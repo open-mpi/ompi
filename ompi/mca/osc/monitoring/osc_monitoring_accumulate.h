@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2016-2017 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +21,7 @@
                                                                     void *result_addr, \
                                                                     ompi_datatype_t *dt, \
                                                                     int target_rank, \
-                                                                    OPAL_PTRDIFF_TYPE target_disp, \
+                                                                    ptrdiff_t target_disp, \
                                                                     ompi_win_t *win) \
     {                                                                   \
         int world_rank;                                                 \
@@ -105,7 +105,7 @@
                                                                int origin_count, \
                                                                ompi_datatype_t *origin_datatype, \
                                                                int target_rank, \
-                                                               OPAL_PTRDIFF_TYPE target_disp, \
+                                                               ptrdiff_t target_disp, \
                                                                int target_count, \
                                                                ompi_datatype_t *target_datatype, \
                                                                ompi_op_t *op, ompi_win_t *win, \
@@ -130,7 +130,7 @@
                                                               int origin_count, \
                                                               ompi_datatype_t *origin_datatype, \
                                                               int target_rank, \
-                                                              OPAL_PTRDIFF_TYPE target_disp, \
+                                                              ptrdiff_t target_disp, \
                                                               int target_count, \
                                                               ompi_datatype_t *target_datatype, \
                                                               ompi_op_t *op, ompi_win_t *win) \
@@ -154,7 +154,7 @@
                                                                 void *result_addr, \
                                                                 ompi_datatype_t *dt, \
                                                                 int target_rank, \
-                                                                OPAL_PTRDIFF_TYPE target_disp, \
+                                                                ptrdiff_t target_disp, \
                                                                 ompi_op_t *op, ompi_win_t *win) \
     {                                                                   \
         int world_rank;                                                 \

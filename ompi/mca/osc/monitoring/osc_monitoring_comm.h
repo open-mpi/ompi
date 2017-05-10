@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2016-2017 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +20,7 @@
                                                        int origin_count, \
                                                        ompi_datatype_t *origin_datatype, \
                                                        int target_rank, \
-                                                       OPAL_PTRDIFF_TYPE target_disp, \
+                                                       ptrdiff_t target_disp, \
                                                        int target_count, \
                                                        ompi_datatype_t *target_datatype, \
                                                        ompi_win_t *win) \
@@ -44,7 +44,7 @@
                                                         int origin_count, \
                                                         ompi_datatype_t *origin_datatype, \
                                                         int target_rank, \
-                                                        OPAL_PTRDIFF_TYPE target_disp, \
+                                                        ptrdiff_t target_disp, \
                                                         int target_count, \
                                                         ompi_datatype_t *target_datatype, \
                                                         ompi_win_t *win, \
@@ -68,7 +68,7 @@
     static int ompi_osc_monitoring_## template ##_get (void *origin_addr, int origin_count, \
                                                        ompi_datatype_t *origin_datatype, \
                                                        int source_rank, \
-                                                       OPAL_PTRDIFF_TYPE source_disp, \
+                                                       ptrdiff_t source_disp, \
                                                        int source_count, \
                                                        ompi_datatype_t *source_datatype, \
                                                        ompi_win_t *win) \
@@ -92,7 +92,7 @@
     static int ompi_osc_monitoring_## template ##_rget (void *origin_addr, int origin_count, \
                                                         ompi_datatype_t *origin_datatype, \
                                                         int source_rank, \
-                                                        OPAL_PTRDIFF_TYPE source_disp, \
+                                                        ptrdiff_t source_disp, \
                                                         int source_count, \
                                                         ompi_datatype_t *source_datatype, \
                                                         ompi_win_t *win, \

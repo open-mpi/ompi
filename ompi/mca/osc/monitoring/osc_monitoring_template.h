@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Inria.  All rights reserved.
+ * Copyright (c) 2016-2017 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,6 +10,7 @@
 #ifndef MCA_OSC_MONITORING_TEMPLATE_H
 #define MCA_OSC_MONITORING_TEMPLATE_H
 
+#include <ompi_config.h>
 #include <ompi/communicator/communicator.h>
 #include <ompi/win/win.h>
 #include <opal/sys/atomic.h>
