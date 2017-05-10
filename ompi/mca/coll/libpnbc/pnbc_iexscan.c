@@ -47,6 +47,13 @@ int ompi_coll_libpnbc_iexscan_init(const void* sendbuf, void* recvbuf, int count
         return res;
     }
 
+  /*
+   * FIXME - this is an initialisation function
+   *         ** it must not do any real work **
+   *         this should instead create a short
+   *         schedule with just PNBC_Sched_copy
+   *         Move this into algorithm selection
+   */
     span = opal_datatype_span(&datatype->super, count, &gap);
     if (0 < rank) {
         handle->tmpbuf = malloc(span);

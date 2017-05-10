@@ -41,7 +41,6 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include "libdict/dict.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,27 +52,6 @@ extern "C" {
 /* true/false */
 #define true 1
 #define false 0
-
-/* all collectives */
-#define PNBC_ALLGATHER 0
-#define PNBC_ALLGATHERV 1
-#define PNBC_ALLREDUCE 2
-#define PNBC_ALLTOALL 3
-#define PNBC_ALLTOALLV 4
-#define PNBC_ALLTOALLW 5
-#define PNBC_BARRIER 6
-#define PNBC_BCAST 7
-#define PNBC_EXSCAN 8
-#define PNBC_GATHER 9
-#define PNBC_GATHERV 10
-#define PNBC_REDUCE 11
-#define PNBC_REDUCESCAT 12
-#define PNBC_SCAN 13
-#define PNBC_SCATTER 14
-#define PNBC_SCATTERV 15
-/* set the number of collectives in nbc.h !!!! */
-
-/* several typedefs for NBC */
 
 /* the function type enum */
 typedef enum {
@@ -156,108 +134,6 @@ int PNBC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datat
 
 int PNBC_Sched_barrier (PNBC_Schedule *schedule);
 int PNBC_Sched_commit (PNBC_Schedule *schedule);
-
-#ifdef PNBC_CACHE_SCHEDULE
-/* this is a dummy structure which is used to get the schedule out of
- * the collop specific structure. The schedule pointer HAS to be at the
- * first position and should NOT BE REORDERED by the compiler (C
- * guarantees that */
-struct PNBC_dummyarg {
-  PNBC_Schedule *schedule;
-};
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *sendbuf;
-  int sendcount;
-  MPI_Datatype sendtype;
-  void* recvbuf;
-  int recvcount;
-  MPI_Datatype recvtype;
-} PNBC_Alltoall_args;
-int PNBC_Alltoall_args_compare(PNBC_Alltoall_args *a, PNBC_Alltoall_args *b, void *param);
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *sendbuf;
-  int sendcount;
-  MPI_Datatype sendtype;
-  void* recvbuf;
-  int recvcount;
-  MPI_Datatype recvtype;
-} PNBC_Allgather_args;
-int PNBC_Allgather_args_compare(PNBC_Allgather_args *a, PNBC_Allgather_args *b, void *param);
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *sendbuf;
-  void* recvbuf;
-  int count;
-  MPI_Datatype datatype;
-  MPI_Op op;
-} PNBC_Allreduce_args;
-int PNBC_Allreduce_args_compare(PNBC_Allreduce_args *a, PNBC_Allreduce_args *b, void *param);
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *buffer;
-  int count;
-  MPI_Datatype datatype;
-  int root;
-} PNBC_Bcast_args;
-int PNBC_Bcast_args_compare(PNBC_Bcast_args *a, PNBC_Bcast_args *b, void *param);
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *sendbuf;
-  int sendcount;
-  MPI_Datatype sendtype;
-  void* recvbuf;
-  int recvcount;
-  MPI_Datatype recvtype;
-  int root;
-} PNBC_Gather_args;
-int PNBC_Gather_args_compare(PNBC_Gather_args *a, PNBC_Gather_args *b, void *param);
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *sendbuf;
-  void* recvbuf;
-  int count;
-  MPI_Datatype datatype;
-  MPI_Op op;
-  int root;
-} PNBC_Reduce_args;
-int PNBC_Reduce_args_compare(PNBC_Reduce_args *a, PNBC_Reduce_args *b, void *param);
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *sendbuf;
-  void* recvbuf;
-  int count;
-  MPI_Datatype datatype;
-  MPI_Op op;
-} PNBC_Scan_args;
-int PNBC_Scan_args_compare(PNBC_Scan_args *a, PNBC_Scan_args *b, void *param);
-
-typedef struct {
-  PNBC_Schedule *schedule;
-  void *sendbuf;
-  int sendcount;
-  MPI_Datatype sendtype;
-  void* recvbuf;
-  int recvcount;
-  MPI_Datatype recvtype;
-  int root;
-} PNBC_Scatter_args;
-int PNBC_Scatter_args_compare(PNBC_Scatter_args *a, PNBC_Scatter_args *b, void *param);
-
-/* Schedule cache structures/functions */
-void PNBC_SchedCache_args_delete(void *entry);
-void PNBC_SchedCache_args_delete_key_dummy(void *k);
-
-#endif
-
 
 int PNBC_Start_internal(PNBC_Handle *handle, PNBC_Schedule *schedule);
 int PNBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libpnbc_request_t **request, ompi_coll_libpnbc_module_t *module);
@@ -572,18 +448,6 @@ static inline int PNBC_Unpack(void *src, int srccount, MPI_Datatype srctype, voi
   }
 
   return OMPI_SUCCESS;
-}
-
-/* deletes elements from dict until low watermark is reached */
-static inline void PNBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
-  hb_itor *itor;
-
-  itor = hb_itor_new(dict);
-  for (; hb_itor_valid(itor) && (*size>PNBC_SCHED_DICT_LOWER); hb_itor_next(itor)) {
-    hb_tree_remove(dict, hb_itor_key(itor), 0);
-    *size = *size-1;
-  }
-  hb_itor_destroy(itor);
 }
 
 #define PNBC_IN_PLACE(sendbuf, recvbuf, inplace) \

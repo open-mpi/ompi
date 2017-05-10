@@ -20,15 +20,10 @@
 #
 
 sources = \
-        coll_libpnbc.h \
+	coll_libpnbc.h \
 	coll_libpnbc_component.c \
 	pnbc.c \
 	pnbc_internal.h \
-	libdict/dict.h \
-	libdict/dict_private.h \
-	libdict/dict.c \
-	libdict/hb_tree.h \
-	libdict/hb_tree.c \
 	pnbc_iallgather.c \
 	pnbc_iallgatherv.c \
 	pnbc_iallreduce.c \
@@ -73,5 +68,5 @@ mca_coll_libpnbc_la_SOURCES = $(sources)
 mca_coll_libpnbc_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_coll_libpnbc_la_SOURCES =$(sources)
+libmca_coll_libpnbc_la_SOURCES = $(sources)
 libmca_coll_libpnbc_la_LDFLAGS = -module -avoid-version

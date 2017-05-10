@@ -70,6 +70,13 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
     return res;
   }
 
+  /*
+   * FIXME - this is an initialisation function
+   *         ** it must not do any real work **
+   *         this should instead create a short
+   *         schedule with just PNBC_Sched_copy
+   *         Move this into algorithm selection
+   */
   if (1 == p) {
     if (!inplace) {
       /* for a single node - copy data to receivebuf */
@@ -102,36 +109,36 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
     alg = PNBC_ARED_RING;
   }
 
-    schedule = OBJ_NEW(PNBC_Schedule);
-    if (NULL == schedule) {
-      PNBC_Return_handle (handle);
-      return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+  schedule = OBJ_NEW(PNBC_Schedule);
+  if (NULL == schedule) {
+    PNBC_Return_handle (handle);
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
 
-    /* ensure the schedule is released with the handle on error */
-    handle->schedule = schedule;
+  /* ensure the schedule is released with the handle on error */
+  handle->schedule = schedule;
 
-    PNBC_DEBUG(7, "** finalizing request schedule **\n");
+  PNBC_DEBUG(7, "** finalizing request schedule **\n");
 
-    switch(alg) {
-      case PNBC_ARED_BINOMIAL:
-        res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, handle);
-        break;
-      case PNBC_ARED_RING:
-        res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, handle);
-        break;
-    }
+  switch(alg) {
+    case PNBC_ARED_BINOMIAL:
+      res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, handle);
+      break;
+    case PNBC_ARED_RING:
+      res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, handle);
+      break;
+  }
 
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      PNBC_Return_handle (handle);
-      return res;
-    }
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    PNBC_Return_handle (handle);
+    return res;
+  }
 
-    res = PNBC_Sched_commit(schedule);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      PNBC_Return_handle (handle);
-      return res;
-    }
+  res = PNBC_Sched_commit(schedule);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    PNBC_Return_handle (handle);
+    return res;
+  }
 
   handle->schedule = schedule;
 
@@ -203,6 +210,13 @@ int ompi_coll_libpnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int c
     return res;
   }
 
+  /*
+   * FIXME - if this is a persistent initialisation function
+   *         then the schedule must not be started yet
+   *         if this is a nonblocking collective function
+   *         then we should let the NBC module provide it
+   *         i.e. this function should not be in this module
+   */
   res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);

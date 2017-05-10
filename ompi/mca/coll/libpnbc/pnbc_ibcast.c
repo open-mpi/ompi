@@ -42,6 +42,7 @@ int ompi_coll_libpnbc_ibcast_init(void *buffer, int count, MPI_Datatype datatype
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
+  /* this is a very special case - start, wait, test are all no-op */
   if (1 == p) {
     *request = &ompi_request_empty;
     return OMPI_SUCCESS;

@@ -344,10 +344,10 @@ int PNBC_Progress(PNBC_Handle *handle) {
             ompi_request_wait(&handle->req_array[i], &status);
           }
           // Warn the user that we had to leave a PML message outstanding so
-          // bad things could happen if they continue using nonblocking collectives
+          // bad things could happen if they continue using persistent nonblocking collectives
           else {
             PNBC_Error ("MPI Error: Not able to cancel the internal request %d. "
-                       "Be aware that continuing to use nonblocking collectives on this communicator may result in undefined behavior.", i);
+                       "Be aware that continuing to use persistent nonblocking collectives on this communicator may result in undefined behavior.", i);
           }
         }
       }
@@ -385,19 +385,15 @@ int PNBC_Progress(PNBC_Handle *handle) {
       /* this was the last round - we're done */
       PNBC_DEBUG(5, "PNBC_Progress last round finished - we're done\n");
 
-      /*if(!REQUEST_COMPLETE(&handle->super)) {
-    	  ompi_request_complete(&handle->super, true);
-    	  PNBC_DEBUG(5, "Request Marked COMPLETED\n");
-      }*/
-
       return PNBC_OK;
-
     }
 
-    PNBC_DEBUG(5, "PNBC_Progress round finished - goto next round\n");
     /* move delim to start of next round */
+    PNBC_DEBUG(5, "PNBC_Progress round finished - goto next round\n");
+
     /* initializing handle for new virgin round */
     handle->row_offset = (intptr_t) (delim + 1) - (intptr_t) handle->schedule->data;
+
     /* kick it off */
     res = PNBC_Start_round(handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -579,18 +575,11 @@ static inline int PNBC_Start_round(PNBC_Handle *handle) {
     }
   }
 
-  /* check if we can make progress - not in the first round, this allows us to leave the
-   * initialization faster and to reach more overlap
-   *
-   * threaded case: calling progress in the first round can lead to a
-   * deadlock if PNBC_Free is called in this round :-( */
-  //if (handle->row_offset) {
-    res = PNBC_Progress(handle);
-    PNBC_DEBUG(5, "Returned from PNBC_Progress\n");
-    if ((PNBC_OK != res) && (PNBC_CONTINUE != res)) {
-      return OMPI_ERROR;
-    }
-  //}
+  res = PNBC_Progress(handle);
+  PNBC_DEBUG(5, "Returned from PNBC_Progress\n");
+  if ((PNBC_OK != res) && (PNBC_CONTINUE != res)) {
+    return OMPI_ERROR;
+  }
 
   PNBC_DEBUG(5, "Leaving PNBC_Start_round\n");
 
@@ -642,10 +631,10 @@ int PNBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libpnbc_request
       }
   }
 
-  handle->comm=comm;
-  /*printf("got comminfo: %lu tag: %i\n", comminfo, comminfo->tag);*/
+  handle->comm = comm;
 
   /******************** end of tag and shadow comm administration ...  ***************/
+
   handle->comminfo = comminfo;
 
   PNBC_DEBUG(3, "got tag %i\n", handle->tag);
@@ -659,54 +648,10 @@ void PNBC_Return_handle(ompi_coll_libpnbc_request_t *request) {
 }
 
 int  PNBC_Init_comm(MPI_Comm comm, PNBC_Comminfo *comminfo) {
-  comminfo->tag= MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
 
-#ifdef PNBC_CACHE_SCHEDULE
-  /* initialize the PNBC_ALLTOALL SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_ALLTOALL] = hb_tree_new((dict_cmp_func)PNBC_Alltoall_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_ALLTOALL] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_ALLTOALL]);
-  comminfo->PNBC_Dict_size[PNBC_ALLTOALL] = 0;
-  /* initialize the PNBC_ALLGATHER SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_ALLGATHER] = hb_tree_new((dict_cmp_func)PNBC_Allgather_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_ALLGATHER] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_ALLGATHER]);
-  comminfo->PNBC_Dict_size[PNBC_ALLGATHER] = 0;
-  /* initialize the PNBC_ALLREDUCE SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_ALLREDUCE] = hb_tree_new((dict_cmp_func)PNBC_Allreduce_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_ALLREDUCE] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_ALLREDUCE]);
-  comminfo->PNBC_Dict_size[PNBC_ALLREDUCE] = 0;
-  /* initialize the PNBC_BARRIER SchedCache tree - is not needed -
-   * schedule is hung off directly */
-  comminfo->PNBC_Dict_size[PNBC_BARRIER] = 0;
-  /* initialize the PNBC_BCAST SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_BCAST] = hb_tree_new((dict_cmp_func)PNBC_Bcast_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_BCAST] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_BCAST]);
-  comminfo->PNBC_Dict_size[PNBC_BCAST] = 0;
-  /* initialize the PNBC_GATHER SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_GATHER] = hb_tree_new((dict_cmp_func)PNBC_Gather_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_GATHER] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_GATHER]);
-  comminfo->PNBC_Dict_size[PNBC_GATHER] = 0;
-  /* initialize the PNBC_REDUCE SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_REDUCE] = hb_tree_new((dict_cmp_func)PNBC_Reduce_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_REDUCE] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_REDUCE]);
-  comminfo->PNBC_Dict_size[PNBC_REDUCE] = 0;
-  /* initialize the PNBC_SCAN SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_SCAN] = hb_tree_new((dict_cmp_func)PNBC_Scan_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_SCAN] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_SCAN]);
-  comminfo->PNBC_Dict_size[PNBC_SCAN] = 0;
-  /* initialize the PNBC_SCATTER SchedCache tree */
-  comminfo->PNBC_Dict[PNBC_SCATTER] = hb_tree_new((dict_cmp_func)PNBC_Scatter_args_compare, PNBC_SchedCache_args_delete_key_dummy, PNBC_SchedCache_args_delete);
-  if(comminfo->PNBC_Dict[PNBC_SCATTER] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  PNBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->PNBC_Dict[PNBC_SCATTER]);
-  comminfo->PNBC_Dict_size[PNBC_SCATTER] = 0;
-#endif
+  comminfo->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
 
+  /* nothing to do here */
   return OMPI_SUCCESS;
 }
 
@@ -716,13 +661,21 @@ int PNBC_Start_internal(PNBC_Handle *handle, PNBC_Schedule *schedule) {
 
   handle->schedule = schedule;
   handle->super.req_complete = REQUEST_PENDING;
-  handle->super.req_state = OMPI_REQUEST_ACTIVE;  // DAN: added
+  handle->super.req_state = OMPI_REQUEST_ACTIVE;
 
   /* kick off first round */
   res = PNBC_Start_round(handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
+
+  /*
+   * FIXME - The request may already be complete/inactive now
+   *         if so, it should not be added to the active list
+   *         Must add param to provide the status of request,
+   *         because the user could have already freed it and
+   *         it could already be in use by another operation!
+   */
 
   OPAL_THREAD_LOCK(&mca_coll_libpnbc_component.lock);
   opal_list_append(&mca_coll_libpnbc_component.active_requests, &(handle->super.super.super));
@@ -732,15 +685,3 @@ int PNBC_Start_internal(PNBC_Handle *handle, PNBC_Schedule *schedule) {
 
 }
 
-#ifdef PNBC_CACHE_SCHEDULE
-void PNBC_SchedCache_args_delete_key_dummy(void *k) {
-    /* do nothing because the key and the data element are identical :-)
-     * both (the single one :) is freed in PNBC_<COLLOP>_args_delete() */
-}
-
-void PNBC_SchedCache_args_delete(void *entry) {
-  struct PNBC_dummyarg *tmp = (struct PNBC_dummyarg*)entry;
-  OBJ_RELEASE(tmp->schedule);
-  free(entry);
-}
-#endif

@@ -162,6 +162,13 @@ int ompi_coll_libpnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_requ
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
+  /*
+   * FIXME - if this is a persistent initialisation function
+   *         then the schedule must not be started yet
+   *         if this is a nonblocking collective function
+   *         then we should let the NBC module provide it
+   *         i.e. this function should not be in this module
+   */
   res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);

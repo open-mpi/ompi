@@ -88,6 +88,13 @@ int ompi_coll_libpnbc_ialltoall_init(const void* sendbuf, int sendcount, MPI_Dat
   } else
     alg = PNBC_A2A_LINEAR; /*PNBC_A2A_PAIRWISE;*/
 
+  /*
+   * FIXME - this is an initialisation function
+   *         ** it must not do any real work **
+   *         this should instead create a short
+   *         schedule with just PNBC_Sched_copy
+   *         Move this into algorithm selection
+   */
   if (!inplace) {
     /* copy my data to receive buffer */
     rbuf = (char *) recvbuf + rank * recvcount * rcvext;
@@ -112,6 +119,13 @@ int ompi_coll_libpnbc_ialltoall_init(const void* sendbuf, int sendcount, MPI_Dat
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } else if (alg == PNBC_A2A_DISS) {
+
+  /*
+   * FIXME - this is an initialisation function
+   *         ** it must not do any real work **
+   *         this does Pack, memcpy, and so on
+   */
+
     /* only A2A_DISS needs buffers */
     if(PNBC_Type_intrinsic(sendtype)) {
       datasize = sndext * sendcount;
@@ -280,6 +294,13 @@ int ompi_coll_libpnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_D
     return res;
   }
 
+  /*
+   * FIXME - if this is a persistent initialisation function
+   *         then the schedule must not be started yet
+   *         if this is a nonblocking collective function
+   *         then we should let the NBC module provide it
+   *         i.e. this function should not be in this module
+   */
   res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);

@@ -23,11 +23,6 @@
  */
 #include "pnbc_internal.h"
 
-/* an gatherv schedule can not be cached easily because the contents
- * ot the recvcounts array may change, so a comparison of the address
- * would not be sufficient ... we simply do not cache it */
-
-
 int ompi_coll_libpnbc_igatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                               void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
@@ -71,6 +66,15 @@ int ompi_coll_libpnbc_igatherv_init(const void* sendbuf, int sendcount, MPI_Data
       rbuf = (char *) recvbuf + displs[i] * rcvext;
       if (i == root) {
         if (!inplace) {
+
+  /*
+   * FIXME - this is an initialisation function
+   *         ** it must not do any real work **
+   *         this should instead create a short
+   *         schedule with just PNBC_Sched_copy
+   *         Move this into algorithm selection
+   */
+
           /* if I am the root - just copy the message */
           res = PNBC_Copy (sendbuf, sendcount, sendtype, rbuf, recvcounts[i], recvtype,
                           comm);
@@ -167,6 +171,13 @@ int ompi_coll_libpnbc_igatherv_inter (const void* sendbuf, int sendcount, MPI_Da
     return res;
   }
 
+  /*
+   * FIXME - if this is a persistent initialisation function
+   *         then the schedule must not be started yet
+   *         if this is a nonblocking collective function
+   *         then we should let the NBC module provide it
+   *         i.e. this function should not be in this module
+   */
   res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);

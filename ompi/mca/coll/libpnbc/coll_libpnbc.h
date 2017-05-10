@@ -37,20 +37,6 @@ BEGIN_C_DECLS
 /* the debug level */
 #define PNBC_DLEVEL 0
 
-/* enable schedule caching - undef PNBC_CACHE_SCHEDULE to deactivate it */
-/* TODO: this whole schedule cache stuff does not work with the tmbuf
- * :-( - first, the tmpbuf must not be freed if a schedule using it is
- * still in the cache and second, the tmpbuf used by the schedule must
- * be attached to the handle that uses this schedule !!!!
- * I.E., THIS IS EXPERIMENTAL AND MIGHT NOT WORK */
-/* It also leaks memory because the schedule is never cleaned up when
-   the communicator is destroyed, so don't use it for now */
-#ifdef PNBC_CACHE_SCHEDULE
-#undef PNBC_CACHE_SCHEDULE
-#endif
-#define PNBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
-#define PNBC_SCHED_DICT_LOWER 512  /* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
-
 /********************* end of LibNBC tuning parameters ************************/
 
 /* Function return codes  */
@@ -64,9 +50,6 @@ BEGIN_C_DECLS
 #define PNBC_NOT_IMPLEMENTED 6
 #define PNBC_INVALID_PARAM 7 /* invalid parameters */
 #define PNBC_INVALID_TOPOLOGY_COMM 8 /* invalid topology attached to communicator */
-
-/* number of implemented collective functions */
-#define PNBC_NUM_COLL 17
 
 extern bool libpnbc_ibcast_skip_dt_decision;
 
@@ -88,14 +71,6 @@ struct ompi_coll_libpnbc_module_t {
     opal_mutex_t mutex;
     bool comm_registered;
     int tag;
-#ifdef PNBC_CACHE_SCHEDULE
-  void *PNBC_Dict[PNBC_NUM_COLL]; /* this should point to a struct
-                                      hb_tree, but since this is a
-                                      public header-file, this would be
-                                      an include mess :-(. So let's void
-                                      it ...*/
-  int PNBC_Dict_size[PNBC_NUM_COLL];
-#endif
 };
 typedef struct ompi_coll_libpnbc_module_t ompi_coll_libpnbc_module_t;
 OBJ_CLASS_DECLARATION(ompi_coll_libpnbc_module_t);
@@ -123,8 +98,6 @@ struct ompi_coll_libpnbc_request_t {
     PNBC_Comminfo *comminfo;
     PNBC_Schedule *schedule;
     void *tmpbuf; /* temporary buffer e.g. used for Reduce */
-    /* TODO: we should make a handle pointer to a state later (that the user
-     * can move request handles) */
 };
 typedef struct ompi_coll_libpnbc_request_t ompi_coll_libpnbc_request_t;
 OBJ_CLASS_DECLARATION(ompi_coll_libpnbc_request_t);
@@ -132,22 +105,22 @@ OBJ_CLASS_DECLARATION(ompi_coll_libpnbc_request_t);
 typedef ompi_coll_libpnbc_request_t PNBC_Handle;
 
 
-#define OMPI_COLL_LIBPNBC_REQUEST_ALLOC(comm, req)                       \
-    do {                                                                \
-        opal_free_list_item_t *item;                                    \
+#define OMPI_COLL_LIBPNBC_REQUEST_ALLOC(comm, req)                         \
+    do {                                                                   \
+        opal_free_list_item_t *item;                                       \
         item = opal_free_list_wait (&mca_coll_libpnbc_component.requests); \
-        req = (ompi_coll_libpnbc_request_t*) item;                       \
-        OMPI_REQUEST_INIT(&req->super, false);                          \
-        req->super.req_mpi_object.comm = comm;                          \
-        req->super.req_complete = false;                                \
-        req->super.req_state = OMPI_REQUEST_ACTIVE;                     \
+        req = (ompi_coll_libpnbc_request_t*) item;                         \
+        OMPI_REQUEST_INIT(&req->super, false);                             \
+        req->super.req_mpi_object.comm = comm;                             \
+        req->super.req_complete = false;                                   \
+        req->super.req_state = OMPI_REQUEST_ACTIVE;                        \
     } while (0)
 
-#define OMPI_COLL_LIBPNBC_REQUEST_RETURN(req)                            \
-    do {                                                                \
-        OMPI_REQUEST_FINI(&(req)->super);                               \
-        opal_free_list_return (&mca_coll_libpnbc_component.requests,     \
-                               (opal_free_list_item_t*) (req));         \
+#define OMPI_COLL_LIBPNBC_REQUEST_RETURN(req)                        \
+    do {                                                             \
+        OMPI_REQUEST_FINI(&(req)->super);                            \
+        opal_free_list_return (&mca_coll_libpnbc_component.requests, \
+                               (opal_free_list_item_t*) (req));      \
     } while (0)
 
 int ompi_coll_libpnbc_progress(void);

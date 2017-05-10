@@ -38,6 +38,7 @@ const char *mca_coll_libpnbc_component_version_string =
     "Open MPI libpnbc collective MCA component version " OMPI_VERSION;
 
 
+/* Use a low priority, but allow other components to be lower */
 static int libpnbc_priority = 10;
 bool libpnbc_ibcast_skip_dt_decision = true;
 
@@ -99,7 +100,7 @@ libpnbc_open(void)
     if (OMPI_SUCCESS != ret) return ret;
 
     /* note: active comms is the number of communicators who have had
-       a non-blocking collective started */
+       a persistent nonblocking collective started */
     mca_coll_libpnbc_component.active_comms = 0;
 
     opal_atomic_init(&mca_coll_libpnbc_component.progress_lock, OPAL_ATOMIC_UNLOCKED);
@@ -110,8 +111,6 @@ libpnbc_open(void)
 static int
 libpnbc_close(void)
 {
-	//printf("*** CLOSING LIBPNBC!! ***\n");
-
     if (0 != mca_coll_libpnbc_component.active_comms) {
         opal_progress_unregister(ompi_coll_libpnbc_progress);
     }
@@ -127,8 +126,6 @@ libpnbc_close(void)
 static int
 libpnbc_register(void)
 {
-    /* Use a low priority, but allow other components to be lower */
-    libpnbc_priority = 10;
     (void) mca_base_component_var_register(&mca_coll_libpnbc_component.super.collm_version,
                                            "priority", "Priority of the libpnbc coll component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -180,10 +177,7 @@ libpnbc_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_t *
-libpnbc_comm_query(struct ompi_communicator_t *comm,
-                  int *priority)
-{
+mca_coll_base_module_t * libpnbc_comm_query(struct ompi_communicator_t *comm, int *priority) {
     ompi_coll_libpnbc_module_t *module;
 
     module = OBJ_NEW(ompi_coll_libpnbc_module_t);
@@ -234,10 +228,8 @@ libpnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_ineighbor_alltoall_init = ompi_coll_libpnbc_ineighbor_alltoall_init;
         module->super.coll_ineighbor_alltoallv_init = ompi_coll_libpnbc_ineighbor_alltoallv_init;
         module->super.coll_ineighbor_alltoallw_init = ompi_coll_libpnbc_ineighbor_alltoallw_init;
-
-        module->super.coll_libpnbc_start = ompi_coll_libpnbc_start;
-
     }
+    module->super.coll_libpnbc_start = ompi_coll_libpnbc_start;
 
     module->super.ft_event = NULL;
 
@@ -253,19 +245,14 @@ libpnbc_comm_query(struct ompi_communicator_t *comm,
 /*
  * Init module on the communicator
  */
-static int
-libpnbc_module_enable(mca_coll_base_module_t *module,
-                     struct ompi_communicator_t *comm)
-{
+static int libpnbc_module_enable(mca_coll_base_module_t *module,
+                     struct ompi_communicator_t *comm) {
     /* All done */
     return OMPI_SUCCESS;
 }
 
 
-int
-ompi_coll_libpnbc_progress(void)
-{
-	//printf("[LIBPNBC - X] **** framework has called PNBC_progress. **** \n");
+int ompi_coll_libpnbc_progress(void) {
 
     ompi_coll_libpnbc_request_t* request, *next;
     int res;
@@ -279,59 +266,45 @@ ompi_coll_libpnbc_progress(void)
     OPAL_LIST_FOREACH_SAFE(request, next, &mca_coll_libpnbc_component.active_requests,
                            ompi_coll_libpnbc_request_t) {
         OPAL_THREAD_UNLOCK(&mca_coll_libpnbc_component.lock);
+
         res = PNBC_Progress(request);
-        //printf("[LIBPNBC - X] **** framework returned from PNBC_Progress **** \n");
+
         if( PNBC_CONTINUE != res ) {
             /* done, remove and complete */
             OPAL_THREAD_LOCK(&mca_coll_libpnbc_component.lock);
-            //printf("[LIBPNBC - X] **** framework removing an active request **** \n");
             opal_list_remove_item(&mca_coll_libpnbc_component.active_requests,
                                   &request->super.super.super);
             OPAL_THREAD_UNLOCK(&mca_coll_libpnbc_component.lock);
 
             if( OMPI_SUCCESS == res || PNBC_OK == res || PNBC_SUCCESS == res ) {
-            	//printf("[LIBPNBC - X] **** framework marking success **** \n");
                 request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
-            }
-            else {
-            	//printf("[LIBPNBC - X] **** framework marking error **** \n");
+            } else {
                 request->super.req_status.MPI_ERROR = res;
             }
 
             if(!REQUEST_COMPLETE(&request->super)) {
-            	//printf("[LIBPNBC - X] **** framework completing a request: %li **** \n", ((long *)(&request->super.req_complete)));
             	ompi_request_complete(&request->super, true);
             }
 
         }
 
-        //printf("[LIBPNBC - X] **** framework request: complete = %li | count = %i | offset = %li **** \n", ((long *)(request->super.req_complete)), request->req_count, request->row_offset);
-
         OPAL_THREAD_LOCK(&mca_coll_libpnbc_component.lock);
-
     }
-
     OPAL_THREAD_UNLOCK(&mca_coll_libpnbc_component.lock);
 
     opal_atomic_unlock(&mca_coll_libpnbc_component.progress_lock);
-
-    //printf("[LIBPNBC - X] **** leaving ompi_coll_libpnbc_progress request **** \n");
 
     return 0;
 }
 
 
-static void
-libpnbc_module_construct(ompi_coll_libpnbc_module_t *module)
-{
+static void libpnbc_module_construct(ompi_coll_libpnbc_module_t *module) {
     OBJ_CONSTRUCT(&module->mutex, opal_mutex_t);
     module->comm_registered = false;
 }
 
 
-static void
-libpnbc_module_destruct(ompi_coll_libpnbc_module_t *module)
-{
+static void libpnbc_module_destruct(ompi_coll_libpnbc_module_t *module) {
     OBJ_DESTRUCT(&module->mutex);
 
     /* if we ever were used for a collective op, do the progress cleanup. */
@@ -351,23 +324,21 @@ OBJ_CLASS_INSTANCE(ompi_coll_libpnbc_module_t,
                    libpnbc_module_destruct);
 
 
-static int
-request_cancel(struct ompi_request_t *request, int complete)
-{
+static int request_cancel(struct ompi_request_t *request, int complete) {
     return MPI_ERR_REQUEST;
 }
 
 
-static int
-request_free(struct ompi_request_t **ompi_req)
-{
+static int request_free(struct ompi_request_t **ompi_req) {
 
     ompi_coll_libpnbc_request_t *request = (ompi_coll_libpnbc_request_t*) *ompi_req;
 
-    //printf("*** REQUEST FINALIZING: complete = %li | count = %i | offset = %li **** \n", ((long *)(request->super.req_complete)), request->req_count, request->row_offset);
+    /*
+     * FIXME - when request has been freed (by user) and completed (by MPI)
+     *         then it must be returned to the request pool to avoid a leak
+     */
 
     if( REQUEST_COMPLETE(&request->super) ) {
-    	//printf("*** RESETTING COUNTERS ***\n");
     	request->row_offset = 0;
     	request->req_count = 0;
     }
@@ -376,16 +347,11 @@ request_free(struct ompi_request_t **ompi_req)
 
     //*ompi_req = MPI_REQUEST_NULL;
 
-    //printf("*** REQUEST FINALIZED ***\n");
-
     return OMPI_SUCCESS;
 }
 
 
-static void
-request_construct(ompi_coll_libpnbc_request_t *request)
-{
-	//printf("*** REQUEST CONSTRUCT ***\n");
+static void request_construct(ompi_coll_libpnbc_request_t *request) {
 
     request->super.req_type = OMPI_REQUEST_COLL;
     request->super.req_status._cancelled = 0;
@@ -398,3 +364,4 @@ OBJ_CLASS_INSTANCE(ompi_coll_libpnbc_request_t,
                    ompi_request_t,
                    request_construct,
                    NULL);
+

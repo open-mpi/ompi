@@ -55,6 +55,13 @@ int ompi_coll_libpnbc_iallgatherv_init(const void* sendbuf, int sendcount, MPI_D
     return res;
   }
 
+  /*
+   * FIXME - this is an initialisation function
+   *         ** it must not do any real work **
+   *         this should instead create a short
+   *         schedule with just PNBC_Sched_copy
+   *         Move this into algorithm selection
+   */
   if (inplace) {
       sendtype = recvtype;
       sendcount = recvcounts[rank];
@@ -171,6 +178,13 @@ int ompi_coll_libpnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_
     return res;
   }
 
+  /*
+   * FIXME - if this is a persistent initialisation function
+   *         then the schedule must not be started yet
+   *         if this is a nonblocking collective function
+   *         then we should let the NBC module provide it
+   *         i.e. this function should not be in this module
+   */
   res = PNBC_Start_internal(handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     PNBC_Return_handle (handle);

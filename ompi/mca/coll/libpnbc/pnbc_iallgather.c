@@ -31,9 +31,6 @@ int ompi_coll_libpnbc_iallgather_init(const void* sendbuf, int sendcount, MPI_Da
   MPI_Aint rcvext;
   PNBC_Schedule *schedule;
   char *rbuf, *sbuf, inplace;
-#ifdef PNBC_CACHE_SCHEDULE
-  PNBC_Allgather_args *args, *found, search;
-#endif
   PNBC_Handle *handle;
   ompi_coll_libpnbc_module_t *libpnbc_module = (ompi_coll_libpnbc_module_t*) module;
 
@@ -47,6 +44,13 @@ int ompi_coll_libpnbc_iallgather_init(const void* sendbuf, int sendcount, MPI_Da
     return res;
   }
 
+  /*
+   * FIXME - this is an initialisation function
+   *         ** it must not do any real work **
+   *         this should instead create a short
+   *         schedule with just PNBC_Sched_copy
+   *         Move this into algorithm selection
+   */
   if (inplace) {
     sendtype = recvtype;
     sendcount = recvcount;
@@ -63,38 +67,37 @@ int ompi_coll_libpnbc_iallgather_init(const void* sendbuf, int sendcount, MPI_Da
     return OMPI_SUCCESS;
   }
 
-    schedule = OBJ_NEW(PNBC_Schedule);
-    if (OPAL_UNLIKELY(NULL == schedule)) {
-      return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+  schedule = OBJ_NEW(PNBC_Schedule);
+  if (OPAL_UNLIKELY(NULL == schedule)) {
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
 
-    sbuf = (char *)recvbuf + rank * recvcount * rcvext;
-    /* do p-1 rounds */
-    for(int r = 0 ; r < p ; ++r) {
-      if(r != rank) {
-        /* recv from rank r */
-        rbuf = (char *)recvbuf + r * recvcount * rcvext;
-        res = PNBC_Sched_recv (rbuf, false, recvcount, recvtype, r, schedule, false);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-          OBJ_RELEASE(schedule);
-          return res;
-        }
+  sbuf = (char *)recvbuf + rank * recvcount * rcvext;
+  /* do p-1 rounds */
+  for(int r = 0 ; r < p ; ++r) {
+    if(r != rank) {
+      /* recv from rank r */
+      rbuf = (char *)recvbuf + r * recvcount * rcvext;
+      res = PNBC_Sched_recv (rbuf, false, recvcount, recvtype, r, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
+        return res;
+      }
 
-        /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
-        res = PNBC_Sched_send (sbuf, false, recvcount, recvtype, r, schedule, false);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-          OBJ_RELEASE(schedule);
-          return res;
-        }
+      /* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
+      res = PNBC_Sched_send (sbuf, false, recvcount, recvtype, r, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
+        return res;
       }
     }
+  }
 
-    res = PNBC_Sched_commit(schedule);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      OBJ_RELEASE(schedule);
-      return res;
-    }
-
+  res = PNBC_Sched_commit(schedule);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    OBJ_RELEASE(schedule);
+    return res;
+  }
 
   res = PNBC_Init_handle (comm, &handle, libpnbc_module);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -165,6 +168,13 @@ int ompi_coll_libpnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_D
     return res;
   }
 
+  /*
+   * FIXME - if this is a persistent initialisation function
+   *         then the schedule must not be started yet
+   *         if this is a nonblocking collective function
+   *         then we should let the NBC module provide it
+   *         i.e. this function should not be in this module
+   */
   res = PNBC_Start_internal (handle, schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OMPI_COLL_LIBPNBC_REQUEST_RETURN(handle);
