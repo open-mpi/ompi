@@ -50,6 +50,13 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
 
     if (OMPI_SUCCESS != ret) return ret;
 
+    if (length >= 1ULL << sizeof(uint32_t) * 8) {
+            opal_show_help("help-mtl-psm.txt",
+                   "message too big", false,
+                   length, 1ULL << sizeof(uint32_t) * 8);
+            return OMPI_ERROR;
+    }
+
     mtl_psm_request->length = length;
     mtl_psm_request->convertor = convertor;
     mtl_psm_request->type = OMPI_MTL_PSM_IRECV;
