@@ -72,7 +72,6 @@ OBJ_CLASS_INSTANCE(ofi_recv_msg_queue_t,
                    opal_list_item_t,
                    ofi_recv_msg_queue_cons, ofi_recv_msg_queue_des);
 
-
 static void send_self_exe(int fd, short args, void* data)
 {
     orte_self_send_xfer_t *xfer = (orte_self_send_xfer_t*)data;
@@ -435,7 +434,7 @@ static void send_msg(int fd, short args, void *cbdata)
             free(pmix_key);
     } else {
         opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                  "%s calling OPAL_MODEX_RECV_STRING for DAEMON peer %s",
+                  "%s calling OPAL_MODEX_RECV_STRING for DAEMON peer %s", 
                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, peer, ORTE_PROC_MY_NAME)) {
                  opal_output_verbose(1, orte_rml_base_framework.framework_output,
@@ -504,26 +503,26 @@ static void send_msg(int fd, short args, void *cbdata)
              */
             ORTE_RML_ACTIVATE_MESSAGE(rcv);
             OBJ_RELEASE(req);
-            return;
+            return; 
        } else {
              memcpy(&ui64, (char*)peer, sizeof(uint64_t));
              if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
                                                      ui64, (void**)&pr) || NULL == pr) {
                   opal_output_verbose(1, orte_rml_base_framework.framework_output,
                                 "%s rml:ofi: Send failed to get peer OFI contact info ",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));                      
                   return;
              }
              opal_output_verbose(1, orte_rml_base_framework.framework_output,
                                 "%s rml:ofi: OFI peer contact info got from hash table",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));         
              dest_ep_name = pr->ofi_ep;
              dest_ep_namelen = pr->ofi_ep_len;
              ret = OPAL_SUCCESS;
       }
    }
     if ( OPAL_SUCCESS == ret) {
-           //Anandhi added for debug purpose
+           //[Debug] printing additional info of IP
             switch ( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->addr_format)
             {
                 case  FI_SOCKADDR_IN :
@@ -531,14 +530,14 @@ static void send_msg(int fd, short args, void *cbdata)
                     /*[debug] - print the sockaddr - port and s_addr */
                     ep_sockaddr = (struct sockaddr_in*)dest_ep_name;
                     opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                            "%s peer %s epnamelen is %lu, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
+                            "%s peer %s epnamelen is %d, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),
                             orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen,ntohs(ep_sockaddr->sin_port),
                             ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
                     /*[end debug]*/
                     break;
             }
-            //Anandhi end debug
+            //[Debug] end debug
         opal_output_verbose(10, orte_rml_base_framework.framework_output,
                          "%s OPAL_MODEX_RECV succeded, %s peer ep name obtained. length=%lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -552,6 +551,7 @@ static void send_msg(int fd, short args, void *cbdata)
             snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
 
                 ORTE_RML_SEND_COMPLETE(snd);
+  
                 return;
         }
     } else {
