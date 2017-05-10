@@ -74,6 +74,27 @@
 
 #include "orte/util/nidmap.h"
 
+static int orte_nidmap_verbosity = -1;
+static int orte_nidmap_output = -1;
+
+void orte_util_nidmap_init(void)
+{
+    orte_nidmap_verbosity = -1;
+    (void) mca_base_var_register ("orte", "orte", NULL, "nidmap_verbose",
+                                  "Verbosity level for ORTE debug messages in the nidmap utilities",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_nidmap_verbosity);
+
+    /* set default output */
+    orte_nidmap_output = opal_output_open(NULL);
+
+    /* open up the verbose output for debugging */
+    if (0 < orte_nidmap_verbosity) {
+        opal_output_set_verbosity(orte_nidmap_output, orte_nidmap_verbosity);
+    }
+}
+
 int orte_util_build_daemon_nidmap(void)
 {
     int i;
@@ -585,6 +606,9 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         OBJ_RELEASE(rng);
     }
     OPAL_LIST_DESTRUCT(&slots);
+    opal_output_verbose(1, orte_nidmap_output,
+                        "%s SLOT ASSIGNMENTS: %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
     /* pack the string */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
@@ -610,6 +634,9 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
     OPAL_LIST_DESTRUCT(&flags);
 
     /* pack the string */
+    opal_output_verbose(1, orte_nidmap_output,
+                        "%s FLAG ASSIGNMENTS: %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -652,6 +679,9 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
             }
             if (NULL == rng->t) {
                 /* need to account for NULL topology */
+                opal_output_verbose(1, orte_nidmap_output,
+                                    "%s PACKING NULL TOPOLOGY",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 tmp2 = NULL;
                 if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &tmp2, 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
@@ -662,6 +692,9 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
                     return rc;
                 }
             } else {
+                opal_output_verbose(1, orte_nidmap_output,
+                                    "%s PACKING TOPOLOGY: %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rng->t->sig);
                 /* pack this topology string */
                 if (ORTE_SUCCESS != (rc = opal_dss.pack(&bucket, &rng->t->sig, 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
@@ -685,6 +718,9 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
         }
         OPAL_LIST_DESTRUCT(&topos);
         /* pack the string */
+        opal_output_verbose(1, orte_nidmap_output,
+                            "%s TOPOLOGY ASSIGNMENTS: %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &tmp, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&bucket);
@@ -1011,6 +1047,9 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
     if (NULL == bptr) {
         /* our topology is first in the array */
         t2 = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
+        opal_output_verbose(1, orte_nidmap_output,
+                            "%s ASSIGNING ALL TOPOLOGIES TO: %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), t2->sig);
         for (n=0; n < orte_node_pool->size; n++) {
             if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
                 if (NULL == node->topology) {
@@ -1077,6 +1116,10 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n+offset))) {
                     continue;
                 }
+                opal_output_verbose(1, orte_nidmap_output,
+                                    "%s ASSIGNING NODE %s WITH TOPO: %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    node->name, t2->sig);
                 if (NULL == node->topology) {
                     OBJ_RETAIN(t2);
                     node->topology = t2;
