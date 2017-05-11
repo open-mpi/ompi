@@ -72,7 +72,7 @@ Bug fixes/minor improvements:
 - Add configury check for MPI_DOUBLE_COMPLEX datatype support.
   Thanks to Alexander Klein for reporting.
 - Fix memory allocated by MPI_WIN_ALLOCATE_SHARED to
-  be 64 byte aligned.  Thanks to Joseph Schuchart for
+  be 64 bit aligned.  Thanks to Joseph Schuchart for
   reporting.
 - Update MPI_WTICK man page to reflect possibly higher
   resolution than 10e-6.  Thanks to Mark Dixon for
