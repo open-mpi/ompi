@@ -756,12 +756,12 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         /******************************************************************/
     case MPI_COMBINER_DARRAY:
         ompi_datatype_create_darray( i[0] /* size */, i[1] /* rank */, i[2] /* ndims */,
-                                     &i[3 + 0 * i[0]], &i[3 + 1 * i[0]],
-                                     &i[3 + 2 * i[0]], &i[3 + 3 * i[0]],
-                                     i[3 + 4 * i[0]], d[0], &datatype );
+                                     &i[3 + 0 * i[2]], &i[3 + 1 * i[2]],
+                                     &i[3 + 2 * i[2]], &i[3 + 3 * i[2]],
+                                     i[3 + 4 * i[2]], d[0], &datatype );
         {
-            const int* a_i[8] = {&i[0], &i[1], &i[2], &i[3 + 0 * i[0]], &i[3 + 1 * i[0]], &i[3 + 2 * i[0]],
-                                 &i[3 + 3 * i[0]], &i[3 + 4 * i[0]]};
+            const int* a_i[8] = {&i[0], &i[1], &i[2], &i[3 + 0 * i[2]], &i[3 + 1 * i[2]], &i[3 + 2 * i[2]],
+                                 &i[3 + 3 * i[2]], &i[3 + 4 * i[2]]};
             ompi_datatype_set_args( datatype, 4 * i[2] + 4, a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
         }
         break;
