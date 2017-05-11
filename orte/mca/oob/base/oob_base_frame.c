@@ -55,11 +55,7 @@ orte_oob_base_t orte_oob_base = {0};
 
 static int orte_oob_base_register(mca_base_register_flag_t flags)
 {
-    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
-        orte_oob_base.num_threads = 0;
-    } else {
-        orte_oob_base.num_threads = 8;
-    }
+    orte_oob_base.num_threads = 0;
     (void)mca_base_var_register("orte", "oob", "base", "num_progress_threads",
                                 "Number of independent progress OOB messages for each interface",
                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -95,6 +91,10 @@ static int orte_oob_base_close(void)
         OBJ_RELEASE(cli);
     }
 
+    if (!ORTE_PROC_IS_APP && !ORTE_PROC_IS_TOOL) {
+        opal_progress_thread_finalize("OOB-BASE");
+    }
+
     /* destruct our internal lists */
     OBJ_DESTRUCT(&orte_oob_base.actives);
 
@@ -122,7 +122,11 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     opal_hash_table_init(&orte_oob_base.peers, 128);
     OBJ_CONSTRUCT(&orte_oob_base.actives, opal_list_t);
 
-    orte_oob_base.ev_base = orte_event_base;
+    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
+        orte_oob_base.ev_base = orte_event_base;
+    } else {
+        orte_oob_base.ev_base = opal_progress_thread_init("OOB-BASE");
+    }
 
 
 #if OPAL_ENABLE_FT_CR == 1
