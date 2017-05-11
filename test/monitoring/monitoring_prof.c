@@ -15,12 +15,19 @@
 /*
 pml monitoring PMPI profiler
 
-Designed by George Bosilca <bosilca@icl.utk.edu>, Emmanuel Jeannot <emmanuel.jeannot@inria.fr> and Guillaume Papauré <guillaume.papaure@bull.net>
+Designed by:
+  George Bosilca <bosilca@icl.utk.edu>
+  Emmanuel Jeannot <emmanuel.jeannot@inria.fr>
+  Guillaume Papauré <guillaume.papaure@bull.net>
+
 Contact the authors for questions.
 
 To be run as:
 
-mpirun -np 4 -x LD_PRELOAD=ompi_install_dir/lib/monitoring_prof.so --mca pml_monitoring_enable 1 ./my_app
+mpirun -np 4 \
+    --mca pml_monitoring_enable 1 \
+    -x LD_PRELOAD=ompi_install_dir/lib/ompi_monitoring_prof.so \
+    ./my_app
 
 ...
 ...
