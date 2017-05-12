@@ -408,6 +408,8 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     node->slots_max = 0;
     node->slots = 1;
     opal_list_append(&nodes, &node->super);
+    /* mark the HNP as "allocated" since we have nothing else to use */
+    orte_hnp_is_allocated = true;
 
     /* store the results in the global resource pool - this removes the
      * list items
