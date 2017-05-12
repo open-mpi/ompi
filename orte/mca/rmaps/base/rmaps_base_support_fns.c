@@ -341,28 +341,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
 
   addknown:
-    /* if the hnp was allocated, include it unless flagged not to */
-    if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
-        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
-            if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
-                                     "HNP IS MARKED NO_USE"));
-                /* clear this for future use, but don't include it */
-                node->state = ORTE_NODE_STATE_UP;
-            } else if (ORTE_NODE_STATE_NOT_INCLUDED != node->state) {
-                OBJ_RETAIN(node);
-                if (initial_map) {
-                    /* if this is the first app_context we
-                     * are getting for an initial map of a job,
-                     * then mark all nodes as unmapped
-                     */
-                    ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
-                }
-                opal_list_append(allocated_nodes, &node->super);
-            }
-        }
-    }
-
     /* add everything in the node pool that can be used - add them
      * in daemon order, which may be different than the order in the
      * node pool. Since an empty list is passed into us, the list at
@@ -370,8 +348,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
      * node obviously has a daemon on it (us!)
      */
     if (0 == opal_list_get_size(allocated_nodes)) {
-        /* the list is empty */
-        nd = NULL;
+        /* the list is empty - if the HNP is allocated, then add it */
+        if (orte_hnp_is_allocated) {
+            nd = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+            opal_list_append(allocated_nodes, &nd->super);
+        } else {
+            nd = NULL;
+        }
     } else {
         nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
     }
@@ -487,10 +470,23 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     } else {
         item  = opal_list_get_first(allocated_nodes);
         while (item != opal_list_get_end(allocated_nodes)) {
+            node = (orte_node_t*)item;
+            opal_output(0, "CHECKING NODE %s", node->name);
             /** save the next pointer in case we remove this node */
             next  = opal_list_get_next(item);
+            /* if the hnp was not allocated, or flagged not to be used,
+             * then remove it here */
+            if (!orte_hnp_is_allocated || (ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
+                node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+                if (node == (orte_node_t*)item) {
+                    opal_output(0, "REMOVING HNP NODE");
+                    opal_list_remove_item(allocated_nodes, item);
+                    OBJ_RELEASE(item);  /* "un-retain" it */
+                    item = next;
+                    continue;
+                }
+            }
             /** check to see if this node is fully used - remove if so */
-            node = (orte_node_t*)item;
             if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                      "%s Removing node %s: max %d inuse %d",
@@ -498,7 +494,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                      node->name, node->slots_max, node->slots_inuse));
                 opal_list_remove_item(allocated_nodes, item);
                 OBJ_RELEASE(item);  /* "un-retain" it */
-            } else if (node->slots <= node->slots_inuse &&
+                item = next;
+                continue;
+            }
+            if (node->slots <= node->slots_inuse &&
                        (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
                 /* remove the node as fully used */
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
@@ -507,14 +506,20 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                      node->name, node->slots, node->slots_inuse));
                 opal_list_remove_item(allocated_nodes, item);
                 OBJ_RELEASE(item);  /* "un-retain" it */
-            } else if (node->slots > node->slots_inuse) {
+                item = next;
+                continue;
+            }
+            if (node->slots > node->slots_inuse) {
                     /* add the available slots */
                     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                          "%s node %s has %d slots available",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          node->name, node->slots - node->slots_inuse));
                     num_slots += node->slots - node->slots_inuse;
-            } else if (!(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
+                    item = next;
+                    continue;
+            }
+            if (!(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
                     /* nothing needed to do here - we don't add slots to the
                      * count as we don't have any available. Just let the mapper
                      * do what it needs to do to meet the request
