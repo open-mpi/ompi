@@ -61,6 +61,7 @@ orte_state_base_module_t orte_state_novm_module = {
 };
 
 static void allocation_complete(int fd, short args, void *cbdata);
+static void map_complete(int fd, short args, void *cbdata);
 static void vm_ready(int fd, short args, void *cbdata);
 
 /* defined state machine sequence for no VM - individual
@@ -74,6 +75,8 @@ static orte_job_state_t launch_states[] = {
     ORTE_JOB_STATE_DAEMONS_LAUNCHED,
     ORTE_JOB_STATE_DAEMONS_REPORTED,
     ORTE_JOB_STATE_VM_READY,
+    ORTE_JOB_STATE_MAP,
+    ORTE_JOB_STATE_MAP_COMPLETE,
     ORTE_JOB_STATE_SYSTEM_PREP,
     ORTE_JOB_STATE_LAUNCH_APPS,
     ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE,
@@ -93,6 +96,8 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_daemons_launched,
     orte_plm_base_daemons_reported,
     vm_ready,
+    orte_rmaps_base_map_job,
+    map_complete,
     orte_plm_base_complete_setup,
     orte_plm_base_launch_apps,
     orte_state_base_local_launch_complete,
@@ -195,7 +200,7 @@ static void allocation_complete(int fd, short args, void *cbdata)
     orte_job_t *daemons;
     orte_topology_t *t;
     orte_node_t *node;
-    int i, rc;
+    int i;
 
     jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
 
@@ -235,21 +240,27 @@ static void allocation_complete(int fd, short args, void *cbdata)
         }
     }
 
-    /* perform the map */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_map_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        goto done;
-    }
-
-    /* after we map, we are ready to launch the daemons */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_LAUNCH_DAEMONS);
+    /* move to the map stage */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
 
  done:
     /* cleanup */
     OBJ_RELEASE(state);
 }
 
+/* after we map, we are ready to launch the daemons */
+static void map_complete(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = state->jdata;
+
+    jdata->state = ORTE_JOB_STATE_MAP_COMPLETE;
+    /* move to the map stage */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_LAUNCH_DAEMONS);
+
+    /* cleanup */
+    OBJ_RELEASE(state);
+}
 
 static void vm_ready(int fd, short args, void *cbdata)
 {

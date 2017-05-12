@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
@@ -53,6 +53,13 @@ ORTE_MODULE_DECLSPEC int orte_rmaps_rr_byobj(orte_job_t *jdata, orte_app_context
                                              orte_std_cntr_t num_slots,
                                              orte_vpid_t num_procs,
                                              hwloc_obj_type_t target, unsigned cache_level);
+
+ORTE_MODULE_DECLSPEC int orte_rmaps_rr_assign_root_level(orte_job_t *jdata);
+
+ORTE_MODULE_DECLSPEC int orte_rmaps_rr_assign_byobj(orte_job_t *jdata,
+                                                    hwloc_obj_type_t target,
+                                                    unsigned cache_level);
+
 
 END_C_DECLS
 

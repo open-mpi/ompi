@@ -351,6 +351,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         /* the list is empty - if the HNP is allocated, then add it */
         if (orte_hnp_is_allocated) {
             nd = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+            OBJ_RETAIN(nd);
             opal_list_append(allocated_nodes, &nd->super);
         } else {
             nd = NULL;
@@ -476,8 +477,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             /* if the hnp was not allocated, or flagged not to be used,
              * then remove it here */
             if (!orte_hnp_is_allocated || (ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
-                node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-                if (node == (orte_node_t*)item) {
+                if (0 == node->index) {
                     opal_list_remove_item(allocated_nodes, item);
                     OBJ_RELEASE(item);  /* "un-retain" it */
                     item = next;
@@ -508,24 +508,24 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 continue;
             }
             if (node->slots > node->slots_inuse) {
-                    /* add the available slots */
-                    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                         "%s node %s has %d slots available",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         node->name, node->slots - node->slots_inuse));
-                    num_slots += node->slots - node->slots_inuse;
-                    item = next;
-                    continue;
+                /* add the available slots */
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
+                                     "%s node %s has %d slots available",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     node->name, node->slots - node->slots_inuse));
+                num_slots += node->slots - node->slots_inuse;
+                item = next;
+                continue;
             }
             if (!(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
-                    /* nothing needed to do here - we don't add slots to the
-                     * count as we don't have any available. Just let the mapper
-                     * do what it needs to do to meet the request
-                     */
-                    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                         "%s node %s is fully used, but available for oversubscription",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         node->name));
+                /* nothing needed to do here - we don't add slots to the
+                 * count as we don't have any available. Just let the mapper
+                 * do what it needs to do to meet the request
+                 */
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
+                                     "%s node %s is fully used, but available for oversubscription",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     node->name));
             } else {
                 /* if we cannot use it, remove it from list */
                 opal_list_remove_item(allocated_nodes, item);

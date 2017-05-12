@@ -198,7 +198,7 @@ int orte_util_build_daemon_nidmap(void)
     return rc;
 }
 
-int orte_util_nidmap_create(char **regex)
+int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
 {
     char *node;
     char prefix[ORTE_MAX_NODE_PREFIX];
@@ -217,8 +217,8 @@ int orte_util_nidmap_create(char **regex)
     OBJ_CONSTRUCT(&dvpids, opal_list_t);
 
     rng = NULL;
-    for (n=0; n < orte_node_pool->size; n++) {
-        if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
+    for (n=0; n < pool->size; n++) {
+        if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(pool, n))) {
             continue;
         }
         /* if no daemon has been assigned, then this node is not being used */
@@ -1178,5 +1178,219 @@ int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer)
   cleanup:
     OPAL_LIST_DESTRUCT(&slts);
     OPAL_LIST_DESTRUCT(&flgs);
+    return rc;
+}
+
+typedef struct {
+    opal_list_item_t super;
+    int ctx;
+    int nprocs;
+    int cnt;
+} orte_nidmap_regex_t;
+static void nrcon(orte_nidmap_regex_t *p)
+{
+    p->ctx = 0;
+    p->nprocs = -1;
+    p->cnt = 0;
+}
+static OBJ_CLASS_INSTANCE(orte_nidmap_regex_t,
+                          opal_list_item_t,
+                          nrcon, NULL);
+
+/* since not every node is involved in a job, we have to create a
+ * regex that indicates the ppn for every node, marking those that
+ * are not involved. Since each daemon knows the entire
+ * node pool, we simply provide a ppn for every daemon, with a -1
+ * to indicate that the node is empty for that job */
+int orte_util_nidmap_generate_ppn(orte_job_t *jdata, char **ppn)
+{
+    orte_nidmap_regex_t *prng, **actives;
+    opal_list_t *prk;
+    orte_node_t *nptr;
+    orte_proc_t *proc;
+    size_t n;
+    int *cnt, i, k;
+    char *tmp2, *ptmp, **cache = NULL;
+
+    /* create an array of lists to handle the number of app_contexts in this job */
+    prk = (opal_list_t*)malloc(jdata->num_apps * sizeof(opal_list_t));
+    cnt = (int*)malloc(jdata->num_apps * sizeof(int));
+    actives = (orte_nidmap_regex_t**)malloc(jdata->num_apps * sizeof(orte_nidmap_regex_t*));
+    for (n=0; n < jdata->num_apps; n++) {
+        OBJ_CONSTRUCT(&prk[n], opal_list_t);
+        actives[n] = NULL;
+    }
+
+    /* we provide a complete map in the regex, with an entry for every
+     * node in the pool */
+    for (i=0; i < orte_node_pool->size; i++) {
+        if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            continue;
+        }
+        /* if a daemon has been assigned, then count how many procs
+         * for each app_context from the specified job are assigned to this node */
+        memset(cnt, 0, jdata->num_apps * sizeof(int));
+        if (NULL != nptr->daemon) {
+            for (k=0; k < nptr->procs->size; k++) {
+                if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(nptr->procs, k))) {
+                    if (proc->name.jobid == jdata->jobid) {
+                        ++cnt[proc->app_idx];
+                    }
+                }
+            }
+        }
+        /* track the #procs on this node */
+        for (n=0; n < jdata->num_apps; n++) {
+            if (NULL == actives[n]) {
+                /* just starting */
+                actives[n] = OBJ_NEW(orte_nidmap_regex_t);
+                actives[n]->nprocs = cnt[n];
+                actives[n]->cnt = 1;
+                opal_list_append(&prk[n], &actives[n]->super);
+            } else {
+                /* is this the next in line */
+                if (cnt[n] == actives[n]->nprocs) {
+                    actives[n]->cnt++;
+                } else {
+                    /* need to start another range */
+                    actives[n] = OBJ_NEW(orte_nidmap_regex_t);
+                    actives[n]->nprocs = cnt[n];
+                    actives[n]->cnt = 1;
+                    opal_list_append(&prk[n], &actives[n]->super);
+                }
+            }
+        }
+    }
+
+    /* construct the regex from the found ranges for each app_context */
+    ptmp = NULL;
+    for (n=0; n < jdata->num_apps; n++) {
+        OPAL_LIST_FOREACH(prng, &prk[n], orte_nidmap_regex_t) {
+            if (1 < prng->cnt) {
+                if (NULL == ptmp) {
+                    asprintf(&ptmp, "%u(%u)", prng->nprocs, prng->cnt);
+                } else {
+                    asprintf(&tmp2, "%s,%u(%u)", ptmp, prng->nprocs, prng->cnt);
+                    free(ptmp);
+                    ptmp = tmp2;
+                }
+            } else {
+                if (NULL == ptmp) {
+                    asprintf(&ptmp, "%u", prng->nprocs);
+                } else {
+                    asprintf(&tmp2, "%s,%u", ptmp, prng->nprocs);
+                    free(ptmp);
+                    ptmp = tmp2;
+                }
+            }
+        }
+        OPAL_LIST_DESTRUCT(&prk[n]);  // releases all the actives objects
+        opal_argv_append_nosize(&cache, ptmp);
+        free(ptmp);
+        ptmp = NULL;
+    }
+    free(prk);
+    free(cnt);
+    free(actives);
+
+    *ppn = opal_argv_join(cache, '@');
+    opal_argv_free(cache);
+
+    return ORTE_SUCCESS;
+}
+
+int orte_util_nidmap_parse_ppn(orte_job_t *jdata, char *regex)
+{
+    orte_node_t *node;
+    orte_proc_t *proc;
+    int n, k, m, cnt;
+    char **tmp, *ptr, **ppn;
+    orte_nidmap_regex_t *rng;
+    opal_list_t trk;
+    int rc = ORTE_SUCCESS;
+
+    /* split the regex by app_context */
+    tmp = opal_argv_split(regex, '@');
+
+    /* for each app_context, set the ppn */
+    for (n=0; NULL != tmp[n]; n++) {
+        ppn = opal_argv_split(tmp[n], ',');
+        /* decompress the ppn */
+        OBJ_CONSTRUCT(&trk, opal_list_t);
+        for (m=0; NULL != ppn[m]; m++) {
+            rng = OBJ_NEW(orte_nidmap_regex_t);
+            opal_list_append(&trk, &rng->super);
+            /* check for a count */
+            if (NULL != (ptr = strchr(ppn[m], '('))) {
+                ppn[m][strlen(ppn[m])-1] = '\0';  // remove trailing paren
+                *ptr = '\0';
+                ++ptr;
+                rng->cnt = strtoul(ptr, NULL, 10);
+            } else {
+                rng->cnt = 1;
+            }
+            /* convert the number */
+            rng->nprocs = strtoul(ppn[m], NULL, 10);
+        }
+        opal_argv_free(ppn);
+
+        /* cycle thru our node pool and add the indicated number of procs
+         * to each node */
+        rng = (orte_nidmap_regex_t*)opal_list_get_first(&trk);
+        cnt = 0;
+        for (m=0; m < orte_node_pool->size; m++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, m))) {
+                continue;
+            }
+            /* see if it has any procs for this job and app_context */
+            if (0 < rng->nprocs) {
+                /* add this node to the job map if it isn't already there */
+                if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
+                    OBJ_RETAIN(node);
+                    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
+                    opal_pointer_array_add(jdata->map->nodes, node);
+                }
+                /* create a proc object for each one */
+                for (k=0; k < rng->nprocs; k++) {
+                    proc = OBJ_NEW(orte_proc_t);
+                    proc->name.jobid = jdata->jobid;
+                    /* leave the vpid undefined as this will be determined
+                     * later when we do the overall ranking */
+                    proc->app_idx = n;
+                    proc->parent = node->daemon->name.vpid;
+                    OBJ_RETAIN(node);
+                    proc->node = node;
+                    /* flag the proc as ready for launch */
+                    proc->state = ORTE_PROC_STATE_INIT;
+                    opal_pointer_array_add(node->procs, proc);
+                    /* we will add the proc to the jdata array when we
+                     * compute its rank */
+                }
+                node->num_procs += rng->nprocs;
+            }
+            ++cnt;
+            if (rng->cnt <= cnt) {
+                rng = (orte_nidmap_regex_t*)opal_list_get_next(&rng->super);
+                if (NULL == rng) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    opal_argv_free(tmp);
+                    rc = ORTE_ERR_NOT_FOUND;
+                    goto complete;
+                }
+                cnt = 0;
+            }
+        }
+        OPAL_LIST_DESTRUCT(&trk);
+    }
+    opal_argv_free(tmp);
+
+  complete:
+    /* reset any node map flags we used so the next job will start clean */
+     for (n=0; n < jdata->map->nodes->size; n++) {
+         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
+             ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+         }
+     }
+
     return rc;
 }

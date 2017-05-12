@@ -99,6 +99,10 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     opal_pmix_persistence_t persist = OPAL_PMIX_PERSIST_APP;
     bool rset, pset;
 
+    opal_output_verbose(1, orte_pmix_server_globals.output,
+                        "%s orted:pmix:server PUBLISH",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
     /* create the caddy */
     req = OBJ_NEW(pmix_server_req_t);
     (void)asprintf(&req->operation, "PUBLISH: %s:%d", __FILE__, __LINE__);
@@ -259,6 +263,10 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
 
     /* pack the keys too */
     for (i=0; i < nkeys; i++) {
+        opal_output_verbose(5, orte_pmix_server_globals.output,
+                            "%s lookup data %s for proc %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), keys[i],
+                            ORTE_NAME_PRINT(proc));
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &keys[i], 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(req);

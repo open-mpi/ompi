@@ -51,6 +51,13 @@
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
 #include "orte/runtime/orte_globals.h"
 
+static int orte_rmaps_rf_map(orte_job_t *jdata);
+
+orte_rmaps_base_module_t orte_rmaps_rank_file_module = {
+    .map_job = orte_rmaps_rf_map
+};
+
+
 static int orte_rmaps_rank_file_parse(const char *);
 static char *orte_rmaps_rank_file_parse_string_or_int(void);
 static const char *orte_rmaps_rank_file_name_cur = NULL;
@@ -363,6 +370,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
         }
     }
     OBJ_DESTRUCT(&rankmap);
+    /* mark the job as fully described */
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+
     return rc;
 
  error:
@@ -370,11 +380,6 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
 
     return rc;
 }
-
-orte_rmaps_base_module_t orte_rmaps_rank_file_module = {
-orte_rmaps_rf_map
-};
-
 
 static int orte_rmaps_rank_file_parse(const char *rankfile)
 {
