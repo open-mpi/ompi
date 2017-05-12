@@ -520,7 +520,9 @@ void orte_rmaps_base_display_map(orte_job_t *jdata)
             }
         }
     } else {
-        opal_output(orte_clean_output, " Data for JOB %s offset %s", ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));
+        opal_output(orte_clean_output, " Data for JOB %s offset %s Total slots allocated %lu",
+                    ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset),
+                    (long unsigned)jdata->total_slots_alloc);
         opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
         if (orte_xml_output) {
             fprintf(orte_xml_fp, "%s\n", output);

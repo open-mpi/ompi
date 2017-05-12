@@ -150,6 +150,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     if (!orte_managed_allocation) {
         if (NULL != orte_set_slots &&
             0 != strncmp(orte_set_slots, "none", strlen(orte_set_slots))) {
+            caddy->jdata->total_slots_alloc = 0;
             for (i=0; i < orte_node_pool->size; i++) {
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                     continue;
@@ -160,6 +161,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, orte_set_slots));
                     orte_plm_base_set_slots(node);
                 }
+                caddy->jdata->total_slots_alloc += node->slots;
             }
         }
     }
