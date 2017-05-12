@@ -471,7 +471,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         item  = opal_list_get_first(allocated_nodes);
         while (item != opal_list_get_end(allocated_nodes)) {
             node = (orte_node_t*)item;
-            opal_output(0, "CHECKING NODE %s", node->name);
             /** save the next pointer in case we remove this node */
             next  = opal_list_get_next(item);
             /* if the hnp was not allocated, or flagged not to be used,
@@ -479,7 +478,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             if (!orte_hnp_is_allocated || (ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
                 node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
                 if (node == (orte_node_t*)item) {
-                    opal_output(0, "REMOVING HNP NODE");
                     opal_list_remove_item(allocated_nodes, item);
                     OBJ_RELEASE(item);  /* "un-retain" it */
                     item = next;
