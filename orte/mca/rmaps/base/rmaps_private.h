@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,9 +56,7 @@ ORTE_DECLSPEC orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
 ORTE_DECLSPEC orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
                                                               orte_job_t *jdata);
 
-ORTE_DECLSPEC int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
-                                                orte_app_context_t *app,
-                                                opal_list_t *nodes);
+ORTE_DECLSPEC int orte_rmaps_base_compute_vpids(orte_job_t *jdata);
 
 ORTE_DECLSPEC int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata);
 

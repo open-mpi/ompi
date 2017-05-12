@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -118,6 +118,12 @@ static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
     cd->active = false;
 }
 
+static void opcbfunc(int status, void *cbdata)
+{
+    struct lookup_caddy_t *cd = (struct lookup_caddy_t*)cbdata;
+    cd->active = false;
+}
+
 int opal_pmix_base_exchange(opal_value_t *indat,
                             opal_pmix_pdata_t *outdat,
                             int timeout)
@@ -141,11 +147,29 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     opal_list_append(&ilist, &info->super);
 
     /* publish it with "session" scope */
-    rc = opal_pmix.publish(&ilist);
-    OPAL_LIST_DESTRUCT(&ilist);
-    if (OPAL_SUCCESS != rc) {
-        OPAL_ERROR_LOG(rc);
-        return rc;
+    if (NULL == opal_pmix.publish_nb) {
+        rc = opal_pmix.publish(&ilist);
+        OPAL_LIST_DESTRUCT(&ilist);
+        if (OPAL_SUCCESS != rc) {
+            OPAL_ERROR_LOG(rc);
+            return rc;
+        }
+    } else {
+       caddy.active = true;
+       rc = opal_pmix.publish_nb(&ilist, opcbfunc, &caddy);
+       if (OPAL_SUCCESS != rc) {
+           OPAL_ERROR_LOG(rc);
+           OPAL_LIST_DESTRUCT(&ilist);
+           return rc;
+       }
+       while (caddy.active) {
+           usleep(10);
+       }
+       OPAL_LIST_DESTRUCT(&ilist);
+       if (OPAL_SUCCESS != caddy.status) {
+           OPAL_ERROR_LOG(caddy.status);
+           return caddy.status;
+       }
     }
 
    /* lookup the other side's info - if a non-blocking form

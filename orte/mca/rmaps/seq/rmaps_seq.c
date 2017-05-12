@@ -54,7 +54,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata);
 
 /* define the module */
 orte_rmaps_base_module_t orte_rmaps_seq_module = {
-    orte_rmaps_seq_map
+    .map_job = orte_rmaps_seq_map
 };
 
 /* local object for tracking rank locations */
@@ -516,6 +516,10 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             save = sq;
         }
     }
+
+    /* mark that this job is to be fully
+     * described in the launch msg */
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
 
     return ORTE_SUCCESS;
 

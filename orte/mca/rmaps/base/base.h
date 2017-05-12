@@ -99,7 +99,8 @@ OBJ_CLASS_DECLARATION(orte_rmaps_base_selected_module_t);
 /*
  * Map a job
  */
-ORTE_DECLSPEC int orte_rmaps_base_map_job(orte_job_t *jdata);
+ORTE_DECLSPEC void orte_rmaps_base_map_job(int sd, short args, void *cbdata);
+ORTE_DECLSPEC int orte_rmaps_base_assign_locations(orte_job_t *jdata);
 
 /**
  * Utility routines to get/set vpid mapping for the job

@@ -46,7 +46,7 @@ BEGIN_C_DECLS
 
 ORTE_DECLSPEC void orte_util_nidmap_init(void);
 
-ORTE_DECLSPEC int orte_util_nidmap_create(char **regex);
+ORTE_DECLSPEC int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex);
 ORTE_DECLSPEC int orte_util_nidmap_parse(char *regex);
 
 /* create a regular expression describing the nodes in the
@@ -58,6 +58,12 @@ ORTE_DECLSPEC int orte_util_encode_nodemap(opal_buffer_t *buffer);
 ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer);
 
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(void);
+
+/* create a regular expression describing the ppn for a job */
+ORTE_DECLSPEC int orte_util_nidmap_generate_ppn(orte_job_t *jdata, char **ppn);
+
+/* decode the ppn */
+ORTE_DECLSPEC int orte_util_nidmap_parse_ppn(orte_job_t *jdata, char *ppn);
 
 END_C_DECLS
 

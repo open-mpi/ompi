@@ -131,7 +131,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     /* if we couldn't provide the allocation regex on the orted
      * cmd line, then we need to provide all the info here */
     if (!orte_nidmap_communicated) {
-        if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(&nidmap))) {
+        if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, &nidmap))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -246,6 +246,22 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         return rc;
     }
 
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        /* compute and pack the ppn regex */
+        if (ORTE_SUCCESS != (rc = orte_util_nidmap_generate_ppn(jdata, &nidmap))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &nidmap, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            free(nidmap);
+            return rc;
+        }
+        free(nidmap);
+    }
+
+    /* compute and pack the regex of ppn */
+
     return ORTE_SUCCESS;
 }
 
@@ -262,13 +278,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     int rc;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL, *daemons;
-    int32_t n, k, m;
+    int32_t n, k;
     opal_buffer_t *bptr;
-    orte_node_t *node;
     orte_proc_t *pptr, *dmn;
     orte_app_context_t *app;
-    bool newmap = false;
     int8_t flag;
+    char *ppn;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                          "%s odls:constructing child list",
@@ -356,7 +371,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
          * the storage */
         jdata->jobid = ORTE_JOBID_INVALID;
         OBJ_RELEASE(jdata);
-        /* get the correct job object */
+        /* get the correct job object - it will be completely filled out */
         if (NULL == (jdata = orte_get_job_data_object(*job))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             rc = ORTE_ERR_NOT_FOUND;
@@ -364,25 +379,65 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
     } else {
         opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
+
+        /* ensure the map object is present */
+        if (NULL == jdata->map) {
+            jdata->map = OBJ_NEW(orte_job_map_t);
+        }
     }
 
-    /* ensure the map object is present */
-    if (NULL == jdata->map) {
-        jdata->map = OBJ_NEW(orte_job_map_t);
-        newmap = true;
+    /* if the job is fully described, then mpirun will have computed
+     * and sent us the complete array of procs in the orte_job_t, so we
+     * don't need to do anything more here */
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        if (!ORTE_PROC_IS_HNP) {
+            /* extract the ppn regex */
+            cnt = 1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ppn, &cnt, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto REPORT_ERROR;
+            }
+            /* populate the node array of the job map and the proc array of
+             * the job object so we know how many procs are on each node */
+            if (ORTE_SUCCESS != (rc = orte_util_nidmap_parse_ppn(jdata, ppn))) {
+                ORTE_ERROR_LOG(rc);
+                free(ppn);
+                goto REPORT_ERROR;
+            }
+            free(ppn);
+            /* now assign locations to the procs */
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
+                ORTE_ERROR_LOG(rc);
+                goto REPORT_ERROR;
+            }
+        }
+        /* compute the ranks and add the proc objects
+         * to the jdata->procs array */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
+        /* and finally, compute the local and node ranks */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
     }
 
-    if (orte_no_vm) {
-        /* if we are operating novm, then mpirun will have sent us
-         * the complete array of procs - process it */
-        for (n=0; n < jdata->procs->size; n++) {
-            if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
-                continue;
-            }
-            if (ORTE_PROC_STATE_UNDEF == pptr->state) {
-                /* not ready for use yet */
-                continue;
-            }
+    /* now that the node array in the job map and jdata are completely filled out,.
+     * we need to "wireup" the procs to their nodes so other utilities can
+     * locate them */
+    for (n=0; n < jdata->procs->size; n++) {
+        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
+            continue;
+        }
+        if (ORTE_PROC_STATE_UNDEF == pptr->state) {
+            /* not ready for use yet */
+            continue;
+        }
+        if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+            /* the parser will have already made the connection, but the fully described
+             * case won't have done it, so connect the proc to its node here */
             opal_output_verbose(5, orte_odls_base_framework.framework_output,
                                 "%s GETTING DAEMON FOR PROC %s WITH PARENT %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -401,97 +456,41 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             }
             OBJ_RETAIN(dmn->node);
             pptr->node = dmn->node;
-            /* add proc to node - note that num_procs for the
-             * node was already correctly unpacked, so don't
-             * increment it here */
-            OBJ_RETAIN(pptr);
-            opal_pointer_array_add(dmn->node->procs, pptr);
-
-            /* add the node to the map, if not already there */
-            if (!ORTE_FLAG_TEST(dmn->node, ORTE_NODE_FLAG_MAPPED)) {
-                OBJ_RETAIN(dmn->node);
-                ORTE_FLAG_SET(dmn->node, ORTE_NODE_FLAG_MAPPED);
-                opal_pointer_array_add(jdata->map->nodes, dmn->node);
-                if (newmap) {
-                    jdata->map->num_nodes++;
-                }
-            }
-
-            /* see if it belongs to us */
-            if (pptr->parent == ORTE_PROC_MY_NAME->vpid) {
-                /* is this child on our current list of children */
-                if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
-                    /* not on the local list */
-                    OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                         "%s[%s:%d] adding proc %s to my local list",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         __FILE__, __LINE__,
-                                         ORTE_NAME_PRINT(&pptr->name)));
-                    /* keep tabs of the number of local procs */
-                    jdata->num_local_procs++;
-                    /* add this proc to our child list */
-                    OBJ_RETAIN(pptr);
-                    ORTE_FLAG_SET(pptr, ORTE_PROC_FLAG_LOCAL);
-                    opal_pointer_array_add(orte_local_children, pptr);
-                }
-
-                /* if the job is in restart mode, the child must not barrier when launched */
-                if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
-                    orte_set_attribute(&pptr->attributes, ORTE_PROC_NOBARRIER, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
-                }
-                /* mark that this app_context is being used on this node */
-                app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
-                ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
-            }
         }
-    } else {
-        /* create the map - will already have been done for the novm case */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_map_job(jdata))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
+        /* see if it belongs to us */
+        if (pptr->parent == ORTE_PROC_MY_NAME->vpid) {
+            /* is this child on our current list of children */
+            if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
+                /* not on the local list */
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                     "%s[%s:%d] adding proc %s to my local list",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     __FILE__, __LINE__,
+                                     ORTE_NAME_PRINT(&pptr->name)));
+                /* keep tabs of the number of local procs */
+                jdata->num_local_procs++;
+                /* add this proc to our child list */
+                OBJ_RETAIN(pptr);
+                ORTE_FLAG_SET(pptr, ORTE_PROC_FLAG_LOCAL);
+                opal_pointer_array_add(orte_local_children, pptr);
+            }
+
+            /* if the job is in restart mode, the child must not barrier when launched */
+            if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
+                orte_set_attribute(&pptr->attributes, ORTE_PROC_NOBARRIER, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+            }
+            /* mark that this app_context is being used on this node */
+            app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
+            ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
         }
-        /* find our local procs */
-        for (n=0; n < jdata->map->nodes->size; n++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
-                continue;
-            }
-            if (node->index != (int)ORTE_PROC_MY_NAME->vpid) {
-                continue;
-            }
-            for (m=0; m < node->procs->size; m++) {
-                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, m))) {
-                    continue;
-                }
-                if (!ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_LOCAL)) {
-                    /* not on the local list */
-                    OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                         "%s[%s:%d] adding proc %s to my local list",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         __FILE__, __LINE__,
-                                         ORTE_NAME_PRINT(&pptr->name)));
-                    /* keep tabs of the number of local procs */
-                    jdata->num_local_procs++;
-                    /* add this proc to our child list */
-                    OBJ_RETAIN(pptr);
-                    ORTE_FLAG_SET(pptr, ORTE_PROC_FLAG_LOCAL);
-                    opal_pointer_array_add(orte_local_children, pptr);
-                    /* mark that this app_context is being used on this node */
-                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
-                    ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
-                }
-            }
-        }
+    }
+
+    if (!ORTE_PROC_IS_HNP &&
+        !orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
         /* compute and save bindings of local children */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
             ORTE_ERROR_LOG(rc);
             goto REPORT_ERROR;
-        }
-    }
-
-   /* reset any node map flags we used so the next job will start clean */
-    for (n=0; n < jdata->map->nodes->size; n++) {
-        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
-            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
         }
     }
 

@@ -899,8 +899,6 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
             opal_pointer_array_set_item(map->nodes, index, NULL);
             /* maintain accounting */
             OBJ_RELEASE(node);
-            /* flag that the node is no longer in a map */
-            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
