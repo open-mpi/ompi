@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -449,6 +449,39 @@ Bug fixes / minor enhancements:
   Siegmar Gross for reporting.
 - Fix a problem with some windows info argument types.  Thanks to
   Alastair McKinstry for reporting.
+
+
+1.10.7 - 16 May 2017
+------
+- Fix bug in TCP BTL that impacted performance on 10GbE (and faster)
+  networks by not adjusting the TCP send/recv buffer sizes and using
+  system default values
+- Add missing MPI_AINT_ADD and MPI_AINT_DIFF function delcarations in
+  mpif.h
+- Fixed time reported by MPI_WTIME; it was previously reported as
+  dependent upon the CPU frequency.
+- Fix platform detection on FreeBSD
+- Fix a bug in the handling of MPI_TYPE_CREATE_DARRAY in
+  MPI_(R)(GET_)ACCUMULATE
+- Fix openib memory registration limit calculation
+- Add missing MPI_T_PVAR_SESSION_NULL in mpi.h
+- Fix "make distcheck" when using external hwloc and/or libevent packages
+- Add latest ConnectX-5 vendor part id to OpenIB device params
+- Fix race condition in the UCX PML
+- Fix signal handling for rsh launcher
+- Fix Fortran compilation errors by removing MPI_SIZEOF in the Fortran
+  interfaces when the compiler does not support it
+- Fixes for the pre-ignore-TKR "mpi" Fortran module implementation
+  (i.e., for older Fortran compilers -- these problems did not exist
+  in the "mpi" module implementation for modern Fortran compilers):
+  - Add PMPI_* interfaces
+  - Fix typo in MPI_FILE_WRITE_AT_ALL_BEGIN interface name
+  - Fix typo in MPI_FILE_READ_ORDERED_BEGIN interface name
+- Fixed the type of MPI_DISPLACEMENT_CURRENT in all Fortran interfaces
+  to be an INTEGER(KIND=MPI_OFFSET_KIND).
+- Fixed typos in MPI_INFO_GET_* man pages.  Thanks to Nicolas Joly for
+  the patch
+- Fix typo bugs in wrapper compiler script
 
 
 1.10.6 - 17 Feb 2017
