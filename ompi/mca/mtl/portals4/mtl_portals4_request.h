@@ -83,6 +83,26 @@ struct ompi_mtl_portals4_recv_request_t {
 };
 typedef struct ompi_mtl_portals4_recv_request_t ompi_mtl_portals4_recv_request_t;
 
+struct ompi_mtl_portals4_rndv_get_frag_t {
+    opal_free_list_item_t super;
+    /* the recv request that's composed of these frags */
+    ompi_mtl_portals4_recv_request_t *request;
+    /* info extracted from the put_overflow event that is required to retry the rndv-get */
+    void            *frag_start;
+    ptl_size_t       frag_length;
+    ptl_process_t    frag_target;
+    ptl_hdr_data_t   frag_match_bits;
+    ptl_size_t       frag_remote_offset;
+
+    int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_rndv_get_frag_t*);
+
+#if OPAL_ENABLE_DEBUG
+    uint32_t frag_num;
+#endif
+};
+typedef struct ompi_mtl_portals4_rndv_get_frag_t ompi_mtl_portals4_rndv_get_frag_t;
+OBJ_CLASS_DECLARATION(ompi_mtl_portals4_rndv_get_frag_t);
+
 
 struct ompi_mtl_portals4_recv_short_request_t {
     ompi_mtl_portals4_base_request_t super;
