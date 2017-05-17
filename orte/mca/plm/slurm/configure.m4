@@ -13,6 +13,7 @@
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2015 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,12 +39,4 @@ AC_DEFUN([MCA_orte_plm_slurm_CONFIG],[
     AC_SUBST([plm_slurm_LDFLAGS])
     AC_SUBST([plm_slurm_LIBS])
 
-    # check to see if this is a Cray nativized slurm env.
-
-    slurm_cray_env=0
-    ORTE_CHECK_ALPS([plm_slurm_cray],
-                    [slurm_cray_env=1])
-
-    AC_DEFINE_UNQUOTED([SLURM_CRAY_ENV],[$slurm_cray_env],
-                       [defined to 1 if slurm cray env, 0 otherwise])
 ])dnl
