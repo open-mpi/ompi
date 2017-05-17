@@ -451,6 +451,10 @@ opal_datatype_compute_remote_size( const opal_datatype_t* pData,
     uint32_t typeMask = pData->bdt_used;
     size_t length = 0;
 
+    if (opal_datatype_is_predefined(pData)) {
+        return sizes[pData->desc.desc->elem.common.type];
+    }
+
     if( OPAL_UNLIKELY(NULL == pData->ptypes) ) {
         /* Allocate and fill the array of types used in the datatype description */
         opal_datatype_compute_ptypes( (opal_datatype_t*)pData );
