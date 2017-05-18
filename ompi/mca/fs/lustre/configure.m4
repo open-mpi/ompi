@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2008-2012 University of Houston. All rights reserved.
 # $COPYRIGHT$
 #
@@ -33,12 +33,6 @@ AC_DEFUN([MCA_ompi_fs_lustre_CONFIG],[
     AS_IF([test "$fs_lustre_happy" = "yes"],
           [$1],
           [$2])
-
-#    AC_CHECK_HEADERS([lustre/liblustreapi.h], [],
-#                      [AC_CHECK_HEADERS([lustre/liblustreapi.h], [], [$2],
-#                          [AC_INCLUDES_DEFAULT])],
-#                      [AC_INCLUDES_DEFAULT])
-
 
     # substitute in the things needed to build lustre
     AC_SUBST([fs_lustre_CPPFLAGS])
