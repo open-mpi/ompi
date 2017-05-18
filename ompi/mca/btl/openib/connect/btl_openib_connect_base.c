@@ -5,6 +5,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -18,6 +20,10 @@
 #include "btl_openib_proc.h"
 #include "connect/base.h"
 #include "connect/btl_openib_connect_empty.h"
+#include "connect/btl_openib_connect_oob.h"
+#if OMPI_HAVE_CONNECTX_XRC
+#include "connect/btl_openib_connect_xoob.h"
+#endif
 #if OMPI_HAVE_RDMACM && OPAL_HAVE_THREADS
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
@@ -41,8 +47,14 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
        the same: XOOB has been removed, so use the "empty" CPC */
     &ompi_btl_openib_connect_empty,
 
+    &ompi_btl_openib_connect_oob,
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
+#if OMPI_HAVE_CONNECTX_XRC
+    &ompi_btl_openib_connect_xoob,
+#else
+    &ompi_btl_openib_connect_empty,
+#endif
 #if OMPI_HAVE_RDMACM && OPAL_HAVE_THREADS
     &ompi_btl_openib_connect_rdmacm,
 #else
@@ -61,7 +73,7 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 };
 
 /* increase this count if any more cpcs are added */
-static ompi_btl_openib_connect_base_component_t *available[5];
+static ompi_btl_openib_connect_base_component_t *available[7];
 static int num_available = 0;
 
 static char *btl_openib_cpc_include;

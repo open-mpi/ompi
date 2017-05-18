@@ -15,6 +15,8 @@
 # Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -61,6 +63,8 @@ sources = \
     btl_openib_ip.c \
     connect/base.h \
     connect/btl_openib_connect_base.c \
+    connect/btl_openib_connect_oob.c \
+    connect/btl_openib_connect_oob.h \
     connect/btl_openib_connect_empty.c \
     connect/btl_openib_connect_empty.h \
     connect/connect.h
@@ -95,6 +99,13 @@ if MCA_btl_openib_have_dynamic_sl
 sources += \
     connect/btl_openib_connect_sl.c \
     connect/btl_openib_connect_sl.h
+endif
+
+# If we have XRC support, build that CPC
+if MCA_btl_openib_have_xrc
+sources += \
+    connect/btl_openib_connect_xoob.c \
+    connect/btl_openib_connect_xoob.h
 endif
 
 # Make the output library in this directory, and name it either
