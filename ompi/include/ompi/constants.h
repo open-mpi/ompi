@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,6 +76,7 @@ enum {
     OMPI_ERR_WIN                    = OMPI_ERR_BASE - 7,
     OMPI_ERR_RMA_FLAVOR             = OMPI_ERR_BASE - 8,
 };
+/* it'd be nice to have a new OMPI_ERR_DISABLED error code. */
 
 #define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 100)
 

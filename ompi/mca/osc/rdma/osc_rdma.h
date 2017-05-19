@@ -13,6 +13,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -94,10 +95,19 @@ struct ompi_osc_rdma_component_t {
     bool acc_use_amo;
 
     /** Priority of the osc/rdma component */
-    unsigned int priority;
+    int priority;
 
     /** aggregation free list */
     opal_free_list_t aggregate;
+
+    /** MCA parameter: Verbose level of this component */
+    int verbose;
+
+    /** MCA parameters: Enable osc_pt2pt component */
+    bool enable;
+
+    /** Allow osc_rdma to run when user passes in MPI_THREAD_MULTIPLE */
+    bool allow_thread_multiple;
 };
 typedef struct ompi_osc_rdma_component_t ompi_osc_rdma_component_t;
 

@@ -16,6 +16,7 @@
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -214,6 +215,20 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.priority);
 
+    mca_osc_rdma_component.enable = true;
+    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+                                           "enable", "Enable osc_rdma component (default: true)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_1,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_rdma_component.enable);
+
+    mca_osc_rdma_component.allow_thread_multiple = true;
+    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+                                           "allow_thread_multiple", "Allow osc_rdma component when running with "
+                                           "MPI_THREAD_MULTIPLE. (default: true)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_1,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_rdma_component.allow_thread_multiple);
+
+
     ompi_osc_rdma_btl_names = "openib,ugni";
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "btls",
                                             "Comma-delimited list of BTL component names to allow without verifying "
@@ -246,6 +261,17 @@ static int ompi_osc_rdma_component_init (bool enable_progress_threads,
                                          bool enable_mpi_threads)
 {
     int ret;
+
+    if (!mca_osc_rdma_component.enable) {
+        opal_output_verbose(2, ompi_osc_base_framework.framework_output, "osc_rdma component_init DISABLED.\n");
+        return -1;
+    }
+
+    if (!mca_osc_rdma_component.allow_thread_multiple && ompi_mpi_thread_multiple) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+           "osc_rdma Disabled for MPI_THREAD_INIT (MCA: osc_rdma_allow_thread_multiple == 0)\n");
+        return -1;
+    }
 
     OBJ_CONSTRUCT(&mca_osc_rdma_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_rdma_component.request_gc, opal_list_t);
@@ -296,6 +322,7 @@ static int ompi_osc_rdma_component_init (bool enable_progress_threads,
         mca_osc_rdma_component.aggregation_limit = 0;
     }
 
+
     return ret;
 }
 
@@ -325,7 +352,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
                                           struct ompi_communicator_t *comm, struct ompi_info_t *info,
                                           int flavor)
 {
-
+    if (!mca_osc_rdma_component.enable) return -1;
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
         return -1;
     }
@@ -1022,6 +1049,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     int init_limit = 256;
     int ret;
     char *name;
+
+    if (!mca_osc_rdma_component.enable) { return OMPI_ERR_NOT_SUPPORTED; } /* OMPI_ERR_DISABLED */
 
     /* the osc/sm component is the exclusive provider for support for shared
      * memory windows */
