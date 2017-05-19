@@ -17,7 +17,7 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
+dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
@@ -254,6 +254,14 @@ AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -lt $OMPI_FORTRAN_USEMPIF08_BINDINGS],
 AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [$OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [Whether we built the 'use mpi_f08' prototype subarray-based implementation or not (i.e., whether to build the use-mpi-f08-desc prototype or the regular use-mpi-f08 implementation)])
+
+AC_ARG_ENABLE([mpi-io],
+    [AC_HELP_STRING([--disable-mpi-io],
+        [Disable built-in support for MPI-2 I/O, likely because
+         an externally-provided MPI I/O package will be used.
+         Default is to use the internal framework system that uses
+         the ompio component and a specially modified version of ROMIO
+         that fits inside the romio314 component])])
 
 ])dnl
 
