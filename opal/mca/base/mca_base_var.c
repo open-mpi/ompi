@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -1515,7 +1515,7 @@ static int var_set_from_env (mca_base_var_t *var)
         const char *new_variable = "None (going away)";
 
         if (is_synonym) {
-            new_variable = var->mbv_full_name;
+            new_variable = original->mbv_full_name;
         }
 
         switch (var->mbv_source) {
