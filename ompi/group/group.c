@@ -563,10 +563,13 @@ bool ompi_group_have_remote_peers (ompi_group_t *group)
 #if OMPI_GROUP_SPARSE
         proc = ompi_group_peer_lookup (group, i);
 #else
-        if (ompi_proc_is_sentinel (group->grp_proc_pointers[i])) {
+        proc = ompi_group_get_proc_ptr_raw (group, i);
+        if (ompi_proc_is_sentinel (proc)) {
+            /* the proc must be stored in the group or cached in the proc
+             * hash table if the process resides in the local node
+             * (see ompi_proc_complete_init) */
             return true;
         }
-        proc = group->grp_proc_pointers[i];
 #endif
         if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
             return true;
