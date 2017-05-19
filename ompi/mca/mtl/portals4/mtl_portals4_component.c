@@ -75,6 +75,10 @@ static mca_base_var_enum_value_t long_protocol_values[] = {
     {0, NULL}
 };
 
+OBJ_CLASS_INSTANCE(ompi_mtl_portals4_rndv_get_frag_t,
+                   opal_free_list_item_t,
+                   NULL, NULL);
+
 static int
 ompi_mtl_portals4_component_register(void)
 {
@@ -249,6 +253,13 @@ ompi_mtl_portals4_component_open(void)
                         ompi_mtl_portals4.eager_limit,
                         opal_cache_line_size,
                         OBJ_CLASS(ompi_mtl_portals4_message_t),
+                        0, 0, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
+
+    OBJ_CONSTRUCT(&ompi_mtl_portals4.fl_rndv_get_frag, opal_free_list_t);
+    opal_free_list_init(&ompi_mtl_portals4.fl_rndv_get_frag,
+                        sizeof(ompi_mtl_portals4_rndv_get_frag_t),
+                        opal_cache_line_size,
+                        OBJ_CLASS(ompi_mtl_portals4_rndv_get_frag_t),
                         0, 0, 1, -1, 1, NULL, 0, NULL, NULL, NULL);
 
     ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
@@ -478,6 +489,7 @@ ompi_mtl_portals4_progress(void)
     unsigned int which;
     ptl_event_t ev;
     ompi_mtl_portals4_base_request_t *ptl_request;
+    ompi_mtl_portals4_rndv_get_frag_t *rndv_get_frag;
 
     while (true) {
 	ret = PtlEQPoll(ompi_mtl_portals4.eqs_h, 2, 0, &ev, &which);
@@ -489,7 +501,6 @@ ompi_mtl_portals4_progress(void)
             case PTL_EVENT_GET:
             case PTL_EVENT_PUT:
             case PTL_EVENT_PUT_OVERFLOW:
-            case PTL_EVENT_REPLY:
             case PTL_EVENT_SEND:
             case PTL_EVENT_ACK:
             case PTL_EVENT_AUTO_FREE:
@@ -499,6 +510,18 @@ ompi_mtl_portals4_progress(void)
                 if (NULL != ev.user_ptr) {
                     ptl_request = ev.user_ptr;
                     ret = ptl_request->event_callback(&ev, ptl_request);
+                    if (OMPI_SUCCESS != ret) {
+                        opal_output(ompi_mtl_base_framework.framework_output,
+                                    "Error returned from target event callback: %d", ret);
+                        abort();
+                    }
+                }
+                break;
+
+            case PTL_EVENT_REPLY:
+                if (NULL != ev.user_ptr) {
+                    rndv_get_frag = ev.user_ptr;
+                    ret = rndv_get_frag->event_callback(&ev, rndv_get_frag);
                     if (OMPI_SUCCESS != ret) {
                         opal_output(ompi_mtl_base_framework.framework_output,
                                     "Error returned from target event callback: %d", ret);
