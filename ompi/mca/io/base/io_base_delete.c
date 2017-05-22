@@ -12,6 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/info.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
@@ -52,19 +54,19 @@ typedef struct avail_io_t avail_io_t;
  * Local functions
  */
 static opal_list_t *check_components(opal_list_t *components,
-                                     const char *filename, struct ompi_info_t *info,
+                                     const char *filename, struct opal_info_t *info,
                                      char **names, int num_names);
 static avail_io_t *check_one_component(const mca_base_component_t *component,
-                                       const char *filename, struct ompi_info_t *info);
+                                       const char *filename, struct opal_info_t *info);
 
 static avail_io_t *query(const mca_base_component_t *component,
-                         const char *filename, struct ompi_info_t *info);
+                         const char *filename, struct opal_info_t *info);
 static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component,
-                               const char *filename, struct ompi_info_t *info);
+                               const char *filename, struct opal_info_t *info);
 
-static void unquery(avail_io_t *avail, const char *filename, struct ompi_info_t *info);
+static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t *info);
 
-static int delete_file(avail_io_t *avail, const char *filename, struct ompi_info_t *info);
+static int delete_file(avail_io_t *avail, const char *filename, struct opal_info_t *info);
 
 
 /*
@@ -75,7 +77,7 @@ static OBJ_CLASS_INSTANCE(avail_io_t, opal_list_item_t, NULL, NULL);
 
 /*
  */
-int mca_io_base_delete(const char *filename, struct ompi_info_t *info)
+int mca_io_base_delete(const char *filename, struct opal_info_t *info)
 {
     int err;
     opal_list_t *selectable;
@@ -180,7 +182,7 @@ static int avail_io_compare (opal_list_item_t **itema,
  * priority order.
  */
 static opal_list_t *check_components(opal_list_t *components,
-                                     const char *filename, struct ompi_info_t *info,
+                                     const char *filename, struct opal_info_t *info,
                                      char **names, int num_names)
 {
     int i;
@@ -249,7 +251,7 @@ static opal_list_t *check_components(opal_list_t *components,
  * Check a single component
  */
 static avail_io_t *check_one_component(const mca_base_component_t *component,
-                                       const char *filename, struct ompi_info_t *info)
+                                       const char *filename, struct opal_info_t *info)
 {
     avail_io_t *avail;
 
@@ -282,7 +284,7 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
  * module struct
  */
 static avail_io_t *query(const mca_base_component_t *component,
-                         const char *filename, struct ompi_info_t *info)
+                         const char *filename, struct opal_info_t *info)
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
@@ -303,7 +305,7 @@ static avail_io_t *query(const mca_base_component_t *component,
 
 
 static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
-                               const char *filename, struct ompi_info_t *info)
+                               const char *filename, struct opal_info_t *info)
 {
     bool usable;
     int priority, ret;
@@ -333,7 +335,7 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
  * Unquery functions
  **************************************************************************/
 
-static void unquery(avail_io_t *avail, const char *filename, struct ompi_info_t *info)
+static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t *info)
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
@@ -358,7 +360,7 @@ static void unquery(avail_io_t *avail, const char *filename, struct ompi_info_t 
 /*
  * Invoke the component's delete function
  */
-static int delete_file(avail_io_t *avail, const char *filename, struct ompi_info_t *info)
+static int delete_file(avail_io_t *avail, const char *filename, struct opal_info_t *info)
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 

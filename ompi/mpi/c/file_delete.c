@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,6 +79,6 @@ int MPI_File_delete(const char *filename, MPI_Info info)
     /* Since there is no MPI_File handle associated with this
        function, the MCA has to do a selection and perform the
        action */
-    rc = mca_io_base_delete(filename, info);
+    rc = mca_io_base_delete(filename, &(info->super));
     OMPI_ERRHANDLER_RETURN(rc, MPI_FILE_NULL, rc, FUNC_NAME);
 }

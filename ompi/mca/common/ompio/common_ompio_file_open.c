@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +44,7 @@
 int mca_common_ompio_file_open (ompi_communicator_t *comm,
                               const char *filename,
                               int amode,
-                              ompi_info_t *info,
+                              opal_info_t *info,
                               mca_io_ompio_file_t *ompio_fh, bool use_sharedfp)
 {
     int ret = OMPI_SUCCESS;
@@ -281,7 +282,7 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
 	ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
     }
     if ( delete_flag && 0 == ompio_fh->f_rank ) {
-        mca_io_ompio_file_delete ( ompio_fh->f_filename, MPI_INFO_NULL );
+        mca_io_ompio_file_delete ( ompio_fh->f_filename, &(MPI_INFO_NULL->super) );
     }
 
     if ( NULL != ompio_fh->f_fs ) {

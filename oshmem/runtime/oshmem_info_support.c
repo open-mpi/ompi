@@ -2,6 +2,7 @@
  *  Copyright (c) 2013      Mellanox Technologies, Inc.
  *                          All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +58,7 @@ int oshmem_info_register_framework_params(opal_pointer_array_t *component_map)
     }
 
     /* Do OMPI interface call */
-    rc = ompi_info_register_framework_params(component_map);
+    rc = opal_info_register_framework_params(component_map);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
@@ -74,7 +75,7 @@ void oshmem_info_close_components(void)
     }
 
     /* Do OMPI interface call */
-    ompi_info_close_components();
+    opal_info_close_components();
 }
 
 void oshmem_info_show_oshmem_version(const char *scope)

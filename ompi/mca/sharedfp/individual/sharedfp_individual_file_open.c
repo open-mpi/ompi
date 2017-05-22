@@ -12,6 +12,7 @@
  * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
 int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
 				       const char* filename,
 				       int amode,
-				       struct ompi_info_t *info,
+				       struct opal_info_t *info,
 				       mca_io_ompio_file_t *fh)
 {
     int err = 0;
@@ -113,7 +114,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     }
     err = mca_common_ompio_file_open(MPI_COMM_SELF, datafilename,
                                    MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
-                                   MPI_INFO_NULL, datafilehandle, false);
+                                   &(MPI_INFO_NULL->super), datafilehandle, false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during datafile file open\n");
         free (shfileHandle );
@@ -156,7 +157,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     }
     err = mca_common_ompio_file_open ( MPI_COMM_SELF,metadatafilename,
                                      MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
-                                     MPI_INFO_NULL, metadatafilehandle, false);
+                                     &(MPI_INFO_NULL->super), metadatafilehandle, false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during metadatafile file open\n");
         free (shfileHandle );

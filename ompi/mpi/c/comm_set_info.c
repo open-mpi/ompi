@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +17,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/info/info.h"
+#include "opal/util/info_subscriber.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -47,7 +48,9 @@ int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
         }
     }
 
-    /* At the moment, we do not support any communicator hints.
-       So... do nothing */
+    OPAL_CR_ENTER_LIBRARY();
+
+    opal_infosubscribe_change_info(&(comm->super), &(info->super));
+
     return MPI_SUCCESS;
 }

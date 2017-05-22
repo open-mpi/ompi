@@ -22,6 +22,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  *
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -748,7 +749,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* initialize info */
-    if (OMPI_SUCCESS != (ret = ompi_info_init())) {
+    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init())) {
         error = "ompi_info_init() failed";
         goto error;
     }

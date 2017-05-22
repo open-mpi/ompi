@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,10 +49,10 @@ static const struct mca_io_base_module_2_0_0_t *
 static int file_unquery(struct ompi_file_t *file,
                         struct mca_io_base_file_t *private_data);
 
-static int delete_query(const char *filename, struct ompi_info_t *info,
+static int delete_query(const char *filename, struct opal_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priorty);
-static int delete_select(const char *filename, struct ompi_info_t *info,
+static int delete_select(const char *filename, struct opal_info_t *info,
                          struct mca_io_base_delete_t *private_data);
 
 static int register_datarep(const char *,
@@ -222,7 +223,7 @@ static int file_unquery(struct ompi_file_t *file,
 }
 
 
-static int delete_query(const char *filename, struct ompi_info_t *info,
+static int delete_query(const char *filename, struct opal_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priority)
 {
@@ -234,15 +235,25 @@ static int delete_query(const char *filename, struct ompi_info_t *info,
 }
 
 
-static int delete_select(const char *filename, struct ompi_info_t *info,
+static int delete_select(const char *filename, struct opal_info_t *info,
                          struct mca_io_base_delete_t *private_data)
 {
     int ret;
 
+// An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
+// below with an MPI_Info, we need to create an equivalent MPI_Info. This
+// isn't ideal but it only happens a few places.
+    ompi_info_t *ompi_info;
+    ompi_info = OBJ_NEW(ompi_info_t);
+    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
+    opal_info_t *opal_info = &(ompi_info->super);
+    opal_info_dup (info, &opal_info);
+
     OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
-    ret = ROMIO_PREFIX(MPI_File_delete)(filename, info);
+    ret = ROMIO_PREFIX(MPI_File_delete)(filename, ompi_info);
     OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
 
+    ompi_info_free(&ompi_info);
     return ret;
 }
 

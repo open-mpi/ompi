@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "mpi.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "ompi/info/info.h"
 
 BEGIN_C_DECLS
 
@@ -110,10 +112,10 @@ typedef int (*mca_fs_base_module_finalize_1_0_0_fn_t)
 
 typedef int (*mca_fs_base_module_file_open_fn_t)(
     struct ompi_communicator_t *comm, const char *filename, int amode,
-    struct ompi_info_t *info, struct mca_io_ompio_file_t *fh);
+    struct opal_info_t *info, struct mca_io_ompio_file_t *fh);
 typedef int (*mca_fs_base_module_file_close_fn_t)(struct mca_io_ompio_file_t *fh);
 typedef int (*mca_fs_base_module_file_delete_fn_t)(
-    char *filename, struct ompi_info_t *info);
+    char *filename, struct opal_info_t *info);
 typedef int (*mca_fs_base_module_file_set_size_fn_t)
     (struct mca_io_ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE size);
 typedef int (*mca_fs_base_module_file_get_size_fn_t)

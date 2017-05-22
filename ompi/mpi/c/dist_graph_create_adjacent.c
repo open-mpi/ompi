@@ -12,6 +12,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,7 +101,7 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
 
     err = topo->topo.dist_graph.dist_graph_create_adjacent(topo, comm_old, indegree,
                                                            sources, sourceweights, outdegree,
-                                                           destinations, destweights, info,
+                                                           destinations, destweights, &(info->super),
                                                            reorder, comm_dist_graph);
     OMPI_ERRHANDLER_RETURN(err, comm_old, err, FUNC_NAME);
 }

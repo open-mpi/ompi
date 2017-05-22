@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/request/request.h"
+#include "ompi/info/info.h"
 
 
 BEGIN_C_DECLS
@@ -176,7 +178,7 @@ typedef int (*mca_sharedfp_base_module_read_ordered_end_fn_t)(
         ompi_status_public_t *status);
 typedef int (*mca_sharedfp_base_module_file_open_fn_t)(
         struct ompi_communicator_t *comm, const char *filename, int amode,
-        struct ompi_info_t *info, struct mca_io_ompio_file_t *fh);
+        struct opal_info_t *info, struct mca_io_ompio_file_t *fh);
 typedef int (*mca_sharedfp_base_module_file_close_fn_t)(struct mca_io_ompio_file_t *fh);
 
 

@@ -12,6 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/communicator/communicator.h"
+#include "opal/util/info_subscriber.h"
 #include "ompi/file/file.h"
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -39,34 +42,27 @@ static const char FUNC_NAME[] = "MPI_File_set_info";
 
 int MPI_File_set_info(MPI_File fh, MPI_Info info)
 {
-    int rc;
+    int ret; 
+
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
-        rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
         if (ompi_file_invalid(fh)) {
-            fh = MPI_FILE_NULL;
-            rc = MPI_ERR_FILE;
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_FILE, FUNC_NAME);
         }
-        OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
+
+	if (NULL == info || MPI_INFO_NULL == info ||
+            ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_INFO,
+                                          FUNC_NAME);
+        }
     }
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* Call the back-end io component function */
+    ret = opal_infosubscribe_change_info(&fh->super, &info->super);
 
-    switch (fh->f_io_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_set_info(fh, info);
-        break;
-
-    default:
-        rc = MPI_ERR_INTERN;
-        break;
-    }
-
-    /* All done */
-
-    OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(ret, fh, ret, FUNC_NAME);
 }

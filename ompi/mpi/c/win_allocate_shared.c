@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +79,7 @@ int MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
     OPAL_CR_ENTER_LIBRARY();
 
     /* create window and return */
-    ret = ompi_win_allocate_shared((size_t)size, disp_unit, info,
+    ret = ompi_win_allocate_shared((size_t)size, disp_unit, &(info->super),
                                    comm, baseptr, win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;

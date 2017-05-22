@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +36,7 @@
  */
 int
 mca_fs_ufs_file_delete (char* file_name,
-                       struct ompi_info_t *info)
+                       struct opal_info_t *info)
 {
     int ret;
 

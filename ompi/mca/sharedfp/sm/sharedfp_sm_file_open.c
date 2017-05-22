@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +49,7 @@
 int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
                                const char* filename,
                                int amode,
-                               struct ompi_info_t *info,
+                               struct opal_info_t *info,
                                mca_io_ompio_file_t *fh)
 {
     int err = OMPI_SUCCESS;
@@ -86,7 +87,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
                                      ompio_fh->f_etype,
                                      ompio_fh->f_orig_filetype,
                                      ompio_fh->f_datarep,
-                                     MPI_INFO_NULL);
+                                     &(MPI_INFO_NULL->super));
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_sm_verbose ) {

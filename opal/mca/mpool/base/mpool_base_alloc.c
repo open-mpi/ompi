@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -28,20 +28,7 @@
 #include "base.h"
 #include "mpool_base_tree.h"
 #include "opal/threads/mutex.h"
-
-struct opal_info_t {
-  opal_list_t super;
-  /**< generic list pointer which is the container for (key,value)
-       pairs */
-  int i_f_to_c_index;
-  /**< fortran handle for info. This is needed for translation from
-       fortran to C and vice versa */
-  opal_mutex_t *i_lock;
-  /**< Mutex for thread safety */
-  bool i_freed;
-  /**< Whether this info has been freed or not */
-};
-typedef struct opal_info_t opal_info_t;
+#include "opal/util/info.h"
 
 
 static void unregister_tree_item(mca_mpool_base_tree_item_t *mpool_tree_item)

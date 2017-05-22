@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -171,7 +172,7 @@ mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
                                 ompi_communicator_t *old_comm,
                                 int n, const int nodes[],
                                 const int degrees[], const int targets[], const int weights[],
-                                ompi_info_t *info, int reorder,
+                                opal_info_t *info, int reorder,
                                 ompi_communicator_t **new_comm);
 
 OMPI_DECLSPEC int
@@ -180,7 +181,7 @@ mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
                                          int indegree, const int sources[],
                                          const int sourceweights[], int outdegree,
                                          const int destinations[], const int destweights[],
-                                         ompi_info_t *info, int reorder,
+                                         opal_info_t *info, int reorder,
                                          ompi_communicator_t **comm_dist_graph);
 
 OMPI_DECLSPEC int

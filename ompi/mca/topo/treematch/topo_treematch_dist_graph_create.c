@@ -11,6 +11,7 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -119,7 +120,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                          int n, const int nodes[],
                                          const int degrees[], const int targets[],
                                          const int weights[],
-                                         struct ompi_info_t *info, int reorder,
+                                         struct opal_info_t *info, int reorder,
                                          ompi_communicator_t **newcomm)
 {
     int err;

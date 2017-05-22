@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,7 +93,7 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
         *newcomm = MPI_COMM_NULL;
         rc = MPI_SUCCESS;
     } else {
-        rc = ompi_comm_split_type( (ompi_communicator_t*)comm, split_type, key, info,
+        rc = ompi_comm_split_type( (ompi_communicator_t*)comm, split_type, key, &(info->super),
                                    (ompi_communicator_t**)newcomm);
     }
     OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);

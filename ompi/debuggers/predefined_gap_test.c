@@ -5,6 +5,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,8 +53,8 @@ int main(int argc, char **argv) {
     /* Test Predefined communicator sizes */
     printf("ompi_predefined_communicator_t = %lu bytes\n", sizeof(ompi_predefined_communicator_t));
     printf("ompi_communicator_t = %lu bytes\n", sizeof(ompi_communicator_t));
-    GAP_CHECK("c_base", test_comm, c_base, c_base, 0);
-    GAP_CHECK("c_lock", test_comm, c_lock, c_base, 1);
+    GAP_CHECK("c_base", test_comm, super, super, 0);
+    GAP_CHECK("c_lock", test_comm, c_lock, super, 1);
     GAP_CHECK("c_name", test_comm, c_name, c_lock, 1);
     GAP_CHECK("c_contextid", test_comm, c_contextid, c_name, 1);
     GAP_CHECK("c_my_rank", test_comm, c_my_rank, c_contextid, 1);
@@ -120,8 +121,8 @@ int main(int argc, char **argv) {
     printf("=============================================\n");
     printf("ompi_predefined_win_t = %lu bytes\n", sizeof(ompi_predefined_win_t));
     printf("ompi_win_t = %lu bytes\n", sizeof(ompi_win_t));
-    GAP_CHECK("w_base", test_win, w_base, w_base, 0);
-    GAP_CHECK("w_lock", test_win, w_lock, w_base, 1);
+    GAP_CHECK("super", test_win, super, super, 0);
+    GAP_CHECK("w_lock", test_win, w_lock, super, 1);
     GAP_CHECK("w_name", test_win, w_name, w_lock, 1);
     GAP_CHECK("w_group", test_win, w_group, w_name, 1);
     GAP_CHECK("w_flags", test_win, w_flags, w_group, 1);
@@ -137,8 +138,7 @@ int main(int argc, char **argv) {
     printf("ompi_info_t = %lu bytes\n", sizeof(ompi_info_t));
     GAP_CHECK("super", test_info, super, super, 0);
     GAP_CHECK("i_f_to_c_index", test_info, i_f_to_c_index, super, 1);
-    GAP_CHECK("i_lock", test_info, i_lock, i_f_to_c_index, 1);
-    GAP_CHECK("i_freed", test_info, i_freed, i_lock, 1);
+    GAP_CHECK("i_freed", test_info, i_freed, i_f_to_c_index, 1);
 
     /* Test Predefined file sizes */
     printf("=============================================\n");
@@ -148,8 +148,7 @@ int main(int argc, char **argv) {
     GAP_CHECK("f_comm", test_file, f_comm, super, 1);
     GAP_CHECK("f_filename", test_file, f_filename, f_comm, 1);
     GAP_CHECK("f_amode", test_file, f_amode,  f_filename, 1);
-    GAP_CHECK("f_info", test_file, f_info, f_amode,  1);
-    GAP_CHECK("f_flags", test_file, f_flags, f_info,  1);
+    GAP_CHECK("f_flags", test_file, f_flags, f_amode,  1);
     GAP_CHECK("f_f_to_c_index", test_file, f_f_to_c_index, f_flags, 1);
     GAP_CHECK("error_handler", test_file, error_handler, f_f_to_c_index, 1);
     GAP_CHECK("errhandler_type", test_file, errhandler_type, error_handler, 1);

@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +57,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
                                ompi_datatype_t *etype,
                                ompi_datatype_t *filetype,
                                const char *datarep,
-                               ompi_info_t *info)
+                               opal_info_t *info)
 {
 
     size_t max_data = 0;

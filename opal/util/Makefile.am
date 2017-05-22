@@ -16,6 +16,7 @@
 #                         reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -70,7 +71,9 @@ headers = \
         strncpy.h \
         sys_limits.h \
         timings.h \
-        uri.h
+        uri.h \
+        info_subscriber.h \
+	info.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
@@ -105,7 +108,9 @@ libopalutil_la_SOURCES = \
         stacktrace.c \
         strncpy.c \
         sys_limits.c \
-        uri.c
+        uri.c \
+ 	info_subscriber.c \
+ 	info.c
 
 if OPAL_COMPILE_TIMING
 libopalutil_la_SOURCES += timings.c

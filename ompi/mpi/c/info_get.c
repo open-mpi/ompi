@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,6 +101,6 @@ int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    err = ompi_info_get (info, key, valuelen, value, flag);
+    err = ompi_info_get(info, key, valuelen, value, flag);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }
