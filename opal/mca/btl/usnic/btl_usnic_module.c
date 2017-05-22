@@ -1659,7 +1659,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                        rc, fi_strerror(-rc));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rc = fi_ep_bind(channel->ep, &module->av->fid, NULL);
+    rc = fi_ep_bind(channel->ep, &module->av->fid, 0);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
