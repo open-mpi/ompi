@@ -27,6 +27,7 @@
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/message/message.h"
+#include "opal/mca/timer/base/base.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_endpoint.h"
@@ -81,6 +82,7 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
         frag->frag_remote_offset = remote_offset + i * ompi_mtl_portals4.max_msg_size_mtl;
 
         frag->event_callback = ompi_mtl_portals4_rndv_get_frag_progress;
+        frag->frag_start_time_usec = opal_timer_base_get_usec();
 
         OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "GET (fragment %d/%d, size %ld) send",
                              i + 1, frag_count, frag->frag_length));
@@ -322,16 +324,23 @@ ompi_mtl_portals4_rndv_get_frag_progress(ptl_event_t *ev,
     ompi_mtl_portals4_recv_request_t* ptl_request =
         (ompi_mtl_portals4_recv_request_t*) rndv_get_frag->request;
 
-    assert(ev->type==PTL_EVENT_REPLY);
+    assert(PTL_EVENT_REPLY == ev->type);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
         "Recv %lu (0x%lx) got reply event",
         ptl_request->opcount, ptl_request->hdr_data));
 
+
     if (OPAL_UNLIKELY(ev->ni_fail_type != PTL_NI_OK)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PTL_EVENT_REPLY with ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
+
+        opal_timer_t time = opal_timer_base_get_usec() - rndv_get_frag->frag_start_time_usec;
+        if (time > (unsigned int) ompi_mtl_portals4.get_retransmit_timeout) {
+            mtl_ptl_error(1, "timeout retrying GET");
+            return OMPI_ERROR;
+        }
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
             "Rendezvous Get Failed: Reissuing frag #%u", rndv_get_frag->frag_num));

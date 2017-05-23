@@ -73,6 +73,7 @@ struct mca_mtl_portals4_module_t {
 
     /* free list of rendezvous get fragments */
     opal_free_list_t fl_rndv_get_frag;
+    int get_retransmit_timeout;
 
     /** Network interface handle for matched interface */
     ptl_handle_ni_t ni_h;
