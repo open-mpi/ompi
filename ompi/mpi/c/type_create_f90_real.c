@@ -14,6 +14,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,7 +83,7 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 
     if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;
-        const int* a_i[2] = {&r, &p};
+        const int* a_i[2] = {&p, &r};
         int rc;
 
         key = (((uint64_t)p) << 32) | ((uint64_t)r);
