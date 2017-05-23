@@ -543,7 +543,7 @@ int opal_util_register_stackhandlers (void)
         opal_stacktrace_output_fileno = fileno(stdout);
     }
     else if( 0 == strcasecmp(opal_stacktrace_output_filename, "stderr") ) {
-        opal_stacktrace_output_fileno = fileno(stdout);
+        opal_stacktrace_output_fileno = fileno(stderr);
     }
     else if( 0 == strcasecmp(opal_stacktrace_output_filename, "file" ) ||
              0 == strcasecmp(opal_stacktrace_output_filename, "file:") ) {
