@@ -3,6 +3,7 @@
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,8 +30,7 @@ OBJ_CLASS_DECLARATION(mca_pml_yalla_convertor_t);
         ptrdiff_t lb; \
         \
         if (opal_datatype_is_contiguous_memory_layout(&(_dtype)->super, _count)) { \
-            ompi_datatype_type_size(_dtype, &size); \
-            ompi_datatype_type_lb(_dtype, &lb); \
+            ompi_datatype_get_true_extent(_dtype, &lb, &size); \
             (_req_base)->data_type          = MXM_REQ_DATA_BUFFER; \
             (_req_base)->data.buffer.ptr    = (char *)_buf + lb; \
             (_req_base)->data.buffer.length = size * (_count); \
