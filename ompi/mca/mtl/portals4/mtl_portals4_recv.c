@@ -336,6 +336,12 @@ ompi_mtl_portals4_rndv_get_frag_progress(ptl_event_t *ev,
                             "%s:%d: PTL_EVENT_REPLY with ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
 
+        if (OPAL_UNLIKELY(ev->ni_fail_type != PTL_NI_DROPPED)) {
+            mtl_ptl_error(1, "PTL_EVENT_REPLY with ni_fail_type: %s"
+                    " => cannot retry",
+                    name_of_err[ev->ni_fail_type]);
+        }
+
         opal_timer_t time = opal_timer_base_get_usec() - rndv_get_frag->frag_start_time_usec;
         if (time > (unsigned int) ompi_mtl_portals4.get_retransmit_timeout) {
             mtl_ptl_error(1, "timeout retrying GET");
