@@ -384,8 +384,9 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         (PDST)->super.opt_desc = (PSRC)->super.opt_desc;                             \
         (PDST)->packed_description = (PSRC)->packed_description;                     \
         (PSRC)->packed_description = NULL;                                           \
-        memcpy( (PDST)->super.btypes, (PSRC)->super.btypes,                          \
-                OPAL_DATATYPE_MAX_PREDEFINED * sizeof(uint32_t) );                   \
+        /* transfer the ptypes */                                                    \
+        (PDST)->super.ptypes = (PSRC)->super.ptypes;                                 \
+        (PSRC)->super.ptypes = NULL;                                                 \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_STRUCT_DDT( PDATA, MPIDDT, MPIDDTNAME, type1, type2, MPIType1, MPIType2, FLAGS) \
@@ -737,7 +738,7 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
                      (long)pData->super.size, (int)pData->super.align, pData->super.id, (int)pData->super.desc.length, (int)pData->super.desc.used,
                      (long)pData->super.true_lb, (long)pData->super.true_ub, (long)(pData->super.true_ub - pData->super.true_lb),
                      (long)pData->super.lb, (long)pData->super.ub, (long)(pData->super.ub - pData->super.lb),
-                     (int)pData->super.nbElems, (int)pData->super.btypes[OPAL_DATATYPE_LOOP], (int)pData->super.flags );
+                     (int)pData->super.nbElems, (int)pData->super.loops, (int)pData->super.flags );
     /* dump the flags */
     if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );

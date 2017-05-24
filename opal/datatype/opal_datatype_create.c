@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -30,8 +30,6 @@
 
 static void opal_datatype_construct( opal_datatype_t* pData )
 {
-    int i;
-
     pData->size               = 0;
     pData->flags              = OPAL_DATATYPE_FLAG_CONTIGUOUS;
     pData->id                 = 0;
@@ -53,32 +51,36 @@ static void opal_datatype_construct( opal_datatype_t* pData )
     pData->opt_desc.length    = 0;
     pData->opt_desc.used      = 0;
 
-    for( i = 0; i < OPAL_DATATYPE_MAX_SUPPORTED; i++ )
-        pData->btypes[i]      = 0;
+    pData->ptypes             = NULL;
+    pData->loops              = 0;
 }
 
 static void opal_datatype_destruct( opal_datatype_t* datatype )
 {
-    if (!opal_datatype_is_predefined(datatype)) {
-        if( datatype->desc.desc != NULL ) {
-            free( datatype->desc.desc );
-            datatype->desc.length = 0;
-            datatype->desc.used   = 0;
-        }
-    }
-    if( datatype->opt_desc.desc != NULL ) {
+    /**
+     * As the default description and the optimized description might point to the
+     * same data description we should start by cleaning the optimized description.
+     */
+    if( NULL != datatype->opt_desc.desc ) {
         if( datatype->opt_desc.desc != datatype->desc.desc )
             free( datatype->opt_desc.desc );
         datatype->opt_desc.length = 0;
         datatype->opt_desc.used   = 0;
         datatype->opt_desc.desc   = NULL;
     }
-    /**
-     * As the default description and the optimized description can point to the
-     * same memory location we should keep the default location pointer until we
-     * know what we should do with the optimized description.
-     */
-    datatype->desc.desc   = NULL;
+    if (!opal_datatype_is_predefined(datatype)) {
+        if( NULL != datatype->desc.desc ) {
+            free( datatype->desc.desc );
+            datatype->desc.length = 0;
+            datatype->desc.used   = 0;
+            datatype->desc.desc   = NULL;
+        }
+    }
+    /* dont free the ptypes of predefined types (it was not dynamically allocated) */
+    if( (NULL != datatype->ptypes) && (datatype->id >= OPAL_DATATYPE_MAX_PREDEFINED) ) {
+        free(datatype->ptypes);
+        datatype->ptypes = NULL;
+    }
 
     /* make sure the name is set to empty */
     datatype->name[0] = '\0';

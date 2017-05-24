@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
@@ -23,7 +23,7 @@
 /**
  * The purpose of this test is to simulate the multi-network packing and
  * unpacking process. The pack operation will happens in-order while the
- * will be done randomly. Therefore, before each unpack the correct
+ * unpack will be done randomly. Therefore, before each unpack the correct
  * position in the user buffer has to be set.
  */
 
