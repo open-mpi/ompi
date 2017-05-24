@@ -5,6 +5,7 @@
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1015,7 +1016,7 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
     ompi_osc_rdma_module_t *module = sync->module;
     mca_btl_base_registration_handle_t *target_handle;
     uint64_t target_address;
-    ptrdiff_t lb, extent;
+    ptrdiff_t lb, extent, target_extent;
     int ret;
 
     /* short-circuit case. note that origin_count may be 0 if op is MPI_NO_OP */
@@ -1027,9 +1028,10 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
         return OMPI_SUCCESS;
     }
 
+    (void) ompi_datatype_get_extent (target_datatype, &lb, &target_extent);
     (void) ompi_datatype_get_extent (origin_datatype, &lb, &extent);
 
-    ret = osc_rdma_get_remote_segment (module, peer, target_disp, extent * target_count, &target_address, &target_handle);
+    ret = osc_rdma_get_remote_segment (module, peer, target_disp, target_extent * target_count, &target_address, &target_handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
