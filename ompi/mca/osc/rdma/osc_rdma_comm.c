@@ -5,6 +5,7 @@
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -793,7 +794,14 @@ static inline int ompi_osc_rdma_put_w_req (ompi_osc_rdma_sync_t *sync, const voi
         return OMPI_SUCCESS;
     }
 
-    ret = osc_rdma_get_remote_segment (module, peer, target_disp, target_datatype->super.size * target_count,
+    ptrdiff_t len, offset;
+    // a buffer defined by (buf, count, dt)
+    // will have data starting at buf+offset and ending len bytes later:
+    len = opal_datatype_span(&target_datatype->super, target_count, &offset);
+
+    // the below function wants arg4 to be the number of bytes after
+    // source_disp that the data ends, which is offset+len
+    ret = osc_rdma_get_remote_segment (module, peer, target_disp, offset+len,
                                        &target_address, &target_handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
