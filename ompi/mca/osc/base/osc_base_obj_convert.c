@@ -11,7 +11,7 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
@@ -105,7 +105,7 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
         struct iovec iov[OMPI_OSC_BASE_DECODE_MAX];
         uint32_t iov_count;
         size_t size, primitive_size;
-        OPAL_PTRDIFF_TYPE lb, extent;
+        ptrdiff_t lb, extent;
         bool done;
 
         primitive_datatype = ompi_datatype_get_single_predefined_type_from_args(datatype);

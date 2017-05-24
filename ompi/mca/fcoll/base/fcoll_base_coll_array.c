@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +47,7 @@ int fcoll_base_coll_allgatherv_array (void *sbuf,
                                       ompi_communicator_t *comm)
 {
     int err = OMPI_SUCCESS;
-    OPAL_PTRDIFF_TYPE extent, lb;
+    ptrdiff_t extent, lb;
     int i, rank, j;
     char *send_buf = NULL;
     struct ompi_datatype_t *newtype, *send_type;
@@ -130,7 +132,7 @@ int fcoll_base_coll_gatherv_array (void *sbuf,
     int i, rank;
     int err = OMPI_SUCCESS;
     char *ptmp;
-    OPAL_PTRDIFF_TYPE extent, lb;
+    ptrdiff_t extent, lb;
     ompi_request_t **reqs=NULL;
 
     rank = ompi_comm_rank (comm);
@@ -219,7 +221,7 @@ int fcoll_base_coll_scatterv_array (void *sbuf,
     int i, rank;
     int err = OMPI_SUCCESS;
     char *ptmp;
-    OPAL_PTRDIFF_TYPE extent, lb;
+    ptrdiff_t extent, lb;
     ompi_request_t ** reqs=NULL;
 
     rank = ompi_comm_rank (comm);
@@ -307,7 +309,7 @@ int fcoll_base_coll_allgather_array (void *sbuf,
 {
     int err = OMPI_SUCCESS;
     int rank;
-    OPAL_PTRDIFF_TYPE extent, lb;
+    ptrdiff_t extent, lb;
 
     rank = ompi_comm_rank (comm);
 
@@ -361,8 +363,8 @@ int fcoll_base_coll_gather_array (void *sbuf,
     int i;
     int rank;
     char *ptmp;
-    OPAL_PTRDIFF_TYPE incr;
-    OPAL_PTRDIFF_TYPE extent, lb;
+    ptrdiff_t incr;
+    ptrdiff_t extent, lb;
     int err = OMPI_SUCCESS;
     ompi_request_t ** reqs=NULL;
 

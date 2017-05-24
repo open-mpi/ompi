@@ -4,6 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,14 +29,14 @@ uint32_t outputFlags = VALIDATE_DATA | CHECK_PACK_UNPACK | RESET_CONVERTORS | QU
 
 static int32_t opal_datatype_create_indexed( int count, const int* pBlockLength, const int* pDisp,
                                              const opal_datatype_t* oldType, opal_datatype_t** newType );
-static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                               const opal_datatype_t* oldType, opal_datatype_t** newType );
 static int32_t opal_datatype_create_struct( int count, const int* pBlockLength,
-                                            const OPAL_PTRDIFF_TYPE* pDisp,
+                                            const ptrdiff_t* pDisp,
                                             opal_datatype_t** pTypes, opal_datatype_t** newType );
 static int32_t opal_datatype_create_vector( int count, int bLength, int stride,
                                             const opal_datatype_t* oldType, opal_datatype_t** newType );
-static int32_t opal_datatype_create_hvector( int count, int bLength, OPAL_PTRDIFF_TYPE stride,
+static int32_t opal_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
                                              const opal_datatype_t* oldType, opal_datatype_t** newType );
 
 
@@ -136,7 +138,7 @@ opal_datatype_t* test_struct( void )
                                  NULL,
                                  (opal_datatype_t*)&opal_datatype_int1 };
     int lengths[] = { 2, 1, 3 };
-    OPAL_PTRDIFF_TYPE disp[] = { 0, 16, 26 };
+    ptrdiff_t disp[] = { 0, 16, 26 };
     opal_datatype_t* pdt, *pdt1;
 
     printf( "test struct\n" );
@@ -166,7 +168,7 @@ opal_datatype_t* test_struct_char_double( void )
 {
     char_double_t data;
     int lengths[] = {1, 1};
-    OPAL_PTRDIFF_TYPE displ[] = {0, 0};
+    ptrdiff_t displ[] = {0, 0};
     opal_datatype_t *pdt;
     opal_datatype_t* types[] = { (opal_datatype_t*)&opal_datatype_int1,
                                  (opal_datatype_t*)&opal_datatype_float8};
@@ -200,7 +202,7 @@ typedef struct {
 opal_datatype_t* create_strange_dt( void )
 {
     sdata_intern v[2];
-    OPAL_PTRDIFF_TYPE displ[3];
+    ptrdiff_t displ[3];
     opal_datatype_t *pdt, *pdt1;
 
     opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt1);
@@ -280,7 +282,7 @@ static int32_t opal_datatype_create_indexed( int count, const int* pBlockLength,
 {
     opal_datatype_t* pdt;
     int i, dLength, endat, disp;
-    OPAL_PTRDIFF_TYPE extent;
+    ptrdiff_t extent;
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
@@ -317,12 +319,12 @@ static int32_t opal_datatype_create_indexed( int count, const int* pBlockLength,
     return OPAL_SUCCESS;
 }
 
-static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                               const opal_datatype_t* oldType, opal_datatype_t** newType )
 {
     opal_datatype_t* pdt;
     int i, dLength;
-    OPAL_PTRDIFF_TYPE extent, disp, endat;
+    ptrdiff_t extent, disp, endat;
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
@@ -360,11 +362,11 @@ static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength
 }
 
 
-static int32_t opal_datatype_create_struct( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+static int32_t opal_datatype_create_struct( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                             opal_datatype_t** pTypes, opal_datatype_t** newType )
 {
     int i;
-    OPAL_PTRDIFF_TYPE disp = 0, endto, lastExtent, lastDisp;
+    ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
     int lastBlock;
     opal_datatype_t *pdt, *lastType;
 
@@ -433,7 +435,7 @@ static int32_t opal_datatype_create_vector( int count, int bLength, int stride,
                                             const opal_datatype_t* oldType, opal_datatype_t** newType )
 {
     opal_datatype_t *pTempData, *pData;
-    OPAL_PTRDIFF_TYPE extent = oldType->ub - oldType->lb;
+    ptrdiff_t extent = oldType->ub - oldType->lb;
 
 
     if( 0 == count ) {
@@ -461,11 +463,11 @@ static int32_t opal_datatype_create_vector( int count, int bLength, int stride,
 }
 
 
-static int32_t opal_datatype_create_hvector( int count, int bLength, OPAL_PTRDIFF_TYPE stride,
+static int32_t opal_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
                                              const opal_datatype_t* oldType, opal_datatype_t** newType )
 {
     opal_datatype_t *pTempData, *pData;
-    OPAL_PTRDIFF_TYPE extent = oldType->ub - oldType->lb;
+    ptrdiff_t extent = oldType->ub - oldType->lb;
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
@@ -637,8 +639,8 @@ opal_datatype_t* test_contiguous( void )
 int mpich_typeub( void )
 {
    int errs = 0;
-   OPAL_PTRDIFF_TYPE extent, lb, extent1, extent2, extent3;
-   OPAL_PTRDIFF_TYPE displ[2];
+   ptrdiff_t extent, lb, extent1, extent2, extent3;
+   ptrdiff_t displ[2];
    int blens[2];
    opal_datatype_t *type1, *type2, *type3, *types[2];
 
@@ -700,7 +702,7 @@ int mpich_typeub2( void )
 {
    int blocklen[3], err = 0;
    size_t sz1, sz2, sz3;
-   OPAL_PTRDIFF_TYPE disp[3], lb, ub, ex1, ex2, ex3;
+   ptrdiff_t disp[3], lb, ub, ex1, ex2, ex3;
    opal_datatype_t *types[3], *dt1, *dt2, *dt3;
 
    blocklen[0] = 1;
@@ -779,7 +781,7 @@ int mpich_typeub3( void )
 {
    int blocklen[3], err = 0, idisp[3];
    size_t sz;
-   OPAL_PTRDIFF_TYPE disp[3], lb, ub, ex;
+   ptrdiff_t disp[3], lb, ub, ex;
    opal_datatype_t *types[3], *dt1, *dt2, *dt3, *dt4, *dt5;
 
    /* Create a datatype with explicit LB and UB */

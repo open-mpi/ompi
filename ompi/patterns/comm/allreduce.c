@@ -3,7 +3,7 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -51,7 +51,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
-    rc = ompi_datatype_type_extent(dtype, (OPAL_PTRDIFF_TYPE *)&dt_extent);
+    rc = ompi_datatype_type_extent(dtype, (ptrdiff_t *)&dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }

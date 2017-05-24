@@ -400,7 +400,7 @@ int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
    if (NULL != fh) {
         ompi_datatype_t *types[2];
         int blocklen[2] = {1, 1};
-        OPAL_PTRDIFF_TYPE d[2], base;
+        ptrdiff_t d[2], base;
         int i;
 
         fh->f_io_array = NULL;
@@ -446,8 +446,8 @@ int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 	types[0] = &ompi_mpi_long.dt;
         types[1] = &ompi_mpi_long.dt;
 
-        d[0] = (OPAL_PTRDIFF_TYPE) fh->f_decoded_iov;
-        d[1] = (OPAL_PTRDIFF_TYPE) &fh->f_decoded_iov[0].iov_len;
+        d[0] = (ptrdiff_t) fh->f_decoded_iov;
+        d[1] = (ptrdiff_t) &fh->f_decoded_iov[0].iov_len;
 
         base = d[0];
         for (i=0 ; i<2 ; i++) {

@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -71,9 +71,9 @@ opal_dt_swap_bytes(void *to_p, const void *from_p, const size_t size, size_t cou
 #define COPY_TYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
 static int32_t                                                                            \
 copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
-                                const char* from, size_t from_len, OPAL_PTRDIFF_TYPE from_extent, \
-                                char* to, size_t to_length, OPAL_PTRDIFF_TYPE to_extent,          \
-                                OPAL_PTRDIFF_TYPE *advance)             \
+                                const char* from, size_t from_len, ptrdiff_t from_extent, \
+                                char* to, size_t to_length, ptrdiff_t to_extent,          \
+                                ptrdiff_t *advance)             \
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
@@ -92,8 +92,8 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
                 from += from_extent;                                    \
             }                                                           \
         }                                                               \
-    } else if ((OPAL_PTRDIFF_TYPE)sizeof(TYPE) == to_extent &&          \
-               (OPAL_PTRDIFF_TYPE)sizeof(TYPE) == from_extent) {        \
+    } else if ((ptrdiff_t)sizeof(TYPE) == to_extent &&          \
+               (ptrdiff_t)sizeof(TYPE) == from_extent) {        \
          MEMCPY( to, from, count * sizeof(TYPE) );                      \
     } else {                                                            \
          /* source or destination are non-contigous */                  \
@@ -110,9 +110,9 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
 #define COPY_2SAMETYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
 static int32_t                                                                            \
 copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
-                                const char* from, size_t from_len, OPAL_PTRDIFF_TYPE from_extent, \
-                                char* to, size_t to_length, OPAL_PTRDIFF_TYPE to_extent,          \
-                                OPAL_PTRDIFF_TYPE *advance)             \
+                                const char* from, size_t from_len, ptrdiff_t from_extent, \
+                                char* to, size_t to_length, ptrdiff_t to_extent,          \
+                                ptrdiff_t *advance)             \
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
@@ -131,8 +131,8 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
                 from += from_extent;                                    \
             }                                                           \
         }                                                               \
-    } else if ((OPAL_PTRDIFF_TYPE)sizeof(TYPE) == to_extent &&          \
-               (OPAL_PTRDIFF_TYPE)sizeof(TYPE) == from_extent) {        \
+    } else if ((ptrdiff_t)sizeof(TYPE) == to_extent &&          \
+               (ptrdiff_t)sizeof(TYPE) == from_extent) {        \
          MEMCPY( to, from, count * sizeof(TYPE) );                      \
     } else {                                                            \
          /* source or destination are non-contigous */                  \
@@ -149,9 +149,9 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
 #define COPY_2TYPE_HETEROGENEOUS( TYPENAME, TYPE1, TYPE2 )              \
 static int32_t                                                          \
 copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count, \
-                                const char* from, uint32_t from_len, OPAL_PTRDIFF_TYPE from_extent, \
-                                char* to, uint32_t to_length, OPAL_PTRDIFF_TYPE to_extent, \
-                                OPAL_PTRDIFF_TYPE *advance)             \
+                                const char* from, uint32_t from_len, ptrdiff_t from_extent, \
+                                char* to, uint32_t to_length, ptrdiff_t to_extent, \
+                                ptrdiff_t *advance)             \
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
@@ -173,8 +173,8 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count, \
             to += to_extent;                                            \
             from += from_extent;                                        \
         }                                                               \
-    } else if ((OPAL_PTRDIFF_TYPE)(sizeof(TYPE1) + sizeof(TYPE2)) == to_extent &&   \
-               (OPAL_PTRDIFF_TYPE)(sizeof(TYPE1) + sizeof(TYPE2)) == from_extent) { \
+    } else if ((ptrdiff_t)(sizeof(TYPE1) + sizeof(TYPE2)) == to_extent &&   \
+               (ptrdiff_t)(sizeof(TYPE1) + sizeof(TYPE2)) == from_extent) { \
         /* source and destination are contigous */                      \
         MEMCPY( to, from, count * (sizeof(TYPE1) + sizeof(TYPE2)) );    \
     } else {                                                            \
@@ -192,8 +192,8 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count, \
 
 static inline void
 datatype_check(char *type, size_t local_size, size_t remote_size, uint32_t *count,
-               const char* from, size_t from_len, OPAL_PTRDIFF_TYPE from_extent,
-               char* to, size_t to_len, OPAL_PTRDIFF_TYPE to_extent)
+               const char* from, size_t from_len, ptrdiff_t from_extent,
+               char* to, size_t to_len, ptrdiff_t to_extent)
 {
     /* make sure the remote buffer is large enough to hold the data */
     if( (remote_size * *count) > from_len ) {
@@ -219,9 +219,9 @@ datatype_check(char *type, size_t local_size, size_t remote_size, uint32_t *coun
     }
 static int32_t
 copy_cxx_bool_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,
-                            const char* from, uint32_t from_len, OPAL_PTRDIFF_TYPE from_extent,
-                            char* to, uint32_t to_length, OPAL_PTRDIFF_TYPE to_extent,
-                            OPAL_PTRDIFF_TYPE *advance)
+                            const char* from, uint32_t from_len, ptrdiff_t from_extent,
+                            char* to, uint32_t to_length, ptrdiff_t to_extent,
+                            ptrdiff_t *advance)
 {
     uint32_t i;
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013-2016 Research Organization for Information Science
+ * Copyright (c) 2013-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -42,9 +42,6 @@
 #define MEMCPY_CUDA( DST, SRC, BLENGTH, CONVERTOR ) \
     CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH), (CONVERTOR) )
 #endif
-
-extern int opal_convertor_create_stack_with_pos_general( opal_convertor_t* convertor,
-                                                         int starting_point, const int* sizes );
 
 static void opal_convertor_construct( opal_convertor_t* convertor )
 {
@@ -226,7 +223,7 @@ int32_t opal_convertor_pack( opal_convertor_t* pConv,
     if( OPAL_LIKELY(pConv->flags & CONVERTOR_NO_OP) ) {
         /**
          * We are doing conversion on a contiguous datatype on a homogeneous
-         * environment. The convertor contain minimal informations, we only
+         * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
         uint32_t i;
@@ -333,7 +330,7 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     const opal_datatype_t* pData = pConvertor->pDesc;
     dt_elem_desc_t* pElems;
     uint32_t count;
-    OPAL_PTRDIFF_TYPE extent;
+    ptrdiff_t extent;
 
     pStack = pConvertor->pStack;
     /**
@@ -447,31 +444,53 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
     return rc;
 }
 
+static size_t
+opal_datatype_compute_remote_size( const opal_datatype_t* pData,
+                                   const size_t* sizes )
+{
+    uint32_t typeMask = pData->bdt_used;
+    size_t length = 0;
+
+    if (opal_datatype_is_predefined(pData)) {
+        return sizes[pData->desc.desc->elem.common.type];
+    }
+
+    if( OPAL_UNLIKELY(NULL == pData->ptypes) ) {
+        /* Allocate and fill the array of types used in the datatype description */
+        opal_datatype_compute_ptypes( (opal_datatype_t*)pData );
+    }
+
+    for( int i = OPAL_DATATYPE_FIRST_TYPE; typeMask && (i < OPAL_DATATYPE_MAX_PREDEFINED); i++ ) {
+        if( typeMask & ((uint32_t)1 << i) ) {
+            length += (pData->ptypes[i] * sizes[i]);
+            typeMask ^= ((uint32_t)1 << i);
+        }
+    }
+    return length;
+}
 
 /**
  * Compute the remote size. If necessary remove the homogeneous flag
  * and redirect the convertor description toward the non-optimized
  * datatype representation.
  */
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
-{                                                                         \
-    if( OPAL_UNLIKELY(0 != (bdt_mask)) ) {                                \
-        opal_convertor_master_t* master;                                  \
-        int i;                                                            \
-        uint32_t mask = datatype->bdt_used;                               \
-        convertor->flags &= (~CONVERTOR_HOMOGENEOUS);                   \
-        master = convertor->master;                                       \
-        convertor->remote_size = 0;                                       \
-        for( i = OPAL_DATATYPE_FIRST_TYPE; mask && (i < OPAL_DATATYPE_MAX_PREDEFINED); i++ ) { \
-            if( mask & ((uint32_t)1 << i) ) {                             \
-                convertor->remote_size += (datatype->btypes[i] *          \
-                                           master->remote_sizes[i]);      \
-                mask ^= ((uint32_t)1 << i);                               \
-            }                                                             \
-        }                                                                 \
-        convertor->remote_size *= convertor->count;                       \
-        convertor->use_desc = &(datatype->desc);                          \
-    }                                                                     \
+size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
+{
+    opal_datatype_t* datatype = (opal_datatype_t*)pConvertor->pDesc;
+    
+    pConvertor->remote_size = pConvertor->local_size;
+    if( OPAL_UNLIKELY(datatype->bdt_used & pConvertor->master->hetero_mask) ) {
+        pConvertor->flags &= (~CONVERTOR_HOMOGENEOUS);
+        pConvertor->use_desc = &(datatype->desc);
+        if( 0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE) ) {
+            /* This is for a single datatype, we must update it with the count */
+            pConvertor->remote_size = opal_datatype_compute_remote_size(datatype,
+                                                                        pConvertor->master->remote_sizes);
+            pConvertor->remote_size *= pConvertor->count;
+        }
+    }
+    pConvertor->flags |= CONVERTOR_HAS_REMOTE_SIZE;
+    return pConvertor->remote_size;
 }
 
 /**
@@ -483,29 +502,26 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
  */
 #define OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
-        uint32_t bdt_mask;                                              \
-                                                                        \
+        convertor->local_size = count * datatype->size;                 \
+        convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
+        convertor->count      = count;                                  \
+        convertor->pDesc      = (opal_datatype_t*)datatype;             \
+        convertor->bConverted = 0;                                      \
+        convertor->use_desc   = &(datatype->opt_desc);                  \
         /* If the data is empty we just mark the convertor as           \
          * completed. With this flag set the pack and unpack functions  \
          * will not do anything.                                        \
          */                                                             \
         if( OPAL_UNLIKELY((0 == count) || (0 == datatype->size)) ) {    \
-            convertor->flags |= OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;  \
+            convertor->flags |= (OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED | CONVERTOR_HAS_REMOTE_SIZE); \
             convertor->local_size = convertor->remote_size = 0;         \
             return OPAL_SUCCESS;                                        \
         }                                                               \
-        /* Compute the local in advance */                              \
-        convertor->local_size = count * datatype->size;                 \
-        convertor->pBaseBuf   = (unsigned char*)pUserBuf;               \
-        convertor->count      = count;                                  \
                                                                         \
         /* Grab the datatype part of the flags */                       \
         convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
         convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
         convertor->flags     |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
-        convertor->pDesc      = (opal_datatype_t*)datatype;             \
-        convertor->bConverted = 0;                                      \
-        convertor->use_desc = &(datatype->opt_desc);                    \
                                                                         \
         convertor->remote_size = convertor->local_size;                 \
         if( OPAL_LIKELY(convertor->remoteArch == opal_local_arch) ) {   \
@@ -516,9 +532,8 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
             }                                                           \
         }                                                               \
                                                                         \
-        bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
-        OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE( convertor, datatype,        \
-                                            bdt_mask );                 \
+        assert( (convertor)->pDesc == (datatype) );                     \
+        opal_convertor_compute_remote_size( convertor );                \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \
@@ -530,7 +545,7 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
         }                                                               \
         convertor->flags &= ~CONVERTOR_NO_OP;                           \
         {                                                               \
-            uint32_t required_stack_length = datatype->btypes[OPAL_DATATYPE_LOOP] + 1; \
+            uint32_t required_stack_length = datatype->loops + 1;       \
                                                                         \
             if( required_stack_length > convertor->stack_size ) {       \
                 assert(convertor->pStack == convertor->static_stack);   \
@@ -599,7 +614,7 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
             convertor->fAdvance = opal_pack_general_checksum;
         } else {
             if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-                if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
+                if( ((datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size)
                     || (1 >= convertor->count) )
                     convertor->fAdvance = opal_pack_homogeneous_contig_checksum;
                 else
@@ -613,7 +628,7 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
             convertor->fAdvance = opal_pack_general;
         } else {
             if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-                if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
+                if( ((datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size)
                     || (1 >= convertor->count) )
                     convertor->fAdvance = opal_pack_homogeneous_contig;
                 else
@@ -714,8 +729,8 @@ void opal_datatype_dump_stack( const dt_stack_t* pStack, int stack_pos,
         opal_output( 0, "%d: pos %d count %d disp %ld ", stack_pos, pStack[stack_pos].index,
                      (int)pStack[stack_pos].count, (long)pStack[stack_pos].disp );
         if( pStack->index != -1 )
-            opal_output( 0, "\t[desc count %d disp %ld extent %ld]\n",
-                         pDesc[pStack[stack_pos].index].elem.count,
+            opal_output( 0, "\t[desc count %lu disp %ld extent %ld]\n",
+                         (unsigned long)pDesc[pStack[stack_pos].index].elem.count,
                          (long)pDesc[pStack[stack_pos].index].elem.disp,
                          (long)pDesc[pStack[stack_pos].index].elem.extent );
         else

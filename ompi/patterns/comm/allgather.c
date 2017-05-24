@@ -3,7 +3,7 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -40,7 +40,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     netpatterns_pair_exchange_node_t my_exchange_node;
     size_t message_extent,current_data_extent,current_data_count;
     size_t dt_size;
-    OPAL_PTRDIFF_TYPE dt_extent;
+    ptrdiff_t dt_extent;
     char *src_buf_current;
     char *dest_buf_current;
     struct iovec send_iov[2] = {{0,0},{0,0}},

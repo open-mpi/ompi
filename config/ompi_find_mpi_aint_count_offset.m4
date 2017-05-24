@@ -15,7 +15,7 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
@@ -42,14 +42,13 @@ AC_DEFUN([OMPI_FIND_MPI_AINT_COUNT_OFFSET],[
 dnl #########################################################################
 
 AC_DEFUN([_OMPI_FIND_MPI_AINT_TYPE], [
-    # Find the type of MPI_Aint.  We already did the work to figure
-    # out what opal_ptrdiff will be; just use that.
+    # MPI_Aint type is ptrdiff_t; just use that.
     AC_MSG_CHECKING([for type of MPI_Aint])
 
-    MPI_AINT_TYPE=$opal_ptrdiff_t
+    MPI_AINT_TYPE=ptrdiff_t
     # Get the size of this type; we'll need it to figure out Fortran's
     # MPI_ADDRESS_KIND, later
-    MPI_AINT_SIZE=$opal_ptrdiff_size
+    MPI_AINT_SIZE=$ac_cv_sizeof_ptrdiff_t
     AC_DEFINE_UNQUOTED(OMPI_MPI_AINT_TYPE, [$MPI_AINT_TYPE],
                        [Type of MPI_Aint])
 

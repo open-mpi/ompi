@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -190,7 +190,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	    goto exit;
 	}
 
-	send_buf_addr = (OPAL_PTRDIFF_TYPE)buf;
+	send_buf_addr = (ptrdiff_t)buf;
 	if ( 0 < iov_count ) {
 	    decoded_iov = (struct iovec *)malloc
 		(iov_count * sizeof(struct iovec));
@@ -201,13 +201,13 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	}
 	for (ti = 0; ti < iov_count; ti ++){
 	    decoded_iov[ti].iov_base = (IOVBASE_TYPE *)(
-		(OPAL_PTRDIFF_TYPE)temp_iov[ti].iov_base -
+		(ptrdiff_t)temp_iov[ti].iov_base -
 		send_buf_addr);
 	    decoded_iov[ti].iov_len =
 		temp_iov[ti].iov_len ;
 #if DEBUG_ON
 	    printf("d_offset[%d]: %ld, d_len[%d]: %ld\n",
-		   ti, (OPAL_PTRDIFF_TYPE)decoded_iov[ti].iov_base,
+		   ti, (ptrdiff_t)decoded_iov[ti].iov_base,
 		   ti, decoded_iov[ti].iov_len);
 #endif
 	}

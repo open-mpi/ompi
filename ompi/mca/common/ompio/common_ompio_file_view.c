@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +65,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
     mca_io_ompio_contg *contg_groups;
 
     size_t ftype_size;
-    OPAL_PTRDIFF_TYPE ftype_extent, lb, ub;
+    ptrdiff_t ftype_extent, lb, ub;
     ompi_datatype_t *newfiletype;
 
     if ( NULL != fh->f_etype ) {
@@ -101,7 +103,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
 
     if ( etype == filetype                             &&
 	 ompi_datatype_is_predefined (filetype )       &&
-	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
+	 ftype_extent == (ptrdiff_t)ftype_size ){
 	ompi_datatype_create_contiguous(MCA_IO_DEFAULT_FILE_VIEW_SIZE,
 					&ompi_mpi_byte.dt,
 					&newfiletype);
@@ -139,7 +141,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
 
     if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
         if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) &&
-	    fh->f_view_extent == (OPAL_PTRDIFF_TYPE)fh->f_view_size ) {
+	    fh->f_view_extent == (ptrdiff_t)fh->f_view_size ) {
             fh->f_flags |= OMPIO_CONTIGUOUS_FVIEW;
         }
     }
@@ -196,7 +198,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
 
     if ( etype == filetype                              &&
 	 ompi_datatype_is_predefined (filetype )        &&
-	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
+	 ftype_extent == (ptrdiff_t)ftype_size ){
 	ompi_datatype_destroy ( &newfiletype );
     }
 

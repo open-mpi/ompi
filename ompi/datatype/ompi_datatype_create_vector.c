@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +38,7 @@ int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
                                      const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t *pTempData, *pData;
-    OPAL_PTRDIFF_TYPE extent = oldType->super.ub - oldType->super.lb;
+    ptrdiff_t extent = oldType->super.ub - oldType->super.lb;
 
 
     if( 0 == count ) {
@@ -64,11 +66,11 @@ int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
 }
 
 
-int32_t ompi_datatype_create_hvector( int count, int bLength, OPAL_PTRDIFF_TYPE stride,
+int32_t ompi_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
                                       const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t *pTempData, *pData;
-    OPAL_PTRDIFF_TYPE extent = oldType->super.ub - oldType->super.lb;
+    ptrdiff_t extent = oldType->super.ub - oldType->super.lb;
 
     if( 0 == count ) {
         *newType = ompi_datatype_create( 0 );

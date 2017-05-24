@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,7 +57,7 @@ ssize_t  mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *fh )
     for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
 	if (fh->f_num_of_io_entries != i+1) {
 	    if (((OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i].offset +
-		 (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) ==
+		 (ptrdiff_t)fh->f_io_array[i].length) ==
 		(OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i+1].offset) {
 		if (!merge) {
 		    merge_offset = (OMPI_MPI_OFFSET_TYPE)

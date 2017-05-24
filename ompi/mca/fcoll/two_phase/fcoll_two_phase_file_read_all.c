@@ -11,9 +11,11 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -165,11 +167,11 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	for (ti = 0; ti < iov_count; ti++){
 
 	    decoded_iov[ti].iov_base = (IOVBASE_TYPE *)
-		((OPAL_PTRDIFF_TYPE)temp_iov[ti].iov_base - recv_buf_addr);
+		((ptrdiff_t)temp_iov[ti].iov_base - recv_buf_addr);
 	    decoded_iov[ti].iov_len = temp_iov[ti].iov_len;
 #if DEBUG
 	    printf("d_offset[%d]: %ld, d_len[%d]: %ld\n",
-		   ti, (OPAL_PTRDIFF_TYPE)decoded_iov[ti].iov_base,
+		   ti, (ptrdiff_t)decoded_iov[ti].iov_base,
 		   ti, decoded_iov[ti].iov_len);
 #endif
 	}

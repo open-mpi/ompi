@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -259,10 +259,6 @@
  *
  **********************************************************************/
 #if OMPI_BUILDING
-
-#ifndef HAVE_PTRDIFF_T
-typedef OPAL_PTRDIFF_TYPE ptrdiff_t;
-#endif
 
 /*
  * Maximum size of a filename path.
