@@ -1015,7 +1015,7 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
     ompi_osc_rdma_module_t *module = sync->module;
     mca_btl_base_registration_handle_t *target_handle;
     uint64_t target_address;
-    ptrdiff_t lb, extent;
+    ptrdiff_t lb, origin_extent, target_extent;
     int ret;
 
     /* short-circuit case. note that origin_count may be 0 if op is MPI_NO_OP */
@@ -1027,20 +1027,22 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
         return OMPI_SUCCESS;
     }
 
-    (void) ompi_datatype_get_extent (origin_datatype, &lb, &extent);
+    (void) ompi_datatype_get_extent (target_datatype, &lb, &target_extent);
 
-    ret = osc_rdma_get_remote_segment (module, peer, target_disp, extent * target_count, &target_address, &target_handle);
+    ret = osc_rdma_get_remote_segment (module, peer, target_disp, target_extent * target_count, &target_address, &target_handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
 
-    if (module->acc_single_intrinsic && extent <= 8) {
+    (void) ompi_datatype_get_extent (origin_datatype, &lb, &origin_extent);
+
+    if (module->acc_single_intrinsic && origin_extent <= 8) {
         if (module->acc_use_amo && ompi_datatype_is_predefined (origin_datatype)) {
             if (NULL == result_addr) {
-                ret = ompi_osc_rdma_acc_single_atomic (sync, origin_addr, origin_datatype, extent, peer, target_address,
+                ret = ompi_osc_rdma_acc_single_atomic (sync, origin_addr, origin_datatype, origin_extent, peer, target_address,
                                                        target_handle, op, request);
             } else {
-                ret = ompi_osc_rdma_fetch_and_op_atomic (sync, origin_addr, result_addr, origin_datatype, extent, peer, target_address,
+                ret = ompi_osc_rdma_fetch_and_op_atomic (sync, origin_addr, result_addr, origin_datatype, origin_extent, peer, target_address,
                                                          target_handle, op, request);
             }
 
@@ -1049,7 +1051,7 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
             }
         }
 
-        ret = ompi_osc_rdma_fetch_and_op_cas (sync, origin_addr, result_addr, origin_datatype, extent, peer, target_address,
+        ret = ompi_osc_rdma_fetch_and_op_cas (sync, origin_addr, result_addr, origin_datatype, origin_extent, peer, target_address,
                                               target_handle, op, request);
         if (OMPI_SUCCESS == ret) {
             return OMPI_SUCCESS;
