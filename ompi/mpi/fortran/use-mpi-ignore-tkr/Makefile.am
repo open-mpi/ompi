@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
