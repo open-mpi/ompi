@@ -394,7 +394,8 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
 
     /* allocate anything that will be accessed remotely in the same region. this cuts down on the number of
      * registration handles needed to access this data. */
-    total_size = module->state_size + local_rank_array_size + leader_peer_data_size;
+    total_size = local_rank_array_size + module->region_size +
+        module->state_size + leader_peer_data_size;
 
     if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
         total_size += size;
@@ -409,7 +410,11 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    module->state_offset = local_rank_array_size;
+// Note, the extra module->region_size space added after local_rank_array_size
+// is unused but is there to match what happens in allocte_state_shared()
+// This allows module->state_offset to be uniform across the ranks which
+// is part of how they pull peer info from each other.
+    module->state_offset = local_rank_array_size + module->region_size;
 
     module->state = (ompi_osc_rdma_state_t *) ((intptr_t) module->rank_array + module->state_offset);
     module->node_comm_info = (unsigned char *) ((intptr_t) module->state + module->state_size);
