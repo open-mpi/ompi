@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +46,7 @@ static const char FUNC_NAME[] = "MPI_Type_create_f90_real";
 int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 {
     uint64_t key;
+    int p_key, r_key;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -62,8 +64,10 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
     /* if the user does not care about p or r set them to 0 so the
      * test associate with them will always succeed.
      */
-    if( MPI_UNDEFINED == p ) p = 0;
-    if( MPI_UNDEFINED == r ) r = 0;
+    p_key = p;
+    r_key = r;
+    if( MPI_UNDEFINED == p ) p_key = 0;
+    if( MPI_UNDEFINED == r ) r_key = 0;
 
     /**
      * With respect to the MPI standard, MPI-2.0 Sect. 10.2.5, MPI_TYPE_CREATE_F90_xxxx,
@@ -81,10 +85,10 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 
     if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;
-        const int* a_i[2] = {&r, &p};
+        const int* a_i[2] = {&p, &r};
         int rc;
 
-        key = (((uint64_t)p) << 32) | ((uint64_t)r);
+        key = (((uint64_t)p_key) << 32) | ((uint64_t)r_key);
         if( OPAL_SUCCESS == opal_hash_table_get_value_uint64( &ompi_mpi_f90_real_hashtable,
                                                               key, (void**)newtype ) ) {
             return MPI_SUCCESS;
