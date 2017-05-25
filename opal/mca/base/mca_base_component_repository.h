@@ -13,6 +13,7 @@
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,6 +60,17 @@ struct mca_base_component_repository_item_t {
 typedef struct mca_base_component_repository_item_t mca_base_component_repository_item_t;
 
 OBJ_CLASS_DECLARATION(mca_base_component_repository_item_t);
+
+/*
+ * Structure to track information about why a component failed to load.
+ */
+struct mca_base_failed_component_t {
+    opal_list_item_t super;
+    mca_base_component_repository_item_t *comp;
+    char *error_msg;
+};
+typedef struct mca_base_failed_component_t mca_base_failed_component_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_failed_component_t);
 
 /**
  * @brief initialize the component repository

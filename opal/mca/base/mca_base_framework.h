@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -154,6 +155,8 @@ typedef struct mca_base_framework_t {
     /** List of selected components (filled in by mca_base_framework_register()
         or mca_base_framework_open() */
     opal_list_t                              framework_components;
+    /** List of components that failed to load */
+    opal_list_t                              framework_failed_components;
 } mca_base_framework_t;
 
 
