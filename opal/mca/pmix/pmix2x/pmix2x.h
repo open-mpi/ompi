@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -151,9 +154,9 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
         _cd->handler = (e);                                 \
         _cd->opcbfunc = (cb);                               \
         _cd->cbdata = (cd);                                 \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
-                     -1, EV_WRITE, (fn), (_cd));            \
-        event_active(&((_cd)->ev), EV_WRITE, 1);            \
+        opal_event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
+                          -1, EV_WRITE, (fn), (_cd));            \
+        opal_event_active(&((_cd)->ev), EV_WRITE, 1);            \
     } while(0)
 
 #define OPAL_PMIX_THREADSHIFT(e, i, eh, fn, cb, cd)         \
@@ -165,9 +168,9 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
         _cd->evhandler = (eh);                              \
         _cd->cbfunc = (cb);                                 \
         _cd->cbdata = (cd);                                 \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
-                     -1, EV_WRITE, (fn), (_cd));            \
-        event_active(&((_cd)->ev), EV_WRITE, 1);            \
+        opal_event_assign(&((_cd)->ev), opal_pmix_base.evbase,  \
+                          -1, EV_WRITE, (fn), (_cd));           \
+        opal_event_active(&((_cd)->ev), EV_WRITE, 1);           \
     } while(0)
 
 #define OPAL_PMIX_NOTIFY_THREADSHIFT(s, sr, r, i, fn, cb, cd)   \
@@ -180,9 +183,9 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
         _cd->info = (i);                                        \
         _cd->opcbfunc = (cb);                                   \
         _cd->cbdata = (cd);                                     \
-        event_assign(&((_cd)->ev), opal_pmix_base.evbase,       \
+        opal_event_assign(&((_cd)->ev), opal_pmix_base.evbase,  \
                      -1, EV_WRITE, (fn), (_cd));                \
-        event_active(&((_cd)->ev), EV_WRITE, 1);                \
+        opal_event_active(&((_cd)->ev), EV_WRITE, 1);           \
     } while(0)
 
 /****  CLIENT FUNCTIONS  ****/

@@ -6,6 +6,8 @@
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -308,9 +310,9 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     }
 
     /* now push it into the local thread */
-    event_assign(&cd->ev, opal_pmix_base.evbase,
-                 -1, EV_WRITE, _event_hdlr, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    opal_event_assign(&cd->ev, opal_pmix_base.evbase,
+                      -1, EV_WRITE, _event_hdlr, cd);
+    opal_event_active(&cd->ev, EV_WRITE, 1);
 }
 
 opal_vpid_t pmix2x_convert_rank(pmix_rank_t rank)
