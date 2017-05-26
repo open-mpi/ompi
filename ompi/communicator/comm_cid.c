@@ -36,6 +36,7 @@
 
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/communicator/comm_request.h"
 #include "ompi/op/op.h"
 #include "ompi/constants.h"
 #include "opal/class/opal_pointer_array.h"
@@ -43,7 +44,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/mca/coll/base/base.h"
-#include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
 
 struct ompi_comm_cid_context_t;
