@@ -67,8 +67,9 @@
     int timeout;
     int room_num;
     int remote_room_num;
+    opal_pmix_data_range_t range;
     orte_process_name_t proxy;
-    opal_process_name_t target;
+    orte_process_name_t target;
     orte_job_t *jdata;
     opal_buffer_t msg;
     opal_pmix_op_cbfunc_t opcbfunc;
@@ -255,6 +256,7 @@ typedef struct {
     bool wait_for_server;
     orte_process_name_t server;
     opal_list_t notifications;
+    bool pubsub_init;
 } pmix_server_globals_t;
 
 extern pmix_server_globals_t orte_pmix_server_globals;
