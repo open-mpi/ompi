@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,6 +72,7 @@ int orte_rml_base_get_contact_info(orte_jobid_t job, opal_buffer_t *data)
 int orte_rml_base_update_contact_info(opal_buffer_t* data)
 {
     orte_std_cntr_t cnt;
+    orte_process_name_t peer;
     orte_vpid_t num_procs;
     char *rml_uri;
     int rc;
@@ -89,11 +90,18 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         if (NULL != rml_uri) {
             /* set the contact info into the hash table */
             orte_rml.set_contact_info(rml_uri);
+            /* if this was an update to my own job, then
+             * track how many procs were in the message */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &peer, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                free(rml_uri);
+                return rc;
+            }
+            if (peer.jobid == ORTE_PROC_MY_NAME->jobid) {
+                ++num_procs;
+            }
             free(rml_uri);
         }
-
-        /* track how many procs were in the message */
-        ++num_procs;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);

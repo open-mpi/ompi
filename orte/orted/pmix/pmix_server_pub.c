@@ -42,14 +42,126 @@
 #include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 #include "pmix_server_internal.h"
+
+static int init_server(void)
+{
+    char *server;
+    opal_buffer_t buf;
+    char input[1024], *filename;
+    FILE *fp;
+    int rc;
+
+    /* only do this once */
+    orte_pmix_server_globals.pubsub_init = true;
+
+    /* if the universal server wasn't specified, then we use
+     * our own HNP for that purpose */
+    if (NULL == orte_pmix_server_globals.server_uri) {
+        orte_pmix_server_globals.server = *ORTE_PROC_MY_HNP;
+    } else {
+        if (0 == strncmp(orte_pmix_server_globals.server_uri, "file", strlen("file")) ||
+            0 == strncmp(orte_pmix_server_globals.server_uri, "FILE", strlen("FILE"))) {
+            /* it is a file - get the filename */
+            filename = strchr(orte_pmix_server_globals.server_uri, ':');
+            if (NULL == filename) {
+                /* filename is not correctly formatted */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
+                               orte_basename, orte_pmix_server_globals.server_uri);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            ++filename; /* space past the : */
+
+            if (0 >= strlen(filename)) {
+                /* they forgot to give us the name! */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
+                               orte_basename, orte_pmix_server_globals.server_uri);
+                return ORTE_ERR_BAD_PARAM;
+            }
+
+            /* open the file and extract the uri */
+            fp = fopen(filename, "r");
+            if (NULL == fp) { /* can't find or read file! */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
+                               orte_basename, orte_pmix_server_globals.server_uri);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            if (NULL == fgets(input, 1024, fp)) {
+                /* something malformed about file */
+                fclose(fp);
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
+                               orte_basename, orte_pmix_server_globals.server_uri,
+                               orte_basename);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            fclose(fp);
+            input[strlen(input)-1] = '\0';  /* remove newline */
+            server = strdup(input);
+        } else {
+            server = strdup(orte_pmix_server_globals.server_uri);
+        }
+        /* setup our route to the server */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        opal_dss.pack(&buf, &server, 1, OPAL_STRING);
+        if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            return rc;
+        }
+        OBJ_DESTRUCT(&buf);
+        /* parse the URI to get the server's name */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(server, &orte_pmix_server_globals.server, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* check if we are to wait for the server to start - resolves
+         * a race condition that can occur when the server is run
+         * as a background job - e.g., in scripts
+         */
+        if (orte_pmix_server_globals.wait_for_server) {
+            opal_output(0, "WAIT");
+            /* ping the server */
+            struct timeval timeout;
+            timeout.tv_sec = orte_pmix_server_globals.timeout;
+            timeout.tv_usec = 0;
+            if (ORTE_SUCCESS != (rc = orte_rml.ping(orte_mgmt_conduit, server, &timeout))) {
+                /* try it one more time */
+                if (ORTE_SUCCESS != (rc = orte_rml.ping(orte_mgmt_conduit, server, &timeout))) {
+                    /* okay give up */
+                    orte_show_help("help-orterun.txt", "orterun:server-not-found", true,
+                                   orte_basename, server,
+                                   (long)orte_pmix_server_globals.timeout,
+                                   ORTE_ERROR_NAME(rc));
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    return rc;
+                }
+            }
+        }
+    }
+
+    opal_output(0, "SERVER READY");
+
+    return ORTE_SUCCESS;
+}
 
 static void execute(int sd, short args, void *cbdata)
 {
     pmix_server_req_t *req = (pmix_server_req_t*)cbdata;
     int rc;
     opal_buffer_t *xfer;
+    orte_process_name_t *target;
+
+    if (!orte_pmix_server_globals.pubsub_init) {
+        /* we need to initialize our connection to the server */
+        if (ORTE_SUCCESS != (rc = init_server())) {
+            orte_show_help("help-orted.txt", "noserver", true,
+                           (NULL == orte_pmix_server_globals.server_uri) ?
+                           "NULL" : orte_pmix_server_globals.server_uri);
+            goto callback;
+        }
+    }
 
     /* add this request to our tracker hotel */
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
@@ -67,9 +179,16 @@ static void execute(int sd, short args, void *cbdata)
     }
     opal_dss.copy_payload(xfer, &req->msg);
 
+    /* if the range is SESSION, then set the target to the global server */
+    if (OPAL_PMIX_RANGE_SESSION == req->range) {
+        target = &orte_pmix_server_globals.server;
+    } else {
+        target = ORTE_PROC_MY_HNP;
+    }
+
     /* send the request to the target */
     rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                 &req->target, xfer,
+                                 target, xfer,
                                  ORTE_RML_TAG_DATA_SERVER,
                                  orte_rml_send_callback, NULL);
     if (ORTE_SUCCESS == rc) {
@@ -95,7 +214,6 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     int rc;
     uint8_t cmd = ORTE_PMIX_PUBLISH_CMD;
     opal_value_t *iptr;
-    opal_pmix_data_range_t range = OPAL_PMIX_RANGE_SESSION;
     opal_pmix_persistence_t persist = OPAL_PMIX_PERSIST_APP;
     bool rset, pset;
 
@@ -128,7 +246,7 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     pset = false;
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = (opal_pmix_data_range_t)iptr->data.uint;
+            req->range = (opal_pmix_data_range_t)iptr->data.uint;
             if (pset) {
                 break;
             }
@@ -143,17 +261,10 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     }
 
     /* pack the range */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &range, 1, OPAL_PMIX_DATA_RANGE))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &req->range, 1, OPAL_PMIX_DATA_RANGE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(req);
         return rc;
-    }
-
-    /* if the range is SESSION, then set the target to the global server */
-    if (OPAL_PMIX_RANGE_SESSION == range) {
-        req->target = orte_pmix_server_globals.server;
-    } else {
-        req->target = *ORTE_PROC_MY_HNP;
     }
 
     /* pack the persistence */
@@ -205,7 +316,6 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
     uint8_t cmd = ORTE_PMIX_LOOKUP_CMD;
     int32_t nkeys, i;
     opal_value_t *iptr;
-    opal_pmix_data_range_t range = OPAL_PMIX_RANGE_SESSION;
 
     /* the list of info objects are directives for us - they include
      * things like timeout constraints, so there is no reason to
@@ -234,23 +344,16 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
     /* no help for it - need to search for range */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = (opal_pmix_data_range_t)iptr->data.uint;
+            req->range = (opal_pmix_data_range_t)iptr->data.uint;
             break;
         }
     }
 
     /* pack the range */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &range, 1, OPAL_PMIX_DATA_RANGE))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &req->range, 1, OPAL_PMIX_DATA_RANGE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(req);
         return rc;
-    }
-
-    /* if the range is SESSION, then set the target to the global server */
-    if (OPAL_PMIX_RANGE_SESSION == range) {
-        req->target = orte_pmix_server_globals.server;
-    } else {
-        req->target = *ORTE_PROC_MY_HNP;
     }
 
     /* pack the number of keys */
@@ -309,7 +412,6 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
     uint8_t cmd = ORTE_PMIX_UNPUBLISH_CMD;
     uint32_t nkeys, n;
     opal_value_t *iptr;
-    opal_pmix_data_range_t range = OPAL_PMIX_RANGE_SESSION;
 
     /* create the caddy */
     req = OBJ_NEW(pmix_server_req_t);
@@ -334,23 +436,16 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
     /* no help for it - need to search for range */
     OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
         if (0 == strcmp(iptr->key, OPAL_PMIX_RANGE)) {
-            range = (opal_pmix_data_range_t)iptr->data.integer;
+            req->range = (opal_pmix_data_range_t)iptr->data.integer;
             break;
         }
     }
 
     /* pack the range */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &range, 1, OPAL_INT))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &req->range, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(req);
         return rc;
-    }
-
-    /* if the range is SESSION, then set the target to the global server */
-    if (OPAL_PMIX_RANGE_SESSION == range) {
-        req->target = orte_pmix_server_globals.server;
-    } else {
-        req->target = *ORTE_PROC_MY_HNP;
     }
 
     /* pack the number of keys */
