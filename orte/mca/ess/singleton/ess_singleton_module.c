@@ -15,7 +15,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -485,11 +485,6 @@ static int fork_hnp(void)
         }
         opal_argv_append(&argc, &argv, "--debug-daemons-file");
     }
-
-    /* indicate that it must use the novm state machine */
-    opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
-    opal_argv_append(&argc, &argv, "state_novm_select");
-    opal_argv_append(&argc, &argv, "1");
 
     /* direct the selection of the ess component */
     opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
