@@ -415,6 +415,7 @@ orte/test/mpi/memcached-dummy
 orte/test/mpi/coll_test
 orte/test/mpi/badcoll
 orte/test/mpi/iof
+orte/test/mpi/no-disconnect
 
 orte/test/system/radix
 orte/test/system/sigusr_trap

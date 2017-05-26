@@ -60,16 +60,21 @@ BEGIN_C_DECLS
  * rmaps module functions
  */
 
-/* mapping event - the event one activates to schedule mapping
- * of procs to nodes for pending jobs
- */
-ORTE_DECLSPEC extern opal_event_t orte_mapping_event;
-
 /**
 * RMAPS module functions - these are not accessible to the outside world,
 * but are defined here by convention
 */
+
+/* map a job - used by the HNP to compute the #procs on each node.
+ * This is passed to the backend daemons as a regex which they
+ * use to create an orte_job_map_t for the job */
 typedef int (*orte_rmaps_base_module_map_fn_t)(orte_job_t *jdata);
+
+/* assign a location to each process. Used by the backend daemons,
+ * this function takes the orte_job_map_t created from the regex
+ * and assigns each process to a specific location within the
+ * hardware topology based on the --map-by directive */
+typedef int (*orte_rmaps_base_module_assign_loc_fn_t)(orte_job_t *jdata);
 
 /*
  * rmaps module version 3.0.0
@@ -77,6 +82,8 @@ typedef int (*orte_rmaps_base_module_map_fn_t)(orte_job_t *jdata);
 struct orte_rmaps_base_module_3_0_0_t {
     /** Mapping function pointer */
     orte_rmaps_base_module_map_fn_t         map_job;
+    /* assign locations */
+    orte_rmaps_base_module_assign_loc_fn_t  assign_locations;
 };
 /** Convenience typedef */
 typedef struct orte_rmaps_base_module_3_0_0_t orte_rmaps_base_module_3_0_0_t;

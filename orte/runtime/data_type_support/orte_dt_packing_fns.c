@@ -89,6 +89,53 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
+        /* pack the attributes that need to be sent */
+        count = 0;
+        OPAL_LIST_FOREACH(kv, &jobs[i]->attributes, orte_attribute_t) {
+            if (ORTE_ATTR_GLOBAL == kv->local) {
+                ++count;
+            }
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        OPAL_LIST_FOREACH(kv, &jobs[i]->attributes, orte_attribute_t) {
+            if (ORTE_ATTR_GLOBAL == kv->local) {
+                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&kv, 1, ORTE_ATTRIBUTE))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
+        /* check for job info attribute */
+        cache = NULL;
+        if (orte_get_attribute(&jobs[i]->attributes, ORTE_JOB_INFO_CACHE, (void**)&cache, OPAL_PTR) &&
+            NULL != cache) {
+            /* we need to pack these as well, but they are composed
+             * of opal_value_t's on a list. So first pack the number
+             * of list elements */
+            count = opal_list_get_size(cache);
+            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* now pack each element on the list */
+            OPAL_LIST_FOREACH(val, cache, opal_value_t) {
+                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&val, 1, OPAL_VALUE))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        } else {
+            /* pack a zero to indicate no job info is being passed */
+            count = 0;
+            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+
         /* pack the personality */
         count = opal_argv_count(jobs[i]->personality);
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &count, 1, OPAL_INT32))) {
@@ -134,14 +181,18 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
-        if (orte_no_vm && 0 < jobs[i]->num_procs) {
-            for (j=0; j < jobs[i]->procs->size; j++) {
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jobs[i]->procs, j))) {
-                    continue;
-                }
-                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&proc, 1, ORTE_PROC))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
+        if (0 < jobs[i]->num_procs) {
+            /* check attributes to see if this job is to be fully
+             * described in the launch msg */
+            if (orte_get_attribute(&jobs[i]->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+                for (j=0; j < jobs[i]->procs->size; j++) {
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jobs[i]->procs, j))) {
+                        continue;
+                    }
+                    if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&proc, 1, ORTE_PROC))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
                 }
             }
         }
@@ -197,53 +248,6 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
                          (void*)(&(jobs[i]->state)), 1, ORTE_JOB_STATE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
-        }
-
-        /* pack the attributes that need to be sent */
-        count = 0;
-        OPAL_LIST_FOREACH(kv, &jobs[i]->attributes, orte_attribute_t) {
-            if (ORTE_ATTR_GLOBAL == kv->local) {
-                ++count;
-            }
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        OPAL_LIST_FOREACH(kv, &jobs[i]->attributes, orte_attribute_t) {
-            if (ORTE_ATTR_GLOBAL == kv->local) {
-                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&kv, 1, ORTE_ATTRIBUTE))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        }
-        /* check for job info attribute */
-        cache = NULL;
-        if (orte_get_attribute(&jobs[i]->attributes, ORTE_JOB_INFO_CACHE, (void**)&cache, OPAL_PTR) &&
-            NULL != cache) {
-            /* we need to pack these as well, but they are composed
-             * of opal_value_t's on a list. So first pack the number
-             * of list elements */
-            count = opal_list_get_size(cache);
-            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* now pack each element on the list */
-            OPAL_LIST_FOREACH(val, cache, opal_value_t) {
-                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&val, 1, OPAL_VALUE))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        } else {
-            /* pack a zero to indicate no job info is being passed */
-            count = 0;
-            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
         }
     }
     return ORTE_SUCCESS;
@@ -594,7 +598,11 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        /* pack the last mapper */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->last_mapper), 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* pack the policies */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->mapping), 1, ORTE_MAPPING_POLICY))) {
             ORTE_ERROR_LOG(rc);

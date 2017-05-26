@@ -45,7 +45,7 @@
 static int mindist_map(orte_job_t *jdata);
 
 orte_rmaps_base_module_t orte_rmaps_mindist_module = {
-    mindist_map
+    .map_job = mindist_map
 };
 
 /*
@@ -391,15 +391,6 @@ static int mindist_map(orte_job_t *jdata)
             }
         }
 
-        /* compute vpids and add proc objects to the job - do this after
-         * each app_context so that the ranks within each context are
-         * contiguous
-         */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata, app, &node_list))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* track the total number of processes we mapped - must update
          * this value AFTER we compute vpids so that computation
          * is done correctly
@@ -415,6 +406,17 @@ static int mindist_map(orte_job_t *jdata)
         OBJ_DESTRUCT(&node_list);
     }
     free(orte_rmaps_base.device);
+    /* compute vpids and add proc objects to the job - do this after
+     * each app_context so that the ranks within each context are
+     * contiguous
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* mark the job as fully described */
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     return ORTE_SUCCESS;
 
 error:
@@ -425,3 +427,96 @@ error:
 
     return rc;
 }
+
+#if 0
+static int assign_locations(orte_job_t *jdata)
+{
+    int j, k, m, n, npus;
+    orte_app_context_t *app;
+    orte_node_t *node;
+    orte_proc_t *proc;
+    hwloc_obj_t obj=NULL;
+    mca_base_component_t *c = &mca_rmaps_mindist_component.base_version;
+    int rc;
+    opal_list_t numa_list;
+    opal_rmaps_numa_node_t *numa;
+
+    if (NULL == jdata->map->last_mapper||
+        0 != strcasecmp(jdata->map->last_mapper, c->mca_component_name)) {
+        /* the mapper should have been set to me */
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:mindist: job %s not using mindist mapper",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                        "mca:rmaps:mindist: assign locations for job %s",
+                        ORTE_JOBID_PRINT(jdata->jobid));
+
+    /* start assigning procs to objects, filling each object as we go until
+     * all procs are assigned. If one pass doesn't catch all the required procs,
+     * then loop thru the list again to handle the oversubscription
+     */
+    for (n=0; n < jdata->apps->size; n++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+            continue;
+        }
+        for (m=0; m < jdata->map->nodes->size; m++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, m))) {
+                continue;
+            }
+            if (NULL == node->topology || NULL == node->topology->topo) {
+                orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
+                               true, node->name);
+                return ORTE_ERR_SILENT;
+            }
+
+            /* first we need to fill summary object for root with information about nodes
+             * so we call opal_hwloc_base_get_nbobjs_by_type */
+            opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
+            OBJ_CONSTRUCT(&numa_list, opal_list_t);
+            rc = opal_hwloc_get_sorted_numa_list(node->topology->topo, orte_rmaps_base.device, &numa_list);
+            if (rc > 1) {
+                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-devices",
+                               true, orte_rmaps_base.device, rc, node->name);
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                OPAL_LIST_DESTRUCT(&numa_list);
+                return ORTE_ERR_TAKE_NEXT_OPTION;
+            } else if (rc < 0) {
+                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:device-not-found",
+                        true, orte_rmaps_base.device, node->name);
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                OPAL_LIST_DESTRUCT(&numa_list);
+                return ORTE_ERR_TAKE_NEXT_OPTION;
+            }
+            j = 0;
+            OPAL_LIST_FOREACH(numa, &numa_list, opal_rmaps_numa_node_t) {
+                /* get the hwloc object for this numa */
+                if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology->topo, HWLOC_OBJ_NODE, 0, numa->index, OPAL_HWLOC_AVAILABLE))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    OPAL_LIST_DESTRUCT(&numa_list);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                npus = opal_hwloc_base_get_npus(node->topology->topo, obj);
+                /* fill the numa region with procs from this job until we either
+                 * have assigned everyone or the region is full */
+                for (k = j; k < node->procs->size && 0 < npus; k++) {
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, k))) {
+                        continue;
+                    }
+                    if (proc->name.jobid != jdata->jobid) {
+                        continue;
+                    }
+                    orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
+                    ++j;
+                    --npus;
+                }
+            }
+            OPAL_LIST_DESTRUCT(&numa_list);
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+#endif

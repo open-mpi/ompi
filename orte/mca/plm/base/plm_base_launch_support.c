@@ -209,7 +209,7 @@ static void files_ready(int status, void *cbdata)
     if (ORTE_SUCCESS != status) {
         ORTE_FORCED_TERMINATE(status);
     } else {
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SYSTEM_PREP);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
     }
 }
 
@@ -1497,7 +1497,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* convert the nodes with daemons to a regex */
     param = NULL;
-    if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(&param))) {
+    if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, &param))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -13,7 +13,7 @@
 # Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved.
-# Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -410,3 +410,13 @@ Either the -host or -hostfile options were given, but the number
 of processes to start was omitted. This combination is not supported.
 
 Please specify the number of processes to run and try again.
+#
+[failed-assignments]
+The attempt to assign hardware locations to processes on a
+compute node failed:
+
+  Node:    %s
+  Policy:  %s
+
+We cannot continue - please check that the policy is in
+accordance with the actual available hardware.

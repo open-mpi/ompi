@@ -42,8 +42,10 @@
 #include "orte/mca/rmaps/base/rmaps_private.h"
 
 
-int orte_rmaps_base_map_job(orte_job_t *jdata)
+void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 {
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = caddy->jdata;
     orte_node_t *node;
     int rc, i, ppx = 0;
     bool did_map, given, pernode = false;
@@ -116,7 +118,9 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
                             /* inform the user of the error */
                             orte_show_help("help-orte-rmaps-base.txt", "num-procs-not-specified", true);
                             OPAL_LIST_DESTRUCT(&nodes);
-                            return ORTE_ERR_BAD_PARAM;
+                            OBJ_RELEASE(caddy);
+                            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+                            return;
                         }
                     }
                     nprocs += slots;
@@ -335,7 +339,9 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         int i;
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
+            OBJ_RELEASE(caddy);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            return;
         }
         t0 = node->topology;
         for (i=1; i < orte_node_pool->size; i++) {
@@ -368,15 +374,26 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
          */
         if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            OBJ_RELEASE(caddy);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            return;
         }
     }
+    /* reset any node map flags we used so the next job will start clean */
+     for (i=0; i < jdata->map->nodes->size; i++) {
+         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
+             ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+         }
+     }
+
     if (did_map && ORTE_ERR_RESOURCE_BUSY == rc) {
         /* the map was done but nothing could be mapped
          * for launch as all the resources were busy
          */
         orte_show_help("help-orte-rmaps-base.txt", "cannot-launch", true);
-        return rc;
+        OBJ_RELEASE(caddy);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+        return;
     }
 
     /* if we get here without doing the map, or with zero procs in
@@ -386,7 +403,9 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         orte_show_help("help-orte-rmaps-base.txt", "failed-map", true,
                        did_map ? "mapped" : "unmapped",
                        jdata->num_procs, jdata->map->num_nodes);
-        return ORTE_ERR_INVALID_NUM_PROCS;
+        OBJ_RELEASE(caddy);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+        return;
     }
 
     /* if any node is oversubscribed, then check to see if a binding
@@ -399,17 +418,29 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         }
     }
 
-    /* compute and save local ranks */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        /* compute and save location assignments */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(caddy);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            return;
+        }
+    } else {
+        /* compute and save local ranks */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(caddy);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            return;
+        }
 
-    if (orte_no_vm) {
         /* compute and save bindings */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            OBJ_RELEASE(caddy);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            return;
         }
     }
 
@@ -427,7 +458,11 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         }
     }
 
-    return ORTE_SUCCESS;
+    /* set the job state to the next position */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_COMPLETE);
+
+    /* cleanup */
+    OBJ_RELEASE(caddy);
 }
 
 void orte_rmaps_base_display_map(orte_job_t *jdata)

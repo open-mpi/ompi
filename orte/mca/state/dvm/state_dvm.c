@@ -255,7 +255,7 @@ static void vm_ready(int fd, short args, void *cbdata)
         /* if we couldn't provide the allocation regex on the orted
          * cmd line, then we need to provide all the info here */
         if (!orte_nidmap_communicated) {
-            if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(&nidmap))) {
+            if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, &nidmap))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
                 return;
