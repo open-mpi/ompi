@@ -311,7 +311,7 @@ static inline int ompi_osc_rdma_lock_acquire_exclusive (ompi_osc_rdma_module_t *
 {
     int ret;
 
-    while (1 != (ret = ompi_osc_rdma_lock_try_acquire_exclusive (module, peer, offset))) {
+    while (1 == (ret = ompi_osc_rdma_lock_try_acquire_exclusive (module, peer, offset))) {
         ompi_osc_rdma_progress (module);
     }
 
