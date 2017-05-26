@@ -43,6 +43,7 @@ bool pmix_timing_overhead = true;
 
 static bool pmix_register_done = false;
 char *pmix_net_private_ipv4 = NULL;
+int pmix_event_caching_window;
 
 pmix_status_t pmix_register_params(void)
 {
@@ -89,6 +90,14 @@ pmix_status_t pmix_register_params(void)
     if (0 > ret) {
         return ret;
     }
+
+    pmix_event_caching_window = 3;
+    (void) pmix_mca_base_var_register ("pmix", "pmix", NULL, "event_caching_window",
+                                  "Time (in seconds) to cache events before reporting them - this "
+                                  "allows for event aggregation",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_9, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_event_caching_window);
 
     return PMIX_SUCCESS;
 }

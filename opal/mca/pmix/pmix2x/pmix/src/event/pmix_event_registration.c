@@ -234,6 +234,8 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
             active->code = PMIX_MAX_ERR_CONSTANT;
             active->nregs = 1;
             pmix_list_append(&pmix_globals.events.actives, &active->super);
+            /* ensure we register it */
+            need_register = true;
         }
     } else {
         for (n=0; n < cd->ncodes; n++) {
@@ -675,7 +677,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     }
 
     /* check if any matching notifications have been cached */
-    for (i=0; i < pmix_globals.notifications.size; i++) {
+    for (i=0; i < (size_t)pmix_globals.notifications.size; i++) {
         if (NULL == (ncd = (pmix_notify_caddy_t*)pmix_ring_buffer_poke(&pmix_globals.notifications, i))) {
             break;
         }
@@ -912,11 +914,10 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
         }
     }
     /* if we get here, then the registration could not be found */
-    if (NULL != cd->cbfunc.opcbfn) {
-        cd->cbfunc.opcbfn(PMIX_ERR_NOT_FOUND, cd->cbdata);
+    if (NULL != msg) {
+        PMIX_RELEASE(msg);
     }
-    PMIX_RELEASE(cd);
-    return;
+    goto cleanup;
 
   report:
     if (NULL != msg) {

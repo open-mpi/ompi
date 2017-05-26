@@ -229,6 +229,8 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
             PMIX_RELEASE(cb);
             goto cleanup;
         }
+    } else {
+        cbfunc(PMIX_SUCCESS, cbdata);
     }
 
     /* now notify any matching registered callbacks we have */
@@ -946,6 +948,24 @@ static bool check_range(pmix_range_trkr_t *rng,
     return false;
 }
 
+void pmix_event_timeout_cb(int fd, short flags, void *arg)
+{
+    pmix_event_chain_t *ch = (pmix_event_chain_t*)arg;
+
+    ch->timer_active = false;
+
+    /* remove it from the list */
+    pmix_list_remove_item(&pmix_globals.cached_events, &ch->super);
+
+    /* process this event thru the regular channels */
+    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        pmix_server_notify_client_of_event(ch->status, &ch->source,
+                                           ch->range, ch->info, ch->ninfo,
+                                           ch->final_cbfunc, ch->final_cbdata);
+    } else {
+        pmix_invoke_local_event_hdlr(ch);
+    }
+}
 
 /****    CLASS INSTANTIATIONS    ****/
 
@@ -1019,6 +1039,7 @@ PMIX_CLASS_INSTANCE(pmix_events_t,
 
 static void chcon(pmix_event_chain_t *p)
 {
+    p->timer_active = false;
     memset(p->source.nspace, 0, PMIX_MAX_NSLEN+1);
     p->source.rank = PMIX_RANK_UNDEF;
     p->nondefault = false;
@@ -1034,6 +1055,9 @@ static void chcon(pmix_event_chain_t *p)
 }
 static void chdes(pmix_event_chain_t *p)
 {
+    if (p->timer_active) {
+        pmix_event_del(&p->ev);
+    }
     if (NULL != p->info) {
         PMIX_INFO_FREE(p->info, p->ninfo);
     }
@@ -1042,5 +1066,5 @@ static void chdes(pmix_event_chain_t *p)
     }
 }
 PMIX_CLASS_INSTANCE(pmix_event_chain_t,
-                    pmix_object_t,
+                    pmix_list_item_t,
                     chcon, chdes);
