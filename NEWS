@@ -53,6 +53,80 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+2.0.3 -- June 2017
+------------------
+
+Bug fixes/minor improvements:
+
+ - Fix a problem with MPI_IALLTOALLW when zero size messages are present.
+   Thanks to @mathbird for reporting.
+ - Add missing MPI_USER_FUNCTION definition to the mpi_f08 module.
+   Thanks to Nathan Weeks for reporting this issue.
+ - Fix a problem with MPI_WIN_LOCK not returning an error code when
+   a negative rank is supplied.  Thanks to Jeff Hammond for reporting and
+   providing a fix.
+ - Fix a problem with make check that could lead to hangs.  Thanks to
+   Nicolas Morey-Chaisemartin for reporting.
+ - Resolve a symbol conflict problem with PMI-1 and PMI-2 PMIx components.
+   Thanks to Kilian Cavalotti for reporting this issue.
+ - Insure that memory allocations returned from MPI_WIN_ALLOCATE_SHARED are
+   64 byte aligned.  Thanks to Joseph Schuchart for reporting this issue.
+ - Make use of DOUBLE_COMPLEX, if available, for Fortran bindings.  Thanks
+   to Alexander Klein for reporting this issue.
+ - Add missing MPI_T_PVAR_SESSION_NULL definition to Open MPI mpi.h include
+   file.  Thanks to Omri Mor for reporting and fixing.
+ - Fix a problem with use of MPI shared file pointers when accessing
+   a file from independent jobs.  Thanks to Nicolas Joly for reporting
+   this issue.
+ - Optimize zero size MPI_IALLTOALL{V,W} with MPI_IN_PLACE.  Thanks to
+   Lisandro Dalcin for the report.
+ - Fix a ROMIO buffer overflow problem for large transfers when using NFS
+   filesystems.
+ - Fix type of MPI_ARGV[S]_NULL which prevented it from being used
+   properly with MPI_COMM_SPAWN[_MULTIPLE] in the mpi_f08 module.
+ - Ensure to add proper linker flags to the wrapper compilers for
+   dynamic libraries on platforms that need it (e.g., RHEL 7.3 and
+   later).
+ - Get better performance on TCP-based networks 10Gbps and higher by
+   using OS defaults for buffer sizing.
+ - Fix a bug with MPI_[R][GET_]ACCUMULATE when using DARRAY datatypes.
+ - Fix handling of --with-lustre configure command line argument.
+   Thanks to Prentice Bisbal and Tim Mattox for reporting the issue.
+ - Added MPI_AINT_ADD and MPI_AINT_DIFF declarations to mpif.h.  Thanks
+   to Aboorva Devarajan (@AboorvaDevarajan) for the bug report.
+ - Fix a problem in the TCP BTL when Open MPI is initialized with
+   MPI_THREAD_MULTIPLE support.  Thanks to Evgueni Petro for analyzing and
+   reporting this issue.
+ - Fix yalla PML to properly handle underflow errors, and fixed a
+   memory leak with blocking non-contiguous sends.
+ - Restored ability to run autogen.pl on official distribution tarballs
+   (although this is still not recommended for most users!).
+ - Fix accuracy problems with MPI_WTIME on some systems by always using
+   either clock_gettime(3) or gettimeofday(3).
+ - Fix a problem where MPI_WTICK was not returning a higher time resolution
+   when available.  Thanks to Mark Dixon for reporting this issue.
+ - Restore SGE functionality.  Thanks to Kevin Buckley for the initial
+   report.
+ - Fix external hwloc compilation issues, and extend support to allow
+   using external hwloc installations as far back as v1.5.0.  Thanks to
+   Orion Poplawski for raising the issue.
+ - Added latest Mellanox Connect-X and Chelsio T-6 adapter part IDs to
+   the openib list of default values.
+ - Do a better job of cleaning up session directories (e.g., in /tmp).
+ - Update a help message to indicate how to suppress a warning about
+   no high performance networks being detected by Open MPI.  Thanks to
+   Susan Schwarz for reporting this issue.
+ - Fix a problem with mangling of custom CFLAGS when configuring Open MPI.
+   Thanks to Phil Tooley for reporting.
+ - Fix some minor memory leaks and remove some unused variables.
+   Thanks to Joshua Gerrard for reporting.
+ - Fix MPI_ALLGATHERV bug with MPI_IN_PLACE.
+
+Known issues (to be addressed in v2.0.4):
+
+- See the list of fixes slated for v2.0.4 here:
+  https://github.com/open-mpi/ompi/milestone/29
+
 2.0.2 -- 26 January 2017
 -------------------------
 
