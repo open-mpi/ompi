@@ -167,6 +167,7 @@ typedef struct pmix_personality_t {
  * by the socket, not the process nspace/rank */
 typedef struct pmix_peer_t {
     pmix_object_t super;
+    bool finalized;
     pmix_rank_info_t *info;
     int proc_cnt;
     void *server_object;
@@ -374,6 +375,8 @@ typedef struct {
     pmix_list_t nspaces;                // list of pmix_nspace_t for the nspaces we know about
     pmix_buffer_t *cache_local;         // data PUT by me to local scope
     pmix_buffer_t *cache_remote;        // data PUT by me to remote scope
+    struct timeval event_window;
+    pmix_list_t cached_events;          // events waiting in the window prior to processing
     pmix_ring_buffer_t notifications;   // ring buffer of pending notifications
 } pmix_globals_t;
 

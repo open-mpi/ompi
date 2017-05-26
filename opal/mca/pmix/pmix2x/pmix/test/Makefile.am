@@ -34,7 +34,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_buildd
 noinst_SCRIPTS = pmix_client_otheruser.sh
 noinst_PROGRAMS =
 
-if WANT_PMIX_BACKWARD
+if WANT_PMI_BACKWARD
 noinst_PROGRAMS += pmi_client pmi2_client
 endif
 
@@ -48,7 +48,7 @@ pmix_test_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_test_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-if WANT_PMIX_BACKWARD
+if WANT_PMI_BACKWARD
 pmi_client_SOURCES = $(headers) \
         pmi_client.c
 pmi_client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)

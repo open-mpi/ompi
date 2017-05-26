@@ -75,10 +75,10 @@ static void pmix_buffer_destruct (pmix_buffer_t* buffer)
     }
 }
 
-PMIX_CLASS_INSTANCE(pmix_buffer_t,
-                   pmix_object_t,
-                   pmix_buffer_construct,
-                   pmix_buffer_destruct);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_buffer_t,
+                                pmix_object_t,
+                                pmix_buffer_construct,
+                                pmix_buffer_destruct);
 
 
 static void pmix_bfrop_type_info_construct(pmix_bfrop_type_info_t *obj)
@@ -97,9 +97,9 @@ static void pmix_bfrop_type_info_destruct(pmix_bfrop_type_info_t *obj)
     }
 }
 
-PMIX_CLASS_INSTANCE(pmix_bfrop_type_info_t, pmix_object_t,
-                   pmix_bfrop_type_info_construct,
-                   pmix_bfrop_type_info_destruct);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_bfrop_type_info_t, pmix_object_t,
+                                pmix_bfrop_type_info_construct,
+                                pmix_bfrop_type_info_destruct);
 
 static void kvcon(pmix_kval_t *k)
 {
@@ -115,18 +115,18 @@ static void kvdes(pmix_kval_t *k)
         PMIX_VALUE_RELEASE(k->value);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_kval_t,
-                   pmix_list_item_t,
-                   kvcon, kvdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_kval_t,
+                                pmix_list_item_t,
+                                kvcon, kvdes);
 
 static void rcon(pmix_regex_range_t *p)
 {
     p->start = 0;
     p->cnt = 0;
 }
-PMIX_CLASS_INSTANCE(pmix_regex_range_t,
-                    pmix_list_item_t,
-                    rcon, NULL);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_regex_range_t,
+                                pmix_list_item_t,
+                                rcon, NULL);
 
 static void rvcon(pmix_regex_value_t *p)
 {
@@ -145,9 +145,9 @@ static void rvdes(pmix_regex_value_t *p)
     }
     PMIX_LIST_DESTRUCT(&p->ranges);
 }
-PMIX_CLASS_INSTANCE(pmix_regex_value_t,
-                    pmix_list_item_t,
-                    rvcon, rvdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_regex_value_t,
+                                pmix_list_item_t,
+                                rvcon, rvdes);
 
 pmix_status_t pmix_bfrop_open(void)
 {

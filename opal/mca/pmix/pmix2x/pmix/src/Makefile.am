@@ -24,6 +24,7 @@
 ACLOCAL_AMFLAGS = -I ./config
 
 SUBDIRS = \
+	atomics/asm \
 	util/keyval \
     mca/base \
     $(MCA_pmix_FRAMEWORKS_SUBDIRS) \
@@ -32,6 +33,7 @@ SUBDIRS = \
     $(MCA_pmix_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 DIST_SUBDIRS = \
+	atomics/asm \
 	util/keyval \
     mca/base \
     $(MCA_pmix_FRAMEWORKS_SUBDIRS) \
@@ -52,7 +54,6 @@ if PMIX_EMBEDDED_MODE
 
 if WANT_INSTALL_HEADERS
 
-# retain output of pmix library
 lib_LTLIBRARIES = libpmix.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
@@ -73,6 +74,8 @@ libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
 
 endif !PMIX_EMBEDDED_MODE
 
+include atomics/sys/Makefile.include
+include threads/Makefile.include
 include class/Makefile.include
 include event/Makefile.include
 include include/Makefile.include

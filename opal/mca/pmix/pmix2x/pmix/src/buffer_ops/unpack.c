@@ -632,7 +632,7 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             break;
         case PMIX_PROC:
             /* this field is now a pointer, so we must allocate storage for it */
-            PMIX_PROC_CREATE(val->data.proc, 1);
+            PMIX_PROC_CREATE(val->data.proc, m);
             if (NULL == val->data.proc) {
                 return PMIX_ERR_NOMEM;
             }
@@ -653,6 +653,11 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             break;
         case PMIX_PERSIST:
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.proc, &m, PMIX_PROC))) {
+                return ret;
+            }
+            break;
+        case PMIX_POINTER:
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, &val->data.ptr, &m, PMIX_POINTER))) {
                 return ret;
             }
             break;

@@ -22,6 +22,8 @@
 #define PMIX_EVENT_H
 
 #include <src/include/pmix_config.h>
+#include "src/include/types.h"
+#include PMIX_EVENT_HEADER
 
 #include <pmix_common.h>
 #include "src/class/pmix_list.h"
@@ -92,8 +94,10 @@ PMIX_CLASS_DECLARATION(pmix_events_t);
  * means for us to relay the event across that chain
  */
 typedef struct pmix_event_chain_t {
-    pmix_object_t super;
+    pmix_list_item_t super;
     pmix_status_t status;
+    pmix_event_t ev;
+    bool timer_active;
     bool nondefault;
     bool endchain;
     pmix_proc_t source;
@@ -120,22 +124,64 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
                                                  pmix_info_t info[], size_t ninfo,
                                                  pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-#define PMIX_REPORT_EVENT(e, f)                     \
-    do {                                            \
-        pmix_event_chain_t *_ch;                    \
-        _ch = PMIX_NEW(pmix_event_chain_t);         \
-        _ch->status = (e);                          \
-        _ch->ninfo = 2;                             \
-        _ch->final_cbfunc = (f);                    \
-        _ch->final_cbdata = _ch;                    \
-        PMIX_INFO_CREATE(_ch->info, _ch->ninfo);    \
-        PMIX_INFO_LOAD(&_ch->info[0],               \
-                       PMIX_EVENT_HDLR_NAME,        \
-                       NULL, PMIX_STRING);          \
-        PMIX_INFO_LOAD(&_ch->info[1],               \
-                       PMIX_EVENT_RETURN_OBJECT,    \
-                       NULL, PMIX_POINTER);         \
-        pmix_invoke_local_event_hdlr(_ch);          \
+void pmix_event_timeout_cb(int fd, short flags, void *arg);
+
+#define PMIX_REPORT_EVENT(e, p, r, f)                                               \
+    do {                                                                            \
+        pmix_event_chain_t *ch, *cp;                                                \
+        size_t n, ninfo;                                                            \
+        pmix_info_t *info;                                                          \
+        pmix_proc_t proc;                                                           \
+                                                                                    \
+        ch = NULL;                                                                  \
+        /* see if we already have this event cached */                              \
+        PMIX_LIST_FOREACH(cp, &pmix_globals.cached_events, pmix_event_chain_t) {    \
+            if (cp->status == (e)) {                                                \
+                ch = cp;                                                            \
+                break;                                                              \
+            }                                                                       \
+        }                                                                           \
+        if (NULL == ch) {                                                           \
+            /* nope - need to add it */                                             \
+            ch = PMIX_NEW(pmix_event_chain_t);                                      \
+            ch->status = (e);                                                       \
+            ch->range = (r);                                                        \
+            (void)strncpy(ch->source.nspace,                                        \
+                          (p)->info->nptr->nspace,                                  \
+                          PMIX_MAX_NSLEN);                                          \
+            ch->source.rank = (p)->info->rank;                                      \
+            ch->ninfo = 2;                                                          \
+            ch->final_cbfunc = (f);                                                 \
+            ch->final_cbdata = ch;                                                  \
+            PMIX_INFO_CREATE(ch->info, ch->ninfo);                                  \
+            PMIX_INFO_LOAD(&ch->info[0],                                            \
+                           PMIX_EVENT_HDLR_NAME,                                    \
+                           NULL, PMIX_STRING);                                      \
+            PMIX_INFO_LOAD(&ch->info[1],                                            \
+                           PMIX_EVENT_RETURN_OBJECT,                                \
+                           NULL, PMIX_POINTER);                                     \
+            /* cache it */                                                          \
+            pmix_list_append(&pmix_globals.cached_events, &ch->super);              \
+            ch->timer_active = true;                                                \
+            pmix_event_assign(&ch->ev, pmix_globals.evbase, -1, 0,                  \
+                              pmix_event_timeout_cb, ch);                           \
+            pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
+        } else {                                                                    \
+            /* add this peer to the array of sources */                             \
+            (void)strncpy(proc.nspace, (p)->info->nptr->nspace, PMIX_MAX_NSLEN);    \
+            proc.rank = (p)->info->rank;                                            \
+            ninfo = ch->ninfo + 1;                                                  \
+            PMIX_INFO_CREATE(info, ninfo);                                          \
+            /* must keep the hdlr name and return object at the end, so prepend */  \
+            PMIX_INFO_LOAD(&info[0], PMIX_PROCID,                                   \
+                           &proc, PMIX_PROC);                                       \
+            for (n=0; n < ch->ninfo; n++) {                                         \
+                PMIX_INFO_XFER(&info[n+1], &ch->info[n]);                           \
+            }                                                                       \
+            PMIX_INFO_FREE(ch->info, ch->ninfo);                                    \
+            ch->info = info;                                                        \
+            ch->ninfo = ninfo;                                                      \
+        }                                                                           \
     } while(0)
 
 

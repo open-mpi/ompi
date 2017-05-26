@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +46,7 @@ extern bool pmix_timing_overhead;
 
 extern int pmix_initialized;
 extern char *pmix_net_private_ipv4;
+extern int pmix_event_caching_window;
 
 /** version string of pmix */
 extern const char pmix_version_string[];

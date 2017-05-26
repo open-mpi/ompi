@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/include -I$(top_builddir)/include/pmix
 
-noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex test_pmix simptool
+noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex test_pmix simptool simpdie
 
 simptest_SOURCES = \
         simptest.c
@@ -69,4 +69,10 @@ simptool_SOURCES = \
         simptool.c
 simptool_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simptool_LDADD = \
+    $(top_builddir)/src/libpmix.la
+
+simpdie_SOURCES = \
+        simpdie.c
+simpdie_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+simpdie_LDADD = \
     $(top_builddir)/src/libpmix.la
