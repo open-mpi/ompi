@@ -17,7 +17,7 @@ include_HEADERS = \
         pmix_server.h \
         pmix_tool.h
 
-if WANT_PMIX_BACKWARD
+if WANT_PMI_BACKWARD
 include_HEADERS += \
         pmi.h \
         pmi2.h

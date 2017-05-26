@@ -53,7 +53,7 @@
 
 #include "src/class/pmix_list.h"
 #include "src/util/output.h"
-#include "src/buffer_ops/types.h"
+#include "src/mca/bfrops/bfrops_types.h"
 
 BEGIN_C_DECLS
 
@@ -169,8 +169,9 @@ typedef struct {
     size_t ninfo;
     pmix_status_t status;
     struct sockaddr_storage addr;
-    char *bfrop;
+    char *bfrops;
     char *psec;
+    char *gds;
     struct pmix_ptl_module_t *ptl;
     pmix_bfrop_buffer_type_t buffer_type;
     char *cred;
@@ -228,8 +229,8 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
         pmix_output_verbose(5, pmix_globals.debug_output,                               \
                             "[%s:%d] queue callback called: reply to %s:%d on tag %d size %d",  \
                             __FILE__, __LINE__,                                         \
-                            (p)->info->nptr->nspace,                                    \
-                            (p)->info->rank, (t), (int)(b)->bytes_used);                \
+                            (p)->info->pname.nspace,                                    \
+                            (p)->info->pname.rank, (t), (int)(b)->bytes_used);          \
         snd = PMIX_NEW(pmix_ptl_send_t);                                                \
         snd->hdr.pindex = htonl(pmix_globals.pindex);                                   \
         snd->hdr.tag = htonl(t);                                                        \

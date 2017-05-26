@@ -208,7 +208,7 @@ int main(int argc, char **argv)
          * query the status of the allocation request */
         usleep(10);
         PMIX_QUERY_CREATE(query, 1);
-        PMIX_ARGV_APPEND(query[0].keys, PMIX_QUERY_ALLOC_STATUS);
+        PMIX_ARGV_APPEND(rc, query[0].keys, PMIX_QUERY_ALLOC_STATUS);
         PMIX_INFO_CREATE(query[0].qualifiers, 1);
         PMIX_INFO_LOAD(&query[0].qualifiers[0], PMIX_ALLOC_ID, myallocation, PMIX_STRING);
         mydata.active = true;

@@ -55,17 +55,6 @@
 
 /* Instantiate the global vars */
 pmix_ptl_globals_t pmix_ptl_globals = {{{0}}};
-pmix_ptl_API_t pmix_ptl = {
-    .set_notification_cbfunc = pmix_ptl_stub_set_notification_cbfunc,
-    .get_available_modules = pmix_ptl_stub_get_available_modules,
-    .send_recv = pmix_ptl_stub_send_recv,
-    .send_oneway = pmix_ptl_stub_send_oneway,
-    .connect_to_peer = pmix_ptl_stub_connect_to_peer,
-    .recv = pmix_ptl_stub_register_recv,
-    .cancel = pmix_ptl_stub_cancel_recv,
-    .start_listening = pmix_ptl_base_start_listening,
-    .stop_listening = pmix_ptl_base_stop_listening
-};
 
 static int pmix_ptl_register(pmix_mca_base_register_flag_t flags)
 {
@@ -80,7 +69,7 @@ static pmix_status_t pmix_ptl_close(void)
     pmix_ptl_globals.initialized = false;
 
     /* ensure the listen thread has been shut down */
-    pmix_ptl.stop_listening();
+    pmix_ptl_base_stop_listening();
 
     if (0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
@@ -180,8 +169,9 @@ static void pccon(pmix_pending_connection_t *p)
     memset(p->nspace, 0, PMIX_MAX_NSLEN+1);
     p->info = NULL;
     p->ninfo = 0;
-    p->bfrop = NULL;
+    p->bfrops = NULL;
     p->psec = NULL;
+    p->gds = NULL;
     p->ptl = NULL;
     p->cred = NULL;
 }
@@ -190,11 +180,14 @@ static void pcdes(pmix_pending_connection_t *p)
     if (NULL != p->info) {
         PMIX_INFO_FREE(p->info, p->ninfo);
     }
-    if (NULL != p->bfrop) {
-        free(p->bfrop);
+    if (NULL != p->bfrops) {
+        free(p->bfrops);
     }
     if (NULL != p->psec) {
         free(p->psec);
+    }
+    if (NULL != p->gds) {
+        free(p->gds);
     }
     if (NULL != p->cred) {
         free(p->cred);

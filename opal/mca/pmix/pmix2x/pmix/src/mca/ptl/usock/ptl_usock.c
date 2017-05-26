@@ -52,7 +52,7 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/include/pmix_globals.h"
 #include "src/include/pmix_socket_errno.h"
-#include "src/mca/psec/psec.h"
+#include "src/mca/psec/base/base.h"
 
 #include "src/mca/ptl/base/base.h"
 #include "ptl_usock.h"
@@ -117,11 +117,12 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* set the server nspace */
     pmix_client_globals.myserver.info = PMIX_NEW(pmix_rank_info_t);
-    pmix_client_globals.myserver.info->nptr = PMIX_NEW(pmix_nspace_t);
-    (void)strncpy(pmix_client_globals.myserver.info->nptr->nspace, uri[0], PMIX_MAX_NSLEN);
+    pmix_client_globals.myserver.nptr = PMIX_NEW(pmix_nspace_t);
+    pmix_client_globals.myserver.nptr->nspace = strdup(uri[0]);
+    pmix_client_globals.myserver.info->pname.nspace = strdup(uri[0]);
 
     /* set the server rank */
-    pmix_client_globals.myserver.info->rank = strtoull(uri[1], NULL, 10);
+    pmix_client_globals.myserver.info->pname.rank = strtoull(uri[1], NULL, 10);
 
     /* setup the path to the daemon rendezvous point */
     memset(&mca_ptl_usock_component.connection, 0, sizeof(struct sockaddr_storage));
@@ -248,8 +249,9 @@ static pmix_status_t send_connect_ack(int sd)
 
     /* get a credential, if the security system provides one. Not
      * every SPC will do so, thus we must first check */
-    if (PMIX_SUCCESS != (rc = pmix_psec.create_cred(&pmix_client_globals.myserver,
-                                                    PMIX_PROTOCOL_V1, &cred, &len))) {
+    PMIX_PSEC_CREATE_CRED(rc, &pmix_client_globals.myserver,
+                          PMIX_PROTOCOL_V1, &cred, &len);
+    if (PMIX_SUCCESS != rc) {
         return rc;
     }
 
@@ -335,7 +337,8 @@ static pmix_status_t recv_connect_ack(int sd)
 
     /* see if they want us to do the handshake */
     if (PMIX_ERR_READY_FOR_HANDSHAKE == reply) {
-        if (PMIX_SUCCESS != (rc = pmix_psec.client_handshake(&pmix_client_globals.myserver, sd))) {
+        PMIX_PSEC_CLIENT_HANDSHAKE(rc, &pmix_client_globals.myserver, sd);
+        if (PMIX_SUCCESS != rc) {
             return rc;
         }
     } else if (PMIX_SUCCESS != reply) {

@@ -13,5 +13,4 @@ sources += \
         common/pmix_query.c \
         common/pmix_strings.c \
         common/pmix_log.c \
-        common/pmix_jobdata.c \
         common/pmix_control.c

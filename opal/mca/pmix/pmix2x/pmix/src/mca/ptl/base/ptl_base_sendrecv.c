@@ -41,6 +41,7 @@
 
 #include "src/class/pmix_pointer_array.h"
 #include "src/include/pmix_globals.h"
+#include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
 
@@ -57,7 +58,7 @@ static void _notify_complete(pmix_status_t status, void *cbdata)
 static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
 {
     pmix_server_trkr_t *trk;
-    pmix_rank_info_t *rinfo, *rnext;
+    pmix_server_caddy_t *rinfo, *rnext;
     pmix_trkr_caddy_t *tcd;
     pmix_regevents_info_t *reginfoptr, *regnext;
     pmix_peer_events_info_t *pr, *pnext;
@@ -65,6 +66,7 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
     pmix_ptl_posted_recv_t *rcv;
     pmix_buffer_t buf;
     pmix_ptl_hdr_t hdr;
+    bool notify = true;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -90,17 +92,17 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
          * after it successfully connected */
         PMIX_LIST_FOREACH(trk, &pmix_server_globals.collectives, pmix_server_trkr_t) {
             /* see if this proc is participating in this tracker */
-            PMIX_LIST_FOREACH_SAFE(rinfo, rnext, &trk->ranks, pmix_rank_info_t) {
-                if (0 != strncmp(rinfo->nptr->nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN)) {
+            PMIX_LIST_FOREACH_SAFE(rinfo, rnext, &trk->local_cbs, pmix_server_caddy_t) {
+                if (0 != strncmp(rinfo->peer->info->pname.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN)) {
                     continue;
                 }
-                if (rinfo->rank != peer->info->rank) {
+                if (rinfo->peer->info->pname.rank != peer->info->pname.rank) {
                     continue;
                 }
                 /* it is - adjust the count */
                 --trk->nlocal;
                 /* remove it from the list */
-                pmix_list_remove_item(&trk->ranks, &rinfo->super);
+                pmix_list_remove_item(&trk->local_cbs, &rinfo->super);
                 PMIX_RELEASE(rinfo);
                 /* check for completion */
                 if (pmix_list_get_size(&trk->local_cbs) == trk->nlocal) {
@@ -112,14 +114,16 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 }
             }
         }
-        /* remove this proc from the list of ranks for this nspace if it is still there */
-        PMIX_LIST_FOREACH_SAFE(info, pinfo, &(peer->info->nptr->server->ranks), pmix_rank_info_t) {
+        /* remove this proc from the list of ranks for this nspace if it is
+         * still there - we must check for multiple copies as there will be
+         * one for each "clone" of this peer */
+        PMIX_LIST_FOREACH_SAFE(info, pinfo, &(peer->nptr->ranks), pmix_rank_info_t) {
             if (info == peer->info) {
-                pmix_list_remove_item(&(peer->info->nptr->server->ranks), &(peer->info->super));
+                pmix_list_remove_item(&(peer->nptr->ranks), &(peer->info->super));
             }
         }
         /* reduce the number of local procs */
-        --peer->info->nptr->server->nlocalprocs;
+        --peer->nptr->nlocalprocs;
         /* now decrease the refcount - might actually free the object */
         PMIX_RELEASE(peer->info);
         /* remove this client from our array */
@@ -139,6 +143,9 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 }
              }
          }
+         if (peer->finalized) {
+            notify = false;
+         }
          PMIX_RELEASE(peer);
      } else {
         /* if I am a client, there is only
@@ -154,6 +161,8 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
          * the return call from a sendrecv - i.e., any that are
          * waiting on dynamic tags */
         PMIX_CONSTRUCT(&buf, pmix_buffer_t);
+        /* must set the buffer type so it doesn't fail in unpack */
+        buf.type = pmix_client_globals.myserver.nptr->compat.type;
         hdr.nbytes = 0; // initialize the hdr to something safe
         PMIX_LIST_FOREACH(rcv, &pmix_ptl_globals.posted_recvs, pmix_ptl_posted_recv_t) {
             if (UINT_MAX != rcv->tag && NULL != rcv->cbfunc) {
@@ -164,7 +173,9 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
         }
         PMIX_DESTRUCT(&buf);
     }
-    PMIX_REPORT_EVENT(err, _notify_complete);
+    if (notify) {
+        PMIX_REPORT_EVENT(err, _notify_complete);
+    }
 }
 
 static pmix_status_t send_msg(int sd, pmix_ptl_send_t *msg)
@@ -303,7 +314,7 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "ptl:base:send_handler SENDING TO PEER %s:%d tag %u with %s msg",
-                        peer->info->nptr->nspace, peer->info->rank,
+                        peer->info->pname.nspace, peer->info->pname.rank,
                         (NULL == msg) ? UINT_MAX : ntohl(msg->hdr.tag),
                         (NULL == msg) ? "NULL" : "NON-NULL");
 
@@ -364,9 +375,9 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
     char *ptr;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "ptl:base:recv:handler called with peer %s:%d",
-                        (NULL == peer) ? "NULL" : peer->info->nptr->nspace,
-                        (NULL == peer) ? PMIX_RANK_UNDEF : peer->info->rank);
+                        "ptl:base:recv:handler called with peer %s:%u",
+                        (NULL == peer) ? "NULL" : peer->info->pname.nspace,
+                        (NULL == peer) ? PMIX_RANK_UNDEF : peer->info->pname.rank);
 
     if (NULL == peer) {
         return;
@@ -407,8 +418,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
             /* if this is a zero-byte message, then we are done */
             if (0 == peer->recv_msg->hdr.nbytes) {
                 pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "RECVD ZERO-BYTE MESSAGE FROM %s:%d for tag %d",
-                                    peer->info->nptr->nspace, peer->info->rank,
+                                    "RECVD ZERO-BYTE MESSAGE FROM %s:%u for tag %d",
+                                    peer->info->pname.nspace, peer->info->pname.rank,
                                     peer->recv_msg->hdr.tag);
                 peer->recv_msg->data = NULL;  // make sure
                 peer->recv_msg->rdptr = NULL;
@@ -492,17 +503,17 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
     pmix_ptl_send_t *snd;
 
     if (NULL == queue->peer || queue->peer->sd < 0 ||
-        NULL == queue->peer->info || NULL == queue->peer->info->nptr) {
+        NULL == queue->peer->info || NULL == queue->peer->nptr) {
         /* this peer has lost connection */
         PMIX_RELEASE(queue);
         return;
     }
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "[%s:%d] send to %s:%d on tag %d",
+                        "[%s:%d] send to %s:%u on tag %d",
                         __FILE__, __LINE__,
-                        (queue->peer)->info->nptr->nspace,
-                        (queue->peer)->info->rank, (queue->tag));
+                        (queue->peer)->info->pname.nspace,
+                        (queue->peer)->info->pname.rank, (queue->tag));
 
     snd = PMIX_NEW(pmix_ptl_send_t);
     snd->hdr.pindex = htonl(pmix_globals.pindex);
@@ -611,12 +622,12 @@ void pmix_ptl_base_process_msg(int fd, short flags, void *cbdata)
                 /* construct and load the buffer */
                 PMIX_CONSTRUCT(&buf, pmix_buffer_t);
                 if (NULL != msg->data) {
-                    buf.base_ptr = (char*)msg->data;
-                    buf.bytes_allocated = buf.bytes_used = msg->hdr.nbytes;
-                    buf.unpack_ptr = buf.base_ptr;
-                    buf.pack_ptr = ((char*)buf.base_ptr) + buf.bytes_used;
+                    PMIX_LOAD_BUFFER(msg->peer, &buf, msg->data, msg->hdr.nbytes);
+                } else {
+                    /* we need to at least set the buffer type so
+                     * unpack of a zero-byte message doesn't error */
+                    buf.type = msg->peer->nptr->compat.type;
                 }
-                msg->data = NULL;  // protect the data region
                 rcv->cbfunc(msg->peer, &msg->hdr, &buf, rcv->cbdata);
                 PMIX_DESTRUCT(&buf);  // free's the msg data
             }
