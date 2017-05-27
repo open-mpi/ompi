@@ -457,6 +457,7 @@ ORTE_DECLSPEC extern bool orte_coprocessors_detected;
 ORTE_DECLSPEC extern opal_hash_table_t *orte_coprocessors;
 ORTE_DECLSPEC extern char *orte_topo_signature;
 ORTE_DECLSPEC extern bool orte_no_vm;
+ORTE_DECLSPEC extern char *orte_data_server_uri;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;

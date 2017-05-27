@@ -39,6 +39,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_data_server.h"
@@ -197,4 +198,48 @@ void ompi_rte_wait_for_debugger(void)
         /* deregister the event handler */
         opal_pmix.deregister_evhandler(handler, NULL, NULL);
     }
+}
+
+bool ompi_rte_connect_accept_support(const char *port)
+{
+    char *ptr, *tmp;
+    orte_process_name_t name;
+
+    /* were we launched by mpirun, or are we calling
+     * without a defined port? */
+    if (NULL == orte_process_info.my_hnp_uri ||
+        0 == strlen(port)) {
+        return true;
+    }
+
+    /* is the job family in the port different than my own? */
+    tmp = strdup(port);  // protect input
+    if (NULL == (ptr = strchr(tmp, ':'))) {
+        /* this port didn't come from us! */
+        orte_show_help("help-orterun.txt", "orterun:malformedport", true);
+        free(tmp);
+        return false;
+    }
+    *ptr = '\0';
+    if (ORTE_SUCCESS != orte_util_convert_string_to_process_name(&name, tmp)) {
+        free(tmp);
+        orte_show_help("help-orterun.txt", "orterun:malformedport", true);
+        return false;
+    }
+    free(tmp);
+    if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) == ORTE_JOB_FAMILY(name.jobid)) {
+        /* same job family, so our infrastructure is adequate */
+        return true;
+    }
+
+    /* if the job family of the port is different than our own
+     * and we were launched by mpirun, then we require ompi-server
+     * support */
+    if (NULL == orte_data_server_uri) {
+        /* print a pretty help message */
+        orte_show_help("help-orterun.txt", "orterun:server-unavailable", true);
+        return false;
+    }
+
+    return true;
 }

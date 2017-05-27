@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -40,6 +40,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix.h"
@@ -112,6 +113,12 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     if (NULL == opal_pmix.publish || NULL == opal_pmix.connect ||
         NULL == opal_pmix.unpublish ||
        (NULL == opal_pmix.lookup && NULL == opal_pmix.lookup_nb)) {
+        /* print a nice message explaining we don't have support */
+        opal_show_help("help-mpi-runtime.txt", "noconxcpt", true);
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+    if (!ompi_rte_connect_accept_support(port_string)) {
+        /* they will have printed the help message */
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
