@@ -663,24 +663,32 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ret);
                 free(cmpdata);
                 OBJ_DESTRUCT(&data);
+                OBJ_RELEASE(answer);
+                goto CLEANUP;
             }
             /* pack the compressed length */
             if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &cmplen, 1, OPAL_SIZE))) {
                 ORTE_ERROR_LOG(ret);
                 free(cmpdata);
                 OBJ_DESTRUCT(&data);
+                OBJ_RELEASE(answer);
+                goto CLEANUP;
             }
             /* pack the uncompressed length */
             if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &data.bytes_used, 1, OPAL_SIZE))) {
                 ORTE_ERROR_LOG(ret);
                 free(cmpdata);
                 OBJ_DESTRUCT(&data);
+                OBJ_RELEASE(answer);
+                goto CLEANUP;
             }
             /* pack the compressed info */
             if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, cmpdata, cmplen, OPAL_UINT8))) {
                 ORTE_ERROR_LOG(ret);
                 free(cmpdata);
                 OBJ_DESTRUCT(&data);
+                OBJ_RELEASE(answer);
+                goto CLEANUP;
             }
             OBJ_DESTRUCT(&data);
             free(cmpdata);
@@ -691,6 +699,8 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ret);
                 OBJ_DESTRUCT(&data);
                 free(cmpdata);
+                OBJ_RELEASE(answer);
+                goto CLEANUP;
             }
             /* transfer the payload across */
             opal_dss.copy_payload(answer, &data);
