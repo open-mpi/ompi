@@ -413,7 +413,8 @@ static int rank_by(orte_job_t *jdata,
                             return ORTE_ERROR;
                         }
                         /* ignore procs not on this object */
-                        if (!hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
+                        if (NULL == locale ||
+                            !hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
                             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                                 "mca:rmaps:rank_by: proc at position %d is not on object %d",
                                                 j, i);

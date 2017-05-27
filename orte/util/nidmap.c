@@ -1285,9 +1285,11 @@ int orte_util_nidmap_generate_ppn(orte_job_t *jdata, char **ppn)
             }
         }
         OPAL_LIST_DESTRUCT(&prk[n]);  // releases all the actives objects
-        opal_argv_append_nosize(&cache, ptmp);
-        free(ptmp);
-        ptmp = NULL;
+        if (NULL != ptmp) {
+            opal_argv_append_nosize(&cache, ptmp);
+            free(ptmp);
+            ptmp = NULL;
+        }
     }
     free(prk);
     free(cnt);
