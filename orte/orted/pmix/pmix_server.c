@@ -138,14 +138,6 @@ void pmix_server_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_pmix_server_globals.timeout);
 
-    /* register the URI of the UNIVERSAL data server */
-    orte_pmix_server_globals.server_uri = NULL;
-    (void) mca_base_var_register ("orte", "pmix", NULL, "server_uri",
-                                  "URI of a session-level keyval server for publish/lookup operations",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
-                                  &orte_pmix_server_globals.server_uri);
-
     /* whether or not to wait for the universal server */
     orte_pmix_server_globals.wait_for_server = false;
     (void) mca_base_var_register ("orte", "pmix", NULL, "wait_for_server",
