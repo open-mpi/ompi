@@ -788,5 +788,14 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_fwd_mpirun_port);
 
+    /* register the URI of the UNIVERSAL data server */
+    orte_data_server_uri = NULL;
+    (void) mca_base_var_register ("orte", "pmix", NULL, "server_uri",
+                                  "URI of a session-level keyval server for publish/lookup operations",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_data_server_uri);
+
+
     return ORTE_SUCCESS;
 }

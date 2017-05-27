@@ -59,13 +59,13 @@ static int init_server(void)
 
     /* if the universal server wasn't specified, then we use
      * our own HNP for that purpose */
-    if (NULL == orte_pmix_server_globals.server_uri) {
+    if (NULL == orte_data_server_uri) {
         orte_pmix_server_globals.server = *ORTE_PROC_MY_HNP;
     } else {
-        if (0 == strncmp(orte_pmix_server_globals.server_uri, "file", strlen("file")) ||
-            0 == strncmp(orte_pmix_server_globals.server_uri, "FILE", strlen("FILE"))) {
+        if (0 == strncmp(orte_data_server_uri, "file", strlen("file")) ||
+            0 == strncmp(orte_data_server_uri, "FILE", strlen("FILE"))) {
             /* it is a file - get the filename */
-            filename = strchr(orte_pmix_server_globals.server_uri, ':');
+            filename = strchr(orte_data_server_uri, ':');
             if (NULL == filename) {
                 /* filename is not correctly formatted */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
@@ -121,7 +121,6 @@ static int init_server(void)
          * as a background job - e.g., in scripts
          */
         if (orte_pmix_server_globals.wait_for_server) {
-            opal_output(0, "WAIT");
             /* ping the server */
             struct timeval timeout;
             timeout.tv_sec = orte_pmix_server_globals.timeout;
@@ -140,8 +139,6 @@ static int init_server(void)
             }
         }
     }
-
-    opal_output(0, "SERVER READY");
 
     return ORTE_SUCCESS;
 }

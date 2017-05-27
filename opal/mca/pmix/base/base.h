@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,6 +57,7 @@ OPAL_DECLSPEC void opal_pmix_base_set_evbase(opal_event_base_t *evbase);
 
 typedef struct {
     opal_event_base_t *evbase;
+    int timeout;
 } opal_pmix_base_t;
 
 extern opal_pmix_base_t opal_pmix_base;

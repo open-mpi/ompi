@@ -193,7 +193,12 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     info = OBJ_NEW(opal_value_t);
     info->key = strdup(OPAL_PMIX_TIMEOUT);
     info->type = OPAL_INT;
-    info->data.integer = timeout;
+    if (0 < opal_pmix_base.timeout) {
+        /* the user has overridden the default */
+        info->data.integer = opal_pmix_base.timeout;
+    } else {
+        info->data.integer = timeout;
+    }
     opal_list_append(&mlist, &info->super);
 
     /* if a non-blocking version of lookup isn't

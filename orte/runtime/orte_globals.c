@@ -77,6 +77,7 @@ char *orte_coll_transport = NULL;
 int orte_mgmt_conduit = -1;
 int orte_coll_conduit = -1;
 bool orte_no_vm = false;
+char *orte_data_server_uri = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
