@@ -690,6 +690,44 @@ typedef struct pmix_byte_object {
 } pmix_byte_object_t;
 
 
+/****    PMIX DATA BUFFER    ****/
+typedef struct pmix_data_buffer {
+    /** Start of my memory */
+    char *base_ptr;
+    /** Where the next data will be packed to (within the allocated
+        memory starting at base_ptr) */
+    char *pack_ptr;
+    /** Where the next data will be unpacked from (within the
+        allocated memory starting as base_ptr) */
+    char *unpack_ptr;
+    /** Number of bytes allocated (starting at base_ptr) */
+    size_t bytes_allocated;
+    /** Number of bytes used by the buffer (i.e., amount of data --
+        including overhead -- packed in the buffer) */
+    size_t bytes_used;
+} pmix_data_buffer_t;
+#define PMIX_DATA_BUFFER_CREATE(m)                                          \
+    do {                                                                    \
+        (m) = (pmix_data_buffer_t*)calloc(1, sizeof(pmix_data_buffer_t));   \
+    } while (0)
+#define PMIX_DATA_BUFFER_RELEASE(m)             \
+    do {                                        \
+        if (NULL != (m)->base_ptr) {            \
+            free((m)->base_ptr);                \
+        }                                       \
+        free((m));                              \
+        (m) = NULL;                             \
+    } while (0)
+#define PMIX_DATA_BUFFER_CONSTRUCT(m)       \
+    memset((m), 0, sizeof(pmix_data_buffer_t))
+#define PMIX_DATA_BUFFER_DESTRUCT(m)        \
+    do {                                    \
+        if (NULL != (m)->base_ptr) {        \
+            free((m)->base_ptr);            \
+        }                                   \
+    } while (0)
+
+
 /****    PMIX PROC OBJECT    ****/
 typedef struct pmix_proc {
     char nspace[PMIX_MAX_NSLEN+1];
@@ -700,9 +738,10 @@ typedef struct pmix_proc {
         (m) = (pmix_proc_t*)calloc((n) , sizeof(pmix_proc_t));  \
     } while (0)
 
-#define PMIX_PROC_RELEASE(m)                    \
-    do {                                        \
-        PMIX_PROC_FREE((m));                    \
+#define PMIX_PROC_RELEASE(m)    \
+    do {                        \
+        free((m));              \
+        (m) = NULL;             \
     } while (0)
 
 #define PMIX_PROC_CONSTRUCT(m)                  \
@@ -956,7 +995,6 @@ pmix_status_t pmix_setenv(const char *name, const char *value,
     pmix_argv_append_nosize(&(a), (b))
 #define PMIX_SETENV(a, b, c) \
     pmix_setenv((a), (b), true, (c))
-
 
 /****    PMIX INFO STRUCT    ****/
 struct pmix_info_t {
@@ -1490,6 +1528,209 @@ const char* PMIx_Get_version(void);
  * never be "pushed" externally */
 pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
                                   const char *key, pmix_value_t *val);
+
+
+/**
+ * Top-level interface function to pack one or more values into a
+ * buffer.
+ *
+ * The pack function packs one or more values of a specified type into
+ * the specified buffer.  The buffer must have already been
+ * initialized via the PMIX_DATA_BUFFER_CREATE or PMIX_DATA_BUFFER_CONSTRUCT
+ * call - otherwise, the pack_value function will return an error.
+ * Providing an unsupported type flag will likewise be reported as an error.
+ *
+ * Note that any data to be packed that is not hard type cast (i.e.,
+ * not type cast to a specific size) may lose precision when unpacked
+ * by a non-homogeneous recipient.  The PACK function will do its best to deal
+ * with heterogeneity issues between the packer and unpacker in such
+ * cases. Sending a number larger than can be handled by the recipient
+ * will return an error code (generated upon unpacking) -
+ * the error cannot be detected during packing.
+ *
+ * @param *buffer A pointer to the buffer into which the value is to
+ * be packed.
+ *
+ * @param *src A void* pointer to the data that is to be packed. Note
+ * that strings are to be passed as (char **) - i.e., the caller must
+ * pass the address of the pointer to the string as the void*. This
+ * allows PMIx to use a single pack function, but still allow
+ * the caller to pass multiple strings in a single call.
+ *
+ * @param num_values An int32_t indicating the number of values that are
+ * to be packed, beginning at the location pointed to by src. A string
+ * value is counted as a single value regardless of length. The values
+ * must be contiguous in memory. Arrays of pointers (e.g., string
+ * arrays) should be contiguous, although (obviously) the data pointed
+ * to need not be contiguous across array entries.
+ *
+ * @param type The type of the data to be packed - must be one of the
+ * PMIX defined data types.
+ *
+ * @retval PMIX_SUCCESS The data was packed as requested.
+ *
+ * @retval PMIX_ERROR(s) An appropriate PMIX error code indicating the
+ * problem encountered. This error code should be handled
+ * appropriately.
+ *
+ * @code
+ * pmix_data_buffer_t *buffer;
+ * int32_t src;
+ *
+ * PMIX_DATA_BUFFER_CREATE(buffer);
+ * status_code = PMIx_Data_pack(buffer, &src, 1, PMIX_INT32);
+ * @endcode
+ */
+pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
+                             void *src, int32_t num_vals,
+                             pmix_data_type_t type);
+
+/**
+ * Unpack values from a buffer.
+ *
+ * The unpack function unpacks the next value (or values) of a
+ * specified type from the specified buffer.
+ *
+ * The buffer must have already been initialized via an PMIX_DATA_BUFFER_CREATE or
+ * PMIX_DATA_BUFFER_CONSTRUCT call (and assumedly filled with some data) -
+ * otherwise, the unpack_value function will return an
+ * error. Providing an unsupported type flag will likewise be reported
+ * as an error, as will specifying a data type that DOES NOT match the
+ * type of the next item in the buffer. An attempt to read beyond the
+ * end of the stored data held in the buffer will also return an
+ * error.
+ *
+ * NOTE: it is possible for the buffer to be corrupted and that
+ * PMIx will *think* there is a proper variable type at the
+ * beginning of an unpack region - but that the value is bogus (e.g., just
+ * a byte field in a string array that so happens to have a value that
+ * matches the specified data type flag). Therefore, the data type error check
+ * is NOT completely safe. This is true for ALL unpack functions.
+ *
+ *
+ * Unpacking values is a "nondestructive" process - i.e., the values are
+ * not removed from the buffer. It is therefore possible for the caller
+ * to re-unpack a value from the same buffer by resetting the unpack_ptr.
+ *
+ * Warning: The caller is responsible for providing adequate memory
+ * storage for the requested data. As noted below, the user
+ * must provide a parameter indicating the maximum number of values that
+ * can be unpacked into the allocated memory. If more values exist in the
+ * buffer than can fit into the memory storage, then the function will unpack
+ * what it can fit into that location and return an error code indicating
+ * that the buffer was only partially unpacked.
+ *
+ * Note that any data that was not hard type cast (i.e., not type cast
+ * to a specific size) when packed may lose precision when unpacked by
+ * a non-homogeneous recipient.  PMIx will do its best to deal with
+ * heterogeneity issues between the packer and unpacker in such
+ * cases. Sending a number larger than can be handled by the recipient
+ * will return an error code generated upon unpacking - these errors
+ * cannot be detected during packing.
+ *
+ * @param *buffer A pointer to the buffer from which the value will be
+ * extracted.
+ *
+ * @param *dest A void* pointer to the memory location into which the
+ * data is to be stored. Note that these values will be stored
+ * contiguously in memory. For strings, this pointer must be to (char
+ * **) to provide a means of supporting multiple string
+ * operations. The unpack function will allocate memory for each
+ * string in the array - the caller must only provide adequate memory
+ * for the array of pointers.
+ *
+ * @param type The type of the data to be unpacked - must be one of
+ * the BFROP defined data types.
+ *
+ * @retval *max_num_values The number of values actually unpacked. In
+ * most cases, this should match the maximum number provided in the
+ * parameters - but in no case will it exceed the value of this
+ * parameter.  Note that if you unpack fewer values than are actually
+ * available, the buffer will be in an unpackable state - the function will
+ * return an error code to warn of this condition.
+ *
+ * @note The unpack function will return the actual number of values
+ * unpacked in this location.
+ *
+ * @retval PMIX_SUCCESS The next item in the buffer was successfully
+ * unpacked.
+ *
+ * @retval PMIX_ERROR(s) The unpack function returns an error code
+ * under one of several conditions: (a) the number of values in the
+ * item exceeds the max num provided by the caller; (b) the type of
+ * the next item in the buffer does not match the type specified by
+ * the caller; or (c) the unpack failed due to either an error in the
+ * buffer or an attempt to read past the end of the buffer.
+ *
+ * @code
+ * pmix_data_buffer_t *buffer;
+ * int32_t dest;
+ * char **string_array;
+ * int32_t num_values;
+ *
+ * num_values = 1;
+ * status_code = PMIx_Data_unpack(buffer, (void*)&dest, &num_values, PMIX_INT32);
+ *
+ * num_values = 5;
+ * string_array = malloc(num_values*sizeof(char *));
+ * status_code = PMIx_Data_unpack(buffer, (void*)(string_array), &num_values, PMIX_STRING);
+ *
+ * @endcode
+ */
+pmix_status_t PMIx_Data_unpack(pmix_data_buffer_t *buffer, void *dest,
+                               int32_t *max_num_values,
+                               pmix_data_type_t type);
+
+/**
+ * Copy a data value from one location to another.
+ *
+ * Since registered data types can be complex structures, the system
+ * needs some way to know how to copy the data from one location to
+ * another (e.g., for storage in the registry). This function, which
+ * can call other copy functions to build up complex data types, defines
+ * the method for making a copy of the specified data type.
+ *
+ * @param **dest The address of a pointer into which the
+ * address of the resulting data is to be stored.
+ *
+ * @param *src A pointer to the memory location from which the
+ * data is to be copied.
+ *
+ * @param type The type of the data to be copied - must be one of
+ * the PMIx defined data types.
+ *
+ * @retval PMIX_SUCCESS The value was successfully copied.
+ *
+ * @retval PMIX_ERROR(s) An appropriate error code.
+ *
+ */
+pmix_status_t PMIx_Data_copy(void **dest, void *src, pmix_data_type_t type);
+
+/**
+ * Print a data value.
+ *
+ * Since registered data types can be complex structures, the system
+ * needs some way to know how to print them (i.e., convert them to a string
+ * representation). Provided for debug purposes.
+ *
+ * @retval PMIX_SUCCESS The value was successfully printed.
+ *
+ * @retval PMIX_ERROR(s) An appropriate error code.
+ */
+pmix_status_t PMIx_Data_print(char **output, char *prefix,
+                              void *src, pmix_data_type_t type);
+
+/**
+ * Copy a payload from one buffer to another
+ *
+ * This function will append a copy of the payload in one buffer into
+ * another buffer.
+ * NOTE: This is NOT a destructive procedure - the
+ * source buffer's payload will remain intact, as will any pre-existing
+ * payload in the destination's buffer.
+ */
+pmix_status_t PMIx_Data_copy_payload(pmix_data_buffer_t *dest,
+                                     pmix_data_buffer_t *src);
 
 
 /* Key-Value pair management macros */
