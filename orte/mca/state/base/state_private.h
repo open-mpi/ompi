@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 
 BEGIN_C_DECLS
 
+extern bool orte_state_base_run_fdcheck;
 /*
  * Base functions
  */
@@ -75,7 +77,7 @@ ORTE_DECLSPEC void orte_state_base_cleanup_job(int fd, short argc, void *cbdata)
 ORTE_DECLSPEC void orte_state_base_report_progress(int fd, short argc, void *cbdata);
 ORTE_DECLSPEC void orte_state_base_track_procs(int fd, short argc, void *cbdata);
 ORTE_DECLSPEC void orte_state_base_check_all_complete(int fd, short args, void *cbdata);
-
+ORTE_DECLSPEC void orte_state_base_check_fds(orte_job_t *jdata);
 
 END_C_DECLS
 #endif
