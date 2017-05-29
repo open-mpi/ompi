@@ -310,8 +310,25 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
                             struct ompi_communicator_t *comm,
                             ompi_request_t ** request,
                             mca_coll_base_module_t *module);
-
+extern int mca_coll_hcoll_progress_registered;
 int mca_coll_hcoll_progress(void);
+
+static inline void
+mca_coll_hcoll_progress_unregister(void) {
+    if (mca_coll_hcoll_progress_registered) {
+        opal_progress_unregister(mca_coll_hcoll_progress);
+        mca_coll_hcoll_progress_registered = 0;
+    }
+}
+
+static inline void
+mca_coll_hcoll_progress_register(void) {
+    if (!mca_coll_hcoll_progress_registered) {
+        opal_progress_register(mca_coll_hcoll_progress);
+        mca_coll_hcoll_progress_registered = 1;
+    }
+}
+
 void mca_coll_hcoll_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc);
 END_C_DECLS
 
