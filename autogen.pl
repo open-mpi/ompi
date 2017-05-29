@@ -5,7 +5,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2015-2016 Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
 #
@@ -61,9 +61,9 @@ my $include_list;
 my $exclude_list;
 
 # Minimum versions
-my $ompi_automake_version = "1.12.2";
+my $ompi_automake_version = "1.15.0";
 my $ompi_autoconf_version = "2.69";
-my $ompi_libtool_version = "2.4.2";
+my $ompi_libtool_version = "2.4.6";
 
 # Search paths
 my $ompi_autoconf_search = "autoconf";
