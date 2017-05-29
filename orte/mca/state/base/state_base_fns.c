@@ -13,6 +13,13 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/pmix/pmix.h"
@@ -714,6 +721,10 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         /* track job status */
         jdata->num_terminated++;
         if (jdata->num_terminated == jdata->num_procs) {
+            /* if requested, check fd status for leaks */
+            if (orte_state_base_run_fdcheck) {
+                orte_state_base_check_fds(jdata);
+            }
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
             /* if they requested notification upon completion, provide it */
             if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION, NULL, OPAL_BOOL)) {
@@ -1015,4 +1026,100 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     orte_plm.terminate_orteds();
 
     OBJ_RELEASE(caddy);
+}
+
+
+void orte_state_base_check_fds(orte_job_t *jdata)
+{
+    int nfds, i, fdflags, flflags;
+    char path[1024], info[256], **list=NULL, *status, *result, *r2;
+    ssize_t rc;
+    struct flock fl;
+    int cnt = 0;
+
+    /* get the number of available file descriptors
+     * for this daemon */
+    nfds = getdtablesize();
+    result = NULL;
+    /* loop over them and get their info */
+    for (i=0; i < nfds; i++) {
+        fdflags = fcntl(i, F_GETFD);
+        if (-1 == fdflags) {
+            /* no open fd in that slot */
+            continue;
+        }
+        flflags = fcntl(i, F_GETFL);
+        if (-1 == flflags) {
+            /* no open fd in that slot */
+            continue;
+        }
+        snprintf(path, 1024, "/proc/self/fd/%d", i);
+        memset(info, 0, 256);
+        /* read the info about this fd */
+        rc = readlink(path, info, 256);
+        if (-1 == rc) {
+            /* this fd is unavailable */
+            continue;
+        }
+        /* get any file locking status */
+        fl.l_type = F_WRLCK;
+        fl.l_whence = 0;
+        fl.l_start = 0;
+        fl.l_len = 0;
+        fcntl(i, F_GETLK, &fl);
+        /* construct the list of capabilities */
+        if (fdflags & FD_CLOEXEC) {
+            opal_argv_append_nosize(&list, "cloexec");
+        }
+        if (flflags & O_APPEND) {
+            opal_argv_append_nosize(&list, "append");
+        }
+        if (flflags & O_NONBLOCK) {
+            opal_argv_append_nosize(&list, "nonblock");
+        }
+        if (flflags & O_RDONLY) {
+            opal_argv_append_nosize(&list, "rdonly");
+        }
+        if (flflags & O_RDWR) {
+            opal_argv_append_nosize(&list, "rdwr");
+        }
+        if (flflags & O_WRONLY) {
+            opal_argv_append_nosize(&list, "wronly");
+        }
+        if (flflags & O_DSYNC) {
+            opal_argv_append_nosize(&list, "dsync");
+        }
+        if (flflags & O_RSYNC) {
+            opal_argv_append_nosize(&list, "rsync");
+        }
+        if (flflags & O_SYNC) {
+            opal_argv_append_nosize(&list, "sync");
+        }
+        if (F_UNLCK != fl.l_type) {
+            if (F_WRLCK == fl.l_type) {
+                opal_argv_append_nosize(&list, "wrlock");
+            } else {
+                opal_argv_append_nosize(&list, "rdlock");
+            }
+        }
+        if (NULL != list) {
+            status = opal_argv_join(list, ' ');
+            opal_argv_free(list);
+            list = NULL;
+            if (NULL == result) {
+                asprintf(&result, "    %d\t(%s)\t%s\n", i, info, status);
+            } else {
+                asprintf(&r2, "%s    %d\t(%s)\t%s\n", result, i, info, status);
+                free(result);
+                result = r2;
+            }
+            free(status);
+        }
+        ++cnt;
+    }
+    asprintf(&r2, "%s: %d open file descriptors after job %d completed\n%s",
+             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cnt, ORTE_LOCAL_JOBID(jdata->jobid), result);
+    opal_output(0, "%s", r2);
+    free(result);
+    free(r2);
 }

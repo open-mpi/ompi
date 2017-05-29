@@ -4,6 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +42,20 @@
  * Globals
  */
 orte_state_base_module_t orte_state = {0};
+bool orte_state_base_run_fdcheck = false;
+
+static int orte_state_base_register(mca_base_register_flag_t flags)
+{
+    orte_state_base_run_fdcheck = false;
+    mca_base_var_register("orte", "state", "base", "check_fds",
+                          "Daemons should check fds for leaks after each job completes",
+                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                          OPAL_INFO_LVL_9,
+                          MCA_BASE_VAR_SCOPE_READONLY,
+                          &orte_state_base_run_fdcheck);
+
+    return ORTE_SUCCESS;
+}
 
 static int orte_state_base_close(void)
 {
@@ -62,7 +77,8 @@ static int orte_state_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&orte_state_base_framework, flags);
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(orte, state, "ORTE State Machine", NULL,
+MCA_BASE_FRAMEWORK_DECLARE(orte, state, "ORTE State Machine",
+                           orte_state_base_register,
                            orte_state_base_open, orte_state_base_close,
                            mca_state_base_static_components, 0);
 
@@ -95,4 +111,3 @@ OBJ_CLASS_INSTANCE(orte_state_caddy_t,
                    opal_object_t,
                    orte_state_caddy_construct,
                    orte_state_caddy_destruct);
-
