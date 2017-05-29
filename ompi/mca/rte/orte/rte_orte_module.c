@@ -208,7 +208,7 @@ bool ompi_rte_connect_accept_support(const char *port)
     /* were we launched by mpirun, or are we calling
      * without a defined port? */
     if (NULL == orte_process_info.my_hnp_uri ||
-        0 == strlen(port)) {
+        NULL == port || 0 == strlen(port)) {
         return true;
     }
 
