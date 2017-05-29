@@ -123,8 +123,12 @@ int main(int argc, char **argv)
 
     /* rank=0 dies */
     if (4 < nprocs) {
-        /* have two exit */
-        if (myproc.rank < 2) {
+        /* have one exit */
+        if (0 == myproc.rank) {
+            pmix_output(0, "Client ns %s rank %d: bye-bye!", myproc.nspace, myproc.rank);
+            exit(1);
+        } else if (1 == myproc.rank) {
+            usleep(500000);
             pmix_output(0, "Client ns %s rank %d: bye-bye!", myproc.nspace, myproc.rank);
             exit(1);
         }

@@ -43,7 +43,8 @@ bool pmix_timing_overhead = true;
 
 static bool pmix_register_done = false;
 char *pmix_net_private_ipv4 = NULL;
-int pmix_event_caching_window;
+int pmix_event_caching_window = 1;
+bool pmix_suppress_missing_data_warning = false;
 
 pmix_status_t pmix_register_params(void)
 {
@@ -91,13 +92,19 @@ pmix_status_t pmix_register_params(void)
         return ret;
     }
 
-    pmix_event_caching_window = 3;
     (void) pmix_mca_base_var_register ("pmix", "pmix", NULL, "event_caching_window",
-                                  "Time (in seconds) to cache events before reporting them - this "
-                                  "allows for event aggregation",
+                                  "Time (in seconds) to aggregate events before reporting them - this "
+                                  "suppresses event cascades when processes abnormally terminate",
                                   PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  PMIX_INFO_LVL_9, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
                                   &pmix_event_caching_window);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", NULL, "suppress_missing_data_warning",
+                                  "Suppress warning that PMIx is missing job-level data that "
+                                  "is supposed to be provided by the host RM.",
+                                  PMIX_MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_suppress_missing_data_warning);
 
     return PMIX_SUCCESS;
 }

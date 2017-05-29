@@ -181,6 +181,9 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             PMIX_INFO_FREE(ch->info, ch->ninfo);                                    \
             ch->info = info;                                                        \
             ch->ninfo = ninfo;                                                      \
+            /* reset the timer */                                                   \
+            pmix_event_del(&ch->ev);                                                \
+            pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
         }                                                                           \
     } while(0)
 

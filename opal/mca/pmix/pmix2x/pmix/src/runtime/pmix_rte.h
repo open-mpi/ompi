@@ -47,6 +47,7 @@ extern bool pmix_timing_overhead;
 extern int pmix_initialized;
 extern char *pmix_net_private_ipv4;
 extern int pmix_event_caching_window;
+extern bool pmix_suppress_missing_data_warning;
 
 /** version string of pmix */
 extern const char pmix_version_string[];

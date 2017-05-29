@@ -63,7 +63,7 @@ AC_DEFUN([MCA_pmix_pdl_pdlopen_CONFIG],[
           ])
 
     AS_IF([test "$pmix_pdl_pdlopen_happy" = "yes"],
-          [pdl_pdlopen_ADD_LIBS=$pmix_pdl_pdlopen_LIBS
+          [pmix_pdl_pdlopen_ADD_LIBS=$pmix_pdl_pdlopen_LIBS
            $1],
           [$2])
 

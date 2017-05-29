@@ -3,6 +3,8 @@
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -846,6 +848,23 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
                     return PMIX_ERR_BAD_PARAM;
                 }
             }
+        }
+    }
+    /*
+     * If the range is PMIX_RANGE_NAMESPACE, then they should not have set a
+     * PMIX_EVENT_CUSTOM_RANGE info object or at least we should ignore it
+     */
+    if (PMIX_RANGE_NAMESPACE == cd->range) {
+        if (cd->targets) {
+            PMIX_PROC_FREE(cd->targets, cd->ntargets);
+        }
+        PMIX_PROC_CREATE(cd->targets, 1);
+        cd->ntargets = 1;
+        cd->targets[0].rank = PMIX_RANK_WILDCARD;
+        if (NULL == source) {
+            strncpy(cd->targets[0].nspace, "UNDEF", PMIX_MAX_NSLEN);
+        } else {
+            strncpy(cd->targets[0].nspace, source->nspace, PMIX_MAX_NSLEN);
         }
     }
 
