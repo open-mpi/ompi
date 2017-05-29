@@ -825,6 +825,7 @@ static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *ori
     ompi_osc_rdma_module_t *module = sync->module;
     mca_btl_base_registration_handle_t *source_handle;
     uint64_t source_address;
+    ptrdiff_t source_span, source_lb;
     int ret;
 
     /* short-circuit case */
@@ -836,7 +837,11 @@ static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *ori
         return OMPI_SUCCESS;
     }
 
-    ret = osc_rdma_get_remote_segment (module, peer, source_disp, source_datatype->super.size * source_count,
+    // a buffer defined by (buf, count, dt)
+    // will have data starting at buf+offset and ending len bytes later:
+    source_span = opal_datatype_span(&source_datatype->super, source_count, &source_lb);
+
+    ret = osc_rdma_get_remote_segment (module, peer, source_disp, source_span+source_lb,
                                        &source_address, &source_handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;

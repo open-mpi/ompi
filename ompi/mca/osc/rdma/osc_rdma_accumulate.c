@@ -967,6 +967,7 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
     mca_btl_base_registration_handle_t *target_handle;
     ompi_osc_rdma_sync_t *sync;
     uint64_t target_address;
+    ptrdiff_t true_lb, true_extent;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "cswap: 0x%lx, 0x%lx, 0x%lx, %s, %d, %d, %s",
@@ -978,7 +979,12 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
         return OMPI_ERR_RMA_SYNC;
     }
 
-    ret = osc_rdma_get_remote_segment (module, peer, target_disp, dt->super.size, &target_address, &target_handle);
+    ret = ompi_datatype_get_true_extent(dt, &true_lb, &true_extent);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return ret;
+    }
+
+    ret = osc_rdma_get_remote_segment (module, peer, target_disp, true_lb+true_extent, &target_address, &target_handle);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         return ret;
     }
@@ -1015,7 +1021,7 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
     ompi_osc_rdma_module_t *module = sync->module;
     mca_btl_base_registration_handle_t *target_handle;
     uint64_t target_address;
-    ptrdiff_t lb, origin_extent, target_extent;
+    ptrdiff_t lb, origin_extent, target_span;
     int ret;
 
     /* short-circuit case. note that origin_count may be 0 if op is MPI_NO_OP */
@@ -1027,9 +1033,11 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_osc_rdma_sync_t *sync, const vo
         return OMPI_SUCCESS;
     }
 
-    (void) ompi_datatype_get_extent (target_datatype, &lb, &target_extent);
+    target_span = opal_datatype_span(&target_datatype->super, target_count, &lb);
 
-    ret = osc_rdma_get_remote_segment (module, peer, target_disp, target_extent * target_count, &target_address, &target_handle);
+    // a buffer defined by (buf, count, dt)
+    // will have data starting at buf+offset and ending len bytes later:
+    ret = osc_rdma_get_remote_segment (module, peer, target_disp, target_span+lb, &target_address, &target_handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
