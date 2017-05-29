@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -153,6 +153,13 @@ int pmix_rte_init(pmix_proc_type_t type,
     memset(&pmix_globals.myid, 0, sizeof(pmix_proc_t));
     PMIX_CONSTRUCT(&pmix_globals.nspaces, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_globals.events, pmix_events_t);
+    pmix_globals.event_window.tv_sec = pmix_event_caching_window;
+    pmix_globals.event_window.tv_usec = 0;
+    PMIX_CONSTRUCT(&pmix_globals.cached_events, pmix_list_t);
+    /* construct the global notification ring buffer */
+    PMIX_CONSTRUCT(&pmix_globals.notifications, pmix_ring_buffer_t);
+    pmix_ring_buffer_init(&pmix_globals.notifications, 256);
+
     /* get our effective id's */
     pmix_globals.uid = geteuid();
     pmix_globals.gid = getegid();

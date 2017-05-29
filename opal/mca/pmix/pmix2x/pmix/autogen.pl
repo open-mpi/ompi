@@ -4,7 +4,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      IBM Corporation.  All rights reserved.
@@ -55,9 +55,9 @@ my $include_list;
 my $exclude_list;
 
 # Minimum versions
-my $pmix_automake_version = "1.12.2";
+my $pmix_automake_version = "1.15.0";
 my $pmix_autoconf_version = "2.69";
-my $pmix_libtool_version = "2.4.2";
+my $pmix_libtool_version = "2.4.6";
 
 # Search paths
 my $pmix_autoconf_search = "autoconf";

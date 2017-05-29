@@ -113,8 +113,6 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     PMIX_CONSTRUCT(&pmix_server_globals.gdata, pmix_buffer_t);
     PMIX_CONSTRUCT(&pmix_server_globals.events, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_server_globals.local_reqs, pmix_list_t);
-    PMIX_CONSTRUCT(&pmix_server_globals.notifications, pmix_ring_buffer_t);
-    pmix_ring_buffer_init(&pmix_server_globals.notifications, 256);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server init called");
@@ -261,7 +259,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     PMIX_LIST_DESTRUCT(&pmix_server_globals.remote_pnd);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.local_reqs);
     PMIX_DESTRUCT(&pmix_server_globals.gdata);
-    PMIX_DESTRUCT(&pmix_server_globals.notifications);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.events);
 
     if (NULL != security_mode) {
@@ -1018,7 +1015,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
     }
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:server register client %s:%d",
+                        "pmix:server dmodex request%s:%d",
                         proc->nspace, proc->rank);
 
     cd = PMIX_NEW(pmix_setup_caddy_t);
@@ -2220,6 +2217,8 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
     if (PMIX_FINALIZE_CMD == cmd) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "recvd FINALIZE");
+        /* mark that this peer called finalize */
+        peer->finalized = true;
         /* call the local server, if supported */
         if (NULL != pmix_host_server.client_finalized) {
             PMIX_PEER_CADDY(cd, peer, tag);

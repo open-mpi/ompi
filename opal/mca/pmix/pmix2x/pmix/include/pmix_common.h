@@ -131,6 +131,10 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_GRPID                          "pmix.egid"             // (uint32_t) effective group id
 #define PMIX_DSTPATH                        "pmix.dstpath"          // (char*) path to dstore files
 #define PMIX_VERSION_INFO                   "pmix.version"          // (char*) PMIx version of contactor
+#define PMIX_PROGRAMMING_MODEL              "pmix.pgm.model"        // (char*) programming model being initialized (e.g., "MPI" or "OpenMP")
+#define PMIX_MODEL_LIBRARY_NAME             "pmix.mdl.name"         // (char*) programming model implementation ID (e.g., "OpenMPI" or "MPICH")
+#define PMIX_MODEL_LIBRARY_VERSION          "pmix.mld.vrs"          // (char*) programming model version string (e.g., "2.1.1")
+#define PMIX_THREADING_MODEL                "pmix.threads"          // (char*) threading model used (e.g., "pthreads")
 
 
 /* attributes for the USOCK rendezvous socket  */
@@ -531,6 +535,7 @@ typedef int pmix_status_t;
 #define PMIX_ERR_EVENT_REGISTRATION             (PMIX_ERR_OP_BASE - 14)
 #define PMIX_ERR_JOB_TERMINATED                 (PMIX_ERR_OP_BASE - 15)
 #define PMIX_ERR_UPDATE_ENDPOINTS               (PMIX_ERR_OP_BASE - 16)
+#define PMIX_MODEL_DECLARED                     (PMIX_ERR_OP_BASE - 17)
 
 /* define a starting point for system error constants so
  * we avoid renumbering when making additions */

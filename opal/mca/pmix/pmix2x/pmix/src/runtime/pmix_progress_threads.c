@@ -21,52 +21,11 @@
 #include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
+#include "src/threads/threads.h"
 #include "src/util/error.h"
 #include "src/util/fd.h"
 
 #include "src/runtime/pmix_progress_threads.h"
-
-/* define a thread object */
-#define PMIX_THREAD_CANCELLED   ((void*)1);
-typedef void *(*pmix_thread_fn_t) (pmix_object_t *);
-
-typedef struct pmix_thread_t {
-    pmix_object_t super;
-    pmix_thread_fn_t t_run;
-    void* t_arg;
-    pthread_t t_handle;
-} pmix_thread_t;
-static void ptcon(pmix_thread_t *p)
-{
-    p->t_arg = NULL;
-    p->t_handle = (pthread_t) -1;
-}
-PMIX_CLASS_INSTANCE(pmix_thread_t,
-                  pmix_object_t,
-                  ptcon, NULL);
-
-static int pmix_thread_start(pmix_thread_t *t)
-{
-    int rc;
-
-    if (PMIX_ENABLE_DEBUG) {
-        if (NULL == t->t_run || t->t_handle != (pthread_t) -1) {
-            return PMIX_ERR_BAD_PARAM;
-        }
-    }
-
-    rc = pthread_create(&t->t_handle, NULL, (void*(*)(void*)) t->t_run, t);
-
-    return (rc == 0) ? PMIX_SUCCESS : PMIX_ERROR;
-}
-
-
-static int pmix_thread_join(pmix_thread_t *t, void **thr_return)
-{
-    int rc = pthread_join(t->t_handle, thr_return);
-    t->t_handle = (pthread_t) -1;
-    return (rc == 0) ? PMIX_SUCCESS : PMIX_ERROR;
-}
 
 
 /* create a tracking object for progress threads */
