@@ -5,7 +5,7 @@ PROGS = mpi_no_op mpi_barrier hello hello_nodename abort multi_abort simple_spaw
 		parallel_w8 parallel_w64 parallel_r8 parallel_r64 sio sendrecv_blaster early_abort \
 		debugger singleton_client_server intercomm_create spawn_tree init-exit77 mpi_info \
 		info_spawn server client paccept pconnect ring hello.sapp binding badcoll attach xlib \
-		no-disconnect
+		no-disconnect nonzero
 
 all: $(PROGS)
 
