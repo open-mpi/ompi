@@ -484,6 +484,11 @@ static void track_procs(int fd, short argc, void *cbdata)
                 jdata->map = NULL;
             }
 
+            /* if requested, check fd status for leaks */
+            if (orte_state_base_run_fdcheck) {
+                orte_state_base_check_fds(jdata);
+            }
+
             /* cleanup the job info */
             opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
             OBJ_RELEASE(jdata);
