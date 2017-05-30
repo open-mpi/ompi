@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,10 +35,10 @@
 
 BEGIN_C_DECLS
 
-#define ORTE_PMIX_PUBLISH_CMD    0x01
-#define ORTE_PMIX_LOOKUP_CMD     0x02
-#define ORTE_PMIX_UNPUBLISH_CMD  0x03
-
+#define ORTE_PMIX_PUBLISH_CMD           0x01
+#define ORTE_PMIX_LOOKUP_CMD            0x02
+#define ORTE_PMIX_UNPUBLISH_CMD         0x03
+#define ORTE_PMIX_PURGE_PROC_CMD        0x04
 
 /* provide hooks to startup and finalize the data server */
 ORTE_DECLSPEC int orte_data_server_init(void);

@@ -78,6 +78,7 @@ ORTE_DECLSPEC void orte_state_base_report_progress(int fd, short argc, void *cbd
 ORTE_DECLSPEC void orte_state_base_track_procs(int fd, short argc, void *cbdata);
 ORTE_DECLSPEC void orte_state_base_check_all_complete(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_state_base_check_fds(orte_job_t *jdata);
+ORTE_DECLSPEC void orte_state_base_notify_data_server(orte_process_name_t *target);
 
 END_C_DECLS
 #endif

@@ -653,6 +653,46 @@ void orte_data_server(int status, orte_process_name_t* sender,
         goto SEND_ANSWER;
         break;
 
+    case ORTE_PMIX_PURGE_PROC_CMD:
+        /* unpack the proc whose data is to be purged - session
+         * data is purged by providing a requestor whose rank
+         * is wildcard */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &requestor, &count, OPAL_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto SEND_ERROR;
+        }
+
+        OPAL_OUTPUT_VERBOSE((1, orte_data_server_output,
+                             "%s data server: purge data from %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&requestor)));
+
+        /* cycle across the stored data, looking for a match */
+        for (k=0; k < orte_data_server_store.size; k++) {
+            data = (orte_data_object_t*)opal_pointer_array_get_item(&orte_data_server_store, k);
+            if (NULL == data) {
+                continue;
+            }
+            /* check if data posted by the same process */
+            if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &data->owner, &requestor)) {
+                continue;
+            }
+            /* check persistence - if it is intended to persist beyond the
+             * proc itself, then we only delete it if rank=wildcard*/
+            if ((data->persistence == OPAL_PMIX_PERSIST_APP ||
+                 data->persistence == OPAL_PMIX_PERSIST_SESSION) &&
+                ORTE_VPID_WILDCARD != requestor.vpid) {
+                continue;
+            }
+            /* remove the object */
+            opal_pointer_array_set_item(&orte_data_server_store, k, NULL);
+            OBJ_RELEASE(data);
+        }
+        /* no response is required */
+        OBJ_RELEASE(answer);
+        return;
+
     default:
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         rc = ORTE_ERR_BAD_PARAM;
