@@ -370,7 +370,6 @@ int orte_submit_init(int argc, char *argv[],
     } else {
         orte_process_info.proc_type = ORTE_PROC_TOOL;
     }
-
     if (ORTE_PROC_IS_TOOL) {
         if (0 == strncasecmp(orte_cmd_options.hnp, "file", strlen("file"))) {
             char input[1024], *filename;
