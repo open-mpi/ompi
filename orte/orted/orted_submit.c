@@ -1628,22 +1628,17 @@ static int create_app(int argc, char* argv[],
     app->num_procs = (orte_std_cntr_t)orte_cmd_options.num_procs;
     total_num_apps++;
 
-    /* Capture any preload flags */
-    if (orte_cmd_options.preload_binaries) {
-        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
-    }
-    /* if we were told to cwd to the session dir and the app was given in
-     * relative syntax, then we need to preload the binary to
+    /* see if we need to preload the binary to
      * find the app - don't do this for java apps, however, as we
      * can't easily find the class on the cmd line. Java apps have to
      * preload their binary via the preload_files option
      */
-    if (!opal_path_is_absolute(app->argv[0]) &&
-        NULL == strstr(app->argv[0], "java")) {
+    if (NULL == strstr(app->argv[0], "java")) {
         if (orte_cmd_options.preload_binaries) {
             orte_set_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
-        } else if (orte_get_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, NULL, OPAL_BOOL)) {
             orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+            /* no harm in setting this attribute twice as the function will simply ignore it */
+            orte_set_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
         }
     }
     if (NULL != orte_cmd_options.preload_files) {
