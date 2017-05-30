@@ -659,6 +659,54 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
         child->rml_uri = NULL;
     }
 
+    /* setup the rest of the environment with the proc-specific items - these
+     * will be overwritten for each child
+     */
+    if (ORTE_SUCCESS != (rc = orte_schizo.setup_child(jobdat, child, app, &cd->env))) {
+        ORTE_ERROR_LOG(rc);
+        state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
+        goto errorout;
+    }
+
+    /* Search for the OMPI_exec_path and PATH settings in the environment. */
+    for (argvptr = app->env; *argvptr != NULL; argvptr++) {
+        if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
+            mpiexec_pathenv = *argvptr + 15;
+        }
+        if (0 == strncmp("PATH=", *argvptr, 5)) {
+            pathenv = *argvptr + 5;
+        }
+    }
+
+    /* If OMPI_exec_path is set (meaning --path was used), then create a
+       temporary environment to be used in the search for the executable.
+       The PATH setting in this temporary environment is a combination of
+       the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
+       then just use existing environment with PATH in it.  */
+    if (NULL != mpiexec_pathenv) {
+        argvptr = NULL;
+        if (pathenv != NULL) {
+            asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
+        } else {
+            asprintf(&full_search, "%s", mpiexec_pathenv);
+        }
+        opal_setenv("PATH", full_search, true, &argvptr);
+        free(full_search);
+    } else {
+        argvptr = app->env;
+    }
+
+    rc = orte_util_check_context_app(app, argvptr);
+    /* do not ERROR_LOG - it will be reported elsewhere */
+    if (NULL != mpiexec_pathenv) {
+        opal_argv_free(argvptr);
+    }
+    if (ORTE_SUCCESS != rc) {
+        opal_output(0, "%s:%d", __FILE__, __LINE__);
+        state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
+        goto errorout;
+    }
+
     /* did the user request we display output in xterms? */
     if (NULL != orte_xterm && !ORTE_FLAG_TEST(jobdat, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         opal_list_item_t *nmitem;
@@ -717,53 +765,6 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     } else {
         cd->cmd = strdup(app->app);
         cd->argv = opal_argv_copy(app->argv);
-    }
-
-    /* setup the rest of the environment with the proc-specific items - these
-     * will be overwritten for each child
-     */
-    if (ORTE_SUCCESS != (rc = orte_schizo.setup_child(jobdat, child, app, &cd->env))) {
-        ORTE_ERROR_LOG(rc);
-        state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
-        goto errorout;
-    }
-
-    /* Search for the OMPI_exec_path and PATH settings in the environment. */
-    for (argvptr = app->env; *argvptr != NULL; argvptr++) {
-        if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
-            mpiexec_pathenv = *argvptr + 15;
-        }
-        if (0 == strncmp("PATH=", *argvptr, 5)) {
-            pathenv = *argvptr + 5;
-        }
-    }
-
-    /* If OMPI_exec_path is set (meaning --path was used), then create a
-       temporary environment to be used in the search for the executable.
-       The PATH setting in this temporary environment is a combination of
-       the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
-       then just use existing environment with PATH in it.  */
-    if (NULL != mpiexec_pathenv) {
-        argvptr = NULL;
-        if (pathenv != NULL) {
-            asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
-        } else {
-            asprintf(&full_search, "%s", mpiexec_pathenv);
-        }
-        opal_setenv("PATH", full_search, true, &argvptr);
-        free(full_search);
-    } else {
-        argvptr = app->env;
-    }
-
-    rc = orte_util_check_context_app(app, argvptr);
-    /* do not ERROR_LOG - it will be reported elsewhere */
-    if (NULL != mpiexec_pathenv) {
-        opal_argv_free(argvptr);
-    }
-    if (ORTE_SUCCESS != rc) {
-        state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
-        goto errorout;
     }
 
     /* if we are indexing the argv by rank, do so now */
