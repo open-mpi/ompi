@@ -485,8 +485,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
     }
 
-    if (!ORTE_PROC_IS_HNP &&
-        !orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
         /* compute and save bindings of local children */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
             ORTE_ERROR_LOG(rc);
