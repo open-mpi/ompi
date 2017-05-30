@@ -109,12 +109,16 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
         bool done;
 
         primitive_datatype = ompi_datatype_get_single_predefined_type_from_args(datatype);
+        ompi_datatype_type_size (primitive_datatype, &primitive_size);
+
         if (ompi_datatype_is_contiguous_memory_layout (datatype, count) &&
             1 == datatype->super.desc.used) {
             /* NTH: the datatype is made up of a contiguous block of the primitive
              * datatype. fast path. do not set up a convertor to deal with the
              * datatype. */
-            count *= datatype->super.desc.desc[0].elem.count;
+            (void)ompi_datatype_type_size(datatype, &size);
+            count *= (size / primitive_size);
+            assert( 0 == (size % primitive_size) );
 
             /* in case it is possible for the datatype to have a non-zero lb in this case.
              * remove me if this is not possible */
@@ -124,8 +128,6 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
             ompi_op_reduce(op, inbuf, outbuf, count, primitive_datatype);
             return OMPI_SUCCESS;
         }
-
-        ompi_datatype_type_size (primitive_datatype, &primitive_size);
 
         /* create convertor */
         OBJ_CONSTRUCT(&convertor, opal_convertor_t);
