@@ -1,0 +1,102 @@
+## Make a perfect tarball
+
+- [ ] Update the major,minor,release,greek version numbers in `VERSION`
+- [ ] Update the `c:r:a` shared library version number(s) in `VERSION` [per the GNU Libtool shared library version number rules](https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html)
+   - **NOTE:** It may be helpful to use a command like `git checkout BRANCH; git pull --rebase; git log --stat --topo-order --decorate TAG_FROM_PREVIOUS_RELEASE..HEAD` to examine the Git logs and see what has changed.
+   - [ ] *IF RELEVANT:* If this is a new backwards-compatible release on a single branch (i.e., this is `vx.y.z` where `z>1`), you probably want to examine `git log --stat --no-merges last_release_tag..this_branch_name` to see what source code files have changed (which directly impacts how to increment the `c:r:a` values).
+  - [ ] *IF RELEVANT:* If this is a new release series (e.g., `vx.y.0`), set `r` to 0 and increase `c` values by 10 compared to the first release in the prior series (i.e., `vx.(y-1).0` or `v(x-1).0.0`, as relevant).
+  - [ ] *IF RELEVANT:* If this is a new backwards-compatible release series (i.e., `vx.y.0`, where `y>1`), set`a` values to 10 so that the shared libraries will be ABI compatible with the prior release series.
+  - [ ] *IF RELEVANT:* If this is a new backwards-**IN**compatible release series (i.e., `vx.0.0`), set `a` values to 0 so that there is no possibility of users accidentally mixing shared library versions.
+- Update all documentation files (especially including dates and version numbers), including:
+  - [ ] `README`: all relevant updates, build options, etc.  Be sure to update the date near the top of the file.
+  - [ ] `AUTHORS`: via `contrib/dist/make-authors.pl` (and commit the result)
+  - [ ] `NEWS`: List all user-noticeable changes.  Similar to setting shared library versions (above):
+       - Pro tip: if this is a new release on a single branch (i.e., this is `vx.y.z` where `z>1`), you probably want to examine `git log --stat --no-merges last_release_tag..this_branch_name` to see what has changed.
+       - Pro tip: if this is a new release series (i.e., this is `vx.y.0` where `y>1`, or this is `vx.0.0`), you will need to be more creative in examining the git logs because this release is on a different branch than the prior release (`vx.(y-1).z`).  Hence, `git log ... last_release_tag..this_branch_name` will not necessarily give you need.  You may need to merge what has changed on your branch with what has changed on the prior release branch, depending on when the prior release branched from this branch.  Read the **SPECIFYING RANGES** section `gitrevisions(7)` for more details.
+  - [ ] `LICENSE`: Update the years in the copyright notices
+  - [ ] ...any other doc files that may not be included in this list
+- [ ] Make final `openmpi-x.y.z.tar.gz` and `openmpi-x.y.z.bz2` tarballs using the _make_dist_tarball_ script in contrib/dist. To do this correctly, you'll need to
+      -  log in to aws.open-mpi.org and su mpiteam
+      -  module load (one of the autconf module files)
+      -  git clone the Open MPI, cd into ompi, switch to the right branch, then
+      -  ./contrib/dist/make_dist_tarball
+
+## Ensure that the tarball actually works
+- [ ] Ensure openmpi `make distcheck` passes
+- Build and install Open MPI (from a tarball)
+  - [ ] Check that the version number and release date is correct in the installed man pages
+- [ ] Build and run the examples in the tarball
+  - [ ] MPI / C bindings
+  - [ ] MPI / C++ bindings
+  - [ ] MPI / All three Fortran bindings (you'll need newer compiler, e.g. gcc 4.9 or higher)
+  - [ ] OSHMEM / C bindings (don't run if not using ikrit)
+  - [ ] OSHMEM / Fortran bindings (don't run if not using ikrit)
+- [ ] Build and install the IBM tests from the `ompi-tests` repo
+  - [ ] Ensure the tests pass with at least 1 or 2 different MPI transports
+- [ ] With a prior release tarball from the same release series (if applicable):
+  - [ ] Build and install Open MPI
+  - [ ] Build all the examples in the tarball (against the prior OMPI release)
+  - [ ] Build the IBM tests from the `ompi-tests` repo (against the prior OMPI release)
+  - [ ] `rm -rf` the installation of the prior release
+  - [ ] Set `LD_LIBRARY_PATH` to point to the installation of the new Open MPI
+  - [ ] Run examples, make sure they still work
+  - [ ] Run IBM tests, make sure they still work
+
+## Test packaging
+- [ ] Ensure that building an Open MPI source RPM works on a RHEL system
+- [ ] Ensure that building the Open MPI binary RPM works on a RHEL system (note had to do hacking on buildrpm.sh script and it doesn't report correct information about where rpms are installed, at least not on my RHEL7.2 system running as root)
+- [ ] Install both RPMs on an RHEL system
+- [ ] Test building and running the IBM tests against the RPM-installed Open MPI
+- [ ] Test building a MPI-based program with the output from `pkg-config` with the RPM-installed `ompi.pc`
+- [ ] Test that uninstall of the rpm works
+
+## Do the release
+- [ ] Find the appropriate git hash to tag: look in the `VERSION` file in the official release tarball, and look at the `repo_rev` field.
+    - [ ] Make the release tag: `git tag -a vX.Y.Z HASH`
+    - [ ] Make the tag commit message be "Release vX.Y.Z"
+    - [ ] Double check that you tagged the Right commit, and that it exactly agrees with the hash in `VERSION` in the release tarball
+    - [ ] Triple check that you tagged the Right commit.  **TAGS ARE FOREVER!**
+- [ ] `git push --tags --dry-run` to the ompi repo.  Remove `--dry-run` when you're convinced it is correct.
+- Publish the tarballs on the Open MPI web site
+  - If Z is 0 (i.e., this is the first release in a series):
+    - [ ] `cp -r software/ompi/vCURRENT_RELEASE software/ompi/vRELEASE` (where RELEASE is for the new release X.Y and CURRENT_RELEASE is the X.Y of the current release)
+    - [ ] Edit each file in the new directory to update for the new release
+        - [ ] Edit `timeline-graph.php` to indicate relevant dates, such as branching
+    - [ ] Remove all prior tarballs from the `downloads` subdirectory
+    - [ ] Edit `software/ompi/nav.inc` and make this release series be the current stable release; shift other release series down as appropriate
+    - [ ] Edit `nightly/index.php` to make this release series be the current stable release; shift other release series snapshot tarballs down as appropriate
+    - [ ] Edit `software/ompi/current/version.inc` to set the new release series as the current software release.
+  - [ ] Add the tarball + SRPM files to the appropriate `ompi-www` directory (e.g., `software/ompi/vRELEASE/downloads/`).
+  - [ ] Update the `md5sums.txt` and `sha1sums.txt` file in that directory (e.g., `md5sum openmpi* > md5sums.txt`)
+  - [ ] Update the `latest_snapshot.txt` file in that directory
+  - [ ] Update `version.inc` in one directory up
+  - [ ] Update `index.php` (in the same directory as `version.inc`) and add the prior release to the `$versions[]` array so that it shows up in the older releases list
+  - [ ] Update `timeline-graph.php` (in the same directory as `version.inc`) to add a date stamp to the timeline graph for the release of this version (i.e., call `milestone()` like it is for the other releases)
+  - [ ] Update the top-level `index.php` with a news bullet about this release.  It is likely possible to guess the correct URL that will be used to web archive the announcement mail sent to announce@lists.open-mpi.org
+  - [ ] Git commit and push all these changes
+- Publish the newest version of the man pages
+  - [ ] Download and un-tar a new Open MPI release tarball (no need to config/rebuild/install it)
+  - [ ] Get a git clone of the Open MPI repo, checkout the branch that you are releasing
+  - [ ] Check out the vA.B.C release tag that you are releasing
+  - [ ] In the top-level directory of the expanded tarball, run
+  `contrib/dist/make-html-man-pages.pl` from the git clone checked out at the vA.B.C release tag (this file is *not* in the release tarball).  Note you'll need to get hold of *rman* for this script to work.
+    - This will take a little time because it will configure and build Open MPI, and then convert all the man pages to HTML.
+    - You can ignore warnings about the "" macro not being recognized
+  - In the `ompi-www` repo:
+    - [ ] `git rm -rf doc/vRELEASE` and commit
+    - [ ] `mkdir doc/vRELEASE`
+    - [ ] `cp -rp YOUR_BUILD_TREE/man-page-generator/php/* .`
+    - [ ] `git add doc/vRELEASE`
+    - [ ] If this is a new release series:
+        - [ ] Update `doc/index.php` to list the new directory and git add it
+        - [ ] Remove and re-create the `current` sym link to point to the correct directory and git add it
+    - [ ] `git commit -s`
+  - [ ] Git push all web site changes
+  - [ ] Verify the live web site to ensure all changes are both present and correct
+- [ ] Close the relevant Github milestone in `open-mpi/ompi`
+- [ ] Re-target (change milestone) all still-open issues for the new release to the next major or minor release of Open MPI as appropriate
+- [ ] Ensure that new Github milestones exist in `open-mpi/ompi` for the next release
+- [ ] Update the Open MPI version number in `VERSION` to `<NEXT_VERSION>` and get `greek` to `a1`
+- [ ] Send an email to the `announce@lists.open-mpi.org` mailing list announcing the release
+- [ ] Verify that the URL used to link to the release announcement (to `announce@open-mpi.org`) is correct on the front Open MPI web page.
+- [ ] Open a duplicate of this issue for the next release in this series.
