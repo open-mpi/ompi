@@ -220,6 +220,7 @@ int pmix_server_init(void)
         return rc;
     }
     OBJ_CONSTRUCT(&orte_pmix_server_globals.notifications, opal_list_t);
+    orte_pmix_server_globals.server = *ORTE_NAME_INVALID;
 
    /* setup recv for direct modex requests */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX,

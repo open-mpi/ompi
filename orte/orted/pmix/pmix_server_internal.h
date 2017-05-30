@@ -45,8 +45,9 @@
 #include "opal/util/proc.h"
 
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/runtime/orte_globals.h"
 
- BEGIN_C_DECLS
+BEGIN_C_DECLS
 
 #define ORTED_PMIX_MIN_DMX_TIMEOUT      10
 #define ORTE_ADJUST_TIMEOUT(a)                                      \
@@ -252,7 +253,6 @@ typedef struct {
     opal_hotel_t reqs;
     int num_rooms;
     int timeout;
-    char *server_uri;
     bool wait_for_server;
     orte_process_name_t server;
     opal_list_t notifications;

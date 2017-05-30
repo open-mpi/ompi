@@ -69,7 +69,7 @@ static int init_server(void)
             if (NULL == filename) {
                 /* filename is not correctly formatted */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
-                               orte_basename, orte_pmix_server_globals.server_uri);
+                               orte_basename, orte_data_server_uri);
                 return ORTE_ERR_BAD_PARAM;
             }
             ++filename; /* space past the : */
@@ -77,7 +77,7 @@ static int init_server(void)
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
-                               orte_basename, orte_pmix_server_globals.server_uri);
+                               orte_basename, orte_data_server_uri);
                 return ORTE_ERR_BAD_PARAM;
             }
 
@@ -85,14 +85,14 @@ static int init_server(void)
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
-                               orte_basename, orte_pmix_server_globals.server_uri);
+                               orte_basename, orte_data_server_uri);
                 return ORTE_ERR_BAD_PARAM;
             }
             if (NULL == fgets(input, 1024, fp)) {
                 /* something malformed about file */
                 fclose(fp);
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
-                               orte_basename, orte_pmix_server_globals.server_uri,
+                               orte_basename, orte_data_server_uri,
                                orte_basename);
                 return ORTE_ERR_BAD_PARAM;
             }
@@ -100,7 +100,7 @@ static int init_server(void)
             input[strlen(input)-1] = '\0';  /* remove newline */
             server = strdup(input);
         } else {
-            server = strdup(orte_pmix_server_globals.server_uri);
+            server = strdup(orte_data_server_uri);
         }
         /* setup our route to the server */
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -154,8 +154,8 @@ static void execute(int sd, short args, void *cbdata)
         /* we need to initialize our connection to the server */
         if (ORTE_SUCCESS != (rc = init_server())) {
             orte_show_help("help-orted.txt", "noserver", true,
-                           (NULL == orte_pmix_server_globals.server_uri) ?
-                           "NULL" : orte_pmix_server_globals.server_uri);
+                           (NULL == orte_data_server_uri) ?
+                           "NULL" : orte_data_server_uri);
             goto callback;
         }
     }
