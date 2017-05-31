@@ -1207,6 +1207,11 @@ static int setup_child(orte_job_t *jdata,
         opal_setenv("PWD", param, true, env);
         /* update the initial wdir value too */
         opal_setenv("OMPI_MCA_initial_wdir", param, true, env);
+    } else if (NULL != app->cwd) {
+        /* change to it */
+        if (0 != chdir(app->cwd)) {
+            return ORTE_ERROR;
+        }
     }
     return ORTE_SUCCESS;
 }
