@@ -15,7 +15,7 @@ dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2016 Research Organization for Information Science
+dnl Copyright (c) 2014-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
@@ -35,6 +35,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_USEMPI_LIB=
 
     OMPI_FORTRAN_USEMPIF08_DIR=
+    OMPI_FORTRAN_USEMPIF08_MOD=
     OMPI_FORTRAN_USEMPIF08_LIB=
 
     OMPI_FORTRAN_MAX_ARRAY_RANK=0
@@ -543,12 +544,14 @@ end type test_mpi_handle],
                AS_IF([test $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 1],
                      [ # Case a) partial/prototype implementation
                       OMPI_FORTRAN_USEMPIF08_DIR=mpi/fortran/use-mpi-f08-desc
+                      OMPI_FORTRAN_USEMPIF08_MOD=$OMPI_FORTRAN_USEMPIF08_DIR/mod
                       OMPI_FORTRAN_SUBARRAYS_SUPPORTED=.TRUE.
                       OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=0
                       AC_MSG_RESULT([array subsections (partial/experimental)])
                      ],
                      [ # Both cases b) and c)
                       OMPI_FORTRAN_USEMPIF08_DIR=mpi/fortran/use-mpi-f08
+                      OMPI_FORTRAN_USEMPIF08_MOD=$OMPI_FORTRAN_USEMPIF08_DIR/mod
                       OMPI_FORTRAN_SUBARRAYS_SUPPORTED=.FALSE.
                       AS_IF([test $OMPI_FORTRAN_HAVE_OPTIONAL_ARGS -eq 1],
                             [ # Case b) "good compiler"
@@ -701,6 +704,7 @@ end type test_mpi_handle],
 
     # This goes into ompi/Makefile.am
     AC_SUBST(OMPI_FORTRAN_USEMPIF08_DIR)
+    AC_SUBST(OMPI_FORTRAN_USEMPIF08_MOD)
     # This goes into mpifort-wrapper-data.txt
     AC_SUBST(OMPI_FORTRAN_USEMPIF08_LIB)
 
