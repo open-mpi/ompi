@@ -130,6 +130,16 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
                   [enable rpath/runpath support in the wrapper compilers (default=yes)])])
     AS_IF([test "$enable_wrapper_rpath" != "no"], [enable_wrapper_rpath=yes])
     AC_MSG_RESULT([$enable_wrapper_rpath])
+
+    AC_MSG_CHECKING([if want wrapper compiler runpath support])
+    AC_ARG_ENABLE([wrapper-runpath],
+                  [AS_HELP_STRING([--enable--wrapper-runpath],
+                  [enable runpath in the wrapper compilers if linker supports it (default: enabled,  unless wrapper-rpath is disabled).])])
+    AS_IF([test "$enable_wrapper_runpath" != "no"], [enable_wrapper_runpath=yes])
+    AC_MSG_RESULT([$enable_wrapper_runpath])
+
+    AS_IF([test "$enable_wrapper_rpath" = "no" && test "$enable_wrapper_runpath" = "yes"],
+          [AC_MSG_ERROR([--enable-wrapper-runpath cannot be selected with --disable-wrapper-rpath])])
 ])
 
 # Check to see whether the linker supports DT_RPATH.  We'll need to
@@ -220,18 +230,19 @@ EOF
 AC_DEFUN([OPAL_SETUP_RUNPATH],[
     OPAL_VAR_SCOPE_PUSH([LDFLAGS_save rpath_script rpath_outfile wl_fc])
 
-    AC_MSG_CHECKING([if linker supports RUNPATH])
     # Set the output in $runpath_args
     runpath_args=
     LDFLAGS_save=$LDFLAGS
     LDFLAGS="$LDFLAGS -Wl,--enable-new-dtags"
-    AC_LANG_PUSH([C])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 7;])],
-                   [WRAPPER_RPATH_SUPPORT=runpath
-                    runpath_args="-Wl,--enable-new-dtags"
-                    AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
-                   [AC_MSG_RESULT([no])])
-    AC_LANG_POP([C])
+    AS_IF([test x"$enable_wrapper_runpath" = x"yes"],
+           [AC_LANG_PUSH([C])
+            AC_MSG_CHECKING([if linker supports RUNPATH])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 7;])],
+                           [WRAPPER_RPATH_SUPPORT=runpath
+                            runpath_args="-Wl,--enable-new-dtags"
+                            AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
+                           [AC_MSG_RESULT([no])])
+            AC_LANG_POP([C])])
 m4_ifdef([project_ompi],[
     # Output goes into globally-visible $rpath_args.  Run this in a
     # sub-process so that we don't pollute the current process
