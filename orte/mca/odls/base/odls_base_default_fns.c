@@ -702,7 +702,6 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
         opal_argv_free(argvptr);
     }
     if (ORTE_SUCCESS != rc) {
-        opal_output(0, "%s:%d", __FILE__, __LINE__);
         state = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
         goto errorout;
     }
@@ -798,6 +797,7 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
 
   errorout:
     ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_ALIVE);
+    child->exit_code = rc;
     ORTE_ACTIVATE_PROC_STATE(&child->name, state);
     OBJ_RELEASE(cd);
 }
