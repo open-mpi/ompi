@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
@@ -17,10 +17,12 @@
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
-             -I$(top_srcdir) $(FCFLAGS)
+             -I$(top_srcdir) -Imod $(FCFLAGS)
 
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
 
+module_sentinel_file = \
+        mod/libforce_usempif08_internal_modules_to_be_built.la
 #
 # This list is a subset of the full MPI API used for testing Fortran
 # descriptors usage in MPI-3
@@ -38,8 +40,6 @@ mpi_api_files = \
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
-        mpi-f08-types.f90 \
-        mpi-f08-interfaces.F90 \
         mpi-f-interfaces-bind.h \
         mpi-f08.f90 \
         ISO_Fortran_binding.h \
@@ -59,9 +59,7 @@ MOSTLYCLEANFILES = *.mod
 # manually here.  Bummer!
 #
 
-mpi-f08-types.lo: mpi-f08-types.f90
-mpi-f08-interfaces.lo: mpi-f08-interfaces.F90 mpi-f08-types.lo
-OMPI_Fortran_binding.lo: OMPI_Fortran_binding.f90 mpi-f08-types.lo
+OMPI_Fortran_binding.lo: OMPI_Fortran_binding.f90 mod/mpi-f08-types.lo
 
 
 #
@@ -73,9 +71,8 @@ mpi_api_lo_files = $(mpi_api_files:.f90=.lo)
 
 $(mpi_api_lo_files): mpi-f08.lo
 
-mpi-f08.lo: mpi-f08-types.lo
+mpi-f08.lo: $(module_sentinel_file)
 mpi-f08.lo: OMPI_Fortran_binding.lo
-mpi-f08.lo: mpi-f08-interfaces.lo
 mpi-f08.lo: mpi-f-interfaces-bind.h
 mpi-f08.lo: mpi-f08.f90
 

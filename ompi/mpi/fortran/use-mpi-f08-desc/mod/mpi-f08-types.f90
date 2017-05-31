@@ -3,7 +3,7 @@
 ! Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 !
 ! This file creates mappings between MPI C types (e.g., MPI_Comm) and
@@ -153,6 +153,6 @@ module mpi_f08_types
 !
 ! STATUS/STATUSES_IGNORE
 !
-#include "mpif-f08-types.h"
+include 'mpif-f08-types.h'
 
 end module mpi_f08_types

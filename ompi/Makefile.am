@@ -15,7 +15,7 @@
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -90,6 +90,7 @@ SUBDIRS = \
         mpi/fortran/mpif-h \
         $(OMPI_MPIEXT_USEMPI_DIR) \
         $(OMPI_FORTRAN_USEMPI_DIR) \
+        $(OMPI_FORTRAN_USEMPIF08_MOD) \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
         $(OMPI_FORTRAN_USEMPIF08_DIR) \
         mpi/fortran/mpiext \
@@ -119,7 +120,9 @@ DIST_SUBDIRS = \
         mpi/fortran/use-mpi-tkr \
         mpi/fortran/use-mpi-ignore-tkr \
         mpi/fortran/use-mpi-f08 \
+        mpi/fortran/use-mpi-f08/mod \
         mpi/fortran/use-mpi-f08-desc \
+        mpi/fortran/use-mpi-f08-desc/mod \
         mpi/fortran/mpiext \
         mpi/java \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
