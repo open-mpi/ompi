@@ -256,6 +256,7 @@ ompi/tools/wrappers/mpicc.1
 ompi/tools/wrappers/mpic++.1
 ompi/tools/wrappers/mpicxx.1
 ompi/tools/wrappers/mpifort.1
+ompi/tools/wrappers/mpijavac.1
 ompi/tools/wrappers/ompi_wrapper_script
 ompi/tools/wrappers/ompi.pc
 ompi/tools/wrappers/ompi-c.pc
