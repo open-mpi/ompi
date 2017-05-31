@@ -3,6 +3,7 @@
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -179,7 +180,7 @@ jdoc: doc
 # mpi.jar is ever rebuilt, then also make the docs eligible to be
 # rebuilt.
 doc: mpi/MPI.class
-	$(OMPI_V_JAVADOC) javadoc $(OMPI_V_JAVADOC_QUIET) -d doc $(srcdir)/*.java
+	$(OMPI_V_JAVADOC) $(JAVADOC) $(OMPI_V_JAVADOC_QUIET) -d doc $(srcdir)/*.java
 	@touch doc
 
 jdoc-install: doc
