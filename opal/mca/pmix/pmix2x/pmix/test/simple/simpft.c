@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -114,13 +114,14 @@ int main(int argc, char **argv)
         PMIx_Abort(PMIX_ERR_OUT_OF_RESOURCE, "Eat rocks",
                    &proc, 1);
         pmix_output(0, "Client ns %s rank %d: Abort called", myproc.nspace, myproc.rank);
-    }
+    } else {
     /* everyone simply waits */
-    while (!completed) {
-        struct timespec ts;
-        ts.tv_sec = 0;
-        ts.tv_nsec = 100000;
-        nanosleep(&ts, NULL);
+        while (!completed) {
+            struct timespec ts;
+            ts.tv_sec = 0;
+            ts.tv_nsec = 100000;
+            nanosleep(&ts, NULL);
+        }
     }
 
  done:

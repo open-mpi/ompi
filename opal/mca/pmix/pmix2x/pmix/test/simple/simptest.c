@@ -216,7 +216,7 @@ static void model_callback(size_t evhdlr_registration_id,
     /* just let us know it was received */
     fprintf(stderr, "Model event handler called with status %d(%s)\n", status, PMIx_Error_string(status));
     for (n=0; n < ninfo; n++) {
-        if (PMIX_STRING == info[n].value.type) {
+        if (0 == strncmp(info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
             fprintf(stderr, "\t%s:\t%s\n", info[n].key, info[n].value.data.string);
         }
     }

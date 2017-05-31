@@ -157,10 +157,10 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
             PMIX_INFO_XFER(&chain->info[n], &info[n]);
         }
     }
-    /* put the evhandler name tag in the next-to-last element - we
+    /* add the evhandler name tag - we
      * will fill it in as each handler is called */
     PMIX_INFO_LOAD(&chain->info[chain->ninfo-2], PMIX_EVENT_HDLR_NAME, NULL, PMIX_STRING);
-    /* now put the callback object tag in the last element */
+    /* now add the callback object tag */
     PMIX_INFO_LOAD(&chain->info[chain->ninfo-1], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
 
     /* we need to cache this event so we can pass it into
@@ -324,15 +324,27 @@ static void progress_local_event_hdlr(pmix_status_t status,
             if (nxt->codes[0] == chain->status &&
                 check_range(&nxt->rng, &chain->source)) {
                 chain->evhdlr = nxt;
-                /* add the handler name in case they want to reference it */
-                if (NULL != chain->info[chain->ninfo-2].value.data.string) {
-                    free(chain->info[chain->ninfo-2].value.data.string);
+                /* update the handler name in case they want to reference it */
+                for (n=0; n < chain->ninfo; n++) {
+                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
+                        if (NULL != chain->info[n].value.data.string) {
+                            free(chain->info[n].value.data.string);
+                        }
+                        if (NULL != chain->evhdlr->name) {
+                            chain->info[n].value.data.string = strdup(chain->evhdlr->name);
+                        }
+                        break;
+                    }
                 }
-                if (NULL != chain->evhdlr->name) {
-                    chain->info[chain->ninfo-2].value.data.string = strdup(chain->evhdlr->name);
+                /* update the evhdlr cbobject */
+                for (n=0; n < chain->ninfo; n++) {
+                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
+                        if (NULL != chain->evhdlr->name) {
+                            chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
+                        }
+                        break;
+                    }
                 }
-                /* add any cbobject - the info struct for it is at the end */
-                chain->info[chain->ninfo-1].value.data.ptr = nxt->cbobject;
                 nxt->evhdlr(nxt->index,
                             chain->status, &chain->source,
                             chain->info, chain->ninfo,
@@ -364,15 +376,27 @@ static void progress_local_event_hdlr(pmix_status_t status,
                  * the source fits within it */
                 if (nxt->codes[n] == chain->status) {
                     chain->evhdlr = nxt;
-                    /* add the handler name in case they want to reference it */
-                    if (NULL != chain->info[chain->ninfo-2].value.data.string) {
-                        free(chain->info[chain->ninfo-2].value.data.string);
+                    /* update the handler name in case they want to reference it */
+                    for (n=0; n < chain->ninfo; n++) {
+                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
+                            if (NULL != chain->info[n].value.data.string) {
+                                free(chain->info[n].value.data.string);
+                            }
+                            if (NULL != chain->evhdlr->name) {
+                                chain->info[n].value.data.string = strdup(chain->evhdlr->name);
+                            }
+                            break;
+                        }
                     }
-                    if (NULL != chain->evhdlr->name) {
-                        chain->info[chain->ninfo-2].value.data.string = strdup(chain->evhdlr->name);
+                    /* update the evhdlr cbobject */
+                    for (n=0; n < chain->ninfo; n++) {
+                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
+                            if (NULL != chain->evhdlr->name) {
+                                chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
+                            }
+                            break;
+                        }
                     }
-                    /* add any cbobject - the info struct for it is at the end */
-                    chain->info[chain->ninfo-1].value.data.ptr = nxt->cbobject;
                     nxt->evhdlr(nxt->index,
                                 chain->status, &chain->source,
                                 chain->info, chain->ninfo,
@@ -398,15 +422,27 @@ static void progress_local_event_hdlr(pmix_status_t status,
              * the source fits within it */
             if (check_range(&nxt->rng, &chain->source)) {
                 chain->evhdlr = nxt;
-                /* add the handler name in case they want to reference it */
-                if (NULL != chain->info[chain->ninfo-2].value.data.string) {
-                    free(chain->info[chain->ninfo-2].value.data.string);
+                /* update the handler name in case they want to reference it */
+                for (n=0; n < chain->ninfo; n++) {
+                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
+                        if (NULL != chain->info[n].value.data.string) {
+                            free(chain->info[n].value.data.string);
+                        }
+                        if (NULL != chain->evhdlr->name) {
+                            chain->info[n].value.data.string = strdup(chain->evhdlr->name);
+                        }
+                        break;
+                    }
                 }
-                if (NULL != chain->evhdlr->name) {
-                    chain->info[chain->ninfo-2].value.data.string = strdup(chain->evhdlr->name);
+                /* update the evhdlr cbobject */
+                for (n=0; n < chain->ninfo; n++) {
+                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
+                        if (NULL != chain->evhdlr->name) {
+                            chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
+                        }
+                        break;
+                    }
                 }
-                /* add any cbobject - the info struct for it is at the end */
-                chain->info[chain->ninfo-1].value.data.ptr = nxt->cbobject;
                 nxt->evhdlr(nxt->index,
                             chain->status, &chain->source,
                             chain->info, chain->ninfo,
@@ -425,15 +461,27 @@ static void progress_local_event_hdlr(pmix_status_t status,
         if (1 == pmix_globals.events.last->ncodes &&
             pmix_globals.events.last->codes[0] == chain->status) {
             chain->evhdlr = pmix_globals.events.last;
-            /* add the handler name in case they want to reference it */
-            if (NULL != chain->info[chain->ninfo-2].value.data.string) {
-                free(chain->info[chain->ninfo-2].value.data.string);
+            /* update the handler name in case they want to reference it */
+            for (n=0; n < chain->ninfo; n++) {
+                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
+                    if (NULL != chain->info[n].value.data.string) {
+                        free(chain->info[n].value.data.string);
+                    }
+                    if (NULL != chain->evhdlr->name) {
+                        chain->info[n].value.data.string = strdup(chain->evhdlr->name);
+                    }
+                    break;
+                }
             }
-            if (NULL != chain->evhdlr->name) {
-                chain->info[chain->ninfo-2].value.data.string = strdup(chain->evhdlr->name);
+            /* update the evhdlr cbobject */
+            for (n=0; n < chain->ninfo; n++) {
+                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
+                    if (NULL != chain->evhdlr->name) {
+                        chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
+                    }
+                    break;
+                }
             }
-            /* add any cbobject - the info struct for it is at the end */
-            chain->info[chain->ninfo-1].value.data.ptr = pmix_globals.events.last->cbobject;
             chain->evhdlr->evhdlr(chain->evhdlr->index,
                                   chain->status, &chain->source,
                                   chain->info, chain->ninfo,
@@ -445,15 +493,27 @@ static void progress_local_event_hdlr(pmix_status_t status,
             for (n=0; n < pmix_globals.events.last->ncodes; n++) {
                 if (pmix_globals.events.last->codes[n] == chain->status) {
                     chain->evhdlr = pmix_globals.events.last;
-                    /* add the handler name in case they want to reference it */
-                    if (NULL != chain->info[chain->ninfo-2].value.data.string) {
-                        free(chain->info[chain->ninfo-2].value.data.string);
+                    /* update the handler name in case they want to reference it */
+                    for (n=0; n < chain->ninfo; n++) {
+                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
+                            if (NULL != chain->info[n].value.data.string) {
+                                free(chain->info[n].value.data.string);
+                            }
+                            if (NULL != chain->evhdlr->name) {
+                                chain->info[n].value.data.string = strdup(chain->evhdlr->name);
+                            }
+                            break;
+                        }
                     }
-                    if (NULL != chain->evhdlr->name) {
-                        chain->info[chain->ninfo-2].value.data.string = strdup(chain->evhdlr->name);
+                    /* update the evhdlr cbobject */
+                    for (n=0; n < chain->ninfo; n++) {
+                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
+                            if (NULL != chain->evhdlr->name) {
+                                chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
+                            }
+                            break;
+                        }
                     }
-                    /* add any cbobject - the info struct for it is at the end */
-                    chain->info[chain->ninfo-1].value.data.ptr = pmix_globals.events.last->cbobject;
                     chain->evhdlr->evhdlr(chain->evhdlr->index,
                                           chain->status, &chain->source,
                                           chain->info, chain->ninfo,
@@ -465,15 +525,27 @@ static void progress_local_event_hdlr(pmix_status_t status,
         } else {
             /* gets run for all codes */
             chain->evhdlr = pmix_globals.events.last;
-            /* add the handler name in case they want to reference it */
-            if (NULL != chain->info[chain->ninfo-2].value.data.string) {
-                free(chain->info[chain->ninfo-2].value.data.string);
+            /* update the handler name in case they want to reference it */
+            for (n=0; n < chain->ninfo; n++) {
+                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
+                    if (NULL != chain->info[n].value.data.string) {
+                        free(chain->info[n].value.data.string);
+                    }
+                    if (NULL != chain->evhdlr->name) {
+                        chain->info[n].value.data.string = strdup(chain->evhdlr->name);
+                    }
+                    break;
+                }
             }
-            if (NULL != chain->evhdlr->name) {
-                chain->info[chain->ninfo-2].value.data.string = strdup(chain->evhdlr->name);
+            /* update the evhdlr cbobject */
+            for (n=0; n < chain->ninfo; n++) {
+                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
+                    if (NULL != chain->evhdlr->name) {
+                        chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
+                    }
+                    break;
+                }
             }
-            /* add any cbobject - the info struct for it is at the end */
-            chain->info[chain->ninfo-1].value.data.ptr = pmix_globals.events.last->cbobject;
             chain->evhdlr->evhdlr(chain->evhdlr->index,
                                   chain->status, &chain->source,
                                   chain->info, chain->ninfo,
@@ -642,15 +714,28 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
 
 
   invk:
+    /* update the handler name in case they want to reference it */
+    for (i=0; i < chain->ninfo; i++) {
+        if (0 == strncmp(chain->info[i].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
+            if (NULL != chain->info[i].value.data.string) {
+                free(chain->info[i].value.data.string);
+            }
+            if (NULL != chain->evhdlr->name) {
+                chain->info[i].value.data.string = strdup(chain->evhdlr->name);
+            }
+            break;
+        }
+    }
+    /* update the evhdlr cbobject */
+    for (i=0; i < chain->ninfo; i++) {
+        if (0 == strncmp(chain->info[i].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
+            if (NULL != chain->evhdlr->name) {
+                chain->info[i].value.data.ptr = chain->evhdlr->cbobject;
+            }
+            break;
+        }
+    }
     /* invoke the handler */
-    /* add the handler name in case they want to reference it */
-    if (NULL != chain->info[chain->ninfo-2].value.data.string) {
-        free(chain->info[chain->ninfo-2].value.data.string);
-    }
-    if (NULL != chain->evhdlr->name) {
-        chain->info[chain->ninfo-2].value.data.string = strdup(chain->evhdlr->name);
-    }
-    chain->info[chain->ninfo-1].value.data.ptr = chain->evhdlr->cbobject;
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "[%s:%d] INVOKING EVHDLR %s", __FILE__, __LINE__,
                         (NULL == chain->evhdlr->name) ?

@@ -55,9 +55,9 @@ my $include_list;
 my $exclude_list;
 
 # Minimum versions
-my $pmix_automake_version = "1.15.0";
+my $pmix_automake_version = "1.13.4";
 my $pmix_autoconf_version = "2.69";
-my $pmix_libtool_version = "2.4.6";
+my $pmix_libtool_version = "2.4.2";
 
 # Search paths
 my $pmix_autoconf_search = "autoconf";

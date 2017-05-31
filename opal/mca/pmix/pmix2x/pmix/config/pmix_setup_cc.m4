@@ -12,11 +12,11 @@ dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+dnl Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -38,7 +38,6 @@ AC_DEFUN([PMIX_SETUP_CC],[
     AC_REQUIRE([AM_PROG_CC_C_O])
 
     # We require a C99 compiant compiler
-    AC_PROG_CC_C99
     # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
     if test "x$ac_cv_prog_cc_c99" = xno ; then
         AC_MSG_WARN([PMIx requires a C99 compiler])
@@ -322,7 +321,7 @@ AC_DEFUN([_PMIX_PROG_CC],[
     #
     PMIX_VAR_SCOPE_PUSH([pmix_cflags_save dummy pmix_cc_arvgv0])
     pmix_cflags_save="$CFLAGS"
-    AC_PROG_CC
+    AC_PROG_CC_C99
     BASECC="`basename $CC`"
     CFLAGS="$pmix_cflags_save"
     AC_DEFINE_UNQUOTED(PMIX_CC, "$CC", [PMIx underlying C compiler])
