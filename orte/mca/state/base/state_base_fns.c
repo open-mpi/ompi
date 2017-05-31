@@ -1148,15 +1148,6 @@ void orte_state_base_check_fds(orte_job_t *jdata)
         } else {
             opal_argv_append_nosize(&list, "rdwr");
         }
-        if (flflags & O_DSYNC) {
-            opal_argv_append_nosize(&list, "dsync");
-        }
-        if (flflags & O_RSYNC) {
-            opal_argv_append_nosize(&list, "rsync");
-        }
-        if (flflags & O_SYNC) {
-            opal_argv_append_nosize(&list, "sync");
-        }
         if (flk && F_UNLCK != fl.l_type) {
             if (F_WRLCK == fl.l_type) {
                 opal_argv_append_nosize(&list, "wrlock");
