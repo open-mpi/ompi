@@ -81,13 +81,14 @@ int orte_odls_alps_component_query(mca_base_module_t **module, int *priority)
     bool flag;
 
     /*
-     * make sure we're in a daemon process
+     * make sure we're in a daemon process.  On systems using
+     * SLURM, can be the HNP process as well
      */
 
-    if (!ORTE_PROC_IS_DAEMON) {
+    if (!(ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP)) {
         *priority = 0;
         *module = NULL;
-        rc = ORTE_ERROR;
+        return rc;
     }
 
     /*
