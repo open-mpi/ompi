@@ -180,14 +180,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         calloc(1, sizeof(ompi_osc_sm_module_t));
     if (NULL == module) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
+    win->w_osc_module = &module->super;
+
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
-
-    ret = opal_infosubscribe_subscribe(&(win->super), "blocking_fence", "false", 
-        component_set_blocking_fence_info);
-
-    module->global_state->use_barrier_for_fence = 1;
-
-    if (OPAL_SUCCESS != ret) goto error;
 
     ret = opal_infosubscribe_subscribe(&(win->super), "alloc_shared_contig", "false", component_set_alloc_shared_noncontig_info);
 
@@ -390,18 +385,20 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 #endif
     }
 
+    ret = opal_infosubscribe_subscribe(&(win->super), "blocking_fence", "false",
+        component_set_blocking_fence_info);
+
+    if (OPAL_SUCCESS != ret) goto error;
+
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                             module->comm->c_coll->coll_barrier_module);
     if (OMPI_SUCCESS != ret) goto error;
 
     *model = MPI_WIN_UNIFIED;
 
-    win->w_osc_module = &module->super;
-
     return OMPI_SUCCESS;
 
  error:
-    win->w_osc_module = &module->super;
     ompi_osc_sm_free (win);
 
     return ret;
