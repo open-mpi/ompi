@@ -22,6 +22,7 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,11 +104,26 @@ static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
                                                   mca_btl_base_descriptor_t* des,
                                                   int status);
 #endif /* OPAL_CUDA_SUPPORT */
+static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
+        struct ibv_wc *wc);
 /*
  * Local variables
  */
 static mca_btl_openib_device_t *receive_queues_device = NULL;
 static int num_devices_intentionally_ignored = 0;
+
+/*
+ * Maintain a list of completions seen by ibv_poll_cq()
+ */
+typedef struct {
+    opal_list_item_t parent;
+    mca_btl_openib_device_t* device;
+    uint32_t cq;
+    struct ibv_wc *wc;
+} ompi_wcitem_t;
+OBJ_CLASS_DECLARATION(ompi_wcitem_t);
+OBJ_CLASS_INSTANCE(ompi_wcitem_t, opal_list_item_t, NULL, NULL);
+static opal_list_t ompi_wclist;
 
 mca_btl_openib_component_t mca_btl_openib_component = {
     .super = {
@@ -188,6 +204,7 @@ static int btl_openib_component_open(void)
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
     mca_btl_openib_component.memory_registration_verbose = -1;
+    OBJ_CONSTRUCT(&ompi_wclist, opal_list_t);
 
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_stage_one_init();
@@ -223,6 +240,8 @@ static int btl_openib_component_close(void)
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_fini();
 #endif /* OPAL_CUDA_SUPPORT */
+
+    OBJ_DESTRUCT(&ompi_wclist);
 
     return rc;
 }
@@ -3595,12 +3614,59 @@ error:
                              (struct opal_proc_t*)remote_proc, NULL);
 }
 
+static void add_to_wclist(mca_btl_openib_device_t* device, const uint32_t cq,
+        struct ibv_wc *wc)
+{
+    ompi_wcitem_t *savewc;
+    savewc = OBJ_NEW(ompi_wcitem_t);
+    savewc->device = device;
+    savewc->cq = cq;
+    savewc->wc = wc;
+    opal_list_append(&ompi_wclist, (opal_list_item_t *) savewc);
+}
+
+static void process_wclist(void)
+{
+    ompi_wcitem_t *savewc;
+
+    while (opal_list_get_size (&ompi_wclist)) {
+        savewc = (ompi_wcitem_t *)
+            opal_list_remove_first(&ompi_wclist);
+
+        handle_wc(savewc->device, savewc->cq, savewc->wc);
+        OBJ_RELEASE(savewc);
+    }
+}
+
 static int poll_device(mca_btl_openib_device_t* device, int count)
 {
     int ne = 0, cq;
     uint32_t hp_iter = 0;
     struct ibv_wc wc[MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT];
     int i;
+    static int depth = 0;
+    static int counter = 0;
+    int weight;
+
+// Sometimes completion functions triggered in handle_wc() try to send a
+// message and block (looping a progression function) waiting on its
+// completion. It's possible a prerequisite for completion though is that
+// further items be processed out of the completion list to free up resources.
+// So here we allow processing of already queued completion events. This has
+// the potential to go heavily recursive, so we only trigger the extra
+// progression some of the time.
+    ++depth;
+    ++counter;
+    if (depth < 13) {
+        weight = 2 << depth;
+    } else {
+        // weights = 4, 8, 16, 32, .. 1024, 2048, 4096, 8192, 8192, 8192 ...
+        weight = 8192;
+    }
+    if (counter > weight) {
+        counter = 0;
+        process_wclist();
+    }
 
     device->pollme = false;
     for(cq = 0; cq < 2 && hp_iter < mca_btl_openib_component.cq_poll_progress;)
@@ -3628,13 +3694,18 @@ static int poll_device(mca_btl_openib_device_t* device, int count)
         }
 
         for (i = 0; i < ne; i++)
-            handle_wc(device, cq, &wc[i]);
+            add_to_wclist(device, cq, &wc[i]);
+//          handle_wc(device, cq, &wc[i]);
+
+        process_wclist();
     }
 
+    --depth;
     return count;
 error:
     BTL_ERROR(("error polling %s with %d errno says %s", cq_name[cq], ne,
                 strerror(errno)));
+    --depth;
     return count;
 }
 
