@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -38,7 +38,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_message_t);
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
-#define PREDEFINED_MESSAGE_PAD (sizeof(void*) * 32)
+#define PREDEFINED_MESSAGE_PAD 256
 
 struct ompi_predefined_message_t {
     struct ompi_message_t message;
