@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2016      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
@@ -258,10 +258,17 @@ make_tarball() {
     #
     echo "*** Running autogen $autogen_args..."
     rm -f success
+
+    strict="--autotools-eq"
+    if test $highok -eq 0; then
+        strict="--autotools-ge"
+    fi
+    strict="$strict ac:$AC_TARGET_VERSION,am:$AM_TARGET_VERSION,lt:$LT_TARGET_VERSION"
+
     if test "$want_ompi" = "1" ; then
-        (./autogen.pl --force $autogen_args 2>&1 && touch success) | tee auto.out
+        (./autogen.pl $strict --force $autogen_args 2>&1 && touch success) | tee auto.out
     else
-        (./autogen.pl --force --no-ompi $autogen_args 2>&1 && touch success) | tee auto.out
+        (./autogen.pl $strict --force --no-ompi $autogen_args 2>&1 && touch success) | tee auto.out
     fi
     if test ! -f success; then
         echo "Autogen failed.  Aborting"

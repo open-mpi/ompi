@@ -54,6 +54,8 @@ my $help_arg = 0;
 my $platform_arg = 0;
 my $include_arg = 0;
 my $exclude_arg = 0;
+my $autotools_eq_arg = 0;
+my $autotools_ge_arg = 0;
 my $force_arg = 0;
 
 # Include/exclude lists
@@ -793,11 +795,69 @@ sub find_and_delete {
 # Find a specific executable and ensure that it is a recent enough
 # version.
 
+sub check_version {
+    my $version = shift;
+    my $op = shift;
+    my $req_version = shift;
+
+    my @parts = split(/\./, $version);
+    my @min_version = split(/\./, $req_version);
+
+    my $i = 0;
+    # Check every component of the version number
+    while ($i <= $#min_version) {
+        verbose "       Found version component $parts[$i] -- need $min_version[$i]\n";
+
+        # Check to see if there are any characters (!) in the version
+        # number (e.g., Libtool's "2.2.6b" -- #%@#$%!!!).  Do separate
+        # comparisons between the number and any trailing digits.  You
+        # can't just "lt" compare the whole string because "10 lt 2b"
+        # will return true.  #@$@#$#@$ Libtool!!
+        $parts[$i] =~ m/(\d+)([a-z]*)/i;
+        my $pn = $1;
+        my $pa = $2;
+        $min_version[$i] =~ m/(\d+)([a-z]*)/i;
+        my $mn = $1;
+        my $ma = $2;
+
+        # What is the op we're checking for?
+        # - If "eq", then the version number must be exactly equal.
+        # - If "ge", then the version can be greater than or equal to.
+
+        if ($op eq "eq") {
+            if ($pn != $mn) {
+                verbose "     ==> Version is different -- rejected\n";
+                # Unhappy
+                return 0;
+            }
+        } elsif ($op eq "ge") {
+            # If the version is higher, we're done.
+            if ($pn > $mn) {
+                # Happy!
+                return 1;
+            }
+            # If the version is lower, we're done.
+            elsif ($pn < $mn ||
+                   ($pn == $mn && $pa lt $ma)) {
+                verbose "     ==> Too low!  Skipping this version\n";
+                last;
+            }
+
+            # If the version is equal, keep checking
+        }
+
+        ++$i;
+    }
+
+    # If we get here, everything is good!
+    # Happy
+    return 1;
+}
+
 sub find_and_check {
     my ($app, $app_name, $req_version) = @_;
 
     my @search_path = split(/;/, $app_name);
-    my @min_version = split(/\./, $req_version);
     my @versions_found = ();
 
     foreach (@search_path) {
@@ -808,13 +868,14 @@ sub find_and_check {
             next;
         }
 
-	# Matches a version string with 1 or more parts possibly prefixed with a letter (ex:
-	# v2.2) or followed by a letter (ex: 2.2.6b). This regex assumes there is a space
-	# before the version string and that the version is ok if there is no version.
+	# Matches a version string with 1 or more parts possibly
+	# prefixed with a letter (ex: v2.2) or followed by a letter
+	# (ex: 2.2.6b). This regex assumes there is a space before the
+	# version string.
 	if (!($version =~ m/\s[vV]?(\d[\d\.]*\w?)/m)) {
-	    verbose "  WARNING: $_ does not appear to support --version. Assuming it is ok\n";
-
-	    return;
+	    verbose "  WARNING: $_ does not appear to support --version.";
+            verbose "  WARNING: Skipped\n";
+            next;
 	}
 
 	$version = $1;
@@ -822,53 +883,27 @@ sub find_and_check {
         verbose "     Found $_ version $version; checking version...\n";
         push(@versions_found, $version);
 
-        my @parts = split(/\./, $version);
-        my $i = 0;
-        # Check every component of the version number
-        while ($i <= $#min_version) {
-            verbose "       Found version component $parts[$i] -- need $min_version[$i]\n";
-
-            # Check to see if there are any characters (!) in the
-            # version number (e.g., Libtool's "2.2.6b" -- #%@#$%!!!).
-            # Do separate comparisons between the number and any
-            # trailing digits.  You can't just "lt" compare the whole
-            # string because "10 lt 2b" will return true.  #@$@#$#@$
-            # Libtool!!
-            $parts[$i] =~ m/(\d+)([a-z]*)/i;
-            my $pn = $1;
-            my $pa = $2;
-            $min_version[$i] =~ m/(\d+)([a-z]*)/i;
-            my $mn = $1;
-            my $ma = $2;
-
-            # If the version is higher, we're done.
-            if ($pn > $mn) {
-                verbose "     ==> ACCEPTED\n";
-                return;
-            }
-            # If the version is lower, we're done.
-            elsif ($pn < $mn ||
-                ($pn == $mn && $pa lt $ma)) {
-                verbose "     ==> Too low!  Skipping this version\n";
-                last;
-            }
-
-            # If the version was equal, keep checking.
-            ++$i;
+        my $happy;
+        if ($autotools_strict_arg) {
+            $happy = check_version($version, "eq", $req_version);
+        } else {
+            $happy = check_version($version, "ge", $req_version);
         }
 
-        # If we found a good version, return.
-        if ($i > $#min_version) {
+        if ($happy) {
             verbose "     ==> ACCEPTED\n";
             return;
         }
     }
 
     # if no acceptable version found, reject it
+    my $str = "at least";
+    $str = "exactly"
+        if ($autotools_strict_arg);
     print "
 =================================================================
-I could not find a recent enough copy of $app.
-I need at least $req_version, but only found the following versions:\n\n";
+I could not find a good enough version of $app.
+I need $str $req_version, but only found the following versions:\n\n";
 
     my $i = 0;
     foreach (@search_path) {
@@ -878,7 +913,7 @@ I need at least $req_version, but only found the following versions:\n\n";
 
     print "\nI am gonna abort.  :-(
 
-Please make sure you are using at least the following versions of the
+Please make sure you are using $str the following versions of the
 tools:
 
     GNU Autoconf: $ompi_autoconf_version
@@ -1103,6 +1138,46 @@ my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "platform=s" => \$platform_arg,
                                   "include=s" => \$include_arg,
                                   "exclude=s" => \$exclude_arg,
+
+
+
+
+
+
+
+
+
+                                  #
+                                  # JMS: Better would be to allow
+                                  # specifying the desired autotools
+                                  # verions separately from the
+                                  # comparison op that should be used.
+                                  # E.g.:
+                                  #
+                                  # --autotools-ver ac:X,am:X,lt:X
+                                  # --autotools-eq
+                                  # --autotools-ge
+                                  #
+                                  # Note that make_dist_tarball also
+                                  # checks m4 and flex versions, too.
+                                  # Need to add those here, too? (not
+                                  # sure why we check m4 -- but I can
+                                  # see why we check flex -- for dist
+                                  # tarballs, at least).
+                                  #
+
+JMS put syntax error here so that when trying to run, we'll find the
+above comment.  :-)
+
+
+
+
+
+
+
+
+                                  "autotools-eq=s" => \$autotools_eq_arg,
+                                  "autotools-ge=s" => \$autotools_ge_arg,
                                   "force|f" => \$force_arg,
     );
 
@@ -1124,9 +1199,35 @@ if (!$ok || $help_arg) {
                                 to build
   --exclude | -e                Comma-separated list of framework or framework-component
                                 to be excluded from the build
+  --autotools-eq am:X,ac:X,lt:X Require exact Autotools versions to run (vs. allowing
+                                greater-than-or-equal-to behavior)
+  --autotools-ge am:X,ac:X,lt:X Require Autotools versions greater than or equal to run
   --force | -f                  Run even if invoked from the source tree of an expanded
                                 distribution tarball\n";
     my_exit($ok ? 0 : 1);
+}
+
+#---------------------------------------------------------------------------
+
+# Parse autotools-* arguments
+
+if ($autotools_eq_arg && $autotools_ge_arg) {
+    print "Cannot specify both --autotools-eq and --autotools-ge\n";
+    my_exit(1);
+}
+my $auto = $autotools_eq_arg;
+$auto = $autotools_ge_arg
+    if ($autotools_ge_arg);
+if ($auto) {
+    $auto =~ m/ac:(.+?),am:(.+?),lt:(.+)$/;
+    if ($1 && $2 && $3) {
+        $ompi_autoconf_version = $1;
+        $ompi_automake_version = $2;
+        $ompi_libtool_version = $3;
+    } else {
+        print "--autotools-* arguments must be of the form: ac:X,am:X,lt:X\n";
+        my_exit(1);
+    }
 }
 
 #---------------------------------------------------------------------------
