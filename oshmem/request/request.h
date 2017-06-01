@@ -1,5 +1,4 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -138,7 +137,7 @@ typedef struct oshmem_request_t oshmem_request_t;
  * See oshmem/communicator/communicator.h comments with struct oshmem_group_t
  * for full explanation why we chose the following padding construct for predefines.
  */
-#define PREDEFINED_REQUEST_PAD (sizeof(void*) * 32)
+#define PREDEFINED_REQUEST_PAD 256
 
 struct oshmem_predefined_request_t {
     struct oshmem_request_t request;
