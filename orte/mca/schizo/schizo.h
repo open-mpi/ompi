@@ -118,7 +118,7 @@ typedef void (*orte_schizo_base_module_finalize_fn_t)(void);
  * and decides it cannot provide the info in the current situation,
  * then it can return ORTE_ERR_TAKE_NEXT_OPTION to indicate that
  * another module should be tried */
-typedef long (*orte_schizo_base_module_get_rem_time_fn_t)(void);
+typedef int (*orte_schizo_base_module_get_rem_time_fn_t)(uint32_t *timeleft);
 
 /*
  * schizo module version 1.3.0

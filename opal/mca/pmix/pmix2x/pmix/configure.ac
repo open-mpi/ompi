@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
@@ -63,9 +63,9 @@ pmix_show_title "Configuring PMIx"
 AC_CANONICAL_TARGET
 
 # Init automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.12.2 -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 -Wall -Werror])
 
-# SILENT_RULES is new in AM 1.11, but we require 1.11 or higher via
+# SILENT_RULES is new in AM 1.11, but we require 1.13.4 or higher via
 # autogen.  Limited testing shows that calling SILENT_RULES directly
 # works in more cases than adding "silent-rules" to INIT_AUTOMAKE
 # (even though they're supposed to be identical).  Shrug.
@@ -178,10 +178,6 @@ PMIX_DO_AM_CONDITIONALS
 ####################################################################
 # Setup C compiler
 ####################################################################
-
-CFLAGS_save="$CFLAGS"
-AC_PROG_CC
-CFLAGS="$CFLAGS_save"
 
 AC_ARG_VAR(CC_FOR_BUILD,[build system C compiler])
 AS_IF([test -z "$CC_FOR_BUILD"],[

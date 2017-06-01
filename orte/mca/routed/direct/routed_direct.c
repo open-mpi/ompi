@@ -4,7 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,14 +76,16 @@ static int init(void)
     lifeline = NULL;
 
     if (ORTE_PROC_IS_DAEMON) {
+        ORTE_PROC_MY_PARENT->jobid = ORTE_PROC_MY_NAME->jobid;
         /* if we are using static ports, set my lifeline to point at my parent */
         if (orte_static_ports) {
+            /* we will have been given our parent's vpid by MCA param */
             lifeline = ORTE_PROC_MY_PARENT;
         } else {
             /* set our lifeline to the HNP - we will abort if that connection is lost */
             lifeline = ORTE_PROC_MY_HNP;
+            ORTE_PROC_MY_PARENT->vpid = 0;
         }
-        ORTE_PROC_MY_PARENT->jobid = ORTE_PROC_MY_NAME->jobid;
     } else if (ORTE_PROC_IS_APP) {
         /* if we don't have a designated daemon, just
          * disqualify ourselves */
@@ -359,4 +361,3 @@ static int direct_ft_event(int state)
     return exit_status;
 }
 #endif
-

@@ -12,7 +12,7 @@
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved.
-# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,7 +31,8 @@ libmca_rmaps_la_SOURCES += \
         base/rmaps_base_support_fns.c \
         base/rmaps_base_ranking.c \
         base/rmaps_base_print_fns.c \
-        base/rmaps_base_binding.c
+        base/rmaps_base_binding.c \
+        base/rmaps_base_assign_locations.c
 
 
 dist_ortedata_DATA = base/help-orte-rmaps-base.txt

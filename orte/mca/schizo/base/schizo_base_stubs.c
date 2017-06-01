@@ -162,20 +162,20 @@ orte_schizo_launch_environ_t orte_schizo_base_check_launch_environment(void)
     return ORTE_SCHIZO_UNDETERMINED;
 }
 
-long orte_schizo_base_get_remaining_time(void)
+int orte_schizo_base_get_remaining_time(uint32_t *timeleft)
 {
-    long rc;
+    int rc;
     orte_schizo_base_active_module_t *mod;
 
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (NULL != mod->module->get_remaining_time) {
-            rc = mod->module->get_remaining_time();
+            rc = mod->module->get_remaining_time(timeleft);
             if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
                 return rc;
             }
         }
     }
-    return -1;
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
 void orte_schizo_base_finalize(void)

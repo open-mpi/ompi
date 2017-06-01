@@ -33,9 +33,11 @@
 #include "rmaps_ppr.h"
 
 static int ppr_mapper(orte_job_t *jdata);
+static int assign_locations(orte_job_t *jdata);
 
 orte_rmaps_base_module_t orte_rmaps_ppr_module = {
-    ppr_mapper
+    .map_job = ppr_mapper,
+    .assign_locations = assign_locations
 };
 
 /* RHC: will eventually remove this
@@ -327,47 +329,49 @@ static int ppr_mapper(orte_job_t *jdata)
                 }
             }
 
-            /* set the total slots used */
-            if ((int)node->num_procs <= node->slots) {
-                node->slots_inuse = (int)node->num_procs;
-            } else {
-                node->slots_inuse = node->slots;
-            }
-
-            /* if no-oversubscribe was specified, check to see if
-             * we have violated the total slot specification - regardless,
-             * if slots_max was given, we are not allowed to violate it!
-             */
-            if ((node->slots < (int)node->num_procs) ||
-                (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
-                if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
-                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
-                                   true, node->num_procs, app->app);
-                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                    rc = ORTE_ERR_SILENT;
-                    goto error;
+            if (!(ORTE_MAPPING_DEBUGGER & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
+                /* set the total slots used */
+                if ((int)node->num_procs <= node->slots) {
+                    node->slots_inuse = (int)node->num_procs;
+                } else {
+                    node->slots_inuse = node->slots;
                 }
-                /* flag the node as oversubscribed so that sched-yield gets
-                 * properly set
+
+                /* if no-oversubscribe was specified, check to see if
+                 * we have violated the total slot specification - regardless,
+                 * if slots_max was given, we are not allowed to violate it!
                  */
-                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
-                ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
-                /* check for permission */
-                if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
-                    /* if we weren't given a directive either way, then we will error out
-                     * as the #slots were specifically given, either by the host RM or
-                     * via hostfile/dash-host */
-                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                if ((node->slots < (int)node->num_procs) ||
+                    (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
+                    if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
-                                       true, app->num_procs, app->app);
+                                       true, node->num_procs, app->app);
                         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                        return ORTE_ERR_SILENT;
-                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
-                        /* if we were explicitly told not to oversubscribe, then don't */
-                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
-                                       true, app->num_procs, app->app);
-                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                        return ORTE_ERR_SILENT;
+                        rc = ORTE_ERR_SILENT;
+                        goto error;
+                    }
+                    /* flag the node as oversubscribed so that sched-yield gets
+                     * properly set
+                     */
+                    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                    ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_OVERSUBSCRIBED);
+                    /* check for permission */
+                    if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                        /* if we weren't given a directive either way, then we will error out
+                         * as the #slots were specifically given, either by the host RM or
+                         * via hostfile/dash-host */
+                        if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                           true, app->num_procs, app->app);
+                            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                            return ORTE_ERR_SILENT;
+                        } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                            /* if we were explicitly told not to oversubscribe, then don't */
+                            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                           true, app->num_procs, app->app);
+                            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                            return ORTE_ERR_SILENT;
+                        }
                     }
                 }
             }
@@ -387,11 +391,6 @@ static int ppr_mapper(orte_job_t *jdata)
             orte_show_help("help-orte-rmaps-ppr.txt", "ppr-too-many-procs",
                            true, app->app, app->num_procs, jdata->map->ppr);
             rc = ORTE_ERR_SILENT;
-            goto error;
-        }
-        /* compute vpids and add proc objects to the job */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata, app, &node_list))) {
-            ORTE_ERROR_LOG(rc);
             goto error;
         }
 
@@ -620,4 +619,123 @@ static void prune(orte_jobid_t jobid,
 
  error:
     opal_output(0, "INFINITE LOOP");
+}
+
+static int assign_locations(orte_job_t *jdata)
+{
+    int i, j, m, n;
+    mca_base_component_t *c=&mca_rmaps_ppr_component.base_version;
+    orte_node_t *node;
+    orte_proc_t *proc;
+    orte_app_context_t *app;
+    opal_hwloc_level_t level;
+    hwloc_obj_t obj;
+    unsigned int cache_level=0;
+    int ppr, cnt, nobjs, nprocs_mapped;
+    char **ppr_req, **ck;
+
+    if (NULL == jdata->map->last_mapper ||
+        0 != strcasecmp(jdata->map->last_mapper, c->mca_component_name)) {
+        /* a mapper has been specified, and it isn't me */
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:ppr: job %s not using ppr assign: %s",
+                            ORTE_JOBID_PRINT(jdata->jobid),
+                            (NULL == jdata->map->last_mapper) ? "NULL" : jdata->map->last_mapper);
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                        "mca:rmaps:ppr: assigning locations for job %s with ppr %s policy %s",
+                        ORTE_JOBID_PRINT(jdata->jobid), jdata->map->ppr,
+                        orte_rmaps_base_print_mapping(jdata->map->mapping));
+
+    /* pickup the object level */
+    if (ORTE_MAPPING_BYNODE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_NODE_LEVEL;
+    } else if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_HWTHREAD_LEVEL;
+    } else if (ORTE_MAPPING_BYCORE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_CORE_LEVEL;
+    } else if (ORTE_MAPPING_BYSOCKET == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_SOCKET_LEVEL;
+    } else if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_L1CACHE_LEVEL;
+        cache_level = 1;
+    } else if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_L2CACHE_LEVEL;
+        cache_level = 2;
+    } else if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_L3CACHE_LEVEL;
+        cache_level = 3;
+    } else if (ORTE_MAPPING_BYNUMA == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        level = OPAL_HWLOC_NUMA_LEVEL;
+    } else {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
+    /* get the ppr value */
+    ppr_req = opal_argv_split(jdata->map->ppr, ',');
+    ck = opal_argv_split(ppr_req[0], ':');
+    ppr = strtol(ck[0], NULL, 10);
+    opal_argv_free(ck);
+    opal_argv_free(ppr_req);
+
+    /* start assigning procs to objects, filling each object as we go until
+     * all procs are assigned. */
+    for (n=0; n < jdata->apps->size; n++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+            continue;
+        }
+        nprocs_mapped = 0;
+        for (m=0; m < jdata->map->nodes->size; m++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, m))) {
+                continue;
+            }
+            if (NULL == node->topology || NULL == node->topology->topo) {
+                orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
+                               true, node->name);
+                return ORTE_ERR_SILENT;
+            }
+            if (OPAL_HWLOC_NODE_LEVEL == level) {
+                obj = hwloc_get_root_obj(node->topology->topo);
+                for (j=0; j < node->procs->size; j++) {
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                        continue;
+                    }
+                    if (proc->name.jobid != jdata->jobid) {
+                        continue;
+                    }
+                    orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
+                }
+            } else {
+                /* get the number of resources on this node at this level */
+                nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                           level, cache_level,
+                                                           OPAL_HWLOC_AVAILABLE);
+
+                /* map the specified number of procs to each such resource on this node,
+                 * recording the locale of each proc so we know its cpuset
+                 */
+                cnt = 0;
+                for (i=0; i < nobjs; i++) {
+                    obj = opal_hwloc_base_get_obj_by_type(node->topology->topo,
+                                                          level, cache_level,
+                                                          i, OPAL_HWLOC_AVAILABLE);
+                    for (j=0; j < node->procs->size && cnt < ppr && nprocs_mapped < app->num_procs; j++) {
+                        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                            continue;
+                        }
+                        if (proc->name.jobid != jdata->jobid) {
+                            continue;
+                        }
+                        nprocs_mapped++;
+                        cnt++;
+                        orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
+                    }
+                }
+            }
+        }
+    }
+    return ORTE_SUCCESS;
 }

@@ -76,7 +76,7 @@ ORTE_DECLSPEC int orte_schizo_base_setup_child(orte_job_t *jobdat,
                                                orte_app_context_t *app,
                                                char ***env);
 ORTE_DECLSPEC orte_schizo_launch_environ_t orte_schizo_base_check_launch_environment(void);
-ORTE_DECLSPEC long orte_schizo_base_get_remaining_time(void);
+ORTE_DECLSPEC int orte_schizo_base_get_remaining_time(uint32_t *timeleft);
 ORTE_DECLSPEC void orte_schizo_base_finalize(void);
 
 END_C_DECLS

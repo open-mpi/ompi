@@ -105,7 +105,7 @@ static void spawn(int sd, short args, void *cbdata)
 
     /* add this request to our tracker hotel */
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
-        ORTE_ERROR_LOG(rc);
+        orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
         goto callback;
     }
 
@@ -510,4 +510,14 @@ int pmix_server_disconnect_fn(opal_list_t *procs, opal_list_t *info,
     }
 
     return rc;
+}
+
+int pmix_server_alloc_fn(const opal_process_name_t *requestor,
+                         opal_pmix_alloc_directive_t dir,
+                         opal_list_t *info,
+                         opal_pmix_info_cbfunc_t cbfunc,
+                         void *cbdata)
+{
+    /* ORTE currently has no way of supporting allocation requests */
+    return ORTE_ERR_NOT_SUPPORTED;
 }

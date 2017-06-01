@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -37,7 +37,6 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
-#include "opal/util/timings.h"
 #include "opal/runtime/opal.h"
 #include "opal/threads/threads.h"
 
@@ -48,6 +47,7 @@
 #include "orte/mca/schizo/base/base.h"
 #include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 #include "orte/orted/pmix/pmix_server.h"
@@ -152,6 +152,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     opal_snprintf_jobid = orte_util_snprintf_jobid;
     opal_convert_string_to_jobid = _convert_string_to_jobid;
 
+
     /* initialize the opal layer */
     if (ORTE_SUCCESS != (ret = opal_init(pargc, pargv))) {
         error = "opal_init";
@@ -201,6 +202,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* let the pmix server register params */
         pmix_server_register_params();
+        orte_util_nidmap_init();
     }
 
     /* open the SCHIZO framework as everyone needs it, and the
@@ -210,10 +212,12 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "orte_schizo_base_open";
         goto error;
     }
+
     if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
         error = "orte_schizo_base_select";
         goto error;
     }
+
     /* if we are an app, let SCHIZO help us determine our environment */
     if (ORTE_PROC_IS_APP) {
         (void)orte_schizo.check_launch_environment();
@@ -225,6 +229,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "orte_ess_base_open";
         goto error;
     }
+
     if (ORTE_SUCCESS != (ret = orte_ess_base_select())) {
         error = "orte_ess_base_select";
         goto error;
@@ -254,10 +259,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     opal_process_info.num_local_peers  = (int32_t)orte_process_info.num_local_peers;
     opal_process_info.my_local_rank    = (int32_t)orte_process_info.my_local_rank;
     opal_process_info.cpuset           = orte_process_info.cpuset;
-
-#if OPAL_ENABLE_TIMING
-    opal_timing_set_jobid(ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-#endif
 
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* start listening - will be ignored if no listeners

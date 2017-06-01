@@ -13,7 +13,9 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2017      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -278,7 +280,7 @@ for val in ${$1}; do
     # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
 
     case $val in
-    -Xclang)
+    -Xclang|-Xg)
             pmix_found=0
             pmix_i=`expr $pmix_count + 1`
             ;;
@@ -366,7 +368,7 @@ AC_DEFUN([PMIX_FLAGS_UNIQ],[
         # https://github.com/open-mpi/ompi/issues/324).
 
         case $val in
-        -Xclang)
+        -Xclang|-Xg)
                 pmix_found=0
                 pmix_i=`expr $pmix_count + 1`
                 ;;

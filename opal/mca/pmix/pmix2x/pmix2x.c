@@ -493,6 +493,12 @@ int pmix2x_convert_rc(pmix_status_t rc)
     case PMIX_QUERY_PARTIAL_SUCCESS:
         return OPAL_ERR_PARTIAL_SUCCESS;
 
+    case PMIX_MONITOR_HEARTBEAT_ALERT:
+        return OPAL_ERR_HEARTBEAT_ALERT;
+
+    case PMIX_MONITOR_FILE_ALERT:
+        return OPAL_ERR_FILE_ALERT;
+
     case PMIX_ERROR:
         return OPAL_ERROR;
     case PMIX_SUCCESS:
@@ -1333,6 +1339,22 @@ static void pmix2x_log(opal_list_t *info,
     OBJ_RELEASE(cd);
 }
 
+opal_pmix_alloc_directive_t pmix2x_convert_allocdir(pmix_alloc_directive_t dir)
+{
+    switch (dir) {
+        case PMIX_ALLOC_NEW:
+            return OPAL_PMIX_ALLOC_NEW;
+        case PMIX_ALLOC_EXTEND:
+            return OPAL_PMIX_ALLOC_EXTEND;
+        case PMIX_ALLOC_RELEASE:
+            return OPAL_PMIX_ALLOC_RELEASE;
+        case PMIX_ALLOC_REAQUIRE:
+            return OPAL_PMIX_ALLOC_REAQCUIRE;
+        default:
+            return OPAL_PMIX_ALLOC_UNDEF;
+    }
+}
+
 /****  INSTANTIATE INTERNAL CLASSES  ****/
 OBJ_CLASS_INSTANCE(opal_pmix2x_jobid_trkr_t,
                    opal_list_item_t,
@@ -1380,8 +1402,8 @@ static void opdes(pmix2x_opcaddy_t *p)
     if (NULL != p->error_procs) {
         PMIX_PROC_FREE(p->error_procs, p->nerror_procs);
     }
-    if (NULL != p->info) {
-        PMIX_INFO_FREE(p->info, p->sz);
+    if (0 < p->ninfo) {
+        PMIX_INFO_FREE(p->info, p->ninfo);
     }
     if (NULL != p->apps) {
         PMIX_APP_FREE(p->apps, p->sz);
@@ -1443,3 +1465,19 @@ static void tsdes(pmix2x_threadshift_t *p)
 OBJ_CLASS_INSTANCE(pmix2x_threadshift_t,
                    opal_object_t,
                    tscon, tsdes);
+
+static void dmcon(opal_pmix2x_dmx_trkr_t *p)
+{
+    p->nspace = NULL;
+    p->cbfunc = NULL;
+    p->cbdata = NULL;
+}
+static void dmdes(opal_pmix2x_dmx_trkr_t *p)
+{
+    if (NULL != p->nspace) {
+        free(p->nspace);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_pmix2x_dmx_trkr_t,
+                   opal_list_item_t,
+                   dmcon, dmdes);

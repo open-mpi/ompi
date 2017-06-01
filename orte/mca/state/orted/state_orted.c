@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -27,6 +27,8 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
+#include "orte/orted/pmix/pmix_server_internal.h"
+#include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/state/state.h"
@@ -254,12 +256,13 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata, *pptr;
     opal_buffer_t *alert;
-    int rc, i, j;
+    int rc, i;
     orte_plm_cmd_flag_t cmd;
     char *rtmod;
     orte_std_cntr_t index;
     orte_job_map_t *map;
     orte_node_t *node;
+    orte_process_name_t target;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:orted:track_procs called for proc %s state %s",
@@ -482,6 +485,19 @@ static void track_procs(int fd, short argc, void *cbdata)
                 }
                 OBJ_RELEASE(map);
                 jdata->map = NULL;
+            }
+
+            /* if requested, check fd status for leaks */
+            if (orte_state_base_run_fdcheck) {
+                orte_state_base_check_fds(jdata);
+            }
+
+            /* if ompi-server is around, then notify it to purge
+             * any session-related info */
+            if (NULL != orte_data_server_uri) {
+                target.jobid = jdata->jobid;
+                target.vpid = ORTE_VPID_WILDCARD;
+                orte_state_base_notify_data_server(&target);
             }
 
             /* cleanup the job info */

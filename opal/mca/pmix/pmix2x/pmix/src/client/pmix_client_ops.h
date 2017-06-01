@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +15,7 @@
 
 #include "src/buffer_ops/buffer_ops.h"
 #include "src/class/pmix_hash_table.h"
+#include "src/threads/threads.h"
 
 BEGIN_C_DECLS
 
@@ -24,6 +25,8 @@ typedef struct {
 } pmix_client_globals_t;
 
 PMIX_EXPORT extern pmix_client_globals_t pmix_client_globals;
+
+PMIX_EXPORT extern pmix_mutex_t pmix_client_bootstrap_mutex;
 
 END_C_DECLS
 

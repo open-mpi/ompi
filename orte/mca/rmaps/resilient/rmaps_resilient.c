@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -35,6 +35,14 @@
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "rmaps_resilient.h"
+
+static int orte_rmaps_resilient_map(orte_job_t *jdata);
+static int resilient_assign(orte_job_t *jdata);
+
+orte_rmaps_base_module_t orte_rmaps_resilient_module = {
+    .map_job = orte_rmaps_resilient_map,
+    .assign_locations = resilient_assign
+};
 
 
 /*
@@ -270,9 +278,22 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     return rc;
 }
 
-orte_rmaps_base_module_t orte_rmaps_resilient_module = {
-    orte_rmaps_resilient_map
-};
+static int resilient_assign(orte_job_t *jdata)
+{
+    mca_base_component_t *c = &mca_rmaps_resilient_component.super.base_version;
+
+    if (NULL == jdata->map->last_mapper ||
+        0 != strcasecmp(jdata->map->last_mapper, c->mca_component_name)) {
+        /* a mapper has been specified, and it isn't me */
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:resilient: job %s not using resilient assign: %s",
+                            ORTE_JOBID_PRINT(jdata->jobid),
+                            (NULL == jdata->map->last_mapper) ? "NULL" : jdata->map->last_mapper);
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
 
 static char *orte_getline(FILE *fp)
 {
@@ -855,15 +876,6 @@ static int map_to_ftgrps(orte_job_t *jdata)
         /* track number of procs */
         jdata->num_procs += app->num_procs;
 
-        /* compute vpids and add proc objects to the job - this has to be
-         * done after each app_context is mapped in order to keep the
-         * vpids contiguous within an app_context
-         */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata, app, &node_list))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
          */
@@ -871,12 +883,6 @@ static int map_to_ftgrps(orte_job_t *jdata)
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&node_list);
-    }
-
-    /* compute and save local ranks */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
     }
 
     return ORTE_SUCCESS;

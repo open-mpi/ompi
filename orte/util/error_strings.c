@@ -89,7 +89,7 @@ int orte_err2str(int errnum, const char **errmsg)
         if (orte_report_silent_errors) {
             retval = "Silent error";
         } else {
-            retval = NULL;
+            retval = "";
         }
         break;
     case ORTE_ERR_ADDRESSEE_UNKNOWN:
@@ -174,7 +174,7 @@ int orte_err2str(int errnum, const char **errmsg)
         if (orte_report_silent_errors) {
             retval = "Next option";
         } else {
-            retval = NULL;
+            retval = "";
         }
         break;
     case ORTE_ERR_SENSOR_LIMIT_EXCEEDED:
@@ -244,11 +244,7 @@ int orte_err2str(int errnum, const char **errmsg)
         retval = "Partial success";
         break;
     default:
-        if (orte_report_silent_errors) {
-            retval = "Unknown error";
-        } else {
-            retval = NULL;
-        }
+        retval = "Unknown error";
     }
 
     *errmsg = retval;

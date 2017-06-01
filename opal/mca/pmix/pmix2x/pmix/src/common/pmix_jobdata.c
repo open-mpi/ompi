@@ -20,6 +20,8 @@
 #include "src/util/argv.h"
 #include "src/util/compress.h"
 #include "src/util/hash.h"
+#include "src/util/show_help.h"
+#include "src/runtime/pmix_rte.h"
 #include "src/include/pmix_jobdata.h"
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
@@ -77,6 +79,7 @@ static inline int _rank_key_dstore_store(void *cbdata)
     pmix_job_data_caddy_t *cb = (pmix_job_data_caddy_t*)cbdata;
     pmix_rank_t rank;
     pmix_kval_t *kv = NULL;
+    bool flag = true;
 
     if (NULL == cb->bufs) {
         rc = PMIX_ERR_BAD_PARAM;
@@ -93,9 +96,22 @@ static inline int _rank_key_dstore_store(void *cbdata)
         tmp = &(PMIX_VALUE_ARRAY_GET_ITEM(cb->bufs, pmix_buffer_t, i));
         rank = 0 == i ? PMIX_RANK_WILDCARD : i - 1;
         PMIX_UNLOAD_BUFFER(tmp, kv->value->data.bo.bytes, kv->value->data.bo.size);
-        if (PMIX_SUCCESS != (rc = cb->dstore_fn(cb->nsptr->nspace, rank, kv))) {
-            PMIX_ERROR_LOG(rc);
-            goto exit;
+        if (NULL == kv->value->data.bo.bytes) {
+            if (flag && !pmix_suppress_missing_data_warning) {
+                /* this occurs if the host RM did _not_ provide us with
+                 * data for every process in the job, in non-compliance
+                 * with the PMIx standard. Warn the user that their job
+                 * may not scale as desired, and give them a way to turn
+                 * that warning off in case the RM just can't do it */
+                pmix_show_help("help-pmix-runtime.txt", "missingdata", true);
+                /* only show this once */
+                flag = false;
+            }
+        } else {
+            if (PMIX_SUCCESS != (rc = cb->dstore_fn(cb->nsptr->nspace, rank, kv))) {
+                PMIX_ERROR_LOG(rc);
+                goto exit;
+            }
         }
     }
 

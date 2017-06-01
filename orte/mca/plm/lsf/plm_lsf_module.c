@@ -160,7 +160,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
     int rc;
     char** env = NULL;
     char **nodelist_argv;
-    char *nodelist;
     int nodelist_argc;
     char *vpid_string;
     int i;
@@ -257,19 +256,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
-    /* we need mpirun to be the first node on this list - since we
-     * aren't launching mpirun via TM, it won't be there now */
-    opal_argv_prepend_nosize(&nodelist_argv, orte_process_info.nodename);
-    nodelist = opal_argv_join(nodelist_argv, ',');
-    opal_argv_free(nodelist_argv);
-
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "lsf",
-                                          &proc_vpid_index,
-                                          nodelist);
-    free(nodelist);
+                                          &proc_vpid_index);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end

@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -296,6 +297,7 @@ while attempting to start process rank %lu.
 %s was unable to start the specified application as it encountered an
 error:
 
+Error code: %d
 Error name: %s
 Node: %s
 
@@ -455,6 +457,21 @@ Error received: %s
 
 Please check to ensure that the requested server matches the actual server
 information, and that the server is in operation.
+#
+[orterun:server-unavailable]
+The user has called an operation involving MPI_Connect and/or MPI_Accept
+that spans multiple invocations of mpirun. This requires the support of
+the ompi-server tool, which must be executing somewhere that can be
+accessed by all participants.
+
+Please ensure the tool is running, and provide each mpirun with the MCA
+parameter "pmix_server_uri" pointing to it.
+#
+[orterun:malformedport]
+An operation involving MPI_Connect and/or MPI_Accept was called with
+an unrecognized port string. This typically happens when passing the
+string on a cmd line and failing to properly quote it to protect
+against the special characters it includes
 #
 [orterun:ompi-server-pid-bad]
 %s was unable to parse the PID of the %s to be used as the ompi-server.

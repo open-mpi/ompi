@@ -65,7 +65,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_quit.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/state/state.h"
 
 #include "orte/orted/orted.h"
@@ -323,6 +323,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         goto cleanup;
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
+    opal_argv_free(nodelist_argv);
 
     /* if we are using all allocated nodes, then srun doesn't
      * require any further arguments
@@ -345,6 +346,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((2, orte_plm_base_framework.framework_output,
                          "%s plm:slurm: launching on nodes %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodelist_flat));
+    free(nodelist_flat);
 
     /*
      * ORTED OPTIONS
@@ -353,18 +355,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
-    /* we need mpirun to be the first node on this list - since we
-     * aren't launching mpirun via srun, it won't be there now */
-    opal_argv_prepend_nosize(&nodelist_argv, orte_process_info.nodename);
-    free(nodelist_flat);
-    nodelist_flat = opal_argv_join(nodelist_argv, ',');
-    opal_argv_free(nodelist_argv);
-
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                          "slurm", &proc_vpid_index,
-                                          nodelist_flat);
-    free(nodelist_flat);
+                                          "slurm", &proc_vpid_index);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end

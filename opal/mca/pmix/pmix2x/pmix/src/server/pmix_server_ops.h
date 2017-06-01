@@ -111,7 +111,6 @@ typedef struct {
     pmix_list_t local_reqs;                 // list of pmix_dmdx_local_t awaiting arrival of data from local neighbours
     pmix_buffer_t gdata;                    // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
-    pmix_ring_buffer_t notifications;       // ring buffer of pending notifications
     bool tool_connections_allowed;
 } pmix_server_globals_t;
 
@@ -217,6 +216,16 @@ pmix_status_t pmix_server_alloc(pmix_peer_t *peer,
                                 pmix_buffer_t *buf,
                                 pmix_info_cbfunc_t cbfunc,
                                 void *cbdata);
+
+pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
+                                   pmix_buffer_t *buf,
+                                   pmix_info_cbfunc_t cbfunc,
+                                   void *cbdata);
+
+pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
+                                  pmix_buffer_t *buf,
+                                  pmix_info_cbfunc_t cbfunc,
+                                  void *cbdata);
 
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,

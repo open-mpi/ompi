@@ -854,7 +854,13 @@ static inline void _esh_session_release(session_t *s)
     }
 
     _delete_sm_desc(s->sm_seg_first);
-    close(s->lockfd);
+    /* the session_t structures are initialized to zero. If
+     * we release the session without having actually assigned
+     * a locking fd, then we don't want to close that fd
+     * as it doesn't belong to us */
+    if (0 != s->lockfd) {
+        close(s->lockfd);
+    }
 
     if (NULL != s->lockfile) {
         if(PMIX_PROC_SERVER == pmix_globals.proc_type) {

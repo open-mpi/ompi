@@ -560,6 +560,11 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
                 return ret;
             }
             break;
+        case PMIX_POINTER:
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.ptr, 1, PMIX_POINTER))) {
+                return ret;
+            }
+            break;
         case PMIX_SCOPE:
             if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.scope, 1, PMIX_SCOPE))) {
                 return ret;

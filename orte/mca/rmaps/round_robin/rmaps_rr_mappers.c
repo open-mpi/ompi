@@ -359,7 +359,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
                 nprocs_mapped++;
-            orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
+                orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
             }
             /* not all nodes are equal, so only set oversubscribed for
              * this node if it is in that state

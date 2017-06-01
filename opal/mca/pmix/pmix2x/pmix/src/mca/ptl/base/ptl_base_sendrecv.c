@@ -41,12 +41,13 @@
 
 #include "src/class/pmix_pointer_array.h"
 #include "src/include/pmix_globals.h"
+#include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
 
 #include "src/mca/ptl/base/base.h"
 
-static uint32_t current_tag = 1;  // 0 is reserved for system purposes
+static uint32_t current_tag = PMIX_PTL_TAG_DYNAMIC;
 
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
@@ -137,9 +138,16 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
                         break;
                     }
                 }
-             }
-         }
-         PMIX_RELEASE(peer);
+            }
+        }
+        if (!peer->finalized) {
+            /* if this peer already called finalize, then
+             * we are just seeing their connection go away
+             * when they terminate - so do not generate
+             * an event. If not, then we do */
+            PMIX_REPORT_EVENT(err, peer, PMIX_RANGE_NAMESPACE, _notify_complete);
+        }
+        PMIX_RELEASE(peer);
      } else {
         /* if I am a client, there is only
          * one connection we can have */
@@ -163,8 +171,11 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
             }
         }
         PMIX_DESTRUCT(&buf);
+        /* if I called finalize, then don't generate an event */
+        if (!pmix_globals.mypeer->finalized) {
+            PMIX_REPORT_EVENT(err, &pmix_client_globals.myserver, PMIX_RANGE_LOCAL, _notify_complete);
+        }
     }
-    PMIX_REPORT_EVENT(err, _notify_complete);
 }
 
 static pmix_status_t send_msg(int sd, pmix_ptl_send_t *msg)
@@ -182,7 +193,7 @@ static pmix_status_t send_msg(int sd, pmix_ptl_send_t *msg)
     } else {
         iov_count = 1;
     }
-retry:
+  retry:
     rc = writev(sd, iov, iov_count);
     if (PMIX_LIKELY(rc == remain)) {
         /* we successfully sent the header and the msg data if any */
@@ -541,16 +552,16 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
         return;
     }
 
-    /* set the tag */
-    tag = current_tag++;
+    /* take the next tag in the sequence */
+    current_tag++;
+    if (UINT32_MAX == current_tag ) {
+        current_tag = PMIX_PTL_TAG_DYNAMIC;
+    }
+    tag = current_tag;
 
     if (NULL != ms->cbfunc) {
         /* if a callback msg is expected, setup a recv for it */
         req = PMIX_NEW(pmix_ptl_posted_recv_t);
-        /* take the next tag in the sequence */
-        if (UINT32_MAX == current_tag ) {
-            current_tag = 1;
-        }
         req->tag = tag;
         req->cbfunc = ms->cbfunc;
         req->cbdata = ms->cbdata;
@@ -617,23 +628,29 @@ void pmix_ptl_base_process_msg(int fd, short flags, void *cbdata)
                     buf.pack_ptr = ((char*)buf.base_ptr) + buf.bytes_used;
                 }
                 msg->data = NULL;  // protect the data region
-                if (NULL != rcv->cbfunc) {
-                    rcv->cbfunc(msg->peer, &msg->hdr, &buf, rcv->cbdata);
-                }
+                rcv->cbfunc(msg->peer, &msg->hdr, &buf, rcv->cbdata);
                 PMIX_DESTRUCT(&buf);  // free's the msg data
-                /* also done with the recv, if not a wildcard or the error tag */
-                if (UINT32_MAX != rcv->tag && 0 != rcv->tag) {
-                    pmix_list_remove_item(&pmix_ptl_globals.posted_recvs, &rcv->super);
-                    PMIX_RELEASE(rcv);
-                }
-                PMIX_RELEASE(msg);
-                return;
             }
+            /* done with the recv if it is a dynamic tag */
+            if (PMIX_PTL_TAG_DYNAMIC <= rcv->tag && UINT_MAX != rcv->tag) {
+                pmix_list_remove_item(&pmix_ptl_globals.posted_recvs, &rcv->super);
+                PMIX_RELEASE(rcv);
+            }
+            PMIX_RELEASE(msg);
+            return;
         }
     }
 
-    /* we get here if no matching recv was found - this is an error */
-    pmix_output(0, "UNEXPECTED MESSAGE tag = %d", msg->hdr.tag);
-    PMIX_RELEASE(msg);
-    PMIX_REPORT_EVENT(PMIX_ERROR, _notify_complete);
+    /* if the tag in this message is above the dynamic marker, then
+     * that is an error */
+    if (PMIX_PTL_TAG_DYNAMIC <= msg->hdr.tag) {
+        pmix_output(0, "UNEXPECTED MESSAGE tag = %d", msg->hdr.tag);
+        PMIX_REPORT_EVENT(PMIX_ERROR, msg->peer, PMIX_RANGE_NAMESPACE, _notify_complete);
+        PMIX_RELEASE(msg);
+        return;
+    }
+
+    /* it is possible that someone may post a recv for this message
+     * at some point, so we have to hold onto it */
+    pmix_list_append(&pmix_ptl_globals.unexpected_msgs, &msg->super);
 }

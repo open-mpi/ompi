@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -118,6 +118,13 @@ static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
     cd->active = false;
 }
 
+static void opcbfunc(int status, void *cbdata)
+{
+    struct lookup_caddy_t *cd = (struct lookup_caddy_t*)cbdata;
+    cd->status = status;
+    cd->active = false;
+}
+
 int opal_pmix_base_exchange(opal_value_t *indat,
                             opal_pmix_pdata_t *outdat,
                             int timeout)
@@ -141,17 +148,37 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     opal_list_append(&ilist, &info->super);
 
     /* publish it with "session" scope */
-    rc = opal_pmix.publish(&ilist);
-    OPAL_LIST_DESTRUCT(&ilist);
-    if (OPAL_SUCCESS != rc) {
-        OPAL_ERROR_LOG(rc);
-        return rc;
+    if (NULL == opal_pmix.publish_nb) {
+        rc = opal_pmix.publish(&ilist);
+        OPAL_LIST_DESTRUCT(&ilist);
+        if (OPAL_SUCCESS != rc) {
+            OPAL_ERROR_LOG(rc);
+            return rc;
+        }
+    } else {
+        caddy.status = -1;
+        caddy.active = true;
+        caddy.pdat = NULL;
+        rc = opal_pmix.publish_nb(&ilist, opcbfunc, &caddy);
+        if (OPAL_SUCCESS != rc) {
+            OPAL_ERROR_LOG(rc);
+            OPAL_LIST_DESTRUCT(&ilist);
+            return rc;
+        }
+        while (caddy.active) {
+            usleep(10);
+        }
+        OPAL_LIST_DESTRUCT(&ilist);
+        if (OPAL_SUCCESS != caddy.status) {
+            OPAL_ERROR_LOG(caddy.status);
+            return caddy.status;
+        }
     }
 
-   /* lookup the other side's info - if a non-blocking form
-    * of lookup isn't available, then we use the blocking
-    * form and trust that the underlying system will WAIT
-    * until the other side publishes its data */
+    /* lookup the other side's info - if a non-blocking form
+     * of lookup isn't available, then we use the blocking
+     * form and trust that the underlying system will WAIT
+     * until the other side publishes its data */
     pdat = OBJ_NEW(opal_pmix_pdata_t);
     pdat->value.key = strdup(outdat->value.key);
     pdat->value.type = outdat->value.type;
@@ -169,7 +196,12 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     info = OBJ_NEW(opal_value_t);
     info->key = strdup(OPAL_PMIX_TIMEOUT);
     info->type = OPAL_INT;
-    info->data.integer = timeout;
+    if (0 < opal_pmix_base.timeout) {
+        /* the user has overridden the default */
+        info->data.integer = opal_pmix_base.timeout;
+    } else {
+        info->data.integer = timeout;
+    }
     opal_list_append(&mlist, &info->super);
 
     /* if a non-blocking version of lookup isn't
@@ -185,6 +217,7 @@ int opal_pmix_base_exchange(opal_value_t *indat,
             return rc;
         }
     } else {
+        caddy.status = -1;
         caddy.active = true;
         caddy.pdat = pdat;
         keys = NULL;

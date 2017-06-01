@@ -36,6 +36,7 @@
 #include "src/buffer_ops/types.h"
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
+#include "src/class/pmix_ring_buffer.h"
 #include "src/event/pmix_event.h"
 
 #include "src/mca/psec/psec.h"
@@ -72,7 +73,9 @@ typedef enum {
     PMIX_DEREGEVENTS_CMD,
     PMIX_QUERY_CMD,
     PMIX_LOG_CMD,
-    PMIX_ALLOC_CMD
+    PMIX_ALLOC_CMD,
+    PMIX_JOB_CONTROL_CMD,
+    PMIX_MONITOR_CMD
 } pmix_cmd_t;
 
 /* provide a "pretty-print" function for cmds */
@@ -164,6 +167,7 @@ typedef struct pmix_personality_t {
  * by the socket, not the process nspace/rank */
 typedef struct pmix_peer_t {
     pmix_object_t super;
+    bool finalized;
     pmix_rank_info_t *info;
     int proc_cnt;
     void *server_object;
@@ -214,6 +218,8 @@ typedef struct {
     pmix_status_t status;
     pmix_query_t *queries;
     size_t nqueries;
+    pmix_proc_t *targets;
+    size_t ntargets;
     pmix_info_t *info;
     size_t ninfo;
     pmix_info_cbfunc_t cbfunc;
@@ -354,21 +360,24 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
  * between various parts of the code library. Both the client
  * and server libraries must instance this structure */
 typedef struct {
-    int init_cntr;                       // #times someone called Init - #times called Finalize
+    int init_cntr;                      // #times someone called Init - #times called Finalize
     pmix_proc_t myid;
-    pmix_peer_t *mypeer;                 // my own peer object
+    pmix_peer_t *mypeer;                // my own peer object
     pmix_proc_type_t proc_type;
-    uid_t uid;                           // my effective uid
-    gid_t gid;                           // my effective gid
+    uid_t uid;                          // my effective uid
+    gid_t gid;                          // my effective gid
     int pindex;
     pmix_event_base_t *evbase;
     bool external_evbase;
     int debug_output;
-    pmix_events_t events;                // my event handler registrations.
+    pmix_events_t events;               // my event handler registrations.
     bool connected;
-    pmix_list_t nspaces;                 // list of pmix_nspace_t for the nspaces we know about
-    pmix_buffer_t *cache_local;          // data PUT by me to local scope
-    pmix_buffer_t *cache_remote;         // data PUT by me to remote scope
+    pmix_list_t nspaces;                // list of pmix_nspace_t for the nspaces we know about
+    pmix_buffer_t *cache_local;         // data PUT by me to local scope
+    pmix_buffer_t *cache_remote;        // data PUT by me to remote scope
+    struct timeval event_window;
+    pmix_list_t cached_events;          // events waiting in the window prior to processing
+    pmix_ring_buffer_t notifications;   // ring buffer of pending notifications
 } pmix_globals_t;
 
 

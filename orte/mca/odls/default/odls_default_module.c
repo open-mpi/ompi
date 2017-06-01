@@ -16,6 +16,10 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Rutgers, The State University of New Jersey.
+ *                         All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -416,11 +420,20 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
 
     /* take us to the correct wdir */
     if (NULL != cd->wdir) {
-        chdir(cd->wdir);
+        if (0 != chdir(cd->wdir)) {
+            send_error_show_help(write_fd, 1,
+                                 "help-orterun.txt",
+                                 "orterun:wdir-not-found",
+                                 "orted",
+                                 cd->wdir,
+                                 orte_process_info.nodename,
+                                 (NULL == cd->child) ? 0 : cd->child->app_rank);
+            /* Does not return */
+        }
     }
 
     /* Exec the new executable */
-    execve(cd->app->app, cd->argv, cd->env);
+    execve(cd->cmd, cd->argv, cd->env);
     getcwd(dir, sizeof(dir));
     send_error_show_help(write_fd, 1,
                          "help-orte-odls-default.txt", "execve error",

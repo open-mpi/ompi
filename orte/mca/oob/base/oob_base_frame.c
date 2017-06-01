@@ -52,16 +52,10 @@
  * Global variables
  */
 orte_oob_base_t orte_oob_base = {0};
-OPAL_TIMING_DECLARE(tm_oob)
-
 
 static int orte_oob_base_register(mca_base_register_flag_t flags)
 {
-    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
-        orte_oob_base.num_threads = 0;
-    } else {
-        orte_oob_base.num_threads = 8;
-    }
+    orte_oob_base.num_threads = 0;
     (void)mca_base_var_register("orte", "oob", "base", "num_progress_threads",
                                 "Number of independent progress OOB messages for each interface",
                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -97,6 +91,10 @@ static int orte_oob_base_close(void)
         OBJ_RELEASE(cli);
     }
 
+    if (!ORTE_PROC_IS_APP && !ORTE_PROC_IS_TOOL) {
+        opal_progress_thread_finalize("OOB-BASE");
+    }
+
     /* destruct our internal lists */
     OBJ_DESTRUCT(&orte_oob_base.actives);
 
@@ -108,9 +106,6 @@ static int orte_oob_base_close(void)
     }
 
     OBJ_DESTRUCT(&orte_oob_base.peers);
-
-    OPAL_TIMING_EVENT((&tm_oob, "Finish"));
-    OPAL_TIMING_REPORT(orte_oob_base.timing, &tm_oob);
 
     return mca_base_framework_components_close(&orte_oob_base_framework, NULL);
 }
@@ -127,7 +122,11 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     opal_hash_table_init(&orte_oob_base.peers, 128);
     OBJ_CONSTRUCT(&orte_oob_base.actives, opal_list_t);
 
-    orte_oob_base.ev_base = orte_event_base;
+    if (ORTE_PROC_IS_APP || ORTE_PROC_IS_TOOL) {
+        orte_oob_base.ev_base = orte_event_base;
+    } else {
+        orte_oob_base.ev_base = opal_progress_thread_init("OOB-BASE");
+    }
 
 
 #if OPAL_ENABLE_FT_CR == 1
@@ -136,8 +135,6 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     orte_state.add_job_state(ORTE_JOB_STATE_FT_CONTINUE, orte_oob_base_ft_event, ORTE_ERROR_PRI);
     orte_state.add_job_state(ORTE_JOB_STATE_FT_RESTART, orte_oob_base_ft_event, ORTE_ERROR_PRI);
 #endif
-
-    OPAL_TIMING_INIT(&tm_oob);
 
      /* Open up all available components */
     return mca_base_framework_components_open(&orte_oob_base_framework, flags);

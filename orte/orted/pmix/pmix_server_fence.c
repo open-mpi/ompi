@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
@@ -37,6 +37,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
@@ -148,6 +149,10 @@ static void dmodex_req(int sd, short args, void *cbdata)
         return;
     }
 
+    /* adjust the timeout to reflect the size of the job as it can take some
+     * amount of time to start the job */
+    ORTE_ADJUST_TIMEOUT(req);
+
     /* has anyone already requested data for this target? If so,
      * then the data is already on its way */
     for (rnum=0; rnum < orte_pmix_server_globals.reqs.num_rooms; rnum++) {
@@ -160,7 +165,7 @@ static void dmodex_req(int sd, short args, void *cbdata)
             /* save the request in the hotel until the
              * data is returned */
             if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
-                ORTE_ERROR_LOG(rc);
+                orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
                 /* can't just return as that would cause the requestor
                  * to hang, so instead execute the callback */
                 goto callback;
@@ -176,7 +181,7 @@ static void dmodex_req(int sd, short args, void *cbdata)
          * that we don't know about yet. In this case, just
          * record the request and we will process it later */
         if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
-            ORTE_ERROR_LOG(rc);
+            orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
             /* can't just return as that would cause the requestor
              * to hang, so instead execute the callback */
             goto callback;
@@ -205,7 +210,7 @@ static void dmodex_req(int sd, short args, void *cbdata)
     /* track the request so we know the function and cbdata
      * to callback upon completion */
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
-        ORTE_ERROR_LOG(rc);
+        orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
         goto callback;
     }
 

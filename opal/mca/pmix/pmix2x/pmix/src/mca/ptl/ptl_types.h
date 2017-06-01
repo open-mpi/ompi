@@ -63,6 +63,16 @@ struct pmix_ptl_module_t;
 
 /****    MESSAGING STRUCTURES    ****/
 typedef uint32_t pmix_ptl_tag_t;
+/* define a range of "reserved" tags - these
+ * are tags that are used for persistent recvs
+ * within the system */
+#define PMIX_PTL_TAG_NOTIFY           0
+#define PMIX_PTL_TAG_HEARTBEAT        1
+
+/* define the start of dynamic tags that are
+ * assigned for send/recv operations */
+#define PMIX_PTL_TAG_DYNAMIC        100
+
 
 /* header for messages */
 typedef struct {

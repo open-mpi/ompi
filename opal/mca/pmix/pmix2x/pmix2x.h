@@ -42,6 +42,7 @@ typedef struct {
   opal_list_t events;
   int cache_size;
   opal_list_t cache;
+  opal_list_t dmdx;
 } mca_pmix_pmix2x_component_t;
 
 OPAL_DECLSPEC extern mca_pmix_pmix2x_component_t mca_pmix_pmix2x_component;
@@ -63,6 +64,14 @@ typedef struct {
     void *cbdata;
 } opal_pmix2x_event_t;
 OBJ_CLASS_DECLARATION(opal_pmix2x_event_t);
+
+typedef struct {
+    opal_list_item_t super;
+    char *nspace;
+    pmix_modex_cbfunc_t cbfunc;
+    void *cbdata;
+} opal_pmix2x_dmx_trkr_t;
+OBJ_CLASS_DECLARATION(opal_pmix2x_dmx_trkr_t);
 
 typedef struct {
     opal_object_t super;
@@ -278,6 +287,8 @@ OPAL_MODULE_DECLSPEC void pmix2x_value_load(pmix_value_t *v,
                                             opal_value_t *kv);
 OPAL_MODULE_DECLSPEC int pmix2x_value_unload(opal_value_t *kv,
                                             const pmix_value_t *v);
+
+OPAL_MODULE_DECLSPEC opal_pmix_alloc_directive_t pmix2x_convert_allocdir(pmix_alloc_directive_t dir);
 
 END_C_DECLS
 

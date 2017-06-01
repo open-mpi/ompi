@@ -37,9 +37,17 @@
 
 BEGIN_C_DECLS
 
+#define ORTE_MAX_REGEX_CMD_LENGTH   1024
+
 #define ORTE_MAX_NODE_PREFIX        50
 #define ORTE_CONTIG_NODE_CMD        0x01
 #define ORTE_NON_CONTIG_NODE_CMD    0x02
+
+
+ORTE_DECLSPEC void orte_util_nidmap_init(void);
+
+ORTE_DECLSPEC int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex);
+ORTE_DECLSPEC int orte_util_nidmap_parse(char *regex);
 
 /* create a regular expression describing the nodes in the
  * allocation */
@@ -49,11 +57,13 @@ ORTE_DECLSPEC int orte_util_encode_nodemap(opal_buffer_t *buffer);
  * into the orte_node_pool array */
 ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_buffer_t *buffer);
 
-ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);
+ORTE_DECLSPEC int orte_util_build_daemon_nidmap(void);
 
-ORTE_DECLSPEC int orte_util_encode_topologies(opal_buffer_t *buffer);
+/* create a regular expression describing the ppn for a job */
+ORTE_DECLSPEC int orte_util_nidmap_generate_ppn(orte_job_t *jdata, char **ppn);
 
-ORTE_DECLSPEC int orte_util_decode_topologies(opal_buffer_t *buffer);
+/* decode the ppn */
+ORTE_DECLSPEC int orte_util_nidmap_parse_ppn(orte_job_t *jdata, char *ppn);
 
 END_C_DECLS
 

@@ -612,10 +612,10 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
     }
 
     if (NULL == nptr) {
-/*
- * We may not have this namespace because someone asked about this namespace
- * but there are not processses from it running on this host
- */
+        /*
+         * We may not have this namespace because someone asked about this namespace
+         * but there are not processses from it running on this host
+         */
         nptr = PMIX_NEW(pmix_nspace_t);
         (void)strncpy(nptr->nspace, caddy->lcd->proc.nspace, PMIX_MAX_NSLEN);
         nptr->server = PMIX_NEW(pmix_server_nspace_t);
@@ -628,8 +628,12 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
      * store the data first so we can immediately satisfy any future
      * requests. Then, rather than duplicate the resolve code here, we
      * will let the pmix_pending_resolve function go ahead and retrieve
-     * it from the hash table */
-    if (PMIX_SUCCESS == caddy->status) {
+     * it from the hash table.
+     *
+     * NOTE: A NULL data pointer indicates that the data has already
+     * been returned via completion of a background fence_nb operation.
+     * In this case, all we need to do is resolve the request */
+    if (PMIX_SUCCESS == caddy->status && NULL != caddy->data) {
         if (caddy->lcd->proc.rank == PMIX_RANK_WILDCARD) {
             void * where = malloc(caddy->ndata);
             if (where) {

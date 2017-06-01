@@ -179,6 +179,8 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_CHECK_TYPES(uint32_t)
     AC_CHECK_TYPES(int64_t)
     AC_CHECK_TYPES(uint64_t)
+    AC_CHECK_TYPES(__int128)
+    AC_CHECK_TYPES(uint128_t)
     AC_CHECK_TYPES(long long)
 
     AC_CHECK_TYPES(intptr_t)
@@ -301,6 +303,17 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     PMIX_CHECK_ATTRIBUTES
     PMIX_CHECK_COMPILER_VERSION_ID
+
+    ##################################
+    # Assembler Configuration
+    ##################################
+
+    pmix_show_subtitle "Assembler"
+
+    AM_PROG_AS
+    AC_PATH_PROG(PERL, perl, perl)
+    PMIX_CONFIG_ASM
+
 
     ##################################
     # Header files
@@ -618,6 +631,28 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_C_BIGENDIAN
     PMIX_CHECK_BROKEN_QSORT
 
+    #
+    # Check out what thread support we have
+    #
+    PMIX_CONFIG_THREADS
+
+    CFLAGS="$CFLAGS $THREAD_CFLAGS"
+    CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
+    CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
+    CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"
+    LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
+    LIBS="$LIBS $THREAD_LIBS"
+
+    #
+    # What is the local equivalent of "ln -s"
+    #
+
+    AC_PROG_LN_S
+
+    AC_PROG_GREP
+    AC_PROG_EGREP
+
+
     ##################################
     # Visibility
     ##################################
@@ -708,6 +743,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         pmix_config_prefix[Makefile]
         pmix_config_prefix[config/Makefile]
         pmix_config_prefix[include/Makefile]
+        pmix_config_prefix[src/atomics/asm/Makefile]
         pmix_config_prefix[src/Makefile]
         pmix_config_prefix[src/util/keyval/Makefile]
         pmix_config_prefix[src/mca/base/Makefile]
@@ -950,18 +986,18 @@ AC_MSG_RESULT([$with_ident_string])
 # Timing support
 #
 AC_MSG_CHECKING([if want developer-level timing support])
-AC_ARG_ENABLE(timing,
-              AC_HELP_STRING([--enable-timing],
-                             [enable developer-level timing code (default: disabled)]))
-if test "$enable_timing" = "yes"; then
+AC_ARG_ENABLE(pmix-timing,
+              AC_HELP_STRING([--enable-pmix-timing],
+                             [enable PMIx developer-level timing code (default: disabled)]))
+if test "$enable_pmix_timing" = "yes"; then
     AC_MSG_RESULT([yes])
-    WANT_TIMING=1
+    WANT_PMIX_TIMING=1
 else
     AC_MSG_RESULT([no])
-    WANT_TIMING=0
+    WANT_PMIX_TIMING=0
 fi
 
-AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_TIMING],
+AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_PMIX_TIMING],
                    [Whether we want developer-level timing support or not])
 
 #
@@ -979,6 +1015,21 @@ else
     WANT_INSTALL_HEADERS=0
 fi
 
+#
+# Install backward compatibility support for PMI-1 and PMI-2
+#
+AC_MSG_CHECKING([if want backward compatibility for PMI-1 and PMI-2])
+AC_ARG_ENABLE(pmi-backward-compatibility,
+              AC_HELP_STRING([--enable-pmi-backward-compatibility],
+                             [enable PMIx support for PMI-1 and PMI-2 (default: enabled)]))
+if test "$enable_pmi_backward_compatibility" = "no"; then
+    AC_MSG_RESULT([no])
+    WANT_PMI_BACKWARD=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_PMI_BACKWARD=1
+fi
+
 AM_CONDITIONAL([WANT_INSTALL_HEADERS], [test $WANT_INSTALL_HEADERS -eq 1])
 ])dnl
 
@@ -994,6 +1045,7 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([WANT_DSTORE], [test "x$enable_dstore" != "xno"])
         AM_CONDITIONAL([WANT_PRIMARY_HEADERS], [test "x$pmix_install_primary_headers" = "xyes"])
         AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
+        AM_CONDITIONAL(WANT_PMI_BACKWARD, test "$WANT_PMI_BACKWARD" = 1)
     ])
     pmix_did_am_conditionals=yes
 ])dnl

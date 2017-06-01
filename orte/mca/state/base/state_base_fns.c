@@ -13,10 +13,19 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/pmix/pmix.h"
 
+#include "orte/orted/pmix/pmix_server_internal.h"
+#include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -459,7 +468,52 @@ void orte_state_base_report_progress(int fd, short argc, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
+void orte_state_base_notify_data_server(orte_process_name_t *target)
+{
+    opal_buffer_t *buf;
+    int rc, room = -1;
+    uint8_t cmd = ORTE_PMIX_PURGE_PROC_CMD;
+
+    /* if nobody local to us published anything, then we can ignore this */
+    if (ORTE_JOBID_INVALID == orte_pmix_server_globals.server.jobid) {
+        return;
+    }
+
+    buf = OBJ_NEW(opal_buffer_t);
+
+    /* pack the room number */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &room, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
+    }
+
+    /* load the command */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &cmd, 1, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
+    }
+
+    /* provide the target */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, target, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
+    }
+
+    /* send the request to the server */
+    rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                 &orte_pmix_server_globals.server, buf,
+                                 ORTE_RML_TAG_DATA_SERVER,
+                                 orte_rml_send_callback, NULL);
+    if (ORTE_SUCCESS != rc) {
+        OBJ_RELEASE(buf);
+    }
+}
+
 static void _send_notification(int status,
+                               orte_proc_state_t state,
                                orte_process_name_t *proc,
                                orte_process_name_t *target)
 {
@@ -485,19 +539,43 @@ static void _send_notification(int status,
         return;
     }
 
-    /* the source is me */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+    /* the source is the proc */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, proc, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return;
     }
 
-    /* we are going to pass three opal_value_t's */
-    rc = 3;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return;
+    if (OPAL_ERR_PROC_ABORTED == status) {
+        /* we will pass four opal_value_t's */
+        rc = 4;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        /* pass along the affected proc(s) */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_PMIX_EVENT_AFFECTED_PROC);
+        kv.type = OPAL_NAME;
+        kv.data.name.jobid = proc->jobid;
+        kv.data.name.vpid = proc->vpid;
+        kvptr = &kv;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        OBJ_DESTRUCT(&kv);
+    } else {
+        /* we are going to pass three opal_value_t's */
+        rc = 3;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            return;
+        }
     }
 
     /* pass along the affected proc(s) */
@@ -689,6 +767,17 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         /* track job status */
         jdata->num_terminated++;
         if (jdata->num_terminated == jdata->num_procs) {
+            /* if requested, check fd status for leaks */
+            if (orte_state_base_run_fdcheck) {
+                orte_state_base_check_fds(jdata);
+            }
+            /* if ompi-server is around, then notify it to purge
+             * any session-related info */
+            if (NULL != orte_data_server_uri) {
+                target.jobid = jdata->jobid;
+                target.vpid = ORTE_VPID_WILDCARD;
+                orte_state_base_notify_data_server(&target);
+            }
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
             /* if they requested notification upon completion, provide it */
             if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION, NULL, OPAL_BOOL)) {
@@ -699,11 +788,11 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
                     /* notify everyone who asked for it */
                     target.jobid = jdata->jobid;
                     target.vpid = ORTE_VPID_WILDCARD;
-                    _send_notification(OPAL_ERR_JOB_TERMINATED, &target, ORTE_NAME_WILDCARD);
+                    _send_notification(OPAL_ERR_JOB_TERMINATED, pdata->state, &target, ORTE_NAME_WILDCARD);
                 } else {
                     target.jobid = jdata->jobid;
                     target.vpid = ORTE_VPID_WILDCARD;
-                    _send_notification(OPAL_ERR_JOB_TERMINATED, &target, &parent);
+                    _send_notification(OPAL_ERR_JOB_TERMINATED, pdata->state, &target, &parent);
                 }
             }
         } else if (ORTE_PROC_STATE_TERMINATED < pdata->state &&
@@ -711,7 +800,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
             /* if this was an abnormal term, notify the other procs of the termination */
             parent.jobid = jdata->jobid;
             parent.vpid = ORTE_VPID_WILDCARD;
-            _send_notification(OPAL_ERR_PROC_ABORTED, &pdata->name, &parent);
+            _send_notification(OPAL_ERR_PROC_ABORTED, pdata->state, &pdata->name, &parent);
         }
     }
 
@@ -874,8 +963,6 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
             opal_pointer_array_set_item(map->nodes, index, NULL);
             /* maintain accounting */
             OBJ_RELEASE(node);
-            /* flag that the node is no longer in a map */
-            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
@@ -992,4 +1079,100 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     orte_plm.terminate_orteds();
 
     OBJ_RELEASE(caddy);
+}
+
+
+void orte_state_base_check_fds(orte_job_t *jdata)
+{
+    int nfds, i, fdflags, flflags;
+    char path[1024], info[256], **list=NULL, *status, *result, *r2;
+    ssize_t rc;
+    struct flock fl;
+    bool flk;
+    int cnt = 0;
+
+    /* get the number of available file descriptors
+     * for this daemon */
+    nfds = getdtablesize();
+    result = NULL;
+    /* loop over them and get their info */
+    for (i=0; i < nfds; i++) {
+        fdflags = fcntl(i, F_GETFD);
+        if (-1 == fdflags) {
+            /* no open fd in that slot */
+            continue;
+        }
+        flflags = fcntl(i, F_GETFL);
+        if (-1 == flflags) {
+            /* no open fd in that slot */
+            continue;
+        }
+        snprintf(path, 1024, "/proc/self/fd/%d", i);
+        memset(info, 0, 256);
+        /* read the info about this fd */
+        rc = readlink(path, info, 256);
+        if (-1 == rc) {
+            /* this fd is unavailable */
+            continue;
+        }
+        /* get any file locking status */
+        fl.l_type = F_WRLCK;
+        fl.l_whence = 0;
+        fl.l_start = 0;
+        fl.l_len = 0;
+        if (-1 == fcntl(i, F_GETLK, &fl)) {
+            flk = false;
+        } else {
+            flk = true;
+        }
+        /* construct the list of capabilities */
+        if (fdflags & FD_CLOEXEC) {
+            opal_argv_append_nosize(&list, "cloexec");
+        }
+        if (flflags & O_APPEND) {
+            opal_argv_append_nosize(&list, "append");
+        }
+        if (flflags & O_NONBLOCK) {
+            opal_argv_append_nosize(&list, "nonblock");
+        }
+        /* from the man page:
+         *  Unlike the other values that can be specified in flags,
+         * the access mode values O_RDONLY, O_WRONLY, and O_RDWR,
+         * do not specify individual bits.  Rather, they define
+         * the low order two bits of flags, and defined respectively
+         * as 0, 1, and 2. */
+        if (O_RDONLY == (flflags & 3)) {
+            opal_argv_append_nosize(&list, "rdonly");
+        } else if (O_WRONLY == (flflags & 3)) {
+            opal_argv_append_nosize(&list, "wronly");
+        } else {
+            opal_argv_append_nosize(&list, "rdwr");
+        }
+        if (flk && F_UNLCK != fl.l_type) {
+            if (F_WRLCK == fl.l_type) {
+                opal_argv_append_nosize(&list, "wrlock");
+            } else {
+                opal_argv_append_nosize(&list, "rdlock");
+            }
+        }
+        if (NULL != list) {
+            status = opal_argv_join(list, ' ');
+            opal_argv_free(list);
+            list = NULL;
+            if (NULL == result) {
+                asprintf(&result, "    %d\t(%s)\t%s\n", i, info, status);
+            } else {
+                asprintf(&r2, "%s    %d\t(%s)\t%s\n", result, i, info, status);
+                free(result);
+                result = r2;
+            }
+            free(status);
+        }
+        ++cnt;
+    }
+    asprintf(&r2, "%s: %d open file descriptors after job %d completed\n%s",
+             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cnt, ORTE_LOCAL_JOBID(jdata->jobid), result);
+    opal_output(0, "%s", r2);
+    free(result);
+    free(r2);
 }

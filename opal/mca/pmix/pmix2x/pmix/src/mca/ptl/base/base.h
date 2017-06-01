@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -73,6 +73,7 @@ struct pmix_ptl_globals_t {
     pmix_list_t actives;
     bool initialized;
     pmix_list_t posted_recvs;     // list of pmix_ptl_posted_recv_t
+    pmix_list_t unexpected_msgs;
     int stop_thread[2];
     bool listen_thread_active;
     pmix_list_t listeners;
@@ -93,6 +94,11 @@ PMIX_EXPORT pmix_status_t pmix_ptl_stub_send_oneway(struct pmix_peer_t *peer,
                                                     pmix_ptl_tag_t tag);
 PMIX_EXPORT pmix_status_t pmix_ptl_stub_connect_to_peer(struct pmix_peer_t *peer,
                                                         pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t pmix_ptl_stub_register_recv(struct pmix_peer_t *peer,
+                                                      pmix_ptl_cbfunc_t cbfunc,
+                                                      pmix_ptl_tag_t tag);
+PMIX_EXPORT pmix_status_t pmix_ptl_stub_cancel_recv(struct pmix_peer_t *peer,
+                                                    pmix_ptl_tag_t tag);
 
 PMIX_EXPORT pmix_status_t pmix_ptl_base_start_listening(pmix_info_t *info, size_t ninfo);
 PMIX_EXPORT void pmix_ptl_base_stop_listening(void);

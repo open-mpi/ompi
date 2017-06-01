@@ -15,7 +15,7 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -258,8 +258,8 @@ int orte_print_aborted_job(orte_job_t *job,
         default:
             if (0 != proc->exit_code) {
                 orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start", true,
-                               orte_basename, ORTE_ERROR_NAME(proc->exit_code), node->name,
-                               (unsigned long)proc->name.vpid);
+                               orte_basename, proc->exit_code, ORTE_ERROR_NAME(proc->exit_code),
+                               node->name, (unsigned long)proc->name.vpid);
             } else {
                 orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status", true,
                                orte_basename, node->name);
@@ -345,7 +345,7 @@ static void dump_aborted_procs(void)
     /* find the job that caused the problem */
     n = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&job, &nptr);
     while (OPAL_SUCCESS == n) {
-        if (job->jobid == ORTE_PROC_MY_NAME->jobid) {
+        if (NULL == job || job->jobid == ORTE_PROC_MY_NAME->jobid) {
             goto next;
         }
         if (ORTE_JOB_STATE_UNDEF != job->state &&

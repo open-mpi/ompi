@@ -32,6 +32,11 @@ BEGIN_C_DECLS
  * that key */
 #define OPAL_PMIX_RANK_WILDCARD  UINT32_MAX-1
 
+/* other special rank values will be used to define
+ * groups of ranks for use in collectives */
+#define OPAL_PMIX_RANK_LOCAL_NODE    UINT32_MAX-2        // all ranks on local node
+
+
 /* define a set of "standard" attributes that can
  * be queried. Implementations (and users) are free to extend as
  * desired, so the get functions need to be capable
@@ -55,11 +60,14 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_CONNECT_TO_SYSTEM             "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
                                                                         //        a local system-level PMIx server
 #define OPAL_PMIX_CONNECT_SYSTEM_FIRST          "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
+#define OPAL_PMIX_REGISTER_NODATA               "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
+#define OPAL_PMIX_SERVER_ENABLE_MONITORING      "pmix.srv.monitor"      // (bool) Enable PMIx internal monitoring by server
 
 
 /* identification attributes */
 #define OPAL_PMIX_USERID                        "pmix.euid"             // (uint32_t) effective user id
 #define OPAL_PMIX_GRPID                         "pmix.egid"             // (uint32_t) effective group id
+
 
 /* attributes for the rendezvous socket  */
 #define OPAL_PMIX_USOCK_DISABLE                 "pmix.usock.disable"    // (bool) disable legacy usock support
@@ -76,6 +84,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_TCP_DISABLE_IPV4              "pmix.tcp.disipv4"      // (bool) true to disable IPv4 family
 #define OPAL_PMIX_TCP_DISABLE_IPV6              "pmix.tcp.disipv6"      // (bool) true to disable IPv6 family
 
+
 /* general proc-level attributes */
 #define OPAL_PMIX_CPUSET                        "pmix.cpuset"           // (char*) hwloc bitmap applied to proc upon launch
 #define OPAL_PMIX_CREDENTIAL                    "pmix.cred"             // (char*) security credential assigned to proc
@@ -88,6 +97,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_NSDIR                         "pmix.nsdir"            // (char*) sub-tmpdir assigned to namespace
 #define OPAL_PMIX_PROCDIR                       "pmix.pdir"             // (char*) sub-nsdir assigned to proc
 #define OPAL_PMIX_TDIR_RMCLEAN                  "pmix.tdir.rmclean"     // (bool)  Resource Manager will clean session directories
+
 
 /* information about relative ranks as assigned by the RM */
 #define OPAL_PMIX_PROCID                        "pmix.procid"           // (opal_process_name_t) process identifier
@@ -104,24 +114,25 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_LOCALLDR                      "pmix.lldr"             // (uint64_t) opal_identifier of lowest rank on this node within this job
 #define OPAL_PMIX_APPLDR                        "pmix.aldr"             // (uint32_t) lowest rank in this app within this job
 #define OPAL_PMIX_PROC_PID                      "pmix.ppid"             // (pid_t) pid of specified proc
-
-/****  no PMIx equivalent ****/
-#define OPAL_PMIX_LOCALITY                      "pmix.loc"              // (uint16_t) relative locality of two procs
-#define OPAL_PMIX_TOPOLOGY_SIGNATURE            "pmix.toposig"          // (char*) topology signature string
-#define OPAL_PMIX_LOCALITY_STRING               "pmix.locstr"           // (char*) string describing a proc's location
-#define OPAL_PMIX_AVAIL_PHYS_MEMORY             "pmix.pmem"             // (uint64_t) total available physical memory on this node
-
+#define OPAL_PMIX_SESSION_ID                    "pmix.session.id"       // (uint32_t) session identifier
 #define OPAL_PMIX_NODE_LIST                     "pmix.nlist"            // (char*) comma-delimited list of nodes running procs for the specified nspace
 #define OPAL_PMIX_ALLOCATED_NODELIST            "pmix.alist"            // (char*) comma-delimited list of all nodes in this allocation regardless of
                                                                         //           whether or not they currently host procs.
 #define OPAL_PMIX_HOSTNAME                      "pmix.hname"            // (char*) name of the host the specified proc is on
 #define OPAL_PMIX_NODEID                        "pmix.nodeid"           // (uint32_t) node identifier
 #define OPAL_PMIX_LOCAL_PEERS                   "pmix.lpeers"           // (char*) comma-delimited string of ranks on this node within the specified nspace
+#define OPAL_PMIX_LOCAL_PROCS                   "pmix.lprocs"           // (opal_list_t*) list of opal_namelist_t of procs on the specified node
 #define OPAL_PMIX_LOCAL_CPUSETS                 "pmix.lcpus"            // (char*) colon-delimited cpusets of local peers within the specified nspace
 #define OPAL_PMIX_PROC_URI                      "opal.puri"             // (char*) URI containing contact info for proc - NOTE: this is published by procs and
                                                                         //            thus cannot be prefixed with "pmix"
+#define OPAL_PMIX_LOCALITY                      "pmix.loc"              // (uint16_t) relative locality of two procs
+
+
+/* Memory info */
+#define OPAL_PMIX_AVAIL_PHYS_MEMORY             "pmix.pmem"             // (uint64_t) total available physical memory on this node
 #define OPAL_PMIX_DAEMON_MEMORY                 "pmix.dmn.mem"          // (float) Mbytes of memory currently used by daemon
 #define OPAL_PMIX_CLIENT_AVG_MEMORY             "pmix.cl.mem.avg"       // (float) Average Mbytes of memory used by client processes
+
 
 /* size info */
 #define OPAL_PMIX_UNIV_SIZE                     "pmix.univ.size"        // (uint32_t) #procs in this nspace
@@ -133,11 +144,15 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_MAX_PROCS                     "pmix.max.size"         // (uint32_t) max #procs for this job
 #define OPAL_PMIX_NUM_NODES                     "pmix.num.nodes"        // (uint32_t) #nodes in this nspace
 
+
 /* topology info */
 #define OPAL_PMIX_NET_TOPO                      "pmix.ntopo"            // (char*) xml-representation of network topology
 #define OPAL_PMIX_LOCAL_TOPO                    "pmix.ltopo"            // (char*) xml-representation of local node topology
 #define OPAL_PMIX_NODE_LIST                     "pmix.nlist"            // (char*) comma-delimited list of nodes running procs for this job
 #define OPAL_PMIX_TOPOLOGY                      "pmix.topo"             // (hwloc_topology_t) pointer to the PMIx client's internal topology object
+#define OPAL_PMIX_TOPOLOGY_SIGNATURE            "pmix.toposig"          // (char*) topology signature string
+#define OPAL_PMIX_LOCALITY_STRING               "pmix.locstr"           // (char*) string describing a proc's location
+
 
 /* request-related info */
 #define OPAL_PMIX_COLLECT_DATA                  "pmix.collect"          // (bool) collect data and return it at the end of the operation
@@ -156,15 +171,18 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_EMBED_BARRIER                 "pmix.embed.barrier"    // (bool) execute a blocking fence operation before executing the
                                                                         //        specified operation
 
+
 /* attribute used by host server to pass data to the server convenience library - the
  * data will then be parsed and provided to the local clients */
 #define OPAL_PMIX_PROC_DATA                     "pmix.pdata"            // (pmix_value_array_t) starts with rank, then contains more data
 #define OPAL_PMIX_NODE_MAP                      "pmix.nmap"             // (char*) regex of nodes containing procs for this job
 #define OPAL_PMIX_PROC_MAP                      "pmix.pmap"             // (char*) regex describing procs on each node within this job
 
+
 /* attributes used internally to communicate data from the server to the client */
 #define OPAL_PMIX_PROC_BLOB                     "pmix.pblob"            // (pmix_byte_object_t) packed blob of process data
 #define OPAL_PMIX_MAP_BLOB                      "pmix.mblob"            // (pmix_byte_object_t) packed blob of process location
+
 
 /* error handler registration  and notification info keys */
 #define OPAL_PMIX_EVENT_HDLR_NAME               "pmix.evname"           // (char*) string name identifying this handler
@@ -187,7 +205,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_EVENT_ACTION_TIMEOUT          "pmix.evtimeout"        // (int) time in sec before RM will execute error response
 
 
-/* attributes used to describe "spawm" attributes */
+/* attributes used to describe "spawn" attributes */
 #define OPAL_PMIX_PERSONALITY                   "pmix.pers"             // (char*) name of personality to use
 #define OPAL_PMIX_HOST                          "pmix.host"             // (char*) comma-delimited list of hosts to use for spawned procs
 #define OPAL_PMIX_HOSTFILE                      "pmix.hostfile"         // (char*) hostfile to use for spawned procs
@@ -229,19 +247,89 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_QUERY_LOCAL_ONLY              "pmix.qry.local"        // constrain the query to local information only
 #define OPAL_PMIX_QUERY_REPORT_AVG              "pmix.qry.avg"          // report average values
 #define OPAL_PMIX_QUERY_REPORT_MINMAX           "pmix.qry.minmax"       // report minimum and maximum value
+#define OPAL_PMIX_QUERY_ALLOC_STATUS            "pmix.query.alloc"      // (char*) string identifier of the allocation whose status
+                                                                        //         is being requested
+#define OPAL_PMIX_TIME_REMAINING                "pmix.time.remaining"   // (char*) query number of seconds (uint32_t) remaining in allocation
+                                                                        //         for the specified nspace
 
 /* log attributes */
-#define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"        // (char*) log string to stderr
-#define OPAL_PMIX_LOG_STDOUT                    "pmix.log.stdout"        // (char*) log string to stdout
-#define OPAL_PMIX_LOG_SYSLOG                    "pmix.log.syslog"        // (char*) log data to syslog - defaults to ERROR priority unless
-#define OPAL_PMIX_LOG_MSG                       "pmix.log.msg"           // (pmix_byte_object_t) message blob to be sent somewhere
+#define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"       // (char*) log string to stderr
+#define OPAL_PMIX_LOG_STDOUT                    "pmix.log.stdout"       // (char*) log string to stdout
+#define OPAL_PMIX_LOG_SYSLOG                    "pmix.log.syslog"       // (char*) log data to syslog - defaults to ERROR priority unless
+#define OPAL_PMIX_LOG_MSG                       "pmix.log.msg"          // (pmix_byte_object_t) message blob to be sent somewhere
+#define OPAL_PMIX_LOG_EMAIL                     "pmix.log.email"        // (pmix_data_array_t) log via email based on pmix_info_t containing directives
+#define OPAL_PMIX_LOG_EMAIL_ADDR                "pmix.log.emaddr"       // (char*) comma-delimited list of email addresses that are to recv msg
+#define OPAL_PMIX_LOG_EMAIL_SUBJECT             "pmix.log.emsub"        // (char*) subject line for email
+#define OPAL_PMIX_LOG_EMAIL_MSG                 "pmix.log.emmsg"        // (char*) msg to be included in email
+
 
 /* debugger attributes */
-#define OPAL_PMIX_DEBUG_STOP_ON_EXEC            "pmix.dbg.exec"          // (bool) job is being spawned under debugger - instruct it to pause on start
-#define OPAL_PMIX_DEBUG_STOP_IN_INIT            "pmix.dbg.init"          // (bool) instruct job to stop during PMIx init
-#define OPAL_PMIX_DEBUG_WAIT_FOR_NOTIFY         "pmix.dbg.notify"        // (bool) block at desired point until receiving debugger release notification
-#define OPAL_PMIX_DEBUG_JOB                     "pmix.dbg.job"           // (char*) nspace of the job to be debugged - the RM/PMIx server are
-#define OPAL_PMIX_DEBUG_WAITING_FOR_NOTIFY      "pmix.dbg.waiting"       // (bool) job to be debugged is waiting for a release
+#define OPAL_PMIX_DEBUG_STOP_ON_EXEC            "pmix.dbg.exec"         // (bool) job is being spawned under debugger - instruct it to pause on start
+#define OPAL_PMIX_DEBUG_STOP_IN_INIT            "pmix.dbg.init"         // (bool) instruct job to stop during PMIx init
+#define OPAL_PMIX_DEBUG_WAIT_FOR_NOTIFY         "pmix.dbg.notify"       // (bool) block at desired point until receiving debugger release notification
+#define OPAL_PMIX_DEBUG_JOB                     "pmix.dbg.job"          // (char*) nspace of the job to be debugged - the RM/PMIx server are
+#define OPAL_PMIX_DEBUG_WAITING_FOR_NOTIFY      "pmix.dbg.waiting"      // (bool) job to be debugged is waiting for a release
+
+
+/* Resource Manager identification */
+#define OPAL_PMIX_RM_NAME                       "pmix.rm.name"          // (char*) string name of the resource manager
+#define OPAL_PMIX_RM_VERSION                    "pmix.rm.version"       // (char*) RM version string
+
+
+/* attributes for setting envars */
+#define OPAL_PMIX_SET_ENVAR                     "pmix.set.envar"        // (char*) string "key=value" value shall be put into the environment
+#define OPAL_PMIX_UNSET_ENVAR                   "pmix.unset.envar"      // (char*) unset envar specified in string
+
+
+/* attributes relating to allocations */
+#define OPAL_PMIX_ALLOC_ID                      "pmix.alloc.id"         // (char*) provide a string identifier for this allocation request
+                                                                        //         which can later be used to query status of the request
+#define OPAL_PMIX_ALLOC_NUM_NODES               "pmix.alloc.nnodes"     // (uint64_t) number of nodes
+#define OPAL_PMIX_ALLOC_NODE_LIST               "pmix.alloc.nlist"      // (char*) regex of specific nodes
+#define OPAL_PMIX_ALLOC_NUM_CPUS                "pmix.alloc.ncpus"      // (uint64_t) number of cpus
+#define OPAL_PMIX_ALLOC_NUM_CPU_LIST            "pmix.alloc.ncpulist"   // (char*) regex of #cpus for each node
+#define OPAL_PMIX_ALLOC_CPU_LIST                "pmix.alloc.cpulist"    // (char*) regex of specific cpus indicating the cpus involved.
+#define OPAL_PMIX_ALLOC_MEM_SIZE                "pmix.alloc.msize"      // (float) number of Mbytes
+#define OPAL_PMIX_ALLOC_NETWORK                 "pmix.alloc.net"        // (array) array of pmix_info_t describing network resources. If not
+                                                                        //         given as part of an info struct that identifies the
+                                                                        //         impacted nodes, then the description will be applied
+                                                                        //         across all nodes in the requestor's allocation
+#define OPAL_PMIX_ALLOC_NETWORK_ID              "pmix.alloc.netid"      // (char*) name of network
+#define OPAL_PMIX_ALLOC_BANDWIDTH               "pmix.alloc.bw"         // (float) Mbits/sec
+#define OPAL_PMIX_ALLOC_NETWORK_QOS             "pmix.alloc.netqos"     // (char*) quality of service level
+#define OPAL_PMIX_ALLOC_TIME                    "pmix.alloc.time"       // (uint32_t) time in seconds
+
+
+/* job control attributes */
+#define OPAL_PMIX_JOB_CTRL_ID                   "pmix.jctrl.id"         // (char*) provide a string identifier for this request
+#define OPAL_PMIX_JOB_CTRL_PAUSE                "pmix.jctrl.pause"      // (bool) pause the specified processes
+#define OPAL_PMIX_JOB_CTRL_RESUME               "pmix.jctrl.resume"     // (bool) "un-pause" the specified processes
+#define OPAL_PMIX_JOB_CTRL_CANCEL               "pmix.jctrl.cancel"     // (char*) cancel the specified request
+                                                                        //         (NULL => cancel all requests from this requestor)
+#define OPAL_PMIX_JOB_CTRL_KILL                 "pmix.jctrl.kill"       // (bool) forcibly terminate the specified processes and cleanup
+#define OPAL_PMIX_JOB_CTRL_RESTART              "pmix.jctrl.restart"    // (char*) restart the specified processes using the given checkpoint ID
+#define OPAL_PMIX_JOB_CTRL_CHECKPOINT           "pmix.jctrl.ckpt"       // (char*) checkpoint the specified processes and assign the given ID to it
+#define OPAL_PMIX_JOB_CTRL_CHECKPOINT_EVENT     "pmix.jctrl.ckptev"     // (bool) use event notification to trigger process checkpoint
+#define OPAL_PMIX_JOB_CTRL_CHECKPOINT_SIGNAL    "pmix.jctrl.ckptsig"    // (int) use the given signal to trigger process checkpoint
+#define OPAL_PMIX_JOB_CTRL_CHECKPOINT_TIMEOUT   "pmix.jctrl.ckptsig"    // (int) time in seconds to wait for checkpoint to complete
+#define OPAL_PMIX_JOB_CTRL_SIGNAL               "pmix.jctrl.sig"        // (int) send given signal to specified processes
+#define OPAL_PMIX_JOB_CTRL_PROVISION            "pmix.jctrl.pvn"        // (char*) regex identifying nodes that are to be provisioned
+#define OPAL_PMIX_JOB_CTRL_PROVISION_IMAGE      "pmix.jctrl.pvnimg"     // (char*) name of the image that is to be provisioned
+#define OPAL_PMIX_JOB_CTRL_PREEMPTIBLE          "pmix.jctrl.preempt"    // (bool) job can be pre-empted
+
+/* monitoring attributes */
+#define OPAL_PMIX_MONITOR_HEARTBEAT             "pmix.monitor.mbeat"    // (void) register to have the server monitor the requestor for heartbeats
+#define OPAL_PMIX_SEND_HEARTBEAT                "pmix.monitor.beat"     // (void) send heartbeat to local server
+#define OPAL_PMIX_MONITOR_HEARTBEAT_TIME        "pmix.monitor.btime"    // (uint32_t) time in seconds before declaring heartbeat missed
+#define OPAL_PMIX_MONITOR_HEARTBEAT_DROPS       "pmix.monitor.bdrop"    // (uint32_t) number of heartbeats that can be missed before taking
+                                                                        //            specified action
+#define OPAL_PMIX_MONITOR_FILE                  "pmix.monitor.fmon"     // (char*) register to monitor file for signs of life
+#define OPAL_PMIX_MONITOR_FILE_SIZE             "pmix.monitor.fsize"    // (bool) monitor size of given file is growing to determine app is running
+#define OPAL_PMIX_MONITOR_FILE_ACCESS           "pmix.monitor.faccess"  // (char*) monitor time since last access of given file to determine app is running
+#define OPAL_PMIX_MONITOR_FILE_MODIFY           "pmix.monitor.fmod"     // (char*) monitor time since last modified of given file to determine app is running
+#define OPAL_PMIX_MONITOR_FILE_CHECK_TIME       "pmix.monitor.ftime"    // (uint32_t) time in seconds between checking file
+#define OPAL_PMIX_MONITOR_FILE_DROPS            "pmix.monitor.fdrop"    // (uint32_t) number of file checks that can be missed before taking
+                                                                        //            specified action
 
 
 /* define a scope for data "put" by PMI per the following:
@@ -283,6 +371,16 @@ typedef enum {
     OPAL_PMIX_PERSIST_APP,         // retain until application terminates
     OPAL_PMIX_PERSIST_SESSION      // retain until session/allocation terminates
 } opal_pmix_persistence_t;
+
+
+/* define allocation request flags */
+typedef enum {
+    OPAL_PMIX_ALLOC_UNDEF = 0,
+    OPAL_PMIX_ALLOC_NEW,
+    OPAL_PMIX_ALLOC_EXTEND,
+    OPAL_PMIX_ALLOC_RELEASE,
+    OPAL_PMIX_ALLOC_REAQCUIRE
+} opal_pmix_alloc_directive_t;
 
 
 /****    PMIX INFO STRUCT    ****/

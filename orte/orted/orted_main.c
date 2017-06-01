@@ -76,6 +76,7 @@
 #include "orte/util/parse_options.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/util/pre_condition_transports.h"
+#include "orte/util/compress.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -793,8 +794,57 @@ int orte_daemon(int argc, char *argv[])
         /* if we are rank=1, then send our topology back - otherwise, mpirun
          * will request it if necessary */
         if (1 == ORTE_PROC_MY_NAME->vpid) {
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+            opal_buffer_t data;
+            int8_t flag;
+            uint8_t *cmpdata;
+            size_t cmplen;
+
+            /* setup an intermediate buffer */
+            OBJ_CONSTRUCT(&data, opal_buffer_t);
+
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(&data, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
                 ORTE_ERROR_LOG(ret);
+            }
+            if (orte_util_compress_block((uint8_t*)data.base_ptr, data.bytes_used,
+                                 &cmpdata, &cmplen)) {
+                /* the data was compressed - mark that we compressed it */
+                flag = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT8))) {
+                    ORTE_ERROR_LOG(ret);
+                    free(cmpdata);
+                    OBJ_DESTRUCT(&data);
+                }
+                /* pack the compressed length */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &cmplen, 1, OPAL_SIZE))) {
+                    ORTE_ERROR_LOG(ret);
+                    free(cmpdata);
+                    OBJ_DESTRUCT(&data);
+                }
+                /* pack the uncompressed length */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &data.bytes_used, 1, OPAL_SIZE))) {
+                    ORTE_ERROR_LOG(ret);
+                    free(cmpdata);
+                    OBJ_DESTRUCT(&data);
+                }
+                /* pack the compressed info */
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, cmpdata, cmplen, OPAL_UINT8))) {
+                    ORTE_ERROR_LOG(ret);
+                    free(cmpdata);
+                    OBJ_DESTRUCT(&data);
+                }
+                OBJ_DESTRUCT(&data);
+                free(cmpdata);
+            } else {
+                /* mark that it was not compressed */
+                flag = 0;
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT8))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_DESTRUCT(&data);
+                    free(cmpdata);
+                }
+                /* transfer the payload across */
+                opal_dss.copy_payload(buffer, &data);
+                OBJ_DESTRUCT(&data);
             }
         }
 

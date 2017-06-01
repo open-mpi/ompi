@@ -240,17 +240,17 @@ static int tcp_component_register(void)
                                           MCA_BASE_VAR_SCOPE_LOCAL,
                                           &mca_oob_tcp_component.max_retries);
 
-    mca_oob_tcp_component.tcp_sndbuf = 128 * 1024;
+    mca_oob_tcp_component.tcp_sndbuf = 0;
     (void)mca_base_component_var_register(component, "sndbuf",
-                                          "TCP socket send buffering size (in bytes)",
+                                          "TCP socket send buffering size (in bytes, 0 => leave system default)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_4,
                                           MCA_BASE_VAR_SCOPE_LOCAL,
                                           &mca_oob_tcp_component.tcp_sndbuf);
 
-    mca_oob_tcp_component.tcp_rcvbuf = 128 * 1024;
+    mca_oob_tcp_component.tcp_rcvbuf = 0;
     (void)mca_base_component_var_register(component, "rcvbuf",
-                                          "TCP socket receive buffering size (in bytes)",
+                                          "TCP socket receive buffering size (in bytes, 0 => leave system default)",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_4,
                                           MCA_BASE_VAR_SCOPE_LOCAL,
