@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -95,7 +95,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_datatype_t);
 /* Using set constant for padding of the DATATYPE handles because the size of
  * base structure is very close to being the same no matter the bitness.
  */
-#define PREDEFINED_DATATYPE_PAD (512)
+#define PREDEFINED_DATATYPE_PAD 512
 
 struct ompi_predefined_datatype_t {
     struct ompi_datatype_t dt;

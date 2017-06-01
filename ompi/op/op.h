@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC
- * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -199,7 +199,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_t);
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
-#define PREDEFINED_OP_PAD (sizeof(void*) * 256)
+#define PREDEFINED_OP_PAD 2048
 
 struct ompi_predefined_op_t {
     struct ompi_op_t op;

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
@@ -127,7 +127,7 @@ typedef struct ompi_request_t ompi_request_t;
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
-#define PREDEFINED_REQUEST_PAD (sizeof(void*) * 32)
+#define PREDEFINED_REQUEST_PAD 256
 
 struct ompi_predefined_request_t {
     struct ompi_request_t request;

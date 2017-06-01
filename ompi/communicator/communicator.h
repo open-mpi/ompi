@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
@@ -242,6 +242,15 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  * the ompi_communicator_t without impacting the size of the
  * ompi_predefined_communicator_t structure for some number of additions.
  *
+ * Note: we used to define the PAD as a multiple of sizeof(void*).
+ * However, this makes a different size PAD, depending on
+ * sizeof(void*).  In some cases
+ * (https://github.com/open-mpi/ompi/issues/3610), 32 bit builds can
+ * run out of space when 64 bit builds are still ok.  So we changed to
+ * use just a naked byte size.  As a rule of thumb, however, the size
+ * should probably still be a multiple of 8 so that it has the
+ * possibility of being nicely aligned.
+ *
  * As an example:
  * If the size of ompi_communicator_t is less than the size of the _PAD then
  * the _PAD ensures that the size of the ompi_predefined_communicator_t is
@@ -258,7 +267,7 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  * the PREDEFINED_COMMUNICATOR_PAD macro?
  * A: Most likely not, but it would be good to check.
  */
-#define PREDEFINED_COMMUNICATOR_PAD (sizeof(void*) * 64)
+#define PREDEFINED_COMMUNICATOR_PAD 512
 
 struct ompi_predefined_communicator_t {
     struct ompi_communicator_t comm;
