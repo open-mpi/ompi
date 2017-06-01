@@ -12,6 +12,7 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -116,6 +117,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup_and_return;
         }
+        iov.iov_len = packed_size;
     }
     max_data = packed_size;
     iov_count = 1;
