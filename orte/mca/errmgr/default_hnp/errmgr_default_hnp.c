@@ -64,6 +64,7 @@
 
 static int init(void);
 static int finalize(void);
+static void hnp_abort(int error_code, char *fmt, ...);
 
 static int predicted_fault(opal_list_t *proc_list,
                            opal_list_t *node_list,
@@ -83,7 +84,7 @@ orte_errmgr_base_module_t orte_errmgr_default_hnp_module = {
     init,
     finalize,
     orte_errmgr_base_log,
-    orte_errmgr_base_abort,
+    hnp_abort,
     orte_errmgr_base_abort_peers,
     predicted_fault,
     suggest_map_targets,
@@ -124,6 +125,71 @@ static int finalize(void)
 {
     return ORTE_SUCCESS;
 }
+
+static void wakeup(int sd, short args, void *cbdata)
+{
+    /* nothing more we can do */
+    orte_quit(0, 0, NULL);
+}
+
+/* this function only gets called when FORCED_TERMINATE
+ * has been invoked, which means that there is some
+ * internal failure (e.g., to pack/unpack a correct value).
+ * We could just exit, but that doesn't result in any
+ * meaningful error message to the user. Likewise, just
+ * printing something to stdout/stderr won't necessarily
+ * get back to the user. Instead, we will send an error
+ * report to mpirun and give it a chance to order our
+ * termination. In order to ensure we _do_ terminate,
+ * we set a timer - if it fires before we receive the
+ * termination command, then we will exit on our own. This
+ * protects us in the case that the failure is in the
+ * messaging system itself */
+static void hnp_abort(int error_code, char *fmt, ...)
+{
+    va_list arglist;
+    char *outmsg = NULL;
+    orte_timer_t *timer;
+
+    /* ensure we exit with non-zero status */
+    ORTE_UPDATE_EXIT_STATUS(error_code);
+
+    /* If there was a message, construct it */
+    va_start(arglist, fmt);
+    if (NULL != fmt) {
+        vasprintf(&outmsg, fmt, arglist);
+    }
+    va_end(arglist);
+
+    /* use the show-help system to get the message out */
+    orte_show_help("help-errmgr-base.txt", "simple-message", true, outmsg);
+
+    /* this could have happened very early, so see if it happened
+     * before we started anything - if so, we can just finalize */
+    if (orte_never_launched) {
+        orte_quit(0, 0, NULL);
+        return;
+    }
+
+    /* tell the daemons to terminate */
+    if (ORTE_SUCCESS != orte_plm.terminate_orteds()) {
+        orte_quit(0, 0, NULL);
+        return;
+    }
+
+    /* set a timer for exiting - this also gives the message a chance
+     * to get out! */
+    if (NULL == (timer = OBJ_NEW(orte_timer_t))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return;
+    }
+    timer->tv.tv_sec = 5;
+    timer->tv.tv_usec = 0;
+    opal_event_evtimer_set(orte_event_base, timer->ev, wakeup, NULL);
+    opal_event_set_priority(timer->ev, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(timer->ev, &timer->tv);
+}
+
 
 static void job_errors(int fd, short args, void *cbdata)
 {

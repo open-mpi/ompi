@@ -528,7 +528,8 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                 OBJ_RELEASE(item);
                 continue;
             }
-            if (ORTE_PROC_STATE_RUNNING < rec->state ||
+            if ((ORTE_PROC_STATE_RUNNING < rec->state &&
+                ORTE_PROC_STATE_CALLED_ABORT != rec->state) ||
                 !ORTE_FLAG_TEST(rec, ORTE_PROC_FLAG_ALIVE)) {
                 opal_output(0, "%s grpcomm:direct:send_relay proc %s not running - cannot relay",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));

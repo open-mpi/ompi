@@ -59,7 +59,7 @@
  */
 static int init(void);
 static int finalize(void);
-
+static void orted_abort(int error_code, char *fmt, ...);
 static int predicted_fault(opal_list_t *proc_list,
                            opal_list_t *node_list,
                            opal_list_t *suggested_map);
@@ -78,7 +78,7 @@ orte_errmgr_base_module_t orte_errmgr_default_orted_module = {
     init,
     finalize,
     orte_errmgr_base_log,
-    orte_errmgr_base_abort,
+    orted_abort,
     orte_errmgr_base_abort_peers,
     predicted_fault,
     suggest_map_targets,
@@ -120,6 +120,119 @@ static int init(void)
 static int finalize(void)
 {
     return ORTE_SUCCESS;
+}
+
+static void wakeup(int sd, short args, void *cbdata)
+{
+    /* nothing more we can do */
+    orte_quit(0, 0, NULL);
+}
+
+/* this function only gets called when FORCED_TERMINATE
+ * has been invoked, which means that there is some
+ * internal failure (e.g., to pack/unpack a correct value).
+ * We could just exit, but that doesn't result in any
+ * meaningful error message to the user. Likewise, just
+ * printing something to stdout/stderr won't necessarily
+ * get back to the user. Instead, we will send an error
+ * report to mpirun and give it a chance to order our
+ * termination. In order to ensure we _do_ terminate,
+ * we set a timer - if it fires before we receive the
+ * termination command, then we will exit on our own. This
+ * protects us in the case that the failure is in the
+ * messaging system itself */
+static void orted_abort(int error_code, char *fmt, ...)
+{
+    va_list arglist;
+    char *outmsg = NULL;
+    orte_plm_cmd_flag_t cmd;
+    opal_buffer_t *alert;
+    orte_vpid_t null=ORTE_VPID_INVALID;
+    orte_proc_state_t state = ORTE_PROC_STATE_CALLED_ABORT;
+    orte_timer_t *timer;
+    int rc;
+
+    /* If there was a message, construct it */
+    va_start(arglist, fmt);
+    if (NULL != fmt) {
+        vasprintf(&outmsg, fmt, arglist);
+    }
+    va_end(arglist);
+
+    /* use the show-help system to get the message out */
+    orte_show_help("help-errmgr-base.txt", "simple-message", true, outmsg);
+
+    /* tell the HNP we are in distress */
+    alert = OBJ_NEW(opal_buffer_t);
+    /* pack update state command */
+    cmd = ORTE_PLM_UPDATE_PROC_STATE;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        goto cleanup;
+    }
+    /* pack the jobid */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &ORTE_PROC_MY_NAME->jobid, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        goto cleanup;
+    }
+    /* pack our vpid */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &ORTE_PROC_MY_NAME->vpid, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        goto cleanup;
+    }
+    /* pack our pid */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &orte_process_info.pid, 1, OPAL_PID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        goto cleanup;
+    }
+    /* pack our state */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &state, 1, ORTE_PROC_STATE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        goto cleanup;
+    }
+    /* pack our exit code */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &error_code, 1, ORTE_EXIT_CODE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        goto cleanup;
+    }
+    /* flag that this job is complete so the receiver can know */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &null, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        goto cleanup;
+    }
+
+    /* send it */
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          ORTE_PROC_MY_HNP, alert,
+                                          ORTE_RML_TAG_PLM,
+                                          orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(alert);
+        /* we can't communicate, so give up */
+        orte_quit(0, 0, NULL);
+        return;
+    }
+
+  cleanup:
+    /* set a timer for exiting - this also gives the message a chance
+     * to get out! */
+    if (NULL == (timer = OBJ_NEW(orte_timer_t))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return;
+    }
+    timer->tv.tv_sec = 5;
+    timer->tv.tv_usec = 0;
+    opal_event_evtimer_set(orte_event_base, timer->ev, wakeup, NULL);
+    opal_event_set_priority(timer->ev, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(timer->ev, &timer->tv);
+
 }
 
 static void job_errors(int fd, short args, void *cbdata)
@@ -259,7 +372,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* terminate - our routed children will see
          * us leave and automatically die
          */
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        orte_quit(0, 0, NULL);
         goto cleanup;
     }
 
