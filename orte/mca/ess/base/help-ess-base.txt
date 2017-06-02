@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,3 +33,19 @@ and got the error %s.
 This could mean that your PATH or executable name is wrong, or that you do not
 have the necessary permissions.  Please ensure that the executable is able to be
 found and executed as it is required for singleton operations.
+[ess-base:cannot-forward]
+The system does not support trapping and forwarding of the
+specified signal:
+
+  signal: %s
+  param:  %s
+
+Please remove that signal from the ess_base_forward_signals MCA parameter.
+[ess-base:unknown-signal]
+The following signal was included in the ess_base_forward_signals
+MCA parameter:
+
+  signal: %s
+  param:  %s
+
+This is not a recognized signal value. Please fix or remove it.
