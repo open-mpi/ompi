@@ -1006,10 +1006,8 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         comps = opal_argv_split(comp_attrib, ',');
         for (i=0; NULL != comps[i]; i++) {
             /* changing below to check for oob, as trying to use ofi for only mgmt conduit */
-            if (0 == strcmp(comps[i], "oob")) {
-            /* changing below to check for fabric, as trying to use ofi for only coll conduit
-            if (0 == strcmp(comps[i], "fabric")) { */
-            /*if (0 == strcmp(comps[i], "ethernet")) { */
+            if (0 == strcasecmp(comps[i], "fabric") ||
+                0 == strcasecmp(comps[i], "ethernet")) {
                 /* we are a candidate,  */
                 opal_output_verbose(20,orte_rml_base_framework.framework_output,
                     "%s - Forcibly returning ofi socket provider for ethernet transport request",

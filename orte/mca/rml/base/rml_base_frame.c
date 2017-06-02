@@ -146,7 +146,7 @@ static int orte_rml_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.conduits, opal_pointer_array_t);
-    opal_pointer_array_init(&orte_rml_base.conduits,1,INT_MAX,1);
+    opal_pointer_array_init(&orte_rml_base.conduits,1,INT16_MAX,1);
 
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_rml_base_framework, flags);

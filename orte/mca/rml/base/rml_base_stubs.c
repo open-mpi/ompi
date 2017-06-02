@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -82,10 +82,14 @@ orte_rml_conduit_t orte_rml_API_open_conduit(opal_list_t *attributes)
     if (NULL != ourmod) {
         /* we got an answer - store this conduit in our array */
         rc = opal_pointer_array_add(&orte_rml_base.conduits, ourmod);
+        if (rc < 0) {
+            return ORTE_RML_CONDUIT_INVALID;
+        }
         return rc;
     }
     /* we get here if nobody could support it */
-    return ORTE_ERR_NOT_SUPPORTED;
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+    return ORTE_RML_CONDUIT_INVALID;
 }
 
 
