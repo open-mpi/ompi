@@ -777,7 +777,8 @@ int orte_register_params(void)
     /* Amount of time to wait for a stack trace to return from the daemons */
     orte_stack_trace_wait_timeout = 30;
     (void) mca_base_var_register ("orte", "orte", NULL, "timeout_for_stack_trace",
-                                  "Seconds to wait for stack traces to return before terminating the job (<= 0 wait forever)",
+                                  "Seconds to wait for stack traces to return before terminating "
+                                  "the job (<= 0 wait forever)",
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_stack_trace_wait_timeout);
@@ -795,7 +796,6 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                   OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_data_server_uri);
-
 
     return ORTE_SUCCESS;
 }
