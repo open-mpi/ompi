@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,6 +21,8 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
+
+#include <signal.h>
 
 #include "orte/mca/mca.h"
 #include "opal/util/output.h"
