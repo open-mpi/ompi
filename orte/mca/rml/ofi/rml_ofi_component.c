@@ -32,6 +32,8 @@
 
 static int rml_ofi_component_open(void);
 static int rml_ofi_component_close(void);
+static int rml_ofi_component_register(void);
+
 static int rml_ofi_component_init(void);
 static orte_rml_base_module_t* open_conduit(opal_list_t *attributes);
 static orte_rml_pathway_t* query_transports(void);
@@ -55,6 +57,7 @@ orte_rml_component_t mca_rml_ofi_component = {
                               ORTE_RELEASE_VERSION),
         .mca_open_component = rml_ofi_component_open,
         .mca_close_component = rml_ofi_component_close,
+        .mca_register_component_params = rml_ofi_component_register
      },
     .data = {
         /* The component is checkpoint ready */
@@ -81,6 +84,7 @@ orte_rml_ofi_module_t orte_rml_ofi = {
 
 /* Local variables */
 static bool init_done = false;
+static char *ofi_transports_supported = NULL;
 
 static int
 rml_ofi_component_open(void)
@@ -227,6 +231,21 @@ rml_ofi_component_close(void)
     return ORTE_SUCCESS;
 }
 
+static int rml_ofi_component_register(void)
+{
+    mca_base_component_t *component = &mca_rml_ofi_component.base;
+
+    ofi_transports_supported = strdup("fabric,ethernet");
+    mca_base_component_var_register(component, "transports",
+                                    "Comma-delimited list of transports to support (default=\"fabric,ethernet\"",
+                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                    OPAL_INFO_LVL_2,
+                                    MCA_BASE_VAR_SCOPE_LOCAL,
+                                    &ofi_transports_supported);
+    opal_output(0, "OFI TRANSPORTS %s", ofi_transports_supported);
+    return ORTE_SUCCESS;
+}
+
 void print_provider_info (struct fi_info *cur_fi )
 {
     //Display all the details in the fi_info structure
@@ -279,8 +298,7 @@ static orte_rml_pathway_t* query_transports(void)
 /**
     ofi_prov [in]: the ofi ofi_prov_id that triggered the progress fn
  **/
-__opal_attribute_always_inline__ static inline int
-orte_rml_ofi_progress(ofi_transport_ofi_prov_t* prov)
+static int orte_rml_ofi_progress(ofi_transport_ofi_prov_t* prov)
 {
     ssize_t ret;
     int count=0;    /* number of messages read and processed */
@@ -997,17 +1015,15 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
             }
         }
     }
-    /*[Debug] to check for daemon commn over ofi-ethernet, enable the default conduit  ORTE_MGMT_CONDUIT over ofi */
+
     if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_TYPE, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
                 opal_output_verbose(20,orte_rml_base_framework.framework_output,
                     "%s - ORTE_RML_TRANSPORT_TYPE = %s ",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comp_attrib);
         comps = opal_argv_split(comp_attrib, ',');
-        for (i=0; NULL != comps[i]; i++) {
-            /* changing below to check for oob, as trying to use ofi for only mgmt conduit */
-            if (0 == strcasecmp(comps[i], "fabric") ||
-                0 == strcasecmp(comps[i], "ethernet")) {
+        for (i=0; 0 == i; i++) {
+            if (NULL != strstr(ofi_transports_supported, comps[i])) {
                 /* we are a candidate,  */
                 opal_output_verbose(20,orte_rml_base_framework.framework_output,
                     "%s - Forcibly returning ofi socket provider for ethernet transport request",
