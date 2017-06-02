@@ -87,18 +87,19 @@ int mca_coll_spacc_allreduce_intra_redscat_allgather(
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_spacc_stream,
-                "coll:spacc:allreduce_intra_redscat_allgather: rank %d/%d",
-                rank, comm_size));
+    opal_output_verbose(30, mca_coll_spacc_stream,
+                        "coll:spacc:allreduce_intra_redscat_allgather: rank %d/%d",
+                        rank, comm_size);
 
     /* Find nearest power-of-two less than or equal to comm_size */
     int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
+    assert(nsteps >= 0);
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
     if (count < nprocs_pof2 || !ompi_op_is_commute(op)) {
-        OPAL_OUTPUT((ompi_coll_spacc_stream,
-                    "coll:spacc:allreduce_intra_redscat_allgather: rank %d/%d count %d switching to base allreduce",
-                    rank, comm_size, count));
+        opal_output_verbose(20, mca_coll_spacc_stream, 
+                            "coll:spacc:allreduce_intra_redscat_allgather: rank %d/%d count %d switching to base allreduce",
+                            rank, comm_size, count);
         return ompi_coll_base_allreduce_intra_basic_linear(sbuf, rbuf, count, dtype,
                                                            op, comm, module);
     }

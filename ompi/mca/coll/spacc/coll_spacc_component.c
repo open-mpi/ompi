@@ -21,8 +21,9 @@ const char *ompi_coll_spacc_component_version_string =
 /*
  * Global variable
  */
-int ompi_coll_spacc_priority = 5;
-int ompi_coll_spacc_stream = -1;
+int mca_coll_spacc_priority = 5;
+int mca_coll_spacc_stream = -1;
+int mca_coll_spacc_verbose = 0;
 
 /*
  * Local function
@@ -67,38 +68,33 @@ mca_coll_spacc_component_t mca_coll_spacc_component = {
 static int spacc_register(void)
 {
     /* Use a low priority, but allow other components to be lower */
-    ompi_coll_spacc_priority = 5;
+    mca_coll_spacc_priority = 5;
     (void)mca_base_component_var_register(&mca_coll_spacc_component.super.collm_version,
                                           "priority", "Priority of the spacc coll component",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                          OPAL_INFO_LVL_6,
+                                          OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                          &ompi_coll_spacc_priority);
+                                          &mca_coll_spacc_priority);
+
+    (void)mca_base_component_var_register(&mca_coll_spacc_component.super.collm_version,
+                                          "verbose", "Verbose level of the spacc coll component",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_coll_spacc_verbose);
     return OMPI_SUCCESS;
 }
 
 static int spacc_open(void)
 {
-#if OPAL_ENABLE_DEBUG
-    {
-        int param;
-
-        param = mca_base_var_find("ompi", "coll", "base", "verbose");
-        if (param >= 0) {
-            const int *verbose = NULL;
-            mca_base_var_get_value(param, &verbose, NULL, NULL);
-            if (verbose && verbose[0] > 0) {
-                ompi_coll_spacc_stream = opal_output_open(NULL);
-            }
-        }
-    }
-#endif  /* OPAL_ENABLE_DEBUG */
-    OPAL_OUTPUT((ompi_coll_spacc_stream, "coll:spacc:component_open: done"));
+    mca_coll_spacc_stream = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_coll_spacc_stream, mca_coll_spacc_verbose);
+    opal_output_verbose(30, mca_coll_spacc_stream, "coll:spacc:component_open: done");
     return OMPI_SUCCESS;
 }
 
 static int spacc_close(void)
 {
-    OPAL_OUTPUT((ompi_coll_spacc_stream, "coll:spacc:component_close: done"));
+    opal_output_verbose(30, mca_coll_spacc_stream, "coll:spacc:component_close: done");
     return OMPI_SUCCESS;
 }
