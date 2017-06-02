@@ -14,6 +14,7 @@
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,13 +25,14 @@
 include $(top_srcdir)/Makefile.ompi-rules
 
 generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpifort.1 mpif77.1 mpif90.1
-man_pages = $(generated_man_pages)
-
-EXTRA_DIST = mpif77.1in mpijavac.1 mpijavac.pl.in
 
 if OMPI_WANT_JAVA_BINDINGS
-man_pages += mpijavac.1
+generated_man_pages += mpijavac.1
 endif
+
+man_pages = $(generated_man_pages)
+
+EXTRA_DIST = mpif77.1in mpijavac.1in mpijavac.pl.in
 
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
