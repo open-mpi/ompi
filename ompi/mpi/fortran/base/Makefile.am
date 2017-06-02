@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -45,7 +45,7 @@ libmpi_fortran_base_la_SOURCES = \
         constants.h \
         datarep.h \
         fint_2_int.h \
-        strings.h \
+        fortran_base_strings.h \
         attr_fn_f.c \
         conversion_fn_null_f.c \
         f90_accessors.c \
