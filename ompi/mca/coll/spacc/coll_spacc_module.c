@@ -37,9 +37,11 @@ mca_coll_base_module_t *ompi_coll_spacc_comm_query(
 {
     mca_coll_spacc_module_t *spacc_module;
 
-    OPAL_OUTPUT((ompi_coll_spacc_stream, "coll:spacc:module_spacc query called"));
+    opal_output_verbose(30, mca_coll_spacc_stream, "coll:spacc:module_comm_query called");
 
     if (OMPI_COMM_IS_INTER(comm)) {
+        opal_output_verbose(20, mca_coll_spacc_stream,
+                            "coll:spacc:module_comm_query: spacc does not support inter-communicators");
         *priority = 0;
         return NULL;
     }
@@ -53,7 +55,7 @@ mca_coll_base_module_t *ompi_coll_spacc_comm_query(
     if (NULL == spacc_module)
         return NULL;
 
-    *priority = ompi_coll_spacc_priority;
+    *priority = mca_coll_spacc_priority;
 
     spacc_module->super.coll_module_enable = spacc_module_enable;
     spacc_module->super.ft_event = NULL;
@@ -84,7 +86,7 @@ mca_coll_base_module_t *ompi_coll_spacc_comm_query(
 static int spacc_module_enable(mca_coll_base_module_t *module,
                                struct ompi_communicator_t *comm)
 {
-    OPAL_OUTPUT((ompi_coll_spacc_stream, "coll:spacc:module_enable called."));
+    opal_output_verbose(30, mca_coll_spacc_stream, "coll:spacc:module_enable called");
     return OMPI_SUCCESS;
 }
 
