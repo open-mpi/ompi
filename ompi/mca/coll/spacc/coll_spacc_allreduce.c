@@ -281,22 +281,20 @@ int mca_coll_spacc_allreduce_intra_redscat_allgather(
             wsize = rcount[step];
             step++;
         }
-    }
-    /*
-     * Assertion: each process has 1 / p' of the total reduction result:
-     * rcount[nsteps - 1] elements in the rbuf[rindex[nsteps - 1], ...].
-     */
+        /*
+         * Assertion: each process has 1 / p' of the total reduction result:
+         * rcount[nsteps - 1] elements in the rbuf[rindex[nsteps - 1], ...].
+         */
 
-    /*
-     * Step 3. Allgather by the recursive doubling algorithm.
-     * Each process has 1 / p' of the total reduction result:
-     * rcount[nsteps - 1] elements in the rbuf[rindex[nsteps - 1], ...].
-     * All exchanges are executed in reverse order relative
-     * to recursive doubling (previous step).
-     */
+        /*
+         * Step 3. Allgather by the recursive doubling algorithm.
+         * Each process has 1 / p' of the total reduction result:
+         * rcount[nsteps - 1] elements in the rbuf[rindex[nsteps - 1], ...].
+         * All exchanges are executed in reverse order relative
+         * to recursive doubling (previous step).
+         */
 
-    if (vrank != -1) {
-        step = nsteps - 1; /* step = ilog2(p') - 1 */
+        step--;
 
         for (int mask = nprocs_pof2 >> 1; mask > 0; mask >>= 1) {
             int vdest = vrank ^ mask;
