@@ -32,6 +32,43 @@ typedef struct _dist_graph_elem {
     int out;
 } mca_topo_base_dist_graph_elem_t;
 
+static void topo_sort(int *out, int *outw, int *weights, int *temp, int i, int count, int csize) {
+    int *tidx, *src, *tcnt;
+    int current_pos = 0;
+    int j, k, minsrc, minidx;
+    tidx = temp + count;
+    if (MPI_UNWEIGHTED != weights) {
+        src = tidx + count / 2;
+        tcnt = src + count / 2;
+    } else {
+        src = tidx + count;
+        tcnt = src + count;
+    }
+    current_pos = 0;
+    for (j=0; j < i ; j++) {
+        minsrc = csize;
+        minidx = -1;
+        for (k=0; k < i; k++) {
+            if (src[k] < minsrc) {
+                minsrc = src[k];
+                minidx = k;
+            }
+        }
+        if (MPI_UNWEIGHTED != weights) {
+            for( k = 0; k < tcnt[minidx]; k+=2 ) {
+                out[current_pos]  = temp[tidx[minidx] + k + 0];
+                outw[current_pos] = temp[tidx[minidx] + k + 1];
+                current_pos ++;
+            }
+        } else {
+            for( k = 0; k < tcnt[minidx]; k++ ) {
+                out[current_pos]  = temp[tidx[minidx] + k];
+                current_pos ++;
+            }
+        }
+        src[minidx] = csize;
+    }
+}
 int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                                         ompi_communicator_t *comm,
                                         int n, const int nodes[],
@@ -46,6 +83,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     ompi_status_public_t status;
     ompi_request_t **reqs = NULL;
     mca_topo_base_comm_dist_graph_2_2_0_t* topo=NULL;
+    int *tidx, *tcnt, *src;
 
     ompi_datatype_type_size( (ompi_datatype_t*)&ompi_mpi_int, &int_size);
 
@@ -191,17 +229,22 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
      * and then move them to their corresponding place.
      */
     count = topo->indegree;
-    temp = topo->in;
-    if (MPI_UNWEIGHTED != weights) {
-        count *= 2;  /* don't forget the weights */
-        if (count > 0) {
-            /* Allocate an array big enough to hold the edges and
-               their weights */
-            temp = (int*)malloc(count*sizeof(int));
-            if (NULL == temp) {
-                err = OMPI_ERR_OUT_OF_RESOURCE;
-                goto bail_out;
-            }
+    if (count > 0) {
+        if (MPI_UNWEIGHTED != weights) {
+            temp = (int *)malloc(count*5*sizeof(int));
+            tidx = temp + 2 * count;
+            src = tidx + count;
+            tcnt = src + count;
+            count *= 2;  /* don't forget the weights */
+        } else {
+            temp = (int *)malloc(count*4*sizeof(int));
+            tidx = temp + count;
+            src = tidx + count;
+            tcnt = src + count;
+        }
+        if (NULL == temp) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto bail_out;
         }
     }
     for( left_over = count, current_pos = i = 0; left_over > 0; i++ ) {
@@ -210,15 +253,13 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                            MPI_ANY_SOURCE, MCA_TOPO_BASE_TAG_DIST_EDGE_IN,
                            comm, &status ));
         how_much = status._ucount / int_size;
-        if (MPI_UNWEIGHTED != weights) {
-            for( j = 0; j < ((int)how_much >> 1); j++, current_pos++ ) {
-                topo->in[current_pos]  = temp[2 * j + 0 + (count - left_over)];
-                topo->inw[current_pos] = temp[2 * j + 1 + (count - left_over)];
-            }
-        }
+        tidx[i] = count-left_over;
+        src[i] = status.MPI_SOURCE;
+        tcnt[i] = how_much;
         left_over -= how_much;
     }
-    if (MPI_UNWEIGHTED != weights) {
+    topo_sort(topo->in, topo->inw, weights, temp, i, count, csize);
+    if (count > 0) {
         free(temp);
     }
 
@@ -227,17 +268,22 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
      * and then move them to their corresponding place.
      */
     count = topo->outdegree;
-    temp = topo->out;
-    if (MPI_UNWEIGHTED != weights) {
-        count *= 2;  /* don't forget the weights */
-        if (count > 0) {
-            /* Allocate an array big enough to hold the edges and
-               their weights */
-            temp = (int*)malloc(count*sizeof(int));
-            if (NULL == temp) {
-                err = OMPI_ERR_OUT_OF_RESOURCE;
-                goto bail_out;
-            }
+    if (count > 0) {
+        if (MPI_UNWEIGHTED != weights) {
+            temp = (int *)malloc(count*5*sizeof(int));
+            tidx = temp + 2 * count;
+            src = tidx + count;
+            tcnt = src + count;
+            count *= 2;  /* don't forget the weights */
+        } else {
+            temp = (int *)malloc(count*4*sizeof(int));
+            tidx = temp + count;
+            src = tidx + count;
+            tcnt = src + count;
+        }
+        if (NULL == temp) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto bail_out;
         }
     }
     for( left_over = count, current_pos = i = 0; left_over > 0; i++ ) {
@@ -246,16 +292,13 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                            MPI_ANY_SOURCE, MCA_TOPO_BASE_TAG_DIST_EDGE_OUT,
                            comm, &status ));
         how_much = status._ucount / int_size;
-
-        if (MPI_UNWEIGHTED != weights) {
-            for( j = 0; j < ((int)how_much >> 1); j++, current_pos++ ) {
-                topo->out[current_pos]  = temp[2 * j + 0 + (count - left_over)];
-                topo->outw[current_pos] = temp[2 * j + 1 + (count - left_over)];
-            }
-        }
+        tidx[i] = count-left_over;
+        src[i] = status.MPI_SOURCE;
+        tcnt[i] = how_much;
         left_over -= how_much;
     }
-    if (MPI_UNWEIGHTED != weights) {
+    topo_sort(topo->out, topo->outw, weights, temp, i, count, csize);
+    if (count > 0) {
         free(temp);
     }
 
