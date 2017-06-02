@@ -951,7 +951,16 @@ static orte_rml_base_module_t* make_module( int ofi_prov_id)
     memcpy(mod, &orte_rml_ofi, sizeof(orte_rml_ofi_module_t));
     /*  setup the remaining data locations in mod, associate conduit with ofi provider selected*/
     mod->cur_transport_id = ofi_prov_id;
-
+    /* we always go direct to our target peer, so set the routed to "direct" */
+    mod->api.routed = orte_routed.assign_module("direct");
+    if (NULL == mod->api.routed) {
+        /* we can't work */
+        opal_output_verbose(20,orte_rml_base_framework.framework_output,
+                    "%s - Failed to get direct routed support, returning NULL ",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        free(mod);
+        return NULL;
+    }
     return (orte_rml_base_module_t*)mod;
 }
 
