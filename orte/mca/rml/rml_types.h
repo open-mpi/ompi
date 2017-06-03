@@ -198,6 +198,7 @@ typedef uint32_t orte_rml_tag_t;
 
 /* Conduit ID */
 typedef uint16_t orte_rml_conduit_t;
+#define ORTE_RML_CONDUIT_INVALID  0xff
 
 /* define an object for reporting transports */
 typedef struct {

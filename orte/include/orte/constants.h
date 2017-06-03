@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -142,20 +142,12 @@ enum {
     ORTE_ERR_ALLOCATION_PENDING             = (ORTE_ERR_BASE - 43),
     ORTE_ERR_NO_PATH_TO_TARGET              = (ORTE_ERR_BASE - 44),
     ORTE_ERR_OP_IN_PROGRESS                 = (ORTE_ERR_BASE - 45),
-    ORTE_ERR_OPEN_CHANNEL_PEER_FAIL         = (ORTE_ERR_BASE - 46),
-    ORTE_ERR_OPEN_CHANNEL_PEER_REJECT       = (ORTE_ERR_BASE - 47),
-    ORTE_ERR_QOS_TYPE_UNSUPPORTED           = (ORTE_ERR_BASE - 48),
-    ORTE_ERR_QOS_ACK_WINDOW_FULL            = (ORTE_ERR_BASE - 49),
-    ORTE_ERR_ACK_TIMEOUT_SENDER             = (ORTE_ERR_BASE - 50),
-    ORTE_ERR_ACK_TIMEOUT_RECEIVER           = (ORTE_ERR_BASE - 51),
-    ORTE_ERR_LOST_MSG_IN_WINDOW             = (ORTE_ERR_BASE - 52),
-    ORTE_ERR_CHANNEL_BUSY                   = (ORTE_ERR_BASE - 53),
-    ORTE_ERR_DUPLICATE_MSG                  = (ORTE_ERR_BASE - 54),
-    ORTE_ERR_OUT_OF_ORDER_MSG               = (ORTE_ERR_BASE - 55),
-    ORTE_ERR_OPEN_CHANNEL_DUPLICATE         = (ORTE_ERR_BASE - 56),
-    ORTE_ERR_FORCE_SELECT                   = (ORTE_ERR_BASE - 57),
-    ORTE_ERR_JOB_CANCELLED                  = (ORTE_ERR_BASE - 58),
-    ORTE_ERR_CONDUIT_SEND_FAIL              = (ORTE_ERR_BASE - 59)
+    ORTE_ERR_OPEN_CONDUIT_FAIL              = (ORTE_ERR_BASE - 46),
+    ORTE_ERR_DUPLICATE_MSG                  = (ORTE_ERR_BASE - 47),
+    ORTE_ERR_OUT_OF_ORDER_MSG               = (ORTE_ERR_BASE - 48),
+    ORTE_ERR_FORCE_SELECT                   = (ORTE_ERR_BASE - 49),
+    ORTE_ERR_JOB_CANCELLED                  = (ORTE_ERR_BASE - 50),
+    ORTE_ERR_CONDUIT_SEND_FAIL              = (ORTE_ERR_BASE - 51)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
@@ -163,4 +155,3 @@ enum {
 END_C_DECLS
 
 #endif /* ORTE_CONSTANTS_H */
-
