@@ -35,6 +35,9 @@
 #include <sys/param.h>
 #endif
 #include <errno.h>
+#if OPAL_ENABLE_DEBUG
+#include <signal.h>
+#endif
 
 #include "opal/include/opal_stdint.h"
 #include "opal/mca/installdirs/installdirs.h"
@@ -49,6 +52,9 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
+#if OPAL_ENABLE_DEBUG
+#include "opal/threads/mutex.h"
+#endif
 
 /*
  * local variables
@@ -123,6 +129,11 @@ static const char *info_lvl_strings[] = {
     "dev/detail",
     "dev/all"
 };
+
+#if OPAL_ENABLE_DEBUG
+static opal_mutex_t var_destructor_lock;
+static char *destructor_var_name = NULL;
+#endif
 
 /*
  * local functions
@@ -1799,11 +1810,86 @@ static void var_constructor(mca_base_var_t *var)
 }
 
 
+#if OPAL_ENABLE_DEBUG
+/*
+ * Signal handler that tries to catch a common OMPI programming error
+ * and print a helpful messg + abort() when it is detected.
+ *
+ * See comment in var_destructor() for more detail.
+ *
+ * This function only exists in debug builds.
+ */
+static void destructor_string_badness_handler(int sig)
+{
+    char line[128] = "****************************************************************************\n";
+    char msg[512];
+
+    size_t line_len = strlen(line);
+    write(2, line, line_len);
+
+    strncpy(msg,
+            "*** OPAL MCA var error: attempt to free string var whose storage\n"
+            "*** is already gone.\n",
+            sizeof(msg));
+    write(2, msg, strlen(msg) + 1);
+
+    strncpy(msg,
+            "***\n"
+            "*** MCA var name: ", sizeof(msg));
+    strncat(msg + strlen(msg), destructor_var_name, sizeof(msg));
+    strncat(msg + strlen(msg), "\n***\n", sizeof(msg));
+    write(2, msg, strlen(msg) + 1);
+
+    strncpy(msg,
+            "*** This is an OMPI programming error.  Note that this self-check\n"
+            "*** only shows up in debug builds.\n"
+            "***\n"
+            "*** This process will now abort, with core, if possible.\n",
+            sizeof(msg));
+    write(2, msg, strlen(msg) + 1);
+
+    write(2, line, line_len);
+
+    abort();
+}
+#endif
+
 /*
  * Free all the contents of a param container
  */
 static void var_destructor(mca_base_var_t *var)
 {
+#if OPAL_ENABLE_DEBUG
+    /* A common problem is that developers free the storage
+       associated with an MCA variable before they actually free
+       the variable.  In debug builds, try to catch this kind of
+       error and print a helpful message. */
+    if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type ||
+         MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type)) {
+        opal_mutex_lock(&var_destructor_lock);
+
+        /* Temporarily reset the SEGV/BUS signal handlers */
+        sighandler_t old_segv;
+        sighandler_t old_bus;
+        old_segv = signal(SIGSEGV, destructor_string_badness_handler);
+        old_bus = signal(SIGBUS, destructor_string_badness_handler);
+
+        destructor_var_name = var->mbv_full_name;
+
+        /* Memory errors of this type usually occur in the "if" test
+           or the free() */
+        if (NULL != var->mbv_storage &&
+            NULL != var->mbv_storage->stringval) {
+            free (var->mbv_storage->stringval);
+        }
+
+        /* Restore the original signal handlers */
+        signal(SIGSEGV, old_segv);
+        signal(SIGBUS, old_bus);
+
+        opal_mutex_unlock(&var_destructor_lock);
+    }
+#else
     if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type ||
                 MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type) &&
         NULL != var->mbv_storage &&
@@ -1811,6 +1897,7 @@ static void var_destructor(mca_base_var_t *var)
         free (var->mbv_storage->stringval);
         var->mbv_storage->stringval = NULL;
     }
+#endif
 
     /* don't release the boolean enumerator */
     if (var->mbv_enumerator && !var->mbv_enumerator->enum_is_static) {
