@@ -672,7 +672,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         }
 
         if (opal_info_pretty && curr_group != group) {
-            asprintf(&message, "MCA%s %s%s", requested ? "" : " (disabled)",
+            asprintf(&message, "MCA%s %s%s", requested ? "" : " (-)",
                      group->group_framework,
                      component_msg ? component_msg : "");
             opal_info_out(message, message, "---------------------------------------------------");
@@ -687,7 +687,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                asprintf (&message, "MCA%s %s%s", requested ? "" : " (disabled)",
+                asprintf (&message, "MCA%s %s%s", requested ? "" : " (-)",
                           group->group_framework,
                           component_msg ? component_msg : "");
                 opal_info_out(message, message, strings[j]);
@@ -718,7 +718,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         }
 
         if (opal_info_pretty && curr_group != group) {
-            asprintf(&message, "MCA%s %s%s", requested ? "" : " (disabled)",
+            asprintf(&message, "MCA%s %s%s", requested ? "" : " (-)",
                      group->group_framework,
                      component_msg ? component_msg : "");
             opal_info_out(message, message, "---------------------------------------------------");
@@ -733,7 +733,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                asprintf (&message, "MCA%s %s%s", requested ? "" : " (disabled)",
+                asprintf (&message, "MCA%s %s%s", requested ? "" : " (-)",
                           group->group_framework,
                           component_msg ? component_msg : "");
                 opal_info_out(message, message, strings[j]);
@@ -848,8 +848,8 @@ static char *escape_quotes(const char *value)
  * Private variables - set some reasonable screen size defaults
  */
 
-static int centerpoint = 36;
-static int screen_width = 82;
+static int centerpoint = 24;
+static int screen_width = 78;
 
 /*
  * Prints the passed message in a pretty or parsable format.

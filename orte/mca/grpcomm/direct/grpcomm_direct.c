@@ -526,15 +526,18 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
                 OBJ_RELEASE(rly);
                 OBJ_RELEASE(item);
+                ORTE_FORCED_TERMINATE(ORTE_ERR_UNREACH);
                 continue;
             }
             if ((ORTE_PROC_STATE_RUNNING < rec->state &&
                 ORTE_PROC_STATE_CALLED_ABORT != rec->state) ||
                 !ORTE_FLAG_TEST(rec, ORTE_PROC_FLAG_ALIVE)) {
-                opal_output(0, "%s grpcomm:direct:send_relay proc %s not running - cannot relay",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
+                opal_output(0, "%s grpcomm:direct:send_relay proc %s not running - cannot relay: %s ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name),
+                            ORTE_FLAG_TEST(rec, ORTE_PROC_FLAG_ALIVE) ? orte_proc_state_to_str(rec->state) : "NOT ALIVE");
                 OBJ_RELEASE(rly);
                 OBJ_RELEASE(item);
+                ORTE_FORCED_TERMINATE(ORTE_ERR_UNREACH);
                 continue;
             }
             if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
@@ -543,6 +546,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(rly);
                 OBJ_RELEASE(item);
+                ORTE_FORCED_TERMINATE(ORTE_ERR_UNREACH);
                 continue;
             }
             OBJ_RELEASE(item);
