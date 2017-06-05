@@ -383,6 +383,10 @@ static void xcast_recv(int status, orte_process_name_t* sender,
             if (ORTE_DAEMON_EXIT_CMD == command ||
                 ORTE_DAEMON_HALT_VM_CMD == command) {
                 orte_orteds_term_ordered = true;
+                if (ORTE_DAEMON_HALT_VM_CMD == command) {
+                    /* this is an abnormal termination */
+                    orte_abnormal_term_ordered = true;
+                }
                 /* copy the msg for relay to ourselves */
                 relay = OBJ_NEW(opal_buffer_t);
                 /* repack the command */
@@ -522,8 +526,10 @@ static void xcast_recv(int status, orte_process_name_t* sender,
              */
             jdata = orte_get_job_data_object(nm->name.jobid);
             if (NULL == (rec = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, nm->name.vpid))) {
-                opal_output(0, "%s grpcomm:direct:send_relay proc %s not found - cannot relay",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
+                if (!orte_abnormal_term_ordered && !orte_orteds_term_ordered) {
+                    opal_output(0, "%s grpcomm:direct:send_relay proc %s not found - cannot relay",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
+                }
                 OBJ_RELEASE(rly);
                 OBJ_RELEASE(item);
                 ORTE_FORCED_TERMINATE(ORTE_ERR_UNREACH);
@@ -532,9 +538,11 @@ static void xcast_recv(int status, orte_process_name_t* sender,
             if ((ORTE_PROC_STATE_RUNNING < rec->state &&
                 ORTE_PROC_STATE_CALLED_ABORT != rec->state) ||
                 !ORTE_FLAG_TEST(rec, ORTE_PROC_FLAG_ALIVE)) {
-                opal_output(0, "%s grpcomm:direct:send_relay proc %s not running - cannot relay: %s ",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name),
-                            ORTE_FLAG_TEST(rec, ORTE_PROC_FLAG_ALIVE) ? orte_proc_state_to_str(rec->state) : "NOT ALIVE");
+                if (!orte_abnormal_term_ordered && !orte_orteds_term_ordered) {
+                    opal_output(0, "%s grpcomm:direct:send_relay proc %s not running - cannot relay: %s ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name),
+                                ORTE_FLAG_TEST(rec, ORTE_PROC_FLAG_ALIVE) ? orte_proc_state_to_str(rec->state) : "NOT ALIVE");
+                }
                 OBJ_RELEASE(rly);
                 OBJ_RELEASE(item);
                 ORTE_FORCED_TERMINATE(ORTE_ERR_UNREACH);
