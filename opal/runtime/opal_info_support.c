@@ -14,7 +14,7 @@
  * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -848,8 +848,8 @@ static char *escape_quotes(const char *value)
  * Private variables - set some reasonable screen size defaults
  */
 
-static int centerpoint = 24;
-static int screen_width = 78;
+static int centerpoint = 36;
+static int screen_width = 82;
 
 /*
  * Prints the passed message in a pretty or parsable format.
