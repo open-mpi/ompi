@@ -42,6 +42,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
@@ -56,6 +57,8 @@ void orte_rml_base_post_recv(int sd, short args, void *cbdata)
     orte_rml_recv_request_t *req = (orte_rml_recv_request_t*)cbdata;
     orte_rml_posted_recv_t *post, *recv;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL | ORTE_NS_CMP_WILD;
+
+    ORTE_ACQUIRE_OBJECT(req);
 
     opal_output_verbose(5, orte_rml_base_framework.framework_output,
                         "%s posting recv",
@@ -158,6 +161,8 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
     orte_rml_posted_recv_t *post;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL | ORTE_NS_CMP_WILD;
     opal_buffer_t buf;
+
+    ORTE_ACQUIRE_OBJECT(msg);
 
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                          "%s message received from %s for tag %d",

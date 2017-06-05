@@ -127,6 +127,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rtc/rtc.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
@@ -157,11 +158,11 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
  * Module
  */
 orte_odls_base_module_t orte_odls_default_module = {
-    orte_odls_base_default_get_add_procs_data,
-    orte_odls_default_launch_local_procs,
-    orte_odls_default_kill_local_procs,
-    orte_odls_default_signal_local_procs,
-    orte_odls_default_restart_proc
+    .get_add_procs_data = orte_odls_base_default_get_add_procs_data,
+    .launch_local_procs = orte_odls_default_launch_local_procs,
+    .kill_local_procs = orte_odls_default_kill_local_procs,
+    .signal_local_procs = orte_odls_default_signal_local_procs,
+    .restart_proc = orte_odls_default_restart_proc
 };
 
 

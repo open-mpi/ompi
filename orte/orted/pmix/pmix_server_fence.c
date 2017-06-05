@@ -38,6 +38,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
@@ -58,6 +59,8 @@ static void pmix_server_release(int status, opal_buffer_t *buf, void *cbdata)
     char *data = NULL;
     int32_t ndata = 0;
     int rc = OPAL_SUCCESS;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     /* unload the buffer */
     if (NULL != buf) {
@@ -134,6 +137,8 @@ static void dmodex_req(int sd, short args, void *cbdata)
     opal_buffer_t *buf;
     uint8_t *data=NULL;
     int32_t sz=0;
+
+    ORTE_ACQUIRE_OBJECT(rq);
 
     /* a race condition exists here because of the thread-shift - it is
      * possible that data for the specified proc arrived while we were

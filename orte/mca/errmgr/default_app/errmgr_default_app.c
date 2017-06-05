@@ -56,17 +56,11 @@
  * HNP module
  ******************/
  orte_errmgr_base_module_t orte_errmgr_default_app_module = {
-    init,
-    finalize,
-    orte_errmgr_base_log,
-    orte_errmgr_base_abort,
-    abort_peers,
-    NULL,
-    NULL,
-    NULL,
-    orte_errmgr_base_register_migration_warning,
-    orte_errmgr_base_register_error_callback,
-    orte_errmgr_base_execute_error_callbacks
+    .init = init,
+    .finalize = finalize,
+    .logfn = orte_errmgr_base_log,
+    .abort = orte_errmgr_base_abort,
+    .abort_peers = abort_peers
 };
 
 static void proc_errors(int fd, short args, void *cbdata);
@@ -77,6 +71,7 @@ static void register_cbfunc(int status, size_t errhndler, void *cbdata)
 {
     volatile bool *active = (volatile bool*)cbdata;
     myerrhandle = errhndler;
+    ORTE_POST_OBJECT(active);
     *active = false;
 }
 
@@ -112,7 +107,7 @@ static void notify_cbfunc(int status,
     }
 
     /* push it into our event base */
-    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, state);
+    ORTE_ACTIVATE_PROC_STATE((orte_process_name_t*)source, state);
 }
 
 /************************
@@ -154,8 +149,8 @@ static void proc_errors(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     char *nodename;
-    orte_error_t err;
-    opal_pointer_array_t errors;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                         "%s errmgr:default_app: proc %s state %s",
@@ -170,14 +165,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-
-    /* pass the error to the error_callbacks for processing */
-    OBJ_CONSTRUCT(&errors, opal_pointer_array_t);
-    opal_pointer_array_init(&errors, 1, INT_MAX, 1);
-    err.errcode = caddy->proc_state;
-    err.proc = caddy->name;
-    opal_pointer_array_add(&errors, &err);
-
 
     if (ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == caddy->proc_state) {
         /* we can't send a message - print a message */
@@ -196,9 +183,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* we need to die, so mark us so */
         orte_abnormal_term_ordered = true;
     }
-
-    orte_errmgr_base_execute_error_callbacks(&errors);
-    OBJ_DESTRUCT(&errors);
 
     OBJ_RELEASE(caddy);
 }

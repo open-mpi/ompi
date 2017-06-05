@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,6 +33,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -507,6 +508,8 @@ static void process_opens(int fd, short args, void *cbdata)
     opal_list_t lt;
     opal_namelist_t *nm;
 
+    ORTE_ACQUIRE_OBJECT(dfs);
+
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -661,7 +664,7 @@ static void dfs_open(char *uri,
     dfs->cbdata = cbdata;
 
     /* post it for processing */
-    ORTE_DFS_POST_REQUEST(dfs, process_opens);
+    ORTE_THREADSHIFT(dfs, orte_event_base, process_opens, ORTE_SYS_PRI);
 }
 
 static void process_close(int fd, short args, void *cbdata)
@@ -671,6 +674,8 @@ static void process_close(int fd, short args, void *cbdata)
     opal_list_item_t *item;
     opal_buffer_t *buffer;
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(close_dfs);
 
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s closing fd %d",
@@ -757,7 +762,7 @@ static void dfs_close(int fd,
     dfs->cbdata = cbdata;
 
     /* post it for processing */
-    ORTE_DFS_POST_REQUEST(dfs, process_close);
+    ORTE_THREADSHIFT(dfs, orte_event_base, process_close, ORTE_SYS_PRI);
 }
 
 static void process_sizes(int fd, short args, void *cbdata)
@@ -768,6 +773,8 @@ static void process_sizes(int fd, short args, void *cbdata)
     opal_buffer_t *buffer;
     int rc;
     struct stat buf;
+
+    ORTE_ACQUIRE_OBJECT(size_dfs);
 
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s processing get_size on fd %d",
@@ -881,7 +888,7 @@ static void dfs_get_file_size(int fd,
     dfs->cbdata = cbdata;
 
     /* post it for processing */
-    ORTE_DFS_POST_REQUEST(dfs, process_sizes);
+    ORTE_THREADSHIFT(dfs, orte_event_base, process_sizes, ORTE_SYS_PRI);
 }
 
 
@@ -894,6 +901,8 @@ static void process_seeks(int fd, short args, void *cbdata)
     int64_t i64;
     int rc;
     struct stat buf;
+
+    ORTE_ACQUIRE_OBJECT(seek_dfs);
 
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s processing seek on fd %d",
@@ -1035,7 +1044,7 @@ static void dfs_seek(int fd, long offset, int whence,
     dfs->cbdata = cbdata;
 
     /* post it for processing */
-    ORTE_DFS_POST_REQUEST(dfs, process_seeks);
+    ORTE_THREADSHIFT(dfs, orte_event_base, process_seeks, ORTE_SYS_PRI);
 }
 
 static void process_reads(int fd, short args, void *cbdata)
@@ -1047,6 +1056,8 @@ static void process_reads(int fd, short args, void *cbdata)
     opal_buffer_t *buffer;
     int64_t i64;
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(read_dfs);
 
     /* look in our local records for this fd */
     trk = NULL;
@@ -1145,7 +1156,7 @@ static void dfs_read(int fd, uint8_t *buffer,
     dfs->cbdata = cbdata;
 
     /* post it for processing */
-    ORTE_DFS_POST_REQUEST(dfs, process_reads);
+    ORTE_THREADSHIFT(dfs, orte_event_base, process_reads, ORTE_SYS_PRI);
 }
 
 static void process_posts(int fd, short args, void *cbdata)
@@ -1153,6 +1164,8 @@ static void process_posts(int fd, short args, void *cbdata)
     orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
     opal_buffer_t *buffer;
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(dfs);
 
     /* we will get confirmation in our receive function, so
      * add this request to our list */
@@ -1212,7 +1225,7 @@ static void dfs_post_file_map(opal_buffer_t *bo,
     dfs->cbdata = cbdata;
 
     /* post it for processing */
-    ORTE_DFS_POST_REQUEST(dfs, process_posts);
+    ORTE_THREADSHIFT(dfs, orte_event_base, process_posts, ORTE_SYS_PRI);
 }
 
 static void process_getfm(int fd, short args, void *cbdata)
@@ -1220,6 +1233,8 @@ static void process_getfm(int fd, short args, void *cbdata)
     orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
     opal_buffer_t *buffer;
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(dfs);
 
     /* we will get confirmation in our receive function, so
      * add this request to our list */
@@ -1275,7 +1290,7 @@ static void dfs_get_file_map(orte_process_name_t *target,
     dfs->cbdata = cbdata;
 
     /* post it for processing */
-    ORTE_DFS_POST_REQUEST(dfs, process_getfm);
+    ORTE_THREADSHIFT(dfs, orte_event_base, process_getfm, ORTE_SYS_PRI);
 }
 
 static void dfs_load_file_maps(orte_jobid_t jobid,
@@ -1298,4 +1313,3 @@ static void dfs_purge_file_maps(orte_jobid_t jobid,
         cbfunc(cbdata);
     }
 }
-

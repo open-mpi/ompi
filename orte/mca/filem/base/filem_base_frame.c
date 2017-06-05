@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,18 +33,18 @@
  * Globals
  */
 ORTE_DECLSPEC orte_filem_base_module_t orte_filem = {
-    orte_filem_base_module_init,
-    orte_filem_base_module_finalize,
-    orte_filem_base_none_put,
-    orte_filem_base_none_put_nb,
-    orte_filem_base_none_get,
-    orte_filem_base_none_get_nb,
-    orte_filem_base_none_rm,
-    orte_filem_base_none_rm_nb,
-    orte_filem_base_none_wait,
-    orte_filem_base_none_wait_all,
-    orte_filem_base_none_preposition_files,
-    orte_filem_base_none_link_local_files
+    .filem_init = orte_filem_base_module_init,
+    .filem_finalize = orte_filem_base_module_finalize,
+    .put = orte_filem_base_none_put,
+    .put_nb = orte_filem_base_none_put_nb,
+    .get = orte_filem_base_none_get,
+    .get_nb = orte_filem_base_none_get_nb,
+    .rm = orte_filem_base_none_rm,
+    .rm_nb = orte_filem_base_none_rm_nb,
+    .wait = orte_filem_base_none_wait,
+    .wait_all = orte_filem_base_none_wait_all,
+    .preposition_files = orte_filem_base_none_preposition_files,
+    .link_local_files = orte_filem_base_none_link_local_files
 };
 bool orte_filem_base_is_active = false;
 
@@ -69,4 +70,3 @@ static int orte_filem_base_open(mca_base_open_flag_t flags)
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, filem, NULL, NULL, orte_filem_base_open, orte_filem_base_close,
                            mca_filem_base_static_components, 0);
-

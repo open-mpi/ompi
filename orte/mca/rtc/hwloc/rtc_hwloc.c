@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
@@ -39,11 +39,9 @@ static void set(orte_job_t *jdata,
                 int write_fd);
 
 orte_rtc_base_module_t orte_rtc_hwloc_module = {
-    init,
-    finalize,
-    NULL,
-    set,
-    NULL
+    .init = init,
+    .finalize = finalize,
+    .set = set
 };
 
 static int init(void)

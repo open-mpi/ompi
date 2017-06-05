@@ -38,6 +38,7 @@
 #include "opal/util/output.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/state/state.h"
@@ -147,7 +148,7 @@ int orte_iof_base_write_output(const orte_process_name_t *name, orte_iof_tag_t s
     output->numbytes = numbytes;
     goto process;
 
-construct:
+  construct:
     starttaglen = strlen(starttag);
     endtaglen = strlen(endtag);
     endtagged = false;
@@ -249,7 +250,7 @@ construct:
     }
     output->numbytes = k;
 
-process:
+  process:
     /* add this data to the write list for this fd */
     opal_list_append(&channel->outputs, &output->super);
 
@@ -262,8 +263,9 @@ process:
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s write:output adding write event",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        opal_event_add(channel->ev, 0);
         channel->pending = true;
+        ORTE_POST_OBJECT(channel);
+        opal_event_add(channel->ev, 0);
     }
 
     return num_buffered;
@@ -302,6 +304,8 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
     int num_written;
+
+    ORTE_ACQUIRE_OBJECT(sink);
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s write:handler writing data to %d",
@@ -356,8 +360,8 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
-ABORT:
+  ABORT:
     opal_event_del(wev->ev);
     wev->pending = false;
-
+    ORTE_POST_OBJECT(wev);
 }

@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
- * Copyright (c) 2014      Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +60,7 @@
 #include "orte/constants.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/runtime/orte_wait.h"
@@ -188,6 +189,8 @@ static void cancel_callback(int fd, short args, void *cbdata)
     orte_wait_tracker_t *trk = (orte_wait_tracker_t*)cbdata;
     orte_wait_tracker_t *t2;
 
+    ORTE_ACQUIRE_OBJECT(trk);
+
     OPAL_LIST_FOREACH(t2, &pending_cbs, orte_wait_tracker_t) {
         if (t2->child == trk->child) {
             opal_list_remove_item(&pending_cbs, &t2->super);
@@ -214,9 +217,7 @@ void orte_wait_cb_cancel(orte_proc_t *child)
     trk = OBJ_NEW(orte_wait_tracker_t);
     OBJ_RETAIN(child);  // protect against race conditions
     trk->child = child;
-    opal_event_set(orte_event_base, &trk->ev, -1, OPAL_EV_WRITE, cancel_callback, trk);
-    opal_event_set_priority(&trk->ev, ORTE_SYS_PRI);
-    opal_event_active(&trk->ev, OPAL_EV_WRITE, 1);
+    ORTE_THREADSHIFT(trk, orte_event_base, cancel_callback, ORTE_SYS_PRI);
 }
 
 
@@ -227,6 +228,8 @@ static void wait_signal_callback(int fd, short event, void *arg)
     int status;
     pid_t pid;
     orte_wait_tracker_t *t2;
+
+    ORTE_ACQUIRE_OBJECT(signal);
 
     if (SIGCHLD != OPAL_EVENT_SIGNAL(signal)) {
         return;

@@ -31,6 +31,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_quit.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -223,6 +224,8 @@ static void init_complete(int sd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     /* nothing to do here but move along - if it is the
      * daemon job, then next step is allocate */
     if (caddy->jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
@@ -248,6 +251,8 @@ static void vm_ready(int fd, short args, void *cbdata)
     int8_t flag;
     int32_t numbytes;
     char *nidmap;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /* if this is my job, then we are done */
     if (ORTE_PROC_MY_NAME->jobid == caddy->jdata->jobid) {
@@ -353,14 +358,16 @@ static void vm_ready(int fd, short args, void *cbdata)
 static void check_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
-
+    orte_job_t *jdata;
     orte_proc_t *proc;
     int i;
     orte_node_t *node;
     orte_job_map_t *map;
     orte_std_cntr_t index;
     char *rtmod;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = caddy->jdata;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:dvm:check_job_complete on job %s",
@@ -472,7 +479,10 @@ static void check_complete(int fd, short args, void *cbdata)
 static void cleanup_job(int sd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
+    orte_job_t *jdata;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = caddy->jdata;
 
     /* remove this object from the job array */
     opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);

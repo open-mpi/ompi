@@ -81,6 +81,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/orted/orted.h"
@@ -582,6 +583,8 @@ static void timer_cb(int fd, short event, void *cbdata)
     orte_timer_t *tm = (orte_timer_t*)cbdata;
     orte_odls_launch_local_t *ll = (orte_odls_launch_local_t*)tm->payload;
 
+    ORTE_ACQUIRE_OBJECT(tm);
+
     /* increment the number of retries */
     ll->retries++;
 
@@ -628,6 +631,8 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     char **argvptr;
     char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char *full_search;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     /* thread-protect common values */
     cd->env = opal_argv_copy(app->env);
@@ -819,6 +824,8 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_odls_spawn_caddy_t *cd;
     opal_event_base_t *evb;
     char *effective_dir = NULL;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     opal_output_verbose(5, orte_odls_base_framework.framework_output,
                         "%s local:launch",

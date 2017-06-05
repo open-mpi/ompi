@@ -66,6 +66,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/state/state.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
@@ -171,7 +172,10 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_std_cntr_t nnode;
     orte_job_t *daemons;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = state->jdata;
+    orte_job_t *jdata;
+
+    ORTE_ACQUIRE_OBJECT(state);
+    jdata  = state->jdata;
 
     /* start by setting up the virtual machine */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);

@@ -64,6 +64,7 @@
 #include "opal/mca/event/event.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -82,7 +83,10 @@
 void mca_oob_tcp_queue_msg(int sd, short args, void *cbdata)
 {
     mca_oob_tcp_send_t *snd = (mca_oob_tcp_send_t*)cbdata;
-    mca_oob_tcp_peer_t *peer = (mca_oob_tcp_peer_t*)snd->peer;
+    mca_oob_tcp_peer_t *peer;
+
+    ORTE_ACQUIRE_OBJECT(snd);
+    peer = (mca_oob_tcp_peer_t*)snd->peer;
 
     /* if there is no message on-deck, put this one there */
     if (NULL == peer->send_msg) {
@@ -99,8 +103,9 @@ void mca_oob_tcp_queue_msg(int sd, short args, void *cbdata)
         } else {
             /* ensure the send event is active */
             if (!peer->send_ev_active) {
-                opal_event_add(&peer->send_event, 0);
                 peer->send_ev_active = true;
+                ORTE_POST_OBJECT(peer);
+                opal_event_add(&peer->send_event, 0);
             }
         }
     }
@@ -196,8 +201,11 @@ static int send_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_send_t* msg)
 void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
 {
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)cbdata;
-    mca_oob_tcp_send_t* msg = peer->send_msg;
+    mca_oob_tcp_send_t* msg;
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(peer);
+    msg = peer->send_msg;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:send_handler called to send to peer %s",
@@ -424,6 +432,8 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
     int rc;
     orte_rml_send_t *snd;
 
+    ORTE_ACQUIRE_OBJECT(peer);
+
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:tcp:recv:handler called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -437,8 +447,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             /* we connected! Start the send/recv events */
             if (!peer->recv_ev_active) {
-                opal_event_add(&peer->recv_event, 0);
                 peer->recv_ev_active = true;
+                ORTE_POST_OBJECT(peer);
+                opal_event_add(&peer->recv_event, 0);
             }
             if (peer->timer_ev_active) {
                 opal_event_del(&peer->timer_event);
@@ -449,8 +460,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                 peer->send_msg = (mca_oob_tcp_send_t*)opal_list_remove_first(&peer->send_queue);
             }
             if (NULL != peer->send_msg && !peer->send_ev_active) {
-                opal_event_add(&peer->send_event, 0);
                 peer->send_ev_active = true;
+                ORTE_POST_OBJECT(peer);
+                opal_event_add(&peer->send_event, 0);
             }
             /* update our state */
             peer->state = MCA_OOB_TCP_CONNECTED;
