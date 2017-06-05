@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -48,6 +48,7 @@
 
 #include "src/class/pmix_list.h"
 #include "src/buffer_ops/buffer_ops.h"
+#include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -304,7 +305,8 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup_nb(char **keys,
 }
 
 PMIX_EXPORT pmix_status_t PMIx_Unpublish(char **keys,
-                               const pmix_info_t info[], size_t ninfo)
+                                         const pmix_info_t info[],
+                                         size_t ninfo)
 {
     pmix_status_t rc;
     pmix_cb_t *cb;
@@ -417,6 +419,8 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
     int ret;
     int32_t cnt;
 
+    PMIX_ACQUIRE_OBJECT(cb);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client recv callback activated with %d bytes",
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
@@ -437,6 +441,7 @@ static void op_cbfunc(pmix_status_t status, void *cbdata)
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
     cb->status = status;
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -449,6 +454,8 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr,
     int32_t cnt;
     pmix_pdata_t *pdata;
     size_t ndata;
+
+    PMIX_ACQUIRE_OBJECT(cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client recv callback activated with %d bytes",
@@ -514,6 +521,7 @@ static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t nda
     pmix_pdata_t *tgt = (pmix_pdata_t*)cb->cbdata;
     size_t i, j;
 
+    PMIX_ACQUIRE_OBJECT(cb);
     cb->status = status;
     if (PMIX_SUCCESS == status) {
         /* find the matching key in the provided info array - error if not found */
@@ -530,6 +538,6 @@ static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t nda
             }
         }
     }
-
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }

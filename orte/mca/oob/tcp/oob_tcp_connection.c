@@ -63,6 +63,7 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -152,13 +153,16 @@ static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer)
 void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_conn_op_t *op = (mca_oob_tcp_conn_op_t*)cbdata;
-    mca_oob_tcp_peer_t *peer = op->peer;
+    mca_oob_tcp_peer_t *peer;
     int rc;
     opal_socklen_t addrlen = 0;
     mca_oob_tcp_addr_t *addr;
     char *host;
     mca_oob_tcp_send_t *snd;
     bool connected = false;
+
+    ORTE_ACQUIRE_OBJECT(op);
+    peer = op->peer;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s orte_tcp_peer_try_connect: "
@@ -586,8 +590,9 @@ void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t *peer)
                             ORTE_NAME_PRINT(&(peer->name)));
 
         if (!peer->recv_ev_active) {
-            opal_event_add(&peer->recv_event, 0);
             peer->recv_ev_active = true;
+            ORTE_POST_OBJECT(peer);
+            opal_event_add(&peer->recv_event, 0);
         }
     } else {
         opal_output(0, "%s tcp_peer_complete_connect: unable to send connect ack to %s",
@@ -607,6 +612,8 @@ static int tcp_peer_send_blocking(int sd, void* data, size_t size)
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
     int retval;
+
+    ORTE_ACQUIRE_OBJECT(ptr);
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s send blocking of %"PRIsize_t" bytes to socket %d",
@@ -949,8 +956,9 @@ static void tcp_peer_connected(mca_oob_tcp_peer_t* peer)
             opal_list_remove_first(&peer->send_queue);
     }
     if (NULL != peer->send_msg && !peer->send_ev_active) {
-        opal_event_add(&peer->send_event, 0);
         peer->send_ev_active = true;
+        ORTE_POST_OBJECT(peer);
+        opal_event_add(&peer->send_event, 0);
     }
 }
 
@@ -1214,8 +1222,9 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer)
 
         tcp_peer_connected(peer);
         if (!peer->recv_ev_active) {
-            opal_event_add(&peer->recv_event, 0);
             peer->recv_ev_active = true;
+            ORTE_POST_OBJECT(peer);
+            opal_event_add(&peer->recv_event, 0);
         }
         if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
             mca_oob_tcp_peer_dump(peer, "accepted");

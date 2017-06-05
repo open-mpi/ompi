@@ -39,6 +39,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
@@ -149,6 +150,8 @@ static void execute(int sd, short args, void *cbdata)
     int rc;
     opal_buffer_t *xfer;
     orte_process_name_t *target;
+
+    ORTE_ACQUIRE_OBJECT(req);
 
     if (!orte_pmix_server_globals.pubsub_init) {
         /* we need to initialize our connection to the server */
@@ -298,6 +301,7 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
     opal_event_set(orte_event_base, &(req->ev),
                    -1, OPAL_EV_WRITE, execute, req);
     opal_event_set_priority(&(req->ev), ORTE_MSG_PRI);
+    ORTE_POST_OBJECT(req);
     opal_event_active(&(req->ev), OPAL_EV_WRITE, 1);
 
     return OPAL_SUCCESS;
@@ -395,6 +399,7 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
     opal_event_set(orte_event_base, &(req->ev),
                    -1, OPAL_EV_WRITE, execute, req);
     opal_event_set_priority(&(req->ev), ORTE_MSG_PRI);
+    ORTE_POST_OBJECT(req);
     opal_event_active(&(req->ev), OPAL_EV_WRITE, 1);
 
     return OPAL_SUCCESS;
@@ -483,6 +488,7 @@ int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
     opal_event_set(orte_event_base, &(req->ev),
                    -1, OPAL_EV_WRITE, execute, req);
     opal_event_set_priority(&(req->ev), ORTE_MSG_PRI);
+    ORTE_POST_OBJECT(req);
     opal_event_active(&(req->ev), OPAL_EV_WRITE, 1);
 
     return OPAL_SUCCESS;

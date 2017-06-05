@@ -412,6 +412,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_proc_t proc;
     size_t len;
 
+    /* acquire the object */
+    PMIX_ACQUIRE_OBJECT(pnd);
+
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "USOCK CONNECTION FROM PEER ON SOCKET %d", pnd->sd);
 

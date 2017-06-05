@@ -152,7 +152,6 @@ int opal_pmix_base_exchange(opal_value_t *indat,
         rc = opal_pmix.publish(&ilist);
         OPAL_LIST_DESTRUCT(&ilist);
         if (OPAL_SUCCESS != rc) {
-            OPAL_ERROR_LOG(rc);
             return rc;
         }
     } else {
@@ -161,7 +160,6 @@ int opal_pmix_base_exchange(opal_value_t *indat,
         caddy.pdat = NULL;
         rc = opal_pmix.publish_nb(&ilist, opcbfunc, &caddy);
         if (OPAL_SUCCESS != rc) {
-            OPAL_ERROR_LOG(rc);
             OPAL_LIST_DESTRUCT(&ilist);
             return rc;
         }
@@ -213,7 +211,6 @@ int opal_pmix_base_exchange(opal_value_t *indat,
         OPAL_LIST_DESTRUCT(&mlist);
         OPAL_LIST_DESTRUCT(&ilist);
         if (OPAL_SUCCESS != rc) {
-            OPAL_ERROR_LOG(rc);
             return rc;
         }
     } else {
@@ -224,7 +221,6 @@ int opal_pmix_base_exchange(opal_value_t *indat,
         opal_argv_append_nosize(&keys, pdat->value.key);
         rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
         if (OPAL_SUCCESS != rc) {
-            OPAL_ERROR_LOG(rc);
             OPAL_LIST_DESTRUCT(&mlist);
             opal_argv_free(keys);
             return rc;

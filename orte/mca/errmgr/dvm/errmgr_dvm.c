@@ -50,6 +50,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/threads.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_locks.h"
@@ -65,32 +66,15 @@
 static int init(void);
 static int finalize(void);
 
-static int predicted_fault(opal_list_t *proc_list,
-                           opal_list_t *node_list,
-                           opal_list_t *suggested_map);
-
-static int suggest_map_targets(orte_proc_t *proc,
-                               orte_node_t *oldnode,
-                               opal_list_t *node_list);
-
-static int ft_event(int state);
-
-
 /******************
  * dvm module
  ******************/
 orte_errmgr_base_module_t orte_errmgr_dvm_module = {
-    init,
-    finalize,
-    orte_errmgr_base_log,
-    orte_errmgr_base_abort,
-    orte_errmgr_base_abort_peers,
-    predicted_fault,
-    suggest_map_targets,
-    ft_event,
-    orte_errmgr_base_register_migration_warning,
-    NULL,
-    orte_errmgr_base_execute_error_callbacks
+    .init = init,
+    .finalize = finalize,
+    .logfn = orte_errmgr_base_log,
+    .abort = orte_errmgr_base_abort,
+    .abort_peers = orte_errmgr_base_abort_peers
 };
 
 
@@ -145,6 +129,8 @@ static void job_errors(int fd, short args, void *cbdata)
     opal_buffer_t *answer;
     int32_t rc, ret;
     int room, *rmptr;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /*
      * if orte is trying to shutdown, just let it
@@ -247,6 +233,8 @@ static void proc_errors(int fd, short args, void *cbdata)
     int i;
     int32_t i32, *i32ptr;
     char *rtmod;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:dvm: for proc %s state %s",
@@ -386,7 +374,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         }
     }
 
- keep_going:
+  keep_going:
     /* ensure we record the failed proc properly so we can report
      * the error once we terminate
      */
@@ -642,23 +630,4 @@ static void proc_errors(int fd, short args, void *cbdata)
 
  cleanup:
     OBJ_RELEASE(caddy);
-}
-
-static int predicted_fault(opal_list_t *proc_list,
-                           opal_list_t *node_list,
-                           opal_list_t *suggested_map)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int suggest_map_targets(orte_proc_t *proc,
-                               orte_node_t *oldnode,
-                               opal_list_t *node_list)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int ft_event(int state)
-{
-    return ORTE_SUCCESS;
 }

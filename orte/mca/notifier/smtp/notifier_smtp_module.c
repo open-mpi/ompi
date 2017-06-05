@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,18 +50,10 @@
 /* Static API's */
 static void mylog(orte_notifier_base_severity_t severity, int errcode,
                   const char *msg, va_list ap);
-static void myhelplog(orte_notifier_base_severity_t severity, int errcode,
-                      const char *filename,
-                      const char *topic, va_list ap);
-static void mypeerlog(orte_notifier_base_severity_t severity, int errcode,
-                      orte_process_name_t *peer_proc,
-                      const char *msg, va_list ap);
 
 /* Module */
 orte_notifier_base_module_t orte_notifier_smtp_module = {
-    NULL,
-    NULL,
-    mylog,
+    .log = mylog
 };
 
 typedef enum {

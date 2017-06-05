@@ -199,9 +199,7 @@ static pmix_status_t send_recv(struct pmix_peer_t *peer,
     ms->bfr = bfr;
     ms->cbfunc = cbfunc;
     ms->cbdata = cbdata;
-    pmix_event_assign(&ms->ev, pmix_globals.evbase, -1,
-                      EV_WRITE, pmix_ptl_base_send_recv, ms);
-    pmix_event_active(&ms->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(ms, pmix_ptl_base_send_recv);
     return PMIX_SUCCESS;
 }
 
@@ -220,9 +218,7 @@ static pmix_status_t send_oneway(struct pmix_peer_t *peer,
     q->peer = peer;
     q->buf = bfr;
     q->tag = tag;
-    pmix_event_assign(&q->ev, pmix_globals.evbase, -1,
-                      EV_WRITE, pmix_ptl_base_send, q);
-    pmix_event_active(&q->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(q, pmix_ptl_base_send);
 
     return PMIX_SUCCESS;
 }

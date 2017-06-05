@@ -100,7 +100,7 @@ static void errreg_cbfunc (pmix_status_t status,
                         status, errhandler_ref);
 }
 
-int pmix1_client_init(void)
+int pmix1_client_init(opal_list_t *ilist)
 {
     opal_process_name_t pname;
     pmix_status_t rc;

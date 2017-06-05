@@ -20,8 +20,6 @@
 # $HEADER$
 #
 
-dist_ortedata_DATA = help-ess-hnp.txt
-
 sources = \
         ess_hnp.h \
         ess_hnp_component.c \

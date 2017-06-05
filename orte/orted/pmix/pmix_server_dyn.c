@@ -44,6 +44,7 @@
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
 
@@ -102,6 +103,8 @@ static void spawn(int sd, short args, void *cbdata)
     int rc;
     opal_buffer_t *buf;
     orte_plm_cmd_flag_t command;
+
+    ORTE_ACQUIRE_OBJECT(req);
 
     /* add this request to our tracker hotel */
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
@@ -351,6 +354,8 @@ static void _cnlk(int status, opal_list_t *data, void *cbdata)
     orte_job_t *jdata;
     opal_buffer_t buf;
 
+    ORTE_ACQUIRE_OBJECT(cd);
+
     /* if we failed to get the required data, then just inform
      * the embedded server that the connect cannot succeed */
     if (ORTE_SUCCESS != status || NULL == data) {
@@ -401,6 +406,8 @@ static void _cnct(int sd, short args, void *cbdata)
     char **keys = NULL, *key;
     orte_job_t *jdata;
     int rc = ORTE_SUCCESS;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     /* at some point, we need to add bookeeping to track which
      * procs are "connected" so we know who to notify upon
@@ -476,6 +483,8 @@ static void mdxcbfunc(int status,
                       opal_pmix_release_cbfunc_t relcbfunc, void *relcbdata)
 {
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     /* ack the call */
     if (NULL != cd->cbfunc) {

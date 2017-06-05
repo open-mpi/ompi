@@ -55,13 +55,14 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
@@ -186,6 +187,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_job_t *daemons;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
     char *ltmp;
+
+    ORTE_ACQUIRE_OBJECT(state);
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched

@@ -38,7 +38,7 @@
 #include "src/class/pmix_list.h"
 #include "src/class/pmix_ring_buffer.h"
 #include "src/event/pmix_event.h"
-
+#include "src/threads/threads.h"
 #include "src/mca/psec/psec.h"
 #include "src/mca/ptl/ptl.h"
 
@@ -343,6 +343,7 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
     (r)->active = true;                                     \
     pmix_event_assign(&((r)->ev), pmix_globals.evbase,      \
                       -1, EV_WRITE, (c), (r));              \
+    PMIX_POST_OBJECT((r));                                  \
     pmix_event_active(&((r)->ev), EV_WRITE, 1);             \
 } while (0)
 
@@ -352,6 +353,7 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
         while ((a)) {                           \
             usleep(10);                         \
         }                                       \
+        PMIX_ACQUIRE_OBJECT((a));               \
     } while (0)
 
 

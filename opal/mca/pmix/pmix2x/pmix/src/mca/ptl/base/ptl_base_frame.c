@@ -167,13 +167,20 @@ PMIX_CLASS_INSTANCE(pmix_ptl_posted_recv_t,
 
 static void srcon(pmix_ptl_sr_t *p)
 {
+    p->peer = NULL;
     p->bfr = NULL;
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
+static void srdes(pmix_ptl_sr_t *p)
+{
+    if (NULL != p->peer) {
+        PMIX_RELEASE(p->peer);
+    }
+}
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_sr_t,
                                 pmix_object_t,
-                                srcon, NULL);
+                                srcon, srdes);
 
 static void pccon(pmix_pending_connection_t *p)
 {

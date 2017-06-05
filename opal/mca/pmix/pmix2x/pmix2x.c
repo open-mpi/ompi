@@ -6,6 +6,8 @@
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress_threads.h"
+#include "opal/threads/threads.h"
 #include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -162,6 +165,7 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
     pmix_status_t pstatus;
     size_t n;
 
+    OPAL_ACQUIRE_OBJECT(cd);
     if (NULL != cd->pmixcbfunc) {
         op = OBJ_NEW(pmix2x_opcaddy_t);
 
@@ -200,6 +204,8 @@ static void _event_hdlr(int sd, short args, void *cbdata)
 {
     pmix2x_threadshift_t *cd = (pmix2x_threadshift_t*)cbdata;
     opal_pmix2x_event_t *event;
+
+    OPAL_ACQUIRE_OBJECT(cd);
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s _EVENT_HDLR RECEIVED NOTIFICATION FOR HANDLER %d OF STATUS %d",
@@ -308,9 +314,10 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     }
 
     /* now push it into the local thread */
-    event_assign(&cd->ev, opal_pmix_base.evbase,
-                 -1, EV_WRITE, _event_hdlr, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    opal_event_assign(&cd->ev, opal_pmix_base.evbase,
+                      -1, EV_WRITE, _event_hdlr, cd);
+    OPAL_POST_OBJECT(cd);
+    opal_event_active(&cd->ev, EV_WRITE, 1);
 }
 
 opal_vpid_t pmix2x_convert_rank(pmix_rank_t rank)
@@ -409,6 +416,9 @@ pmix_status_t pmix2x_convert_opalrc(int rc)
     case OPAL_ERR_PARTIAL_SUCCESS:
         return PMIX_QUERY_PARTIAL_SUCCESS;
 
+    case OPAL_ERR_MODEL_DECLARED:
+        return PMIX_MODEL_DECLARED;
+
     case OPAL_ERROR:
         return PMIX_ERROR;
     case OPAL_SUCCESS:
@@ -498,6 +508,10 @@ int pmix2x_convert_rc(pmix_status_t rc)
 
     case PMIX_MONITOR_FILE_ALERT:
         return OPAL_ERR_FILE_ALERT;
+
+    case PMIX_MODEL_DECLARED:
+        return OPAL_ERR_MODEL_DECLARED;
+
 
     case PMIX_ERROR:
         return OPAL_ERROR;
@@ -977,6 +991,7 @@ static void errreg_cbfunc (pmix_status_t status,
 {
     pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(op);
     op->event->index = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX2x errreg_cbfunc - error handler registered status=%d, reference=%lu",
@@ -994,6 +1009,7 @@ static void _reg_hdlr(int sd, short args, void *cbdata)
     opal_value_t *kv;
     size_t n;
 
+    OPAL_ACQUIRE_OBJECT(cd);
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s REGISTER HANDLER CODES %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -1010,6 +1026,7 @@ static void _reg_hdlr(int sd, short args, void *cbdata)
         n=0;
         OPAL_LIST_FOREACH(kv, cd->event_codes, opal_value_t) {
             op->pcodes[n] = pmix2x_convert_opalrc(kv->data.integer);
+            ++n;
         }
     }
 
@@ -1057,6 +1074,7 @@ static void _dereg_hdlr(int sd, short args, void *cbdata)
     pmix2x_threadshift_t *cd = (pmix2x_threadshift_t*)cbdata;
     opal_pmix2x_event_t *event;
 
+    OPAL_ACQUIRE_OBJECT(cd);
     /* look for this event */
     OPAL_LIST_FOREACH(event, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
         if (cd->handler == event->index) {
@@ -1105,6 +1123,8 @@ static void _notify(int sd, short args, void *cbdata)
     int rc=OPAL_SUCCESS;
     pmix_data_range_t prange;
     opal_pmix2x_jobid_trkr_t *job, *jptr;
+
+    OPAL_ACQUIRE_OBJECT(cd);
 
     op = OBJ_NEW(pmix2x_opcaddy_t);
 
@@ -1193,6 +1213,8 @@ static void infocbfunc(pmix_status_t status,
     opal_list_t *results = NULL;
     opal_value_t *iptr;
     size_t n;
+
+    OPAL_ACQUIRE_OBJECT(cd);
 
     /* convert the array of pmix_info_t to the list of info */
     if (NULL != info) {
@@ -1283,6 +1305,8 @@ static void pmix2x_query(opal_list_t *queries,
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {
     pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
+
+    OPAL_ACQUIRE_OBJECT(op);
 
     if (NULL != op->opcbfunc) {
         op->opcbfunc(pmix2x_convert_rc(status), op->cbdata);

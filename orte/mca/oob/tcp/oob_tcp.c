@@ -62,6 +62,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
@@ -252,6 +253,8 @@ static void recv_handler(int sd, short flg, void *cbdata)
     int flags;
     mca_oob_tcp_hdr_t hdr;
     mca_oob_tcp_peer_t *peer;
+
+    ORTE_ACQUIRE_OBJECT(op);
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:tcp:recv:handler called",

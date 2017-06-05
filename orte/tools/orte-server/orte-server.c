@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +54,7 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/threads.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/orted/orted.h"
@@ -283,6 +284,7 @@ int main(int argc, char *argv[])
     while (orte_event_base_active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
+    ORTE_ACQUIRE_OBJECT(orte_event_base_active);
 
     /* should never get here, but if we do... */
 

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -51,6 +51,8 @@
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
+#include "src/threads/threads.h"
+
 #include "src/mca/ptl/ptl.h"
 
 #include "pmix_client_ops.h"
@@ -344,5 +346,6 @@ static void op_cbfunc(pmix_status_t status, void *cbdata)
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
     cb->status = status;
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }

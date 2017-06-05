@@ -35,6 +35,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -51,6 +52,8 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     int rc;
     int32_t numbytes;
     orte_iof_proc_t *proct = (orte_iof_proc_t*)rev->proc;
+
+    ORTE_ACQUIRE_OBJECT(rev);
 
     /* read up to the fragment size */
 #if !defined(__WINDOWS__)
@@ -100,6 +103,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     }
     if (!proct->copy) {
         /* re-add the event */
+        ORTE_POST_OBJECT(rev);
         opal_event_add(rev->ev, 0);
         return;
     }
@@ -137,6 +141,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                                     orte_rml_send_callback, NULL);
 
     /* re-add the event */
+    ORTE_POST_OBJECT(rev);
     opal_event_add(rev->ev, 0);
 
     return;

@@ -63,6 +63,7 @@
 #include "opal/util/basename.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -184,6 +185,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
     int32_t launchid, *ldptr;
     char *prefix_dir = NULL;
+
+    ORTE_ACQUIRE_OBJECT(state);
 
     jdata = state->jdata;
 
@@ -403,7 +406,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
                          "%s plm:tm:launch: finished spawning orteds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
- cleanup:
+  cleanup:
     /* cleanup */
     OBJ_RELEASE(state);
 
@@ -421,6 +424,8 @@ static void poll_spawns(int fd, short args, void *cbdata)
     int local_err;
     tm_event_t event;
 
+    ORTE_ACQUIRE_OBJECT(state);
+
     /* TM poll for all the spawns */
     for (i = 0; i < launched; ++i) {
         rc = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
@@ -435,7 +440,7 @@ static void poll_spawns(int fd, short args, void *cbdata)
     }
     failed_launch = false;
 
- cleanup:
+  cleanup:
     /* cleanup */
     OBJ_RELEASE(state);
 

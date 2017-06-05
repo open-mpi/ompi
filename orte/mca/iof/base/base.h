@@ -52,6 +52,7 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/util/threads.h"
 
 BEGIN_C_DECLS
 
@@ -163,6 +164,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
             opal_event_set_priority(ep->wev->ev, ORTE_MSG_PRI);     \
         }                                                           \
         *(snk) = ep;                                                \
+        ORTE_POST_OBJECT(ep);                                       \
     } while(0);
 
 /* add list of structs that has name of proc + orte_iof_tag_t - when
@@ -192,6 +194,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         opal_event_set_priority(rev->ev, ORTE_MSG_PRI);             \
         if ((actv)) {                                               \
             rev->active = true;                                     \
+            ORTE_POST_OBJECT(rev);                                  \
             opal_event_add(rev->ev, 0);                             \
         }                                                           \
     } while(0);

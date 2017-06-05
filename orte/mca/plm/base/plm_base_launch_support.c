@@ -74,6 +74,7 @@
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/regex.h"
+#include "orte/util/threads.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
 #include "orte/util/hostfile/hostfile.h"
@@ -129,6 +130,8 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     orte_node_t *node;
     int i;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     /* if we are not launching, then we just assume that all
      * daemons share our topology */
     if (orte_do_not_launch) {
@@ -182,6 +185,8 @@ void orte_plm_base_allocation_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     /* move the state machine along */
     caddy->jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_LAUNCH_DAEMONS);
@@ -193,6 +198,8 @@ void orte_plm_base_allocation_complete(int fd, short args, void *cbdata)
 void orte_plm_base_daemons_launched(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /* do NOT increment the state - we wait for the
      * daemons to report that they have actually
@@ -217,6 +224,8 @@ void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_VM_READY;
 
@@ -232,6 +241,8 @@ void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
 void orte_plm_base_mapping_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /* move the state machine along */
     caddy->jdata->state = ORTE_JOB_STATE_MAP_COMPLETE;
@@ -251,6 +262,8 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     char *key;
     orte_job_t *parent;
     orte_process_name_t name, *nptr;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_job",
@@ -357,6 +370,8 @@ void orte_plm_base_setup_job_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     /* nothing to do here but move along */
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_ALLOCATE);
     OBJ_RELEASE(caddy);
@@ -371,6 +386,8 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
     orte_vpid_t *vptr;
     int i, rc;
     char *serial_number;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     opal_output_verbose(5, orte_plm_base_framework.framework_output,
                         "%s complete_setup on job %s",
@@ -465,6 +482,8 @@ static void timer_cb(int fd, short event, void *cbdata)
     orte_job_t *jdata = (orte_job_t*)cbdata;
     orte_timer_t *timer=NULL;
 
+    ORTE_ACQUIRE_OBJECT(jdata);
+
     /* declare launch failed */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
 
@@ -485,6 +504,8 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_timer_t *timer;
     orte_grpcomm_signature_t *sig;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /* convenience */
     jdata = caddy->jdata;
@@ -587,6 +608,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
         timer->tv.tv_sec = orte_startup_timeout;
         timer->tv.tv_usec = 0;
         orte_set_attribute(&jdata->attributes, ORTE_JOB_FAILURE_TIMER_EVENT, ORTE_ATTR_LOCAL, timer, OPAL_PTR);
+        ORTE_POST_OBJECT(timer);
         opal_event_evtimer_add(timer->ev, &timer->tv);
     }
 
@@ -604,6 +626,8 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
     int ret;
     opal_buffer_t *answer;
     int room, *rmptr;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /* convenience */
     jdata = caddy->jdata;
@@ -720,6 +744,8 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     opal_buffer_t *answer;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     /* convenience */
     jdata = caddy->jdata;
 
@@ -793,7 +819,7 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
         return;
     }
 
- cleanup:
+  cleanup:
    /* if this wasn't a debugger job, then need to init_after_spawn for debuggers */
     if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
