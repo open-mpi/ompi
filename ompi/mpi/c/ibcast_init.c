@@ -32,7 +32,7 @@ static const char FUNC_NAME[] = "MPIX_Ibcast_init";
 
 
 int MPIX_Ibcast_init(void *buffer, int count, MPI_Datatype datatype,
-              int root, MPI_Comm comm,  MPI_Request *request)
+              int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int err;
 
@@ -81,7 +81,6 @@ int MPIX_Ibcast_init(void *buffer, int count, MPI_Datatype datatype,
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll->coll_ibcast_init(buffer, count, datatype, root, comm,
-                                  request,
-                                  comm->c_coll->coll_ibcast_init_module);
+                                  info, request, comm->c_coll->coll_ibcast_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

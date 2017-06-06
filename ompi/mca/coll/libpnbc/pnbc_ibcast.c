@@ -28,7 +28,7 @@ static inline int bcast_sched_chain(int rank, int p, int root, PNBC_Schedule *sc
 
 
 int ompi_coll_libpnbc_ibcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
-                            struct ompi_communicator_t *comm, ompi_request_t ** request,
+                            struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                             struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, segsize;

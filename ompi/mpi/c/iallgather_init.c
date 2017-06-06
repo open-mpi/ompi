@@ -45,7 +45,7 @@ static const char FUNC_NAME[] = "MPIX_Iallgather_init";
 
 int MPIX_Iallgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                    void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                   MPI_Comm comm,  MPI_Request *request)
+                   MPI_Comm comm,  MPI_Info info, MPI_Request *request)
 {
 //printf("entered iallgather_init.c\n");
 	int err;
@@ -99,7 +99,7 @@ int MPIX_Iallgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
     //printf("invoking iallgather_init\n");
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_iallgather_init(sendbuf, sendcount, sendtype,
-                                       recvbuf, recvcount, recvtype, comm,
+                                       recvbuf, recvcount, recvtype, comm, info,
                                        request, comm->c_coll->coll_iallgather_init_module);
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

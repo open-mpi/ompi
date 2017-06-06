@@ -44,7 +44,7 @@ static const char FUNC_NAME[] = "MPIX_Iallreduce_init";
 
 
 int MPIX_Iallreduce_init(const void *sendbuf, void *recvbuf, int count,
-                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) {
+                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
 
 	//printf("Entered Iallreduce_init...\n");
 
@@ -113,7 +113,7 @@ int MPIX_Iallreduce_init(const void *sendbuf, void *recvbuf, int count,
 
     OBJ_RETAIN(op);
     //printf("Invoking comm->c_coll->coll_iallreduce_init...\n");
-    err = comm->c_coll->coll_iallreduce_init(sendbuf, recvbuf, count, datatype, op, comm, request, comm->c_coll->coll_iallreduce_init_module);
+    err = comm->c_coll->coll_iallreduce_init(sendbuf, recvbuf, count, datatype, op, comm, info, request, comm->c_coll->coll_iallreduce_init_module);
     OBJ_RELEASE(op);
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

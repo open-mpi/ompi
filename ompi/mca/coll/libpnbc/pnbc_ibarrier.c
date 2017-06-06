@@ -21,7 +21,7 @@
 #include "pnbc_internal.h"
 
 /* Dissemination implementation of MPI_Ibarrier */
-int ompi_coll_libpnbc_ibarrier_init(struct ompi_communicator_t *comm, ompi_request_t ** request,
+int ompi_coll_libpnbc_ibarrier_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, maxround, res, recvpeer, sendpeer;
@@ -90,7 +90,7 @@ int ompi_coll_libpnbc_ibarrier_init(struct ompi_communicator_t *comm, ompi_reque
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libpnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
+int ompi_coll_libpnbc_ibarrier_inter(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, res, rsize;

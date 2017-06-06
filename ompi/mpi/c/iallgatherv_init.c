@@ -45,7 +45,7 @@ static const char FUNC_NAME[] = "MPIX_Iallgatherv_init";
 
 int MPIX_Iallgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                     void *recvbuf, const int recvcounts[], const int displs[],
-                    MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+                    MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
 
@@ -121,7 +121,7 @@ int MPIX_Iallgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendt
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_iallgatherv_init	(sendbuf, sendcount, sendtype,
                                         recvbuf, recvcounts, displs,
-                                        recvtype, comm, request,
+                                        recvtype, comm, info, request,
                                         comm->c_coll->coll_iallgatherv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

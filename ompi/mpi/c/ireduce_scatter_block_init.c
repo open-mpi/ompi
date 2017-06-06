@@ -45,7 +45,7 @@ static const char FUNC_NAME[] = "MPIX_Ireduce_scatter_block_init";
 
 int MPIX_Ireduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount,
                               MPI_Datatype datatype, MPI_Op op,
-                              MPI_Comm comm, MPI_Request *request)
+                              MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int err;
 
@@ -99,7 +99,7 @@ int MPIX_Ireduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recv
 
     OBJ_RETAIN(op);
     err = comm->c_coll->coll_ireduce_scatter_block_init(sendbuf, recvbuf, recvcount,
-                                                  datatype, op, comm, request,
+                                                  datatype, op, comm, info, request,
                                                   comm->c_coll->coll_ireduce_scatter_block_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

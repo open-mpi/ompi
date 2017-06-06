@@ -35,7 +35,7 @@ static inline int allred_sched_linear(int rank, int p, const void *sendbuf, void
 
 
 int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                                struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_2_0_t *module)
 {
 
@@ -150,7 +150,7 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
 }
 
 int ompi_coll_libpnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                                      struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                      struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                       struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, res, rsize;

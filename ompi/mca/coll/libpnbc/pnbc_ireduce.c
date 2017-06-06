@@ -33,7 +33,7 @@ static inline int red_sched_linear (int rank, int rsize, int root, const void *s
 
 /* the non-blocking reduce */
 int ompi_coll_libpnbc_ireduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
-                             MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                             MPI_Op op, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                              struct mca_coll_base_module_2_2_0_t *module) {
   int rank, p, res, segsize;
   size_t size;
@@ -144,7 +144,7 @@ int ompi_coll_libpnbc_ireduce_init(const void* sendbuf, void* recvbuf, int count
 }
 
 int ompi_coll_libpnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
-				   MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				   MPI_Op op, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
 				   struct mca_coll_base_module_2_2_0_t *module) {
   int rank, res, rsize;
   PNBC_Schedule *schedule;

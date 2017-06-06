@@ -35,7 +35,7 @@ static inline int a2a_sched_inplace(int rank, int p, PNBC_Schedule* schedule, vo
 
 /* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
 int ompi_coll_libpnbc_ialltoall_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
-                               MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                               MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, datasize;
@@ -232,7 +232,7 @@ int ompi_coll_libpnbc_ialltoall_init(const void* sendbuf, int sendcount, MPI_Dat
 }
 
 int ompi_coll_libpnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
-				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
 				      struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;

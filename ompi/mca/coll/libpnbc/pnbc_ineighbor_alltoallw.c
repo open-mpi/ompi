@@ -21,7 +21,7 @@
 
 int ompi_coll_libpnbc_ineighbor_alltoallw_init(const void *sbuf, const int *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
                                          void *rbuf, const int *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
-                                         struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                         struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_2_0_t *module) {
   int res, indegree, outdegree, *srcs, *dsts;
   PNBC_Handle *handle;

@@ -34,7 +34,7 @@
  *   each node sends to node (rank+2)%p sendcount elements
  *   each node receives from node (rank-2)%p recvcounts[(rank+2)%p] elements */
 int ompi_coll_libpnbc_iallgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
-                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                  struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, speer, rpeer;
@@ -121,7 +121,7 @@ int ompi_coll_libpnbc_iallgatherv_init(const void* sendbuf, int sendcount, MPI_D
 }
 
 int ompi_coll_libpnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
-				       MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				       MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
 				       struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;

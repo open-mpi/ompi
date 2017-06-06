@@ -44,7 +44,7 @@ static const char FUNC_NAME[] = "MPIX_Ialltoallv_init";
 
 int MPIX_Ialltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
                    MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
-                   const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
+                   const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info,
                    MPI_Request *request)
 {
     int i, size, err;
@@ -126,7 +126,7 @@ int MPIX_Ialltoallv_init(const void *sendbuf, const int sendcounts[], const int 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ialltoallv_init(sendbuf, sendcounts, sdispls,
                                        sendtype, recvbuf, recvcounts, rdispls,
-                                       recvtype, comm, request, comm->c_coll->coll_ialltoallv_init_module);
+                                       recvtype, comm, info, request, comm->c_coll->coll_ialltoallv_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

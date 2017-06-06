@@ -43,7 +43,7 @@ static const char FUNC_NAME[] = "MPIX_Iscatterv_init";
 
 int MPIX_Iscatterv_init(const void *sendbuf, const int sendcounts[], const int displs[],
                   MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                  MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
+                  MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
 
@@ -192,6 +192,6 @@ int MPIX_Iscatterv_init(const void *sendbuf, const int sendcounts[], const int d
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_iscatterv_init(sendbuf, sendcounts, displs,
                                       sendtype, recvbuf, recvcount, recvtype, root, comm,
-                                      request, comm->c_coll->coll_iscatterv_init_module);
+                                      info, request, comm->c_coll->coll_iscatterv_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

@@ -20,7 +20,7 @@
 #include "pnbc_internal.h"
 
 int ompi_coll_libpnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
-                                  struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                  struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   struct mca_coll_base_module_2_2_0_t *module) {
   int res;
   PNBC_Schedule *schedule;

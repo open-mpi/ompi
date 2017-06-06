@@ -42,7 +42,7 @@ static const char FUNC_NAME[] = "MPIX_Iexscan_init";
 
 
 int MPIX_Iexscan_init(const void *sendbuf, void *recvbuf, int count,
-                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int err;
 
@@ -81,7 +81,7 @@ int MPIX_Iexscan_init(const void *sendbuf, void *recvbuf, int count,
 
     OBJ_RETAIN(op);
     err = comm->c_coll->coll_iexscan_init(sendbuf, recvbuf, count,
-                                    datatype, op, comm, request,
+                                    datatype, op, comm, info, request,
                                     comm->c_coll->coll_iexscan_init_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

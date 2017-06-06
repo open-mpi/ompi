@@ -44,7 +44,7 @@ static const char FUNC_NAME[] = "MPIX_Ireduce_init";
 
 
 int MPIX_Ireduce_init(const void *sendbuf, void *recvbuf, int count,
-                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
+                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int err;
 
@@ -135,7 +135,7 @@ int MPIX_Ireduce_init(const void *sendbuf, void *recvbuf, int count,
     /* Invoke the coll component to perform the back-end operation */
     OBJ_RETAIN(op);
     err = comm->c_coll->coll_ireduce_init(sendbuf, recvbuf, count,
-                                    datatype, op, root, comm, request,
+                                    datatype, op, root, comm, info, request,
                                     comm->c_coll->coll_ireduce_init_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

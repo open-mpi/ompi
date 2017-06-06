@@ -38,7 +38,7 @@
 static const char FUNC_NAME[] = "MPIX_Ibarrier_init";
 
 
-int MPIX_Ibarrier_init(MPI_Comm comm, MPI_Request *request)
+int MPIX_Ibarrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int err = MPI_SUCCESS;
 
@@ -57,7 +57,7 @@ int MPIX_Ibarrier_init(MPI_Comm comm, MPI_Request *request)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    err = comm->c_coll->coll_ibarrier_init(comm, request, comm->c_coll->coll_ibarrier_init_module);
+    err = comm->c_coll->coll_ibarrier_init(comm, info, request, comm->c_coll->coll_ibarrier_init_module);
 
     /* All done */
 

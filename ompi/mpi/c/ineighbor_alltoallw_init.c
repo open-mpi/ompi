@@ -50,7 +50,7 @@ int MPIX_Ineighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], c
                            const MPI_Datatype sendtypes[], void *recvbuf,
                            const int recvcounts[], const MPI_Aint rdispls[],
                            const MPI_Datatype recvtypes[], MPI_Comm comm,
-                           MPI_Request *request)
+                           MPI_Info info, MPI_Request *request)
 {
     int i, err;
     int indegree, outdegree, weighted;
@@ -140,7 +140,7 @@ int MPIX_Ineighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], c
 
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ineighbor_alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes,
-                                                recvbuf, recvcounts, rdispls, recvtypes, comm, request,
+                                                recvbuf, recvcounts, rdispls, recvtypes, comm, info, request,
                                                 comm->c_coll->coll_ineighbor_alltoallw_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

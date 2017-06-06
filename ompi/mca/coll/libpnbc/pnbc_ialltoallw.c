@@ -38,7 +38,7 @@ static inline int a2aw_sched_inplace(int rank, int p, PNBC_Schedule *schedule,
 /* simple linear Alltoallw */
 int ompi_coll_libpnbc_ialltoallw_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
                                 struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
-                                struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
 				struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res;
@@ -134,7 +134,7 @@ int ompi_coll_libpnbc_ialltoallw_init(const void* sendbuf, const int *sendcounts
 /* simple linear Alltoallw */
 int ompi_coll_libpnbc_ialltoallw_inter (const void* sendbuf, const int *sendcounts, const int *sdispls,
 				       struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
-				       struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				       struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
 				       struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;

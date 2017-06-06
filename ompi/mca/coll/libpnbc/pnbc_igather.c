@@ -24,7 +24,7 @@
 
 int ompi_coll_libpnbc_igather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                              int recvcount, MPI_Datatype recvtype, int root,
-                             struct ompi_communicator_t *comm, ompi_request_t ** request,
+                             struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                              struct mca_coll_base_module_2_2_0_t *module) {
   int rank, p, res;
   MPI_Aint rcvext = 0;
@@ -114,7 +114,7 @@ int ompi_coll_libpnbc_igather_init(const void* sendbuf, int sendcount, MPI_Datat
 
 int ompi_coll_libpnbc_igather_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                     int recvcount, MPI_Datatype recvtype, int root,
-                                    struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                    struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     struct mca_coll_base_module_2_2_0_t *module) {
     int res, rsize;
     MPI_Aint rcvext = 0;

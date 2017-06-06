@@ -20,7 +20,7 @@
 #include "pnbc_internal.h"
 
 int ompi_coll_libpnbc_ineighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                        int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+                                        int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm, MPI_Info info,
                                         ompi_request_t ** request, struct mca_coll_base_module_2_2_0_t *module) {
   int res, indegree, outdegree, *srcs, *dsts;
   MPI_Aint sndext, rcvext;

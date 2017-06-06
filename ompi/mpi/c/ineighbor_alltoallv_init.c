@@ -49,7 +49,7 @@ static const char FUNC_NAME[] = "MPIX_Ineighbor_alltoallv_init";
 int MPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
                             MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
                             const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
-                            MPI_Request *request)
+                            MPI_Info info, MPI_Request *request)
 {
     int i, err;
     int indegree, outdegree, weighted;
@@ -144,7 +144,7 @@ int MPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], c
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll->coll_ineighbor_alltoallv_init(sendbuf, sendcounts, sdispls,
                                                 sendtype, recvbuf, recvcounts, rdispls,
-                                                recvtype, comm, request, comm->c_coll->coll_ineighbor_alltoallv_init_module);
+                                                recvtype, comm, info, request, comm->c_coll->coll_ineighbor_alltoallv_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 
