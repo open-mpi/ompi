@@ -116,6 +116,19 @@ PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_thread_t);
     } while(0);
 
 
+/* provide a macro for forward-proofing the shifting
+ * of objects between threads - at some point, we
+ * may revamp our threading model */
+
+/* post an object to another thread - for now, we
+ * only have a memory barrier */
+#define PMIX_POST_OBJECT(o)     pmix_atomic_wmb()
+
+/* acquire an object from another thread - for now,
+ * we only have a memory barrier */
+#define PMIX_ACQUIRE_OBJECT(o)  pmix_atomic_rmb()
+
+
 PMIX_EXPORT int  pmix_thread_start(pmix_thread_t *);
 PMIX_EXPORT int  pmix_thread_join(pmix_thread_t *, void **thread_return);
 PMIX_EXPORT bool pmix_thread_self_compare(pmix_thread_t*);

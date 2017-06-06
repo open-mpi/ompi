@@ -53,6 +53,7 @@
 
 #include "src/class/pmix_list.h"
 #include "src/buffer_ops/buffer_ops.h"
+#include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/compress.h"
 #include "src/util/error.h"
@@ -186,12 +187,14 @@ static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata)
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_OBJECT(cb);
     cb->status = status;
     if (PMIX_SUCCESS == status) {
         if (PMIX_SUCCESS != (rc = pmix_bfrop.copy((void**)&cb->value, kv, PMIX_VALUE))) {
             PMIX_ERROR_LOG(rc);
         }
     }
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -238,12 +241,12 @@ static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
     return msg;
 }
 
-/* this callback is coming from the usock recv, and thus
+/* this callback is coming from the ptl recv, and thus
  * is occurring inside of our progress thread - hence, no
  * need to thread shift */
 static void _getnb_cbfunc(struct pmix_peer_t *pr,
                           pmix_ptl_hdr_t *hdr,
-                         pmix_buffer_t *buf, void *cbdata)
+                          pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_cb_t *cb2;
@@ -485,6 +488,9 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     size_t n, nvals;
     char *tmp;
     bool my_nspace = false, my_rank = false;
+
+    /* cb was passed to us from another thread - acquire it */
+    PMIX_ACQUIRE_OBJECT(cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: getnbfn value for proc %s:%d key %s",
@@ -739,11 +745,12 @@ request:
         rc = PMIX_ERROR;
         goto respond;
     }
-
+    /* we made a lot of changes to cb, so ensure they get
+     * written out before we return */
+    PMIX_POST_OBJECT(cb);
     return;
 
-respond:
-
+  respond:
     /* if a callback was provided, execute it */
     if (NULL != cb->value_cbfunc) {
         if (NULL != val)  {

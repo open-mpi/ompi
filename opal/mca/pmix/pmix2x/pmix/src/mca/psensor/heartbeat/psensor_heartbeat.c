@@ -150,6 +150,8 @@ static void add_tracker(int sd, short flags, void *cbdata)
 {
     pmix_heartbeat_trkr_t *ft = (pmix_heartbeat_trkr_t*)cbdata;
 
+    PMIX_ACQUIRE_OBJECT(ft);
+
     /* add the tracker to our list */
     pmix_list_append(&mca_psensor_heartbeat_component.trackers, &ft->super);
 
@@ -203,6 +205,7 @@ static pmix_status_t heartbeat_start(pmix_peer_t *requestor, pmix_status_t error
     /* need to push into our event base to add this to our trackers */
     pmix_event_assign(&ft->cdev, pmix_psensor_base.evbase, -1,
                       EV_WRITE, add_tracker, ft);
+    PMIX_POST_OBJECT(ft);
     pmix_event_active(&ft->cdev, EV_WRITE, 1);
 
     return PMIX_SUCCESS;
@@ -212,6 +215,8 @@ static void del_tracker(int sd, short flags, void *cbdata)
 {
     heartbeat_caddy_t *cd = (heartbeat_caddy_t*)cbdata;
     pmix_heartbeat_trkr_t *ft, *ftnext;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     /* remove the tracker from our list */
     PMIX_LIST_FOREACH_SAFE(ft, ftnext, &mca_psensor_heartbeat_component.trackers, pmix_heartbeat_trkr_t) {
@@ -239,6 +244,7 @@ static pmix_status_t heartbeat_stop(pmix_peer_t *requestor, char *id)
     /* need to push into our event base to add this to our trackers */
     pmix_event_assign(&cd->ev, pmix_psensor_base.evbase, -1,
                       EV_WRITE, del_tracker, cd);
+    PMIX_POST_OBJECT(cd);
     pmix_event_active(&cd->ev, EV_WRITE, 1);
 
     return PMIX_SUCCESS;
@@ -260,6 +266,8 @@ static void check_heartbeat(int fd, short dummy, void *cbdata)
     pmix_heartbeat_trkr_t *ft = (pmix_heartbeat_trkr_t*)cbdata;
     pmix_status_t rc;
     pmix_proc_t source;
+
+    PMIX_ACQUIRE_OBJECT(ft);
 
     PMIX_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
                          "[%s:%d] sensor:check_heartbeat for proc %s:%d",
@@ -301,6 +309,8 @@ static void add_beat(int sd, short args, void *cbdata)
     pmix_psensor_beat_t *b = (pmix_psensor_beat_t*)cbdata;
     pmix_heartbeat_trkr_t *ft;
 
+    PMIX_ACQUIRE_OBJECT(b);
+
     /* find this peer in our trackers */
     PMIX_LIST_FOREACH(ft, &mca_psensor_heartbeat_component.trackers, pmix_heartbeat_trkr_t) {
         if (ft->requestor == b->peer) {
@@ -326,5 +336,6 @@ void pmix_psensor_heartbeat_recv_beats(struct pmix_peer_t *peer,
     /* shift this to our thread for processing */
     pmix_event_assign(&b->ev, pmix_psensor_base.evbase, -1,
                       EV_WRITE, add_beat, b);
+    PMIX_POST_OBJECT(b);
     pmix_event_active(&b->ev, EV_WRITE, 1);
 }

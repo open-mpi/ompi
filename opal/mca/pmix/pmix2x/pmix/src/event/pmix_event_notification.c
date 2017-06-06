@@ -254,6 +254,9 @@ static void progress_local_event_hdlr(pmix_status_t status,
                                       pmix_op_cbfunc_t cbfunc, void *thiscbdata,
                                       void *notification_cbdata)
 {
+    /* this may be in the host's thread, so we need to threadshift it
+     * before accessing our internal data */
+
     pmix_event_chain_t *chain = (pmix_event_chain_t*)notification_cbdata;
     size_t n, nsave, cnt;
     pmix_info_t *newinfo;
@@ -768,6 +771,9 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     size_t n;
     bool matched, holdcd;
 
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_server: _notify_error notifying clients of error %s",
                         PMIx_Error_string(cd->status));
@@ -1055,6 +1061,9 @@ static bool check_range(pmix_range_trkr_t *rng,
 void pmix_event_timeout_cb(int fd, short flags, void *arg)
 {
     pmix_event_chain_t *ch = (pmix_event_chain_t*)arg;
+
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(ch);
 
     ch->timer_active = false;
 
