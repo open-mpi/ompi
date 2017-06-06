@@ -335,13 +335,15 @@ static pmix_status_t send_recv(struct pmix_peer_t *peer,
                                void *cbdata)
 {
     pmix_ptl_sr_t *ms;
+    pmix_peer_t *pr = (pmix_peer_t*)peer;
 
     pmix_output_verbose(5, pmix_globals.debug_output,
                         "[%s:%d] post send to server",
                         __FILE__, __LINE__);
 
     ms = PMIX_NEW(pmix_ptl_sr_t);
-    ms->peer = peer;
+    PMIX_RETAIN(pr);
+    ms->peer = pr;
     ms->bfr = bfr;
     ms->cbfunc = cbfunc;
     ms->cbdata = cbdata;
@@ -363,7 +365,7 @@ static pmix_status_t send_oneway(struct pmix_peer_t *peer,
      * peer's send queue */
     q = PMIX_NEW(pmix_ptl_queue_t);
     PMIX_RETAIN(pr);
-    q->peer = peer;
+    q->peer = pr;
     q->buf = bfr;
     q->tag = tag;
     pmix_event_assign(&q->ev, pmix_globals.evbase, -1,
