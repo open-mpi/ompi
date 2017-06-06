@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -207,7 +207,8 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         NULL != comp_attrib) {
         comps = opal_argv_split(comp_attrib, ',');
         for (i=0; NULL != comps[i]; i++) {
-            if (0 == strcasecmp(comps[i], "Ethernet")) {
+            if (0 == strcasecmp(comps[i], "Ethernet") ||
+                0 == strcasecmp(comps[i], "oob")) {
                 /* we are a candidate */
                 opal_argv_free(comps);
                 md = make_module();
@@ -254,7 +255,14 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
         opal_argv_free(comps);
         free(comp_attrib);
         return NULL;
+    }
 
+    /* if they didn't specify a protocol or a transport, then we can be considered */
+    if (!orte_get_attribute(attributes, ORTE_RML_TRANSPORT_TYPE, NULL, OPAL_STRING) ||
+        !orte_get_attribute(attributes, ORTE_RML_PROTOCOL_TYPE, NULL, OPAL_STRING)) {
+        md = make_module();
+        md->routed = orte_routed.assign_module(NULL);
+        return md;
     }
 
     /* if we get here, we cannot handle it */

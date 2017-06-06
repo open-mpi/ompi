@@ -136,8 +136,16 @@ static void hnp_abort(int error_code, char *fmt, ...)
     char *outmsg = NULL;
     orte_timer_t *timer;
 
+    /* only do this once */
+    if (orte_abnormal_term_ordered) {
+        return;
+    }
+
     /* ensure we exit with non-zero status */
     ORTE_UPDATE_EXIT_STATUS(error_code);
+
+    /* set the aborting flag */
+    orte_abnormal_term_ordered = true;
 
     /* If there was a message, construct it */
     va_start(arglist, fmt);
