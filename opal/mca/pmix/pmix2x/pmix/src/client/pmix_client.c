@@ -7,7 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -567,6 +567,9 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         PMIX_WAIT_FOR_COMPLETION(active);
         pmix_output_verbose(2, pmix_globals.debug_output,
                              "pmix:client finalize sync received");
+    }
+    else {
+        pmix_mutex_unlock(&pmix_client_bootstrap_mutex);
     }
 
     if (!pmix_globals.external_evbase) {
