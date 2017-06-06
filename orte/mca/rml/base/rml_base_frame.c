@@ -29,6 +29,7 @@
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/rml/base/base.h"
 
@@ -87,8 +88,10 @@ static void cleanup(int sd, short args, void *cbdata)
 {
     volatile bool *active = (volatile bool*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(active);
     OPAL_LIST_DESTRUCT(&orte_rml_base.posted_recvs);
     if (NULL != active) {
+        ORTE_POST_OBJECT(active);
         *active = false;
     }
 }
@@ -128,6 +131,7 @@ static int orte_rml_base_close(void)
         opal_event_set(orte_event_base, &ev, -1,
                        OPAL_EV_WRITE, cleanup, (void*)&active);
         opal_event_set_priority(&ev, ORTE_ERROR_PRI);
+        ORTE_POST_OBJECT(ev);
         opal_event_active(&ev, OPAL_EV_WRITE, 1);
         ORTE_WAIT_FOR_COMPLETION(active);
      } else {
@@ -243,12 +247,14 @@ void orte_rml_recv_callback(int status, orte_process_name_t* sender,
 {
     orte_rml_recv_cb_t *blob = (orte_rml_recv_cb_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(blob);
     /* transfer the sender */
     blob->name.jobid = sender->jobid;
     blob->name.vpid = sender->vpid;
     /* just copy the payload to the buf */
     opal_dss.copy_payload(&blob->data, buffer);
     /* flag as complete */
+    ORTE_POST_OBJECT(blob);
     blob->active = false;
 }
 

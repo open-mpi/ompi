@@ -36,6 +36,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/mca/state/state.h"
 
 #include "orte/mca/rmaps/base/base.h"
@@ -45,7 +46,7 @@
 void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
+    orte_job_t *jdata;
     orte_node_t *node;
     int rc, i, ppx = 0;
     bool did_map, given, pernode = false;
@@ -53,6 +54,9 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     orte_job_t *parent;
     orte_vpid_t nprocs;
     orte_app_context_t *app;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = caddy->jdata;
 
     jdata->state = ORTE_JOB_STATE_MAP;
 

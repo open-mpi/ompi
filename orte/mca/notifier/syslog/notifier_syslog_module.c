@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,11 +48,11 @@ static void myreport(orte_notifier_request_t *req);
 
 /* Module def */
 orte_notifier_base_module_t orte_notifier_syslog_module = {
-    init,
-    finalize,
-    mylog,
-    myevent,
-    myreport
+    .init = init,
+    .finalize = finalize,
+    .log = mylog,
+    .event = myevent,
+    .report = myreport
 };
 
 
@@ -130,4 +130,3 @@ static void myreport(orte_notifier_request_t *req)
            orte_job_state_to_str(req->state),
            (NULL == req->msg) ? "<N/A>" : req->msg);
 }
-

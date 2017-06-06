@@ -156,6 +156,7 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
         _cd->cbdata = (cd);                                 \
         opal_event_assign(&((_cd)->ev), opal_pmix_base.evbase,   \
                           -1, EV_WRITE, (fn), (_cd));            \
+        OPAL_POST_OBJECT(_cd);                              \
         opal_event_active(&((_cd)->ev), EV_WRITE, 1);            \
     } while(0)
 
@@ -170,6 +171,7 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
         _cd->cbdata = (cd);                                 \
         opal_event_assign(&((_cd)->ev), opal_pmix_base.evbase,  \
                           -1, EV_WRITE, (fn), (_cd));           \
+        OPAL_POST_OBJECT(_cd);                              \
         opal_event_active(&((_cd)->ev), EV_WRITE, 1);           \
     } while(0)
 
@@ -185,6 +187,7 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
         _cd->cbdata = (cd);                                     \
         opal_event_assign(&((_cd)->ev), opal_pmix_base.evbase,  \
                      -1, EV_WRITE, (fn), (_cd));                \
+        OPAL_POST_OBJECT(_cd);                                  \
         opal_event_active(&((_cd)->ev), EV_WRITE, 1);           \
     } while(0)
 

@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -53,17 +53,11 @@ orte_errmgr_base_t orte_errmgr_base = {{{0}}};
 
 /* Public module provides a wrapper around previous functions */
 orte_errmgr_base_module_t orte_errmgr_default_fns = {
-    NULL, /* init     */
-    NULL, /* finalize */
-    orte_errmgr_base_log,
-    orte_errmgr_base_abort,
-    orte_errmgr_base_abort_peers,
-    NULL, /* predicted_fault     */
-    NULL, /* suggest_map_targets */
-    NULL, /* ft_event            */
-    orte_errmgr_base_register_migration_warning,
-    orte_errmgr_base_register_error_callback,
-    orte_errmgr_base_execute_error_callbacks
+    .init = NULL, /* init     */
+    .finalize = NULL, /* finalize */
+    .logfn = orte_errmgr_base_log,
+    .abort = orte_errmgr_base_abort,
+    .abort_peers = orte_errmgr_base_abort_peers
 };
 /* NOTE: ABSOLUTELY MUST initialize this
  * struct to include the log function as it
@@ -71,16 +65,7 @@ orte_errmgr_base_module_t orte_errmgr_default_fns = {
  * opened yet due to error
  */
 orte_errmgr_base_module_t orte_errmgr = {
-    NULL,
-    NULL,
-    orte_errmgr_base_log,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    .logfn = orte_errmgr_base_log
 };
 
 static int orte_errmgr_base_close(void)
@@ -118,7 +103,3 @@ static int orte_errmgr_base_open(mca_base_open_flag_t flags)
 MCA_BASE_FRAMEWORK_DECLARE(orte, errmgr, "ORTE Error Manager", NULL,
                            orte_errmgr_base_open, orte_errmgr_base_close,
                            mca_errmgr_base_static_components, 0);
-
-OBJ_CLASS_INSTANCE(orte_errmgr_cback_t,
-                   opal_list_item_t,
-                   NULL, NULL);

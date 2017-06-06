@@ -87,6 +87,7 @@
 #include "orte/mca/state/state.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -198,6 +199,7 @@ int orterun(int argc, char *argv[])
     while (orte_event_base_active && launchst.active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
+    ORTE_ACQUIRE_OBJECT(orte_event_base_active);
     if (orte_debug_flag) {
         opal_output(0, "Job %s has launched",
                    (NULL == launchst.jdata) ? "UNKNOWN" : ORTE_JOBID_PRINT(launchst.jdata->jobid));
@@ -209,6 +211,7 @@ int orterun(int argc, char *argv[])
     while (orte_event_base_active && completest.active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
+    ORTE_ACQUIRE_OBJECT(orte_event_base_active);
 
     if (ORTE_PROC_IS_HNP) {
         /* ensure all local procs are dead */

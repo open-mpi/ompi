@@ -80,6 +80,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -926,6 +927,8 @@ static void process_launch_list(int fd, short args, void *cbdata)
     pid_t pid;
     orte_plm_rsh_caddy_t *caddy;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     while (num_in_progress < mca_plm_rsh_component.num_concurrent) {
         item = opal_list_remove_first(&launch_list);
         if (NULL == item) {
@@ -1020,6 +1023,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
     int port, *portptr;
     orte_namelist_t *child;
     char *rtmod;
+
+    ORTE_ACQUIRE_OBJECT(state);
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
@@ -1285,6 +1290,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:rsh: activating launch event",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    ORTE_POST_OBJECT(state);
     opal_event_active(&launch_event, EV_WRITE, 1);
 
     /* now that we've launched the daemons, let the daemon callback

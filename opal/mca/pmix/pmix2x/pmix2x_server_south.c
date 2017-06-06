@@ -32,6 +32,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress_threads.h"
+#include "opal/threads/threads.h"
 #include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -58,6 +59,7 @@ static size_t errhdler_ref = 0;
         while ((a)) {                           \
             usleep(10);                         \
         }                                       \
+        OPAL_ACQUIRE_OBJECT(a);                 \
     } while (0)
 
 static void errreg_cbfunc (pmix_status_t status,
@@ -66,10 +68,12 @@ static void errreg_cbfunc (pmix_status_t status,
 {
     volatile bool *active = (volatile bool*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(active);
     errhdler_ref = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX server errreg_cbfunc - error handler registered status=%d, reference=%lu",
                          status, (unsigned long)errhandler_ref);
+    OPAL_POST_OBJECT(active);
     *active = false;
 }
 
@@ -77,11 +81,14 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
 {
     pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(op);
+
     if (NULL != op->opcbfunc) {
         op->opcbfunc(pmix2x_convert_rc(status), op->cbdata);
     }
     if (op->active) {
         op->status = status;
+        OPAL_POST_OBJECT(op);
         op->active = false;
     } else {
         OBJ_RELEASE(op);
@@ -92,6 +99,7 @@ static void op2cbfunc(pmix_status_t status, void *cbdata)
 {
     volatile bool *active = (volatile bool*)cbdata;
 
+    OPAL_POST_OBJECT(active);
     *active = false;
 }
 
@@ -165,6 +173,7 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
 static void fincb(pmix_status_t status, void *cbdata)
 {
     volatile bool *active = (volatile bool*)cbdata;
+    OPAL_POST_OBJECT(active);
     *active = false;
 }
 
@@ -210,6 +219,8 @@ static void _reg_nspace(int sd, short args, void *cbdata)
     opal_list_t *pmapinfo;
     opal_pmix2x_jobid_trkr_t *job;
     pmix2x_opcaddy_t op;
+
+    OPAL_ACQUIRE_OBJECT(cd);
 
     /* we must threadshift this request as we might not be in an event
      * and we are going to access framework-global lists/objects */
@@ -301,6 +312,7 @@ int pmix2x_server_register_nspace(opal_jobid_t jobid,
     } else {
         opal_event_assign(&cd->ev, opal_pmix_base.evbase,
                           -1, EV_WRITE, _reg_nspace, cd);
+        OPAL_POST_OBJECT(cd);
         opal_event_active(&cd->ev, EV_WRITE, 1);
     }
 
@@ -311,10 +323,12 @@ static void tdcbfunc(pmix_status_t status, void *cbdata)
 {
     pmix2x_threadshift_t *cd = (pmix2x_threadshift_t*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(cd);
     if (NULL != cd->opcbfunc) {
         cd->opcbfunc(pmix2x_convert_rc(status), cd->cbdata);
     }
     if (cd->active) {
+        OPAL_POST_OBJECT(cd);
         cd->active = false;
     } else {
         OBJ_RELEASE(cd);
@@ -326,6 +340,7 @@ static void _dereg_nspace(int sd, short args, void *cbdata)
     pmix2x_threadshift_t *cd = (pmix2x_threadshift_t*)cbdata;
     opal_pmix2x_jobid_trkr_t *jptr;
 
+    OPAL_ACQUIRE_OBJECT(cd);
     /* if we don't already have it, we can ignore this */
     OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
         if (jptr->jobid == cd->jobid) {
@@ -361,6 +376,7 @@ void pmix2x_server_deregister_nspace(opal_jobid_t jobid,
     } else {
         opal_event_assign(&cd->ev, opal_pmix_base.evbase,
                      -1, EV_WRITE, _dereg_nspace, cd);
+        OPAL_POST_OBJECT(cd);
         opal_event_active(&cd->ev, EV_WRITE, 1);
     }
 }
@@ -397,6 +413,7 @@ static void _dereg_client(int sd, short args, void *cbdata)
     opal_pmix2x_jobid_trkr_t *jptr;
     pmix_proc_t p;
 
+    OPAL_ACQUIRE_OBJECT(cd);
     /* if we don't already have it, we can ignore this */
     OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
         if (jptr->jobid == cd->source->jobid) {
@@ -431,6 +448,7 @@ void pmix2x_server_deregister_client(const opal_process_name_t *proc,
     } else {
         opal_event_assign(&cd->ev, opal_pmix_base.evbase,
                      -1, EV_WRITE, _dereg_client, cd);
+        OPAL_POST_OBJECT(cd);
         opal_event_active(&cd->ev, EV_WRITE, 1);
     }
 }

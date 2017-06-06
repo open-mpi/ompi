@@ -27,6 +27,7 @@
 #endif
 
 #include "opal/hash_string.h"
+#include "opal/threads/threads.h"
 #include "opal/util/argv.h"
 #include "opal/util/proc.h"
 
@@ -44,6 +45,7 @@ static bool initialized = false;
         while ((a)) {                           \
             usleep(10);                         \
         }                                       \
+        OPAL_ACQUIRE_OBJECT(a);                 \
     } while (0)
 
 
@@ -53,11 +55,14 @@ static void errreg_cbfunc (pmix_status_t status,
 {
     opal_pmix2x_event_t *event = (opal_pmix2x_event_t*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(event);
+
     event->index = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%lu",
                         status, (unsigned long)errhandler_ref);
     regactive = false;
+    OPAL_POST_OBJECT(regactive);
 }
 
 int pmix2x_client_init(opal_list_t *ilist)
@@ -272,6 +277,7 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
 {
     pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(op);
     if (NULL != op->opcbfunc) {
         op->opcbfunc(pmix2x_convert_rc(status), op->cbdata);
     }
@@ -521,6 +527,8 @@ static void val_cbfunc(pmix_status_t status,
     int rc;
     opal_value_t val, *v=NULL;
 
+    OPAL_ACQUIRE_OBJECT(op);
+
     rc = pmix2x_convert_opalrc(status);
     if (PMIX_SUCCESS == status && NULL != kv) {
         rc = pmix2x_value_unload(&val, kv);
@@ -768,6 +776,8 @@ static void lk_cbfunc(pmix_status_t status,
     size_t n;
     opal_pmix2x_jobid_trkr_t *job, *jptr;
 
+    OPAL_ACQUIRE_OBJECT(op);
+
     /* this is in the PMIx local thread - need to threadshift to
      * our own thread as we will be accessing framework-global
      * lists and objects */
@@ -817,7 +827,7 @@ static void lk_cbfunc(pmix_status_t status,
         }
         r = &results;
     }
-release:
+  release:
     /* execute the callback */
     op->lkcbfunc(rc, r, op->cbdata);
 
@@ -993,6 +1003,8 @@ static void spcbfunc(pmix_status_t status,
     int rc;
     opal_jobid_t jobid=OPAL_JOBID_INVALID;
     opal_pmix2x_jobid_trkr_t *job;
+
+    OPAL_ACQUIRE_OBJECT(op);
 
     /* this is in the PMIx local thread - need to threadshift to
      * our own thread as we will be accessing framework-global

@@ -29,6 +29,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/rml/base/base.h"
@@ -38,6 +39,8 @@
 static void send_self_exe(int fd, short args, void* data)
 {
     orte_self_send_xfer_t *xfer = (orte_self_send_xfer_t*)data;
+
+    ORTE_ACQUIRE_OBJECT(xfer);
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "%s rml_send_to_self callback executing for tag %d",
@@ -130,9 +133,7 @@ int orte_rml_oob_send_nb(struct orte_rml_base_module_t *mod,
         xfer->tag = tag;
         xfer->cbdata = cbdata;
         /* setup the event for the send callback */
-        opal_event_set(orte_event_base, &xfer->ev, -1, OPAL_EV_WRITE, send_self_exe, xfer);
-        opal_event_set_priority(&xfer->ev, ORTE_MSG_PRI);
-        opal_event_active(&xfer->ev, OPAL_EV_WRITE, 1);
+        ORTE_THREADSHIFT(xfer, orte_event_base, send_self_exe, ORTE_MSG_PRI);
 
         /* copy the message for the recv */
         rcv = OBJ_NEW(orte_rml_recv_t);
@@ -235,9 +236,7 @@ int orte_rml_oob_send_buffer_nb(struct orte_rml_base_module_t *mod,
         xfer->tag = tag;
         xfer->cbdata = cbdata;
         /* setup the event for the send callback */
-        opal_event_set(orte_event_base, &xfer->ev, -1, OPAL_EV_WRITE, send_self_exe, xfer);
-        opal_event_set_priority(&xfer->ev, ORTE_MSG_PRI);
-        opal_event_active(&xfer->ev, OPAL_EV_WRITE, 1);
+        ORTE_THREADSHIFT(xfer, orte_event_base, send_self_exe, ORTE_MSG_PRI);
 
         /* copy the message for the recv */
         rcv = OBJ_NEW(orte_rml_recv_t);

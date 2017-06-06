@@ -36,6 +36,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/base/state_private.h"
@@ -78,9 +79,7 @@ void orte_state_base_activate_job_state(orte_job_t *jdata,
                 caddy->job_state = state;
                 OBJ_RETAIN(jdata);
             }
-            opal_event_set(orte_event_base, &caddy->ev, -1, OPAL_EV_WRITE, s->cbfunc, caddy);
-            opal_event_set_priority(&caddy->ev, s->priority);
-            opal_event_active(&caddy->ev, OPAL_EV_WRITE, 1);
+            ORTE_THREADSHIFT(caddy, orte_event_base, s->cbfunc, s->priority);
             return;
         }
     }
@@ -107,14 +106,12 @@ void orte_state_base_activate_job_state(orte_job_t *jdata,
         caddy->job_state = state;
         OBJ_RETAIN(jdata);
     }
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
-                                 "%s ACTIVATING JOB %s STATE %s PRI %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid),
-                                 orte_job_state_to_str(state), s->priority));
-    opal_event_set(orte_event_base, &caddy->ev, -1, OPAL_EV_WRITE, s->cbfunc, caddy);
-    opal_event_set_priority(&caddy->ev, s->priority);
-    opal_event_active(&caddy->ev, OPAL_EV_WRITE, 1);
+    OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
+                         "%s ACTIVATING JOB %s STATE %s PRI %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid),
+                         orte_job_state_to_str(state), s->priority));
+    ORTE_THREADSHIFT(caddy, orte_event_base, s->cbfunc, s->priority);
 }
 
 
@@ -262,9 +259,7 @@ void orte_state_base_activate_proc_state(orte_process_name_t *proc,
             caddy = OBJ_NEW(orte_state_caddy_t);
             caddy->name = *proc;
             caddy->proc_state = state;
-            opal_event_set(orte_event_base, &caddy->ev, -1, OPAL_EV_WRITE, s->cbfunc, caddy);
-            opal_event_set_priority(&caddy->ev, s->priority);
-            opal_event_active(&caddy->ev, OPAL_EV_WRITE, 1);
+            ORTE_THREADSHIFT(caddy, orte_event_base, s->cbfunc, s->priority);
             return;
         }
     }
@@ -288,14 +283,12 @@ void orte_state_base_activate_proc_state(orte_process_name_t *proc,
     caddy = OBJ_NEW(orte_state_caddy_t);
     caddy->name = *proc;
     caddy->proc_state = state;
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
-                                 "%s ACTIVATING PROC %s STATE %s PRI %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(proc),
-                                 orte_proc_state_to_str(state), s->priority));
-    opal_event_set(orte_event_base, &caddy->ev, -1, OPAL_EV_WRITE, s->cbfunc, caddy);
-    opal_event_set_priority(&caddy->ev, s->priority);
-    opal_event_active(&caddy->ev, OPAL_EV_WRITE, 1);
+    OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
+                         "%s ACTIVATING PROC %s STATE %s PRI %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         orte_proc_state_to_str(state), s->priority));
+     ORTE_THREADSHIFT(caddy, orte_event_base, s->cbfunc, s->priority);
 }
 
 int orte_state_base_add_proc_state(orte_proc_state_t state,
@@ -443,7 +436,10 @@ void orte_state_base_local_launch_complete(int fd, short argc, void *cbdata)
 void orte_state_base_cleanup_job(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
+    orte_job_t *jdata;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = caddy->jdata;
 
     OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                          "%s state:base:cleanup on job %s",
@@ -460,9 +456,12 @@ void orte_state_base_cleanup_job(int fd, short argc, void *cbdata)
 void orte_state_base_report_progress(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
+    orte_job_t *jdata;
 
-    opal_output(orte_clean_output, "App launch reported: %d (out of %d) daemons - %d (out of %d) procs",
+     ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = caddy->jdata;
+
+   opal_output(orte_clean_output, "App launch reported: %d (out of %d) daemons - %d (out of %d) procs",
                 (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,
                 (int)jdata->num_launched, (int)jdata->num_procs);
     OBJ_RELEASE(caddy);
@@ -659,13 +658,17 @@ static void _send_notification(int status,
 void orte_state_base_track_procs(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_process_name_t *proc = &caddy->name;
-    orte_proc_state_t state = caddy->proc_state;
+    orte_process_name_t *proc;
+    orte_proc_state_t state;
     orte_job_t *jdata;
     orte_proc_t *pdata;
     int i;
     char *rtmod;
     orte_process_name_t parent, target, *npptr;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    proc = &caddy->name;
+    state = caddy->proc_state;
 
     opal_output_verbose(5, orte_state_base_framework.framework_output,
                         "%s state:base:track_procs called for proc %s state %s",
@@ -811,8 +814,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
 void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
-
+    orte_job_t *jdata;
     orte_proc_t *proc;
     int i;
     orte_std_cntr_t j;
@@ -826,6 +828,9 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     uint32_t u32;
     void *nptr;
     char *rtmod;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = caddy->jdata;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:base:check_job_complete on job %s",

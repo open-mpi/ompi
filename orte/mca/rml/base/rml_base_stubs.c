@@ -30,6 +30,7 @@
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/rml/base/base.h"
 
@@ -269,11 +270,7 @@ void orte_rml_API_recv_nb(orte_process_name_t* peer,
     req->post->persistent = persistent;
     req->post->cbfunc.iov = cbfunc;
     req->post->cbdata = cbdata;
-    opal_event_set(orte_event_base, &req->ev, -1,
-                   OPAL_EV_WRITE,
-                   orte_rml_base_post_recv, req);
-    opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
-    opal_event_active(&req->ev, OPAL_EV_WRITE, 1);
+    ORTE_THREADSHIFT(req, orte_event_base, orte_rml_base_post_recv, ORTE_MSG_PRI);
 }
 
 /** Receive non-blocking buffer message */
@@ -300,11 +297,7 @@ void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
     req->post->persistent = persistent;
     req->post->cbfunc.buffer = cbfunc;
     req->post->cbdata = cbdata;
-    opal_event_set(orte_event_base, &req->ev, -1,
-                   OPAL_EV_WRITE,
-                   orte_rml_base_post_recv, req);
-    opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
-    opal_event_active(&req->ev, OPAL_EV_WRITE, 1);
+    ORTE_THREADSHIFT(req, orte_event_base, orte_rml_base_post_recv, ORTE_MSG_PRI);
 }
 
 /** Cancel posted non-blocking receive */
@@ -316,6 +309,8 @@ void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
                          "%s rml_recv_cancel for peer %s tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer), tag);
+
+    ORTE_ACQUIRE_OBJECT(orte_event_base_active);
     if (!orte_event_base_active) {
         /* no event will be processed any more, so simply return. */
         return;
@@ -328,11 +323,7 @@ void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
     req->post->peer.jobid = peer->jobid;
     req->post->peer.vpid = peer->vpid;
     req->post->tag = tag;
-    opal_event_set(orte_event_base, &req->ev, -1,
-                   OPAL_EV_WRITE,
-                   orte_rml_base_post_recv, req);
-    opal_event_set_priority(&req->ev, ORTE_MSG_PRI);
-    opal_event_active(&req->ev, OPAL_EV_WRITE, 1);
+    ORTE_THREADSHIFT(req, orte_event_base, orte_rml_base_post_recv, ORTE_MSG_PRI);
 }
 
 /** Purge information */

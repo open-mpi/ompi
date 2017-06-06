@@ -475,6 +475,7 @@ orte/test/system/opal_db
 orte/test/system/ulfm
 orte/test/system/pmixtool
 orte/test/system/orte_notify
+orte/test/system/threads
 
 orte/tools/orte-checkpoint/orte-checkpoint
 orte/tools/orte-checkpoint/orte-checkpoint.1

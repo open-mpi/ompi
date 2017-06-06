@@ -68,6 +68,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "pmix_server.h"
@@ -350,6 +351,8 @@ static void _mdxresp(int sd, short args, void *cbdata)
     int rc;
     opal_buffer_t *reply;
 
+    ORTE_ACQUIRE_OBJECT(req);
+
     /* check us out of the hotel */
     opal_hotel_checkout(&orte_pmix_server_globals.reqs, req->room_num);
 
@@ -399,6 +402,8 @@ static void modex_resp(int status,
     pmix_server_req_t *req = (pmix_server_req_t*)cbdata;
     opal_buffer_t xfer;
 
+    ORTE_ACQUIRE_OBJECT(req);
+
     req->status = status;
     /* we need to preserve the data as the caller
      * will free it upon our return */
@@ -413,6 +418,7 @@ static void modex_resp(int status,
     opal_event_set(orte_event_base, &(req->ev),
                    -1, OPAL_EV_WRITE, _mdxresp, req);
     opal_event_set_priority(&(req->ev), ORTE_MSG_PRI);
+    ORTE_POST_OBJECT(req);
     opal_event_active(&(req->ev), OPAL_EV_WRITE, 1);
 }
 static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,

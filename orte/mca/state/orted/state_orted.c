@@ -27,6 +27,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/threads.h"
 #include "orte/orted/pmix/pmix_server_internal.h"
 #include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_quit.h"
@@ -165,6 +166,8 @@ static void track_jobs(int fd, short argc, void *cbdata)
     orte_proc_t *child;
     orte_vpid_t null=ORTE_VPID_INVALID;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     if (ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE == caddy->job_state) {
         OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                             "%s state:orted:track_jobs sending local launch complete for job %s",
@@ -251,8 +254,8 @@ static void track_jobs(int fd, short argc, void *cbdata)
 static void track_procs(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_process_name_t *proc = &caddy->name;
-    orte_proc_state_t state = caddy->proc_state;
+    orte_process_name_t *proc;
+    orte_proc_state_t state;
     orte_job_t *jdata;
     orte_proc_t *pdata, *pptr;
     opal_buffer_t *alert;
@@ -263,6 +266,10 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_job_map_t *map;
     orte_node_t *node;
     orte_process_name_t target;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    proc = &caddy->name;
+    state = caddy->proc_state;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:orted:track_procs called for proc %s state %s",

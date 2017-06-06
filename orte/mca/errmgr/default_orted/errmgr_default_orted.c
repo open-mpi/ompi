@@ -33,6 +33,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/rml/rml.h"
@@ -60,32 +61,16 @@
 static int init(void);
 static int finalize(void);
 static void orted_abort(int error_code, char *fmt, ...);
-static int predicted_fault(opal_list_t *proc_list,
-                           opal_list_t *node_list,
-                           opal_list_t *suggested_map);
-
-static int suggest_map_targets(orte_proc_t *proc,
-                               orte_node_t *oldnode,
-                               opal_list_t *node_list);
-
-static int ft_event(int state);
-
 
 /******************
  * default_orted module
  ******************/
 orte_errmgr_base_module_t orte_errmgr_default_orted_module = {
-    init,
-    finalize,
-    orte_errmgr_base_log,
-    orted_abort,
-    orte_errmgr_base_abort_peers,
-    predicted_fault,
-    suggest_map_targets,
-    ft_event,
-    orte_errmgr_base_register_migration_warning,
-    NULL,
-    orte_errmgr_base_execute_error_callbacks
+    .init = init,
+    .finalize = finalize,
+    .logfn = orte_errmgr_base_log,
+    .abort = orted_abort,
+    .abort_peers = orte_errmgr_base_abort_peers
 };
 
 /* Local functions */
@@ -125,6 +110,7 @@ static int finalize(void)
 static void wakeup(int sd, short args, void *cbdata)
 {
     /* nothing more we can do */
+    ORTE_ACQUIRE_OBJECT(cbdata);
     orte_quit(0, 0, NULL);
 }
 
@@ -231,6 +217,7 @@ static void orted_abort(int error_code, char *fmt, ...)
     timer->tv.tv_usec = 0;
     opal_event_evtimer_set(orte_event_base, timer->ev, wakeup, NULL);
     opal_event_set_priority(timer->ev, ORTE_ERROR_PRI);
+    ORTE_POST_OBJECT(timer);
     opal_event_evtimer_add(timer->ev, &timer->tv);
 
 }
@@ -243,6 +230,8 @@ static void job_errors(int fd, short args, void *cbdata)
     int rc;
     orte_plm_cmd_flag_t cmd;
     opal_buffer_t *alert;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /*
      * if orte is trying to shutdown, just let it
@@ -329,6 +318,8 @@ static void proc_errors(int fd, short args, void *cbdata)
     orte_plm_cmd_flag_t cmd;
     int rc=ORTE_SUCCESS;
     int i;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_orted:proc_errors process %s error state %s",
@@ -720,29 +711,9 @@ static void proc_errors(int fd, short args, void *cbdata)
         return;
     }
 
- cleanup:
+  cleanup:
     OBJ_RELEASE(caddy);
 }
-
-static int predicted_fault(opal_list_t *proc_list,
-                           opal_list_t *node_list,
-                           opal_list_t *suggested_map)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int suggest_map_targets(orte_proc_t *proc,
-                               orte_node_t *oldnode,
-                               opal_list_t *node_list)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int ft_event(int state)
-{
-    return ORTE_SUCCESS;
-}
-
 
 /*****************
  * Local Functions

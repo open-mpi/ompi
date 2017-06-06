@@ -28,7 +28,7 @@
 #include "opal/class/opal_list.h"
 
 #include "orte/mca/rml/base/base.h"
-
+#include "orte/util/threads.h"
 #include "oob_tcp.h"
 #include "oob_tcp_hdr.h"
 
@@ -82,10 +82,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
     do {                                                                \
         (s)->peer = (struct mca_oob_tcp_peer_t*)(p);                    \
         (s)->activate = (f);                                            \
-        opal_event_set((p)->ev_base, &(s)->ev, -1,                      \
-                       OPAL_EV_WRITE, mca_oob_tcp_queue_msg, (s));      \
-        opal_event_set_priority(&(s)->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&(s)->ev, OPAL_EV_WRITE, 1);                  \
+        ORTE_THREADSHIFT((s), (p)->ev_base,                             \
+                         mca_oob_tcp_queue_msg, ORTE_MSG_PRI);          \
     } while(0)
 
 /* queue a message to be sent by one of our modules - must
@@ -134,7 +132,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         _s->sdbytes = sizeof(mca_oob_tcp_hdr_t);                       \
         /* add to the msg queue for this peer */                        \
         MCA_OOB_TCP_QUEUE_MSG((p), _s, true);                          \
-    }while(0);
+    } while(0)
 
 /* queue a message to be sent by one of our modules upon completing
  * the connection process - must provide the following params:
@@ -182,7 +180,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         _s->sdbytes = sizeof(mca_oob_tcp_hdr_t);                       \
         /* add to the msg queue for this peer */                        \
         MCA_OOB_TCP_QUEUE_MSG((p), _s, false);                         \
-    }while(0);
+    } while(0)
 
 /* queue a message for relay by one of our modules - must
  * provide the following params:
@@ -217,7 +215,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         _s->sdbytes = sizeof(mca_oob_tcp_hdr_t);                       \
         /* add to the msg queue for this peer */                        \
         MCA_OOB_TCP_QUEUE_MSG((p), _s, true);                          \
-    }while(0);
+    } while(0)
 
 /* State machine for processing message */
 typedef struct {
@@ -237,10 +235,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_op_t);
                             ORTE_NAME_PRINT(&((ms)->dst)));             \
         mop = OBJ_NEW(mca_oob_tcp_msg_op_t);                            \
         mop->msg = (ms);                                                \
-        opal_event_set((ms)->peer->ev_base, &mop->ev, -1,               \
-                       OPAL_EV_WRITE, (cbfunc), mop);                   \
-        opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&mop->ev, OPAL_EV_WRITE, 1);                  \
+        ORTE_THREADSHIFT(mop, (ms)->peer->ev_base,                      \
+                         (cbfunc), ORTE_MSG_PRI);                       \
     } while(0);
 
 typedef struct {
@@ -285,11 +281,9 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
         mop->hop.jobid = (h)->jobid;                                    \
         mop->hop.vpid = (h)->vpid;                                      \
         /* this goes to the OOB framework, so use that event base */    \
-        opal_event_set(orte_oob_base.ev_base, &mop->ev, -1,             \
-                       OPAL_EV_WRITE, (cbfunc), mop);                   \
-        opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&mop->ev, OPAL_EV_WRITE, 1);                  \
-    } while(0);
+        ORTE_THREADSHIFT(mop, orte_oob_base.ev_base,                    \
+                         (cbfunc), ORTE_MSG_PRI);                       \
+    } while(0)
 
 #define ORTE_ACTIVATE_TCP_NO_ROUTE(r, h, c)                             \
     do {                                                                \
@@ -305,10 +299,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
         mop->hop.vpid = (h)->vpid;                                      \
         /* this goes to the component, so use the framework             \
          * event base */                                                \
-        opal_event_set(orte_oob_base.ev_base, &mop->ev, -1,             \
-                       OPAL_EV_WRITE, (c), mop);                        \
-        opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&mop->ev, OPAL_EV_WRITE, 1);                  \
-    } while(0);
+        ORTE_THREADSHIFT(mop, orte_oob_base.ev_base,                    \
+                         (c), ORTE_MSG_PRI);                            \
+    } while(0)
 
 #endif /* _MCA_OOB_TCP_SENDRECV_H_ */
