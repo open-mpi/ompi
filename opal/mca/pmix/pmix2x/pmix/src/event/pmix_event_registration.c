@@ -344,6 +344,9 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     pmix_notify_caddy_t *ncd;
     pmix_event_chain_t *chain;
 
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: register event_hdlr with %d infos", (int)cd->ninfo);
 
@@ -774,6 +777,9 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
     pmix_status_t wildcard = PMIX_MAX_ERR_CONSTANT;
     size_t n;
     pmix_active_code_t *active;
+
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cd);
 
     /* if I am not the server, then I need to notify the server
      * to remove my registration */

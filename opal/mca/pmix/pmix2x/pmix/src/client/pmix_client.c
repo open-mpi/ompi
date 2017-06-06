@@ -88,6 +88,7 @@ static const char pmix_version_string[] = PMIX_VERSION;
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
     pmix_event_chain_t *chain = (pmix_event_chain_t*)cbdata;
+    PMIX_ACQUIRE_OBJECT(chain);
     PMIX_RELEASE(chain);
 }
 
@@ -178,7 +179,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client wait_cbfunc received");
-
+    PMIX_POST_OBJECT(active);
     *active = false;
 }
 
@@ -197,6 +198,7 @@ static void job_data(struct pmix_peer_t *pr,
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &nspace, &cnt, PMIX_STRING))) {
         PMIX_ERROR_LOG(rc);
         cb->status = PMIX_ERROR;
+        PMIX_POST_OBJECT(cb);
         cb->active = false;
         return;
     }
@@ -208,6 +210,7 @@ static void job_data(struct pmix_peer_t *pr,
     pmix_job_data_htable_store(pmix_globals.myid.nspace, buf);
 #endif
     cb->status = PMIX_SUCCESS;
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -235,6 +238,7 @@ static void evhandler_reg_callbk(pmix_status_t status,
                                  void *cbdata)
 {
     volatile int *active = (volatile int*)cbdata;
+    PMIX_POST_OBJECT(active);
     *active = status;
 }
 
@@ -680,6 +684,9 @@ static void _putfn(int sd, short args, void *cbdata)
     uint8_t *tmp;
     size_t len;
 
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
+
     /* no need to push info that starts with "pmix" as that is
      * info we would have been provided at startup */
     if (0 == strncmp(cb->key, "pmix", 4)) {
@@ -757,6 +764,8 @@ static void _putfn(int sd, short args, void *cbdata)
         PMIX_RELEASE(kv);  // maintain accounting
     }
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -801,6 +810,9 @@ static void _commitfn(int sd, short args, void *cbdata)
     pmix_scope_t scope;
     pmix_buffer_t *msgout;
     pmix_cmd_t cmd=PMIX_COMMIT_CMD;
+
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
 
     msgout = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
@@ -850,6 +862,8 @@ static void _commitfn(int sd, short args, void *cbdata)
 
   done:
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
  }
 
@@ -900,6 +914,9 @@ static void _peersfn(int sd, short args, void *cbdata)
     pmix_nrec_t *nptr;
 #endif
     size_t i;
+
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
 
     /* cycle across our known nspaces */
     tmp = NULL;
@@ -955,6 +972,8 @@ static void _peersfn(int sd, short args, void *cbdata)
 
     done:
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -1004,6 +1023,9 @@ static void _nodesfn(int sd, short args, void *cbdata)
     pmix_nspace_t *nsptr;
     pmix_nrec_t *nptr;
 
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
+
     /* cycle across our known nspaces */
     tmp = NULL;
     PMIX_LIST_FOREACH(nsptr, &pmix_globals.nspaces, pmix_nspace_t) {
@@ -1023,6 +1045,8 @@ static void _nodesfn(int sd, short args, void *cbdata)
     }
 
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 

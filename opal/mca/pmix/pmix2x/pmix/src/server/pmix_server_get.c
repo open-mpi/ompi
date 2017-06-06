@@ -63,6 +63,7 @@ extern pmix_server_module_t pmix_host_server;
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
+    volatile bool active;
     pmix_status_t status;
     const char *data;
     size_t ndata;
@@ -597,6 +598,8 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
     pmix_nspace_t *ns, *nptr;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_OBJECT(caddy);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                     "[%s:%d] process dmdx reply from %s:%u",
                     __FILE__, __LINE__,
@@ -709,7 +712,5 @@ static void dmdx_cbfunc(pmix_status_t status,
                         "[%s:%d] queue dmdx reply for %s:%u",
                         __FILE__, __LINE__,
                         caddy->lcd->proc.nspace, caddy->lcd->proc.rank);
-    pmix_event_assign(&caddy->ev, pmix_globals.evbase, -1, EV_WRITE,
-                      _process_dmdx_reply, caddy);
-    pmix_event_active(&caddy->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(caddy, _process_dmdx_reply);
 }

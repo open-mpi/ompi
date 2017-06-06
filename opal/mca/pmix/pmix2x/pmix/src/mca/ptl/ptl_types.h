@@ -145,6 +145,7 @@ PMIX_CLASS_DECLARATION(pmix_ptl_sr_t);
 
 typedef struct {
     pmix_object_t super;
+    volatile bool active;
     pmix_event_t ev;
     struct pmix_peer_t *peer;
     pmix_buffer_t *buf;
@@ -205,6 +206,7 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
                             __FILE__, __LINE__);                        \
         pmix_event_assign(&((ms)->ev), pmix_globals.evbase, -1,         \
                           EV_WRITE, pmix_ptl_base_process_msg, (ms));   \
+        PMIX_POST_OBJECT(ms);                                           \
         pmix_event_active(&((ms)->ev), EV_WRITE, 1);                    \
     } while (0)
 
@@ -245,6 +247,7 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
             /* add it to the queue */                                                   \
             pmix_list_append(&(p)->send_queue, &snd->super);                            \
         }                                                                               \
+        PMIX_POST_OBJECT(snd);                                                          \
         /* ensure the send event is active */                                           \
         if (!(p)->send_ev_active && 0 <= (p)->sd) {                                     \
             pmix_event_add(&(p)->send_event, 0);                                        \

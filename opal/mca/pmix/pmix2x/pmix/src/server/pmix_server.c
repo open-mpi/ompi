@@ -298,6 +298,8 @@ static void _register_nspace(int sd, short args, void *cbdata)
     int32_t cnt;
 #endif
 
+    PMIX_ACQUIRE_OBJECT(caddy);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _register_nspace %s", cd->proc.nspace);
 
@@ -521,6 +523,8 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
     pmix_nspace_t *tmp;
     pmix_status_t rc = PMIX_SUCCESS;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_nspace %s",
                         cd->proc.nspace);
@@ -577,6 +581,8 @@ void pmix_server_execute_collective(int sd, short args, void *cbdata)
     pmix_buffer_t bucket, xfer;
     pmix_rank_info_t *info;
     pmix_value_t *val;
+
+    PMIX_ACQUIRE_OBJECT(tcd);
 
     /* we don't need to check for non-NULL APIs here as
      * that was already done when the tracker was created */
@@ -658,6 +664,8 @@ static void _register_client(int sd, short args, void *cbdata)
     pmix_trkr_caddy_t *tcd;
     bool all_def;
     size_t i;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _register_client for nspace %s rank %d",
@@ -797,6 +805,8 @@ static void _deregister_client(int sd, short args, void *cbdata)
     pmix_rank_info_t *info;
     pmix_nspace_t *nptr, *tmp;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_client for nspace %s rank %d",
                         cd->proc.nspace, cd->proc.rank);
@@ -909,6 +919,8 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     size_t sz = 0;
     pmix_dmdx_remote_t *dcd;
     pmix_status_t rc;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "DMODX LOOKING FOR %s:%d",
@@ -1037,6 +1049,8 @@ static void _store_internal(int sd, short args, void *cbdata)
 {
     pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
     pmix_nspace_t *ns, *nsptr;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     ns = NULL;
     PMIX_LIST_FOREACH(nsptr, &pmix_globals.nspaces, pmix_nspace_t) {
@@ -1453,6 +1467,8 @@ static void _setup_app(int sd, short args, void *cbdata)
     pmix_kval_t *kv;
     size_t n;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     PMIX_CONSTRUCT(&ilist, pmix_list_t);
 
     /* pass to the network libraries */
@@ -1528,6 +1544,8 @@ static void _setup_local_support(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_status_t rc;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     /* pass to the network libraries */
     rc = pmix_pnet.setup_local_network(cd->nspace, cd->info, cd->ninfo);
@@ -1610,6 +1628,8 @@ static void _spcb(int sd, short args, void *cbdata)
     pmix_buffer_t *reply;
     pmix_status_t rc;
     char          *msg;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     /* setup the reply with the returned status */
     reply = PMIX_NEW(pmix_buffer_t);
@@ -1714,6 +1734,8 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt = 1;
     char byte;
+
+    PMIX_ACQUIRE_OBJECT(scd);
 
     /* pass the blobs being returned */
     PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
@@ -1977,6 +1999,8 @@ static void _cnct(int sd, short args, void *cbdata)
     char **nspaces=NULL;
     pmix_nspace_t *nptr;
     pmix_buffer_t *job_info_ptr;
+
+    PMIX_ACQUIRE_OBJECT(scd);
 
     /* setup the reply, starting with the returned status */
     reply = PMIX_NEW(pmix_buffer_t);

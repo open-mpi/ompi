@@ -312,6 +312,9 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
     pmix_ptl_send_t *msg = peer->send_msg;
     pmix_status_t rc;
 
+    /* acquire the object */
+    PMIX_ACQUIRE_OBJECT(peer);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "ptl:base:send_handler SENDING TO PEER %s:%d tag %u with %s msg",
                         peer->info->nptr->nspace, peer->info->rank,
@@ -373,6 +376,9 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
     pmix_ptl_hdr_t hdr;
     size_t nbytes;
     char *ptr;
+
+    /* acquire the object */
+    PMIX_ACQUIRE_OBJECT(peer);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "ptl:base:recv:handler called with peer %s:%d",
@@ -502,6 +508,9 @@ void pmix_ptl_base_send(int sd, short args, void *cbdata)
     pmix_ptl_queue_t *queue = (pmix_ptl_queue_t*)cbdata;
     pmix_ptl_send_t *snd;
 
+    /* acquire the object */
+    PMIX_ACQUIRE_OBJECT(queue);
+
     if (NULL == queue->peer || queue->peer->sd < 0 ||
         NULL == queue->peer->info || NULL == queue->peer->info->nptr) {
         /* this peer has lost connection */
@@ -545,6 +554,9 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
     pmix_ptl_posted_recv_t *req;
     pmix_ptl_send_t *snd;
     uint32_t tag;
+
+    /* acquire the object */
+    PMIX_ACQUIRE_OBJECT(ms);
 
     if (ms->peer->sd < 0) {
         /* this peer's socket has been closed */
@@ -606,6 +618,9 @@ void pmix_ptl_base_process_msg(int fd, short flags, void *cbdata)
     pmix_ptl_recv_t *msg = (pmix_ptl_recv_t*)cbdata;
     pmix_ptl_posted_recv_t *rcv;
     pmix_buffer_t buf;
+
+    /* acquire the object */
+    PMIX_ACQUIRE_OBJECT(msg);
 
     pmix_output_verbose(5, pmix_globals.debug_output,
                         "message received %d bytes for tag %u on socket %d",
