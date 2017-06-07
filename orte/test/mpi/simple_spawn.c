@@ -1,8 +1,7 @@
-#include "orte_config.h"
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/param.h>
 
 #include <mpi.h>
 
@@ -11,7 +10,7 @@ int main(int argc, char* argv[])
     int msg, rc;
     MPI_Comm parent, child;
     int rank, size;
-    char hostname[OPAL_MAXHOSTNAMELEN];
+    char hostname[MAXHOSTNAMELEN];
     pid_t pid;
 
     pid = getpid();
