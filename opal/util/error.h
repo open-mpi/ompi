@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,6 +89,14 @@ typedef int (*opal_err2str_fn_t)(int errnum, const char **str);
 OPAL_DECLSPEC int opal_error_register(const char *project,
                                       int err_base, int err_max,
                                       opal_err2str_fn_t converter);
+
+/**
+ * Print a message and sleep in accordance with the opal_abort_delay value
+ *
+ * This function is (almost) async-thread-safe so it can be called from
+ * a signal handler.
+ */
+OPAL_DECLSPEC void opal_delay_abort(void);
 
 END_C_DECLS
 
