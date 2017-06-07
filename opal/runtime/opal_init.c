@@ -299,6 +299,9 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_FILE_ALERT:
         retval = "File alert - proc may have stalled";
         break;
+    case OPAL_ERR_MODEL_DECLARED:
+        retval = "Model declared";
+        break;
     default:
         retval = "UNRECOGNIZED";
     }
