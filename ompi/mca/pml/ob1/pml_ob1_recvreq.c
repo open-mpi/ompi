@@ -15,7 +15,7 @@
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2012-2017 FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -140,11 +140,104 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     return OMPI_SUCCESS;
 }
 
+static int mca_pml_ob1_recv_request_dump(struct ompi_request_t* request)
+{
+    char crequest[64], cpeer[64], ctag[64];
+    char ccomm[MPI_MAX_OBJECT_NAME+64], ctype[MPI_MAX_OBJECT_NAME+64];
+    mca_pml_base_request_t* basereq = (mca_pml_base_request_t*) request;
+    mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*) request;
+    opal_proc_t* proc = &basereq->req_proc->super;
+    ompi_communicator_t* comm = basereq->req_comm;
+    ompi_datatype_t* type = basereq->req_datatype;
+    FILE* stream = stderr;
+
+    if( MPI_UNDEFINED == request->req_f_to_c_index ) {
+        snprintf(crequest, sizeof(crequest), "(c=%p f=%s)",
+                 (void*) request, "UNDEFINED");
+    } else {
+        snprintf(crequest, sizeof(crequest), "(c=%p f=%d)",
+                 (void*) request, request->req_f_to_c_index);
+    }
+
+    snprintf(ccomm, sizeof(ccomm), "%s (c=%p f=%d id=%" PRIu32 " my_rank=%d)",
+             comm->c_name, (void*) comm, comm->c_f_to_c_index,
+             comm->c_contextid, comm->c_my_rank);
+
+    if( OMPI_ANY_SOURCE == basereq->req_peer ) {
+        snprintf(cpeer, sizeof(cpeer), "%s", "ANY_SOURCE");
+    } else if( NULL == proc ) {
+        snprintf(cpeer, sizeof(cpeer), "%" PRId32, basereq->req_peer);
+    } else {
+        snprintf(cpeer, sizeof(cpeer),
+                 "%" PRId32 " (jobid=%" PRIu32 " vpid=%" PRIu32 ")",
+                 basereq->req_peer,
+                 proc->proc_name.jobid, proc->proc_name.vpid);
+    }
+
+    if( OMPI_ANY_TAG == basereq->req_tag ) {
+        snprintf(ctag, sizeof(ctag), "%s", "ANY_TAG");
+    } else {
+        snprintf(ctag, sizeof(ctag), "%" PRId32, basereq->req_tag);
+    }
+
+    if( 0 == basereq->req_count ) {
+        snprintf(ctype, sizeof(ctype), "N/A");
+    } else {
+        snprintf(ctype, sizeof(ctype), "%s (c=%p f=%" PRId32 " id=%" PRId32 ")",
+                 type->name, (void*) type, type->d_f_to_c_index, type->id);
+    }
+
+    fprintf(stream,
+            "[%s:%05d] "
+            "recv request %s "
+            "from rank=%s on communicator=%s with tag=%s "
+            "for datatype=%s x count=%lu in addr=%p ["
+            "complete=%s state=%d "
+            "type=%d pml_complete=%s free_called=%s sequence=%" PRIu64 " "
+            "bytes_packed=%lu "
+            "send=%p "
+            "pipeline_depth=%lu "
+            "bytes_received=%lu "
+            "bytes_expected=%lu "
+            "rdma_offset=%lu "
+            "send_offset=%lu "
+            "rdma_cnt=%" PRIu32 " "
+            "rdma_idx=%" PRIu32 " "
+            "pending=%s "
+            "ack_sent=%s "
+            "match_received=%s]\n",
+            opal_process_info.nodename, (int) getpid(),
+            crequest,
+            cpeer, ccomm, ctag,
+            ctype, basereq->req_count, basereq->req_addr,
+            (request->req_complete == REQUEST_COMPLETED) ? "y" : "n",
+            (int) request->req_state,
+            (int) basereq->req_type,
+            basereq->req_pml_complete ? "y" : "n",
+            basereq->req_free_called ? "y" : "n",
+            basereq->req_sequence,
+            recvreq->req_recv.req_bytes_packed,
+            recvreq->remote_req_send.pval,
+            recvreq->req_pipeline_depth,
+            recvreq->req_bytes_received,
+            recvreq->req_bytes_expected,
+            recvreq->req_rdma_offset,
+            recvreq->req_send_offset,
+            recvreq->req_rdma_cnt,
+            recvreq->req_rdma_idx,
+            recvreq->req_pending ? "y" : "n",
+            recvreq->req_ack_sent ? "y" : "n",
+            recvreq->req_match_received ? "y" : "n");
+
+    return OMPI_SUCCESS;
+}
+
 static void mca_pml_ob1_recv_request_construct(mca_pml_ob1_recv_request_t* request)
 {
     /* the request type is set by the superclass */
     request->req_recv.req_base.req_ompi.req_free = mca_pml_ob1_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_ob1_recv_request_cancel;
+    request->req_recv.req_base.req_ompi.req_dump = mca_pml_ob1_recv_request_dump;
     request->req_rdma_cnt = 0;
     request->local_handle = NULL;
     OBJ_CONSTRUCT(&request->lock, opal_mutex_t);

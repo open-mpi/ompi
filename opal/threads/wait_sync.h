@@ -8,6 +8,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,9 @@ typedef struct ompi_wait_sync_t {
 #define REQUEST_PENDING        (void*)0L
 #define REQUEST_COMPLETED      (void*)1L
 
-#define SYNC_WAIT(sync)                 (opal_using_threads() ? sync_wait_mt (sync) : sync_wait_st (sync))
+#define SYNC_WAIT(sync, hangup_cbfunc, hangup_cbdata)                        \
+    (opal_using_threads() ? sync_wait_mt(sync, hangup_cbfunc, hangup_cbdata) \
+                          : sync_wait_st(sync, hangup_cbfunc, hangup_cbdata))
 
 /* The loop in release handles a race condition between the signaling
  * thread and the destruction of the condition variable. The signaling
@@ -75,13 +78,14 @@ typedef struct ompi_wait_sync_t {
         (sync)->signaling = false;                    \
 }
 
-OPAL_DECLSPEC int sync_wait_mt(ompi_wait_sync_t *sync);
-static inline int sync_wait_st (ompi_wait_sync_t *sync)
+OPAL_DECLSPEC int sync_wait_mt(ompi_wait_sync_t *sync,
+                               opal_progress_hangup_callback_fn_t hangup_cbfunc,
+                               void *hangup_cbdata);
+static inline int sync_wait_st(ompi_wait_sync_t *sync,
+                               opal_progress_hangup_callback_fn_t hangup_cbfunc,
+                               void *hangup_cbdata)
 {
-    while (sync->count > 0) {
-        opal_progress();
-    }
-
+    OPAL_PROGRESS_WHILE(sync->count > 0, true, hangup_cbfunc, hangup_cbdata);
     return sync->status;
 }
 

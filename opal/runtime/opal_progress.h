@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -32,6 +33,8 @@ BEGIN_C_DECLS
 
 #include "opal_config.h"
 #include "opal/threads/mutex.h"
+#include "opal/runtime/opal_params.h"
+#include "opal/mca/timer/base/base.h"
 
 /**
  * Initialize the progress engine
@@ -197,6 +200,72 @@ static inline bool opal_progress_spin(volatile bool* complete)
     return false;
 }
 
+/**
+ * typedef of callback functions which are called when hang-up is detected
+ */
+typedef void (*opal_progress_hangup_callback_fn_t)(void *cbdata);
+
+/**
+ * How many seconds we wait in opal_progress loop (OPAL_PROGRESS_BLOCK_WHILE)
+ * for the timeout-based hang-up detection feature
+ *
+ * The absolute value is a time in seconds to wait a completion of an operation.
+ * If zero, the timeout-based hang-up detection feature is disabled.
+ * If positive, the process prints a message and aborts on the timeout.
+ * If negative, the process prints a message and continues on the timeout.
+ */
+OPAL_DECLSPEC extern int opal_progress_timeout;
+
+/**
+ * Handle a hang-up situation.
+ */
+OPAL_DECLSPEC
+void opal_progress_handle_hangup(opal_progress_hangup_callback_fn_t cbfunc,
+                                 void *cbdata);
+
+/**
+ * Call the opal_progress function in while-loop
+ *
+ * @param while_condition_ Expression used as the condition of the while-loop.
+ * @param detect_hangup_   Whether to detect hang-up if opal_progress_timeout
+ *                         is nonzero. (bool)
+ * @param hangup_cbfunc_   Function called when when hang-up is detected.
+ *                         (opal_progress_hangup_callback_fn_t)
+ * @param hangup_cbdata_   Data passed as an argument of hangup_cbfunc_.
+ *                         (void *)
+ * @param progress_block_  Content of the while-loop. The opal_progress
+ *                         function should be called in this block.
+ *                         (C block enclosed with '{' and '}')
+ */
+#define OPAL_PROGRESS_BLOCK_WHILE(while_condition_, detect_hangup_,          \
+                                  hangup_cbfunc_, hangup_cbdata_,            \
+                                  progress_block_)                           \
+    if (OPAL_UNLIKELY((detect_hangup_) && opal_progress_timeout != 0)) {     \
+        bool once_detected_ = false;                                         \
+        opal_timer_t limit_ = opal_timer_base_get_usec() +                   \
+                             abs(opal_progress_timeout) * 1000000;           \
+        while (while_condition_) {                                           \
+            progress_block_;                                                 \
+            if (OPAL_UNLIKELY(! once_detected_ &&                            \
+                              opal_timer_base_get_usec() >= limit_)) {       \
+                opal_progress_handle_hangup(hangup_cbfunc_, hangup_cbdata_); \
+                once_detected_ = true;                                       \
+            }                                                                \
+        }                                                                    \
+    } else {                                                                 \
+        while (while_condition_) progress_block_                             \
+    }
+
+/**
+ * Call the opal_progress function in while-loop
+ *
+ * See comment of OPAL_PROGRESS_BLOCK_WHILE.
+ */
+#define OPAL_PROGRESS_WHILE(while_condition_, detect_hangup_,                \
+                            hangup_cbfunc_, hangup_cbdata_)                  \
+    OPAL_PROGRESS_BLOCK_WHILE(while_condition_, detect_hangup_,              \
+                              hangup_cbfunc_, hangup_cbdata_,                \
+                              { opal_progress(); })
 
 END_C_DECLS
 

@@ -13,6 +13,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,17 +66,17 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
             opal_mutex_lock(m);
             return 0;
         }
-        while (c->c_signaled == 0) {
+        OPAL_PROGRESS_BLOCK_WHILE(c->c_signaled == 0, true, NULL, NULL, {
             opal_mutex_unlock(m);
             opal_progress();
             OPAL_CR_TEST_CHECKPOINT_READY_STALL();
             opal_mutex_lock(m);
-        }
+        });
     } else {
-        while (c->c_signaled == 0) {
+        OPAL_PROGRESS_BLOCK_WHILE(c->c_signaled == 0, true, NULL, NULL, {
             opal_progress();
             OPAL_CR_TEST_CHECKPOINT_READY_STALL();
-        }
+        });
     }
 
     c->c_signaled--;

@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,6 +34,9 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/backtrace/backtrace.h"
+#include "opal/util/proc.h"
+#include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_params.h"
 
@@ -48,6 +52,7 @@ bool opal_progress_debug = false;
  */
 static int opal_progress_event_flag = OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK;
 int opal_progress_spin_count = 10000;
+int opal_progress_timeout = 0;
 
 
 /*
@@ -479,4 +484,30 @@ int opal_progress_unregister (opal_progress_callback_t cb)
     opal_atomic_unlock(&progress_lock);
 
     return ret;
+}
+
+void opal_progress_handle_hangup(opal_progress_hangup_callback_fn_t cbfunc,
+                                 void *cbdata)
+{
+    char prefix[100 + OPAL_MAXHOSTNAMELEN];
+    FILE *stream = stderr;
+
+    snprintf(prefix, sizeof(prefix), "[%s:%05d] ",
+             opal_process_info.nodename, (int) getpid());
+
+    fprintf(stream, "%sPossible hang-up (no progress) is detected on %s\n",
+            prefix, (*opal_process_name_print)(OPAL_PROC_MY_NAME));
+    fflush(stream);
+
+    opal_backtrace_print(stream, prefix, 1);
+
+    if (cbfunc != NULL) {
+        (*cbfunc)(cbdata);
+        fflush(stream);
+    }
+
+    if (opal_progress_timeout > 0) {
+        opal_delay_abort();
+        exit(1);
+    }
 }
