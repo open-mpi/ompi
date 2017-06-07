@@ -15,6 +15,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +36,7 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
       ptrdiff_t *st_offset)
 {
     int blksize, global_size, mysize, i, j, rc, start_loop, step;
-    ptrdiff_t stride;
+    ptrdiff_t stride, disps[2];
 
     global_size = gsize_array[dim];
 
@@ -70,6 +71,20 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
     *st_offset = blksize * rank;
     /* in terms of no. of elements of type oldtype in this dimension */
     if (mysize == 0) *st_offset = 0;
+
+    /* need to set the UB for block-cyclic to work */
+    disps[0] = 0;         disps[1] = orig_extent;
+    if (order == MPI_ORDER_FORTRAN) {
+        for(i=0; i<=dim; i++) {
+            disps[1] *= gsize_array[i];
+        }
+    } else {
+        for(i=ndims-1; i>=dim; i--) {
+            disps[1] *= gsize_array[i];
+        }
+    }
+    rc = opal_datatype_resize( &(*type_new)->super, disps[0], disps[1] );
+    if (OMPI_SUCCESS != rc) return rc;
 
     return OMPI_SUCCESS;
 }
