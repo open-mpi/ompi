@@ -376,8 +376,6 @@ static void send_msg(int fd, short args, void *cbdata)
     uint32_t  total_packets;
     fi_addr_t dest_fi_addr;
     orte_rml_send_t *snd;
-    orte_rml_recv_t *rcv;
-    orte_self_send_xfer_t *xfer;
     orte_rml_ofi_request_t* ofi_send_req = OBJ_NEW( orte_rml_ofi_request_t );
     uint8_t ofi_prov_id = req->ofi_prov_id;
     orte_rml_ofi_send_pkt_t* ofi_msg_pkt;
@@ -385,8 +383,6 @@ static void send_msg(int fd, short args, void *cbdata)
     orte_rml_ofi_peer_t* pr;
     uint64_t ui64;
     struct sockaddr_in* ep_sockaddr;
-    int i, bytes;
-    char *ptr;
 
     snd = OBJ_NEW(orte_rml_send_t);
     snd->dst = *peer;
@@ -408,85 +404,59 @@ static void send_msg(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(peer), tag);
 
 
-    /* get the peer address by doing modex_receive      */
+    /* get the peer address from our internal hash table */
+    opal_output_verbose(1, orte_rml_base_framework.framework_output,
+              "%s getting contact info for DAEMON peer %s from internal hash table",
+              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
+     memcpy(&ui64, (char*)peer, sizeof(uint64_t));
+     if (OPAL_SUCCESS != (ret = opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
+                                                        ui64, (void**)&pr) || NULL == pr)) {
+          opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                        "%s rml:ofi: Send failed to get peer OFI contact info ",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+          snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+          ORTE_RML_SEND_COMPLETE(snd);
+          //OBJ_RELEASE( ofi_send_req);
+          return;
+     }
+     opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                        "%s rml:ofi: OFI peer contact info got from hash table",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+     dest_ep_name = pr->ofi_ep;
+     dest_ep_namelen = pr->ofi_ep_len;
+
+   //[Debug] printing additional info of IP
+    switch ( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->addr_format)
+    {
+        case  FI_SOCKADDR_IN :
+            /*  Address is of type sockaddr_in (IPv4) */
+            /*[debug] - print the sockaddr - port and s_addr */
+            ep_sockaddr = (struct sockaddr_in*)dest_ep_name;
+            opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                    "%s peer %s epnamelen is %lu, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),
+                    (unsigned long)orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen,ntohs(ep_sockaddr->sin_port),
+                    ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
+            /*[end debug]*/
+            break;
+    }
+    //[Debug] end debug
     opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                         "%s calling OPAL_MODEX_RECV_STRING ", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
-    if (ORTE_PROC_IS_APP ) {
-            asprintf(&pmix_key,"%s%d",orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->fabric_attr->prov_name,ofi_prov_id);
-            opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                     "%s calling OPAL_MODEX_RECV_STRING for ORTE_PROC_APP peer - %s, key - %s ",
-                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer),pmix_key );
-            OPAL_MODEX_RECV_STRING(ret, pmix_key, peer , (uint8_t **) &dest_ep_name, &dest_ep_namelen);
-            opal_output_verbose(10, orte_rml_base_framework.framework_output, "Returned from MODEX_RECV");
-            opal_output_verbose(50, orte_rml_base_framework.framework_output,
-                         "%s  Return value from OPAL_MODEX_RECV_STRING - %d, length returned - %lu",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret, dest_ep_namelen);
-            free(pmix_key);
-    } else {
+                     "%s OPAL_MODEX_RECV succeded, %s peer ep name obtained. length=%lu",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                     ORTE_NAME_PRINT(peer), dest_ep_namelen);
+    ret = fi_av_insert(orte_rml_ofi.ofi_prov[ofi_prov_id].av, dest_ep_name,1,&dest_fi_addr,0,NULL);
+    if( ret != 1) {
         opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                  "%s calling OPAL_MODEX_RECV_STRING for DAEMON peer %s",
-                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
-             memcpy(&ui64, (char*)peer, sizeof(uint64_t));
-             if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
-                                                     ui64, (void**)&pr) || NULL == pr) {
-                  opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                                "%s rml:ofi: Send failed to get peer OFI contact info ",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                  return;
-             }
-             opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                                "%s rml:ofi: OFI peer contact info got from hash table",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-             dest_ep_name = pr->ofi_ep;
-             dest_ep_namelen = pr->ofi_ep_len;
-             ret = OPAL_SUCCESS;
-   }
-    if ( OPAL_SUCCESS == ret) {
-           //[Debug] printing additional info of IP
-            switch ( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->addr_format)
-            {
-                case  FI_SOCKADDR_IN :
-                    /*  Address is of type sockaddr_in (IPv4) */
-                    /*[debug] - print the sockaddr - port and s_addr */
-                    ep_sockaddr = (struct sockaddr_in*)dest_ep_name;
-                    opal_output_verbose(1,orte_rml_base_framework.framework_output,
-                            "%s peer %s epnamelen is %d, port = %d (or) 0x%x, InternetAddr = 0x%s  ",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ORTE_NAME_PRINT(peer),
-                            orte_rml_ofi.ofi_prov[ofi_prov_id].epnamelen,ntohs(ep_sockaddr->sin_port),
-                            ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
-                    /*[end debug]*/
-                    break;
-            }
-            //[Debug] end debug
-        opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                         "%s OPAL_MODEX_RECV succeded, %s peer ep name obtained. length=%lu",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer), dest_ep_namelen);
-        ret = fi_av_insert(orte_rml_ofi.ofi_prov[ofi_prov_id].av, dest_ep_name,1,&dest_fi_addr,0,NULL);
-        if( ret != 1) {
-            opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s fi_av_insert failed in send_msg() returned %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ret );
-            /* call the send-callback fn with error and return, also return failure status */
-            snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                     "%s fi_av_insert failed in send_msg() returned %d",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ret );
+        /* call the send-callback fn with error and return, also return failure status */
+        snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
 
-                ORTE_RML_SEND_COMPLETE(snd);
-
-                return;
-        }
-    } else {
-
-        opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s OPAL_MODEX_RECV failed to obtain  %s peer ep name ",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer));
-            /* call the send-callback fn with error and return, also return failure status */
-            snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
             ORTE_RML_SEND_COMPLETE(snd);
-            //OBJ_RELEASE( ofi_send_req);
+
             return;
     }
-
     ofi_send_req->send = snd;
     ofi_send_req->completion_count = 1;
 
@@ -625,7 +595,6 @@ int orte_rml_ofi_send_nb(struct orte_rml_base_module_t* mod,
                                    void* cbdata)
 {
     orte_rml_recv_t *rcv;
-    orte_rml_send_t *snd;
     int bytes;
     orte_self_send_xfer_t *xfer;
     int i;
@@ -749,7 +718,6 @@ int orte_rml_ofi_send_buffer_nb(struct orte_rml_base_module_t *mod,
                                               void* cbdata)
 {
     orte_rml_recv_t *rcv;
-    orte_rml_send_t *snd;
     orte_self_send_xfer_t *xfer;
     ofi_send_request_t *req;
     orte_rml_ofi_module_t *ofi_mod = (orte_rml_ofi_module_t*)mod;

@@ -12,6 +12,7 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
+#include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/event/event.h"
@@ -85,6 +86,7 @@ orte_rml_ofi_module_t orte_rml_ofi = {
 /* Local variables */
 static bool init_done = false;
 static char *ofi_transports_supported = NULL;
+static bool ofi_desired = false;
 
 static int
 rml_ofi_component_open(void)
@@ -98,6 +100,7 @@ rml_ofi_component_open(void)
     orte_rml_ofi.ofi_prov_open_num = 0;
     OBJ_CONSTRUCT(&orte_rml_ofi.peers, opal_hash_table_t);
     opal_hash_table_init(&orte_rml_ofi.peers, 128);
+    OBJ_CONSTRUCT(&orte_rml_ofi.recv_msg_queue_list, opal_list_t);
 
     for( uint8_t ofi_prov_id=0; ofi_prov_id < MAX_OFI_PROVIDERS ; ofi_prov_id++) {
         orte_rml_ofi.ofi_prov[ofi_prov_id].fabric =  NULL;
@@ -116,6 +119,12 @@ rml_ofi_component_open(void)
 
     opal_output_verbose(10,orte_rml_base_framework.framework_output," from %s:%d rml_ofi_component_open()",__FILE__,__LINE__);
 
+    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON) {
+        return ORTE_ERROR;
+    }
+    if (!ofi_desired) {
+        return ORTE_ERROR;
+    }
     return ORTE_SUCCESS;
 }
 
@@ -218,7 +227,7 @@ rml_ofi_component_close(void)
                                               (void **)&value, &node);
     while (OPAL_SUCCESS == rc) {
         if (NULL != value) {
-            OBJ_RELEASE(value);
+          OBJ_RELEASE(value);
         }
         rc = opal_hash_table_get_next_key_uint64 (&orte_rml_ofi.peers, &key,
                                                   (void **) &value, node, &node);
@@ -242,7 +251,16 @@ static int rml_ofi_component_register(void)
                                     OPAL_INFO_LVL_2,
                                     MCA_BASE_VAR_SCOPE_LOCAL,
                                     &ofi_transports_supported);
-    opal_output(0, "OFI TRANSPORTS %s", ofi_transports_supported);
+
+
+    ofi_desired = false;
+    mca_base_component_var_register(component, "desired",
+                                    "Use OFI for coll conduit",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_2,
+                                    MCA_BASE_VAR_SCOPE_LOCAL,
+                                    &ofi_desired);
+
     return ORTE_SUCCESS;
 }
 
@@ -982,7 +1000,6 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
                     "%s - Entering rml_ofi_open_conduit()",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-
     /* Open all ofi endpoints */
     if (!init_done) {
         rml_ofi_component_init();
@@ -1135,6 +1152,12 @@ static void ofi_set_contact_info (const char *uri)
         return;
     }
 
+    /* Open all ofi endpoints */
+    if (!init_done) {
+        rml_ofi_component_init();
+        init_done = true;
+    }
+
     uris = strdup(uri);
     process_uri(uris);
     free(uris);
@@ -1146,10 +1169,10 @@ static void process_uri( char *uri)
     orte_process_name_t peer;
     char *cptr, *ofiuri;
     char **uris=NULL;
-    int rc, i=0, tot_reqd = 1, tot_found = 0;
+    int rc, i=0, cur_ofi_prov;
     uint64_t ui64;
     orte_rml_ofi_peer_t *pr;
-    struct sockaddr_in* ep_sockaddr;
+    struct sockaddr_in *ep_sockaddr, *ep_sockaddr2;
 
     /* find the first semi-colon in the string */
     cptr = strchr(uri, ';');
@@ -1176,14 +1199,7 @@ static void process_uri( char *uri)
                             "%s:OFI set_contact_info peer %s is me",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&peer));
-          //skip adding to hashtable for HNP
-        if (!ORTE_PROC_IS_HNP) {
-           return;
-        } else {
-                opal_output_verbose(15, orte_rml_base_framework.framework_output,
-                            "%s:OFI set_contact_info - HNP process so proceeding to add to hashtable",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
-        }
+       return;
     }
 
     /* split the rest of the uri into component parts */
@@ -1191,12 +1207,13 @@ static void process_uri( char *uri)
 
     /* get the peer object for this process */
     memcpy(&ui64, (char*)&peer, sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
-                                                         ui64, (void**)&pr) ||
+    pr = NULL;
+    if (OPAL_SUCCESS != (rc = opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
+                                                         ui64, (void**)&pr)) ||
         NULL == pr) {
         pr = OBJ_NEW(orte_rml_ofi_peer_t);
         /* populate the peer object with the ofi addresses */
-        for(i=0; NULL != uris[i] && tot_found < tot_reqd; i++) {
+        for(i=0; NULL != uris[i]; i++) {
             ofiuri = strdup(uris[i]);
             if (NULL == ofiuri) {
                 opal_output_verbose(2, orte_rml_base_framework.framework_output,
@@ -1211,35 +1228,43 @@ static void process_uri( char *uri)
                 ep_sockaddr = malloc( sizeof ( struct sockaddr_in) );
                 /* ofiuri for socket provider is of format - ofi-socket:<sin_family,sin_addr,sin_port> */
                 convert_to_sockaddr(ofiuri, ep_sockaddr);
-                pr->ofi_ep = (void *)ep_sockaddr;
-                tot_found++;
+                /* see if we have this subnet in our providers - we take
+                 * the first one that matches (other than loopback) */
+                for( cur_ofi_prov=0; cur_ofi_prov < orte_rml_ofi.ofi_prov_open_num ; cur_ofi_prov++ ) {
+                    ep_sockaddr2 = (struct sockaddr_in*)orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name;
+                    if (opal_net_samenetwork((struct sockaddr*)ep_sockaddr, (struct sockaddr*)ep_sockaddr2, 24)) {
+                        pr->ofi_ep = (void *)ep_sockaddr;
+                        if (OPAL_SUCCESS !=
+                           (rc = opal_hash_table_set_value_uint64(&orte_rml_ofi.peers, ui64, (void*)pr))) {
+                            opal_output_verbose(15, orte_rml_base_framework.framework_output,
+                                "%s: ofi peer address insertion failed for peer %s ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&peer));
+                            ORTE_ERROR_LOG(rc);
+                        }
+                        opal_output_verbose(15, orte_rml_base_framework.framework_output,
+                                "%s: ofi peer address inserted for peer %s ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&peer));
+                        opal_output_verbose(15, orte_rml_base_framework.framework_output,
+                                "%s: ofi sock address length = %zd ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                pr->ofi_ep_len);
+                        struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*)pr->ofi_ep;
+                        opal_output_verbose(15,orte_rml_base_framework.framework_output,
+                                        "%s OFI set_name() port = 0x%x, InternetAddr = %s  ",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        ntohs(ep_sockaddr->sin_port),
+                                        inet_ntoa(ep_sockaddr->sin_addr));
+                        opal_argv_free(uris);
+                        return;
+                    }
+                }
             }
             free( ofiuri);
         }
-        /* if atleast one OFI address is known for peer insert it */
-        if( 1 <= tot_found ) {
-            if (OPAL_SUCCESS !=
-               (rc = opal_hash_table_set_value_uint64(&orte_rml_ofi.peers, ui64, (void*)pr))) {
-                opal_output_verbose(15, orte_rml_base_framework.framework_output,
-                    "%s: ofi peer address insertion failed for peer %s ",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&peer));
-                ORTE_ERROR_LOG(rc);
-            }
-            opal_output_verbose(15, orte_rml_base_framework.framework_output,
-                    "%s: ofi peer address inserted for peer %s ",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&peer));
-            opal_output_verbose(15, orte_rml_base_framework.framework_output,
-                    "%s: ofi sock address length = %zd ",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    pr->ofi_ep_len);
-            struct sockaddr_in* ep_sockaddr = (struct sockaddr_in*)pr->ofi_ep;
-            opal_output_verbose(15,orte_rml_base_framework.framework_output,
-                            "%s OFI set_name() port = 0x%x, InternetAddr = %s  ",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ntohs(ep_sockaddr->sin_port),inet_ntoa(ep_sockaddr->sin_addr));
-        }
     }
+
     opal_output_verbose(10,orte_rml_base_framework.framework_output,
                     "%s OFI end of set_contact_info()",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
