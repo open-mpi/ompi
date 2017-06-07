@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -27,6 +27,7 @@
 #endif
 
 #include "opal/hash_string.h"
+#include "opal/threads/threads.h"
 #include "opal/util/argv.h"
 #include "opal/util/proc.h"
 
@@ -36,13 +37,15 @@
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
-static size_t errhdler_ref = 0;
+static volatile bool regactive;
+static bool initialized = false;
 
 #define PMIX_WAIT_FOR_COMPLETION(a)             \
     do {                                        \
         while ((a)) {                           \
             usleep(10);                         \
         }                                       \
+        OPAL_ACQUIRE_OBJECT(a);                 \
     } while (0)
 
 
@@ -50,10 +53,16 @@ static void errreg_cbfunc (pmix_status_t status,
                            size_t errhandler_ref,
                            void *cbdata)
 {
-    errhdler_ref = errhandler_ref;
+    opal_pmix2x_event_t *event = (opal_pmix2x_event_t*)cbdata;
+
+    OPAL_ACQUIRE_OBJECT(event);
+
+    event->index = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%lu",
                         status, (unsigned long)errhandler_ref);
+    regactive = false;
+    OPAL_POST_OBJECT(regactive);
 }
 
 int pmix2x_client_init(opal_list_t *ilist)
@@ -62,19 +71,52 @@ int pmix2x_client_init(opal_list_t *ilist)
     pmix_status_t rc;
     int dbg;
     opal_pmix2x_jobid_trkr_t *job;
+    opal_pmix2x_event_t *event;
+    pmix_info_t *pinfo;
+    size_t ninfo, n;
+    opal_value_t *ival;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client init");
 
-    if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
-        asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
-        putenv(dbgvalue);
+    if (!initialized) {
+        if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
+            asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
+            putenv(dbgvalue);
+        }
     }
 
-    rc = PMIx_Init(&my_proc, NULL, 0);
+    /* convert the incoming list to info structs */
+    if (NULL != ilist) {
+        ninfo = opal_list_get_size(ilist);
+        if (0 < ninfo) {
+            PMIX_INFO_CREATE(pinfo, ninfo);
+            n=0;
+            OPAL_LIST_FOREACH(ival, ilist, opal_value_t) {
+                (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
+                pmix2x_value_load(&pinfo[n].value, ival);
+                ++n;
+            }
+        } else {
+            pinfo = NULL;
+        }
+    } else {
+        pinfo = NULL;
+        ninfo = 0;
+    }
+
+    rc = PMIx_Init(&my_proc, pinfo, ninfo);
     if (PMIX_SUCCESS != rc) {
         return pmix2x_convert_rc(rc);
     }
+    if (0 < ninfo) {
+        PMIX_INFO_FREE(pinfo, ninfo);
+
+    }
+    if (initialized) {
+        return OPAL_SUCCESS;
+    }
+    initialized = true;
 
     /* store our jobid and rank */
     if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
@@ -98,7 +140,15 @@ int pmix2x_client_init(opal_list_t *ilist)
     opal_proc_set_name(&pname);
 
     /* register the default event handler */
-    PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix2x_event_hdlr, errreg_cbfunc, NULL);
+    event = OBJ_NEW(opal_pmix2x_event_t);
+    opal_list_append(&mca_pmix_ext2x_component.events, &event->super);
+    PMIX_INFO_CREATE(pinfo, 1);
+    PMIX_INFO_LOAD(&pinfo[0], PMIX_EVENT_HDLR_NAME, "OPAL-PMIX-2X-DEFAULT", PMIX_STRING);
+    regactive = true;
+    PMIx_Register_event_handler(NULL, 0, pinfo, 1, pmix2x_event_hdlr, errreg_cbfunc, event);
+    PMIX_WAIT_FOR_COMPLETION(regactive);
+    PMIX_INFO_FREE(pinfo, 1);
+
     return OPAL_SUCCESS;
 
 }
@@ -106,12 +156,16 @@ int pmix2x_client_init(opal_list_t *ilist)
 int pmix2x_client_finalize(void)
 {
     pmix_status_t rc;
+    opal_pmix2x_event_t *event;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client finalize");
 
-    /* deregister the default event handler */
-    PMIx_Deregister_event_handler(errhdler_ref, NULL, NULL);
+    /* deregister all event handlers */
+    OPAL_LIST_FOREACH(event, &mca_pmix_ext2x_component.events, opal_pmix2x_event_t) {
+        PMIx_Deregister_event_handler(event->index, NULL, NULL);
+    }
+    /* the list will be destructed when the component is finalized */
 
     rc = PMIx_Finalize(NULL, 0);
     return pmix2x_convert_rc(rc);
@@ -122,7 +176,7 @@ int pmix2x_initialized(void)
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client initialized");
 
-    return PMIx_Initialized();
+    return initialized;
 }
 
 int pmix2x_abort(int flag, const char *msg,
@@ -192,7 +246,6 @@ int pmix2x_store_local(const opal_process_name_t *proc, opal_value_t *val)
             }
         }
         if (NULL == job) {
-            OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
             return OPAL_ERR_NOT_FOUND;
         }
         (void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
@@ -224,6 +277,7 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
 {
     pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(op);
     if (NULL != op->opcbfunc) {
         op->opcbfunc(pmix2x_convert_rc(status), op->cbdata);
     }
@@ -473,6 +527,8 @@ static void val_cbfunc(pmix_status_t status,
     int rc;
     opal_value_t val, *v=NULL;
 
+    OPAL_ACQUIRE_OBJECT(op);
+
     rc = pmix2x_convert_opalrc(status);
     if (PMIX_SUCCESS == status && NULL != kv) {
         rc = pmix2x_value_unload(&val, kv);
@@ -720,6 +776,8 @@ static void lk_cbfunc(pmix_status_t status,
     size_t n;
     opal_pmix2x_jobid_trkr_t *job, *jptr;
 
+    OPAL_ACQUIRE_OBJECT(op);
+
     /* this is in the PMIx local thread - need to threadshift to
      * our own thread as we will be accessing framework-global
      * lists and objects */
@@ -769,7 +827,7 @@ static void lk_cbfunc(pmix_status_t status,
         }
         r = &results;
     }
-release:
+  release:
     /* execute the callback */
     op->lkcbfunc(rc, r, op->cbdata);
 
@@ -945,6 +1003,8 @@ static void spcbfunc(pmix_status_t status,
     int rc;
     opal_jobid_t jobid=OPAL_JOBID_INVALID;
     opal_pmix2x_jobid_trkr_t *job;
+
+    OPAL_ACQUIRE_OBJECT(op);
 
     /* this is in the PMIx local thread - need to threadshift to
      * our own thread as we will be accessing framework-global

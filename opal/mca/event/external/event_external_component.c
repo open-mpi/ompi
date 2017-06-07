@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  *
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,7 @@ static int event_external_register (void) {
     event_module_include = "poll";
 #endif
 
-    avail = opal_argv_join(all_available_eventops, ',');
+    avail = opal_argv_join((char**)all_available_eventops, ',');
     asprintf( &help_msg,
               "Comma-delimited list of libevent subsystems "
               "to use (%s -- available on your platform)",
