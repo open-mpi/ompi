@@ -81,7 +81,7 @@ int oshmem_shmem_abort(int errcode)
         if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
                 fprintf(stderr,
-                        "[%s:%d] [%d] func:%s\n",
+                        "[%s:%05d] [%d] func:%s\n",
                         host,
                         (int) pid,
                         i,
@@ -110,7 +110,7 @@ int oshmem_shmem_abort(int errcode)
                            (int) pid);
         } else {
             fprintf(stderr,
-                    "[%s:%d] Local abort completed successfully; not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
+                    "[%s:%05d] Local abort completed successfully; not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
                     host,
                     (int) pid);
         }

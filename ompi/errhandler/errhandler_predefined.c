@@ -193,7 +193,7 @@ static void backend_fatal_aggregate(char *type,
     arg = va_arg(arglist, char*);
     va_end(arglist);
 
-    if (asprintf(&prefix, "[%s:%d]",
+    if (asprintf(&prefix, "[%s:%05d]",
                  ompi_process_info.nodename,
                  (int) ompi_process_info.pid) == -1) {
         prefix = NULL;

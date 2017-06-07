@@ -148,7 +148,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
         if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
-                fprintf(stderr, "[%s:%d] [%d] func:%s\n", host, (int) pid,
+                fprintf(stderr, "[%s:%05d] [%d] func:%s\n", host, (int) pid,
                         i, messages[i]);
                 fflush(stderr);
             }
@@ -167,7 +167,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     /* If the RTE isn't setup yet/any more, then don't even try
        killing everyone.  Sorry, Charlie... */
     if (!ompi_rte_initialized) {
-        fprintf(stderr, "[%s:%d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
+        fprintf(stderr, "[%s:%05d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
                 host, (int) pid, ompi_mpi_finalized ?
                 "after MPI_FINALIZE started" : "before MPI_INIT completed");
         _exit(errcode == 0 ? 1 : errcode);
