@@ -13,7 +13,7 @@
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -31,23 +31,22 @@ AC_DEFUN([MCA_opal_pmix_ext1x_CONFIG],[
     AC_CONFIG_FILES([opal/mca/pmix/ext1x/Makefile])
 
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
-          [AS_IF([test "$opal_event_external_support" != "yes"],
-                 [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT])
-                  AC_MSG_WARN([LIBRARY. THIS LIBRARY MUST POINT TO THE SAME ONE USED])
-                  AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
-                  AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
-           AS_IF([test "$opal_hwloc_external_support" != "yes"],
-                 [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL HWLOC])
-                  AC_MSG_WARN([LIBRARY THIS LIBRARY MUST POINT TO THE SAME ONE USED ])
-                  AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
-                  AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
-
-           # check for the 1.x version ( >= 1.1.4 ?)
+          [ # check for the 1.x version ( >= 1.1.4 ?)
            AC_MSG_CHECKING([if external component is version 1.x])
            AS_IF([test "$opal_external_pmix_version" = "11" ||
                   test "$opal_external_pmix_version" = "12" ||
                   test "$opal_external_pmix_version" = "1x"],
                  [AC_MSG_RESULT([yes])
+                  AS_IF([test "$opal_event_external_support" != "yes"],
+                        [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT])
+                         AC_MSG_WARN([LIBRARY. THIS LIBRARY MUST POINT TO THE SAME ONE USED])
+                         AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
+                         AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
+                  AS_IF([test "$opal_hwloc_external_support" != "yes"],
+                        [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL HWLOC])
+                         AC_MSG_WARN([LIBRARY THIS LIBRARY MUST POINT TO THE SAME ONE USED ])
+                         AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
+                         AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
                   opal_pmix_external_1x_happy=yes],
                  [AC_MSG_RESULT([no])
                   opal_pmix_external_1x_happy=no])
