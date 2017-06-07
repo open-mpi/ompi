@@ -276,10 +276,12 @@ int mca_coll_spacc_allreduce_intra_redscat_allgather(
                            rcount[step], dtype);
 
             /* Move the current window to the received message */
-            rindex[step + 1] = rindex[step];
-            sindex[step + 1] = rindex[step];
-            wsize = rcount[step];
-            step++;
+            if (step + 1 < nsteps) {
+                rindex[step + 1] = rindex[step];
+                sindex[step + 1] = rindex[step];
+                wsize = rcount[step];
+                step++;
+            }
         }
         /*
          * Assertion: each process has 1 / p' of the total reduction result:
