@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/param.h>
@@ -12,9 +13,15 @@ int main(int argc, char* argv[])
     int rank, size;
     char hostname[MAXHOSTNAMELEN];
     pid_t pid;
+    char *env_rank,*env_nspace;
 
+    env_rank = getenv("PMIX_RANK");
+    env_nspace = getenv("PMIX_NAMESPACE");
     pid = getpid();
-    printf("[pid %ld] starting up!\n", (long)pid);
+    gethostname(hostname, sizeof(hostname));
+
+    printf("[%s:%s pid %ld] starting up on node %s!\n", env_nspace, env_rank, (long)pid, hostname);
+
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     printf("%d completed MPI_Init\n", rank);
@@ -42,7 +49,6 @@ int main(int argc, char* argv[])
     else {
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
-        gethostname(hostname, sizeof(hostname));
         pid = getpid();
         printf("Hello from the child %d of %d on host %s pid %ld\n", rank, 3, hostname, (long)pid);
         if (0 == rank) {

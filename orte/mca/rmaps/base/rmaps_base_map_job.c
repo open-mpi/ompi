@@ -378,26 +378,18 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
          */
         if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(caddy);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-            return;
+            goto cleanup;
         }
     }
-    /* reset any node map flags we used so the next job will start clean */
-     for (i=0; i < jdata->map->nodes->size; i++) {
-         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
-             ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
-         }
-     }
 
     if (did_map && ORTE_ERR_RESOURCE_BUSY == rc) {
         /* the map was done but nothing could be mapped
          * for launch as all the resources were busy
          */
         orte_show_help("help-orte-rmaps-base.txt", "cannot-launch", true);
-        OBJ_RELEASE(caddy);
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-        return;
+        goto cleanup;
     }
 
     /* if we get here without doing the map, or with zero procs in
@@ -407,9 +399,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         orte_show_help("help-orte-rmaps-base.txt", "failed-map", true,
                        did_map ? "mapped" : "unmapped",
                        jdata->num_procs, jdata->map->num_nodes);
-        OBJ_RELEASE(caddy);
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-        return;
+        goto cleanup;
     }
 
     /* if any node is oversubscribed, then check to see if a binding
@@ -423,28 +414,38 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     }
 
     if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        /* we didn't add the nodes to the node map as it would cause them to
+         * be in a different order than on the backend if this is a dynamic
+         * spawn (which means we may have started somewhere other than at
+         * the beginning of the allocation) */
+        for (i=0; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
+                OBJ_RETAIN(node);
+                opal_pointer_array_add(jdata->map->nodes, node);
+            }
+        }
         /* compute and save location assignments */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(caddy);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-            return;
+            goto cleanup;
         }
     } else {
         /* compute and save local ranks */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(caddy);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-            return;
+            goto cleanup;
         }
 
         /* compute and save bindings */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(caddy);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-            return;
+            goto cleanup;
         }
     }
 
@@ -464,6 +465,14 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 
     /* set the job state to the next position */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_COMPLETE);
+
+  cleanup:
+      /* reset any node map flags we used so the next job will start clean */
+       for (i=0; i < jdata->map->nodes->size; i++) {
+           if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
+               ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+           }
+       }
 
     /* cleanup */
     OBJ_RELEASE(caddy);

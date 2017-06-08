@@ -43,7 +43,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                          orte_std_cntr_t num_slots,
                          orte_vpid_t num_procs)
 {
-    int rc, i, nprocs_mapped;
+    int i, nprocs_mapped;
     orte_node_t *node;
     orte_proc_t *proc;
     int num_procs_to_assign, extra_procs_to_assign=0, nxtra_nodes=0;
@@ -94,12 +94,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
             /* add this node to the map - do it only once */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
-                OBJ_RETAIN(node);  /* maintain accounting on object */
                 ++(jdata->map->num_nodes);
             }
             if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
@@ -149,12 +144,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
 
         /* add this node to the map - do it only once */
         if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-            if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
-            OBJ_RETAIN(node);  /* maintain accounting on object */
             ++(jdata->map->num_nodes);
         }
         if (add_one) {
@@ -221,7 +211,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
     int j, nprocs_mapped, nnodes;
     orte_node_t *node;
     orte_proc_t *proc;
-    int num_procs_to_assign, navg, idx;
+    int num_procs_to_assign, navg;
     int extra_procs_to_assign=0, nxtra_nodes=0;
     hwloc_obj_t obj=NULL;
     float balance;
@@ -293,12 +283,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             }
             /* add this node to the map, but only do so once */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-                if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    ORTE_ERROR_LOG(idx);
-                    return idx;
-                }
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
-                OBJ_RETAIN(node);  /* maintain accounting on object */
                 ++(jdata->map->num_nodes);
             }
             if (oversubscribed) {
@@ -456,7 +441,6 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
     orte_node_t *node;
     orte_proc_t *proc;
     int nprocs, start;
-    int idx;
     hwloc_obj_t obj=NULL;
     unsigned int nobjs;
     bool add_one;
@@ -547,12 +531,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             }
             /* add this node to the map, if reqd */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-                if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    ORTE_ERROR_LOG(idx);
-                    return idx;
-                }
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
-                OBJ_RETAIN(node);  /* maintain accounting on object */
                 ++(jdata->map->num_nodes);
             }
             nmapped = 0;
@@ -638,7 +617,6 @@ static int byobj_span(orte_job_t *jdata,
     orte_node_t *node;
     orte_proc_t *proc;
     int nprocs, nxtra_objs;
-    int idx;
     hwloc_obj_t obj=NULL;
     unsigned int nobjs;
 
@@ -699,12 +677,7 @@ static int byobj_span(orte_job_t *jdata,
     OPAL_LIST_FOREACH(node, node_list, orte_node_t) {
         /* add this node to the map, if reqd */
         if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-            if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                ORTE_ERROR_LOG(idx);
-                return idx;
-            }
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
-            OBJ_RETAIN(node);  /* maintain accounting on object */
             ++(jdata->map->num_nodes);
         }
         /* get the number of objects of this type on this node */
