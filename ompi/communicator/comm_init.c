@@ -444,3 +444,40 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
                                       comm->c_f_to_c_index, NULL);
     }
 }
+
+#define OMPI_COMM_SET_INFO_FN(name, flag)       \
+    static char *ompi_comm_set_ ## name (opal_infosubscriber_t *obj, char *key, char *value) \
+    {                                                                   \
+        ompi_communicator_t *comm = (ompi_communicator_t *) obj;        \
+                                                                        \
+        if (opal_str_to_bool(value)) {                                  \
+            comm->c_assertions |= flag;                                 \
+        } else {                                                        \
+            comm->c_assertions &= ~flag;                                \
+        }                                                               \
+                                                                        \
+        return OMPI_COMM_CHECK_ASSERT(comm, flag) ? "true" : "false";   \
+    }
+
+OMPI_COMM_SET_INFO_FN(no_any_source, OMPI_COMM_ASSERT_NO_ANY_SOURCE)
+OMPI_COMM_SET_INFO_FN(no_any_tag, OMPI_COMM_ASSERT_NO_ANY_TAG)
+OMPI_COMM_SET_INFO_FN(allow_overtake, OMPI_COMM_ASSERT_ALLOW_OVERTAKE)
+OMPI_COMM_SET_INFO_FN(exact_length, OMPI_COMM_ASSERT_EXACT_LENGTH)
+
+void ompi_comm_assert_subscribe (ompi_communicator_t *comm, int32_t assert_flag)
+{
+    switch (assert_flag) {
+    case OMPI_COMM_ASSERT_NO_ANY_SOURCE:
+        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_no_any_source", "false", ompi_comm_set_no_any_source);
+        break;
+    case OMPI_COMM_ASSERT_NO_ANY_TAG:
+        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_no_any_tag", "false", ompi_comm_set_no_any_tag);
+        break;
+    case OMPI_COMM_ASSERT_ALLOW_OVERTAKE:
+        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_allow_overtaking", "false", ompi_comm_set_allow_overtake);
+        break;
+    case OMPI_COMM_ASSERT_EXACT_LENGTH:
+        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_exact_length", "false", ompi_comm_set_exact_length);
+        break;
+    }
+}

@@ -58,6 +58,31 @@ requires to be the same on all processes must appear with the same
 value in each process's
 .I info
 object.
+.sp
+The following info key assertions may be accepted by Open MPI:
+.sp
+\fImpi_assert_no_any_tag\fP (boolean): If set to true, then the
+implementation may assume that the process will not use the
+MPI_ANY_TAG wildcard on the given
+communicator.
+.sp
+\fImpi_assert_no_any_source\fP (boolean): If set to true, then
+the implementation may assume that the process will not use the
+MPI_ANY_SOURCE wildcard on the given communicator.
+.sp
+\fImpi_assert_exact_length\fP (boolean): If set to true, then the
+implementation may assume that the lengths of messages received by the
+process are equal to the lengths of the corresponding receive buffers,
+for point-to-point communication operations on the given communicator.
+.sp
+\fImpi_assert_allow_overtaking\fP (boolean): If set to true, then the
+implementation may assume that point-to-point communications on the
+given communicator do not rely on the non-overtaking rule specified in
+MPI-3.1 Section 3.5. In other words, the application asserts that send
+operations are not required to be matched at the receiver in the order
+in which the send operations were performed by the sender, and receive
+operations are not required to be matched in the order in which they
+were performed by the receiver.
 .
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value

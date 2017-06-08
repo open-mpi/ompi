@@ -206,6 +206,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    ompi_comm_assert_subscribe (comm, OMPI_COMM_ASSERT_NO_ANY_SOURCE);
+    ompi_comm_assert_subscribe (comm, OMPI_COMM_ASSERT_ALLOW_OVERTAKE);
+
     mca_pml_ob1_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
     comm->c_pml_comm = pml_comm;
 
@@ -222,6 +225,12 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * non_existing_communicator_pending list. */
         opal_list_remove_item (&mca_pml_ob1.non_existing_communicator_pending,
                                (opal_list_item_t *) frag);
+        if (OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+            opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
+            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
+                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+            continue;
+        }
 
       add_fragment_to_unexpected:
 
@@ -242,7 +251,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          */
         pml_proc = mca_pml_ob1_peer_lookup(comm, hdr->hdr_src);
 
-        if( ((uint16_t)hdr->hdr_seq) == ((uint16_t)pml_proc->expected_sequence) ) {
+        if (((uint16_t)hdr->hdr_seq) == ((uint16_t)pml_proc->expected_sequence) ) {
             /* We're now expecting the next sequence number. */
             pml_proc->expected_sequence++;
             opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
@@ -254,9 +263,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
              * situation as the cant_match is only checked when a new fragment is received from
              * the network.
              */
-           for(frag = (mca_pml_ob1_recv_frag_t *)opal_list_get_first(&pml_proc->frags_cant_match);
-               frag != (mca_pml_ob1_recv_frag_t *)opal_list_get_end(&pml_proc->frags_cant_match);
-               frag = (mca_pml_ob1_recv_frag_t *)opal_list_get_next(frag)) {
+            OPAL_LIST_FOREACH(frag, &pml_proc->frags_cant_match, mca_pml_ob1_recv_frag_t) {
                hdr = &frag->hdr.hdr_match;
                /* If the message has the next expected seq from that proc...  */
                if(hdr->hdr_seq != pml_proc->expected_sequence)
