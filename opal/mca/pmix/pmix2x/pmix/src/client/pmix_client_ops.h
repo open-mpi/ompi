@@ -26,7 +26,7 @@ typedef struct {
 
 PMIX_EXPORT extern pmix_client_globals_t pmix_client_globals;
 
-PMIX_EXPORT extern pmix_mutex_t pmix_client_bootstrap_mutex;
+PMIX_EXPORT extern pmix_lock_t pmix_client_lock;
 
 END_C_DECLS
 

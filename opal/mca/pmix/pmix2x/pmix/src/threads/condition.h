@@ -43,6 +43,12 @@ typedef struct pmix_condition_t pmix_condition_t;
 
 PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_condition_t);
 
+#define PMIX_CONDITION_STATIC_INIT                          \
+    {                                                       \
+        .super = PMIX_OBJ_STATIC_INIT(pmix_condition_t),    \
+        .c_waiting = 0,                                     \
+        .c_signaled = 0                                     \
+    }
 
 static inline int pmix_condition_wait(pmix_condition_t *c, pmix_mutex_t *m)
 {

@@ -59,61 +59,81 @@ PMIX_EXPORT extern bool pmix_debug_threads;
 
 PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_thread_t);
 
+typedef struct {
+    pmix_mutex_t mutex;
+    pmix_condition_t cond;
+    volatile bool active;
+} pmix_lock_t;
+
+#define PMIX_CONSTRUCT_LOCK(l)                          \
+    do {                                                \
+        PMIX_CONSTRUCT(&(l)->mutex, pmix_mutex_t);      \
+        PMIX_CONSTRUCT(&(l)->cond, pmix_condition_t);   \
+        (l)->active = true;                             \
+    } while(0)
+
+#define PMIX_DESTRUCT_LOCK(l)           \
+    do {                                \
+        PMIX_DESTRUCT(&(l)->mutex);     \
+        PMIX_DESTRUCT(&(l)->cond);      \
+    } while(0)
+
+
 #if PMIX_ENABLE_DEBUG
-#define PMIX_ACQUIRE_THREAD(lck, cnd, act)               \
-    do {                                                 \
-        PMIX_THREAD_LOCK((lck));                         \
-        if (pmix_debug_threads) {                        \
-            pmix_output(0, "Waiting for thread %s:%d",   \
-                        __FILE__, __LINE__);             \
-        }                                                \
-        while (*(act)) {                                 \
-            pmix_condition_wait((cnd), (lck));           \
-        }                                                \
-        if (pmix_debug_threads) {                        \
-            pmix_output(0, "Thread obtained %s:%d",      \
-                        __FILE__, __LINE__);             \
-        }                                                \
-        *(act) = true;                                   \
-    } while(0);
+#define PMIX_ACQUIRE_THREAD(lck)                                \
+    do {                                                        \
+        pmix_mutex_lock(&(lck)->mutex);                         \
+        if (pmix_debug_threads) {                               \
+            pmix_output(0, "Waiting for thread %s:%d",          \
+                        __FILE__, __LINE__);                    \
+        }                                                       \
+        while ((lck)->active) {                                 \
+            pmix_condition_wait(&(lck)->cond, &(lck)->mutex);   \
+        }                                                       \
+        if (pmix_debug_threads) {                               \
+            pmix_output(0, "Thread obtained %s:%d",             \
+                        __FILE__, __LINE__);                    \
+        }                                                       \
+        (lck)->active = true;                                   \
+    } while(0)
 #else
-#define PMIX_ACQUIRE_THREAD(lck, cnd, act)               \
-    do {                                                 \
-        PMIX_THREAD_LOCK((lck));                         \
-        while (*(act)) {                                 \
-            pmix_condition_wait((cnd), (lck));           \
-        }                                                \
-        *(act) = true;                                   \
-    } while(0);
+#define PMIX_ACQUIRE_THREAD(lck)                                \
+    do {                                                        \
+        pmix_mutex_lock(&(lck)->mutex);                         \
+        while ((lck)->active) {                                 \
+            pmix_condition_wait(&(lck)->cond, &(lck)->mutex);   \
+        }                                                       \
+        (lck)->active = true;                                   \
+    } while(0)
 #endif
 
 
 #if PMIX_ENABLE_DEBUG
-#define PMIX_RELEASE_THREAD(lck, cnd, act)              \
+#define PMIX_RELEASE_THREAD(lck)                        \
     do {                                                \
         if (pmix_debug_threads) {                       \
             pmix_output(0, "Releasing thread %s:%d",    \
                         __FILE__, __LINE__);            \
         }                                               \
-        *(act) = false;                                 \
-        pmix_condition_broadcast((cnd));                \
-        PMIX_THREAD_UNLOCK((lck));                      \
-    } while(0);
+        (lck)->active = false;                          \
+        pmix_condition_broadcast(&(lck)->cond);         \
+        pmix_mutex_unlock(&(lck)->mutex);               \
+    } while(0)
 #else
-#define PMIX_RELEASE_THREAD(lck, cnd, act)              \
-    do {                                                \
-        *(act) = false;                                 \
-        pmix_condition_broadcast((cnd));                \
-        PMIX_THREAD_UNLOCK((lck));                      \
-    } while(0);
+#define PMIX_RELEASE_THREAD(lck)                \
+    do {                                        \
+        (lck)->active = false;                  \
+        pmix_condition_broadcast(&(lck)->cond); \
+        pmix_mutex_unlock(&(lck)->mutex);       \
+    } while(0)
 #endif
 
 
-#define PMIX_WAKEUP_THREAD(cnd, act)        \
-    do {                                    \
-        *(act) = false;                     \
-        pmix_condition_broadcast((cnd));    \
-    } while(0);
+#define PMIX_WAKEUP_THREAD(lck)                 \
+    do {                                        \
+        (lck)->active = false;                  \
+        pmix_condition_broadcast(&(lck)->cond); \
+    } while(0)
 
 
 /* provide a macro for forward-proofing the shifting

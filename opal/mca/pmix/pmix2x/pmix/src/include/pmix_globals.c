@@ -40,9 +40,11 @@
 #include "src/buffer_ops/types.h"
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
+#include "src/threads/threads.h"
 
 static void cbcon(pmix_cb_t *p)
 {
+    PMIX_CONSTRUCT_LOCK(&p->lock);
     p->active = false;
     p->checked = false;
     PMIX_CONSTRUCT(&p->data, pmix_buffer_t);
@@ -63,6 +65,7 @@ static void cbcon(pmix_cb_t *p)
 }
 static void cbdes(pmix_cb_t *p)
 {
+    PMIX_DESTRUCT_LOCK(&p->lock);
     PMIX_DESTRUCT(&p->data);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_cb_t,
