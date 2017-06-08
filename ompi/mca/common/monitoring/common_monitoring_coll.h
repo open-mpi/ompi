@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2016 Inria.  All rights reserved.
- * Copyright (c) 2017 The University of Tennessee and The University
- *                    of Tennessee Research Foundation.  All rights
- *                    reserved.
+ * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +21,8 @@ BEGIN_C_DECLS
 OMPI_DECLSPEC void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data);
 
 OMPI_DECLSPEC void mca_common_monitoring_coll_flush_all(FILE *pf);
+
+OMPI_DECLSPEC void mca_common_monitoring_coll_reset( void );
 
 OMPI_DECLSPEC int mca_common_monitoring_coll_messages_notify(mca_base_pvar_t *pvar,
                                                              mca_base_pvar_event_t event,

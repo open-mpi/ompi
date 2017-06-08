@@ -188,18 +188,32 @@ void mca_common_monitoring_coll_flush_all(FILE *pf)
     if( NULL == comm_data ) return; /* No hashtable */
 
     uint64_t key;
-    void*data;
-    mca_monitoring_coll_data_t*previous = NULL;
+    mca_monitoring_coll_data_t*previous = NULL, *data;
 
     OPAL_HASH_TABLE_FOREACH(key, uint64, data, comm_data) {
         if( NULL != previous && NULL == previous->p_comm ) {
             /* Phase flushed -> free already released once coll_data_t */
             mca_common_monitoring_coll_cond_release(previous);
         }
-        mca_common_monitoring_coll_flush(pf, (mca_monitoring_coll_data_t*)data);
+        mca_common_monitoring_coll_flush(pf, data);
         previous = data;
     }
     mca_common_monitoring_coll_cond_release(previous);
+}
+
+
+void mca_common_monitoring_coll_reset(void)
+{
+    if( NULL == comm_data ) return; /* No hashtable */
+
+    uint64_t key;
+    mca_monitoring_coll_data_t*data;
+
+    OPAL_HASH_TABLE_FOREACH(key, uint64, data, comm_data) {
+        data->o2a_count = 0; data->o2a_size  = 0;
+        data->a2o_count = 0; data->a2o_size  = 0;
+        data->a2a_count = 0; data->a2a_size  = 0;
+    }
 }
 
 int mca_common_monitoring_coll_messages_notify(mca_base_pvar_t *pvar,

@@ -490,6 +490,7 @@ static void mca_common_monitoring_reset( void )
 {
     int array_size = (10 + max_size_histogram) * nprocs_world;
     memset(pml_data, 0, array_size * sizeof(size_t));
+    mca_common_monitoring_coll_reset();
 }
 
 void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag)
