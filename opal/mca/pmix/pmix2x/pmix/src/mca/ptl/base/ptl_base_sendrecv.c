@@ -397,6 +397,7 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
             pmix_output(0, "sptl:base:recv_handler: unable to allocate recv message\n");
             goto err_close;
         }
+        PMIX_RETAIN(peer);
         peer->recv_msg->peer = peer;  // provide a handle back to the peer object
         /* start by reading the header */
         peer->recv_msg->rdptr = (char*)&peer->recv_msg->hdr;
@@ -486,7 +487,8 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
     }
     /* success */
     return;
- err_close:
+
+  err_close:
     /* stop all events */
     if (peer->recv_ev_active) {
         pmix_event_del(&peer->recv_event);

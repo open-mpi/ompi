@@ -247,11 +247,11 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
             /* add it to the queue */                                                   \
             pmix_list_append(&(p)->send_queue, &snd->super);                            \
         }                                                                               \
-        PMIX_POST_OBJECT(snd);                                                          \
         /* ensure the send event is active */                                           \
         if (!(p)->send_ev_active && 0 <= (p)->sd) {                                     \
-            pmix_event_add(&(p)->send_event, 0);                                        \
             (p)->send_ev_active = true;                                                 \
+            PMIX_POST_OBJECT(snd);                                                      \
+            pmix_event_add(&(p)->send_event, 0);                                        \
         }                                                                               \
     } while (0)
 
