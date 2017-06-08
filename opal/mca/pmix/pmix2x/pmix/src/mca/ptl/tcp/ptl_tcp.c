@@ -315,8 +315,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                       pmix_client_globals.myserver->sd,
                       EV_READ | EV_PERSIST,
                       pmix_ptl_base_recv_handler, pmix_client_globals.myserver);
-    pmix_event_add(&pmix_client_globals.myserver->recv_event, 0);
     pmix_client_globals.myserver->recv_ev_active = true;
+    PMIX_POST_OBJECT(pmix_client_globals.myserver);
+    pmix_event_add(&pmix_client_globals.myserver->recv_event, 0);
 
     /* setup send event */
     pmix_event_assign(&pmix_client_globals.myserver->send_event,

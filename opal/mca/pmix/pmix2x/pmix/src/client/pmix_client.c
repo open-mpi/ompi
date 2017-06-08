@@ -564,7 +564,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
                              "pmix:client sending finalize sync to server");
 
         /* send to the server */
-        active = true;;
+        active = true;
         if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg,
                                                      wait_cbfunc, (void*)&active))){
             return rc;
@@ -599,7 +599,9 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     if (0 <= pmix_client_globals.myserver->sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver->sd);
     }
-    PMIX_RELEASE(pmix_client_globals.myserver);
+    if (NULL != pmix_client_globals.myserver) {
+        PMIX_RELEASE(pmix_client_globals.myserver);
+    }
 
 
     pmix_rte_finalize();
