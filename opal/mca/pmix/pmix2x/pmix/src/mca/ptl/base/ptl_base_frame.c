@@ -159,7 +159,7 @@ static void rdes(pmix_ptl_recv_t *p)
 }
 PMIX_CLASS_INSTANCE(pmix_ptl_recv_t,
                     pmix_list_item_t,
-                    rcon, NULL);
+                    rcon, rdes);
 
 static void prcon(pmix_ptl_posted_recv_t *p)
 {
