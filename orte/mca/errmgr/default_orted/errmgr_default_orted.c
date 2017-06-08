@@ -138,6 +138,14 @@ static void orted_abort(int error_code, char *fmt, ...)
     orte_timer_t *timer;
     int rc;
 
+    /* only do this once */
+    if (orte_abnormal_term_ordered) {
+        return;
+    }
+
+    /* set the aborting flag */
+    orte_abnormal_term_ordered = true;
+
     /* If there was a message, construct it */
     va_start(arglist, fmt);
     if (NULL != fmt) {
