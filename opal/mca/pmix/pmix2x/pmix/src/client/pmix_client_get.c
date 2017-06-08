@@ -740,7 +740,7 @@ request:
     /* track the callback object */
     pmix_list_append(&pmix_client_globals.pending_requests, &cb->super);
     /* send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, _getnb_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, _getnb_cbfunc, (void*)cb))){
         pmix_list_remove_item(&pmix_client_globals.pending_requests, &cb->super);
         rc = PMIX_ERROR;
         goto respond;

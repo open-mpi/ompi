@@ -82,9 +82,11 @@ static pmix_status_t pmix_ptl_close(void)
     /* ensure the listen thread has been shut down */
     pmix_ptl.stop_listening();
 
-    if (0 <= pmix_client_globals.myserver.sd) {
-        CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
-        pmix_client_globals.myserver.sd = -1;
+    if (NULL != pmix_client_globals.myserver) {
+        if (0 <= pmix_client_globals.myserver->sd) {
+            CLOSE_THE_SOCKET(pmix_client_globals.myserver->sd);
+            pmix_client_globals.myserver->sd = -1;
+        }
     }
 
     /* the components will cleanup when closed */
@@ -105,7 +107,6 @@ static pmix_status_t pmix_ptl_open(pmix_mca_base_open_flag_t flags)
     PMIX_CONSTRUCT(&pmix_ptl_globals.unexpected_msgs, pmix_list_t);
     pmix_ptl_globals.listen_thread_active = false;
     PMIX_CONSTRUCT(&pmix_ptl_globals.listeners, pmix_list_t);
-    pmix_client_globals.myserver.sd = -1;
 
     /* Open up all available components */
     return pmix_mca_base_framework_components_open(&pmix_ptl_base_framework, flags);

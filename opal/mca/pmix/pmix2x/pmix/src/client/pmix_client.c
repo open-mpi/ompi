@@ -167,7 +167,7 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
 }
 
 
-pmix_client_globals_t pmix_client_globals = {{{0}}};
+pmix_client_globals_t pmix_client_globals = {0};
 pmix_mutex_t pmix_client_bootstrap_mutex = PMIX_MUTEX_STATIC_INIT;
 
 /* callback for wait completion */
@@ -371,7 +371,10 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
 
     /* setup the globals */
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
-    PMIX_CONSTRUCT(&pmix_client_globals.myserver, pmix_peer_t);
+    pmix_client_globals.myserver = PMIX_NEW(pmix_peer_t);
+    if (NULL == pmix_client_globals.myserver) {
+        return PMIX_ERR_NOMEM;
+    }
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
@@ -411,7 +414,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return PMIX_ERR_INIT;
     }
     /* the server will be using the same */
-    pmix_client_globals.myserver.compat.psec = pmix_globals.mypeer->compat.psec;
+    pmix_client_globals.myserver->compat.psec = pmix_globals.mypeer->compat.psec;
 
     /* setup the shared memory support */
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
@@ -422,7 +425,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
 #endif /* PMIX_ENABLE_DSTORE */
 
     /* connect to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.connect_to_peer(&pmix_client_globals.myserver, info, ninfo))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.connect_to_peer(pmix_client_globals.myserver, info, ninfo))){
         pmix_mutex_unlock(&pmix_client_bootstrap_mutex);
         return rc;
     }
@@ -440,7 +443,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* send to the server */
     PMIX_CONSTRUCT(&cb, pmix_cb_t);
     cb.active = true;
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, req, job_data, (void*)&cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, req, job_data, (void*)&cb))){
         PMIX_DESTRUCT(&cb);
         pmix_mutex_unlock(&pmix_client_bootstrap_mutex);
         return rc;
@@ -523,7 +526,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     /* mark that I called finalize */
     pmix_globals.mypeer->finalized = true;
 
-    if ( 0 <= pmix_client_globals.myserver.sd ) {
+    if ( 0 <= pmix_client_globals.myserver->sd ) {
         /* check to see if we are supposed to execute a
          * blocking fence prior to actually finalizing */
         if (NULL != info && 0 < ninfo) {
@@ -562,7 +565,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
 
         /* send to the server */
         active = true;;
-        if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg,
+        if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg,
                                                      wait_cbfunc, (void*)&active))){
             return rc;
         }
@@ -584,8 +587,6 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         (void)pmix_progress_thread_pause(NULL);
     }
 
-    PMIX_DESTRUCT(&pmix_client_globals.myserver);
-
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     if (0 > (rc = pmix_dstore_nspace_del(pmix_globals.myid.nspace))) {
         PMIX_ERROR_LOG(rc);
@@ -595,9 +596,11 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
 
     PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);
 
-    if (0 <= pmix_client_globals.myserver.sd) {
-        CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
+    if (0 <= pmix_client_globals.myserver->sd) {
+        CLOSE_THE_SOCKET(pmix_client_globals.myserver->sd);
     }
+    PMIX_RELEASE(pmix_client_globals.myserver);
+
 
     pmix_rte_finalize();
 
@@ -665,7 +668,7 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
 
     /* send to the server */
     active = true;
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, bfr,
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, bfr,
                                                  wait_cbfunc, (void*)&active))){
         return rc;
     }
@@ -854,7 +857,7 @@ static void _commitfn(int sd, short args, void *cbdata)
 
     /* always send, even if we have nothing to contribute, so the server knows
      * that we contributed whatever we had */
-    if (PMIX_SUCCESS == (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msgout,
+    if (PMIX_SUCCESS == (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msgout,
                                                  wait_cbfunc, (void*)&cb->active))){
         cb->pstatus = PMIX_SUCCESS;
         return;

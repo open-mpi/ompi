@@ -191,7 +191,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     }
 
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
-    PMIX_CONSTRUCT(&pmix_client_globals.myserver, pmix_peer_t);
+    pmix_client_globals.myserver = PMIX_NEW(pmix_peer_t);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
@@ -202,10 +202,10 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         return PMIX_ERR_INIT;
     }
     /* the server will have to use the same */
-    pmix_client_globals.myserver.compat.psec = pmix_globals.mypeer->compat.psec;
+    pmix_client_globals.myserver->compat.psec = pmix_globals.mypeer->compat.psec;
 
     /* connect to the server - returns job info if successful */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.connect_to_peer(&pmix_client_globals.myserver, info, ninfo))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.connect_to_peer(pmix_client_globals.myserver, info, ninfo))){
         return rc;
     }
 
@@ -507,7 +507,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
 
     /* send to the server */
     active = true;;
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg,
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg,
                                                  wait_cbfunc, (void*)&active))){
         return rc;
     }
@@ -525,7 +525,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
         (void)pmix_progress_thread_pause(NULL);
     }
 
-    PMIX_DESTRUCT(&pmix_client_globals.myserver);
+    PMIX_RELEASE(pmix_client_globals.myserver);
     PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);
 
     /* shutdown services */

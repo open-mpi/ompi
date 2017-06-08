@@ -197,7 +197,7 @@ static pmix_status_t _send_to_server(pmix_rshift_caddy_t *rcd)
             return rc;
         }
     }
-    rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, regevents_cbfunc, rcd);
+    rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, regevents_cbfunc, rcd);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
@@ -928,7 +928,7 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
   report:
     if (NULL != msg) {
         /* send to the server */
-        rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, NULL, NULL);
+        rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, NULL, NULL);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
         }
