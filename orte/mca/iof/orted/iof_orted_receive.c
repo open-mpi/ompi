@@ -136,6 +136,10 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
          item = opal_list_get_next(item)) {
         orte_iof_sink_t* sink = (orte_iof_sink_t*)item;
 
+        /* is this sink for stdin? it could be for writing a file from stdout/err */
+        if (!(ORTE_IOF_STDIN & sink->tag))
+            continue;
+
         /* is this intended for this jobid? */
         if (target.jobid == sink->name.jobid) {
             /* yes - is this intended for all vpids or this vpid? */
