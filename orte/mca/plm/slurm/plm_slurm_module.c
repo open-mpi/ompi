@@ -587,7 +587,8 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
     orte_proc_t *dummy;
 
     if (NULL == exec_argv) {
-        return ORTE_ERR_NOT_FOUND;
+        orte_show_help("help-plm-slurm.txt", "no-srun", true);
+        return ORTE_ERR_SILENT;
     }
 
     srun_pid = fork();
