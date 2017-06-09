@@ -202,7 +202,7 @@ static void job_data(struct pmix_peer_t *pr,
         PMIX_ERROR_LOG(rc);
         cb->status = PMIX_ERROR;
         PMIX_POST_OBJECT(cb);
-        cb->active = false;
+        PMIX_WAKEUP_THREAD(&cb->lock);
         return;
     }
     assert(NULL != nspace);
@@ -462,7 +462,9 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     (void)strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     wildcard.rank = PMIX_RANK_WILDCARD;
     PMIX_INFO_LOAD(&ginfo, PMIX_IMMEDIATE, NULL, PMIX_BOOL);
+    PMIX_RELEASE_THREAD(&pmix_client_lock);
     if (PMIX_SUCCESS == PMIx_Get(&wildcard, PMIX_DEBUG_STOP_IN_INIT, &ginfo, 1, &val)) {
+        PMIX_ACQUIRE_THREAD(&pmix_client_lock);
         PMIX_VALUE_FREE(val, 1); // cleanup memory
         /* if the value was found, then we need to wait for debugger attach here */
         /* register for the debugger release notification */

@@ -66,28 +66,32 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
 static void op_cbfunc(pmix_status_t status, void *cbdata);
 
 PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
-                           const pmix_info_t info[], size_t ninfo)
+                                     const pmix_info_t info[], size_t ninfo)
 {
     pmix_cb_t *cb;
     pmix_status_t rc;
+
+    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: executing fence");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_client_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_client_lock);
         return PMIX_ERR_UNREACH;
     }
+    PMIX_RELEASE_THREAD(&pmix_client_lock);
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
 
     /* push the message into our event base to send to the server */
     if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(procs, nprocs, info, ninfo,
@@ -97,7 +101,7 @@ PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
     }
 
     /* wait for the fence to complete */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_ACQUIRE_THREAD(&cb->lock);
     rc = cb->status;
     PMIX_RELEASE(cb);
 
@@ -108,8 +112,8 @@ PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
 }
 
 PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs,
-                              const pmix_info_t info[], size_t ninfo,
-                              pmix_op_cbfunc_t cbfunc, void *cbdata)
+                                        const pmix_info_t info[], size_t ninfo,
+                                        pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_FENCENB_CMD;
@@ -118,17 +122,22 @@ PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs
     pmix_proc_t rg, *rgs;
     size_t nrg;
 
+    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: fence_nb called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_client_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_client_lock);
         return PMIX_ERR_UNREACH;
     }
+    PMIX_RELEASE_THREAD(&pmix_client_lock);
 
     /* check for bozo input */
     if (NULL == procs && 0 != nprocs) {
@@ -252,5 +261,5 @@ static void op_cbfunc(pmix_status_t status, void *cbdata)
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
     cb->status = status;
-    cb->active = false;
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }

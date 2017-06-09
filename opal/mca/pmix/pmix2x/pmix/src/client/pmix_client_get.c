@@ -87,22 +87,25 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
     pmix_cb_t *cb;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_client_lock);
         return PMIX_ERR_INIT;
     }
+    PMIX_RELEASE_THREAD(&pmix_client_lock);
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     if (PMIX_SUCCESS != (rc = PMIx_Get_nb(proc, key, info, ninfo, _value_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         return rc;
     }
 
     /* wait for the data to return */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_ACQUIRE_THREAD(&cb->lock);
     rc = cb->status;
     *val = cb->value;
     PMIX_RELEASE(cb);
@@ -121,9 +124,13 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
     int rank;
     char *nm;
 
+    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_client_lock);
         return PMIX_ERR_INIT;
     }
+    PMIX_RELEASE_THREAD(&pmix_client_lock);
 
     /* if the proc is NULL, then the caller is assuming
      * that the key is universally unique within the caller's
@@ -169,7 +176,6 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
 
     /* thread-shift so we can check global objects */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     (void)strncpy(cb->nspace, nm, PMIX_MAX_NSLEN);
     cb->rank = rank;
     cb->key = (char*)key;
@@ -195,12 +201,12 @@ static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata)
         }
     }
     PMIX_POST_OBJECT(cb);
-    cb->active = false;
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }
 
 static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
-                               const pmix_info_t info[], size_t ninfo,
-                               pmix_cmd_t cmd)
+                                const pmix_info_t info[], size_t ninfo,
+                                pmix_cmd_t cmd)
 {
     pmix_buffer_t *msg;
     pmix_status_t rc;
@@ -775,5 +781,4 @@ request:
     }
     PMIX_RELEASE(cb);
     return;
-
 }
