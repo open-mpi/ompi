@@ -49,3 +49,7 @@ are running.
 
 Please consult with your system administrator about obtaining
 such support.
+[no-srun]
+The SLURM process starter for OpenMPI was unable to locate a
+usable "srun" command in its path. Please check your path
+and try again.

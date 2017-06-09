@@ -2151,11 +2151,13 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     }
 
     /* ensure we are not on the list */
-    item = opal_list_get_first(&nodes);
-    node = (orte_node_t*)item;
-    if (0 == node->index) {
-        opal_list_remove_item(&nodes, item);
-        OBJ_RELEASE(item);
+    if (0 < opal_list_get_size(&nodes)) {
+        item = opal_list_get_first(&nodes);
+        node = (orte_node_t*)item;
+        if (0 == node->index) {
+            opal_list_remove_item(&nodes, item);
+            OBJ_RELEASE(item);
+        }
     }
 
     /* if we didn't get anything, then we are the only node in the
