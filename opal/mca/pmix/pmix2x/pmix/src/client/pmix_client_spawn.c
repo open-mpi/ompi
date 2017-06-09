@@ -69,22 +69,22 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     pmix_status_t rc;
     pmix_cb_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: spawn called");
 
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
 
     /* ensure the nspace (if provided) is initialized */
@@ -120,22 +120,22 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     pmix_status_t rc;
     pmix_cb_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: spawn called");
 
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */

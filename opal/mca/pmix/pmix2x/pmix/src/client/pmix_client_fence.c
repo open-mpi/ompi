@@ -71,22 +71,22 @@ PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: executing fence");
 
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
@@ -122,22 +122,22 @@ PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs
     pmix_proc_t rg, *rgs;
     size_t nrg;
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: fence_nb called");
 
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* check for bozo input */
     if (NULL == procs && 0 != nprocs) {

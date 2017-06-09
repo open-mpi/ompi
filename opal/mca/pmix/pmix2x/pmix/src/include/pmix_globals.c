@@ -42,10 +42,15 @@
 #include "src/class/pmix_list.h"
 #include "src/threads/threads.h"
 
+pmix_lock_t pmix_global_lock = {
+    .mutex = PMIX_MUTEX_STATIC_INIT,
+    .cond = PMIX_CONDITION_STATIC_INIT,
+    .active = false
+};
+
 static void cbcon(pmix_cb_t *p)
 {
     PMIX_CONSTRUCT_LOCK(&p->lock);
-    p->active = false;
     p->checked = false;
     PMIX_CONSTRUCT(&p->data, pmix_buffer_t);
     p->cbfunc = NULL;
@@ -223,7 +228,7 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_rank_info_t,
 
 static void scon(pmix_shift_caddy_t *p)
 {
-    p->active = false;
+    PMIX_CONSTRUCT_LOCK(&p->lock);
     p->codes = NULL;
     p->ncodes = 0;
     p->nspace = NULL;
@@ -245,6 +250,7 @@ static void scon(pmix_shift_caddy_t *p)
 }
 static void scdes(pmix_shift_caddy_t *p)
 {
+    PMIX_DESTRUCT_LOCK(&p->lock);
     if (NULL != p->kv) {
         PMIX_RELEASE(p->kv);
     }
@@ -259,6 +265,7 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_info_caddy_t,
 
 static void qcon(pmix_query_caddy_t *p)
 {
+    PMIX_CONSTRUCT_LOCK(&p->lock);
     p->queries = NULL;
     p->nqueries = 0;
     p->targets = NULL;
@@ -269,9 +276,13 @@ static void qcon(pmix_query_caddy_t *p)
     p->cbdata = NULL;
     p->relcbfunc = NULL;
 }
-PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
-                    pmix_object_t,
-                    qcon, NULL);
+static void qdes(pmix_query_caddy_t *p)
+{
+    PMIX_DESTRUCT_LOCK(&p->lock);
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
+                                pmix_object_t,
+                                qcon, qdes);
 
 static void jdcon(pmix_job_data_caddy_t *p)
 {

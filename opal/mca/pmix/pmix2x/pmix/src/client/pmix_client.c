@@ -168,11 +168,6 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
 
 
 pmix_client_globals_t pmix_client_globals = {0};
-pmix_lock_t pmix_client_lock = {
-    .mutex = PMIX_MUTEX_STATIC_INIT,
-    .cond = PMIX_CONDITION_STATIC_INIT,
-    .active = false
-};
 
 /* callback for wait completion */
 static void wait_cbfunc(struct pmix_peer_t *pr,
@@ -332,7 +327,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return PMIX_ERR_BAD_PARAM;
     }
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
     if (0 < pmix_globals.init_cntr || PMIX_PROC_SERVER == pmix_globals.proc_type) {
         /* since we have been called before, the nspace and
@@ -349,12 +344,12 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
             _check_for_notify(info, ninfo);
         }
         ++pmix_globals.init_cntr;
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_SUCCESS;
     }
     /* if we don't see the required info, then we cannot init */
     if (NULL == getenv("PMIX_NAMESPACE")) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INVALID_NAMESPACE;
     }
 
@@ -363,7 +358,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     if (PMIX_SUCCESS != (rc = pmix_rte_init(PMIX_PROC_CLIENT, info, ninfo,
                                             pmix_client_notify_recv))) {
         PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
 
@@ -371,7 +366,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     pmix_client_globals.myserver = PMIX_NEW(pmix_peer_t);
     if (NULL == pmix_client_globals.myserver) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_NOMEM;
     }
 
@@ -381,7 +376,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* we require our nspace */
     if (NULL == (evar = getenv("PMIX_NAMESPACE"))) {
         /* let the caller know that the server isn't available yet */
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INVALID_NAMESPACE;
     }
     if (NULL != proc) {
@@ -395,7 +390,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* we also require our rank */
     if (NULL == (evar = getenv("PMIX_RANK"))) {
         /* let the caller know that the server isn't available yet */
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_DATA_VALUE_NOT_FOUND;
     }
     pmix_globals.myid.rank = strtol(evar, NULL, 10);
@@ -409,7 +404,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
      * to us at launch */
     evar = getenv("PMIX_SECURITY_MODE");
     if (PMIX_SUCCESS != (rc = pmix_psec.assign_module(pmix_globals.mypeer, evar))) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
     /* the server will be using the same */
@@ -418,14 +413,14 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* setup the shared memory support */
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
     if (PMIX_SUCCESS != (rc = pmix_dstore_init(NULL, 0))) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_DATA_VALUE_NOT_FOUND;
     }
 #endif /* PMIX_ENABLE_DSTORE */
 
     /* connect to the server */
     if (PMIX_SUCCESS != (rc = pmix_ptl.connect_to_peer(pmix_client_globals.myserver, info, ninfo))){
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
 
@@ -436,14 +431,14 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
      if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(req, &cmd, 1, PMIX_CMD))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(req);
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
     /* send to the server */
     PMIX_CONSTRUCT(&cb, pmix_cb_t);
     if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, req, job_data, (void*)&cb))){
         PMIX_DESTRUCT(&cb);
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
     /* wait for the data to return */
@@ -454,7 +449,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     if (PMIX_SUCCESS == rc) {
         pmix_globals.init_cntr++;
     } else {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
 
@@ -462,18 +457,20 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     (void)strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     wildcard.rank = PMIX_RANK_WILDCARD;
     PMIX_INFO_LOAD(&ginfo, PMIX_IMMEDIATE, NULL, PMIX_BOOL);
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
     if (PMIX_SUCCESS == PMIx_Get(&wildcard, PMIX_DEBUG_STOP_IN_INIT, &ginfo, 1, &val)) {
-        PMIX_ACQUIRE_THREAD(&pmix_client_lock);
         PMIX_VALUE_FREE(val, 1); // cleanup memory
         /* if the value was found, then we need to wait for debugger attach here */
         /* register for the debugger release notification */
         PMIX_CONSTRUCT_LOCK(&reglock);
         PMIx_Register_event_handler(&code, 1, NULL, 0,
                                     notification_fn, NULL, (void*)&reglock);
+        PMIX_ACQUIRE_THREAD(&pmix_global_lock);
         /* wait for it to arrive */
         PMIX_ACQUIRE_THREAD(&reglock);
         PMIX_DESTRUCT_LOCK(&reglock);
+    } else {
+        PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     }
     PMIX_INFO_DESTRUCT(&ginfo);
 
@@ -481,22 +478,56 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     if (NULL != info) {
         _check_for_notify(info, ninfo);
     }
-
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     return PMIX_SUCCESS;
 }
 
 PMIX_EXPORT int PMIx_Initialized(void)
 {
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
     if (0 < pmix_globals.init_cntr) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return true;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
     return false;
+}
+
+typedef struct {
+    pmix_lock_t lock;
+    pmix_event_t ev;
+    bool active;
+} pmix_client_timeout_t;
+
+/* timer callback */
+static void fin_timeout(int sd, short args, void *cbdata)
+{
+    pmix_client_timeout_t *tev;
+    tev = (pmix_client_timeout_t*)cbdata;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:client finwait timeout fired");
+    if (tev->active) {
+        tev->active = false;
+        PMIX_WAKEUP_THREAD(&tev->lock);
+    }
+}
+/* callback for finalize completion */
+static void finwait_cbfunc(struct pmix_peer_t *pr,
+                           pmix_ptl_hdr_t *hdr,
+                           pmix_buffer_t *buf, void *cbdata)
+{
+    pmix_client_timeout_t *tev;
+    tev = (pmix_client_timeout_t*)cbdata;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:client finwait_cbfunc received");
+    if (tev->active) {
+        tev->active = false;
+        PMIX_WAKEUP_THREAD(&tev->lock);
+    }
 }
 
 PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
@@ -505,12 +536,13 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     pmix_cmd_t cmd = PMIX_FINALIZE_CMD;
     pmix_status_t rc;
     size_t n;
-    pmix_lock_t reglock;
+    pmix_client_timeout_t tev;
+    struct timeval tv = {2, 0};
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (1 != pmix_globals.init_cntr) {
         --pmix_globals.init_cntr;
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_SUCCESS;
     }
     pmix_globals.init_cntr = 0;
@@ -557,16 +589,27 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         pmix_output_verbose(2, pmix_globals.debug_output,
                              "pmix:client sending finalize sync to server");
 
+        /* setup a timer to protect ourselves should the server be unable
+         * to answer for some reason */
+        PMIX_CONSTRUCT_LOCK(&tev.lock);
+        pmix_event_assign(&tev.ev, pmix_globals.evbase, -1, 0,
+                          fin_timeout, &tev);
+        tev.active = true;
+        PMIX_POST_OBJECT(&tev);
+        pmix_event_add(&tev.ev, &tv);
         /* send to the server */
-        PMIX_CONSTRUCT_LOCK(&reglock);
         if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg,
-                                                     wait_cbfunc, (void*)&reglock))){
+                                                     finwait_cbfunc, (void*)&tev))){
             return rc;
         }
 
         /* wait for the ack to return */
-        PMIX_ACQUIRE_THREAD(&reglock);
-        PMIX_DESTRUCT_LOCK(&reglock);
+        PMIX_ACQUIRE_THREAD(&tev.lock);
+        PMIX_DESTRUCT_LOCK(&tev.lock);
+        if (tev.active) {
+            pmix_event_del(&tev.ev);
+        }
+
         pmix_output_verbose(2, pmix_globals.debug_output,
                              "pmix:client finalize sync received");
     }
@@ -597,7 +640,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
 
 
     pmix_rte_finalize();
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     return PMIX_SUCCESS;
 }
@@ -613,18 +656,18 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client abort called");
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a buffer to hold the message */
     bfr = PMIX_NEW(pmix_buffer_t);
@@ -777,16 +820,15 @@ PMIX_EXPORT pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_va
                         "pmix: executing put for key %s type %d",
                         key, val->type);
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     cb->scope = scope;
     cb->key = (char*)key;
     cb->value = val;
@@ -871,27 +913,25 @@ static void _commitfn(int sd, short args, void *cbdata)
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we are a server, or we aren't connected, don't attempt to send */
     if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_SUCCESS;  // not an error
     }
     if (!pmix_globals.connected) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
-
     /* pass this into the event library for thread protection */
     PMIX_THREADSHIFT(cb, _commitfn);
 
@@ -983,16 +1023,15 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     cb->key = (char*)nodename;
     if (NULL != nspace) {
         (void)strncpy(cb->nspace, nspace, PMIX_MAX_NSLEN);
@@ -1054,16 +1093,15 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_client_lock);
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
-        PMIX_RELEASE_THREAD(&pmix_client_lock);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
-    PMIX_RELEASE_THREAD(&pmix_client_lock);
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     if (NULL != nspace) {
         (void)strncpy(cb->nspace, nspace, PMIX_MAX_NSLEN);
     }

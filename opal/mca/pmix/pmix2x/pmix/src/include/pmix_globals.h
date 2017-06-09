@@ -214,7 +214,7 @@ PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
-    volatile bool active;
+    pmix_lock_t lock;
     pmix_status_t status;
     pmix_query_t *queries;
     size_t nqueries;
@@ -234,7 +234,7 @@ typedef struct {
     pmix_cmd_t type;
     pmix_proc_t *pcs;               // copy of the original array of participants
     size_t   npcs;                  // number of procs in the array
-    volatile bool active;           // flag for waiting for completion
+    pmix_lock_t lock;               // flag for waiting for completion
     bool def_complete;              // all local procs have been registered and the trk definition is complete
     pmix_list_t ranks;              // list of pmix_rank_info_t of the local participants
     pmix_list_t local_cbs;          // list of pmix_server_caddy_t for sending result to the local participants
@@ -271,7 +271,7 @@ PMIX_CLASS_DECLARATION(pmix_job_data_caddy_t);
  typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
-    volatile bool active;
+    pmix_lock_t lock;
     pmix_status_t status;
     pmix_status_t *codes;
     size_t ncodes;
@@ -306,7 +306,6 @@ typedef struct {
     pmix_list_item_t super;
     pmix_event_t ev;
     pmix_lock_t lock;
-    volatile bool active;
     bool checked;
     int status;
     pmix_status_t pstatus;
@@ -341,7 +340,6 @@ PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
 
 #define PMIX_THREADSHIFT(r, c)                              \
  do {                                                       \
-    (r)->active = true;                                     \
     pmix_event_assign(&((r)->ev), pmix_globals.evbase,      \
                       -1, EV_WRITE, (c), (r));              \
     PMIX_POST_OBJECT((r));                                  \
@@ -385,6 +383,7 @@ typedef struct {
 
 
 PMIX_EXPORT extern pmix_globals_t pmix_globals;
+PMIX_EXPORT extern pmix_lock_t pmix_global_lock;
 
 END_C_DECLS
 

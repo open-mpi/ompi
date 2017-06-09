@@ -19,6 +19,7 @@
 #include <pmix_common.h>
 #include <src/class/pmix_ring_buffer.h>
 #include <pmix_server.h>
+#include "src/threads/threads.h"
 #include "src/util/hash.h"
 
 typedef struct {
@@ -31,7 +32,7 @@ PMIX_CLASS_DECLARATION(pmix_trkr_caddy_t);
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
-    volatile bool active;
+    pmix_lock_t lock;
     char *nspace;
     pmix_status_t status;
     pmix_proc_t proc;
@@ -51,7 +52,7 @@ PMIX_CLASS_DECLARATION(pmix_setup_caddy_t);
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
-    volatile bool active;
+    pmix_lock_t lock;
     pmix_status_t status;
     pmix_proc_t source;
     pmix_data_range_t range;

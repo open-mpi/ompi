@@ -21,6 +21,7 @@
 #include <pmix_server.h>
 #include <pmix_rename.h>
 
+#include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -101,12 +102,22 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
     pmix_buffer_t *msg;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:query non-blocking");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!PMIX_PROC_IS_SERVER && !pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     if (0 == nqueries || NULL == queries) {
         return PMIX_ERR_BAD_PARAM;
@@ -127,12 +138,6 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
         rc = PMIX_SUCCESS;
     } else {
         /* if we are a client, then relay this request to the server */
-
-        /* if we aren't connected, don't attempt to send */
-        if (!pmix_globals.connected) {
-            return PMIX_ERR_UNREACH;
-        }
-
         cd = PMIX_NEW(pmix_query_caddy_t);
         cd->cbfunc = cbfunc;
         cd->cbdata = cbdata;
