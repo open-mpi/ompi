@@ -599,7 +599,8 @@ int orte_util_encode_nodemap(opal_buffer_t *buffer)
                 opal_output_verbose(5, orte_nidmap_output,
                                     "%s CONTINUE TOPOLOGY RANGE (%d) WITH NODE %s: %s",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    tp->cnt, nptr->name, tp->t->sig);
+                                    tp->cnt, nptr->name,
+                                    (NULL == tp->t) ? "N/A" : tp->t->sig);
             } else {
                 /* need to start another range */
                 tp = OBJ_NEW(orte_regex_range_t);
