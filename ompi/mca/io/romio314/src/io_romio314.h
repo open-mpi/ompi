@@ -128,12 +128,24 @@ int mca_io_romio314_file_iread_at (struct ompi_file_t *fh,
                                 int count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_request_t **request);
+int mca_io_romio314_file_iread_at_all (struct ompi_file_t *fh,
+                                       MPI_Offset offset,
+                                       void *buf,
+                                       int count,
+                                       struct ompi_datatype_t *datatype,
+                                       ompi_request_t **request);
 int mca_io_romio314_file_iwrite_at (struct ompi_file_t *fh,
                                  MPI_Offset offset,
                                  const void *buf,
                                  int count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_request_t **request);
+int mca_io_romio314_file_iwrite_at_all (struct ompi_file_t *fh,
+                                        MPI_Offset offset,
+                                        const void *buf,
+                                        int count,
+                                        struct ompi_datatype_t *datatype,
+                                        ompi_request_t **request);
 
 /* Section 9.4.3 */
 int mca_io_romio314_file_read (struct ompi_file_t *fh,
@@ -161,11 +173,21 @@ int mca_io_romio314_file_iread (struct ompi_file_t *fh,
                              int count,
                              struct ompi_datatype_t *datatype,
                              ompi_request_t **request);
+int mca_io_romio314_file_iread_all (struct ompi_file_t *fh,
+                                    void *buf,
+                                    int count,
+                                    struct ompi_datatype_t *datatype,
+                                    ompi_request_t **request);
 int mca_io_romio314_file_iwrite (struct ompi_file_t *fh,
                               const void *buf,
                               int count,
                               struct ompi_datatype_t *datatype,
                               ompi_request_t **request);
+int mca_io_romio314_file_iwrite_all (struct ompi_file_t *fh,
+                                     const void *buf,
+                                     int count,
+                                     struct ompi_datatype_t *datatype,
+                                     ompi_request_t **request);
 int mca_io_romio314_file_seek (struct ompi_file_t *fh,
                             MPI_Offset offset,
                             int whence);
