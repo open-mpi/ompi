@@ -94,7 +94,8 @@ struct ompi_mtl_portals4_rndv_get_frag_t {
     ptl_process_t    frag_target;
     ptl_hdr_data_t   frag_match_bits;
     ptl_size_t       frag_remote_offset;
-    opal_timer_t     frag_start_time_usec;
+    /* the absolute time at which this frag times out */
+    opal_timer_t     frag_abs_timeout_usec;
 
     int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_rndv_get_frag_t*);
 

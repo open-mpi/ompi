@@ -82,7 +82,7 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
         frag->frag_remote_offset = remote_offset + i * ompi_mtl_portals4.max_msg_size_mtl;
 
         frag->event_callback = ompi_mtl_portals4_rndv_get_frag_progress;
-        frag->frag_start_time_usec = opal_timer_base_get_usec();
+        frag->frag_abs_timeout_usec = 0;
 
         OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "GET (fragment %d/%d, size %ld) send",
                              i + 1, frag_count, frag->frag_length));
@@ -337,17 +337,26 @@ ompi_mtl_portals4_rndv_get_frag_progress(ptl_event_t *ev,
                             __FILE__, __LINE__, ev->ni_fail_type);
 
         if (OPAL_UNLIKELY(ev->ni_fail_type != PTL_NI_DROPPED)) {
-            mtl_ptl_error(1, "PTL_EVENT_REPLY with ni_fail_type: %s"
-                    " => cannot retry",
-                    name_of_err[ev->ni_fail_type]);
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "PTL_EVENT_REPLY with ni_fail_type: %u => cannot retry",
+                                (uint32_t)ev->ni_fail_type);
             ret = PTL_FAIL;
             goto callback_error;
         }
 
-        opal_timer_t time = opal_timer_base_get_usec() - rndv_get_frag->frag_start_time_usec;
-        if (time > (unsigned int) ompi_mtl_portals4.get_retransmit_timeout) {
-            mtl_ptl_error(1, "timeout retrying GET");
-            return OMPI_ERROR;
+        if (0 == rndv_get_frag->frag_abs_timeout_usec) {
+            /* this is the first retry of the frag.  start the timer. */
+            /* instead of recording the start time, record the end time
+             * and avoid addition on each retry. */
+            rndv_get_frag->frag_abs_timeout_usec = opal_timer_base_get_usec() + ompi_mtl_portals4.get_retransmit_timeout;
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "setting frag timeout at %lu",
+                                rndv_get_frag->frag_abs_timeout_usec);
+        } else if (opal_timer_base_get_usec() >= rndv_get_frag->frag_abs_timeout_usec) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "timeout retrying GET");
+            ret = PTL_FAIL;
+            goto callback_error;
         }
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
