@@ -20,13 +20,11 @@
 BEGIN_C_DECLS
 
 typedef struct {
-    pmix_peer_t myserver;           // messaging support to/from my server
+    pmix_peer_t *myserver;          // messaging support to/from my server
     pmix_list_t pending_requests;   // list of pmix_cb_t pending data requests
 } pmix_client_globals_t;
 
 PMIX_EXPORT extern pmix_client_globals_t pmix_client_globals;
-
-PMIX_EXPORT extern pmix_mutex_t pmix_client_bootstrap_mutex;
 
 END_C_DECLS
 

@@ -158,6 +158,8 @@ static void add_tracker(int sd, short flags, void *cbdata)
 {
     file_tracker_t *ft = (file_tracker_t*)cbdata;
 
+    PMIX_ACQUIRE_OBJECT(fd);
+
     /* add the tracker to our list */
     pmix_list_append(&mca_psensor_file_component.trackers, &ft->super);
 
@@ -221,6 +223,7 @@ static pmix_status_t start(pmix_peer_t *requestor, pmix_status_t error,
     /* need to push into our event base to add this to our trackers */
     pmix_event_assign(&ft->cdev, pmix_psensor_base.evbase, -1,
                       EV_WRITE, add_tracker, ft);
+    PMIX_POST_OBJECT(ft);
     pmix_event_active(&ft->cdev, EV_WRITE, 1);
 
     return PMIX_SUCCESS;
@@ -231,6 +234,8 @@ static void del_tracker(int sd, short flags, void *cbdata)
 {
     file_caddy_t *cd = (file_caddy_t*)cbdata;
     file_tracker_t *ft, *ftnext;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     /* remove the tracker from our list */
     PMIX_LIST_FOREACH_SAFE(ft, ftnext, &mca_psensor_file_component.trackers, file_tracker_t) {
@@ -258,6 +263,7 @@ static pmix_status_t stop(pmix_peer_t *requestor, char *id)
     /* need to push into our event base to add this to our trackers */
     pmix_event_assign(&cd->ev, pmix_psensor_base.evbase, -1,
                       EV_WRITE, del_tracker, cd);
+    PMIX_POST_OBJECT(cd);
     pmix_event_active(&cd->ev, EV_WRITE, 1);
 
     return PMIX_SUCCESS;
@@ -276,6 +282,8 @@ static void file_sample(int sd, short args, void *cbdata)
     struct stat buf;
     pmix_status_t rc;
     pmix_proc_t source;
+
+    PMIX_ACQUIRE_OBJECT(ft);
 
     PMIX_OUTPUT_VERBOSE((1, pmix_psensor_base_framework.framework_output,
                          "[%s:%d] sampling file %s",

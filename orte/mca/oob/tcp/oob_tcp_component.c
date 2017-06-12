@@ -74,6 +74,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -698,6 +699,9 @@ static void cleanup(int sd, short args, void *cbdata)
 {
     opal_list_item_t * item;
     bool *active = (bool*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(active);
+
     while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.listeners))) {
         OBJ_RELEASE(item);
     }
@@ -756,6 +760,7 @@ static void component_shutdown(void)
         opal_event_set(orte_event_base, &ev, -1,
                        OPAL_EV_WRITE, cleanup, &active);
         opal_event_set_priority(&ev, ORTE_ERROR_PRI);
+        ORTE_POST_OBJECT(active);
         opal_event_active(&ev, OPAL_EV_WRITE, 1);
         ORTE_WAIT_FOR_COMPLETION(active);
      } else {
@@ -1062,6 +1067,8 @@ void mca_oob_tcp_component_set_module(int fd, short args, void *cbdata)
     int rc;
     orte_oob_base_peer_t *bpr;
 
+    ORTE_ACQUIRE_OBJECT(pop);
+
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:set_module called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1092,6 +1099,8 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
     uint64_t ui64;
     orte_oob_base_peer_t *bpr;
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(pop);
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:lost connection called for peer %s",
@@ -1128,6 +1137,8 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
     int rc;
     orte_oob_base_peer_t *bpr;
 
+    ORTE_ACQUIRE_OBJECT(mop);
+
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:no route called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1161,6 +1172,8 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     uint64_t ui64;
     orte_rml_send_t *snd;
     orte_oob_base_peer_t *bpr;
+
+    ORTE_ACQUIRE_OBJECT(mop);
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:unknown hop called for peer %s",
@@ -1234,6 +1247,8 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
 void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_peer_op_t *pop = (mca_oob_tcp_peer_op_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(pop);
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:failed_to_connect called for peer %s",

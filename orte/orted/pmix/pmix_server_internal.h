@@ -43,9 +43,11 @@
 #include "opal/mca/event/event.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/proc.h"
+#include "opal/sys/atomic.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/threads.h"
 
 BEGIN_C_DECLS
 
@@ -119,6 +121,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
         opal_event_set(orte_event_base, &(_req->ev),         \
                        -1, OPAL_EV_WRITE, (cf), _req);       \
         opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
+        ORTE_POST_OBJECT(_req);                              \
         opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
     } while(0);
 
@@ -133,6 +136,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
         opal_event_set(orte_event_base, &(_req->ev),         \
                        -1, OPAL_EV_WRITE, (cf), _req);       \
         opal_event_set_priority(&(_req->ev), ORTE_MSG_PRI);  \
+        ORTE_POST_OBJECT(_req);                              \
         opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
     } while(0);
 
@@ -147,6 +151,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
         opal_event_set(orte_event_base, &(_cd->ev), -1,         \
                        OPAL_EV_WRITE, (fn), _cd);               \
         opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
+        ORTE_POST_OBJECT(_cd);                                  \
         opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
     } while(0);
 
@@ -165,6 +170,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
         opal_event_set(orte_event_base, &(_cd->ev), -1,         \
                        OPAL_EV_WRITE, (fn), _cd);               \
         opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
+        ORTE_POST_OBJECT(_cd);                                  \
         opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
     } while(0);
 

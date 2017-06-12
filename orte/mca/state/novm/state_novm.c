@@ -26,6 +26,7 @@
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/state/state.h"
@@ -196,11 +197,14 @@ static int finalize(void)
 static void allocation_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = state->jdata;
+    orte_job_t *jdata;
     orte_job_t *daemons;
     orte_topology_t *t;
     orte_node_t *node;
     int i;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = state->jdata;
 
     jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
 
@@ -252,7 +256,10 @@ static void allocation_complete(int fd, short args, void *cbdata)
 static void map_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = state->jdata;
+    orte_job_t *jdata;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = state->jdata;
 
     jdata->state = ORTE_JOB_STATE_MAP_COMPLETE;
     /* move to the map stage */
@@ -265,7 +272,10 @@ static void map_complete(int fd, short args, void *cbdata)
 static void vm_ready(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = state->jdata;
+    orte_job_t *jdata;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
+    jdata = state->jdata;
 
     /* now that the daemons are launched, we are ready
      * to roll

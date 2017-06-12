@@ -29,6 +29,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress_threads.h"
+#include "opal/threads/threads.h"
 #include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -142,6 +143,7 @@ static void opal_opcbfunc(int status, void *cbdata)
 {
     pmix2x_opalcaddy_t *opalcaddy = (pmix2x_opalcaddy_t*)cbdata;
 
+    OPAL_ACQUIRE_OBJECT(opalcaddy);
     if (NULL != opalcaddy->opcbfunc) {
         opalcaddy->opcbfunc(pmix2x_convert_opalrc(status), opalcaddy->cbdata);
     }

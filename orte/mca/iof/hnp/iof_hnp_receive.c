@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +41,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/iof/iof.h"
@@ -81,6 +82,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
             !orte_job_term_ordered &&
             !mca_iof_hnp_component.stdinev->active) {
             mca_iof_hnp_component.stdinev->active = true;
+            ORTE_POST_OBJECT(mca_iof_hnp_component.stdinev);
             opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
         }
         goto CLEAN_RETURN;

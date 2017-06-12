@@ -27,6 +27,7 @@
 
 #include "opal/mca/event/event.h"
 
+#include "orte/util/threads.h"
 #include "oob_tcp.h"
 #include "oob_tcp_sendrecv.h"
 
@@ -87,10 +88,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
         if (NULL != proxy) {                                            \
             pop->rtmod = strdup(proxy);                                 \
         }                                                               \
-        opal_event_set(orte_oob_base.ev_base, &pop->ev, -1,             \
-                       OPAL_EV_WRITE, (cbfunc), pop);                   \
-        opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \
+        ORTE_THREADSHIFT(pop, orte_oob_base.ev_base,                    \
+                         (cbfunc), ORTE_MSG_PRI);                       \
     } while(0);
 
 #endif /* _MCA_OOB_TCP_PEER_H_ */

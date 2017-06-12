@@ -64,7 +64,7 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
                      int32_t num_vals, opal_data_type_t type)
 {
     int rc;
-    int32_t i, j, count;
+    int32_t i, j, count, bookmark;
     orte_job_t **jobs;
     orte_app_context_t *app;
     orte_proc_t *proc;
@@ -241,7 +241,16 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             }
         }
 
-        /* do not pack the bookmark or oversubscribe_override flags */
+        /* pack the bookmark */
+        if (NULL == jobs[i]->bookmark) {
+            bookmark = -1;
+        } else {
+            bookmark = jobs[i]->bookmark->index;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &bookmark, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
         /* pack the job state */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,

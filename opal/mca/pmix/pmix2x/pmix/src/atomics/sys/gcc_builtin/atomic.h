@@ -63,6 +63,8 @@ static inline void pmix_atomic_wmb(void)
 }
 
 #define PMIXMB() pmix_atomic_mb()
+#define PMIXRMB() pmix_atomic_rmb()
+#define PMIXWMB() pmix_atomic_wmb()
 
 /**********************************************************************
  *

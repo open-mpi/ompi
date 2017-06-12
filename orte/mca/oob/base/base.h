@@ -42,8 +42,10 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/timings.h"
-#include "orte/mca/mca.h"
 #include "opal/mca/event/event.h"
+
+#include "orte/mca/mca.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/oob/oob.h"
 
@@ -119,11 +121,8 @@ ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
                             __FILE__, __LINE__);                        \
         cd = OBJ_NEW(orte_oob_send_t);                                  \
         cd->msg = (m);                                                  \
-        opal_event_set(orte_oob_base.ev_base, &cd->ev, -1,              \
-                       OPAL_EV_WRITE,                                   \
-                       orte_oob_base_send_nb, cd);                      \
-        opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);                 \
-        opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);                   \
+        ORTE_THREADSHIFT(cd, orte_oob_base.ev_base,                     \
+                         orte_oob_base_send_nb, ORTE_MSG_PRI);          \
     }while(0)
 
 /* Our contact info is actually subject to change as transports
@@ -168,11 +167,11 @@ typedef struct {
 } mca_oob_uri_req_t;
 OBJ_CLASS_DECLARATION(mca_oob_uri_req_t);
 
-#define ORTE_OOB_SET_URI(u)                                     \
-    do {                                                        \
-        mca_oob_uri_req_t *rq;                                  \
-        rq = OBJ_NEW(mca_oob_uri_req_t);                        \
-        rq->uri = strdup((u));                                  \
+#define ORTE_OOB_SET_URI(u)                         \
+    do {                                            \
+        mca_oob_uri_req_t *rq;                      \
+        rq = OBJ_NEW(mca_oob_uri_req_t);            \
+        rq->uri = strdup((u));                      \
         orte_oob_base_set_addr(0, 0, (void*)rq);    \
     }while(0)
 

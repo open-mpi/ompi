@@ -18,6 +18,7 @@
 #include <pmix_server.h>
 #include <pmix_rename.h>
 
+#include "src/threads/threads.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
 
@@ -43,6 +44,21 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
+
+    PMIX_WAIT_THREAD(&pmix_global_lock);
+
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!PMIX_PROC_IS_SERVER && !pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+
 
     if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
         rc = pmix_server_notify_client_of_event(status, source, range,
@@ -102,10 +118,6 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                         "client: notifying server %s:%d of status %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         PMIx_Error_string(status));
-
-    if (!pmix_globals.connected) {
-        return PMIX_ERR_UNREACH;
-    }
 
     if (PMIX_RANGE_PROC_LOCAL != range) {
         /* create the msg object */
@@ -225,7 +237,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "client: notifying server %s:%d - sending",
                             pmix_globals.myid.nspace, pmix_globals.myid.rank);
-        rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, notify_event_cbfunc, cb);
+        rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, notify_event_cbfunc, cb);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(cb);
@@ -254,6 +266,9 @@ static void progress_local_event_hdlr(pmix_status_t status,
                                       pmix_op_cbfunc_t cbfunc, void *thiscbdata,
                                       void *notification_cbdata)
 {
+    /* this may be in the host's thread, so we need to threadshift it
+     * before accessing our internal data */
+
     pmix_event_chain_t *chain = (pmix_event_chain_t*)notification_cbdata;
     size_t n, nsave, cnt;
     pmix_info_t *newinfo;
@@ -768,6 +783,9 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     size_t n;
     bool matched, holdcd;
 
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_server: _notify_error notifying clients of error %s",
                         PMIx_Error_string(cd->status));
@@ -1055,6 +1073,9 @@ static bool check_range(pmix_range_trkr_t *rng,
 void pmix_event_timeout_cb(int fd, short flags, void *arg)
 {
     pmix_event_chain_t *ch = (pmix_event_chain_t*)arg;
+
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(ch);
 
     ch->timer_active = false;
 

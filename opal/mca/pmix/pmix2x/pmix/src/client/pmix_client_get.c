@@ -53,6 +53,7 @@
 
 #include "src/class/pmix_list.h"
 #include "src/buffer_ops/buffer_ops.h"
+#include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/compress.h"
 #include "src/util/error.h"
@@ -86,22 +87,25 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
     pmix_cb_t *cb;
     pmix_status_t rc;
 
+    PMIX_WAIT_THREAD(&pmix_global_lock);
+
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     if (PMIX_SUCCESS != (rc = PMIx_Get_nb(proc, key, info, ninfo, _value_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         return rc;
     }
 
     /* wait for the data to return */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     *val = cb->value;
     PMIX_RELEASE(cb);
@@ -120,9 +124,13 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
     int rank;
     char *nm;
 
+    PMIX_WAIT_THREAD(&pmix_global_lock);
+
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* if the proc is NULL, then the caller is assuming
      * that the key is universally unique within the caller's
@@ -168,7 +176,6 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
 
     /* thread-shift so we can check global objects */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     (void)strncpy(cb->nspace, nm, PMIX_MAX_NSLEN);
     cb->rank = rank;
     cb->key = (char*)key;
@@ -186,18 +193,20 @@ static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata)
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_OBJECT(cb);
     cb->status = status;
     if (PMIX_SUCCESS == status) {
         if (PMIX_SUCCESS != (rc = pmix_bfrop.copy((void**)&cb->value, kv, PMIX_VALUE))) {
             PMIX_ERROR_LOG(rc);
         }
     }
-    cb->active = false;
+    PMIX_POST_OBJECT(cb);
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }
 
 static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
-                               const pmix_info_t info[], size_t ninfo,
-                               pmix_cmd_t cmd)
+                                const pmix_info_t info[], size_t ninfo,
+                                pmix_cmd_t cmd)
 {
     pmix_buffer_t *msg;
     pmix_status_t rc;
@@ -238,12 +247,12 @@ static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
     return msg;
 }
 
-/* this callback is coming from the usock recv, and thus
+/* this callback is coming from the ptl recv, and thus
  * is occurring inside of our progress thread - hence, no
  * need to thread shift */
 static void _getnb_cbfunc(struct pmix_peer_t *pr,
                           pmix_ptl_hdr_t *hdr,
-                         pmix_buffer_t *buf, void *cbdata)
+                          pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_cb_t *cb2;
@@ -485,6 +494,9 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     size_t n, nvals;
     char *tmp;
     bool my_nspace = false, my_rank = false;
+
+    /* cb was passed to us from another thread - acquire it */
+    PMIX_ACQUIRE_OBJECT(cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: getnbfn value for proc %s:%d key %s",
@@ -734,16 +746,17 @@ request:
     /* track the callback object */
     pmix_list_append(&pmix_client_globals.pending_requests, &cb->super);
     /* send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, _getnb_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, _getnb_cbfunc, (void*)cb))){
         pmix_list_remove_item(&pmix_client_globals.pending_requests, &cb->super);
         rc = PMIX_ERROR;
         goto respond;
     }
-
+    /* we made a lot of changes to cb, so ensure they get
+     * written out before we return */
+    PMIX_POST_OBJECT(cb);
     return;
 
-respond:
-
+  respond:
     /* if a callback was provided, execute it */
     if (NULL != cb->value_cbfunc) {
         if (NULL != val)  {
@@ -768,5 +781,4 @@ respond:
     }
     PMIX_RELEASE(cb);
     return;
-
 }

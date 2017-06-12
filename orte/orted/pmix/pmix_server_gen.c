@@ -43,6 +43,7 @@
 #include "orte/mca/schizo/schizo.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/plm/plm.h"
@@ -56,6 +57,8 @@ static void _client_conn(int sd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *p, *ptr;
     int i;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     if (NULL != cd->server_object) {
         /* we were passed back the orte_proc_t */
@@ -105,6 +108,8 @@ static void _client_finalized(int sd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *p, *ptr;
     int i;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     if (NULL != cd->server_object) {
         /* we were passed back the orte_proc_t */
@@ -164,6 +169,8 @@ static void _client_abort(int sd, short args, void *cbdata)
     orte_proc_t *p, *ptr;
     int i;
 
+    ORTE_ACQUIRE_OBJECT(cd);
+
     if (NULL != cd->server_object) {
         p = (orte_proc_t*)cd->server_object;
     } else {
@@ -214,6 +221,8 @@ static void _register_events(int sd, short args, void *cbdata)
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
     opal_value_t *info;
 
+    ORTE_ACQUIRE_OBJECT(cd);
+
     /* the OPAL layer "owns" the list, but let's deconstruct it
      * here so we don't have to duplicate the data */
     while (NULL != (info = (opal_value_t*)opal_list_remove_first(cd->info))) {
@@ -245,6 +254,8 @@ static void _deregister_events(int sd, short args, void *cbdata)
 {
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
     opal_value_t *info, *iptr, *nptr;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     /* the OPAL layer "owns" the list, but let's deconstruct it
      * here for consistency */
@@ -280,6 +291,8 @@ int pmix_server_deregister_events_fn(opal_list_t *info,
 static void _notify_release(int status, void *cbdata)
 {
     orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     if (NULL != cd->info) {
         OPAL_LIST_RELEASE(cd->info);
@@ -464,6 +477,8 @@ static void _query(int sd, short args, void *cbdata)
     orte_namelist_t *nm;
     opal_pstats_t pstat;
     float pss;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s processing query",
@@ -654,6 +669,7 @@ int pmix_server_query_fn(opal_process_name_t *requestor,
     opal_event_set(orte_event_base, &(cd->ev), -1,
                    OPAL_EV_WRITE, _query, cd);
     opal_event_set_priority(&(cd->ev), ORTE_MSG_PRI);
+    ORTE_POST_OBJECT(cd);
     opal_event_active(&(cd->ev), OPAL_EV_WRITE, 1);
 
     return ORTE_SUCCESS;
@@ -668,6 +684,8 @@ static void _toolconn(int sd, short args, void *cbdata)
     orte_node_t *node;
     orte_process_name_t tool;
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s TOOL CONNECTION PROCESSING",
@@ -768,6 +786,7 @@ void pmix_tool_connected_fn(opal_list_t *info,
     opal_event_set(orte_event_base, &(cd->ev), -1,
                    OPAL_EV_WRITE, _toolconn, cd);
     opal_event_set_priority(&(cd->ev), ORTE_MSG_PRI);
+    ORTE_POST_OBJECT(cd);
     opal_event_active(&(cd->ev), OPAL_EV_WRITE, 1);
 
 }

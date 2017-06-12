@@ -16,6 +16,7 @@
 #include <pmix_server.h>
 #include <pmix_rename.h>
 
+#include "src/threads/threads.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
 
@@ -197,7 +198,7 @@ static pmix_status_t _send_to_server(pmix_rshift_caddy_t *rcd)
             return rc;
         }
     }
-    rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, regevents_cbfunc, rcd);
+    rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, regevents_cbfunc, rcd);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
@@ -280,7 +281,7 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
     /* if we are a client, and we haven't already registered a handler of this
      * type with our server, or if we have directives, then we need to notify
      * the server */
-    if (PMIX_PROC_SERVER != pmix_globals.proc_type &&
+    if (!PMIX_PROC_IS_SERVER &&
        (need_register || 0 < pmix_list_get_size(xfer))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: _add_hdlr sending to server");
@@ -301,7 +302,7 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
     /* if we are a server and are registering for events, then we only contact
      * our host if we want environmental events */
 
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type && cd->enviro &&
+    if (PMIX_PROC_IS_SERVER && cd->enviro &&
         NULL != pmix_host_server.register_events) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: _add_hdlr registering with server");
@@ -343,6 +344,9 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     size_t nprocs;
     pmix_notify_caddy_t *ncd;
     pmix_event_chain_t *chain;
+
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: register event_hdlr with %d infos", (int)cd->ninfo);
@@ -747,6 +751,17 @@ PMIX_EXPORT void PMIx_Register_event_handler(pmix_status_t codes[], size_t ncode
 {
     pmix_rshift_caddy_t *cd;
 
+    PMIX_WAIT_THREAD(&pmix_global_lock);
+
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        if (NULL != cbfunc) {
+            cbfunc(PMIX_ERR_INIT, 0, cbdata);
+        }
+        return;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+
     /* need to thread shift this request so we can access
      * our global data to register this *local* event handler */
     cd = PMIX_NEW(pmix_rshift_caddy_t);
@@ -775,9 +790,12 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
     size_t n;
     pmix_active_code_t *active;
 
+    /* need to acquire the object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cd);
+
     /* if I am not the server, then I need to notify the server
      * to remove my registration */
-    if (PMIX_PROC_SERVER != pmix_globals.proc_type) {
+    if (!PMIX_PROC_IS_SERVER) {
         msg = PMIX_NEW(pmix_buffer_t);
         if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
             PMIX_RELEASE(msg);
@@ -922,7 +940,7 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
   report:
     if (NULL != msg) {
         /* send to the server */
-        rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, NULL, NULL);
+        rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, NULL, NULL);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
         }
@@ -941,6 +959,16 @@ PMIX_EXPORT void PMIx_Deregister_event_handler(size_t event_hdlr_ref,
                                                void *cbdata)
 {
     pmix_shift_caddy_t *cd;
+
+    PMIX_WAIT_THREAD(&pmix_global_lock);
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        if (NULL == cbfunc) {
+            cbfunc(PMIX_ERR_INIT, cbdata);
+        }
+        return;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* need to thread shift this request */
     cd = PMIX_NEW(pmix_shift_caddy_t);

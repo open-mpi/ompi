@@ -86,36 +86,41 @@ static void pmix_pointer_array_destruct(pmix_pointer_array_t *array)
  * A classical find first zero bit (ffs) on a large array. It checks starting
  * from the indicated position until it finds a zero bit. If SET is true,
  * the bit is set. The position of the bit is returned in store.
+ *
+ * According to Section 6.4.4.1 of the C standard we don't need to prepend a type
+ * indicator to constants (the type is inferred by the compiler according to
+ * the number of bits necessary to represent it).
  */
-#define FIND_FIRST_ZERO(START_IDX, STORE, SET)                          \
+#define FIND_FIRST_ZERO(START_IDX, STORE)                               \
     do {                                                                \
         uint32_t __b_idx, __b_pos;                                      \
+        if( 0 == table->number_free ) {                                 \
+            (STORE) = table->size;                                      \
+            break;                                                      \
+        }                                                               \
         GET_BIT_POS((START_IDX), __b_idx, __b_pos);                     \
-        for (; table->free_bits[__b_idx] == 0xFFFFFFFFFFFFFFFFULL; __b_idx++); \
+        for (; table->free_bits[__b_idx] == 0xFFFFFFFFFFFFFFFFu; __b_idx++); \
         assert(__b_idx < (uint32_t)table->size);                        \
         uint64_t __check_value = table->free_bits[__b_idx];             \
         __b_pos = 0;                                                    \
                                                                         \
-        if( 0x00000000FFFFFFFFULL == (__check_value & 0x00000000FFFFFFFFULL) ) { \
+        if( 0x00000000FFFFFFFFu == (__check_value & 0x00000000FFFFFFFFu) ) { \
             __check_value >>= 32; __b_pos += 32;                        \
         }                                                               \
-        if( 0x000000000000FFFFULL == (__check_value & 0x000000000000FFFFULL) ) { \
+        if( 0x000000000000FFFFu == (__check_value & 0x000000000000FFFFu) ) { \
             __check_value >>= 16; __b_pos += 16;                        \
         }                                                               \
-        if( 0x00000000000000FFULL == (__check_value & 0x00000000000000FFULL) ) { \
+        if( 0x00000000000000FFu == (__check_value & 0x00000000000000FFu) ) { \
             __check_value >>= 8; __b_pos += 8;                          \
         }                                                               \
-        if( 0x000000000000000FULL == (__check_value & 0x000000000000000FULL) ) { \
+        if( 0x000000000000000Fu == (__check_value & 0x000000000000000Fu) ) { \
             __check_value >>= 4; __b_pos += 4;                          \
         }                                                               \
-        if( 0x0000000000000003ULL == (__check_value & 0x0000000000000003ULL) ) { \
+        if( 0x0000000000000003u == (__check_value & 0x0000000000000003u) ) { \
             __check_value >>= 2; __b_pos += 2;                          \
         }                                                               \
-        if( 0x0000000000000001ULL == (__check_value & 0x0000000000000001ULL) ) { \
+        if( 0x0000000000000001u == (__check_value & 0x0000000000000001u) ) { \
             __b_pos += 1;                                               \
-        }                                                               \
-        if( (SET) ) {                                                   \
-            table->free_bits[__b_idx] |= (1ULL << __b_pos);             \
         }                                                               \
         (STORE) = (__b_idx * 8 * sizeof(uint64_t)) + __b_pos;           \
     } while(0)
@@ -127,8 +132,8 @@ static void pmix_pointer_array_destruct(pmix_pointer_array_t *array)
     do {                                                                \
         uint32_t __b_idx, __b_pos;                                      \
         GET_BIT_POS((IDX), __b_idx, __b_pos);                           \
-        assert( 0 == (table->free_bits[__b_idx] & (1UL << __b_pos)));   \
-        table->free_bits[__b_idx] |= (1ULL << __b_pos);                 \
+        assert( 0 == (table->free_bits[__b_idx] & (((uint64_t)1) << __b_pos))); \
+        table->free_bits[__b_idx] |= (((uint64_t)1) << __b_pos);        \
     } while(0)
 
 /**
@@ -138,8 +143,8 @@ static void pmix_pointer_array_destruct(pmix_pointer_array_t *array)
     do {                                                                \
         uint32_t __b_idx, __b_pos;                                      \
         GET_BIT_POS((IDX), __b_idx, __b_pos);                           \
-        assert( (table->free_bits[__b_idx] & (1UL << __b_pos)));        \
-        table->free_bits[__b_idx] ^= (1ULL << __b_pos);                 \
+        assert( (table->free_bits[__b_idx] & (((uint64_t)1) << __b_pos))); \
+        table->free_bits[__b_idx] ^= (((uint64_t)1) << __b_pos);        \
     } while(0)
 
 #if 0
@@ -157,9 +162,9 @@ static void pmix_pointer_array_validate(pmix_pointer_array_t *array)
         GET_BIT_POS(i, b_idx, p_idx);
         if( NULL == array->addr[i] ) {
             cnt++;
-            assert( 0 == (array->free_bits[b_idx] & (1ULL << p_idx)) );
+            assert( 0 == (array->free_bits[b_idx] & (((uint64_t)1) << p_idx)) );
         } else {
-            assert( 0 != (array->free_bits[b_idx] & (1ULL << p_idx)) );
+            assert( 0 != (array->free_bits[b_idx] & (((uint64_t)1) << p_idx)) );
         }
     }
     assert(cnt == array->number_free);
@@ -236,7 +241,7 @@ int pmix_pointer_array_add(pmix_pointer_array_t *table, void *ptr)
     table->number_free--;
     SET_BIT(index);
     if (table->number_free > 0) {
-        FIND_FIRST_ZERO(index, table->lowest_free, 0);
+        FIND_FIRST_ZERO(index, table->lowest_free);
     } else {
         table->lowest_free = table->size;
     }
@@ -290,7 +295,7 @@ int pmix_pointer_array_set_item(pmix_pointer_array_t *table, int index,
             SET_BIT(index);
             /* Reset lowest_free if required */
             if ( index == table->lowest_free ) {
-                FIND_FIRST_ZERO(index, table->lowest_free, 0);
+                FIND_FIRST_ZERO(index, table->lowest_free);
             }
         } else {
             assert( index != table->lowest_free );
@@ -362,7 +367,7 @@ bool pmix_pointer_array_test_and_set_item (pmix_pointer_array_t *table,
     /* Reset lowest_free if required */
     if( table->number_free > 0 ) {
         if ( index == table->lowest_free ) {
-            FIND_FIRST_ZERO(index, table->lowest_free, 0);
+            FIND_FIRST_ZERO(index, table->lowest_free);
         }
     } else {
         table->lowest_free = table->size;

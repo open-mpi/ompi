@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #endif
 
+#include "orte/util/threads.h"
 #include "oob_tcp.h"
 #include "oob_tcp_peer.h"
 
@@ -59,10 +60,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_conn_op_t);
                             ORTE_NAME_PRINT((&(p)->name)));             \
         cop = OBJ_NEW(mca_oob_tcp_conn_op_t);                           \
         cop->peer = (p);                                                \
-        opal_event_set((p)->ev_base, &cop->ev, -1,        \
-                       OPAL_EV_WRITE, (cbfunc), cop);                   \
-        opal_event_set_priority(&cop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&cop->ev, OPAL_EV_WRITE, 1);                  \
+        ORTE_THREADSHIFT(cop, (p)->ev_base, (cbfunc), ORTE_MSG_PRI);    \
     } while(0);
 
 #define ORTE_ACTIVATE_TCP_ACCEPT_STATE(s, a, cbfunc)            \
@@ -72,6 +70,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_conn_op_t);
         opal_event_set(orte_oob_base.ev_base, &cop->ev, s,      \
                        OPAL_EV_READ, (cbfunc), cop);            \
         opal_event_set_priority(&cop->ev, ORTE_MSG_PRI);        \
+        ORTE_POST_OBJECT(cop);                                  \
         opal_event_add(&cop->ev, 0);                            \
     } while(0);
 
@@ -88,6 +87,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_conn_op_t);
         opal_event_evtimer_set((p)->ev_base,                            \
                                &cop->ev,                                \
                                (cbfunc), cop);                          \
+        ORTE_POST_OBJECT(cop);                                          \
         opal_event_evtimer_add(&cop->ev, (tv));                         \
     } while(0);
 
