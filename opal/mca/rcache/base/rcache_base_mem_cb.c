@@ -65,7 +65,7 @@ void mca_rcache_base_mem_cb (void* base, size_t size, void* cbdata, bool from_al
             if (rc != OPAL_SUCCESS) {
                 if (from_alloc) {
                     int len;
-                    len = snprintf(msg, sizeof(msg), "[%s:%d] Attempt to free memory that is still in "
+                    len = snprintf(msg, sizeof(msg), "[%s:%05d] Attempt to free memory that is still in "
                                    "use by an ongoing MPI communication (buffer %p, size %lu).  MPI job "
                                    "will now abort.\n", opal_proc_local_get()->proc_hostname,
                                    getpid(), base, (unsigned long) size);

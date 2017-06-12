@@ -1,6 +1,7 @@
 /*
  *  Copyright (c) 2013      Mellanox Technologies, Inc.
  *                          All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #endif
 
 #include "opal/mca/backtrace/backtrace.h"
+#include "opal/util/error.h"
 #include "opal/runtime/opal_params.h"
 
 #include "orte/util/proc_info.h"
@@ -79,7 +81,7 @@ int oshmem_shmem_abort(int errcode)
         if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
                 fprintf(stderr,
-                        "[%s:%d] [%d] func:%s\n",
+                        "[%s:%05d] [%d] func:%s\n",
                         host,
                         (int) pid,
                         i,
@@ -95,24 +97,8 @@ int oshmem_shmem_abort(int errcode)
         }
     }
 
-    /* Should we wait for a while before aborting? */
-
-    if (0 != opal_abort_delay) {
-        if (opal_abort_delay < 0) {
-            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter opal_abort_delay is < 0)\n",
-                    host, (int) pid);
-            fflush(stderr);
-            while (1) {
-                sleep(5);
-            }
-        } else {
-            fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
-                    host, (int) pid, opal_abort_delay);
-            do {
-                sleep(1);
-            } while (--opal_abort_delay > 0);
-        }
-    }
+    /* Wait for a while before aborting */
+    opal_delay_abort();
 
     if (!orte_initialized || !oshmem_shmem_initialized) {
         if (orte_show_help_is_available()) {
@@ -124,7 +110,7 @@ int oshmem_shmem_abort(int errcode)
                            (int) pid);
         } else {
             fprintf(stderr,
-                    "[%s:%d] Local abort completed successfully; not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
+                    "[%s:%05d] Local abort completed successfully; not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
                     host,
                     (int) pid);
         }

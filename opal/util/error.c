@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,9 +28,12 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "opal/util/error.h"
 #include "opal/constants.h"
+#include "opal/util/proc.h"
+#include "opal/runtime/opal_params.h"
 
 #define MAX_CONVERTERS 5
 #define MAX_CONVERTER_PROJECT_LEN 10
@@ -207,4 +211,37 @@ opal_error_register(const char *project, int err_base, int err_max,
     }
 
     return OPAL_ERR_OUT_OF_RESOURCE;
+}
+
+
+void
+opal_delay_abort(void)
+{
+    // Though snprintf and strlen are not guaranteed to be async-signal-safe
+    // in POSIX, it is async-signal-safe on many implementations probably.
+
+    if (0 != opal_abort_delay) {
+        int delay = opal_abort_delay;
+        pid_t pid = getpid();
+        char msg[100 + OPAL_MAXHOSTNAMELEN];
+
+        if (delay < 0) {
+            snprintf(msg, sizeof(msg),
+                     "[%s:%05d] Looping forever "
+                     "(MCA parameter opal_abort_delay is < 0)\n",
+                     opal_process_info.nodename, (int) pid);
+            write(STDERR_FILENO, msg, strlen(msg) + 1);
+            while (1) {
+                sleep(5);
+            }
+        } else {
+            snprintf(msg, sizeof(msg),
+                     "[%s:%05d] Delaying for %d seconds before aborting\n",
+                     opal_process_info.nodename, (int) pid, delay);
+            write(STDERR_FILENO, msg, strlen(msg) + 1);
+            do {
+                sleep(1);
+            } while (--delay > 0);
+        }
+    }
 }

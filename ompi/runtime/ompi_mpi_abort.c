@@ -18,6 +18,7 @@
  *                         reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,7 @@
 #include <errno.h>
 
 #include "opal/mca/backtrace/backtrace.h"
+#include "opal/util/error.h"
 #include "opal/runtime/opal_params.h"
 
 #include "ompi/communicator/communicator.h"
@@ -146,7 +148,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
         if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
-                fprintf(stderr, "[%s:%d] [%d] func:%s\n", host, (int) pid,
+                fprintf(stderr, "[%s:%05d] [%d] func:%s\n", host, (int) pid,
                         i, messages[i]);
                 fflush(stderr);
             }
@@ -159,29 +161,13 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         }
     }
 
-    /* Should we wait for a while before aborting? */
-
-    if (0 != opal_abort_delay) {
-        if (opal_abort_delay < 0) {
-            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter opal_abort_delay is < 0)\n",
-                    host, (int) pid);
-            fflush(stderr);
-            while (1) {
-                sleep(5);
-            }
-        } else {
-            fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
-                    host, (int) pid, opal_abort_delay);
-            do {
-                sleep(1);
-            } while (--opal_abort_delay > 0);
-        }
-    }
+    /* Wait for a while before aborting */
+    opal_delay_abort();
 
     /* If the RTE isn't setup yet/any more, then don't even try
        killing everyone.  Sorry, Charlie... */
     if (!ompi_rte_initialized) {
-        fprintf(stderr, "[%s:%d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
+        fprintf(stderr, "[%s:%05d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
                 host, (int) pid, ompi_mpi_finalized ?
                 "after MPI_FINALIZE started" : "before MPI_INIT completed");
         _exit(errcode == 0 ? 1 : errcode);
