@@ -86,19 +86,19 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
 
 static void cleanup(int sd, short args, void *cbdata)
 {
-    volatile bool *active = (volatile bool*)cbdata;
+    orte_lock_t *lk = (orte_lock_t*)cbdata;
 
     ORTE_ACQUIRE_OBJECT(active);
     OPAL_LIST_DESTRUCT(&orte_rml_base.posted_recvs);
-    if (NULL != active) {
-        ORTE_POST_OBJECT(active);
-        *active = false;
+    if (NULL != lk) {
+        ORTE_POST_OBJECT(lk);
+        ORTE_WAKEUP_THREAD(lk);
     }
 }
 
 static int orte_rml_base_close(void)
 {
-    volatile bool active;
+    orte_lock_t lock;
     int idx, total_conduits = opal_pointer_array_get_size(&orte_rml_base.conduits);
     orte_rml_base_module_t *mod;
     orte_rml_component_t *comp;
@@ -127,13 +127,14 @@ static int orte_rml_base_close(void)
      * it there */
      if (ORTE_PROC_IS_APP) {
         opal_event_t ev;
-        active = true;
+        ORTE_CONSTRUCT_LOCK(&lock);
         opal_event_set(orte_event_base, &ev, -1,
-                       OPAL_EV_WRITE, cleanup, (void*)&active);
+                       OPAL_EV_WRITE, cleanup, (void*)&lock);
         opal_event_set_priority(&ev, ORTE_ERROR_PRI);
         ORTE_POST_OBJECT(ev);
         opal_event_active(&ev, OPAL_EV_WRITE, 1);
-        ORTE_WAIT_FOR_COMPLETION(active);
+        ORTE_WAIT_THREAD(&lock);
+        ORTE_DESTRUCT_LOCK(&lock);
      } else {
         /* we can call the destruct directly */
         cleanup(0, 0, NULL);

@@ -9,22 +9,31 @@ Email                           Name                        Affiliation(s)
 alinask                         Elena Shipunova             Mellanox
 annu13                          Annapurna Dasari            Intel
 artpol84                        Artem Polyakov              Mellanox
+ashleypittman                   Ashley Pittman              Intel
 dsolt                           Dave Solt                   IBM
+garlick                         Jim Garlick                 LLNL
 ggouaillardet                   Gilles Gouaillardet         RIST
 hjelmn                          Nathan Hjelm                LANL
 igor-ivanov                     Igor Ivanov                 Mellanox
 jladd-mlnx                      Joshua Ladd                 Mellanox
-jsquyres                        Jeff Squyres                Cisco, IU
+jjhursey                        Joshua Hursey               IBM
+jsquyres                        Jeff Squyres                Cisco
+karasevb                        Boris Karasev               Mellanox
+kawashima-fj                    Takahiro Kawashima          Fujitsu
 nkogteva                        Nadezhda Kogteva            Mellanox
-rhc54                           Ralph Castain               LANL, Cisco, Intel
+nysal                           Nysal Jan KA                IBM
+PHHargrove                      Paul Hargrove               LBNL
+rhc54                           Ralph Castain               Intel
 ------------------------------- --------------------------- -------------------
 
 Affiliation abbreviations:
 --------------------------
 Cisco = Cisco Systems, Inc.
+Fujitsu = Fujitsu
 IBM = International Business Machines, Inc.
 Intel = Intel, Inc.
-IU = Indiana University
 LANL = Los Alamos National Laboratory
+LBNL = Lawrence Berkeley National Laboratory
+LLNL = Lawrence Livermore National Laboratory
 Mellanox = Mellanox
 RIST = Research Organization for Information Science and Technology

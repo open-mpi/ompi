@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -424,29 +424,6 @@ struct pmix_output_stream_t {
                                             const char *format, va_list ap) __pmix_attribute_format__(__printf__, 3, 0);
 
     /**
-     * Send output to a string if the verbosity level is high enough.
-     *
-     * @param output_id Stream id returned from pmix_output_open().
-     * @param level Target verbosity level.
-     * @param format printf-style format string.
-     * @param varargs printf-style varargs list to fill the string
-     * specified by the format parameter.
-     *
-     * Exactly the same as pmix_output_verbose(), except the output it
-     * sent to a string instead of to the stream.  If the verbose
-     * level is not high enough, NULL is returned.  The caller is
-     * responsible for free()'ing the returned string.
-     */
-    char *pmix_output_string(int verbose_level, int output_id,
-                                           const char *format, ...) __pmix_attribute_format__(__printf__, 3, 4);
-
-   /**
-    * Same as pmix_output_string, but accepts a va_list form of varargs.
-    */
-    char *pmix_output_vstring(int verbose_level, int output_id,
-                                            const char *format, va_list ap) __pmix_attribute_format__(__printf__, 3, 0);
-
-    /**
      * Set the verbosity level for a stream.
      *
      * @param output_id Stream id returned from pmix_output_open().
@@ -567,4 +544,3 @@ PMIX_CLASS_DECLARATION(pmix_output_stream_t);
 END_C_DECLS
 
 #endif /* PMIX_OUTPUT_H_ */
-

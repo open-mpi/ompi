@@ -1675,7 +1675,7 @@ static void tcon(pmix_server_trkr_t *t)
 {
     t->pcs = NULL;
     t->npcs = 0;
-    t->active = true;
+    PMIX_CONSTRUCT_LOCK(&t->lock);
     t->def_complete = false;
     PMIX_CONSTRUCT(&t->ranks, pmix_list_t);
     PMIX_CONSTRUCT(&t->local_cbs, pmix_list_t);
@@ -1690,6 +1690,7 @@ static void tcon(pmix_server_trkr_t *t)
 }
 static void tdes(pmix_server_trkr_t *t)
 {
+    PMIX_DESTRUCT_LOCK(&t->lock);
     if (NULL != t->pcs) {
         free(t->pcs);
     }
@@ -1725,7 +1726,7 @@ PMIX_CLASS_INSTANCE(pmix_snd_caddy_t,
 static void scadcon(pmix_setup_caddy_t *p)
 {
     memset(&p->proc, 0, sizeof(pmix_proc_t));
-    p->active = true;
+    PMIX_CONSTRUCT_LOCK(&p->lock);
     p->nspace = NULL;
     p->server_object = NULL;
     p->nlocalprocs = 0;
@@ -1738,6 +1739,7 @@ static void scadcon(pmix_setup_caddy_t *p)
 }
 static void scaddes(pmix_setup_caddy_t *p)
 {
+    PMIX_DESTRUCT_LOCK(&p->lock);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_setup_caddy_t,
                                 pmix_object_t,
@@ -1745,7 +1747,7 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_setup_caddy_t,
 
 static void ncon(pmix_notify_caddy_t *p)
 {
-    p->active = true;
+    PMIX_CONSTRUCT_LOCK(&p->lock);
     memset(p->source.nspace, 0, PMIX_MAX_NSLEN+1);
     p->source.rank = PMIX_RANK_UNDEF;
     p->range = PMIX_RANGE_UNDEF;
@@ -1758,6 +1760,7 @@ static void ncon(pmix_notify_caddy_t *p)
 }
 static void ndes(pmix_notify_caddy_t *p)
 {
+    PMIX_DESTRUCT_LOCK(&p->lock);
     if (NULL != p->info) {
         PMIX_INFO_FREE(p->info, p->ninfo);
     }

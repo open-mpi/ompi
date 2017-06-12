@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -89,7 +89,7 @@ static void construct(pmix_object_t *stream);
 static int do_open(int output_id, pmix_output_stream_t * lds);
 static int open_file(int i);
 static void free_descriptor(int output_id);
-static int make_string(char **no_newline_string, output_desc_t *ldi,
+static int make_string(char **out, char **no_newline_string, output_desc_t *ldi,
                        const char *format, va_list arglist);
 static int output(int output_id, const char *format, va_list arglist);
 
@@ -111,8 +111,6 @@ int pmix_output_redirected_syslog_pri = 0;
 static bool initialized = false;
 static int default_stderr_fd = -1;
 static output_desc_t info[PMIX_OUTPUT_MAX_STREAMS];
-static char *temp_str = 0;
-static size_t temp_str_len = 0;
 #if defined(HAVE_SYSLOG)
 static bool syslog_opened = false;
 #endif
@@ -357,50 +355,6 @@ void pmix_output_vverbose(int level, int output_id, const char *format,
 
 
 /*
- * Send a message to a string if the verbose level is high enough
- */
-char *pmix_output_string(int level, int output_id, const char *format, ...)
-{
-    int rc;
-    char *ret = NULL;
-
-    if (output_id >= 0 && output_id < PMIX_OUTPUT_MAX_STREAMS &&
-        info[output_id].ldi_verbose_level >= level) {
-        va_list arglist;
-        va_start(arglist, format);
-        rc = make_string(&ret, &info[output_id], format, arglist);
-        va_end(arglist);
-        if (PMIX_SUCCESS != rc) {
-            ret = NULL;
-        }
-    }
-
-    return ret;
-}
-
-
-/*
- * Send a message to a string if the verbose level is high enough
- */
-char *pmix_output_vstring(int level, int output_id, const char *format,
-                          va_list arglist)
-{
-    int rc;
-    char *ret = NULL;
-
-    if (output_id >= 0 && output_id < PMIX_OUTPUT_MAX_STREAMS &&
-        info[output_id].ldi_verbose_level >= level) {
-        rc = make_string(&ret, &info[output_id], format, arglist);
-        if (PMIX_SUCCESS != rc) {
-            ret = NULL;
-        }
-    }
-
-    return ret;
-}
-
-
-/*
  * Set the verbosity level of a stream
  */
 void pmix_output_set_verbosity(int output_id, int level)
@@ -501,11 +455,6 @@ void pmix_output_finalize(void)
 
         free (output_prefix);
         free (output_dir);
-        if(NULL != temp_str) {
-            free(temp_str);
-            temp_str = NULL;
-            temp_str_len = 0;
-        }
         PMIX_DESTRUCT(&verbose);
     }
 }
@@ -813,14 +762,15 @@ static void free_descriptor(int output_id)
 }
 
 
-static int make_string(char **no_newline_string, output_desc_t *ldi,
+static int make_string(char **out, char **no_newline_string, output_desc_t *ldi,
                        const char *format, va_list arglist)
 {
-    size_t len, total_len;
+    size_t len, total_len, temp_str_len;
     bool want_newline = false;
+    char *temp_str;
 
     /* Make the formatted string */
-
+    *out = NULL;
     if (0 > vasprintf(no_newline_string, format, arglist)) {
         return PMIX_ERR_NOMEM;
     }
@@ -844,16 +794,11 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
     if (NULL != ldi->ldi_suffix) {
         total_len += strlen(ldi->ldi_suffix);
     }
-    if (temp_str_len < total_len + want_newline) {
-        if (NULL != temp_str) {
-            free(temp_str);
-        }
-        temp_str = (char *) malloc(total_len * 2);
-        if (NULL == temp_str) {
-            return PMIX_ERR_OUT_OF_RESOURCE;
-        }
-        temp_str_len = total_len * 2;
+    temp_str = (char *) malloc(total_len * 2);
+    if (NULL == temp_str) {
+        return PMIX_ERR_OUT_OF_RESOURCE;
     }
+    temp_str_len = total_len * 2;
     if (NULL != ldi->ldi_prefix && NULL != ldi->ldi_suffix) {
         if (want_newline) {
             snprintf(temp_str, temp_str_len, "%s%s%s\n",
@@ -885,7 +830,7 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
             snprintf(temp_str, temp_str_len, "%s", *no_newline_string);
         }
     }
-
+    *out = temp_str;
     return PMIX_SUCCESS;
 }
 
@@ -897,7 +842,7 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
 static int output(int output_id, const char *format, va_list arglist)
 {
     int rc = PMIX_SUCCESS;
-    char *str, *out = NULL;
+    char *str=NULL, *out = NULL;
     output_desc_t *ldi;
 
     /* Setup */
@@ -913,8 +858,8 @@ static int output(int output_id, const char *format, va_list arglist)
         ldi = &info[output_id];
 
         /* Make the strings */
-        if (PMIX_SUCCESS != (rc = make_string(&str, ldi, format, arglist))) {
-            return rc;
+        if (PMIX_SUCCESS != (rc = make_string(&out, &str, ldi, format, arglist))) {
+            goto cleanup;
         }
 
         /* Syslog output -- does not use the newline-appended string */
@@ -924,15 +869,11 @@ static int output(int output_id, const char *format, va_list arglist)
         }
 #endif
 
-        /* All others (stdout, stderr, file) use temp_str, potentially
-           with a newline appended */
-
-        out = temp_str;
-
         /* stdout output */
         if (ldi->ldi_stdout) {
             if (0 > write(fileno(stdout), out, (int)strlen(out))) {
-                return PMIX_ERROR;
+                rc = PMIX_ERROR;
+                goto cleanup;
             }
             fflush(stdout);
         }
@@ -942,7 +883,8 @@ static int output(int output_id, const char *format, va_list arglist)
             if (0 > write((-1 == default_stderr_fd) ?
                           fileno(stderr) : default_stderr_fd,
                           out, (int)strlen(out))) {
-                return PMIX_ERROR;
+                rc = PMIX_ERROR;
+                goto cleanup;
             }
             fflush(stderr);
         }
@@ -964,7 +906,8 @@ static int output(int output_id, const char *format, va_list arglist)
                              "[WARNING: %d lines lost because the PMIx process session directory did\n not exist when pmix_output() was invoked]\n",
                              ldi->ldi_file_num_lines_lost);
                     if (0 > write(ldi->ldi_fd, buffer, (int)strlen(buffer))) {
-                        return PMIX_ERROR;
+                        rc = PMIX_ERROR;
+                        goto cleanup;
                     }
                     ldi->ldi_file_num_lines_lost = 0;
                     if (out != buffer) {
@@ -974,13 +917,22 @@ static int output(int output_id, const char *format, va_list arglist)
             }
             if (ldi->ldi_fd != -1) {
                 if (0 > write(ldi->ldi_fd, out, (int)strlen(out))) {
-                    return PMIX_ERROR;
+                    rc = PMIX_ERROR;
+                    goto cleanup;
                 }
             }
         }
         free(str);
+        str = NULL;
     }
 
+  cleanup:
+    if (NULL != str) {
+        free(str);
+    }
+    if (NULL != out) {
+        free(out);
+    }
     return rc;
 }
 

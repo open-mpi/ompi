@@ -165,6 +165,7 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             ch->timer_active = true;                                                \
             pmix_event_assign(&ch->ev, pmix_globals.evbase, -1, 0,                  \
                               pmix_event_timeout_cb, ch);                           \
+            PMIX_POST_OBJECT(ch);                                                   \
             pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
         } else {                                                                    \
             /* add this peer to the array of sources */                             \
@@ -183,6 +184,7 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             ch->ninfo = ninfo;                                                      \
             /* reset the timer */                                                   \
             pmix_event_del(&ch->ev);                                                \
+            PMIX_POST_OBJECT(ch);                                                   \
             pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
         }                                                                           \
     } while(0)

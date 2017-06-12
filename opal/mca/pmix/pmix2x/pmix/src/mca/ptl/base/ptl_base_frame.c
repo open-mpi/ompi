@@ -82,9 +82,11 @@ static pmix_status_t pmix_ptl_close(void)
     /* ensure the listen thread has been shut down */
     pmix_ptl.stop_listening();
 
-    if (0 <= pmix_client_globals.myserver.sd) {
-        CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
-        pmix_client_globals.myserver.sd = -1;
+    if (NULL != pmix_client_globals.myserver) {
+        if (0 <= pmix_client_globals.myserver->sd) {
+            CLOSE_THE_SOCKET(pmix_client_globals.myserver->sd);
+            pmix_client_globals.myserver->sd = -1;
+        }
     }
 
     /* the components will cleanup when closed */
@@ -105,7 +107,6 @@ static pmix_status_t pmix_ptl_open(pmix_mca_base_open_flag_t flags)
     PMIX_CONSTRUCT(&pmix_ptl_globals.unexpected_msgs, pmix_list_t);
     pmix_ptl_globals.listen_thread_active = false;
     PMIX_CONSTRUCT(&pmix_ptl_globals.listeners, pmix_list_t);
-    pmix_client_globals.myserver.sd = -1;
 
     /* Open up all available components */
     return pmix_mca_base_framework_components_open(&pmix_ptl_base_framework, flags);
@@ -142,6 +143,7 @@ PMIX_CLASS_INSTANCE(pmix_ptl_send_t,
 
 static void rcon(pmix_ptl_recv_t *p)
 {
+    p->peer = NULL;
     memset(&p->hdr, 0, sizeof(pmix_ptl_hdr_t));
     p->hdr.tag = UINT32_MAX;
     p->hdr.nbytes = 0;
@@ -150,9 +152,15 @@ static void rcon(pmix_ptl_recv_t *p)
     p->rdptr = NULL;
     p->rdbytes = 0;
 }
+static void rdes(pmix_ptl_recv_t *p)
+{
+    if (NULL != p->peer) {
+        PMIX_RELEASE(p->peer);
+    }
+}
 PMIX_CLASS_INSTANCE(pmix_ptl_recv_t,
                     pmix_list_item_t,
-                    rcon, NULL);
+                    rcon, rdes);
 
 static void prcon(pmix_ptl_posted_recv_t *p)
 {

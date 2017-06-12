@@ -32,6 +32,7 @@
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/rml.h"
@@ -69,10 +70,10 @@ static size_t myerrhandle = SIZE_MAX;
 
 static void register_cbfunc(int status, size_t errhndler, void *cbdata)
 {
-    volatile bool *active = (volatile bool*)cbdata;
+    orte_lock_t *lk = (orte_lock_t*)cbdata;
     myerrhandle = errhndler;
-    ORTE_POST_OBJECT(active);
-    *active = false;
+    ORTE_POST_OBJECT(lk);
+    ORTE_WAKEUP_THREAD(lk);
 }
 
 static void notify_cbfunc(int status,
@@ -116,22 +117,23 @@ static void notify_cbfunc(int status,
  static int init(void)
  {
     opal_list_t directives;
-    volatile bool active;
+    orte_lock_t lock;
     opal_value_t *kv;
 
     /* setup state machine to trap proc errors */
     orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
 
     /* tie the default PMIx event handler back to us */
-    active = true;
+    ORTE_CONSTRUCT_LOCK(&lock);
     OBJ_CONSTRUCT(&directives, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_EVENT_HDLR_NAME);
     kv->type = OPAL_STRING;
     kv->data.string = strdup("ORTE-APP-DEFAULT");
     opal_list_append(&directives, &kv->super);
-    opal_pmix.register_evhandler(NULL, &directives, notify_cbfunc, register_cbfunc, (void*)&active);
-    ORTE_WAIT_FOR_COMPLETION(active);
+    opal_pmix.register_evhandler(NULL, &directives, notify_cbfunc, register_cbfunc, (void*)&lock);
+    ORTE_WAIT_THREAD(&lock);
+    ORTE_DESTRUCT_LOCK(&lock);
     OPAL_LIST_DESTRUCT(&directives);
 
     return ORTE_SUCCESS;

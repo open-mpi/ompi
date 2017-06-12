@@ -277,9 +277,6 @@ int ompi_mpi_finalize(void)
         }
     }
 
-    /* account for our refcount on pmix_init */
-    opal_pmix.finalize();
-
     /* check for timing request - get stop time and report elapsed
      time if so */
     //OPAL_TIMING_DELTAS(ompi_enable_timing, &tm);
