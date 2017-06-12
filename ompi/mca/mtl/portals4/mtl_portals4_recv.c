@@ -340,6 +340,8 @@ ompi_mtl_portals4_rndv_get_frag_progress(ptl_event_t *ev,
             mtl_ptl_error(1, "PTL_EVENT_REPLY with ni_fail_type: %s"
                     " => cannot retry",
                     name_of_err[ev->ni_fail_type]);
+            ret = PTL_FAIL;
+            goto callback_error;
         }
 
         opal_timer_t time = opal_timer_base_get_usec() - rndv_get_frag->frag_start_time_usec;
