@@ -14,7 +14,7 @@ dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
+dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
@@ -95,7 +95,7 @@ EOF
 #
 
 OPAL_CONFIGURE_USER="`whoami`"
-OPAL_CONFIGURE_HOST="`hostname | head -n 1`"
+OPAL_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
 OPAL_CONFIGURE_DATE="`date`"
 
 OPAL_LIBNL_SANITY_INIT
@@ -117,7 +117,7 @@ AC_DEFUN([OPAL_BASIC_SETUP],[
 #
 
 OPAL_CONFIGURE_USER="`whoami`"
-OPAL_CONFIGURE_HOST="`hostname | head -n 1`"
+OPAL_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
 OPAL_CONFIGURE_DATE="`date`"
 
 #

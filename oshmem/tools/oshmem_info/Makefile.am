@@ -1,8 +1,10 @@
 #
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -15,7 +17,7 @@ AM_CPPFLAGS = \
             -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\"" \
             -DOPAL_CONFIGURE_DATE="\"@OPAL_CONFIGURE_DATE@\"" \
             -DOMPI_BUILD_USER="\"$$USER\"" \
-            -DOMPI_BUILD_HOST="\"`hostname`\"" \
+            -DOMPI_BUILD_HOST="\"`(hostname || uname -n) 2> /dev/null | sed 1q`\"" \
             -DOMPI_BUILD_DATE="\"`date`\"" \
             -DOMPI_BUILD_CFLAGS="\"@CFLAGS@\"" \
             -DOMPI_BUILD_CPPFLAGS="\"@CPPFLAGS@\"" \
