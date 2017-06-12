@@ -92,16 +92,17 @@ int opal_pmix_base_notify_event(int status,
     return OPAL_SUCCESS;
 }
 
-struct lookup_caddy_t {
-    volatile bool active;
+typedef struct {
+    opal_pmix_lock_t lock;
     int status;
     opal_pmix_pdata_t *pdat;
-};
+} lookup_caddy_t;
 
 /********     DATA EXCHANGE     ********/
 static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
 {
-    struct lookup_caddy_t *cd = (struct lookup_caddy_t*)cbdata;
+    lookup_caddy_t *cd = (lookup_caddy_t*)cbdata;
+
     cd->status = status;
     if (OPAL_SUCCESS == status && NULL != data) {
         opal_pmix_pdata_t *p = (opal_pmix_pdata_t*)opal_list_get_first(data);
@@ -115,14 +116,14 @@ static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
             }
         }
     }
-    cd->active = false;
+    OPAL_PMIX_WAKEUP_THREAD(&cd->lock);
 }
 
 static void opcbfunc(int status, void *cbdata)
 {
-    struct lookup_caddy_t *cd = (struct lookup_caddy_t*)cbdata;
+    lookup_caddy_t *cd = (lookup_caddy_t*)cbdata;
     cd->status = status;
-    cd->active = false;
+    OPAL_PMIX_WAKEUP_THREAD(&cd->lock);
 }
 
 int opal_pmix_base_exchange(opal_value_t *indat,
@@ -133,7 +134,7 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     opal_list_t ilist, mlist;
     opal_value_t *info;
     opal_pmix_pdata_t *pdat;
-    struct lookup_caddy_t caddy;
+    lookup_caddy_t caddy;
     char **keys;
 
     /* protect the incoming value */
@@ -155,22 +156,22 @@ int opal_pmix_base_exchange(opal_value_t *indat,
             return rc;
         }
     } else {
+        OPAL_PMIX_CONSTRUCT_LOCK(&caddy.lock);
         caddy.status = -1;
-        caddy.active = true;
         caddy.pdat = NULL;
         rc = opal_pmix.publish_nb(&ilist, opcbfunc, &caddy);
         if (OPAL_SUCCESS != rc) {
             OPAL_LIST_DESTRUCT(&ilist);
             return rc;
         }
-        while (caddy.active) {
-            usleep(10);
-        }
+        OPAL_PMIX_ACQUIRE_THREAD(&caddy.lock);
         OPAL_LIST_DESTRUCT(&ilist);
         if (OPAL_SUCCESS != caddy.status) {
             OPAL_ERROR_LOG(caddy.status);
+            OPAL_PMIX_DESTRUCT_LOCK(&caddy.lock);
             return caddy.status;
         }
+        OPAL_PMIX_DESTRUCT_LOCK(&caddy.lock);
     }
 
     /* lookup the other side's info - if a non-blocking form
@@ -214,8 +215,8 @@ int opal_pmix_base_exchange(opal_value_t *indat,
             return rc;
         }
     } else {
+        OPAL_PMIX_CONSTRUCT_LOCK(&caddy.lock);
         caddy.status = -1;
-        caddy.active = true;
         caddy.pdat = pdat;
         keys = NULL;
         opal_argv_append_nosize(&keys, pdat->value.key);
@@ -225,15 +226,15 @@ int opal_pmix_base_exchange(opal_value_t *indat,
             opal_argv_free(keys);
             return rc;
         }
-        while (caddy.active) {
-            usleep(10);
-        }
+        OPAL_PMIX_ACQUIRE_THREAD(&caddy.lock);
         opal_argv_free(keys);
         OPAL_LIST_DESTRUCT(&mlist);
         if (OPAL_SUCCESS != caddy.status) {
             OPAL_ERROR_LOG(caddy.status);
+            OPAL_PMIX_DESTRUCT_LOCK(&caddy.lock);
             return caddy.status;
         }
+        OPAL_PMIX_DESTRUCT_LOCK(&caddy.lock);
     }
 
     /* pass back the result */

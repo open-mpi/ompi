@@ -357,13 +357,6 @@ int orte_ess_base_orted_setup(void)
     }
     /* set the event base */
     opal_pmix_base_set_evbase(orte_event_base);
-    /* setup the PMIx server */
-    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
-        /* the server code already barked, so let's be quiet */
-        ret = ORTE_ERR_SILENT;
-        error = "pmix_server_init";
-        goto error;
-    }
 
     /* Setup the communication infrastructure */
     /* Routed system */
@@ -555,6 +548,14 @@ int orte_ess_base_orted_setup(void)
             error = "orte_plm_init";
             goto error;
         }
+    }
+
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        /* the server code already barked, so let's be quiet */
+        ret = ORTE_ERR_SILENT;
+        error = "pmix_server_init";
+        goto error;
     }
 
     /* setup I/O forwarding system - must come after we init routes */

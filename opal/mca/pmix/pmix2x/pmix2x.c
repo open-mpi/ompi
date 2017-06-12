@@ -279,6 +279,7 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&cd->pname.jobid, source->nspace))) {
             OPAL_ERROR_LOG(rc);
             OBJ_RELEASE(cd);
+            cd->pmixcbfunc(PMIX_EVENT_NO_ACTION_TAKEN, NULL, 0, NULL, NULL, cd->cbdata);
             return;
         }
         cd->pname.vpid = pmix2x_convert_rank(source->rank);
@@ -1386,12 +1387,17 @@ OBJ_CLASS_INSTANCE(opal_pmix2x_jobid_trkr_t,
 
 static void evcon(opal_pmix2x_event_t *p)
 {
+    OPAL_PMIX_CONSTRUCT_LOCK(&p->lock);
     p->handler = NULL;
     p->cbdata = NULL;
 }
+static void evdes(opal_pmix2x_event_t *p)
+{
+    OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
+}
 OBJ_CLASS_INSTANCE(opal_pmix2x_event_t,
                    opal_list_item_t,
-                   evcon, NULL);
+                   evcon, evdes);
 
 static void opcon(pmix2x_opcaddy_t *p)
 {
@@ -1404,7 +1410,7 @@ static void opcon(pmix2x_opcaddy_t *p)
     p->ninfo = 0;
     p->apps = NULL;
     p->sz = 0;
-    p->active = false;
+    OPAL_PMIX_CONSTRUCT_LOCK(&p->lock);
     p->codes = NULL;
     p->pcodes = NULL;
     p->queries = NULL;
@@ -1420,6 +1426,7 @@ static void opcon(pmix2x_opcaddy_t *p)
 }
 static void opdes(pmix2x_opcaddy_t *p)
 {
+    OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
     if (NULL != p->procs) {
         PMIX_PROC_FREE(p->procs, p->nprocs);
     }
@@ -1471,7 +1478,7 @@ OBJ_CLASS_INSTANCE(pmix2x_opalcaddy_t,
 
 static void tscon(pmix2x_threadshift_t *p)
 {
-    p->active = false;
+    OPAL_PMIX_CONSTRUCT_LOCK(&p->lock);
     p->source = NULL;
     p->event_codes = NULL;
     p->info = NULL;
@@ -1484,6 +1491,7 @@ static void tscon(pmix2x_threadshift_t *p)
 }
 static void tsdes(pmix2x_threadshift_t *p)
 {
+    OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
     OPAL_LIST_DESTRUCT(&p->results);
 }
 OBJ_CLASS_INSTANCE(pmix2x_threadshift_t,

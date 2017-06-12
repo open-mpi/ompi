@@ -25,7 +25,6 @@
 
 # Source code files
 headers += \
-        threads/condition.h \
         threads/mutex.h \
         threads/mutex_unix.h \
         threads/threads.h \
@@ -34,7 +33,6 @@ headers += \
 	threads/thread_usage.h
 
 libpmix_la_SOURCES += \
-        threads/condition.c \
         threads/mutex.c \
         threads/thread.c \
         threads/wait_sync.c

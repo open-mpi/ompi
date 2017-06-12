@@ -31,7 +31,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/proc.h"
 
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/base/base.h"
 #include "pmix_server.h"
 #include "pmix_common.h"
 
@@ -62,6 +62,7 @@ OBJ_CLASS_DECLARATION(opal_pmix2x_jobid_trkr_t);
 
 typedef struct {
     opal_list_item_t super;
+    opal_pmix_lock_t lock;
     size_t index;
     opal_pmix_notification_fn_t handler;
     void *cbdata;
@@ -88,7 +89,7 @@ typedef struct {
     size_t ninfo;
     pmix_app_t *apps;
     size_t sz;
-    volatile bool active;
+    opal_pmix_lock_t lock;
     opal_list_t *codes;
     pmix_status_t *pcodes;
     size_t ncodes;
@@ -127,7 +128,8 @@ OBJ_CLASS_DECLARATION(pmix2x_opalcaddy_t);
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
-    volatile bool active;
+    opal_pmix_lock_t lock;
+    const char *msg;
     size_t id;
     int status;
     opal_process_name_t pname;
@@ -136,6 +138,7 @@ typedef struct {
     opal_pmix_data_range_t range;
     bool nondefault;
     size_t handler;
+    opal_value_t *val;
     opal_list_t *event_codes;
     opal_list_t *info;
     opal_list_t results;
@@ -143,6 +146,7 @@ typedef struct {
     opal_pmix_evhandler_reg_cbfunc_t cbfunc;
     opal_pmix_op_cbfunc_t opcbfunc;
     pmix_event_notification_cbfunc_fn_t pmixcbfunc;
+    opal_pmix_value_cbfunc_t valcbfunc;
     void *cbdata;
 } pmix2x_threadshift_t;
 OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
@@ -189,6 +193,14 @@ OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
                      -1, EV_WRITE, (fn), (_cd));                \
         OPAL_POST_OBJECT(_cd);                                  \
         opal_event_active(&((_cd)->ev), EV_WRITE, 1);           \
+    } while(0)
+
+#define OPAL_PMIX2X_THREADSHIFT(p, cb)                          \
+    do {                                                        \
+        opal_event_assign(&((p)->ev), opal_pmix_base.evbase,    \
+                          -1, EV_WRITE, (cb), (p));             \
+        OPAL_POST_OBJECT(p);                                    \
+        opal_event_active(&((p)->ev), EV_WRITE, 1);             \
     } while(0)
 
 /****  CLIENT FUNCTIONS  ****/

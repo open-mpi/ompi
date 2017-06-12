@@ -123,7 +123,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* if I am a client, then we need to look for the appropriate
      * connection info in the environment */
-    if (PMIX_PROC_CLIENT == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_CLIENT) {
         if (NULL == (evar = getenv("PMIX_SERVER_URI2"))) {
             /* not us */
             return PMIX_ERR_NOT_SUPPORTED;
@@ -163,7 +163,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         }
         pmix_argv_free(uri);
 
-    } else if (PMIX_PROC_TOOL == pmix_globals.proc_type) {
+    } else if (PMIX_PROC_IS_TOOL) {
         /* if we already have a URI, then look no further */
         if (NULL == mca_ptl_tcp_component.super.uri) {
             /* we have to discover the connection info,
@@ -217,9 +217,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             free(srvr);
         }
     }
-
-    /* mark that we are the active module for this server */
-    pmix_client_globals.myserver->compat.ptl = &pmix_ptl_tcp_module;
 
     /* setup the path to the daemon rendezvous point */
     memset(&mca_ptl_tcp_component.connection, 0, sizeof(struct sockaddr_storage));

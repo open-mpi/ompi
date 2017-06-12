@@ -423,6 +423,8 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
+    /* mark that we are using the same module as used for the server */
+    pmix_globals.mypeer->compat.ptl = pmix_client_globals.myserver->compat.ptl;
 
     /* send a request for our job info - we do this as a non-blocking
      * transaction because some systems cannot handle very large
