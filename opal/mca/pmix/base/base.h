@@ -133,6 +133,7 @@ typedef struct {
             opal_output(0, "Thread obtained %s:%d",                 \
                         __FILE__, __LINE__);                        \
         }                                                           \
+        OPAL_ACQUIRE_OBJECT(&lck);                                  \
         opal_mutex_unlock(&(lck)->mutex);                           \
     } while(0)
 #else
@@ -142,6 +143,7 @@ typedef struct {
         while ((lck)->active) {                                     \
             opal_pmix_condition_wait(&(lck)->cond, &(lck)->mutex);  \
         }                                                           \
+        OPAL_ACQUIRE_OBJECT(lck);                                   \
         opal_mutex_unlock(&(lck)->mutex);                           \
     } while(0)
 #endif
@@ -171,6 +173,7 @@ typedef struct {
 #define OPAL_PMIX_WAKEUP_THREAD(lck)                    \
     do {                                                \
         (lck)->active = false;                          \
+        OPAL_POST_OBJECT(lck);                          \
         opal_pmix_condition_broadcast(&(lck)->cond);    \
     } while(0)
 

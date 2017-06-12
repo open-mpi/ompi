@@ -77,7 +77,7 @@ typedef struct {
             opal_output(0, "Thread obtained %s:%d",             \
                         __FILE__, __LINE__);                    \
         }                                                       \
-        opal_mutex_unlock(&(lck)->mutex);                           \
+        (lck)->active = true;                                   \
     } while(0)
 #else
 #define ORTE_ACQUIRE_THREAD(lck)                                \
@@ -86,7 +86,36 @@ typedef struct {
         while ((lck)->active) {                                 \
             orte_condition_wait(&(lck)->cond, &(lck)->mutex);   \
         }                                                       \
-        opal_mutex_unlock(&(lck)->mutex);                           \
+        (lck)->active = true;                                   \
+    } while(0)
+#endif
+
+
+#if OPAL_ENABLE_DEBUG
+#define ORTE_WAIT_THREAD(lck)                                   \
+    do {                                                        \
+        opal_mutex_lock(&(lck)->mutex);                         \
+        if (opal_debug_threads) {                               \
+            opal_output(0, "Waiting for thread %s:%d",          \
+                        __FILE__, __LINE__);                    \
+        }                                                       \
+        while ((lck)->active) {                                 \
+            orte_condition_wait(&(lck)->cond, &(lck)->mutex);   \
+        }                                                       \
+        if (opal_debug_threads) {                               \
+            opal_output(0, "Thread obtained %s:%d",             \
+                        __FILE__, __LINE__);                    \
+        }                                                       \
+        opal_mutex_unlock(&(lck)->mutex);                       \
+    } while(0)
+#else
+#define ORTE_WAIT_THREAD(lck)                                   \
+    do {                                                        \
+        opal_mutex_lock(&(lck)->mutex);                         \
+        while ((lck)->active) {                                 \
+            orte_condition_wait(&(lck)->cond, &(lck)->mutex);   \
+        }                                                       \
+        opal_mutex_unlock(&(lck)->mutex);                       \
     } while(0)
 #endif
 

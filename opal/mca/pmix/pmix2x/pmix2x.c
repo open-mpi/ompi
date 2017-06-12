@@ -1402,8 +1402,11 @@ OBJ_CLASS_INSTANCE(opal_pmix2x_event_t,
 static void opcon(pmix2x_opcaddy_t *p)
 {
     memset(&p->p, 0, sizeof(pmix_proc_t));
+    p->nspace = NULL;
     p->procs = NULL;
     p->nprocs = 0;
+    p->pdata = NULL;
+    p->npdata = 0;
     p->error_procs = NULL;
     p->nerror_procs = 0;
     p->info = NULL;
@@ -1427,6 +1430,9 @@ static void opcon(pmix2x_opcaddy_t *p)
 static void opdes(pmix2x_opcaddy_t *p)
 {
     OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
+    if (NULL != p->nspace) {
+        free(p->nspace);
+    }
     if (NULL != p->procs) {
         PMIX_PROC_FREE(p->procs, p->nprocs);
     }
@@ -1479,6 +1485,8 @@ OBJ_CLASS_INSTANCE(pmix2x_opalcaddy_t,
 static void tscon(pmix2x_threadshift_t *p)
 {
     OPAL_PMIX_CONSTRUCT_LOCK(&p->lock);
+    p->msg = NULL;
+    p->strings = NULL;
     p->source = NULL;
     p->event_codes = NULL;
     p->info = NULL;
@@ -1492,6 +1500,9 @@ static void tscon(pmix2x_threadshift_t *p)
 static void tsdes(pmix2x_threadshift_t *p)
 {
     OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
+    if (NULL != p->strings) {
+        free(p->strings);
+    }
     OPAL_LIST_DESTRUCT(&p->results);
 }
 OBJ_CLASS_INSTANCE(pmix2x_threadshift_t,

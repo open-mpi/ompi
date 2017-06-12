@@ -69,7 +69,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     pmix_status_t rc;
     pmix_cb_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: spawn called");
@@ -101,7 +101,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     }
 
     /* wait for the result */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     if (NULL != nspace) {
         (void)strncpy(nspace, cb->nspace, PMIX_MAX_NSLEN);
@@ -120,7 +120,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     pmix_status_t rc;
     pmix_cb_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: spawn called");

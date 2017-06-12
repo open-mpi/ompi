@@ -102,7 +102,7 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
     pmix_status_t rc;
     pmix_query_caddy_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: job control called");
@@ -200,7 +200,7 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
     pmix_status_t rc;
     pmix_query_caddy_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: monitor called");

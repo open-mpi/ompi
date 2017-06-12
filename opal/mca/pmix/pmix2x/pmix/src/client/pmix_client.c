@@ -327,7 +327,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return PMIX_ERR_BAD_PARAM;
     }
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     if (0 < pmix_globals.init_cntr || PMIX_PROC_SERVER == pmix_globals.proc_type) {
         /* since we have been called before, the nspace and
@@ -444,7 +444,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return rc;
     }
     /* wait for the data to return */
-    PMIX_ACQUIRE_THREAD(&cb.lock);
+    PMIX_WAIT_THREAD(&cb.lock);
     rc = cb.status;
     PMIX_DESTRUCT(&cb);
 
@@ -467,12 +467,12 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         PMIX_CONSTRUCT_LOCK(&reglock);
         PMIx_Register_event_handler(&code, 1, NULL, 0,
                                     notification_fn, NULL, (void*)&reglock);
-        PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+        PMIX_WAIT_THREAD(&pmix_global_lock);
         /* wait for it to arrive */
-        PMIX_ACQUIRE_THREAD(&reglock);
+        PMIX_WAIT_THREAD(&reglock);
         PMIX_DESTRUCT_LOCK(&reglock);
     } else {
-        PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+        PMIX_WAIT_THREAD(&pmix_global_lock);
     }
     PMIX_INFO_DESTRUCT(&ginfo);
 
@@ -487,7 +487,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
 
 PMIX_EXPORT int PMIx_Initialized(void)
 {
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     if (0 < pmix_globals.init_cntr) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -541,7 +541,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     pmix_client_timeout_t tev;
     struct timeval tv = {2, 0};
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
     if (1 != pmix_globals.init_cntr) {
         --pmix_globals.init_cntr;
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -606,7 +606,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         }
 
         /* wait for the ack to return */
-        PMIX_ACQUIRE_THREAD(&tev.lock);
+        PMIX_WAIT_THREAD(&tev.lock);
         PMIX_DESTRUCT_LOCK(&tev.lock);
         if (tev.active) {
             pmix_event_del(&tev.ev);
@@ -658,7 +658,7 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client abort called");
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
@@ -714,7 +714,7 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
     }
 
     /* wait for the release */
-     PMIX_ACQUIRE_THREAD(&reglock);
+     PMIX_WAIT_THREAD(&reglock);
      PMIX_DESTRUCT_LOCK(&reglock);
      return PMIX_SUCCESS;
  }
@@ -822,7 +822,7 @@ PMIX_EXPORT pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_va
                         "pmix: executing put for key %s type %d",
                         key, val->type);
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
@@ -839,7 +839,7 @@ PMIX_EXPORT pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_va
     PMIX_THREADSHIFT(cb, _putfn);
 
     /* wait for the result */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->pstatus;
     PMIX_RELEASE(cb);
 
@@ -915,7 +915,7 @@ static void _commitfn(int sd, short args, void *cbdata)
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
@@ -938,7 +938,7 @@ static void _commitfn(int sd, short args, void *cbdata)
     PMIX_THREADSHIFT(cb, _commitfn);
 
     /* wait for the result */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->pstatus;
     PMIX_RELEASE(cb);
 
@@ -1025,7 +1025,7 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
@@ -1043,7 +1043,7 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     PMIX_THREADSHIFT(cb, _peersfn);
 
     /* wait for the result */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->pstatus;
     /* transfer the result */
     *procs = cb->procs;
@@ -1095,7 +1095,7 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
@@ -1112,7 +1112,7 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist
     PMIX_THREADSHIFT(cb, _nodesfn);
 
     /* wait for the result */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->pstatus;
     *nodelist = cb->key;
     PMIX_RELEASE(cb);

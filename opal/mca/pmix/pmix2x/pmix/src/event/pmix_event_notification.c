@@ -45,7 +45,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
 {
     int rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);

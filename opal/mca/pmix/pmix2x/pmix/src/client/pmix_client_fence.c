@@ -71,7 +71,7 @@ PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: executing fence");
@@ -101,7 +101,7 @@ PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
     }
 
     /* wait for the fence to complete */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     PMIX_RELEASE(cb);
 
@@ -122,7 +122,7 @@ PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs
     pmix_proc_t rg, *rgs;
     size_t nrg;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: fence_nb called");

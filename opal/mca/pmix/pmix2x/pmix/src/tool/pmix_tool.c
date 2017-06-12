@@ -158,7 +158,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_nspace_t *nptr, *nsptr;
     char hostname[PMIX_MAX_NSLEN];
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     if (NULL == proc) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -582,7 +582,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     }
 
     /* wait for the ack to return */
-    PMIX_ACQUIRE_THREAD(&tev.lock);
+    PMIX_WAIT_THREAD(&tev.lock);
     PMIX_DESTRUCT_LOCK(&tev.lock);
     if (tev.active) {
         pmix_event_del(&tev.ev);

@@ -72,7 +72,7 @@ PMIX_EXPORT pmix_status_t PMIx_Publish(const pmix_info_t info[],
     pmix_status_t rc;
     pmix_cb_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: publish called");
@@ -99,7 +99,7 @@ PMIX_EXPORT pmix_status_t PMIx_Publish(const pmix_info_t info[],
     }
 
     /* wait for the server to ack our request */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = (pmix_status_t)cb->status;
     PMIX_RELEASE(cb);
 
@@ -114,7 +114,7 @@ PMIX_EXPORT pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo
     pmix_status_t rc;
     pmix_cb_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: publish called");
@@ -190,7 +190,7 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
     char **keys = NULL;
     size_t i;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: lookup called");
@@ -234,7 +234,7 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
     }
 
     /* wait for the server to ack our request */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
 
     /* the data has been stored in the info array by lookup_cbfunc, so
      * nothing more for us to do */
@@ -253,7 +253,7 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup_nb(char **keys,
     pmix_cb_t *cb;
     size_t nkeys, n;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: lookup called");
@@ -342,7 +342,7 @@ PMIX_EXPORT pmix_status_t PMIx_Unpublish(char **keys,
     pmix_status_t rc;
     pmix_cb_t *cb;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: unpublish called");
@@ -371,7 +371,7 @@ PMIX_EXPORT pmix_status_t PMIx_Unpublish(char **keys,
     }
 
     /* wait for the server to ack our request */
-    PMIX_ACQUIRE_THREAD(&cb->lock);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     PMIX_RELEASE(cb);
 
@@ -388,7 +388,7 @@ PMIX_EXPORT pmix_status_t PMIx_Unpublish_nb(char **keys,
     pmix_cb_t *cb;
     size_t i, j;
 
-    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    PMIX_WAIT_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: unpublish called");

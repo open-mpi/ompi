@@ -79,10 +79,14 @@ OBJ_CLASS_DECLARATION(opal_pmix2x_dmx_trkr_t);
 
 typedef struct {
     opal_object_t super;
+    opal_event_t ev;
     pmix_status_t status;
+    char *nspace;
     pmix_proc_t p;
     pmix_proc_t *procs;
     size_t nprocs;
+    pmix_pdata_t *pdata;
+    size_t npdata;
     pmix_proc_t *error_procs;
     size_t nerror_procs;
     pmix_info_t *info;
@@ -130,6 +134,7 @@ typedef struct {
     opal_event_t ev;
     opal_pmix_lock_t lock;
     const char *msg;
+    char *strings;
     size_t id;
     int status;
     opal_process_name_t pname;
@@ -147,6 +152,7 @@ typedef struct {
     opal_pmix_op_cbfunc_t opcbfunc;
     pmix_event_notification_cbfunc_fn_t pmixcbfunc;
     opal_pmix_value_cbfunc_t valcbfunc;
+    opal_pmix_lookup_cbfunc_t lkcbfunc;
     void *cbdata;
 } pmix2x_threadshift_t;
 OBJ_CLASS_DECLARATION(pmix2x_threadshift_t);
