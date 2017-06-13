@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -29,9 +29,8 @@
 
 #define MB()  __asm__ __volatile__ ("sync" : : : "memory")
 #define RMB() __asm__ __volatile__ ("lwsync" : : : "memory")
-#define WMB() __asm__ __volatile__ ("eieio" : : : "memory")
-#define SMP_SYNC  "sync \n\t"
-#define SMP_ISYNC "\n\tisync"
+#define WMB() __asm__ __volatile__ ("lwsync" : : : "memory")
+#define ISYNC() __asm__ __volatile__ ("isync" : : : "memory")
 
 
 /**********************************************************************
