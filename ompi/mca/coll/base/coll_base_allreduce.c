@@ -135,7 +135,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     int ret, line, rank, size, adjsize, remote, distance;
     int newrank, newremote, extra_ranks;
     char *tmpsend = NULL, *tmprecv = NULL, *tmpswap = NULL, *inplacebuf_free = NULL, *inplacebuf;
-    ptrdiff_t span, gap;
+    ptrdiff_t span, gap = 0;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);

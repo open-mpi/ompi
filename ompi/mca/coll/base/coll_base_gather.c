@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -49,8 +49,8 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
     char *ptmp     = NULL, *tempbuf  = NULL;
     ompi_coll_tree_t* bmtree;
     MPI_Status status;
-    MPI_Aint sextent, sgap, ssize;
-    MPI_Aint rextent, rgap, rsize;
+    MPI_Aint sextent, sgap = 0, ssize;
+    MPI_Aint rextent, rgap = 0, rsize;
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     mca_coll_base_comm_t *data = base_module->base_data;
 

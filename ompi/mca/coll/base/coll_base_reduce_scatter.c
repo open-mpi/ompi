@@ -76,7 +76,7 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
         if (root == rank) {
             /* We must allocate temporary receive buffer on root to ensure that
                rbuf is big enough */
-            ptrdiff_t dsize, gap;
+            ptrdiff_t dsize, gap = 0;
             dsize = opal_datatype_span(&dtype->super, total_count, &gap);
 
             tmprbuf_free = (char*) malloc(dsize);
@@ -138,7 +138,7 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
 {
     int i, rank, size, count, err = OMPI_SUCCESS;
     int tmp_size, remain = 0, tmp_rank, *disps = NULL;
-    ptrdiff_t extent, buf_size, gap;
+    ptrdiff_t extent, buf_size, gap = 0;
     char *recv_buf = NULL, *recv_buf_free = NULL;
     char *result_buf = NULL, *result_buf_free = NULL;
 
@@ -462,7 +462,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
     int inbi, *displs = NULL;
     char *tmpsend = NULL, *tmprecv = NULL, *accumbuf = NULL, *accumbuf_free = NULL;
     char *inbuf_free[2] = {NULL, NULL}, *inbuf[2] = {NULL, NULL};
-    ptrdiff_t extent, max_real_segsize, dsize, gap;
+    ptrdiff_t extent, max_real_segsize, dsize, gap = 0;
     ompi_request_t *reqs[2] = {NULL, NULL};
 
     size = ompi_comm_size(comm);

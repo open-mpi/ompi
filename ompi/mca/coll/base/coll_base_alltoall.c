@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -42,7 +42,7 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
                                            mca_coll_base_module_t *module)
 {
     int i, j, size, rank, err = MPI_SUCCESS, line;
-    ptrdiff_t ext, gap;
+    ptrdiff_t ext, gap = 0;
     ompi_request_t *req;
     char *allocated_buffer = NULL, *tmp_buffer;
     size_t max_size;
@@ -197,7 +197,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     int i, k, line = -1, rank, size, err = 0;
     int sendto, recvfrom, distance, *displs = NULL, *blen = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
-    ptrdiff_t sext, rext, span, gap;
+    ptrdiff_t sext, rext, span, gap = 0;
     struct ompi_datatype_t *new_ddt;
 
     if (MPI_IN_PLACE == sbuf) {

@@ -168,7 +168,7 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
     */
     if (0 != rank) {
         char *free_buf = NULL, *shift_buf = NULL;
-        ptrdiff_t span, gap;
+        ptrdiff_t span, gap = 0;
 
         span = opal_datatype_span(&rdtype->super, (int64_t)(size - rank) * rcount, &gap);
 
