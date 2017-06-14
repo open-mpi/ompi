@@ -9,6 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
+ *  Copyright (c) 2017      IBM Corporation.  All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -87,6 +88,33 @@ mca_io_romio314_file_iread_at (ompi_file_t *fh,
     return ret;
 }
 
+int
+mca_io_romio314_file_iread_at_all (ompi_file_t *fh,
+                                   MPI_Offset offset,
+                                   void *buf,
+                                   int count,
+                                   struct ompi_datatype_t *datatype,
+                                   ompi_request_t **request)
+{
+    int         ret;
+    mca_io_romio314_data_t *data;
+
+    data = (mca_io_romio314_data_t *) fh->f_io_selected_data;
+    OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
+    // ----------------------------------------------------
+    // NOTE: If you upgrade ROMIO, replace this with the actual ROMIO call.
+    // ----------------------------------------------------
+    // No support for non-blocking collective I/O operations.
+    // Fake it with individual non-blocking I/O operations.
+    // Similar to OMPIO
+    ret =
+        ROMIO_PREFIX(MPI_File_iread_at) (data->romio_fh, offset, buf, count,
+                                         datatype, request);
+    OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
+
+    return ret;
+}
+
 
 int
 mca_io_romio314_file_read (ompi_file_t *fh,
@@ -150,6 +178,31 @@ mca_io_romio314_file_iread (ompi_file_t *fh,
     return ret;
 }
 
+int
+mca_io_romio314_file_iread_all (ompi_file_t *fh,
+                                void *buf,
+                                int count,
+                                struct ompi_datatype_t *datatype,
+                                ompi_request_t **request)
+{
+    int         ret;
+    mca_io_romio314_data_t *data;
+
+    data = (mca_io_romio314_data_t *) fh->f_io_selected_data;
+    OPAL_THREAD_LOCK (&mca_io_romio314_mutex);
+    // ----------------------------------------------------
+    // NOTE: If you upgrade ROMIO, replace this with the actual ROMIO call.
+    // ----------------------------------------------------
+    // No support for non-blocking collective I/O operations.
+    // Fake it with individual non-blocking I/O operations.
+    // Similar to OMPIO
+    ret =
+        ROMIO_PREFIX(MPI_File_iread) (data->romio_fh, buf, count, datatype,
+                                      request);
+    OPAL_THREAD_UNLOCK (&mca_io_romio314_mutex);
+
+    return ret;
+}
 
 int
 mca_io_romio314_file_read_shared (ompi_file_t *fh,
