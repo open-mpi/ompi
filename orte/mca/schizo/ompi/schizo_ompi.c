@@ -970,7 +970,9 @@ static int setup_fork(orte_job_t *jdata,
      * any binding policy was applied by us (e.g., so that
      * MPI_INIT doesn't try to bind itself)
      */
-    opal_setenv("OMPI_MCA_orte_bound_at_launch", "1", true, &app->env);
+    if (OPAL_BIND_TO_NONE != OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+        opal_setenv("OMPI_MCA_orte_bound_at_launch", "1", true, &app->env);
+    }
 
     /* tell the ESS to avoid the singleton component - but don't override
      * anything that may have been provided elsewhere
