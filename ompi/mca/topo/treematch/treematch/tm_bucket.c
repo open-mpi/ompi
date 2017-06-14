@@ -31,7 +31,7 @@ static int ilog2(int val)
 
 static int verbose_level = ERROR;
 
-bucket_list_t global_bl;
+static bucket_list_t global_bl;
 
 int tab_cmp(const void*,const void*);
 int old_bucket_id(int,int,bucket_list_t);
@@ -199,7 +199,7 @@ void add_to_bucket(int id,int i,int j,bucket_list_t bucket_list)
     /* display_bucket(bucket);*/
     if(verbose_level >= DEBUG){
       printf("Extending bucket %d (%p) from size %d to size %d!\n",
-	     id,bucket->bucket, bucket->nb_elem, bucket->nb_elem+size);
+             id, (void*)bucket->bucket, bucket->nb_elem, bucket->nb_elem+size);
     }
 
     bucket->bucket = (coord*)REALLOC(bucket->bucket,sizeof(coord)*(size + bucket->bucket_len));
@@ -525,7 +525,7 @@ void partial_update_val (int nb_args, void **args, int thread_id){
 
   if(nb_args != 5){
     if(verbose_level >= ERROR)
-      fprintf(stderr,"(Thread: %d) Wrong number of args in %s: %d\n",thread_id, __FUNCTION__, nb_args);
+      fprintf(stderr,"(Thread: %d) Wrong number of args in %s: %d\n",thread_id, __func__, nb_args);
     exit(-1);
   }
 

@@ -4,11 +4,7 @@
 /*
   This comparison function is used to sort elements in key descending order.
 */
-int compfunc(const FiboNode * const, const FiboNode * const);
-
-
-
-int compFunc(const FiboNode * const node1, const FiboNode * const node2)
+static int compFunc(const FiboNode * const node1, const FiboNode * const node2)
 {
   return 
     ( ( ((QueueElement*)(node1))->key > ((QueueElement*)(node2))->key ) ? -1 : 1); 
