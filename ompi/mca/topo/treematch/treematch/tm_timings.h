@@ -1,4 +1,3 @@
-
 #ifndef TIMINGS_H
 #define TIMINGS_H
 #include <stdio.h>

@@ -12,6 +12,7 @@ void get_time(void)
 
   CLOCK(time_tab[clock_num]);
 }
+
 double time_diff(void)
 {
   CLOCK_T t2,t1;
@@ -22,7 +23,7 @@ double time_diff(void)
   }
 
   if(clock_num < 0){
-    return -1.0;
+    return -2.0;
   }
 
   CLOCK(t2);
