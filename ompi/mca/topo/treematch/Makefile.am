@@ -13,20 +13,25 @@
 
 if topo_treematch_local
 extra_treematch_files = treematch/tm_bucket.h \
-    treematch/tm_hwloc.h treematch/tm_mapping.h \
+    treematch/tm_mapping.h \
     treematch/tm_timings.h treematch/tm_tree.h \
     treematch/tm_kpartitioning.h treematch/uthash.h\
     treematch/IntConstantInitializedVector.h \
-    treematch/tm_mt.h \
+    treematch/tm_mt.h treematch/fibo.h \
     treematch/tm_thread_pool.h treematch/tm_verbose.h \
-    treematch/tm_malloc.h \
+    treematch/tm_malloc.h treematch/k-partitioning.h\
+    treematch/tm_solution.h treematch/tm_topology.h\
+    treematch/PriorityQueue.h \
     treematch/IntConstantInitializedVector.c \
-    treematch/tm_mt.c \
+    treematch/tm_mt.c treematch/fibo.c \
     treematch/tm_thread_pool.c treematch/tm_verbose.c \
-    treematch/tm_malloc.c \
+    treematch/tm_malloc.c treematch/treematch.h \
     treematch/tm_mapping.c treematch/tm_timings.c \
     treematch/tm_bucket.c treematch/tm_tree.c \
-    treematch/tm_hwloc.c treematch/tm_kpartitioning.c
+    treematch/tm_topology.c treematch/tm_kpartitioning.c \
+    treematch/tm_solution.c  treematch/k-partitioning.c \
+    treematch/PriorityQueue.c
+EXTRA_DIST =  treematch/COPYING treematch/LICENSE
 endif
 
 sources = \
