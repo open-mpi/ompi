@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <pthread.h>
 
+#include "treematch.h"
 #include "tm_tree.h"
 #include "tm_mapping.h"
 #include "tm_timings.h"
@@ -244,7 +245,7 @@ void partial_aggregate_aff_mat (int nb_args, void **args, int thread_id){
 
   if(nb_args != 7){
     if(verbose_level >= ERROR)
-      fprintf(stderr, "Thread %d: Wrong number of args in %s: %d\n", thread_id, __FUNCTION__, nb_args);
+      fprintf(stderr, "Thread %d: Wrong number of args in %s: %d\n", thread_id, __func__, nb_args);
     exit(-1);
   }
 
@@ -268,7 +269,7 @@ void partial_aggregate_aff_mat (int nb_args, void **args, int thread_id){
 }
 
 
-tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat, int M)
+static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat, int M)
 {
   int i, j, i1, j1, id1, id2;
   double **new_mat = NULL, **old_mat = aff_mat->mat;
@@ -702,7 +703,7 @@ int  select_independent_groups(group_list_t **tab_group, int n, int arity, int M
 }
 
 
-int8_t** init_independent_group_mat(int n, group_list_t **tab_group, int arity){
+static int8_t** init_independent_group_mat(int n, group_list_t **tab_group, int arity){
   int i, j, ii, jj;
   int8_t **indep_mat = (int8_t **)MALLOC(sizeof(int8_t*) *n);
 
@@ -730,7 +731,7 @@ int8_t** init_independent_group_mat(int n, group_list_t **tab_group, int arity){
   return indep_mat;
 }
 
-int independent_groups_mat(group_list_t **selection, int selection_size, group_list_t *elem, int8_t **indep_mat)
+static int independent_groups_mat(group_list_t **selection, int selection_size, group_list_t *elem, int8_t **indep_mat)
 {
   int i;
   int id_elem = elem->id;
@@ -753,7 +754,7 @@ int independent_groups_mat(group_list_t **selection, int selection_size, group_l
   static long int y=0;
 
 
-int thread_derecurs_exhaustive_search(group_list_t **tab_group, int i, int nb_groups, int arity, int depth, int solution_size,
+static int thread_derecurs_exhaustive_search(group_list_t **tab_group, int i, int nb_groups, int arity, int depth, int solution_size,
 				      double val, double *best_val, group_list_t **selection, group_list_t **best_selection,
 				      int8_t **indep_mat, pthread_mutex_t *lock, int thread_id, int *tab_i, int start_depth){
 
@@ -841,8 +842,8 @@ int thread_derecurs_exhaustive_search(group_list_t **tab_group, int i, int nb_gr
   return 0;
 }
 
-
-group_list_t * group_dup(group_list_t *group, int nb_groups){
+#if 0
+static group_list_t * group_dup(group_list_t *group, int nb_groups){
    group_list_t *elem = NULL;
    /* tm_tree_t **tab = NULL; */
    double *bound;
@@ -866,8 +867,10 @@ group_list_t * group_dup(group_list_t *group, int nb_groups){
    return elem;
 
 }
+#endif
 
-group_list_t **  tab_group_dup(group_list_t **tab_group, int nb_groups){
+#if 0
+static group_list_t **  tab_group_dup(group_list_t **tab_group, int nb_groups){
   group_list_t **res;
   int i;
 
@@ -881,8 +884,10 @@ group_list_t **  tab_group_dup(group_list_t **tab_group, int nb_groups){
 
   return res;
 }
+#endif
 
-int8_t **indep_mat_dup(int8_t** mat, int n){
+#if 0
+static int8_t **indep_mat_dup(int8_t** mat, int n){
   int i;
   int8_t ** res = (int8_t**)MALLOC(sizeof(int8_t*)*n);
   int row_len;
@@ -895,9 +900,9 @@ int8_t **indep_mat_dup(int8_t** mat, int n){
 
   return res;
 }
+#endif
 
-
-void  partial_exhaustive_search(int nb_args, void **args, int thread_id){
+static void  partial_exhaustive_search(int nb_args, void **args, int thread_id){
   int i, j;
   group_list_t **selection = NULL;
   double val;
@@ -921,7 +926,7 @@ void  partial_exhaustive_search(int nb_args, void **args, int thread_id){
 
   if(nb_args!=9){
     if(verbose_level>=ERROR){
-      fprintf(stderr, "Id: %d: bad number of argument for function %s: %d instead of 9\n", thread_id, __FUNCTION__, nb_args);
+      fprintf(stderr, "Id: %d: bad number of argument for function %s: %d instead of 9\n", thread_id, __func__, nb_args);
       return;
     }
   }
@@ -1004,19 +1009,20 @@ void  partial_exhaustive_search(int nb_args, void **args, int thread_id){
 }
 
 
-
-int dbl_cmp_dec(const void* x1,const void* x2)
+#if 0
+static int dbl_cmp_dec(const void* x1,const void* x2)
 {
   return *((double *)x1) > *((double *)x2) ? -1 : 1;
 }
-int dbl_cmp_inc(const void* x1,const void* x2)
+#endif
+static int dbl_cmp_inc(const void* x1,const void* x2)
 {
   return *((double *)x1) < *((double *)x2) ? -1 : 1;
 }
 
 
 
-double *build_bound_array(double *tab, int n){
+static double *build_bound_array(double *tab, int n){
   int i;
   double *bound;
 
@@ -1045,7 +1051,7 @@ double *build_bound_array(double *tab, int n){
   return bound;
 }
 
-work_unit_t *create_work_unit(work_unit_t *cur,  int *tab,int size){
+static work_unit_t *create_work_unit(work_unit_t *cur,  int *tab,int size){
   work_unit_t *res = (work_unit_t *) CALLOC(1,sizeof(work_unit_t));
   int *tab_group = MALLOC(size*sizeof(int));
   memcpy(tab_group, tab, size*sizeof(int));
@@ -1056,7 +1062,7 @@ work_unit_t *create_work_unit(work_unit_t *cur,  int *tab,int size){
   return res;
 }
 
-work_unit_t *generate_work_units(work_unit_t *cur,  int i, int id, int *tab_group,int size, int id_max){
+static work_unit_t *generate_work_units(work_unit_t *cur,  int i, int id, int *tab_group,int size, int id_max){
 
   tab_group[i] = id;
   if(i==size-1){
@@ -1076,7 +1082,7 @@ work_unit_t *generate_work_units(work_unit_t *cur,  int i, int id, int *tab_grou
 }
 
 
-work_unit_t *create_tab_work(int n){
+static work_unit_t *create_tab_work(int n){
   int work_size = 4;
   int i;
   work_unit_t *cur,*res = (work_unit_t *) CALLOC(1,sizeof(work_unit_t));
@@ -1100,7 +1106,7 @@ work_unit_t *create_tab_work(int n){
 }
 
 
-int thread_exhaustive_search(group_list_t **tab_group, int nb_groups, int arity, int solution_size, double *best_val,
+static int thread_exhaustive_search(group_list_t **tab_group, int nb_groups, int arity, int solution_size, double *best_val,
 			 group_list_t **best_selection){
 
   pthread_mutex_t lock;
@@ -1203,8 +1209,8 @@ int thread_exhaustive_search(group_list_t **tab_group, int nb_groups, int arity,
   return 0;
 }
 
-
-int old_recurs_exhaustive_search(group_list_t **tab, int i, int n, int arity, int d, int solution_size, double val, double *best_val, group_list_t **selection, group_list_t **best_selection, int8_t **indep_mat)
+#if 0
+static int old_recurs_exhaustive_search(group_list_t **tab, int i, int n, int arity, int d, int solution_size, double val, double *best_val, group_list_t **selection, group_list_t **best_selection, int8_t **indep_mat)
 {
   group_list_t *elem = NULL;
 
@@ -1243,10 +1249,10 @@ int old_recurs_exhaustive_search(group_list_t **tab, int i, int n, int arity, in
 
   return 0;
 }
+#endif
 
-
-
-int recurs_exhaustive_search(group_list_t **tab, int i, int n, int arity, int d, int solution_size, double val, double *best_val, group_list_t **selection, group_list_t **best_selection, int8_t **indep_mat, int* tab_i)
+#if 0
+static int recurs_exhaustive_search(group_list_t **tab, int i, int n, int arity, int d, int solution_size, double val, double *best_val, group_list_t **selection, group_list_t **best_selection, int8_t **indep_mat, int* tab_i)
 {
   group_list_t *elem = NULL;
 
@@ -1296,10 +1302,10 @@ int recurs_exhaustive_search(group_list_t **tab, int i, int n, int arity, int d,
 
   return 0;
 }
+#endif
 
-
-
-int  exhaustive_search(group_list_t **tab_group, int n, int arity, int solution_size, double *best_val,
+#if 0
+static int  exhaustive_search(group_list_t **tab_group, int n, int arity, int solution_size, double *best_val,
 			       group_list_t **best_selection)
 {
   int i, j;
@@ -1359,7 +1365,7 @@ int  exhaustive_search(group_list_t **tab_group, int n, int arity, int solution_
 
   return 0;
 }
-
+#endif
 
 
 int  select_independent_groups_by_largest_index(group_list_t **tab_group, int n, int arity, int solution_size, double *best_val, group_list_t **best_selection, int bound, double max_duration)
@@ -1560,7 +1566,7 @@ double fast_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t 
   return val;
 }
 
-double k_partition_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node, int arity, int solution_size) {
+static double k_partition_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node, int arity, int solution_size) {
   int *partition = NULL;
   int n = aff_mat->order;
   com_mat_t com_mat;

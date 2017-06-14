@@ -34,25 +34,6 @@ typedef struct {
 } hash2_t;
 
 
-tm_affinity_mat_t * new_affinity_mat(double **mat, double *sum_row, int order);
-int compute_nb_leaves_from_level(int depth,tm_topology_t *topology);
-void depth_first(tm_tree_t *comm_tree, int *proc_list,int *i);
-int  fill_tab(int **new_tab,int *tab, int n, int start, int max_val, int shift);
-void init_mat(char *filename,int N, double **mat, double *sum_row);
-void map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
-		  int *sigma, int nb_processes, int **k, int nb_compute_units);
-int nb_leaves(tm_tree_t *comm_tree);
-int nb_lines(char *filename);
-int nb_processing_units(tm_topology_t *topology);
-void print_1D_tab(int *tab,int N);
-tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree);
-void tm_finalize();
-void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
-tm_affinity_mat_t *tm_load_aff_mat(char *filename);
-void update_comm_speed(double **comm_speed,int old_size,int new_size);
-tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order);
-
-
 /* compute the number of leaves of any subtree starting froma node of depth depth*/
 int compute_nb_leaves_from_level(int depth,tm_topology_t *topology)
 {
@@ -280,7 +261,7 @@ int nb_leaves(tm_tree_t *comm_tree)
 }
 
 /* find the first '-1 in the array of size n and put the value there*/
-void set_val(int *tab, int val, int n){
+static void set_val(int *tab, int val, int n){
   int i = 0;
 
   while (i < n ){

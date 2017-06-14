@@ -114,7 +114,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                          int n, const int nodes[],
                                          const int degrees[], const int targets[],
                                          const int weights[],
-                                         struct ompi_info_t *info, int reorder,
+                                         struct opal_info_t *info, int reorder,
                                          ompi_communicator_t **newcomm)
 {
     int err;
@@ -613,7 +613,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     if (obj_mapping[i] != -1)
                         tm_topology->nb_constraints++;
                 tm_topology->constraints = (int *)calloc(tm_topology->nb_constraints,sizeof(int));		
-                for(idx = 0,i = 0; i < tm_topology->nb_proc_units ; i++)
+                for(idx = 0, i = 0; i < tm_topology->nb_proc_units ; i++)
                     if (obj_mapping[i] != -1)
                         tm_topology->constraints[idx++] = obj_mapping[i];		
 

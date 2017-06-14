@@ -294,7 +294,7 @@ com_mat_t **split_com_mat(com_mat_t *com_mat, int n, int k, int *partition)
     printf("Partition: "); print_1D_tab(partition,n);
     display_tab(com_mat->comm,com_mat->n);
     printf("m=%d,n=%d,k=%d\n",m,n,k);
-    printf("perm=%p\n",perm);
+    printf("perm=%p\n", (void*)perm);
   }
 
   perm  = (int*)MALLOC(sizeof(int)*m);
@@ -425,8 +425,8 @@ void free_const_tab(constraint_t *const_tab, int k)
   FREE(const_tab);
 }
 
-
-void check_com_mat(com_mat_t *com_mat){
+#if 0
+static void check_com_mat(com_mat_t *com_mat){
   int i,j;
 
   for( i = 0 ; i < com_mat->n ; i++ )
@@ -435,9 +435,8 @@ void check_com_mat(com_mat_t *com_mat){
 	printf("com_mat->comm[%d][%d]= %f\n",i,j,com_mat->comm[i][j]);
 	exit(-1);
       }
-
-
 }
+#endif
 
 void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, int N, int depth,
 				     tm_topology_t *topology, int *local_vertices,

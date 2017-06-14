@@ -115,7 +115,7 @@ int topo_nb_proc(hwloc_topology_t topology,int N)
 
 
 
-double link_cost(int depth)
+static double link_cost(int depth)
 {
   /*
     Bertha values
@@ -427,7 +427,7 @@ int int_cmp_inc(const void* x1,const void* x2)
 }
 
 
-int topo_check_constraints(tm_topology_t *topology){
+static int topo_check_constraints(tm_topology_t *topology){
   int n = topology->nb_constraints;
   int i;
   int depth = topology->nb_levels-1;
@@ -447,7 +447,7 @@ int topo_check_constraints(tm_topology_t *topology){
 
 /* cpy flag tells if we need to copy the array.
    Set to 1 when called from the application level and 0 when called from inside the library*/
-int tm_topology_set_binding_constraints_cpy(int *constraints, int nb_constraints, tm_topology_t *topology, int cpy_flag){
+static int tm_topology_set_binding_constraints_cpy(int *constraints, int nb_constraints, tm_topology_t *topology, int cpy_flag){
 
   topology -> nb_constraints = nb_constraints;
   if(cpy_flag){
