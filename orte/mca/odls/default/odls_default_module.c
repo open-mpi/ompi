@@ -644,9 +644,22 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
  * Send a signal to a pid.  Note that if we get an error, we set the
  * return value and let the upper layer print out the message.
  */
-static int send_signal(pid_t pid, int signal)
+static int send_signal(pid_t pd, int signal)
 {
     int rc = ORTE_SUCCESS;
+    pid_t pid;
+
+    if (orte_odls_globals.signal_direct_children_only) {
+        pid = pd;
+    } else {
+#if HAVE_SETPGID
+        /* send to the process group so that any children of our children
+         * also receive the signal*/
+        pid = -pd;
+#else
+        pid = pd;
+#endif
+    }
 
     OPAL_OUTPUT_VERBOSE((1, orte_odls_base_framework.framework_output,
                          "%s sending signal %d to pid %ld",

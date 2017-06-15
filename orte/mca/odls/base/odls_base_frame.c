@@ -86,6 +86,15 @@ static int orte_odls_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_odls_globals.num_threads);
 
+    orte_odls_globals.signal_direct_children_only = false;
+    (void) mca_base_var_register("orte", "odls", "base", "signal_direct_children_only",
+                                 "Whether to restrict signals (e.g., SIGTERM) to direct children, or "
+                                 "to apply them as well to any children spawned by those processes",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_odls_globals.signal_direct_children_only);
+
     return ORTE_SUCCESS;
 }
 
