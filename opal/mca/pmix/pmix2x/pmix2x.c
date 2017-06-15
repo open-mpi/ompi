@@ -219,10 +219,12 @@ static void _event_hdlr(int sd, short args, void *cbdata)
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s _EVENT_HDLR CALLING EVHDLR",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-            event->handler(cd->status, &cd->pname,
-                           cd->info, &cd->results,
-                           return_local_event_hdlr, (void*)cd);
-            return;
+            if (NULL != event->handler) {
+                event->handler(cd->status, &cd->pname,
+                               cd->info, &cd->results,
+                               return_local_event_hdlr, (void*)cd);
+                return;
+            }
         }
     }
     /* if we didn't find a match, we still have to call their final callback */
