@@ -154,14 +154,6 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 	ompio_fh->f_flags |= OMPIO_SHAREDFP_IS_SET;
     }
 
-     /*Determine topology information if set*/
-    if (ompio_fh->f_comm->c_flags & OMPI_COMM_CART){
-        ret = mca_io_ompio_cart_based_grouping(ompio_fh);
-	if(OMPI_SUCCESS != ret ){
-	    ret = MPI_ERR_FILE;
-	}
-    }
-
     ret = ompio_fh->f_fs->fs_file_open (comm,
 					filename,
 					amode,
