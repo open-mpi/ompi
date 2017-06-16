@@ -30,6 +30,7 @@
 BEGIN_C_DECLS
 
 ORTE_DECLSPEC int pmix_server_init(void);
+ORTE_DECLSPEC void pmix_server_start(void);
 ORTE_DECLSPEC void pmix_server_finalize(void);
 ORTE_DECLSPEC void pmix_server_register_params(void);
 

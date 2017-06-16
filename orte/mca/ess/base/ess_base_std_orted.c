@@ -357,7 +357,9 @@ int orte_ess_base_orted_setup(void)
     }
     /* set the event base */
     opal_pmix_base_set_evbase(orte_event_base);
-    /* setup the PMIx server */
+    /* setup the PMIx server - we need this here in case the
+     * communications infrastructure wants to register
+     * information */
     if (ORTE_SUCCESS != (ret = pmix_server_init())) {
         /* the server code already barked, so let's be quiet */
         ret = ORTE_ERR_SILENT;
@@ -397,6 +399,9 @@ int orte_ess_base_orted_setup(void)
         error = "orte_rml_base_select";
         goto error;
     }
+
+    /* it is now safe to start the pmix server */
+    pmix_server_start();
 
     if (NULL != orte_process_info.my_hnp_uri) {
         /* extract the HNP's name so we can update the routing table */
@@ -444,7 +449,7 @@ int orte_ess_base_orted_setup(void)
      /* add our contact info to our proc object */
      proc->rml_uri = orte_rml.get_contact_info();
 
-   /*
+    /*
      * Group communications
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {

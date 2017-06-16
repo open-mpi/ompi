@@ -715,7 +715,7 @@ int orte_daemon(int argc, char *argv[])
              * a little time in the launch phase by "warming up" the
              * connection to our parent while we wait for our children */
             buffer = OBJ_NEW(opal_buffer_t);  // zero-byte message
-            if (0 > (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
+            if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
                                                    ORTE_PROC_MY_PARENT, buffer,
                                                    ORTE_RML_TAG_WARMUP_CONNECTION,
                                                    orte_rml_send_callback, NULL))) {
@@ -749,6 +749,44 @@ int orte_daemon(int argc, char *argv[])
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
             goto DONE;
+        }
+
+        /* get any connection info we may have pushed */
+        {
+            opal_value_t *val = NULL, *kv;
+            opal_list_t *modex;
+            int32_t flag;
+
+            if (OPAL_SUCCESS != (ret = opal_pmix.get(ORTE_PROC_MY_NAME, NULL, NULL, &val)) || NULL == val) {
+                /* just pack a marker indicating we don't have any to share */
+                flag = 0;
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(buffer);
+                    goto DONE;
+                }
+            } else {
+                /* the data is returned as a list of key-value pairs in the opal_value_t */
+                if (OPAL_PTR != val->type) {
+                    opal_output(0, "WRONG RETURNED TYPE");
+                }
+                modex = (opal_list_t*)val->data.ptr;
+                flag = (int32_t)opal_list_get_size(modex);
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(buffer);
+                    goto DONE;
+                }
+                OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &kv, 1, OPAL_VALUE))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(buffer);
+                        goto DONE;
+                    }
+                }
+                OPAL_LIST_RELEASE(modex);
+                OBJ_RELEASE(val);
+            }
         }
 
         /* include our node name */
@@ -850,7 +888,7 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* send it to the designated target */
-        if (0 > (ret = orte_rml.send_buffer_nb(orte_coll_conduit,
+        if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
                                                &target, buffer,
                                                ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
