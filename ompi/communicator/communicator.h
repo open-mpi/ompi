@@ -90,6 +90,17 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_BARRIER_TAG   -31079
 #define OMPI_COMM_ALLREDUCE_TAG -31080
 
+#define OMPI_COMM_ASSERT_NO_ANY_TAG     0x00000001
+#define OMPI_COMM_ASSERT_NO_ANY_SOURCE  0x00000002
+#define OMPI_COMM_ASSERT_EXACT_LENGTH   0x00000004
+#define OMPI_COMM_ASSERT_ALLOW_OVERTAKE 0x00000008
+
+#define OMPI_COMM_CHECK_ASSERT(comm, flag) !!((comm)->c_assertions & flag)
+#define OMPI_COMM_CHECK_ASSERT_NO_ANY_TAG(comm)     OMPI_COMM_CHECK_ASSERT(comm, OMPI_COMM_ASSERT_NO_ANY_TAG)
+#define OMPI_COMM_CHECK_ASSERT_NO_ANY_SOURCE(comm)  OMPI_COMM_CHECK_ASSERT(comm, OMPI_COMM_ASSERT_NO_ANY_SOURCE)
+#define OMPI_COMM_CHECK_ASSERT_EXACT_LENGTH(comm)   OMPI_COMM_CHECK_ASSERT(comm, OMPI_COMM_ASSERT_EXACT_LENGTH)
+#define OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) OMPI_COMM_CHECK_ASSERT(comm, OMPI_COMM_ASSERT_ALLOW_OVERTAKE)
+
 /**
  * Modes required for acquiring the new comm-id.
  * The first (INTER/INTRA) indicates whether the
@@ -126,6 +137,7 @@ struct ompi_communicator_t {
     int                     c_my_rank;
     uint32_t                  c_flags; /* flags, e.g. intercomm,
                                           topology, etc. */
+    uint32_t                  c_assertions; /* info assertions */
 
     int c_id_available; /* the currently available Cid for allocation
                to a child*/
@@ -696,6 +708,8 @@ extern int ompi_comm_num_dyncomm;
 */
 OMPI_DECLSPEC int ompi_comm_cid_init ( void );
 
+
+void ompi_comm_assert_subscribe (ompi_communicator_t *comm, int32_t assert_flag);
 
 END_C_DECLS
 

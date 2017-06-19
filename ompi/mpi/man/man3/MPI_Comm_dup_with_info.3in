@@ -60,6 +60,10 @@ MPI_Comm_dup_with_info acts exactly like MPI_Comm_dup except that the
 info hints associated with the communicator \fIcomm\fP are not duplicated in \fInewcomm\fP. The
 hints provided by the argument \fIinfo\fP are associated with the output communicator \fInewcomm\fP
 instead.
+.sp
+See
+.BR MPI_Comm_set_info (3)
+for the list of recognized info keys.
 
 .SH NOTES
 This operation is used to provide a parallel
@@ -82,3 +86,4 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 .SH SEE ALSO
 MPI_Comm_dup
 MPI_Comm_idup
+MPI_Comm_set_info

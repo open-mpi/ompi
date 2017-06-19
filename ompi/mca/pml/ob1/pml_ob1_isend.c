@@ -143,14 +143,16 @@ int mca_pml_ob1_isend(const void *buf,
     mca_pml_ob1_send_request_t *sendreq = NULL;
     ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
-    int16_t seqn;
+    int16_t seqn = 0;
     int rc;
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
         return OMPI_ERR_UNREACH;
     }
 
-    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+        seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
+    }
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
         rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
@@ -196,7 +198,7 @@ int mca_pml_ob1_send(const void *buf,
     ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
     mca_pml_ob1_send_request_t *sendreq = NULL;
-    int16_t seqn;
+    int16_t seqn = 0;
     int rc;
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
@@ -217,7 +219,9 @@ int mca_pml_ob1_send(const void *buf,
         return OMPI_SUCCESS;
     }
 
-    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+        seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
+    }
 
     /**
      * The immediate send will not have a request, so they are
