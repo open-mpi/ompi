@@ -82,7 +82,8 @@ typedef int (*ompi_request_complete_fn_t)(struct ompi_request_t* request);
  * or MPI_WAIT{|ANY|ALL|SOME} function call. Implementers can dump any data
  * for debugging purposes.
  */
-typedef int (*ompi_request_dump_fn_t)(struct ompi_request_t* request);
+typedef int (*ompi_request_dump_fn_t)(FILE* file, char* prefix,
+                                      struct ompi_request_t* request);
 
 /**
  * Forward declaration
@@ -360,16 +361,20 @@ int ompi_request_finalize(void);
 /**
  * Function used for OPAL_PROGRESS_WHILE to dump one request data on hang-up.
  *
+ * @param file   File stream to output hang-up situation information.
+ * @param prefix Desired prefix for each line of hang-up situation information.
  * @param cbdata Pointer to an ompi_request_t object.
  */
-void ompi_request_dump_on_hangup(void * cbdata);
+void ompi_request_dump_on_hangup(FILE * file, char * prefix, void * cbdata);
 
 /**
  * Function used for OPAL_PROGRESS_WHILE to dump multiple request data on hang-up.
  *
+ * @param file   File stream to output hang-up situation information.
+ * @param prefix Desired prefix for each line of hang-up situation information.
  * @param cbdata Pointer to an ompi_request_array_t object.
  */
-void ompi_request_dump_array_on_hangup(void * cbdata);
+void ompi_request_dump_array_on_hangup(FILE * file, char * prefix, void * cbdata);
 
 /**
  * Cancel a pending request.

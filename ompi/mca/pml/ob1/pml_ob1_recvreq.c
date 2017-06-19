@@ -140,7 +140,8 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     return OMPI_SUCCESS;
 }
 
-static int mca_pml_ob1_recv_request_dump(struct ompi_request_t* request)
+static int mca_pml_ob1_recv_request_dump(FILE* file, char* prefix,
+                                         struct ompi_request_t* request)
 {
     char crequest[64], cpeer[64], ctag[64];
     char ccomm[MPI_MAX_OBJECT_NAME+64], ctype[MPI_MAX_OBJECT_NAME+64];
@@ -149,7 +150,6 @@ static int mca_pml_ob1_recv_request_dump(struct ompi_request_t* request)
     opal_proc_t* proc = &basereq->req_proc->super;
     ompi_communicator_t* comm = basereq->req_comm;
     ompi_datatype_t* type = basereq->req_datatype;
-    FILE* stream = stderr;
 
     if( MPI_UNDEFINED == request->req_f_to_c_index ) {
         snprintf(crequest, sizeof(crequest), "(c=%p f=%s)",
@@ -187,8 +187,8 @@ static int mca_pml_ob1_recv_request_dump(struct ompi_request_t* request)
                  type->name, (void*) type, type->d_f_to_c_index, type->id);
     }
 
-    fprintf(stream,
-            "[%s:%05d] "
+    fprintf(file,
+            "%s"
             "recv request %s "
             "from rank=%s on communicator=%s with tag=%s "
             "for datatype=%s x count=%lu in addr=%p ["
@@ -206,7 +206,7 @@ static int mca_pml_ob1_recv_request_dump(struct ompi_request_t* request)
             "pending=%s "
             "ack_sent=%s "
             "match_received=%s]\n",
-            opal_process_info.nodename, (int) getpid(),
+            prefix,
             crequest,
             cpeer, ccomm, ctag,
             ctype, basereq->req_count, basereq->req_addr,

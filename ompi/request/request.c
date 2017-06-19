@@ -185,18 +185,18 @@ int ompi_request_finalize(void)
     return OMPI_SUCCESS;
 }
 
-void ompi_request_dump_on_hangup(void * cbdata)
+void ompi_request_dump_on_hangup(FILE * file, char * prefix, void * cbdata)
 {
     ompi_request_t* request = (ompi_request_t*) cbdata;
     if (request->req_complete != REQUEST_COMPLETED && request->req_dump) {
-        request->req_dump(request);
+        request->req_dump(file, prefix, request);
     }
 }
 
-void ompi_request_dump_array_on_hangup(void * cbdata)
+void ompi_request_dump_array_on_hangup(FILE * file, char * prefix, void * cbdata)
 {
     ompi_request_array_t* array = (ompi_request_array_t*) cbdata;
     for (size_t i = 0; i < array->count; i++) {
-        ompi_request_dump_on_hangup(array->requests[i]);
+        ompi_request_dump_on_hangup(file, prefix, array->requests[i]);
     }
 }

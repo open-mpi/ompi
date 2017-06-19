@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,18 @@
  * is passed NULL for it's FILE file pointer.
  */
 extern int opal_stacktrace_output_fileno;
+
+/**
+ * Set the opal_stacktrace_output_filename variable.
+ *
+ * We append VPID and PID as a suffix to the filename specified by the MCA
+ * parameter opal_stacktrace_output. But since the MCA parameter registration
+ * and its parsing may be processed before setting the VPID of this process,
+ * they may not be able to determine the suffix. This function should be
+ * called before using the opal_stacktrace_output_filename variable so that
+ * the filename suffix will be set appropriately with the VPID.
+ */
+OPAL_DECLSPEC void opal_stacktrace_set_output_filename(void);
 
 /**
  * Output the current stack trace (not including the call to this

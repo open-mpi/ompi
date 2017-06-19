@@ -202,8 +202,15 @@ static inline bool opal_progress_spin(volatile bool* complete)
 
 /**
  * typedef of callback functions which are called when hang-up is detected
+ *
+ * A typical usage is to output hang-up situation information for debugging.
+ *
+ * @param file   File stream to output hang-up situation information into.
+ * @param prefix Desired prefix for each line of hang-up situation information.
+ * @param cbdata Callback data passed with the function pointer.
  */
-typedef void (*opal_progress_hangup_callback_fn_t)(void *cbdata);
+typedef void (*opal_progress_hangup_callback_fn_t)(FILE *file, char *prefix,
+                                                   void *cbdata);
 
 /**
  * How many seconds we wait in opal_progress loop (OPAL_PROGRESS_BLOCK_WHILE)

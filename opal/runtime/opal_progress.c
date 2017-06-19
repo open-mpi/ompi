@@ -489,8 +489,33 @@ int opal_progress_unregister (opal_progress_callback_t cb)
 void opal_progress_handle_hangup(opal_progress_hangup_callback_fn_t cbfunc,
                                  void *cbdata)
 {
+    static bool once_called;
+    FILE *stream = NULL;
     char prefix[100 + OPAL_MAXHOSTNAMELEN];
-    FILE *stream = stderr;
+    bool need_close = false;
+
+    if (0 <= opal_stacktrace_output_fileno) {
+        stream = fdopen(opal_stacktrace_output_fileno, "a");
+        if (stream == NULL) {
+            opal_output(0,
+                        "Error: Failed to open the stacktrace file descriptor. "
+                        "Default: stderr\n\tFile descriptor: %d\n\tErrno: %s",
+                        opal_stacktrace_output_fileno, strerror(errno));
+        }
+    } else if (NULL != opal_stacktrace_output_filename) {
+        opal_stacktrace_set_output_filename();
+        stream = fopen(opal_stacktrace_output_filename, once_called ? "a" : "w");
+        if (stream == NULL) {
+            opal_output(0,
+                        "Error: Failed to open the stacktrace output file. "
+                        "Default: stderr\n\tFilename: %s\n\tErrno: %s",
+                        opal_stacktrace_output_filename, strerror(errno));
+        }
+        need_close = stream != NULL;
+    }
+    if (stream == NULL) {
+        stream = stderr;
+    }
 
     snprintf(prefix, sizeof(prefix), "[%s:%05d] ",
              opal_process_info.nodename, (int) getpid());
@@ -502,9 +527,15 @@ void opal_progress_handle_hangup(opal_progress_hangup_callback_fn_t cbfunc,
     opal_backtrace_print(stream, prefix, 1);
 
     if (cbfunc != NULL) {
-        (*cbfunc)(cbdata);
+        (*cbfunc)(stream, prefix, cbdata);
         fflush(stream);
     }
+
+    if (need_close) {
+        fclose(stream);
+    }
+
+    once_called = true;
 
     if (opal_progress_timeout > 0) {
         opal_delay_abort();
