@@ -2347,9 +2347,9 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
 
     if (!MPIR_being_debugged && !orte_in_parallel_debugger) {
         /* if we were given a test debugger, then we still want to
-         * colaunch it
+         * colaunch it - unless we are testing attach to a running job
          */
-        if (NULL != orte_debugger_test_daemon) {
+        if (NULL != orte_debugger_test_daemon && !orte_debugger_test_attach) {
             opal_output_verbose(2, orte_debug_output,
                                 "%s No debugger test daemon specified",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -2413,8 +2413,8 @@ static void setup_debugger_job(void)
      * to avoid confusing the rest of the system's bookkeeping
      */
     orte_plm_base_create_jobid(debugger);
-    /* set the personality to ORTE */
-    debugger->personality = strdup("orte");
+    /* set the personality to OMPI */
+    debugger->personality = strdup("ompi");
     /* flag the job as being debugger daemons */
     ORTE_FLAG_SET(debugger, ORTE_JOB_FLAG_DEBUGGER_DAEMON);
     /* unless directed, we do not forward output */
@@ -2478,6 +2478,9 @@ static void setup_debugger_job(void)
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = debugger->jobid;
         proc->name.vpid = vpid++;
+        /* point the proc at the local ORTE daemon as its parent */
+        proc->parent = node->daemon->name.vpid;
+
         /* set the local/node ranks - we don't actually care
          * what these are, but the odls needs them
          */
@@ -2518,7 +2521,7 @@ static bool mpir_breakpoint_fired = false;
 void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
+    orte_job_t *jdata = caddy->jdata, *target;
     orte_proc_t *proc;
     orte_app_context_t *appctx;
     orte_vpid_t i, j;
@@ -2526,35 +2529,55 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
     int rc;
     char **aliases, *aptr;
 
+    opal_output_verbose(5, orte_debug_output,
+                        "%s INIT AFTER SPAWN FOR %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_JOBID_PRINT(caddy->jdata->jobid));
+
     /* if we couldn't get thru the mapper stage, we might
      * enter here with no procs. Avoid the "zero byte malloc"
      * message by checking here
      */
     if (MPIR_proctable || 0 == jdata->num_procs) {
+
         /* already initialized */
         opal_output_verbose(5, orte_debug_output,
                             "%s: debugger already initialized or zero procs",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        OBJ_RELEASE(caddy);
-        if (!mpir_breakpoint_fired) {
-            /* record that we have triggered the debugger */
-            mpir_breakpoint_fired = true;
 
-            /* trigger the debugger */
-            MPIR_Breakpoint();
+        if (MPIR_being_debugged || NULL != orte_debugger_test_daemon ||
+            NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
+            OBJ_RELEASE(caddy);
+            if (!mpir_breakpoint_fired) {
+                /* record that we have triggered the debugger */
+                mpir_breakpoint_fired = true;
 
-            /* send a message to rank=0 to release it */
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
-                ORTE_PROC_STATE_UNTERMINATED < proc->state ) {
-                /* proc is already dead */
-                return;
-            }
-            buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
-            if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                  ORTE_RML_TAG_DEBUGGER_RELEASE,
-                                                  orte_rml_send_callback, NULL))) {
-                opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
-                OBJ_RELEASE(buf);
+                /* trigger the debugger */
+                MPIR_Breakpoint();
+
+                /* send a message to rank=0 of the job being debugged to release it */
+                target = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, 1);
+                if (NULL == target) {
+                    /* the job is dead */
+                    return;
+                }
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(target->procs, 0)) ||
+                    ORTE_PROC_STATE_UNTERMINATED < proc->state ) {
+                    /* proc is already dead */
+                    return;
+                }
+                buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
+                opal_output_verbose(5, orte_debug_output,
+                                    "%s SENDING DEBUGGER RELEASE TO %s %s:%d",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&proc->name),
+                                    __FILE__, __LINE__);
+                if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
+                                                      ORTE_RML_TAG_DEBUGGER_RELEASE,
+                                                      orte_rml_send_callback, NULL))) {
+                    opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
+                    OBJ_RELEASE(buf);
+                }
             }
         }
         return;
@@ -2649,8 +2672,13 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
             /* trigger the debugger */
             MPIR_Breakpoint();
 
-            /* send a message to rank=0 to release it */
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
+            /* send a message to rank=0 of the job being debugged to release it */
+            target = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, 1);
+            if (NULL == target) {
+                /* the job is dead */
+                return;
+            }
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(target->procs, 0)) ||
                 ORTE_PROC_STATE_UNTERMINATED < proc->state) {
                 /* proc is already dead or never registered with us (so we don't have
                  * contact info for him)
@@ -2668,7 +2696,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                 opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
                 OBJ_RELEASE(buf);
             }
-        } else {
+        } else if (!orte_debugger_test_attach) {
             /* if I am launching debugger daemons, then I need to do so now
              * that the job has been started and I know which nodes have
              * apps on them
@@ -2720,16 +2748,24 @@ static void open_fifo (void)
         return;
     }
 
-    opal_output_verbose(2, orte_debug_output,
-                        "%s Monitoring debugger attach fifo %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        MPIR_attach_fifo);
+    if (orte_debugger_test_attach) {
+        opal_output(0, "%s Monitoring debugger attach fifo %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    MPIR_attach_fifo);
+    } else {
+        opal_output_verbose(2, orte_debug_output,
+                            "%s Monitoring debugger attach fifo %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            MPIR_attach_fifo);
+    }
     attach = (opal_event_t*)malloc(sizeof(opal_event_t));
     opal_event_set(orte_event_base, attach, attach_fd, OPAL_EV_READ, attach_debugger, attach);
 
     fifo_active = true;
     opal_event_add(attach, 0);
 }
+
+static bool did_once = false;
 
 static void attach_debugger(int fd, short event, void *arg)
 {
@@ -2786,6 +2822,12 @@ static void attach_debugger(int fd, short event, void *arg)
                             (NULL == orte_debugger_test_daemon) ?
                             MPIR_executable_path : orte_debugger_test_daemon);
         setup_debugger_job();
+        did_once = true;
+    }
+
+    /* if we are testing, ensure we only do this once */
+    if (NULL != orte_debugger_test_daemon && did_once) {
+        return;
     }
 
     /* reset the read or timer event */

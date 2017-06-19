@@ -711,7 +711,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
         /* setup the environment for this app */
         if (ORTE_SUCCESS != (rc = orte_schizo.setup_fork(jobdat, app))) {
 
-            OPAL_OUTPUT_VERBOSE((10, orte_odls_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                                  "%s odls:launch:setup_fork failed with error %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_ERROR_NAME(rc)));
