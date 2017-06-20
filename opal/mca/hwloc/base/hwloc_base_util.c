@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -830,7 +830,6 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
 {
     unsigned int num_objs, idx;
     hwloc_obj_t obj;
-    opal_list_item_t *item;
     opal_hwloc_summary_t *sum;
     opal_hwloc_topo_data_t *data;
     int rc;
@@ -866,10 +865,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
         data = OBJ_NEW(opal_hwloc_topo_data_t);
         obj->userdata = (void*)data;
     } else {
-        for (item = opal_list_get_first(&data->summaries);
-             item != opal_list_get_end(&data->summaries);
-             item = opal_list_get_next(item)) {
-            sum = (opal_hwloc_summary_t*)item;
+        OPAL_LIST_FOREACH(sum, &data->summaries, opal_hwloc_summary_t) {
             if (target == sum->type &&
                 cache_level == sum->cache_level &&
                 rtype == sum->rtype) {
@@ -2098,7 +2094,6 @@ static int find_devices(hwloc_topology_t topo, char** device_name)
 int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, opal_list_t *sorted_list)
 {
     hwloc_obj_t obj;
-    opal_list_item_t *item;
     opal_hwloc_summary_t *sum;
     opal_hwloc_topo_data_t *data;
     opal_rmaps_numa_node_t *numa, *copy_numa;
@@ -2110,10 +2105,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
     /* we call opal_hwloc_base_get_nbobjs_by_type() before it to fill summary object so it should exist*/
     data = (opal_hwloc_topo_data_t*)obj->userdata;
     if (NULL != data) {
-        for (item = opal_list_get_first(&data->summaries);
-                item != opal_list_get_end(&data->summaries);
-                item = opal_list_get_next(item)) {
-            sum = (opal_hwloc_summary_t*)item;
+        OPAL_LIST_FOREACH(sum, &data->summaries, opal_hwloc_summary_t) {
             if (HWLOC_OBJ_NODE == sum->type) {
                 if (opal_list_get_size(&sum->sorted_by_dist_list) > 0) {
                     OPAL_LIST_FOREACH(numa, &(sum->sorted_by_dist_list), opal_rmaps_numa_node_t) {

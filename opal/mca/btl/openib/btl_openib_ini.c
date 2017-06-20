@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -160,7 +160,6 @@ int opal_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
 {
     int ret;
     device_values_t *h;
-    opal_list_item_t *item;
 
     if (!initialized) {
         if (OPAL_SUCCESS != (ret = opal_btl_openib_ini_init())) {
@@ -176,10 +175,7 @@ int opal_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
     reset_values(values);
 
     /* Iterate over all the saved devices */
-    for (item = opal_list_get_first(&devices);
-         item != opal_list_get_end(&devices);
-         item = opal_list_get_next(item)) {
-        h = (device_values_t*) item;
+    OPAL_LIST_FOREACH(h, &devices, device_values_t) {
         if (vendor_id == h->vendor_id &&
             vendor_part_id == h->vendor_part_id) {
             /* Found it! */
@@ -208,15 +204,8 @@ int opal_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
  */
 int opal_btl_openib_ini_finalize(void)
 {
-    opal_list_item_t *item;
-
     if (initialized) {
-        for (item = opal_list_remove_first(&devices);
-             NULL != item;
-             item = opal_list_remove_first(&devices)) {
-            OBJ_RELEASE(item);
-        }
-        OBJ_DESTRUCT(&devices);
+        OPAL_LIST_DESTRUCT(&devices);
         initialized = true;
     }
 
@@ -524,7 +513,6 @@ static void reset_values(opal_btl_openib_ini_values_t *v)
 static int save_section(parsed_section_values_t *s)
 {
     int i, j;
-    opal_list_item_t *item;
     device_values_t *h;
     bool found;
 
@@ -541,10 +529,7 @@ static int save_section(parsed_section_values_t *s)
             found = false;
 
             /* Iterate over all the saved devices */
-            for (item = opal_list_get_first(&devices);
-                 item != opal_list_get_end(&devices);
-                 item = opal_list_get_next(item)) {
-                h = (device_values_t*) item;
+            OPAL_LIST_FOREACH(h, &devices, device_values_t) {
                 if (s->vendor_ids[i] == h->vendor_id &&
                     s->vendor_part_ids[j] == h->vendor_part_id) {
                     /* Found a match.  Update any newly-set values. */

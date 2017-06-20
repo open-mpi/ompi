@@ -556,10 +556,9 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
         opal_mutex_unlock(&cmd->lcl_mutex);
         return NULL;
     }
-    for (i = 0, item = opal_list_get_first(&cmd->lcl_options);
-         opal_list_get_end(&cmd->lcl_options) != item;
-         ++i, item = opal_list_get_next(item)) {
-        sorted[i] = (cmd_line_option_t *) item;
+    i = 0;
+    OPAL_LIST_FOREACH(item, &cmd->lcl_options, opal_list_item_t) {
+        sorted[i++] = (cmd_line_option_t *) item;
     }
     qsort(sorted, i, sizeof(cmd_line_option_t*), qsort_callback);
 
@@ -762,7 +761,6 @@ bool opal_cmd_line_is_taken(opal_cmd_line_t *cmd, const char *opt)
 int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, const char *opt)
 {
     int ret;
-    opal_list_item_t *item;
     cmd_line_param_t *param;
     cmd_line_option_t *option;
 
@@ -776,10 +774,7 @@ int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, const char *opt)
     ret = 0;
     option = find_option(cmd, opt);
     if (NULL != option) {
-        for (item = opal_list_get_first(&cmd->lcl_params);
-             opal_list_get_end(&cmd->lcl_params) != item;
-             item = opal_list_get_next(item)) {
-            param = (cmd_line_param_t *) item;
+        OPAL_LIST_FOREACH(param, &cmd->lcl_params, cmd_line_param_t) {
             if (param->clp_option == option) {
                 ++ret;
             }
@@ -804,7 +799,6 @@ char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst,
                               int idx)
 {
     int num_found;
-    opal_list_item_t *item;
     cmd_line_param_t *param;
     cmd_line_option_t *option;
 
@@ -823,10 +817,7 @@ char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst,
            parameter index greater than we will have */
 
         if (idx < option->clo_num_params) {
-            for (item = opal_list_get_first(&cmd->lcl_params);
-                 opal_list_get_end(&cmd->lcl_params) != item;
-                 item = opal_list_get_next(item)) {
-                param = (cmd_line_param_t *) item;
+            OPAL_LIST_FOREACH(param, &cmd->lcl_params, cmd_line_param_t) {
                 if (param->clp_argc > 0 && param->clp_option == option) {
                     if (num_found == inst) {
                         opal_mutex_unlock(&cmd->lcl_mutex);
@@ -1160,17 +1151,13 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
 static cmd_line_option_t *find_option(opal_cmd_line_t *cmd,
                                       const char *option_name)
 {
-    opal_list_item_t *item;
     cmd_line_option_t *option;
 
     /* Iterate through the list of options hanging off the
        opal_cmd_line_t and see if we find a match in either the short
        or long names */
 
-    for (item = opal_list_get_first(&cmd->lcl_options);
-         opal_list_get_end(&cmd->lcl_options) != item;
-         item = opal_list_get_next(item)) {
-        option = (cmd_line_option_t *) item;
+    OPAL_LIST_FOREACH(option, &cmd->lcl_options, cmd_line_option_t) {
         if ((NULL != option->clo_long_name &&
              0 == strcmp(option_name, option->clo_long_name)) ||
             (NULL != option->clo_single_dash_name &&
