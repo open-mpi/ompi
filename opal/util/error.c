@@ -230,7 +230,7 @@ opal_delay_abort(void)
                      "[%s:%05d] Looping forever "
                      "(MCA parameter opal_abort_delay is < 0)\n",
                      opal_process_info.nodename, (int) pid);
-            write(STDERR_FILENO, msg, strlen(msg) + 1);
+            write(STDERR_FILENO, msg, strlen(msg));
             while (1) {
                 sleep(5);
             }
@@ -238,7 +238,7 @@ opal_delay_abort(void)
             snprintf(msg, sizeof(msg),
                      "[%s:%05d] Delaying for %d seconds before aborting\n",
                      opal_process_info.nodename, (int) pid, delay);
-            write(STDERR_FILENO, msg, strlen(msg) + 1);
+            write(STDERR_FILENO, msg, strlen(msg));
             do {
                 sleep(1);
             } while (--delay > 0);
