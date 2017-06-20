@@ -79,7 +79,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     /* in-place alltoallv slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
         for (j = i+1 ; j < size ; ++j) {
-            if (i == rank) {
+            if (i == rank && 0 != rcounts[j] && 0 != rdtype_size) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[j],
                                                            tmp_buffer, (char *) rbuf + rdisps[j] * ext);
@@ -92,7 +92,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
                                                      j, MCA_COLL_BASE_TAG_ALLTOALLV,
                                                      comm, MPI_STATUS_IGNORE);
                 if (MPI_SUCCESS != err) { goto error_hndl; }
-            } else if (j == rank) {
+            } else if (j == rank && 0 != rcounts[i] && 0 != rdtype_size) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[i],
                                                            tmp_buffer, (char *) rbuf + rdisps[i] * ext);
