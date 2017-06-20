@@ -225,14 +225,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * non_existing_communicator_pending list. */
         opal_list_remove_item (&mca_pml_ob1.non_existing_communicator_pending,
                                (opal_list_item_t *) frag);
-        if (OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
-            opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
-            continue;
-        }
-
-      add_fragment_to_unexpected:
 
         /* We generate the MSG_ARRIVED event as soon as the PML is aware
          * of a matching fragment arrival. Independing if it is received
@@ -250,6 +242,15 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * proc, or into the out-of-order (cant_match) list.
          */
         pml_proc = mca_pml_ob1_peer_lookup(comm, hdr->hdr_src);
+
+        if (OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+            opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
+            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
+                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+            continue;
+        }
+
+      add_fragment_to_unexpected:
 
         if (((uint16_t)hdr->hdr_seq) == ((uint16_t)pml_proc->expected_sequence) ) {
             /* We're now expecting the next sequence number. */
