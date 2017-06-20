@@ -54,6 +54,7 @@
 
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -74,6 +75,8 @@ static void dump_aborted_procs(void);
 void orte_quit(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /* cleanup */
     if (NULL != caddy) {
@@ -135,6 +138,7 @@ void orte_quit(int fd, short args, void *cbdata)
      * so we will exit
      */
     orte_event_base_active = false;
+    ORTE_POST_OBJECT(orte_event_base_active);
     /* break out of the event loop */
     opal_event_base_loopbreak(orte_event_base);
 }

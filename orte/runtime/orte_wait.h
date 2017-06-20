@@ -13,7 +13,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +48,7 @@
 #include "orte/types.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/threads.h"
 
 BEGIN_C_DECLS
 
@@ -95,6 +96,7 @@ ORTE_DECLSPEC void orte_wait_cb_cancel(orte_proc_t *proc);
             struct timespec tp = {0, 100000};                           \
             nanosleep(&tp, NULL);                                       \
         }                                                               \
+        ORTE_ACQUIRE_OBJECT(flg);                                       \
     }while(0);
 
 /**
@@ -135,6 +137,7 @@ ORTE_DECLSPEC void orte_wait_cb_cancel(orte_proc_t *proc);
                              "defining timeout: %ld sec %ld usec at %s:%d", \
                             (long)tmp->tv.tv_sec, (long)tmp->tv.tv_usec,    \
                             __FILE__, __LINE__));                           \
+        ORTE_POST_OBJECT(tmp);                                              \
         opal_event_evtimer_add(tmp->ev, &tmp->tv);                          \
     }while(0);                                                              \
 
@@ -161,6 +164,7 @@ ORTE_DECLSPEC void orte_wait_cb_cancel(orte_proc_t *proc);
                              "defining timer event: %ld sec %ld usec at %s:%d", \
                              (long)tm->tv.tv_sec, (long)tm->tv.tv_usec,         \
                              __FILE__, __LINE__));                              \
+        ORTE_POST_OBJECT(tm);                                                   \
         opal_event_evtimer_add(tm->ev, &tm->tv);                                \
     }while(0);                                                                  \
 

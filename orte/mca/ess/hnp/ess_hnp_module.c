@@ -149,7 +149,7 @@ static int rte_init(void)
     int idx;
     orte_topology_t *t;
     opal_list_t transports;
-    ess_hnp_signal_t *sig;
+    orte_ess_base_signal_t *sig;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -193,7 +193,7 @@ static int rte_init(void)
     signal(SIGHUP, abort_signal_callback);
 
     /** setup callbacks for signals we should forward */
-    if (0 < (idx = opal_list_get_size(&mca_ess_hnp_component.signals))) {
+    if (0 < (idx = opal_list_get_size(&orte_ess_base_signals))) {
         forward_signals_events = (opal_event_t*)malloc(sizeof(opal_event_t) * idx);
         if (NULL == forward_signals_events) {
             ret = ORTE_ERR_OUT_OF_RESOURCE;
@@ -201,7 +201,7 @@ static int rte_init(void)
             goto error;
         }
         idx = 0;
-        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+        OPAL_LIST_FOREACH(sig, &orte_ess_base_signals, orte_ess_base_signal_t) {
             setup_sighandler(sig->signal, forward_signals_events + idx, signal_forward_callback);
             ++idx;
         }
@@ -355,13 +355,21 @@ static int rte_init(void)
     OBJ_CONSTRUCT(&transports, opal_list_t);
     orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
                        ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
-    orte_mgmt_conduit = orte_rml.open_conduit(&transports);
+    if (ORTE_RML_CONDUIT_INVALID == (orte_mgmt_conduit = orte_rml.open_conduit(&transports))) {
+        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
+        error = "orte_rml_open_mgmt_conduit";
+        goto error;
+    }
     OPAL_LIST_DESTRUCT(&transports);
 
     OBJ_CONSTRUCT(&transports, opal_list_t);
     orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
                        ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
-    orte_coll_conduit = orte_rml.open_conduit(&transports);
+    if (ORTE_RML_CONDUIT_INVALID == (orte_coll_conduit = orte_rml.open_conduit(&transports))) {
+        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
+        error = "orte_rml_open_coll_conduit";
+        goto error;
+    }
     OPAL_LIST_DESTRUCT(&transports);
 
     /*
@@ -789,7 +797,7 @@ static int rte_finalize(void)
     char *contact_path;
     orte_job_t *jdata;
     uint32_t key;
-    ess_hnp_signal_t *sig;
+    orte_ess_base_signal_t *sig;
     unsigned int i;
 
     if (signals_set) {
@@ -799,7 +807,7 @@ static int rte_finalize(void)
         opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
         i = 0;
-        OPAL_LIST_FOREACH(sig, &mca_ess_hnp_component.signals, ess_hnp_signal_t) {
+        OPAL_LIST_FOREACH(sig, &orte_ess_base_signals, orte_ess_base_signal_t) {
             opal_event_signal_del(forward_signals_events + i);
             ++i;
         }

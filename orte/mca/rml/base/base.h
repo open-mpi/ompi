@@ -202,9 +202,9 @@ OBJ_CLASS_DECLARATION(orte_self_send_xfer_t);
     do {                                                                \
         orte_rml_recv_t *msg;                                           \
         opal_output_verbose(5, orte_rml_base_framework.framework_output, \
-                            "%s Message posted at %s:%d",               \
+                            "%s Message posted at %s:%d for tag %d",    \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__);                        \
+                            __FILE__, __LINE__, (t));                   \
         msg = OBJ_NEW(orte_rml_recv_t);                                 \
         msg->sender.jobid = (p)->jobid;                                 \
         msg->sender.vpid = (p)->vpid;                                   \

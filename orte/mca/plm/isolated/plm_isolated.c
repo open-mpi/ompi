@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +38,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/state/state.h"
@@ -113,6 +114,8 @@ static int isolated_launch(orte_job_t *jdata)
 static void launch_daemons(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(state);
 
     /* there are no daemons to launch, so just trigger the
      * daemon-launch-complete state

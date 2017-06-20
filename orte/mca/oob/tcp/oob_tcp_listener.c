@@ -66,6 +66,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
@@ -162,6 +163,7 @@ int orte_oob_tcp_start_listening(void)
                        connection_event_handler,
                        0);
         opal_event_set_priority(&listener->event, ORTE_MSG_PRI);
+        ORTE_POST_OBJECT(listener);
         opal_event_add(&listener->event, 0);
     }
 
@@ -816,6 +818,7 @@ static void* listen_thread(opal_object_t *obj)
                 }
 
                 /* activate the event */
+                ORTE_POST_OBJECT(pending_connection);
                 opal_event_active(&pending_connection->ev, OPAL_EV_WRITE, 1);
                 accepted_connections++;
             }
@@ -857,6 +860,8 @@ static void connection_handler(int sd, short flags, void* cbdata)
     mca_oob_tcp_pending_connection_t *new_connection;
 
     new_connection = (mca_oob_tcp_pending_connection_t*)cbdata;
+
+    ORTE_ACQUIRE_OBJECT(new_connection);
 
     opal_output_verbose(4, orte_oob_base_framework.framework_output,
                         "%s connection_handler: working connection "

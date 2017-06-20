@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +25,7 @@
 #include "opal/util/argv.h"
 
 #include "orte/util/attr.h"
+#include "orte/util/threads.h"
 #include "orte/mca/notifier/base/base.h"
 
 
@@ -37,6 +38,8 @@ void orte_notifier_base_log(int sd, short args, void *cbdata)
     char **modules = NULL;
     orte_notifier_active_module_t *imod;
     int i;
+
+    ORTE_ACQUIRE_OBJECT(req);
 
     /* if no modules are active, then there is nothing to do */
     if (0 == opal_list_get_size(&orte_notifier_base.modules)) {
@@ -74,6 +77,8 @@ void orte_notifier_base_event(int sd, short args, void *cbdata)
     orte_notifier_active_module_t *imod;
     int i;
 
+    ORTE_ACQUIRE_OBJECT(req);
+
     /* if no modules are active, then there is nothing to do */
     if (0 == opal_list_get_size(&orte_notifier_base.modules)) {
         return;
@@ -109,6 +114,8 @@ void orte_notifier_base_report(int sd, short args, void *cbdata)
     char **modules = NULL;
     orte_notifier_active_module_t *imod;
     int i;
+
+    ORTE_ACQUIRE_OBJECT(req);
 
     /* if no modules are active, then there is nothing to do */
     if (0 == opal_list_get_size(&orte_notifier_base.modules)) {

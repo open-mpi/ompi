@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -35,7 +35,7 @@
 #include "opal/mca/pmix/base/pmix_base_hash.h"
 #include "pmix_flux.h"
 
-static int flux_init(void);
+static int flux_init(opal_list_t *ilist);
 static int flux_fini(void);
 static int flux_initialized(void);
 static int flux_abort(int flag, const char msg[],
@@ -359,7 +359,7 @@ done:
     return ret;
 }
 
-static int flux_init(void)
+static int flux_init(opal_list_t *ilist)
 {
     int initialized;
     int spawned;
@@ -371,6 +371,10 @@ static int flux_init(void)
     char **localranks=NULL;
     opal_process_name_t wildcard_rank;
     char *str;
+
+    if (0 < pmix_init_count) {
+        return OPAL_SUCCESS;
+    }
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");

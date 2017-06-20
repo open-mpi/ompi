@@ -35,6 +35,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
@@ -48,10 +49,13 @@ static void restart_stdin(int fd, short event, void *cbdata)
 {
     orte_timer_t *tm = (orte_timer_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(tm);
+
     if (NULL != mca_iof_hnp_component.stdinev &&
         !orte_job_term_ordered &&
         !mca_iof_hnp_component.stdinev->active) {
         mca_iof_hnp_component.stdinev->active = true;
+        ORTE_POST_OBJECT(mca_iof_hnp_component.stdinev);
         opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
     }
 
@@ -74,7 +78,11 @@ bool orte_iof_hnp_stdin_check(int fd)
 
 void orte_iof_hnp_stdin_cb(int fd, short event, void *cbdata)
 {
-    bool should_process = orte_iof_hnp_stdin_check(0);
+    bool should_process;
+
+    ORTE_ACQUIRE_OBJECT(mca_iof_hnp_component.stdinev);
+
+    should_process = orte_iof_hnp_stdin_check(0);
 
     if (should_process) {
         mca_iof_hnp_component.stdinev->active = true;
@@ -98,6 +106,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     orte_ns_cmp_bitmask_t mask=ORTE_NS_CMP_ALL;
     bool exclusive;
     orte_iof_sink_t *sink;
+
+    ORTE_ACQUIRE_OBJECT(rev);
 
     /* read up to the fragment size */
     numbytes = read(fd, data, sizeof(data));
@@ -293,6 +303,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     }
 
     /* re-add the event */
+    ORTE_POST_OBJECT(rev);
     opal_event_add(rev->ev, 0);
 
     return;

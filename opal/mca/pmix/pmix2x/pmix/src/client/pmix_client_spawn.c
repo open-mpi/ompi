@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -48,6 +48,7 @@
 
 #include "src/class/pmix_list.h"
 #include "src/buffer_ops/buffer_ops.h"
+#include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -68,17 +69,23 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     pmix_status_t rc;
     pmix_cb_t *cb;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: spawn called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+
 
     /* ensure the nspace (if provided) is initialized */
     if (NULL != nspace) {
@@ -87,7 +94,6 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
 
     if (PMIX_SUCCESS != (rc = PMIx_Spawn_nb(job_info, ninfo, apps, napps, spawn_cbfunc, cb))) {
         PMIX_RELEASE(cb);
@@ -95,7 +101,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     }
 
     /* wait for the result */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     if (NULL != nspace) {
         (void)strncpy(nspace, cb->nspace, PMIX_MAX_NSLEN);
@@ -114,17 +120,22 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     pmix_status_t rc;
     pmix_cb_t *cb;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: spawn called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
@@ -170,7 +181,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -188,6 +199,8 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
     char *n2 = NULL;
     pmix_status_t rc, ret;
     int32_t cnt;
+
+    PMIX_ACQUIRE_OBJECT(cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client recv callback activated with %d bytes",
@@ -233,9 +246,11 @@ static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
+    PMIX_ACQUIRE_OBJECT(cb);
     cb->status = status;
     if (NULL != nspace) {
         (void)strncpy(cb->nspace, nspace, PMIX_MAX_NSLEN);
     }
-    cb->active = false;
+    PMIX_POST_OBJECT(cb);
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }

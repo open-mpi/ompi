@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,14 +76,6 @@ typedef struct {
     void *cbdata;
 } orte_dfs_request_t;
 OBJ_CLASS_DECLARATION(orte_dfs_request_t);
-
-#define ORTE_DFS_POST_REQUEST(d, cb)                                    \
-    do {                                                                \
-        opal_event_set(orte_event_base, &((d)->ev),                     \
-                   -1, OPAL_EV_WRITE, (cb), (d));                       \
-        opal_event_set_priority(&((d)->ev), ORTE_SYS_PRI);              \
-        opal_event_active(&((d)->ev), OPAL_EV_WRITE, 1);                \
-    } while(0);
 
 END_C_DECLS
 

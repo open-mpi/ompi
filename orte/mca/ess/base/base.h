@@ -52,6 +52,7 @@ ORTE_DECLSPEC extern int orte_ess_base_std_buffering;
 ORTE_DECLSPEC extern int orte_ess_base_num_procs;
 ORTE_DECLSPEC extern char *orte_ess_base_jobid;
 ORTE_DECLSPEC extern char *orte_ess_base_vpid;
+ORTE_DECLSPEC extern opal_list_t orte_ess_base_signals;
 
 /*
  * Internal helper functions used by components
@@ -81,6 +82,13 @@ ORTE_DECLSPEC int orte_ess_base_proc_binding(void);
 ORTE_DECLSPEC int orte_ess_env_put(orte_std_cntr_t num_procs,
                                    orte_std_cntr_t num_local_procs,
                                    char ***env);
+
+typedef struct {
+    opal_list_item_t super;
+    char *signame;
+    int signal;
+} orte_ess_base_signal_t;
+OBJ_CLASS_DECLARATION(orte_ess_base_signal_t);
 
 END_C_DECLS
 

@@ -42,6 +42,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
@@ -190,10 +191,13 @@ SETUP:
      */
     if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
         proct->revstdout->active = true;
+        ORTE_POST_OBJECT(proct->revstdout);
         opal_event_add(proct->revstdout->ev, 0);
         proct->revstderr->active = true;
+        ORTE_POST_OBJECT(proct->revstderr);
         opal_event_add(proct->revstderr->ev, 0);
         proct->revstddiag->active = true;
+        ORTE_POST_OBJECT(proct->revstddiag);
         opal_event_add(proct->revstddiag->ev, 0);
     }
     return ORTE_SUCCESS;
@@ -367,6 +371,8 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     orte_iof_write_output_t *output;
     int num_written;
 
+    ORTE_ACQUIRE_OBJECT(sink);
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s orted:stdin:write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -400,6 +406,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  * when the fd is ready.
                  */
                 wev->pending = true;
+                ORTE_POST_OBJECT(wev);
                 opal_event_add(wev->ev, 0);
                 goto CHECK;
             }
@@ -430,6 +437,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * when the fd is ready.
              */
             wev->pending = true;
+            ORTE_POST_OBJECT(wev);
             opal_event_add(wev->ev, 0);
             goto CHECK;
         }

@@ -29,6 +29,7 @@
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/rml/base/base.h"
 
@@ -85,17 +86,19 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
 
 static void cleanup(int sd, short args, void *cbdata)
 {
-    volatile bool *active = (volatile bool*)cbdata;
+    orte_lock_t *lk = (orte_lock_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(active);
     OPAL_LIST_DESTRUCT(&orte_rml_base.posted_recvs);
-    if (NULL != active) {
-        *active = false;
+    if (NULL != lk) {
+        ORTE_POST_OBJECT(lk);
+        ORTE_WAKEUP_THREAD(lk);
     }
 }
 
 static int orte_rml_base_close(void)
 {
-    volatile bool active;
+    orte_lock_t lock;
     int idx, total_conduits = opal_pointer_array_get_size(&orte_rml_base.conduits);
     orte_rml_base_module_t *mod;
     orte_rml_component_t *comp;
@@ -124,12 +127,14 @@ static int orte_rml_base_close(void)
      * it there */
      if (ORTE_PROC_IS_APP) {
         opal_event_t ev;
-        active = true;
+        ORTE_CONSTRUCT_LOCK(&lock);
         opal_event_set(orte_event_base, &ev, -1,
-                       OPAL_EV_WRITE, cleanup, (void*)&active);
+                       OPAL_EV_WRITE, cleanup, (void*)&lock);
         opal_event_set_priority(&ev, ORTE_ERROR_PRI);
+        ORTE_POST_OBJECT(ev);
         opal_event_active(&ev, OPAL_EV_WRITE, 1);
-        ORTE_WAIT_FOR_COMPLETION(active);
+        ORTE_WAIT_THREAD(&lock);
+        ORTE_DESTRUCT_LOCK(&lock);
      } else {
         /* we can call the destruct directly */
         cleanup(0, 0, NULL);
@@ -146,7 +151,7 @@ static int orte_rml_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.conduits, opal_pointer_array_t);
-    opal_pointer_array_init(&orte_rml_base.conduits,1,INT_MAX,1);
+    opal_pointer_array_init(&orte_rml_base.conduits,1,INT16_MAX,1);
 
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_rml_base_framework, flags);
@@ -243,12 +248,14 @@ void orte_rml_recv_callback(int status, orte_process_name_t* sender,
 {
     orte_rml_recv_cb_t *blob = (orte_rml_recv_cb_t*)cbdata;
 
+    ORTE_ACQUIRE_OBJECT(blob);
     /* transfer the sender */
     blob->name.jobid = sender->jobid;
     blob->name.vpid = sender->vpid;
     /* just copy the payload to the buf */
     opal_dss.copy_payload(&blob->data, buffer);
     /* flag as complete */
+    ORTE_POST_OBJECT(blob);
     blob->active = false;
 }
 

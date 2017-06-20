@@ -13,6 +13,7 @@
 #include "opal/constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/threads/thread_usage.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
@@ -35,7 +36,16 @@ opal_pmix_base_module_t opal_pmix = { 0 };
 bool opal_pmix_collect_all_data = true;
 int opal_pmix_verbose_output = -1;
 bool opal_pmix_base_async_modex = false;
-opal_pmix_base_t opal_pmix_base = {0};
+opal_pmix_base_t opal_pmix_base = {
+    .evbase = NULL,
+    .timeout = 0,
+    .initialized = 0,
+    .lock = {
+        .mutex = OPAL_MUTEX_STATIC_INIT,
+        .cond = OPAL_PMIX_CONDITION_STATIC_INIT,
+        .active = false
+    }
+};
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {

@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +32,9 @@
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/state/state.h"
@@ -55,17 +57,11 @@
  * HNP module
  ******************/
  orte_errmgr_base_module_t orte_errmgr_default_app_module = {
-    init,
-    finalize,
-    orte_errmgr_base_log,
-    orte_errmgr_base_abort,
-    abort_peers,
-    NULL,
-    NULL,
-    NULL,
-    orte_errmgr_base_register_migration_warning,
-    orte_errmgr_base_register_error_callback,
-    orte_errmgr_base_execute_error_callbacks
+    .init = init,
+    .finalize = finalize,
+    .logfn = orte_errmgr_base_log,
+    .abort = orte_errmgr_base_abort,
+    .abort_peers = abort_peers
 };
 
 static void proc_errors(int fd, short args, void *cbdata);
@@ -74,7 +70,10 @@ static size_t myerrhandle = SIZE_MAX;
 
 static void register_cbfunc(int status, size_t errhndler, void *cbdata)
 {
+    orte_lock_t *lk = (orte_lock_t*)cbdata;
     myerrhandle = errhndler;
+    ORTE_POST_OBJECT(lk);
+    ORTE_WAKEUP_THREAD(lk);
 }
 
 static void notify_cbfunc(int status,
@@ -109,7 +108,7 @@ static void notify_cbfunc(int status,
     }
 
     /* push it into our event base */
-    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, state);
+    ORTE_ACTIVATE_PROC_STATE((orte_process_name_t*)source, state);
 }
 
 /************************
@@ -117,11 +116,25 @@ static void notify_cbfunc(int status,
  ************************/
  static int init(void)
  {
+    opal_list_t directives;
+    orte_lock_t lock;
+    opal_value_t *kv;
+
     /* setup state machine to trap proc errors */
     orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
 
     /* tie the default PMIx event handler back to us */
-    opal_pmix.register_evhandler(NULL, NULL, notify_cbfunc, register_cbfunc, NULL);
+    ORTE_CONSTRUCT_LOCK(&lock);
+    OBJ_CONSTRUCT(&directives, opal_list_t);
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_EVENT_HDLR_NAME);
+    kv->type = OPAL_STRING;
+    kv->data.string = strdup("ORTE-APP-DEFAULT");
+    opal_list_append(&directives, &kv->super);
+    opal_pmix.register_evhandler(NULL, &directives, notify_cbfunc, register_cbfunc, (void*)&lock);
+    ORTE_WAIT_THREAD(&lock);
+    ORTE_DESTRUCT_LOCK(&lock);
+    OPAL_LIST_DESTRUCT(&directives);
 
     return ORTE_SUCCESS;
 }
@@ -138,8 +151,8 @@ static void proc_errors(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     char *nodename;
-    orte_error_t err;
-    opal_pointer_array_t errors;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                         "%s errmgr:default_app: proc %s state %s",
@@ -154,14 +167,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-
-    /* pass the error to the error_callbacks for processing */
-    OBJ_CONSTRUCT(&errors, opal_pointer_array_t);
-    opal_pointer_array_init(&errors, 1, INT_MAX, 1);
-    err.errcode = caddy->proc_state;
-    err.proc = caddy->name;
-    opal_pointer_array_add(&errors, &err);
-
 
     if (ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == caddy->proc_state) {
         /* we can't send a message - print a message */
@@ -180,9 +185,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* we need to die, so mark us so */
         orte_abnormal_term_ordered = true;
     }
-
-    orte_errmgr_base_execute_error_callbacks(&errors);
-    OBJ_DESTRUCT(&errors);
 
     OBJ_RELEASE(caddy);
 }
