@@ -45,18 +45,13 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
   NBC_Schedule *schedule;
   char *rbuf, *sbuf, inplace;
   ptrdiff_t span=0;
-  NBC_Handle *handle;
+  void *tmpbuf = NULL;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
-
-  res = NBC_Init_handle (comm, &handle, libnbc_module);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    return res;
-  }
 
   /* copy data to receivbuffer */
   if (inplace) {
@@ -69,12 +64,10 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
     }
     if (OPAL_UNLIKELY(0 == span)) {
       *request = &ompi_request_empty;
-      NBC_Return_handle (handle);
       return OMPI_SUCCESS;
     }
-    handle->tmpbuf = malloc(span);
-    if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
-      NBC_Return_handle (handle);
+    tmpbuf = malloc(span);
+    if (OPAL_UNLIKELY(NULL == tmpbuf)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
     sendcounts = recvcounts;
@@ -85,14 +78,13 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
     sbuf = (char *) sendbuf + sdispls[rank];
     res = NBC_Copy(sbuf, sendcounts[rank], sendtypes[rank], rbuf, recvcounts[rank], recvtypes[rank], comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
       return res;
     }
   }
 
   schedule = OBJ_NEW(NBC_Schedule);
   if (OPAL_UNLIKELY(NULL == schedule)) {
-    NBC_Return_handle (handle);
+    free(tmpbuf);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
@@ -105,25 +97,24 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
                             recvbuf, recvcounts, rdispls, recvtypes);
   }
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
     OBJ_RELEASE(schedule);
+    free(tmpbuf);
     return res;
   }
 
   res = NBC_Sched_commit (schedule);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
     OBJ_RELEASE(schedule);
+    free(tmpbuf);
     return res;
   }
 
-  res = NBC_Start (handle, schedule);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
+    OBJ_RELEASE(schedule);
+    free(tmpbuf);
     return res;
   }
-
-  *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
 } 
@@ -137,7 +128,6 @@ int ompi_coll_libnbc_ialltoallw_inter (const void* sendbuf, const int *sendcount
   int res, rsize;
   NBC_Schedule *schedule;
   char *rbuf, *sbuf;
-  NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   rsize = ompi_comm_remote_size (comm);
@@ -174,19 +164,11 @@ int ompi_coll_libnbc_ialltoallw_inter (const void* sendbuf, const int *sendcount
     return res;
   }
 
-  res = NBC_Init_handle (comm, &handle, libnbc_module);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
   }
-
-  res = NBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return res;
-  }
-
-  *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
 }

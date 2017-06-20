@@ -11,7 +11,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  */
@@ -37,7 +37,6 @@ int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatyp
   MPI_Aint rcvext;
   NBC_Schedule *schedule;
   char *rbuf, *sbuf, inplace;
-  NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
@@ -96,19 +95,11 @@ int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatyp
     return res;
   }
 
-  res = NBC_Init_handle (comm, &handle, libnbc_module);
+  res = NBC_Schedule_request (schedule, comm, libnbc_module, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
   }
-
-  res = NBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return res;
-  }
-
-  *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
 }
@@ -120,7 +111,6 @@ int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_D
   int res, rsize;
   MPI_Aint rcvext;
   NBC_Schedule *schedule;
-  NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   rsize = ompi_comm_remote_size (comm);
@@ -165,19 +155,11 @@ int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_D
     return res;
   }
 
-  res = NBC_Init_handle (comm, &handle, libnbc_module);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
   }
-
-  res = NBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return res;
-  }
-
-  *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
 }

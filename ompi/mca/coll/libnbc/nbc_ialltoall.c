@@ -8,7 +8,7 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -24,7 +24,7 @@ static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint 
                                      int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
 static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,
                                  const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
-                                 int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+                                 int recvcount, MPI_Datatype recvtype, MPI_Comm comm, void* tmpbuf);
 static inline int a2a_sched_inplace(int rank, int p, NBC_Schedule* schedule, void* buf, int count,
                                    MPI_Datatype type, MPI_Aint ext, ptrdiff_t gap, MPI_Comm comm);
 
@@ -62,7 +62,7 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
 #endif
   char *rbuf, *sbuf, inplace;
   enum {NBC_A2A_LINEAR, NBC_A2A_PAIRWISE, NBC_A2A_DISS, NBC_A2A_INPLACE} alg;
-  NBC_Handle *handle;
+  void *tmpbuf = NULL;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
   ptrdiff_t span, gap;
 
@@ -115,17 +115,11 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
     }
   }
 
-  res = NBC_Init_handle(comm, &handle, libnbc_module);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    return res;
-  }
-
   /* allocate temp buffer if we need one */
   if (alg == NBC_A2A_INPLACE) {
     span = opal_datatype_span(&recvtype->super, recvcount, &gap);
-    handle->tmpbuf = malloc(span);
-    if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
-      NBC_Return_handle (handle);
+    tmpbuf = malloc(span);
+    if (OPAL_UNLIKELY(NULL == tmpbuf)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } else if (alg == NBC_A2A_DISS) {
@@ -136,21 +130,19 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
       res = PMPI_Pack_size (sendcount, sendtype, comm, &datasize);
       if (MPI_SUCCESS != res) {
         NBC_Error("MPI Error in PMPI_Pack_size() (%i)", res);
-        NBC_Return_handle (handle);
         return res;
       }
     }
 
     /* allocate temporary buffers */
     if ((p & 1) == 0) {
-      handle->tmpbuf = malloc (datasize * p * 2);
+      tmpbuf = malloc (datasize * p * 2);
     } else {
       /* we cannot divide p by two, so alloc more to be safe ... */
-      handle->tmpbuf = malloc (datasize * (p / 2 + 1) * 2 * 2);
+      tmpbuf = malloc (datasize * (p / 2 + 1) * 2 * 2);
     }
 
-    if (OPAL_UNLIKELY(NULL == handle->tmpbuf)) {
-      NBC_Return_handle (handle);
+    if (OPAL_UNLIKELY(NULL == tmpbuf)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -161,29 +153,29 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
     if (NBC_Type_intrinsic(sendtype)) {
 #endif /* OPAL_CUDA_SUPPORT */
       /* contiguous - just copy (1st copy) */
-      memcpy (handle->tmpbuf, (char *) sendbuf + datasize * rank, datasize * (p - rank));
+      memcpy (tmpbuf, (char *) sendbuf + datasize * rank, datasize * (p - rank));
       if (rank != 0) {
-        memcpy ((char *) handle->tmpbuf + datasize * (p - rank), sendbuf, datasize * rank);
+        memcpy ((char *) tmpbuf + datasize * (p - rank), sendbuf, datasize * rank);
       }
     } else {
       int pos=0;
 
       /* non-contiguous - pack */
-      res = PMPI_Pack ((char *) sendbuf + rank * sendcount * sndext, (p - rank) * sendcount, sendtype, handle->tmpbuf,
+      res = PMPI_Pack ((char *) sendbuf + rank * sendcount * sndext, (p - rank) * sendcount, sendtype, tmpbuf,
                       (p - rank) * datasize, &pos, comm);
       if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
         NBC_Error("MPI Error in PMPI_Pack() (%i)", res);
-        NBC_Return_handle (handle);
+        free(tmpbuf);
         return res;
       }
 
       if (rank != 0) {
         pos = 0;
-        res = PMPI_Pack(sendbuf, rank * sendcount, sendtype, (char *) handle->tmpbuf + datasize * (p - rank),
+        res = PMPI_Pack(sendbuf, rank * sendcount, sendtype, (char *) tmpbuf + datasize * (p - rank),
                        rank * datasize, &pos, comm);
         if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
           NBC_Error("MPI Error in PMPI_Pack() (%i)", res);
-          NBC_Return_handle (handle);
+          free(tmpbuf);
           return res;
         }
       }
@@ -204,12 +196,9 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
     /* not found - generate new schedule */
     schedule = OBJ_NEW(NBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
-      NBC_Return_handle (handle);
+      free(tmpbuf);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-    /* ensure the schedule is released with the handle on error */
-    handle->schedule = schedule;
 
     switch(alg) {
       case NBC_A2A_INPLACE:
@@ -219,7 +208,7 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
         res = a2a_sched_linear(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
         break;
       case NBC_A2A_DISS:
-        res = a2a_sched_diss(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, handle);
+        res = a2a_sched_diss(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, tmpbuf);
         break;
       case NBC_A2A_PAIRWISE:
         res = a2a_sched_pairwise(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
@@ -227,13 +216,15 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
+      OBJ_RELEASE(schedule);
+      free(tmpbuf);
       return res;
     }
 
     res = NBC_Sched_commit(schedule);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      NBC_Return_handle (handle);
+      OBJ_RELEASE(schedule);
+      free(tmpbuf);
       return res;
     }
 
@@ -269,13 +260,12 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
   }
 #endif
 
-  res = NBC_Start (handle, schedule);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
+    OBJ_RELEASE(schedule);
+    free(tmpbuf);
     return res;
   }
-
-  *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
 }
@@ -288,7 +278,6 @@ int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Da
   MPI_Aint sndext, rcvext;
   NBC_Schedule *schedule;
   char *rbuf, *sbuf;
-  NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   rsize = ompi_comm_remote_size (comm);
@@ -337,19 +326,11 @@ int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Da
     return res;
   }
 
-  res = NBC_Init_handle (comm, &handle, libnbc_module);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
   }
-
-  res = NBC_Start (handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return res;
-  }
-
-  *request = (ompi_request_t *) handle;
 
   return OMPI_SUCCESS;
 }
@@ -413,7 +394,7 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 
 static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,
                                  const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
-                                 MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+                                 MPI_Datatype recvtype, MPI_Comm comm, void* tmpbuf) {
   int res, speer, rpeer, datasize, offset, virtp;
   char *rbuf, *rtmpbuf, *stmpbuf;
 
@@ -433,13 +414,13 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
 
   /* allocate temporary buffers */
   if ((p & 1) == 0) {
-    rtmpbuf = (char *) handle->tmpbuf + datasize * p;
-    stmpbuf = (char *) handle->tmpbuf + datasize * (p + p / 2);
+    rtmpbuf = (char *)tmpbuf + datasize * p;
+    stmpbuf = (char *)tmpbuf + datasize * (p + p / 2);
   } else {
     /* we cannot divide p by two, so alloc more to be safe ... */
     virtp = (p / 2 + 1) * 2;
-    rtmpbuf = (char *) handle->tmpbuf + datasize * p;
-    stmpbuf = (char *) handle->tmpbuf + datasize * (p + virtp / 2);
+    rtmpbuf = (char *)tmpbuf + datasize * p;
+    stmpbuf = (char *)tmpbuf + datasize * (p + virtp / 2);
   }
 
   /* phase 2 - communicate */
@@ -451,7 +432,7 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
         /* copy data to sendbuffer (2nd copy) - could be avoided using iovecs */
         /*printf("[%i] round %i: copying element %i to buffer %lu\n", rank, r, i, (unsigned long)(stmpbuf+offset));*/
         res = NBC_Sched_copy((void *)(intptr_t)(i * datasize), true, datasize, MPI_BYTE, stmpbuf + offset -
-                             (intptr_t) handle->tmpbuf, true, datasize, MPI_BYTE, schedule, false);
+                             (intptr_t)tmpbuf, true, datasize, MPI_BYTE, schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
@@ -463,12 +444,12 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
     /* add p because modulo does not work with negative values */
     rpeer = ((rank - r) + p) % p;
 
-    res = NBC_Sched_recv (rtmpbuf - (intptr_t) handle->tmpbuf, true, offset, MPI_BYTE, rpeer, schedule, false);
+    res = NBC_Sched_recv (rtmpbuf - (intptr_t)tmpbuf, true, offset, MPI_BYTE, rpeer, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
 
-    res = NBC_Sched_send (stmpbuf - (intptr_t) handle->tmpbuf, true, offset, MPI_BYTE, speer, schedule, true);
+    res = NBC_Sched_send (stmpbuf - (intptr_t)tmpbuf, true, offset, MPI_BYTE, speer, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
@@ -479,7 +460,7 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
       /* test if bit r is set in rank number i */
       if (i & r) {
         /* copy data to tmpbuffer (3rd copy) - could be avoided using iovecs */
-        res = NBC_Sched_copy (rtmpbuf + offset - (intptr_t) handle->tmpbuf, true, datasize, MPI_BYTE,
+        res = NBC_Sched_copy (rtmpbuf + offset - (intptr_t)tmpbuf, true, datasize, MPI_BYTE,
                               (void *)(intptr_t)(i * datasize), true, datasize, MPI_BYTE, schedule,
                               false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -491,8 +472,7 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
     }
   }
 
-  /* phase 3 - reorder - data is now in wrong order in handle->tmpbuf -
-   * reorder it into recvbuf */
+  /* phase 3 - reorder - data is now in wrong order in tmpbuf - reorder it into recvbuf */
   for (int i = 0 ; i < p; ++i) {
     rbuf = (char *) recvbuf + ((rank - i + p) % p) * recvcount * rcvext;
     res = NBC_Sched_unpack ((void *)(intptr_t) (i * datasize), true, recvcount, recvtype, rbuf, false, schedule,
