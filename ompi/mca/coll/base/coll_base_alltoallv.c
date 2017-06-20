@@ -14,7 +14,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -78,7 +78,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     /* in-place alltoallv slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
         for (j = i+1 ; j < size ; ++j) {
-            if (i == rank && rcounts[j]) {
+            if (i == rank && 0 != rcounts[j] && 0 != rdtype_size) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[j],
                                                            tmp_buffer, (char *) rbuf + rdisps[j] * ext);
@@ -93,7 +93,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
                                           j, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                           comm));
                 if (MPI_SUCCESS != err) { goto error_hndl; }
-            } else if (j == rank && rcounts[i]) {
+            } else if (j == rank && 0 != rcounts[i] && 0 != rdtype_size) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[i],
                                                            tmp_buffer, (char *) rbuf + rdisps[i] * ext);
