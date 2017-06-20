@@ -62,6 +62,7 @@ typedef struct {
     opal_event_base_t **ev_bases;   // event base array for progress threads
     char** ev_threads;              // event progress thread names
     int next_base;                  // counter to load-level thread use
+    bool signal_direct_children_only;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
