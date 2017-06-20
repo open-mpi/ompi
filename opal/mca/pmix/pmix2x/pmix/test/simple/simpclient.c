@@ -73,6 +73,54 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
     *active = false;
 }
 
+/* this is an event notification function that we explicitly request
+ * be called when the PMIX_MODEL_DECLARED notification is issued.
+ * We could catch it in the general event notification function and test
+ * the status to see if the status matched, but it often is simpler
+ * to declare a use-specific notification callback point. In this case,
+ * we are asking to know whenever a model is declared as a means
+ * of testing server self-notification */
+static void model_callback(size_t evhdlr_registration_id,
+                           pmix_status_t status,
+                           const pmix_proc_t *source,
+                           pmix_info_t info[], size_t ninfo,
+                           pmix_info_t results[], size_t nresults,
+                           pmix_event_notification_cbfunc_fn_t cbfunc,
+                           void *cbdata)
+{
+    size_t n;
+
+    /* just let us know it was received */
+    fprintf(stderr, "%s:%d Model event handler called with status %d(%s)\n",
+            myproc.nspace, myproc.rank, status, PMIx_Error_string(status));
+    for (n=0; n < ninfo; n++) {
+        if (PMIX_STRING == info[n].value.type) {
+            fprintf(stderr, "%s:%d\t%s:\t%s\n",
+                    myproc.nspace, myproc.rank,
+                    info[n].key, info[n].value.data.string);
+        }
+    }
+
+    /* we must NOT tell the event handler state machine that we
+     * are the last step as that will prevent it from notifying
+     * anyone else that might be listening for declarations */
+    if (NULL != cbfunc) {
+        cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
+    }
+}
+
+/* event handler registration is done asynchronously */
+static void model_registration_callback(pmix_status_t status,
+                                        size_t evhandler_ref,
+                                        void *cbdata)
+{
+    volatile int *active = (volatile int*)cbdata;
+
+    fprintf(stderr, "simpclient EVENT HANDLER REGISTRATION RETURN STATUS %d, ref=%lu\n",
+               status, (unsigned long)evhandler_ref);
+    *active = false;
+}
+
 int main(int argc, char **argv)
 {
     int rc;
@@ -84,7 +132,9 @@ int main(int argc, char **argv)
     int cnt, j;
     bool doabort = false;
     volatile bool active;
-    pmix_info_t info;
+    pmix_info_t info, *iptr;
+    size_t ninfo;
+    pmix_status_t code;
 
     if (1 < argc) {
         if (0 == strcmp("-abort", argv[1])) {
@@ -92,12 +142,16 @@ int main(int argc, char **argv)
         }
     }
 
-    /* init us */
-    if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
+    /* init us and declare we are a test programming model */
+    PMIX_INFO_CREATE(iptr, 2);
+    PMIX_INFO_LOAD(&iptr[0], PMIX_PROGRAMMING_MODEL, "TEST", PMIX_STRING);
+    PMIX_INFO_LOAD(&iptr[1], PMIX_MODEL_LIBRARY_NAME, "PMIX", PMIX_STRING);
+    if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, iptr, 2))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %s",
                     myproc.nspace, myproc.rank, PMIx_Error_string(rc));
         exit(rc);
     }
+    PMIX_INFO_FREE(iptr, 2);
     pmix_output(0, "Client ns %s rank %d: Running", myproc.nspace, myproc.rank);
 
     /* test something */
@@ -109,6 +163,19 @@ int main(int argc, char **argv)
         exit(rc);
     }
     PMIX_VALUE_RELEASE(val);
+
+    /* register a handler specifically for when models declare */
+    active = true;
+    ninfo = 1;
+    PMIX_INFO_CREATE(iptr, ninfo);
+    PMIX_INFO_LOAD(&iptr[0], PMIX_EVENT_HDLR_NAME, "SIMPCLIENT-MODEL", PMIX_STRING);
+    code = PMIX_MODEL_DECLARED;
+    PMIx_Register_event_handler(&code, 1, iptr, ninfo,
+                                model_callback, model_registration_callback, (void*)&active);
+    while (active) {
+        usleep(10);
+    }
+    PMIX_INFO_FREE(iptr, ninfo);
 
     /* register our errhandler */
     active = true;

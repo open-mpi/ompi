@@ -167,6 +167,8 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     ############################################################################
     pmix_show_title "Compiler and preprocessor tests"
 
+    PMIX_SETUP_CC
+
     #
     # Check for some types
     #

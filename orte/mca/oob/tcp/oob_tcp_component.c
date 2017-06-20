@@ -185,7 +185,7 @@ static int tcp_component_open(void)
 static int tcp_component_close(void)
 {
     /* cleanup listen event list */
-    OBJ_DESTRUCT(&mca_oob_tcp_component.listeners);
+    OPAL_LIST_DESTRUCT(&mca_oob_tcp_component.listeners);
 
     OBJ_DESTRUCT(&mca_oob_tcp_component.peers);
 
@@ -695,27 +695,11 @@ static int component_startup(void)
     return rc;
 }
 
-static void cleanup(int sd, short args, void *cbdata)
-{
-    opal_list_item_t * item;
-    bool *active = (bool*)cbdata;
-
-    ORTE_ACQUIRE_OBJECT(active);
-
-    while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.listeners))) {
-        OBJ_RELEASE(item);
-    }
-    if (NULL != active) {
-        *active = false;
-    }
-}
-
 static void component_shutdown(void)
 {
     mca_oob_tcp_peer_t *peer;
     uint64_t ui64;
     int i = 0;
-    bool active;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN",
@@ -749,24 +733,6 @@ static void component_shutdown(void)
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "no hnp or not active");
     }
-
-    /* because the listeners are in a separate
-     * async thread for apps, we can't just release them here.
-     * Instead, we push it into that event thread and release
-     * them there */
-     if (ORTE_PROC_IS_APP) {
-        opal_event_t ev;
-        active = true;
-        opal_event_set(orte_event_base, &ev, -1,
-                       OPAL_EV_WRITE, cleanup, &active);
-        opal_event_set_priority(&ev, ORTE_ERROR_PRI);
-        ORTE_POST_OBJECT(active);
-        opal_event_active(&ev, OPAL_EV_WRITE, 1);
-        ORTE_WAIT_FOR_COMPLETION(active);
-     } else {
-        /* we can call the destruct directly */
-        cleanup(0, 0, NULL);
-     }
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN done",

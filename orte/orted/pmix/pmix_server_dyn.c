@@ -279,11 +279,20 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
         jdata->num_apps++;
         if (NULL != papp->cmd) {
             app->app = strdup(papp->cmd);
+        } else if (NULL == papp->argv ||
+                   NULL == papp->argv[0]) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            OBJ_RELEASE(jdata);
+            return ORTE_ERR_BAD_PARAM;
         } else {
             app->app = strdup(papp->argv[0]);
         }
-        app->argv = opal_argv_copy(papp->argv);
-        app->env = opal_argv_copy(papp->env);
+        if (NULL != papp->argv) {
+            app->argv = opal_argv_copy(papp->argv);
+        }
+        if (NULL != papp->env) {
+            app->env = opal_argv_copy(papp->env);
+        }
         if (NULL != papp->cwd) {
             app->cwd = strdup(papp->cwd);
         }

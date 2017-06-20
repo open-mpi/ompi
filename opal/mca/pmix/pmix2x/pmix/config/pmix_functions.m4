@@ -95,7 +95,7 @@ EOF
 #
 
 PMIX_CONFIGURE_USER="`whoami`"
-PMIX_CONFIGURE_HOST="`hostname | head -n 1`"
+PMIX_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
 PMIX_CONFIGURE_DATE="`date`"
 
 #
@@ -115,7 +115,7 @@ AC_DEFUN([PMIX_BASIC_SETUP],[
 #
 
 PMIX_CONFIGURE_USER="`whoami`"
-PMIX_CONFIGURE_HOST="`hostname | head -n 1`"
+PMIX_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
 PMIX_CONFIGURE_DATE="`date`"
 
 #

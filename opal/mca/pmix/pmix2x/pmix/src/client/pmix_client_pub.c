@@ -72,21 +72,25 @@ PMIX_EXPORT pmix_status_t PMIx_Publish(const pmix_info_t info[],
     pmix_status_t rc;
     pmix_cb_t *cb;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: publish called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object to let us know when it is done */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
 
     if (PMIX_SUCCESS != (rc = PMIx_Publish_nb(info, ninfo, op_cbfunc, cb))) {
         PMIX_ERROR_LOG(rc);
@@ -95,7 +99,7 @@ PMIX_EXPORT pmix_status_t PMIx_Publish(const pmix_info_t info[],
     }
 
     /* wait for the server to ack our request */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = (pmix_status_t)cb->status;
     PMIX_RELEASE(cb);
 
@@ -110,17 +114,22 @@ PMIX_EXPORT pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo
     pmix_status_t rc;
     pmix_cb_t *cb;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: publish called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
 
     /* if we aren't connected, don't attempt to send */
     if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* check for bozo cases */
     if (NULL == info) {
@@ -163,10 +172,9 @@ PMIX_EXPORT pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo
     cb = PMIX_NEW(pmix_cb_t);
     cb->op_cbfunc = cbfunc;
     cb->cbdata = cbdata;
-    cb->active = true;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -182,8 +190,22 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
     char **keys = NULL;
     size_t i;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: lookup called");
+
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* bozo protection */
     if (NULL == pdata) {
@@ -203,7 +225,6 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
     cb = PMIX_NEW(pmix_cb_t);
     cb->cbdata = (void*)pdata;
     cb->nvals = ndata;
-    cb->active = true;
 
     if (PMIX_SUCCESS != (rc = PMIx_Lookup_nb(keys, info, ninfo,
                                              lookup_cbfunc, cb))) {
@@ -213,7 +234,7 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
     }
 
     /* wait for the server to ack our request */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_WAIT_THREAD(&cb->lock);
 
     /* the data has been stored in the info array by lookup_cbfunc, so
      * nothing more for us to do */
@@ -232,12 +253,22 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup_nb(char **keys,
     pmix_cb_t *cb;
     size_t nkeys, n;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: lookup called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* check for bozo cases */
     if (NULL == keys) {
@@ -296,7 +327,7 @@ PMIX_EXPORT pmix_status_t PMIx_Lookup_nb(char **keys,
     cb->cbdata = cbdata;
 
     /* send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, wait_lookup_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, wait_lookup_cbfunc, (void*)cb))){
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -311,14 +342,27 @@ PMIX_EXPORT pmix_status_t PMIx_Unpublish(char **keys,
     pmix_status_t rc;
     pmix_cb_t *cb;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: unpublish called");
+
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
 
     /* push the message into our event base to send to the server */
     if (PMIX_SUCCESS != (rc = PMIx_Unpublish_nb(keys, info, ninfo, op_cbfunc, cb))) {
@@ -327,7 +371,7 @@ PMIX_EXPORT pmix_status_t PMIx_Unpublish(char **keys,
     }
 
     /* wait for the server to ack our request */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     PMIX_RELEASE(cb);
 
@@ -344,12 +388,22 @@ PMIX_EXPORT pmix_status_t PMIx_Unpublish_nb(char **keys,
     pmix_cb_t *cb;
     size_t i, j;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: unpublish called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create the unpublish cmd */
     msg = PMIX_NEW(pmix_buffer_t);
@@ -399,10 +453,9 @@ PMIX_EXPORT pmix_status_t PMIx_Unpublish_nb(char **keys,
     cb = PMIX_NEW(pmix_cb_t);
     cb->op_cbfunc = cbfunc;
     cb->cbdata = cbdata;
-    cb->active = true;
 
     /* send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -442,7 +495,7 @@ static void op_cbfunc(pmix_status_t status, void *cbdata)
 
     cb->status = status;
     PMIX_POST_OBJECT(cb);
-    cb->active = false;
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }
 
 static void wait_lookup_cbfunc(struct pmix_peer_t *pr,
@@ -539,5 +592,5 @@ static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t nda
         }
     }
     PMIX_POST_OBJECT(cb);
-    cb->active = false;
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }

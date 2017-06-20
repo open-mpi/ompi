@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +70,7 @@ int pmix_ptl_base_select(void)
         PMIX_LIST_FOREACH(active, &pmix_ptl_globals.actives, pmix_ptl_base_active_t) {
             if (newactive->pri > active->pri) {
                 pmix_list_insert_pos(&pmix_ptl_globals.actives,
-                                     (pmix_list_item_t*)active, &newactive->super);
+                                     &active->super, &newactive->super);
                 inserted = true;
                 break;
             }

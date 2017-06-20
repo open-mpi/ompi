@@ -200,6 +200,10 @@ static pmix_status_t server_client_finalized_fn(const pmix_proc_t *p, void* serv
     opalcaddy->cbdata = cbdata;
 
     /* pass it up */
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s FINALIZED",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(proc));
     rc = host_module->client_finalized(&proc, server_object, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
@@ -227,6 +231,11 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
         return pmix2x_convert_opalrc(rc);
     }
     proc.vpid = pmix2x_convert_rank(p->rank);
+
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s CALLED ABORT",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(proc));
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -279,10 +288,12 @@ static void opmdx_response(int status, const char *data, size_t sz, void *cbdata
         /* if we were collecting all data, then check for any pending
          * dmodx requests that we cached and notify them that the
          * data has arrived */
+        OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
         while (NULL != (dmdx = (opal_pmix2x_dmx_trkr_t*)opal_list_remove_first(&mca_pmix_pmix2x_component.dmdx))) {
             dmdx->cbfunc(PMIX_SUCCESS, NULL, 0, dmdx->cbdata, NULL, NULL);
             OBJ_RELEASE(dmdx);
         }
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     } else {
         OBJ_RELEASE(opalcaddy);
     }
@@ -298,6 +309,9 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
     opal_namelist_t *nm;
     opal_value_t *iptr;
     int rc;
+
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s FENCE CALLED", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     if (NULL == host_module || NULL == host_module->fence_nb) {
         return PMIX_ERR_NOT_SUPPORTED;
@@ -359,6 +373,11 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
     }
     proc.vpid = pmix2x_convert_rank(p->rank);
 
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s CALLED DMODX",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(proc));
+
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
     opalcaddy->mdxcbfunc = cbfunc;
@@ -372,10 +391,12 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
      * arrived - this will trigger the pmix server to tell the
      * client that the data is available */
     if (opal_pmix_base_async_modex && opal_pmix_collect_all_data) {
+        OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
         dmdx = OBJ_NEW(opal_pmix2x_dmx_trkr_t);
         dmdx->cbfunc = cbfunc;
         dmdx->cbdata = cbdata;
         opal_list_append(&mca_pmix_pmix2x_component.dmdx, &dmdx->super);
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
         return PMIX_SUCCESS;
     }
 
@@ -420,6 +441,11 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
         return pmix2x_convert_opalrc(rc);
     }
     proc.vpid = pmix2x_convert_rank(p->rank);
+
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s CALLED PUBLISH",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(proc));
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -497,6 +523,11 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
     }
     proc.vpid = pmix2x_convert_rank(p->rank);
 
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s CALLED LOOKUP",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(proc));
+
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
     opalcaddy->lkupcbfunc = cbfunc;
@@ -542,6 +573,11 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
         return pmix2x_convert_opalrc(rc);
     }
     proc.vpid = pmix2x_convert_rank(p->rank);
+
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s CALLED UNPUBLISH",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(proc));
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
@@ -767,6 +803,10 @@ static pmix_status_t server_register_events(pmix_status_t *codes, size_t ncodes,
     opal_value_t *oinfo;
     int rc;
 
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s REGISTER EVENTS",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix2x_opalcaddy_t);
     opalcaddy->opcbfunc = cbfunc;
@@ -795,6 +835,9 @@ static pmix_status_t server_register_events(pmix_status_t *codes, size_t ncodes,
 static pmix_status_t server_deregister_events(pmix_status_t *codes, size_t ncodes,
                                               pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s DEREGISTER EVENTS", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
     return PMIX_ERR_NOT_SUPPORTED;
 }
 
@@ -828,6 +871,11 @@ static pmix_status_t server_notify_event(pmix_status_t code,
         return pmix2x_convert_opalrc(rc);
     }
     src.vpid = pmix2x_convert_rank(source->rank);
+
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s CALLED NOTIFY",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(src));
 
     /* ignore the range for now */
 
@@ -924,6 +972,11 @@ static pmix_status_t server_query(pmix_proc_t *proct,
         return pmix2x_convert_opalrc(rc);
     }
     requestor.vpid = pmix2x_convert_rank(proct->rank);
+
+    opal_output_verbose(3, opal_pmix_base_framework.framework_output,
+                        "%s CLIENT %s CALLED QUERY",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(requestor));
 
     /* convert the queries */
     for (n=0; n < nqueries; n++) {

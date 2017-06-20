@@ -21,6 +21,7 @@
 #include <pmix_server.h>
 #include <pmix_rename.h>
 
+#include "src/threads/threads.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -101,12 +102,22 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
     pmix_status_t rc;
     pmix_query_caddy_t *cb;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: job control called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!PMIX_PROC_IS_SERVER && !pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* if we are the server, then we just issue the request and
      * return the response */
@@ -125,12 +136,6 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
     }
 
     /* if we are a client, then relay this request to the server */
-
-    /* if we aren't connected, don't attempt to send */
-    if (!pmix_globals.connected) {
-        return PMIX_ERR_UNREACH;
-    }
-
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
@@ -178,7 +183,7 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, query_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, query_cbfunc, (void*)cb))){
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -195,12 +200,22 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
     pmix_status_t rc;
     pmix_query_caddy_t *cb;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: monitor called");
 
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!PMIX_PROC_IS_SERVER && !pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* if we are the server, then we just issue the request and
      * return the response */
@@ -217,12 +232,6 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
     }
 
     /* if we are a client, then relay this request to the server */
-
-    /* if we aren't connected, don't attempt to send */
-    if (!pmix_globals.connected) {
-        return PMIX_ERR_UNREACH;
-    }
-
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
@@ -267,7 +276,7 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, query_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, query_cbfunc, (void*)cb))){
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }

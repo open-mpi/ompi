@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +19,8 @@
 
 #ifndef PMIX_PREFETCH_H
 #define PMIX_PREFETCH_H
+
+#include <src/include/pmix_config.h>
 
 #if PMIX_C_HAVE_BUILTIN_EXPECT
 #define PMIX_LIKELY(expression) __builtin_expect(!!(expression), 1)

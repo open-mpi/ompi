@@ -87,22 +87,25 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
     pmix_cb_t *cb;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     if (PMIX_SUCCESS != (rc = PMIx_Get_nb(proc, key, info, ninfo, _value_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         return rc;
     }
 
     /* wait for the data to return */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     *val = cb->value;
     PMIX_RELEASE(cb);
@@ -121,9 +124,13 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
     int rank;
     char *nm;
 
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
     if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     /* if the proc is NULL, then the caller is assuming
      * that the key is universally unique within the caller's
@@ -169,7 +176,6 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
 
     /* thread-shift so we can check global objects */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->active = true;
     (void)strncpy(cb->nspace, nm, PMIX_MAX_NSLEN);
     cb->rank = rank;
     cb->key = (char*)key;
@@ -195,12 +201,12 @@ static void _value_cbfunc(pmix_status_t status, pmix_value_t *kv, void *cbdata)
         }
     }
     PMIX_POST_OBJECT(cb);
-    cb->active = false;
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }
 
 static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
-                               const pmix_info_t info[], size_t ninfo,
-                               pmix_cmd_t cmd)
+                                const pmix_info_t info[], size_t ninfo,
+                                pmix_cmd_t cmd)
 {
     pmix_buffer_t *msg;
     pmix_status_t rc;
@@ -620,8 +626,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         rc = pmix_dstore_fetch(cb->nspace, cb->rank, cb->key, &val);
 #endif
         if( PMIX_SUCCESS != rc && !my_nspace ){
-            /* we are asking about the job-level info from other
-             * namespace. It seems tha we don't have it - go and
+            /* we are asking about the job-level info from another
+             * namespace. It seems that we don't have it - go and
              * ask server
              */
             goto request;
@@ -687,12 +693,12 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         goto respond;
     }
 
-request:
+  request:
     /* if we got here, then we don't have the data for this proc. If we
      * are a server, or we are a client and not connected, then there is
      * nothing more we can do */
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type ||
-        (PMIX_PROC_SERVER != pmix_globals.proc_type && !pmix_globals.connected)) {
+    if (PMIX_PROC_IS_SERVER ||
+        (!PMIX_PROC_IS_SERVER && !pmix_globals.connected)) {
         rc = PMIX_ERR_NOT_FOUND;
         goto respond;
     }
@@ -700,13 +706,14 @@ request:
     /* we also have to check the user's directives to see if they do not want
      * us to attempt to retrieve it from the server */
     for (n=0; n < cb->ninfo; n++) {
-        if (0 == strcmp(cb->info[n].key, PMIX_OPTIONAL) &&
+        if ((0 == strcmp(cb->info[n].key, PMIX_OPTIONAL) || (0 == strcmp(cb->info[n].key, PMIX_IMMEDIATE))) &&
             (PMIX_UNDEF == cb->info[n].value.type || cb->info[n].value.data.flag)) {
             /* they don't want us to try and retrieve it */
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "PMIx_Get key=%s for rank = %d, namespace = %s was not found - request was optional",
                                 cb->key, cb->rank, cb->nspace);
             rc = PMIX_ERR_NOT_FOUND;
+            val = NULL;
             goto respond;
         }
     }
@@ -740,7 +747,7 @@ request:
     /* track the callback object */
     pmix_list_append(&pmix_client_globals.pending_requests, &cb->super);
     /* send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, _getnb_cbfunc, (void*)cb))){
+    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, _getnb_cbfunc, (void*)cb))){
         pmix_list_remove_item(&pmix_client_globals.pending_requests, &cb->super);
         rc = PMIX_ERROR;
         goto respond;
@@ -775,5 +782,4 @@ request:
     }
     PMIX_RELEASE(cb);
     return;
-
 }

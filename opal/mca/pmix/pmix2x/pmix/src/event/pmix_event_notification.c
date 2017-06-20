@@ -18,6 +18,7 @@
 #include <pmix_server.h>
 #include <pmix_rename.h>
 
+#include "src/threads/threads.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
 
@@ -44,7 +45,22 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
 {
     int rc;
 
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!PMIX_PROC_IS_SERVER && !pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+
+
+    if (PMIX_PROC_IS_SERVER) {
         rc = pmix_server_notify_client_of_event(status, source, range,
                                                 info, ninfo,
                                                 cbfunc, cbdata);
@@ -102,10 +118,6 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                         "client: notifying server %s:%d of status %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         PMIx_Error_string(status));
-
-    if (!pmix_globals.connected) {
-        return PMIX_ERR_UNREACH;
-    }
 
     if (PMIX_RANGE_PROC_LOCAL != range) {
         /* create the msg object */
@@ -175,12 +187,11 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         cd->source.rank = source->rank;
     }
     cd->range = range;
-
-    /* check for directives */
-    if (NULL != info) {
+    if (0 < chain->ninfo) {
         cd->ninfo = chain->ninfo;
         PMIX_INFO_CREATE(cd->info, cd->ninfo);
-        for (n=0; n < chain->ninfo; n++) {
+       /* need to copy the info */
+        for (n=0; n < cd->ninfo; n++) {
             PMIX_INFO_XFER(&cd->info[n], &chain->info[n]);
             if (0 == strncmp(cd->info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
                 cd->nondefault = true;
@@ -205,6 +216,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
             }
         }
     }
+
     /* add to our cache */
     rbout = pmix_ring_buffer_push(&pmix_globals.notifications, cd);
     /* if an older event was bumped, release it */
@@ -225,7 +237,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "client: notifying server %s:%d - sending",
                             pmix_globals.myid.nspace, pmix_globals.myid.rank);
-        rc = pmix_ptl.send_recv(&pmix_client_globals.myserver, msg, notify_event_cbfunc, cb);
+        rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, notify_event_cbfunc, cb);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(cb);
@@ -288,6 +300,7 @@ static void progress_local_event_hdlr(pmix_status_t status,
             ++cnt;
         }
     }
+
     /* save this handler's returned status */
     if (NULL != chain->evhdlr->name) {
         (void)strncpy(newinfo[cnt].key, chain->evhdlr->name, PMIX_MAX_KEYLEN);

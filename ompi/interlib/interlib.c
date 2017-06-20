@@ -155,10 +155,9 @@ int ompi_interlib_declare(int threadlevel, char *version)
     }
     opal_list_append(&info, &kv->super);
     /* call pmix to initialize these values */
-    if (OPAL_SUCCESS != (ret = opal_pmix.init(&info))) {
-        OPAL_LIST_DESTRUCT(&info);
-        return ret;
-    }
+    ret = opal_pmix.init(&info);
     OPAL_LIST_DESTRUCT(&info);
-    return OMPI_SUCCESS;
+    /* account for our refcount on pmix_init */
+    opal_pmix.finalize();
+    return ret;
 }
