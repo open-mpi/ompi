@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2016 INRIA.  All rights reserved.
- * Copyright (c) 2012-2017 Bordeaux Poytechnic Institute
+ * Copyright (c) 2012-2017 Bordeaux Polytechnic Institute
  * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
