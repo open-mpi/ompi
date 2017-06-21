@@ -130,12 +130,10 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     /* the shared memory segment is identified opening a file
     ** and then mapping it to memory
     ** For sharedfp we also want to put the file backed shared memory into the tmp directory
-    ** TODO: properly name the file so that different jobs can run on the same system w/o
-    **      overwriting each other, e.g.  orte_process_info.proc_session_dir
     */
     /*sprintf(sm_filename,"%s%s",filename,".sm");*/
     filename_basename = basename((void *)filename);
-    sm_filename = (char*) malloc( sizeof(char) * (strlen(filename_basename)+64) );
+    sm_filename = (char*) malloc( sizeof(char) * (strlen(filename_basename)+strlen(ompi_process_info.job_session_dir)+64) );
     if (NULL == sm_filename) {
         free(sm_data);
         free(sh);
@@ -151,7 +149,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
                                comm->c_coll->coll_bcast_module );
 
-    sprintf(sm_filename,"/tmp/OMPIO_%s_%d_%s",filename_basename, masterjobid, ".sm");
+    sprintf(sm_filename,"%s/OMPIO_%s_%d_%s",ompi_process_info.job_session_dir, filename_basename, masterjobid, ".sm");
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
