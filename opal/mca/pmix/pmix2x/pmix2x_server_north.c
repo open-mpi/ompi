@@ -980,7 +980,7 @@ static pmix_status_t server_query(pmix_proc_t *proct,
 
     /* convert the queries */
     for (n=0; n < nqueries; n++) {
-            q = OBJ_NEW(opal_pmix_query_t);
+        q = OBJ_NEW(opal_pmix_query_t);
         /* we "borrow" the info field of the caddy as we and the
          * server function both agree on what will be there */
         opal_list_append(&opalcaddy->info, &q->super);
@@ -1027,7 +1027,9 @@ static void toolcbfunc(int status,
         job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
         (void)strncpy(job->nspace, p.nspace, PMIX_MAX_NSLEN);
         job->jobid = proc.jobid;
+        OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
         opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     }
 
     /* pass it down */
