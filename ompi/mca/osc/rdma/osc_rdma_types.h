@@ -205,6 +205,19 @@ typedef struct ompi_osc_rdma_aggregation_t ompi_osc_rdma_aggregation_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_aggregation_t);
 
+struct ompi_osc_rdma_pending_op_t {
+    opal_list_item_t super;
+    struct ompi_osc_rdma_frag_t *op_frag;
+    void *op_buffer;
+    void *op_result;
+    size_t op_size;
+    volatile bool op_complete;
+};
+
+typedef struct ompi_osc_rdma_pending_op_t ompi_osc_rdma_pending_op_t;
+
+OBJ_CLASS_DECLARATION(ompi_osc_rdma_pending_op_t);
+
 #define OSC_RDMA_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_osc_base_framework.framework_output, __VA_ARGS__))
 
 #endif /* OMPI_OSC_RDMA_TYPES_H */
