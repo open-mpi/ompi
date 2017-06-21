@@ -50,6 +50,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/threads.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_locks.h"
@@ -64,33 +65,17 @@
 
 static int init(void);
 static int finalize(void);
-
-static int predicted_fault(opal_list_t *proc_list,
-                           opal_list_t *node_list,
-                           opal_list_t *suggested_map);
-
-static int suggest_map_targets(orte_proc_t *proc,
-                               orte_node_t *oldnode,
-                               opal_list_t *node_list);
-
-static int ft_event(int state);
-
+static void hnp_abort(int error_code, char *fmt, ...);
 
 /******************
  * default_hnp module
  ******************/
 orte_errmgr_base_module_t orte_errmgr_default_hnp_module = {
-    init,
-    finalize,
-    orte_errmgr_base_log,
-    orte_errmgr_base_abort,
-    orte_errmgr_base_abort_peers,
-    predicted_fault,
-    suggest_map_targets,
-    ft_event,
-    orte_errmgr_base_register_migration_warning,
-    NULL,
-    orte_errmgr_base_execute_error_callbacks
+    .init = init,
+    .finalize = finalize,
+    .logfn = orte_errmgr_base_log,
+    .abort = hnp_abort,
+    .abort_peers = orte_errmgr_base_abort_peers
 };
 
 
@@ -125,6 +110,81 @@ static int finalize(void)
     return ORTE_SUCCESS;
 }
 
+static void wakeup(int sd, short args, void *cbdata)
+{
+    /* nothing more we can do */
+    ORTE_ACQUIRE_OBJECT(cbdata);
+    orte_quit(0, 0, NULL);
+}
+
+/* this function only gets called when FORCED_TERMINATE
+ * has been invoked, which means that there is some
+ * internal failure (e.g., to pack/unpack a correct value).
+ * We could just exit, but that doesn't result in any
+ * meaningful error message to the user. Likewise, just
+ * printing something to stdout/stderr won't necessarily
+ * get back to the user. Instead, we will send an error
+ * report to mpirun and give it a chance to order our
+ * termination. In order to ensure we _do_ terminate,
+ * we set a timer - if it fires before we receive the
+ * termination command, then we will exit on our own. This
+ * protects us in the case that the failure is in the
+ * messaging system itself */
+static void hnp_abort(int error_code, char *fmt, ...)
+{
+    va_list arglist;
+    char *outmsg = NULL;
+    orte_timer_t *timer;
+
+    /* only do this once */
+    if (orte_abnormal_term_ordered) {
+        return;
+    }
+
+    /* ensure we exit with non-zero status */
+    ORTE_UPDATE_EXIT_STATUS(error_code);
+
+    /* set the aborting flag */
+    orte_abnormal_term_ordered = true;
+
+    /* If there was a message, construct it */
+    va_start(arglist, fmt);
+    if (NULL != fmt) {
+        vasprintf(&outmsg, fmt, arglist);
+    }
+    va_end(arglist);
+
+    /* use the show-help system to get the message out */
+    orte_show_help("help-errmgr-base.txt", "simple-message", true, outmsg);
+
+    /* this could have happened very early, so see if it happened
+     * before we started anything - if so, we can just finalize */
+    if (orte_never_launched) {
+        orte_quit(0, 0, NULL);
+        return;
+    }
+
+    /* tell the daemons to terminate */
+    if (ORTE_SUCCESS != orte_plm.terminate_orteds()) {
+        orte_quit(0, 0, NULL);
+        return;
+    }
+
+    /* set a timer for exiting - this also gives the message a chance
+     * to get out! */
+    if (NULL == (timer = OBJ_NEW(orte_timer_t))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return;
+    }
+    timer->tv.tv_sec = 5;
+    timer->tv.tv_usec = 0;
+    opal_event_evtimer_set(orte_event_base, timer->ev, wakeup, NULL);
+    opal_event_set_priority(timer->ev, ORTE_ERROR_PRI);
+    ORTE_POST_OBJECT(timer);
+    opal_event_evtimer_add(timer->ev, &timer->tv);
+}
+
+
 static void job_errors(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -135,6 +195,8 @@ static void job_errors(int fd, short args, void *cbdata)
     opal_buffer_t *answer;
     int32_t rc, ret;
     int room, *rmptr;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     /*
      * if orte is trying to shutdown, just let it
@@ -297,6 +359,8 @@ static void proc_errors(int fd, short args, void *cbdata)
     int32_t i32, *i32ptr;
     char *rtmod;
 
+    ORTE_ACQUIRE_OBJECT(caddy);
+
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_hnp: for proc %s state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -431,7 +495,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         }
     }
 
- keep_going:
+  keep_going:
     /* if this is a continuously operating job, then there is nothing more
      * to do - we let the job continue to run */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL)) {
@@ -730,25 +794,6 @@ static void proc_errors(int fd, short args, void *cbdata)
 
  cleanup:
     OBJ_RELEASE(caddy);
-}
-
-static int predicted_fault(opal_list_t *proc_list,
-                           opal_list_t *node_list,
-                           opal_list_t *suggested_map)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int suggest_map_targets(orte_proc_t *proc,
-                               orte_node_t *oldnode,
-                               opal_list_t *node_list)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int ft_event(int state)
-{
-    return ORTE_SUCCESS;
 }
 
 /*****************

@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
@@ -223,13 +223,21 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     OBJ_CONSTRUCT(&transports, opal_list_t);
     orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
                        ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
-    orte_mgmt_conduit = orte_rml.open_conduit(&transports);
+    if (ORTE_RML_CONDUIT_INVALID == (orte_mgmt_conduit = orte_rml.open_conduit(&transports))) {
+        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
+        error = "orte_rml_open_mgmt_conduit";
+        goto error;
+    }
     OPAL_LIST_DESTRUCT(&transports);
 
     OBJ_CONSTRUCT(&transports, opal_list_t);
     orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
                        ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
-    orte_coll_conduit = orte_rml.open_conduit(&transports);
+    if (ORTE_RML_CONDUIT_INVALID == (orte_coll_conduit = orte_rml.open_conduit(&transports))) {
+        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
+        error = "orte_rml_open_coll_conduit";
+        goto error;
+    }
     OPAL_LIST_DESTRUCT(&transports);
 
     /*

@@ -152,7 +152,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     opal_snprintf_jobid = orte_util_snprintf_jobid;
     opal_convert_string_to_jobid = _convert_string_to_jobid;
 
-
     /* initialize the opal layer */
     if (ORTE_SUCCESS != (ret = opal_init(pargc, pargv))) {
         error = "opal_init";

@@ -45,6 +45,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/comm/comm.h"
 #include "orte/util/error_strings.h"
+#include "orte/util/threads.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_quit.h"
 
@@ -114,6 +115,8 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     char *hosts=NULL;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate",

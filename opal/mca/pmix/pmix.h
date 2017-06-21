@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -146,7 +146,7 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             OPAL_NAME_PRINT(*(p)), (s)));                                \
         OBJ_CONSTRUCT(&(_ilist), opal_list_t);                                           \
         _info = OBJ_NEW(opal_value_t);                                                   \
-        _info->key = strdup(OPAL_PMIX_OPTIONAL);                                         \
+        _info->key = strdup(OPAL_PMIX_IMMEDIATE);                                        \
         _info->type = OPAL_BOOL;                                                         \
         _info->data.flag = true;                                                         \
         opal_list_append(&(_ilist), &(_info)->super);                                    \
@@ -284,7 +284,7 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
  * If the information is not found, or the server connection fails, then
  * an appropriate error constant will be returned.
  */
-typedef int (*opal_pmix_base_module_init_fn_t)(void);
+typedef int (*opal_pmix_base_module_init_fn_t)(opal_list_t *ilist);
 
 /* Finalize the PMIx client, closing the connection to the local server.
  * An error code will be returned if, for some reason, the connection

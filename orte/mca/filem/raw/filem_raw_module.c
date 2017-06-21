@@ -2,7 +2,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -49,6 +49,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -61,14 +62,6 @@
 
 static int raw_init(void);
 static int raw_finalize(void);
-static int raw_put(orte_filem_base_request_t *req);
-static int raw_put_nb(orte_filem_base_request_t *req);
-static int raw_get(orte_filem_base_request_t *req);
-static int raw_get_nb(orte_filem_base_request_t *req);
-static int raw_rm(orte_filem_base_request_t *req);
-static int raw_rm_nb(orte_filem_base_request_t *req);
-static int raw_wait(orte_filem_base_request_t *req);
-static int raw_wait_all(opal_list_t *reqs);
 static int raw_preposition_files(orte_job_t *jdata,
                                  orte_filem_completion_cbfunc_t cbfunc,
                                  void *cbdata);
@@ -76,20 +69,20 @@ static int raw_link_local_files(orte_job_t *jdata,
                                 orte_app_context_t *app);
 
 orte_filem_base_module_t mca_filem_raw_module = {
-    raw_init,
-    raw_finalize,
+    .filem_init = raw_init,
+    .filem_finalize = raw_finalize,
     /* we don't use any of the following */
-    raw_put,
-    raw_put_nb,
-    raw_get,
-    raw_get_nb,
-    raw_rm,
-    raw_rm_nb,
-    raw_wait,
-    raw_wait_all,
+    .put = orte_filem_base_none_put,
+    .put_nb = orte_filem_base_none_put_nb,
+    .get = orte_filem_base_none_get,
+    .get_nb = orte_filem_base_none_get_nb,
+    .rm = orte_filem_base_none_rm,
+    .rm_nb = orte_filem_base_none_rm_nb,
+    .wait = orte_filem_base_none_wait,
+    .wait_all = orte_filem_base_none_wait_all,
     /* now the APIs we *do* use */
-    raw_preposition_files,
-    raw_link_local_files
+    .preposition_files = raw_preposition_files,
+    .link_local_files = raw_link_local_files
 };
 
 static opal_list_t outbound_files;
@@ -161,46 +154,6 @@ static int raw_finalize(void)
         OBJ_DESTRUCT(&positioned_files);
     }
 
-    return ORTE_SUCCESS;
-}
-
-static int raw_put(orte_filem_base_request_t *req)
-{
-    return ORTE_SUCCESS;
-}
-
-static int raw_put_nb(orte_filem_base_request_t *req)
-{
-    return ORTE_SUCCESS;
-}
-
-static int raw_get(orte_filem_base_request_t *req)
-{
-    return ORTE_SUCCESS;
-}
-
-static int raw_get_nb(orte_filem_base_request_t *req)
-{
-    return ORTE_SUCCESS;
-}
-
-static int raw_rm(orte_filem_base_request_t *req)
-{
-    return ORTE_SUCCESS;
-}
-
-static int raw_rm_nb(orte_filem_base_request_t *req)
-{
-    return ORTE_SUCCESS;
-}
-
-static int raw_wait(orte_filem_base_request_t *req)
-{
-    return ORTE_SUCCESS;
-}
-
-static int raw_wait_all(opal_list_t *reqs)
-{
     return ORTE_SUCCESS;
 }
 
@@ -586,8 +539,9 @@ static int raw_preposition_files(orte_job_t *jdata,
         opal_list_append(&outbound->xfers, &xfer->super);
         opal_event_set(orte_event_base, &xfer->ev, fd, OPAL_EV_READ, send_chunk, xfer);
         opal_event_set_priority(&xfer->ev, ORTE_MSG_PRI);
-        opal_event_add(&xfer->ev, 0);
         xfer->pending = true;
+        ORTE_POST_OBJECT(xfer);
+        opal_event_add(&xfer->ev, 0);
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&fsets);
@@ -804,6 +758,8 @@ static void send_chunk(int fd, short argc, void *cbdata)
     opal_buffer_t chunk;
     orte_grpcomm_signature_t *sig;
 
+    ORTE_ACQUIRE_OBJECT(rev);
+
     /* flag that event has fired */
     rev->pending = false;
 
@@ -815,6 +771,7 @@ static void send_chunk(int fd, short argc, void *cbdata)
 
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
+            ORTE_POST_OBJECT(rev);
             opal_event_add(&rev->ev, 0);
             return;
         }
@@ -891,8 +848,9 @@ static void send_chunk(int fd, short argc, void *cbdata)
         return;
     } else {
         /* restart the read event */
-        opal_event_add(&rev->ev, 0);
         rev->pending = true;
+        ORTE_POST_OBJECT(rev);
+        opal_event_add(&rev->ev, 0);
     }
 }
 
@@ -1116,7 +1074,8 @@ static void recv_files(int status, orte_process_name_t* sender,
             }
         }
         free(tmp);
-        opal_event_set(orte_event_base, &incoming->ev, incoming->fd, OPAL_EV_WRITE, write_handler, incoming);
+        opal_event_set(orte_event_base, &incoming->ev, incoming->fd,
+                       OPAL_EV_WRITE, write_handler, incoming);
         opal_event_set_priority(&incoming->ev, ORTE_MSG_PRI);
     }
     /* create an output object for this data */
@@ -1135,8 +1094,9 @@ static void recv_files(int status, orte_process_name_t* sender,
 
     if (!incoming->pending) {
         /* add the event */
-        opal_event_add(&incoming->ev, 0);
         incoming->pending = true;
+        ORTE_POST_OBJECT(incoming);
+        opal_event_add(&incoming->ev, 0);
     }
 
     /* cleanup */
@@ -1153,6 +1113,8 @@ static void write_handler(int fd, short event, void *cbdata)
     char *dirname, *cmd;
     char homedir[MAXPATHLEN];
     int rc;
+
+    ORTE_ACQUIRE_OBJECT(sink);
 
     OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s write:handler writing data to %d",
@@ -1226,8 +1188,9 @@ static void write_handler(int fd, short event, void *cbdata)
                 /* leave the write event running so it will call us again
                  * when the fd is ready.
                  */
-                opal_event_add(&sink->ev, 0);
                 sink->pending = true;
+                ORTE_POST_OBJECT(sink);
+                opal_event_add(&sink->ev, 0);
                 return;
             }
             /* otherwise, something bad happened so all we can do is abort
@@ -1250,8 +1213,9 @@ static void write_handler(int fd, short event, void *cbdata)
             /* leave the write event running so it will call us again
              * when the fd is ready
              */
-            opal_event_add(&sink->ev, 0);
             sink->pending = true;
+            ORTE_POST_OBJECT(sink);
+            opal_event_add(&sink->ev, 0);
             return;
         }
         OBJ_RELEASE(output);

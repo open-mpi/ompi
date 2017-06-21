@@ -44,6 +44,7 @@
 #include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -144,6 +145,8 @@ static void allgather_stub(int fd, short args, void *cbdata)
     orte_grpcomm_coll_t *coll;
     uint32_t *seq_number;
 
+    ORTE_ACQUIRE_OBJECT(cd);
+
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:allgather stub",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -212,6 +215,7 @@ int orte_grpcomm_API_allgather(orte_grpcomm_signature_t *sig,
     cd->cbdata = cbdata;
     opal_event_set(orte_event_base, &cd->ev, -1, OPAL_EV_WRITE, allgather_stub, cd);
     opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);
+    ORTE_POST_OBJECT(cd);
     opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);
     return ORTE_SUCCESS;
 }

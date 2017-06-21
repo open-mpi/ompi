@@ -19,8 +19,9 @@
 #if !defined(PMIX_THREADS_WAIT_SYNC_H)
 #define PMIX_THREADS_WAIT_SYNC_H
 
+#include "src/include/prefetch.h"
 #include "src/atomics/sys/atomic.h"
-#include "src/threads/condition.h"
+#include "src/threads/threads.h"
 #include "src/util/error.h"
 #include <pthread.h>
 

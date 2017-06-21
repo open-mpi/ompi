@@ -284,6 +284,8 @@ static void* listen_thread(void *obj)
                 pmix_output_verbose(8, pmix_globals.debug_output,
                                     "listen_thread: new connection: (%d, %d)",
                                     pending_connection->sd, pmix_socket_errno);
+                /* post the object */
+                PMIX_POST_OBJECT(pending_connection);
                 /* activate the event */
                 pmix_event_active(&pending_connection->ev, EV_WRITE, 1);
                 accepted_connections++;

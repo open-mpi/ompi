@@ -24,6 +24,65 @@ current release as well as the "stable" bug fix release branch.
 Master (not on release branches yet)
 ------------------------------------
 
+
+2.0.0
+------
+**** NOTE: This release implements the complete PMIX v2.0 Standard
+**** and therefore includes a number of new APIs and features. These
+**** can be tracked by their RFC's in the RFC repository at:
+**** https://github.com/pmix/RFCs. A formal standards document will
+**** be included in a later v2.x release. Some of the changes are
+**** identified below.
+- Added the Modular Component Architecture (MCA) plugin manager and
+  converted a number of operations to plugins, thereby allowing easy
+  customization and extension (including proprietary offerings)
+- Added support for TCP sockets instead of Unix domain sockets for
+  client-server communications
+- Added support for on-the-fly Allocation requests, including requests
+  for additional resources, extension of time for currently allocated
+  resources, and return of identified allocated resources to the scheduler
+  (RFC 0005 - https://github.com/pmix/RFCs/blob/master/RFC0005.md)
+- Tightened rules on the processing of PMIx_Get requests, including
+  reservation of the "pmix" prefix for attribute keys and specifying
+  behaviors associated with the PMIX_RANK_WILDCARD value
+  (RFC 0009 - https://github.com/pmix/RFCs/blob/master/RFC0009.md)
+- Extended support for tool interactions with a PMIx server aimed at
+  meeting the needs of debuggers and other tools. Includes support
+  for rendezvousing with a system-level PMIx server for interacting
+  with the system management stack (SMS) outside of an allocated
+  session, and adds two new APIs:
+  - PMIx_Query: request general information such as the process
+    table for a specified job, and available SMS capabilities
+  - PMIx_Log: log messages (e.g., application progress) to a
+    system-hosted persistent store
+  (RFC 0010 - https://github.com/pmix/RFCs/blob/master/RFC0010.md)
+- Added support for fabric/network interactions associated with
+  "instant on" application startup
+  (RFC 0012 - https://github.com/pmix/RFCs/blob/master/RFC0012.md)
+- Added an attribute to support getting the time remaining in an
+  allocation via the PMIx_Query interface
+  (RFC 0013 - https://github.com/pmix/RFCs/blob/master/RFC0013.md)
+- Added interfaces to support job control and monitoring requests,
+  including heartbeat and file monitors to detect stalled applications.
+  Job control interface supports standard signal-related operations
+  (pause, kill, resume, etc.) as well as checkpoint/restart requests.
+  The interface can also be used by an application to indicate it is
+  willing to be pre-empted, with the host RM providing an event
+  notification when the preemption is desired.
+  (RFC 0015 - https://github.com/pmix/RFCs/blob/master/RFC0015.md)
+- Extended the event notification system to support notifications
+  across threads in the same process, and the ability to direct
+  ordering of notifications when registering event handlers.
+  (RFC 0018 - https://github.com/pmix/RFCs/blob/master/RFC0018.md)
+- Expose the buffer manipulation functions via a new set of APIs
+  to support heterogeneous data transfers within the host RM
+  environment
+  (RFC 0020 - https://github.com/pmix/RFCs/blob/master/RFC0020.md)
+- Fix a number of race condition issues that arose at scale
+- Enable PMIx servers to generate notifications to the host RM
+  and to themselves
+
+
 1.2.2 -- 21 March 2017
 ----------------------
 - Compiler fix for Sun/Oracle CC (PR #322)

@@ -61,7 +61,7 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                        int32_t *num_vals, opal_data_type_t type)
 {
     int rc;
-    int32_t i, k, n, count;
+    int32_t i, k, n, count, bookmark;
     orte_job_t **jobs;
     orte_app_idx_t j;
     orte_attribute_t *kv;
@@ -237,7 +237,17 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             }
         }
 
-        /* no bookmark of oversubscribe_override flags to unpack */
+        /* unpack the bookmark */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                                            &bookmark, &n, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 <= bookmark) {
+            /* retrieve it */
+            jobs[i]->bookmark = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, bookmark);
+        }
 
         /* unpack the job state */
         n = 1;

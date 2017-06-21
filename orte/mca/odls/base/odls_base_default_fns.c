@@ -81,6 +81,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/orted/orted.h"
@@ -278,6 +279,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     int rc;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL, *daemons;
+    orte_node_t *node;
     int32_t n, k;
     opal_buffer_t *bptr;
     orte_proc_t *pptr, *dmn;
@@ -435,7 +437,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             /* not ready for use yet */
             continue;
         }
-        if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        if (!ORTE_PROC_IS_HNP &&
+            orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
             /* the parser will have already made the connection, but the fully described
              * case won't have done it, so connect the proc to its node here */
             opal_output_verbose(5, orte_odls_base_framework.framework_output,
@@ -456,6 +459,17 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             }
             OBJ_RETAIN(dmn->node);
             pptr->node = dmn->node;
+            /* add the node to the job map, if needed */
+            if (!ORTE_FLAG_TEST(pptr->node, ORTE_NODE_FLAG_MAPPED)) {
+                OBJ_RETAIN(pptr->node);
+                opal_pointer_array_add(jdata->map->nodes, pptr->node);
+                jdata->map->num_nodes++;
+                ORTE_FLAG_SET(pptr->node, ORTE_NODE_FLAG_MAPPED);
+            }
+            /* add this proc to that node */
+            OBJ_RETAIN(pptr);
+            opal_pointer_array_add(pptr->node->procs, pptr);
+            pptr->node->num_procs++;
         }
         /* see if it belongs to us */
         if (pptr->parent == ORTE_PROC_MY_NAME->vpid) {
@@ -482,6 +496,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             /* mark that this app_context is being used on this node */
             app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pptr->app_idx);
             ORTE_FLAG_SET(app, ORTE_APP_FLAG_USED_ON_NODE);
+        }
+    }
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        /* reset the mapped flags */
+        for (n=0; n < jdata->map->nodes->size; n++) {
+            if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, n))) {
+                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
+            }
         }
     }
 
@@ -582,6 +604,8 @@ static void timer_cb(int fd, short event, void *cbdata)
     orte_timer_t *tm = (orte_timer_t*)cbdata;
     orte_odls_launch_local_t *ll = (orte_odls_launch_local_t*)tm->payload;
 
+    ORTE_ACQUIRE_OBJECT(tm);
+
     /* increment the number of retries */
     ll->retries++;
 
@@ -628,6 +652,8 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
     char **argvptr;
     char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char *full_search;
+
+    ORTE_ACQUIRE_OBJECT(cd);
 
     /* thread-protect common values */
     cd->env = opal_argv_copy(app->env);
@@ -819,6 +845,8 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_odls_spawn_caddy_t *cd;
     opal_event_base_t *evb;
     char *effective_dir = NULL;
+
+    ORTE_ACQUIRE_OBJECT(caddy);
 
     opal_output_verbose(5, orte_odls_base_framework.framework_output,
                         "%s local:launch",

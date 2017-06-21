@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
@@ -30,10 +30,8 @@
 
 #define PMIXMB()  __asm__ __volatile__ ("sync" : : : "memory")
 #define PMIXRMB() __asm__ __volatile__ ("lwsync" : : : "memory")
-#define PMIXWMB() __asm__ __volatile__ ("eieio" : : : "memory")
+#define PMIXWMB() __asm__ __volatile__ ("lwsync" : : : "memory")
 #define PMIXISYNC() __asm__ __volatile__ ("isync" : : : "memory")
-#define PMIXSMP_SYNC  "sync \n\t"
-#define PMIXSMP_ISYNC "\n\tisync"
 
 
 /**********************************************************************

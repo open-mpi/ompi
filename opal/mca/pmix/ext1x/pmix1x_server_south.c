@@ -1,10 +1,10 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -115,6 +115,13 @@ static void errreg_cbfunc(pmix_status_t status,
                         status, errhandler_ref);
 }
 
+static void op2cbfunc(pmix_status_t status, void *cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+    if (active)
+        *active = false;
+}
+
 int pmix1_server_init(opal_pmix_server_module_t *module,
                       opal_list_t *info)
 {
@@ -123,6 +130,8 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
     opal_value_t *kv;
     pmix_info_t *pinfo;
     size_t sz, n;
+    opal_pmix1_jobid_trkr_t *job;
+    volatile bool active;
 
     if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
         asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
@@ -144,6 +153,13 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
         pinfo = NULL;
     }
 
+    /* insert this into our list of jobids - it will be the
+     * first, and so we'll check it first */
+    job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
+    (void)opal_snprintf_jobid(job->nspace, PMIX_MAX_NSLEN, OPAL_PROC_MY_NAME.jobid);
+    job->jobid = OPAL_PROC_MY_NAME.jobid;
+    opal_list_append(&mca_pmix_ext1x_component.jobids, &job->super);
+
     if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, pinfo, sz))) {
         PMIX_INFO_FREE(pinfo, sz);
         return pmix1_convert_rc(rc);
@@ -155,6 +171,13 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
 
     /* register the errhandler */
     PMIx_Register_errhandler(NULL, 0, myerr, errreg_cbfunc, NULL);
+
+    /* as we might want to use some client-side functions, be sure
+     * to register our own nspace */
+    active = true;
+    PMIx_server_register_nspace(job->nspace, 1, NULL, 0, op2cbfunc, (void*)&active);
+    PMIX_WAIT_FOR_COMPLETION(active);
+
     return OPAL_SUCCESS;
 }
 

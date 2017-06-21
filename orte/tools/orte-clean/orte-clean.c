@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  *
@@ -128,6 +128,7 @@ main(int argc, char *argv[])
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var;
 #endif
+    char *legacy;
 
     /* This is needed so we can print the help message */
     if (ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
@@ -173,6 +174,18 @@ main(int argc, char *argv[])
                 orte_process_info.top_session_dir);
     }
     opal_os_dirpath_destroy(orte_process_info.top_session_dir, true, NULL);
+
+    /* also get rid of any legacy session directories */
+    asprintf(&legacy, "%s/openmpi-sessions-%d@%s_0",
+             orte_process_info.tmpdir_base,
+             (int)geteuid(), orte_process_info.nodename);
+    opal_os_dirpath_destroy(legacy, true, NULL);
+    free(legacy);
+
+    /* and finally get rid of any lingering pmix-related artifacts */
+    asprintf(&legacy, "rm -f %s/pmix*", orte_process_info.tmpdir_base);
+    system(legacy);
+    free(legacy);
 
     /* now kill any lingering procs, if we can */
     kill_procs();
@@ -415,7 +428,7 @@ void kill_procs(void) {
             }
         }
         free(inputline);
-	free(procname);
+        free(procname);
     }
     free(this_user);
     pclose(psfile);

@@ -98,3 +98,10 @@ then it could be an internal programming error that should be
 reported to the developers. In the meantime, a workaround may
 be to set the MCA param routed=direct on the command line or
 in your environment.
+#
+[simple-message]
+An internal error has occurred in ORTE:
+
+%s
+
+This is something that should be reported to the developers.

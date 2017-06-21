@@ -77,6 +77,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/compress.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -919,6 +920,7 @@ int orte_daemon(int argc, char *argv[])
     while (orte_event_base_active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
+    ORTE_ACQUIRE_OBJECT(orte_event_base_active);
 
     /* ensure all local procs are dead */
     orte_odls.kill_local_procs(NULL);

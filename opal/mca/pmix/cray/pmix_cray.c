@@ -34,7 +34,7 @@
 
 static char cray_pmi_version[128];
 
-static int cray_init(void);
+static int cray_init(opal_list_t *ilist);
 static int cray_fini(void);
 static int cray_initialized(void);
 static int cray_abort(int flat, const char *msg,
@@ -282,7 +282,7 @@ static void cray_get_more_info(void)
     return;
 }
 
-static int cray_init(void)
+static int cray_init(opal_list_t *ilist)
 {
     int i, spawned, size, rank, appnum, my_node;
     int rc, ret = OPAL_ERROR;

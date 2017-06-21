@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All Rights Reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +51,7 @@
 #include "orte/types.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/threads.h"
 
 BEGIN_C_DECLS
 
@@ -63,7 +64,7 @@ ORTE_DECLSPEC extern int orte_notifier_debug_output;
  * The code has NOT been auditied for use of malloc, so this still
  * may fail to get the "OUT_OF_RESOURCE" message out.  Oh Well.
  */
-#define ORTE_NOTIFIER_MAX_BUF	512
+#define ORTE_NOTIFIER_MAX_BUF   512
 
 /* Severities */
 typedef enum {
@@ -136,6 +137,7 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
         opal_event_set(orte_notifier_base.ev_base, &(_n)->ev, -1,       \
                        OPAL_EV_WRITE, orte_notifier_base_log, (_n));    \
         opal_event_set_priority(&(_n)->ev, ORTE_ERROR_PRI);             \
+        ORTE_POST_OBJECT(_n);                                           \
         opal_event_active(&(_n)->ev, OPAL_EV_WRITE, 1);                 \
     } while(0);
 
@@ -160,6 +162,7 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
         opal_event_set(orte_notifier_base.ev_base, &(_n)->ev, -1,       \
                        OPAL_EV_WRITE, orte_notifier_base_report, (_n)); \
         opal_event_set_priority(&(_n)->ev, ORTE_ERROR_PRI);             \
+        ORTE_POST_OBJECT(_n);                                           \
         opal_event_active(&(_n)->ev, OPAL_EV_WRITE, 1);                 \
     } while(0);
 
@@ -183,6 +186,7 @@ typedef void (*orte_notifier_base_module_report_fn_t)(orte_notifier_request_t *r
         opal_event_set(orte_notifier_base.ev_base, &(_n)->ev, -1,       \
                        OPAL_EV_WRITE, orte_notifier_base_event, (_n));  \
         opal_event_set_priority(&(_n)->ev, ORTE_ERROR_PRI);             \
+        ORTE_POST_OBJECT(_n);                                           \
         opal_event_active(&(_n)->ev, OPAL_EV_WRITE, 1);                 \
     } while(0);
 

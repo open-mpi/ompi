@@ -21,7 +21,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/rml/rml.h"
-
+#include "orte/util/threads.h"
 #include "orte/mca/oob/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/state/base/base.h"
@@ -32,7 +32,7 @@ static void process_uri(char *uri);
 void orte_oob_base_send_nb(int fd, short args, void *cbdata)
 {
     orte_oob_send_t *cd = (orte_oob_send_t*)cbdata;
-    orte_rml_send_t *msg = cd->msg;
+    orte_rml_send_t *msg;
     mca_base_component_list_item_t *cli;
     orte_oob_base_peer_t *pr;
     int rc;
@@ -42,7 +42,10 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     bool reachable;
     char *uri;
 
+    ORTE_ACQUIRE_OBJECT(cd);
+
     /* done with this. release it now */
+    msg = cd->msg;
     OBJ_RELEASE(cd);
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
@@ -276,7 +279,7 @@ void orte_oob_base_get_addr(char **uri)
         }
     }
 
- unblock:
+  unblock:
     *uri = final;
 }
 
@@ -303,7 +306,10 @@ OBJ_CLASS_INSTANCE(mca_oob_uri_req_t,
 void orte_oob_base_set_addr(int fd, short args, void *cbdata)
 {
     mca_oob_uri_req_t *req = (mca_oob_uri_req_t*)cbdata;
-    char *uri = req->uri;
+    char *uri;
+
+    ORTE_ACQUIRE_OBJECT(req);
+    uri = req->uri;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "%s: set_addr to uri %s",

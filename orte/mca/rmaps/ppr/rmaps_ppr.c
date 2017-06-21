@@ -275,12 +275,7 @@ static int ppr_mapper(orte_job_t *jdata)
             }
             /* add the node to the map, if needed */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto error;
-                }
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
-                OBJ_RETAIN(node);  /* maintain accounting on object */
                 jdata->map->num_nodes++;
             }
             /* if we are mapping solely at the node level, just put
@@ -407,7 +402,7 @@ static int ppr_mapper(orte_job_t *jdata)
     }
     return ORTE_SUCCESS;
 
- error:
+  error:
     while (NULL != (item = opal_list_remove_first(&node_list))) {
         OBJ_RELEASE(item);
     }

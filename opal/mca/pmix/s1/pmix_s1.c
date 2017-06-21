@@ -31,7 +31,7 @@
 #include "opal/mca/pmix/base/pmix_base_hash.h"
 #include "pmix_s1.h"
 
-static int s1_init(void);
+static int s1_init(opal_list_t *ilist);
 static int s1_fini(void);
 static int s1_initialized(void);
 static int s1_abort(int flag, const char msg[],
@@ -141,7 +141,7 @@ static int kvs_put(const char key[], const char value[])
     return rc;
 }
 
-static int s1_init(void)
+static int s1_init(opal_list_t *ilist)
 {
     PMI_BOOL initialized;
     int spawned;
@@ -154,6 +154,10 @@ static int s1_init(void)
     opal_process_name_t ldr;
     char **localranks=NULL;
     opal_process_name_t wildcard_rank;
+
+    if (0 < pmix_init_count) {
+        return OPAL_SUCCESS;
+    }
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
