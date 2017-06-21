@@ -342,6 +342,8 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_state_base_framework);
 
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* cleanup the process info */
+    orte_proc_info_finalize();
 
     return ORTE_SUCCESS;
 }

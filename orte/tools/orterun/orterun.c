@@ -86,6 +86,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
 #include "orte/util/threads.h"
 
@@ -222,6 +223,9 @@ int orterun(int argc, char *argv[])
     /* cleanup and leave */
     orte_submit_finalize();
     orte_finalize();
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    /* cleanup the process info */
+    orte_proc_info_finalize();
 
     if (orte_debug_flag) {
         fprintf(stderr, "exiting with status %d\n", orte_exit_status);
