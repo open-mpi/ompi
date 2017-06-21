@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -83,9 +83,6 @@ int orte_finalize(void)
     /* finalize and close schizo */
     orte_schizo.finalize();
     (void) mca_base_framework_close(&orte_schizo_base_framework);
-
-    /* cleanup the process info */
-    orte_proc_info_finalize();
 
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);

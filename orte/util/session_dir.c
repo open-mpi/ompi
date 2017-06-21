@@ -370,14 +370,12 @@ cleanup:
 int
 orte_session_dir_cleanup(orte_jobid_t jobid)
 {
-    int rc = ORTE_SUCCESS;
-
     if (!orte_create_session_dirs || orte_process_info.rm_session_dirs ) {
         /* we haven't created them or RM will clean them up for us*/
         return ORTE_SUCCESS;
     }
 
-    if (NULL == orte_process_info.job_session_dir ||
+    if (NULL == orte_process_info.jobfam_session_dir ||
         NULL == orte_process_info.proc_session_dir) {
         /* this should never happen - it means we are calling
          * cleanup *before* properly setting up the session
@@ -385,30 +383,20 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
          * accidentally removing directories we shouldn't
          * touch
          */
-        rc = ORTE_ERR_NOT_INITIALIZED;
-        goto CLEANUP;
+        return ORTE_ERR_NOT_INITIALIZED;
     }
 
     /* recursively blow the whole session away for our job family,
      * saving only output files
      */
-    opal_os_dirpath_destroy(orte_process_info.job_session_dir,
+    opal_os_dirpath_destroy(orte_process_info.jobfam_session_dir,
                             true, orte_dir_check_file);
 
-    /* now attempt to eliminate the top level directory itself - this
-     * will fail if anything is present, but ensures we cleanup if
-     * we are the last one out
-     */
-    if( NULL != orte_process_info.top_session_dir ){
-        opal_os_dirpath_destroy(orte_process_info.top_session_dir,
-                                false, orte_dir_check_file);
-    }
-
-    if (opal_os_dirpath_is_empty(orte_process_info.job_session_dir)) {
+    if (opal_os_dirpath_is_empty(orte_process_info.jobfam_session_dir)) {
         if (orte_debug_flag) {
-            opal_output(0, "sess_dir_cleanup: found job session dir empty - deleting");
+            opal_output(0, "sess_dir_cleanup: found jobfam session dir empty - deleting");
         }
-        rmdir(orte_process_info.job_session_dir);
+        rmdir(orte_process_info.jobfam_session_dir);
     } else {
         if (orte_debug_flag) {
             if (OPAL_ERR_NOT_FOUND ==
@@ -418,12 +406,10 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
                 opal_output(0, "sess_dir_cleanup: job session dir not empty - leaving");
             }
         }
-        goto CLEANUP;
     }
 
-    if ( NULL != orte_process_info.top_session_dir ){
-
-        if( opal_os_dirpath_is_empty(orte_process_info.top_session_dir) ) {
+    if (NULL != orte_process_info.top_session_dir) {
+        if (opal_os_dirpath_is_empty(orte_process_info.top_session_dir)) {
             if (orte_debug_flag) {
                 opal_output(0, "sess_dir_cleanup: found top session dir empty - deleting");
             }
@@ -440,9 +426,17 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
         }
     }
 
-CLEANUP:
+    /* now attempt to eliminate the top level directory itself - this
+     * will fail if anything is present, but ensures we cleanup if
+     * we are the last one out
+     */
+    if( NULL != orte_process_info.top_session_dir ){
+        opal_os_dirpath_destroy(orte_process_info.top_session_dir,
+                                false, orte_dir_check_file);
+    }
 
-    return rc;
+
+    return ORTE_SUCCESS;
 }
 
 
