@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2016 The University of Tennessee and The University
+# Copyright (c) 2013-2017 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2013-2017 Inria.  All rights reserved.
@@ -13,6 +13,8 @@
 #
 # $HEADER$
 #
+
+EXTRA_DIST = profile2mat.pl aggregate_profile.pl
 
 # This test requires multiple processes to run. Don't run it as part
 # of 'make check'
@@ -53,6 +55,10 @@ if MCA_BUILD_ompi_pml_monitoring_DSO
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 endif # MCA_BUILD_ompi_pml_monitoring_DSO
+
+if OPAL_INSTALL_BINARIES
+bin_SCRIPTS = profile2mat.pl aggregate_profile.pl
+endif # OPAL_INSTALL_BINARIES
 
 endif # PROJECT_OMPI
 
