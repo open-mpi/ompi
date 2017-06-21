@@ -933,6 +933,10 @@ int orte_daemon(int argc, char *argv[])
     orte_finalize();
     opal_finalize_util();
 
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    /* cleanup the process info */
+    orte_proc_info_finalize();
+
     if (orte_debug_flag) {
         fprintf(stderr, "exiting with status %d\n", orte_exit_status);
     }
