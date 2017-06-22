@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -452,7 +452,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
     my_peer->state = (uint64_t) (uintptr_t) module->state;
 
-    if (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) {
+    if (module->use_cpu_atomics) {
         /* all peers are local or it is safe to mix cpu and nic atomics */
         my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
     } else {
@@ -501,6 +501,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
     local_rank = ompi_comm_rank (shared_comm);
     local_size = ompi_comm_size (shared_comm);
+
+    /* CPU atomics can be used if every process is on the same node or the NIC allows mixing CPU and NIC atomics */
+    module->use_cpu_atomics = local_size == global_size || (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
 
     if (1 == local_size) {
         /* no point using a shared segment if there are no other processes on this node */
@@ -631,13 +634,15 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
         }
 
-        /* barrier to make sure all ranks have attached */
+        /* barrier to make sure all ranks have set up their region data */
         shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
 
         offset = data_base;
         for (int i = 0 ; i < local_size ; ++i) {
+            /* local pointer to peer's state */
+            ompi_osc_rdma_state_t *peer_state = (ompi_osc_rdma_state_t *) ((uintptr_t) module->segment_base + state_base + module->state_size * i);
+            ompi_osc_rdma_region_t *peer_region = (ompi_osc_rdma_region_t *) peer_state->regions;
             ompi_osc_rdma_peer_extended_t *ex_peer;
-            ompi_osc_rdma_state_t *peer_state;
             ompi_osc_rdma_peer_t *peer;
             int peer_rank = temp[i].rank;
 
@@ -648,13 +653,12 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
             ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
 
-            /* peer state local pointer */
-            peer_state = (ompi_osc_rdma_state_t *) ((uintptr_t) module->segment_base + state_base + module->state_size * i);
-
-            if (local_size == global_size || (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB)) {
+            /* set up peer state */
+            if (module->use_cpu_atomics) {
                 /* all peers are local or it is safe to mix cpu and nic atomics */
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
                 peer->state = (osc_rdma_counter_t) peer_state;
+                peer->state_endpoint = NULL;
             } else {
                 /* use my endpoint handle to modify the peer's state */
                 if (module->selected_btl->btl_register_mem) {
@@ -664,38 +668,39 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, temp[0].rank);
             }
 
-            /* finish setting up the local peer structure */
-            if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
-                if (!module->same_disp_unit) {
-                    ex_peer->disp_unit = peer_state->disp_unit;
-                }
+            if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor || MPI_WIN_FLAVOR_CREATE == module->flavor) {
+                /* use the peer's BTL endpoint directly */
+                peer->data_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, peer_rank);
+            } else if (!module->use_cpu_atomics && temp[i].size) {
+                /* use the local leader's endpoint */
+                peer->data_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, temp[0].rank);
+            }
 
-                if (!module->same_size) {
-                    ex_peer->size = temp[i].size;
-                }
+            ompi_osc_module_add_peer (module, peer);
 
-                if (my_rank == peer_rank) {
-                    peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
-                }
+            if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor || 0 == temp[i].size) {
+                /* nothing more to do */
+                continue;
+            }
 
-                if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-                    if (temp[i].size) {
-                        ex_peer->super.base = state_region->base + offset;
-                        offset += temp[i].size;
-                    } else {
-                        ex_peer->super.base = 0;
-                    }
-                }
+            /* finish setting up the local peer structure for win allocate/create */
+            if (!(module->same_disp_unit && module->same_size)) {
+                ex_peer->disp_unit = peer_state->disp_unit;
+                ex_peer->size = temp[i].size;
+            }
 
-                ompi_osc_rdma_region_t *peer_region = (ompi_osc_rdma_region_t *) peer_state->regions;
-
+            if (module->use_cpu_atomics && MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+                /* base is local and cpu atomics are available */
+                ex_peer->super.base = (uintptr_t) module->segment_base + offset;
+                peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
+                offset += temp[i].size;
+            } else {
                 ex_peer->super.base = peer_region->base;
+
                 if (module->selected_btl->btl_register_mem) {
                     ex_peer->super.base_handle = (mca_btl_base_registration_handle_t *) peer_region->btl_handle_data;
                 }
             }
-
-            ompi_osc_module_add_peer (module, peer);
         }
     } while (0);
 

@@ -128,6 +128,9 @@ struct ompi_osc_rdma_module_t {
     /** value of same_size info key for this window */
     bool same_size;
 
+    /** CPU atomics can be used */
+    bool use_cpu_atomics;
+
     /** passive-target synchronization will not be used in this window */
     bool no_locks;
 
