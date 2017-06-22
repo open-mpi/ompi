@@ -456,6 +456,7 @@ int pmix2x_get(const opal_process_name_t *proc, const char *key,
     size_t sz = 0, n;
     opal_value_t *ival;
     pmix_value_t *pval = NULL;
+    int ret;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "%s pmix2x:client get on proc %s key %s",
@@ -517,8 +518,11 @@ int pmix2x_get(const opal_process_name_t *proc, const char *key,
     rc = PMIx_Get(&p, key, pinfo, sz, &pval);
     if (PMIX_SUCCESS == rc) {
         ival = OBJ_NEW(opal_value_t);
-        pmix2x_value_unload(ival, pval);
-        *val = ival;
+        if (OPAL_SUCCESS != (ret = pmix2x_value_unload(ival, pval))) {
+            rc = pmix2x_convert_opalrc(ret);
+        } else {
+            *val = ival;
+        }
         PMIX_VALUE_FREE(pval, 1);
     }
     PMIX_INFO_FREE(pinfo, sz);
@@ -728,6 +732,7 @@ int pmix2x_lookup(opal_list_t *data, opal_list_t *info)
     size_t cnt, n, sz;
     opal_value_t *iptr;
     opal_pmix2x_jobid_trkr_t *jptr, *job;
+    int ret;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "pmix2x:client lookup");
@@ -792,7 +797,9 @@ int pmix2x_lookup(opal_list_t *data, opal_list_t *info)
                 opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
             }
             d->proc.vpid = pmix2x_convert_rank(pdata[n].proc.rank);
-            pmix2x_value_unload(&d->value, &pdata[n].value);
+            if (OPAL_SUCCESS != (ret = pmix2x_value_unload(&d->value, &pdata[n].value))) {
+                OPAL_ERROR_LOG(ret);
+            }
         }
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     }
@@ -1069,7 +1076,7 @@ static void spcbfunc(pmix_status_t status,
 {
     pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
     opal_pmix2x_jobid_trkr_t *job;
-    opal_jobid_t jobid;
+    opal_jobid_t jobid = OPAL_JOBID_INVALID;
     int rc;
 
     OPAL_ACQUIRE_OBJECT(op);
