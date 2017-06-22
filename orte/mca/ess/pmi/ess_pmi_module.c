@@ -37,6 +37,9 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
+#include <sys/mman.h>
+#include <errno.h>
+#include <fcntl.h>
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -98,6 +101,9 @@ static int rte_init(void)
     opal_process_name_t wildcard_rank, pname;
     bool bool_val, *bool_ptr = &bool_val, tdir_mca_override = false;
     size_t i;
+    uint64_t addr, *aptr, size, *sptr;
+    char *hwlocfile;
+    void *mmapped;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -317,6 +323,42 @@ static int rte_init(void)
         if (OPAL_SUCCESS == ret ) {
             orte_process_info.rm_session_dirs = bool_val;
         }
+    }
+
+    /* test mapping to hwloc shmem region */
+    aptr = &addr;
+    sptr = &size;
+    int ret1, ret2, ret3;
+    hwlocfile = NULL;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret1, OPAL_PMIX_HWLOC_SHMEM_FILE, &wildcard_rank, (void**)&hwlocfile, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret2, OPAL_PMIX_HWLOC_SHMEM_ADDR, &wildcard_rank, (void**)&aptr, OPAL_SIZE);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret3, OPAL_PMIX_HWLOC_SHMEM_SIZE, &wildcard_rank, (void**)&sptr, OPAL_SIZE);
+    OPAL_OUTPUT_VERBOSE((20, orte_ess_base_framework.framework_output,
+                        "FILE %s ADDR %lx SIZE %lx", hwlocfile,
+                        (unsigned long)addr, (unsigned long)size));
+    if (OPAL_SUCCESS == ret1 && OPAL_SUCCESS == ret2 && OPAL_SUCCESS == ret3) {
+        int fd;
+        fd = open(hwlocfile, O_RDONLY);
+        mmapped = mmap((void*)(uintptr_t) addr, size, PROT_READ, MAP_SHARED|MAP_FIXED, fd, 0);
+        if (mmapped == MAP_FAILED) {
+            opal_output(0, "mmap for HWLOC shmem region failed with error: %s", strerror(errno));
+            char cmd[128];
+            snprintf(cmd, sizeof(cmd), "cat /proc/%lu/maps", (unsigned long)getpid());
+            system(cmd);
+        } else if (mmapped != (void*)(uintptr_t) addr) {
+            opal_output(0, "mmap for HWLOC shmem region returned addr %p expected addr %0lx", mmapped, (unsigned long)addr);
+            char cmd[128];
+            snprintf(cmd, sizeof(cmd), "cat /proc/%lu/maps", (unsigned long)getpid());
+            system(cmd);
+        } else if (mmapped != (void*)(uintptr_t) addr) {
+            munmap(mmapped, size);
+        } else {
+            OPAL_OUTPUT_VERBOSE((20, orte_ess_base_framework.framework_output,
+                                "mmap for HWLOC shmem os size %lu MBytes succeeded",
+                                (unsigned long)(size/(1024*1024))));
+            munmap(mmapped, size);
+        }
+        close(fd);
     }
 
     /* get our local peers */
