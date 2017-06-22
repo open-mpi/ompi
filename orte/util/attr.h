@@ -144,6 +144,8 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_TRANSPORT_KEY          (ORTE_JOB_START_KEY + 51)    // string - transport keys assigned to this job
 #define ORTE_JOB_INFO_CACHE             (ORTE_JOB_START_KEY + 52)    // opal_list_t - list of opal_value_t to be included in job_info
 #define ORTE_JOB_FULLY_DESCRIBED        (ORTE_JOB_START_KEY + 53)    // bool - job is fully described in launch msg
+#define ORTE_JOB_HWLOC_SHMEM_ADDR       (ORTE_JOB_START_KEY + 54)    // size_t - address of HWLOC shared memory segment
+#define ORTE_JOB_HWLOC_SHMEM_SIZE       (ORTE_JOB_START_KEY + 55)    // size_t - size of HWLOC shared memory segment
 
 #define ORTE_JOB_MAX_KEY   300
 
