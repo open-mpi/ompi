@@ -35,6 +35,12 @@
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
@@ -47,6 +53,8 @@
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
+
+static bool topo_in_shmem = false;
 
 /*
  * Provide the hwloc object that corresponds to the given
@@ -251,21 +259,58 @@ int opal_hwloc_base_get_topology(void)
     int rc;
     opal_process_name_t wildcard_rank;
     char *val = NULL;
+#if HWLOC_API_VERSION >= 0x20000
+        int rc2, rc3, fd;
+        uint64_t addr, *aptr, size, *sptr;
+        char *shmemfile;
+    hwloc_obj_t root;
+    opal_hwloc_topo_data_t *sum;
+#endif
 
     OPAL_OUTPUT_VERBOSE((2, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_topology"));
 
-    /* see if we already got it */
+    /* see if we already have it */
     if (NULL != opal_hwloc_topology) {
         return OPAL_SUCCESS;
     }
+    wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
+    wildcard_rank.vpid = OPAL_VPID_WILDCARD;
 
     if (NULL != opal_pmix.get) {
-        /* try to retrieve it from the PMIx store */
+#if HWLOC_API_VERSION >= 0x20000
+        OPAL_OUTPUT_VERBOSE((2, opal_hwloc_base_framework.framework_output,
+                             "hwloc:base: looking for topology in shared memory"));
+
+        /* first try to get the shmem link, if available */
+        aptr = &addr;
+        sptr = &size;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_HWLOC_SHMEM_FILE,
+                                       &wildcard_rank, (void**)&shmemfile, OPAL_STRING);
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc2, OPAL_PMIX_HWLOC_SHMEM_ADDR,
+                                       &wildcard_rank, (void**)&aptr, OPAL_SIZE);
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc3, OPAL_PMIX_HWLOC_SHMEM_SIZE,
+                                       &wildcard_rank, (void**)&sptr, OPAL_SIZE);
+        if (OPAL_SUCCESS == rc && OPAL_SUCCESS == rc2 && OPAL_SUCCESS == rc3) {
+            if (0 > (fd = open(shmemfile, O_RDONLY))) {
+                free(shmemfile);
+                return OPAL_ERROR;
+            }
+            free(shmemfile);
+            if (0 != hwloc_shmem_topology_adopt(&opal_hwloc_topology, fd,
+                                                0, (void*)addr, size, 0)) {
+                return OPAL_ERROR;
+            }
+            OPAL_OUTPUT_VERBOSE((2, opal_hwloc_base_framework.framework_output,
+                                 "hwloc:base: topology in shared memory"));
+            topo_in_shmem = true;
+            return OPAL_SUCCESS;
+        }
+#endif
+        /* if that isn't available, then try to retrieve
+         * the xml representation from the PMIx data store */
         opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
                             "hwloc:base instantiating topology");
-        wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
-        wildcard_rank.vpid = OPAL_VPID_WILDCARD;
         OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_TOPO,
                                        &wildcard_rank, &val, OPAL_STRING);
     } else {
@@ -306,6 +351,20 @@ int opal_hwloc_base_get_topology(void)
             hwloc_topology_destroy(opal_hwloc_topology);
             return rc;
         }
+#else
+        /* setup the summary cpuset to make things consistent */
+        root = hwloc_get_root_obj(opal_hwloc_topology);
+
+        if (NULL == root->userdata) {
+            root->userdata = (void*)OBJ_NEW(opal_hwloc_topo_data_t);
+        }
+        sum = (opal_hwloc_topo_data_t*)root->userdata;
+
+        /* should only ever enter here once, but check anyway */
+        if (NULL == sum->available) {
+            sum->available = hwloc_bitmap_dup(root->allowed_cpuset);
+            return OPAL_SUCCESS;
+        }
 #endif
     } else if (NULL == opal_hwloc_base_topo_file) {
         if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
@@ -318,6 +377,20 @@ int opal_hwloc_base_get_topology(void)
         if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
             hwloc_topology_destroy(opal_hwloc_topology);
             return rc;
+        }
+#else
+        /* setup the summary cpuset to make things consistent */
+        root = hwloc_get_root_obj(opal_hwloc_topology);
+
+        if (NULL == root->userdata) {
+            root->userdata = (void*)OBJ_NEW(opal_hwloc_topo_data_t);
+        }
+        sum = (opal_hwloc_topo_data_t*)root->userdata;
+
+        /* should only ever enter here once, but check anyway */
+        if (NULL == sum->available) {
+            sum->available = hwloc_bitmap_dup(root->allowed_cpuset);
+            return OPAL_SUCCESS;
         }
 #endif
     } else {
@@ -414,18 +487,20 @@ void opal_hwloc_base_free_topology(hwloc_topology_t topo)
     opal_hwloc_topo_data_t *rdata;
     unsigned k;
 
-    obj = hwloc_get_root_obj(topo);
-    /* release the root-level userdata */
-    if (NULL != obj->userdata) {
-        rdata = (opal_hwloc_topo_data_t*)obj->userdata;
-        OBJ_RELEASE(rdata);
-        obj->userdata = NULL;
-    }
-    /* now recursively descend and release userdata
-     * in the rest of the objects
-     */
-    for (k=0; k < obj->arity; k++) {
-        free_object(obj->children[k]);
+    if (!topo_in_shmem) {
+        obj = hwloc_get_root_obj(topo);
+        /* release the root-level userdata */
+        if (NULL != obj->userdata) {
+            rdata = (opal_hwloc_topo_data_t*)obj->userdata;
+            OBJ_RELEASE(rdata);
+            obj->userdata = NULL;
+        }
+        /* now recursively descend and release userdata
+         * in the rest of the objects
+         */
+        for (k=0; k < obj->arity; k++) {
+            free_object(obj->children[k]);
+        }
     }
     hwloc_topology_destroy(topo);
 }
@@ -744,7 +819,9 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
         return NULL;
     }
 
- notfound:
+#if HWLOC_API_VERSION < 0x20000
+  notfound:
+#endif
     for (k=0; k < start->arity; k++) {
         obj = df_search(topo, start->children[k], target, cache_level, nobj, rtype, idx, num_objs);
         if (NULL != obj) {
@@ -923,7 +1000,9 @@ hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t top
         return obj;
     }
 
- moveon:
+#if HWLOC_API_VERSION < 0x20000
+  moveon:
+#endif
     /* the hwloc accessors all report at the topo level,
      * so we have to do some work
      */
@@ -1876,7 +1955,6 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
 
     /* if the cpuset includes all available cpus, then we are unbound */
     root = hwloc_get_root_obj(topo);
-#if HWLOC_API_VERSION < 0x20000
     if (NULL != root->userdata) {
         sum = (opal_hwloc_topo_data_t*)root->userdata;
         if (NULL == sum->available) {
@@ -1886,11 +1964,6 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
             return OPAL_ERR_NOT_BOUND;
         }
     }
-#else
-    if (0 != hwloc_bitmap_isincluded(root->cpuset, cpuset)) {
-        return OPAL_ERR_NOT_BOUND;
-    }
-#endif
 
     /* Iterate over all existing sockets */
     for (socket = hwloc_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0);
@@ -1952,14 +2025,17 @@ static int dist_cmp_fn (opal_list_item_t **a, opal_list_item_t **b)
 static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *sorted_list)
 {
     hwloc_obj_t device_obj = NULL;
-    hwloc_obj_t obj = NULL, root = NULL;
+    hwloc_obj_t obj = NULL;
     struct hwloc_distances_s* distances;
     opal_rmaps_numa_node_t *numa_node;
     int close_node_index;
     float latency;
     unsigned int j;
+#if HWLOC_API_VERSION < 0x20000
+    hwloc_obj_t root = NULL;
     int depth;
     unsigned i;
+#endif
     unsigned distances_nr = 0;
 
     for (device_obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_OS_DEVICE, 0); device_obj; device_obj = hwloc_get_next_osdev(topo, device_obj)) {
@@ -2019,7 +2095,9 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
                     opal_list_append(sorted_list, &numa_node->super);
                 }
 #else
-                if (0 != hwloc_distances_get_by_type(topo, HWLOC_OBJ_NODE, &distances_nr, &distances, 0, 0) || 0 == distances_nr) {
+                distances_nr = 1;
+                if (0 != hwloc_distances_get_by_type(topo, HWLOC_OBJ_NODE, &distances_nr, &distances,
+                                                     HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0) || 0 == distances_nr) {
                     opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                             "hwloc:base:get_sorted_numa_list: There is no information about distances on the node.");
                     return;

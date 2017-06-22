@@ -16,6 +16,7 @@
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -242,10 +243,6 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
         return OMPI_SUCCESS;
     }
 
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
     /* translate group ranks into the communicator */
     peers = ompi_osc_rdma_get_peers (module, module->pw_group);
     if (OPAL_UNLIKELY(NULL == peers)) {
@@ -281,7 +278,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
         do {
             ompi_osc_rdma_lock_t result;
 
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "attempting to post to index %d @ rank %d", post_index, peer->rank);
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "attempting to post to index %d @ rank %d", (int)post_index, peer->rank);
 
             /* try to post. if the value isn't 0 then another rank is occupying this index */
             if (!ompi_osc_rdma_peer_local_state (peer)) {

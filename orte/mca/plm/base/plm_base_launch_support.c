@@ -467,9 +467,6 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         OBJ_RELEASE(orte_coprocessors);
     }
 
-    /* load any controls into the system */
-    orte_rtc.assign(jdata);
-
     /* set the job state to the next position */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_LAUNCH_APPS);
 

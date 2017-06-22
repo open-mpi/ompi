@@ -1,11 +1,13 @@
 #
-# Copyright (c) 2014      Intel, Inc. All rights reserved
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
+
+dist_ortedata_DATA = help-orte-rtc-hwloc.txt
 
 sources = \
         rtc_hwloc.c \

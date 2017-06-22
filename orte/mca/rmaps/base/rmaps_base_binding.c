@@ -933,6 +933,9 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
                  */
                 map_depth = hwloc_get_cache_type_depth(node->topology->topo, clvm, (hwloc_obj_cache_type_t)-1);
             } else
+#else
+                /* do something with clvm to silence compiler warnings */
+                ++clvm;
 #endif
                 map_depth = hwloc_get_type_depth(node->topology->topo, hwm);
             if (0 > map_depth) {

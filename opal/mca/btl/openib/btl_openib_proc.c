@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
@@ -77,8 +77,6 @@ void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* ib_proc)
 
 void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* ib_proc)
 {
-    mca_btl_openib_proc_btlptr_t* elem;
-
     /* release resources */
     if(NULL != ib_proc->proc_endpoints) {
         free(ib_proc->proc_endpoints);

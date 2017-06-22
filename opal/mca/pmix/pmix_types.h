@@ -64,6 +64,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_SERVER_ENABLE_MONITORING      "pmix.srv.monitor"      // (bool) Enable PMIx internal monitoring by server
 #define OPAL_PMIX_SERVER_NSPACE                 "pmix.srv.nspace"       // (char*) Name of the nspace to use for this server
 #define OPAL_PMIX_SERVER_RANK                   "pmix.srv.rank"         // (uint32_t) Rank of this server
+#define OPAL_PMIX_TOOL_NSPACE                   "pmix.tool.nspace"      // (char*) Name of the nspace to use for this tool
+#define OPAL_PMIX_TOOL_RANK                     "pmix.tool.rank"        // (uint32_t) Rank of this tool
 
 /* identification attributes */
 #define OPAL_PMIX_USERID                        "pmix.euid"             // (uint32_t) effective user id
@@ -156,7 +158,9 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_TOPOLOGY                      "pmix.topo"             // (hwloc_topology_t) pointer to the PMIx client's internal topology object
 #define OPAL_PMIX_TOPOLOGY_SIGNATURE            "pmix.toposig"          // (char*) topology signature string
 #define OPAL_PMIX_LOCALITY_STRING               "pmix.locstr"           // (char*) string describing a proc's location
-
+#define OPAL_PMIX_HWLOC_SHMEM_ADDR              "pmix.hwlocaddr"        // (size_t) address of HWLOC shared memory segment
+#define OPAL_PMIX_HWLOC_SHMEM_SIZE              "pmix.hwlocsize"        // (size_t) size of HWLOC shared memory segment
+#define OPAL_PMIX_HWLOC_SHMEM_FILE              "pmix.hwlocfile"        // (char*) path to HWLOC shared memory file
 
 /* request-related info */
 #define OPAL_PMIX_COLLECT_DATA                  "pmix.collect"          // (bool) collect data and return it at the end of the operation

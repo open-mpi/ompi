@@ -70,6 +70,7 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
+#include "orte/mca/rtc/rtc.h"
 #include "orte/mca/schizo/schizo.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/filem/filem.h"
@@ -602,6 +603,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             OBJ_RELEASE(bptr);
         }
     }
+
+    /* load any controls into the job */
+    orte_rtc.assign(jdata);
 
     /* register this job with the PMIx server - need to wait until after we
      * have computed the #local_procs before calling the function */

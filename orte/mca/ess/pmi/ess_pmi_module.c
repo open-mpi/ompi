@@ -37,6 +37,9 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
+#include <sys/mman.h>
+#include <errno.h>
+#include <fcntl.h>
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"

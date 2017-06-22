@@ -46,15 +46,13 @@ int main(int argc, char* argv[])
     csize = CPU_ALLOC_SIZE(nrcpus);
     CPU_ZERO_S(csize, mask);
     if ( sched_getaffinity(0, csize, mask) == -1 ) {
-            CPU_FREE(mask);
-            perror("sched_getaffinity");
-            return -1;
-    }
-
-    for ( c = 0; c < nrcpus; c++ ) {
-            if ( CPU_ISSET_S(c, csize, mask) ) {
-                    printf("[%s:%d] CPU %d is set\n", hostname, (int)getpid(), c);
-            }
+        perror("sched_getaffinity");
+    } else {
+        for ( c = 0; c < nrcpus; c++ ) {
+                if ( CPU_ISSET_S(c, csize, mask) ) {
+                        printf("[%s:%d] CPU %d is set\n", hostname, (int)getpid(), c);
+                }
+        }
     }
 
     CPU_FREE(mask);
