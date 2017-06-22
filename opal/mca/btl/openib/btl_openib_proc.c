@@ -16,7 +16,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -96,12 +96,7 @@ void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* ib_proc)
     }
     OBJ_DESTRUCT(&ib_proc->proc_lock);
 
-    elem = (mca_btl_openib_proc_btlptr_t*)opal_list_remove_first(&ib_proc->openib_btls);
-    while( NULL != elem ){
-            OBJ_RELEASE(elem);
-            elem = (mca_btl_openib_proc_btlptr_t*)opal_list_remove_first(&ib_proc->openib_btls);
-    }
-    OBJ_DESTRUCT(&ib_proc->openib_btls);
+    OPAL_LIST_DESTRUCT(&ib_proc->openib_btls);
 }
 
 
@@ -113,11 +108,7 @@ static mca_btl_openib_proc_t* ibproc_lookup_no_lock(opal_proc_t* proc)
 {
     mca_btl_openib_proc_t* ib_proc;
 
-    for(ib_proc = (mca_btl_openib_proc_t*)
-            opal_list_get_first(&mca_btl_openib_component.ib_procs);
-            ib_proc != (mca_btl_openib_proc_t*)
-            opal_list_get_end(&mca_btl_openib_component.ib_procs);
-            ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
+    OPAL_LIST_FOREACH(ib_proc, &mca_btl_openib_component.ib_procs, mca_btl_openib_proc_t) {
         if(ib_proc->proc_opal == proc) {
             return ib_proc;
         }
@@ -398,10 +389,7 @@ int mca_btl_openib_proc_reg_btl(mca_btl_openib_proc_t* ib_proc,
 {
     mca_btl_openib_proc_btlptr_t* elem;
 
-
-    for(elem = (mca_btl_openib_proc_btlptr_t*)opal_list_get_first(&ib_proc->openib_btls);
-            elem != (mca_btl_openib_proc_btlptr_t*)opal_list_get_end(&ib_proc->openib_btls);
-            elem  = (mca_btl_openib_proc_btlptr_t*)opal_list_get_next(elem)) {
+    OPAL_LIST_FOREACH(elem, &ib_proc->openib_btls, mca_btl_openib_proc_btlptr_t) {
         if(elem->openib_btl == openib_btl) {
             /* this is normal return meaning that this BTL has already touched this ib_proc */
             return OPAL_ERR_RESOURCE_BUSY;

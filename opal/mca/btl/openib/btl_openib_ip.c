@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2008      Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * Additional copyrights may follow
  *
@@ -89,7 +92,7 @@ static char *stringify(uint32_t addr)
 uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
                                          uint8_t port)
 {
-    opal_list_item_t *item;
+    struct rdma_addr_list *addr;
 
     /* In the off chance that the user forces a non-RDMACM CPC and an
      * IP-based mechanism, the list will be uninitialized.  Return 0
@@ -100,10 +103,7 @@ uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
         return 0;
     }
 
-    for (item = opal_list_get_first(myaddrs);
-         item != opal_list_get_end(myaddrs);
-         item = opal_list_get_next(item)) {
-        struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
+    OPAL_LIST_FOREACH(addr, myaddrs, struct rdma_addr_list) {
         if (!strcmp(addr->dev_name, ib_dev->name) &&
             port == addr->dev_port) {
             return addr->subnet;
@@ -123,7 +123,7 @@ uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
 uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs,
                                           uint8_t port)
 {
-    opal_list_item_t *item;
+    struct rdma_addr_list *addr;
 
     /* Sanity check */
     if (NULL == myaddrs) {
@@ -132,10 +132,7 @@ uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs,
 
     BTL_VERBOSE(("Looking for %s:%d in IP address list",
                  ibv_get_device_name(verbs->device), port));
-    for (item = opal_list_get_first(myaddrs);
-         item != opal_list_get_end(myaddrs);
-         item = opal_list_get_next(item)) {
-        struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
+    OPAL_LIST_FOREACH(addr, myaddrs, struct rdma_addr_list) {
         if (!strcmp(addr->dev_name, verbs->device->name) &&
             port == addr->dev_port) {
             BTL_VERBOSE(("FOUND: %s:%d is %s",
@@ -404,19 +401,9 @@ int mca_btl_openib_build_rdma_addr_list(void)
 
 void mca_btl_openib_free_rdma_addr_list(void)
 {
-    opal_list_item_t *item, *next;
-
-    if (NULL != myaddrs && 0 != opal_list_get_size(myaddrs)) {
-        for (item = opal_list_get_first(myaddrs);
-             item != opal_list_get_end(myaddrs);
-             item = next) {
-            struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
-            next = opal_list_get_next(item);
-            opal_list_remove_item(myaddrs, item);
-            OBJ_RELEASE(addr);
-        }
-       OBJ_RELEASE(myaddrs);
-       myaddrs = NULL;
+    if (NULL != myaddrs) {
+        OPAL_LIST_RELEASE(myaddrs);
+        myaddrs = NULL;
     }
 }
 

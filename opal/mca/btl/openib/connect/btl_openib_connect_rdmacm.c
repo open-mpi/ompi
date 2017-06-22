@@ -5,7 +5,7 @@
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      The University of Tennessee and The University
@@ -1879,7 +1879,7 @@ static int ipaddrcheck(id_context_t *context,
     rdmacm_contents_t *server = context->contents;
     uint32_t ipaddr;
     bool already_exists = false;
-    opal_list_item_t *item;
+    rdmacm_contents_t *contents;
     int server_tcp_port = rdma_get_src_port(context->id);
     char *str;
 
@@ -1908,10 +1908,7 @@ static int ipaddrcheck(id_context_t *context,
 
     /* Ok, we found the IP address of this device/port.  Have we
        already see this IP address/TCP port before? */
-    for (item = opal_list_get_first(&server_listener_list);
-         item != opal_list_get_end(&server_listener_list);
-         item = opal_list_get_next(item)) {
-        rdmacm_contents_t *contents = (rdmacm_contents_t *)item;
+    OPAL_LIST_FOREACH(contents, &server_listener_list, rdmacm_contents_t) {
         BTL_VERBOSE(("paddr = %x, ipaddr addr = %x",
                      contents->ipaddr, ipaddr));
         if (contents->ipaddr == ipaddr &&

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -1266,17 +1266,13 @@ void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,
                      struct mca_btl_base_endpoint_t* endpoint,
                      int verbose)
 {
-    opal_list_item_t *item;
     mca_btl_smcuda_frag_t* frag;
 
     mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
                      (void*) btl, (void*) endpoint,
                      endpoint->my_smp_rank, endpoint->peer_smp_rank);
     if( NULL != endpoint ) {
-        for(item =  opal_list_get_first(&endpoint->pending_sends);
-            item != opal_list_get_end(&endpoint->pending_sends);
-            item = opal_list_get_next(item)) {
-            frag = (mca_btl_smcuda_frag_t*)item;
+        OPAL_LIST_FOREACH(frag, &endpoint->pending_sends, mca_btl_smcuda_frag_t) {
             mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank %d tag %d)\n",
                              (void*) frag, frag->size, (void*) frag->hdr->frag,
                              frag->hdr->len, frag->hdr->my_smp_rank,

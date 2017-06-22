@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -83,22 +83,18 @@ OBJ_CLASS_INSTANCE(opal_info_entry_t,
 int opal_info_dup (opal_info_t *info, opal_info_t **newinfo)
 {
     int err;
-    opal_list_item_t *item;
     opal_info_entry_t *iterator;
 
     OPAL_THREAD_LOCK(info->i_lock);
-    for (item = opal_list_get_first(&(info->super));
-         item != opal_list_get_end(&(info->super));
-         item = opal_list_get_next(iterator)) {
-         iterator = (opal_info_entry_t *) item;
-         err = opal_info_set(*newinfo, iterator->ie_key, iterator->ie_value);
-         if (MPI_SUCCESS != err) {
+    OPAL_LIST_FOREACH(iterator, &info->super, opal_info_entry_t) {
+        err = opal_info_set(*newinfo, iterator->ie_key, iterator->ie_value);
+        if (MPI_SUCCESS != err) {
             OPAL_THREAD_UNLOCK(info->i_lock);
             return err;
-         }
+        }
      }
     OPAL_THREAD_UNLOCK(info->i_lock);
-     return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }
 
 /*
@@ -118,7 +114,6 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
     int show_modifications)     // (pick v from k/v or __IN_k/v)
 {
     int err, flag;
-    opal_list_item_t *item;
     opal_info_entry_t *iterator;
     char savedkey[MPI_MAX_INFO_KEY];
     char savedval[MPI_MAX_INFO_VAL];
@@ -127,11 +122,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
     int exists_IN_key, exists_reg_key;
 
     OPAL_THREAD_LOCK(info->i_lock);
-    for (item = opal_list_get_first(&(info->super));
-         item != opal_list_get_end(&(info->super));
-         item = opal_list_get_next(iterator)) {
-         iterator = (opal_info_entry_t *) item;
-
+    OPAL_LIST_FOREACH(iterator, &info->super, opal_info_entry_t) {
 // If we see an __IN_<key> key but no <key>, decide what to do based on mode.
 // If we see an __IN_<key> and a <key>, skip since it'll be handled when
 // we process <key>.
@@ -543,9 +534,7 @@ static opal_info_entry_t *info_find_key (opal_info_t *info, const char *key)
      * return immediately. Else, the loop will fall of the edge
      * and NULL is returned
      */
-    for (iterator = (opal_info_entry_t *)opal_list_get_first(&(info->super));
-         opal_list_get_end(&(info->super)) != (opal_list_item_t*) iterator;
-         iterator = (opal_info_entry_t *)opal_list_get_next(iterator)) {
+    OPAL_LIST_FOREACH(iterator, &info->super, opal_info_entry_t) {
         if (0 == strcmp(key, iterator->ie_key)) {
             return iterator;
         }

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,7 +143,6 @@ opal_mem_hooks_support_level(void)
 int
 opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata)
 {
-    opal_list_item_t *item;
     callback_list_item_t *cbitem, *new_cbitem;
     int ret = OPAL_SUCCESS;
 
@@ -165,11 +167,7 @@ opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata
     opal_atomic_mb();
 
     /* make sure the callback isn't already in the list */
-    for (item = opal_list_get_first(&release_cb_list) ;
-         item != opal_list_get_end(&release_cb_list) ;
-         item = opal_list_get_next(item)) {
-        cbitem = (callback_list_item_t*) item;
-
+    OPAL_LIST_FOREACH(cbitem, &release_cb_list, callback_list_item_t) {
         if (cbitem->cbfunc == func) {
             ret = OPAL_EXISTS;
             goto done;
@@ -195,22 +193,16 @@ opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata
 int
 opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t* func)
 {
-    opal_list_item_t *item;
-    opal_list_item_t *found_item = NULL;
-    callback_list_item_t *cbitem;
+    callback_list_item_t *cbitem, *found_item;
     int ret = OPAL_ERR_NOT_FOUND;
 
     opal_atomic_lock(&release_lock);
 
     /* make sure the callback isn't already in the list */
-    for (item = opal_list_get_first(&release_cb_list) ;
-         item != opal_list_get_end(&release_cb_list) ;
-         item = opal_list_get_next(item)) {
-        cbitem = (callback_list_item_t*) item;
-
+    OPAL_LIST_FOREACH(cbitem, &release_cb_list, callback_list_item_t) {
         if (cbitem->cbfunc == func) {
-            opal_list_remove_item(&release_cb_list, item);
-            found_item = item;
+            opal_list_remove_item(&release_cb_list, (opal_list_item_t *) cbitem);
+            found_item = cbitem;
             ret = OPAL_SUCCESS;
             break;
         }
@@ -221,7 +213,7 @@ opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t* func)
     /* OBJ_RELEASE calls free, so we can't release until we get out of
        the lock */
     if (NULL != found_item) {
-        OBJ_RELEASE(item);
+        OBJ_RELEASE(found_item);
     }
 
     return ret;

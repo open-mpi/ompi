@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -186,25 +186,16 @@ static void opal_adjacency_list_destruct(opal_adjacency_list_t *aj_list)
 static void delete_all_edges_conceded_to_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
 {
     opal_adjacency_list_t *aj_list;
-    opal_list_item_t *aj_list_item;
-    opal_graph_edge_t *edge;
-    opal_list_item_t *edge_item;
+    opal_graph_edge_t *edge, *next;
 
     /**
      * for all the adjacency list in the graph
      */
-    for (aj_list_item = opal_list_get_first(graph->adjacency_list);
-         aj_list_item != opal_list_get_end(graph->adjacency_list);
-         aj_list_item  = opal_list_get_next(aj_list_item)) {
-        aj_list = (opal_adjacency_list_t *) aj_list_item;
+    OPAL_LIST_FOREACH(aj_list, graph->adjacency_list, opal_adjacency_list_t) {
         /**
          * for all the edges in the adjacency list
          */
-        edge_item = opal_list_get_first(aj_list->edges);
-        while (edge_item != opal_list_get_end(aj_list->edges)) {
-            edge = (opal_graph_edge_t *)edge_item;
-            edge_item  = opal_list_get_next(edge_item);
-
+        OPAL_LIST_FOREACH_SAFE(edge, next, aj_list->edges, opal_graph_edge_t) {
             /**
              * if the edge is ended in the vertex
              */
@@ -228,15 +219,11 @@ static void delete_all_edges_conceded_to_vertex(opal_graph_t *graph, opal_graph_
 void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
 {
    opal_adjacency_list_t *aj_list;
-   opal_list_item_t *item;
 
    /**
     * Find if this vertex already exists in the graph.
     */
-   for (item = opal_list_get_first(graph->adjacency_list);
-        item != opal_list_get_end(graph->adjacency_list);
-        item  = opal_list_get_next(item)) {
-       aj_list = (opal_adjacency_list_t *) item;
+   OPAL_LIST_FOREACH(aj_list, graph->adjacency_list, opal_adjacency_list_t) {
        if (aj_list->vertex == vertex) {
            /* If this vertex exists, dont do anything. */
            return;
@@ -270,17 +257,13 @@ void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
 int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge)
 {
     opal_adjacency_list_t *aj_list, *start_aj_list= NULL;
-    opal_list_item_t *item;
     bool start_found = false, end_found = false;
 
 
     /**
      * find the vertices that this edge should connect.
      */
-    for (item = opal_list_get_first(graph->adjacency_list);
-         item != opal_list_get_end(graph->adjacency_list);
-         item  = opal_list_get_next(item)) {
-        aj_list = (opal_adjacency_list_t *) item;
+    OPAL_LIST_FOREACH(aj_list, graph->adjacency_list, opal_adjacency_list_t) {
         if (aj_list->vertex == edge->start) {
             start_found = true;
             start_aj_list = aj_list;
@@ -372,7 +355,6 @@ void opal_graph_remove_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
 uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_graph_vertex_t *vertex2)
 {
     opal_adjacency_list_t *adj_list;
-    opal_list_item_t *item;
     opal_graph_edge_t *edge;
 
     /**
@@ -401,10 +383,7 @@ uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1, 
      * vertex.
      */
     adj_list = (opal_adjacency_list_t *) vertex1->in_adj_list;
-    for (item = opal_list_get_first(adj_list->edges);
-         item != opal_list_get_end(adj_list->edges);
-         item  = opal_list_get_next(item)) {
-        edge = (opal_graph_edge_t *)item;
+    OPAL_LIST_FOREACH(edge, adj_list->edges, opal_graph_edge_t) {
         if (edge->end == vertex2) {
             /* if the second vertex was found in the adjacency list of the first one, return the weight */
             return edge->weight;
@@ -452,15 +431,11 @@ int opal_graph_get_size(opal_graph_t *graph)
 opal_graph_vertex_t *opal_graph_find_vertex(opal_graph_t *graph, void *vertex_data)
 {
     opal_adjacency_list_t *aj_list;
-    opal_list_item_t *item;
 
     /**
      * Run on all the vertices of the graph
      */
-    for (item = opal_list_get_first(graph->adjacency_list);
-         item != opal_list_get_end(graph->adjacency_list);
-         item  = opal_list_get_next(item)) {
-        aj_list = (opal_adjacency_list_t *) item;
+    OPAL_LIST_FOREACH(aj_list, graph->adjacency_list, opal_adjacency_list_t) {
         if (NULL != aj_list->vertex->compare_vertex) {
             /* if the vertex data of a vertex is equal to the vertex data */
             if (0 == aj_list->vertex->compare_vertex(aj_list->vertex->vertex_data, vertex_data)) {
@@ -489,8 +464,6 @@ opal_graph_vertex_t *opal_graph_find_vertex(opal_graph_t *graph, void *vertex_da
 int opal_graph_get_graph_vertices(opal_graph_t *graph, opal_pointer_array_t *vertices_list)
 {
     opal_adjacency_list_t *aj_list;
-    opal_list_item_t *item;
-    int i;
 
     /**
      * If the graph order is 0, return NULL.
@@ -499,10 +472,7 @@ int opal_graph_get_graph_vertices(opal_graph_t *graph, opal_pointer_array_t *ver
         return 0;
     }
     /* Run on all the vertices of the graph */
-    for (item = opal_list_get_first(graph->adjacency_list), i = 0;
-         item != opal_list_get_end(graph->adjacency_list);
-         item  = opal_list_get_next(item), i++) {
-        aj_list = (opal_adjacency_list_t *) item;
+    OPAL_LIST_FOREACH(aj_list, graph->adjacency_list, opal_adjacency_list_t) {
         /* Add the vertex to the vertices array */
         opal_pointer_array_add(vertices_list,(void *)aj_list->vertex);
     }
@@ -528,9 +498,7 @@ int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *v
     opal_adjacency_list_t *adj_list;
     opal_graph_edge_t *edge;
     int adjacents_number;
-    opal_list_item_t *item;
     vertex_distance_from_t distance_from;
-    int i;
 
     /**
      * Verify that the vertex belongs to the graph.
@@ -546,10 +514,7 @@ int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *v
     /* find the number of adjcents of this vertex */
     adjacents_number = opal_list_get_size(adj_list->edges);
     /* Run on all the edges from this vertex */
-    for (item = opal_list_get_first(adj_list->edges), i = 0;
-         item != opal_list_get_end(adj_list->edges);
-         item  = opal_list_get_next(item), i++) {
-        edge = (opal_graph_edge_t *)item;
+    OPAL_LIST_FOREACH(edge, adj_list->edges, opal_graph_edge_t) {
         /* assign vertices and their weight in the adjcents list */
         distance_from.vertex = edge->end;
         distance_from.weight = edge->weight;
@@ -663,7 +628,6 @@ uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, o
 {
     int graph_order;
     vertex_distance_from_t *Q, *q_start, *current_vertex;
-    opal_list_item_t *adj_list_item;
     opal_adjacency_list_t *adj_list;
     int number_of_items_in_q;
     int i;
@@ -683,22 +647,15 @@ uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, o
     /* assign a pointer to the start of the queue */
     q_start = Q;
     /* run on all the vertices of the graph */
-    for (adj_list_item = opal_list_get_first(graph->adjacency_list), i=0;
-         adj_list_item != opal_list_get_end(graph->adjacency_list);
-         adj_list_item  = opal_list_get_next(adj_list_item), i++) {
-        adj_list = (opal_adjacency_list_t *)adj_list_item;
+    i = 0;
+    OPAL_LIST_FOREACH(adj_list, graph->adjacency_list, opal_adjacency_list_t) {
         /* insert the vertices pointes to the working queue */
         Q[i].vertex = adj_list->vertex;
         /**
          * assign an infinity distance to all the vertices in the queue
          * except the reference vertex which its distance should be 0.
          */
-        if (Q[i].vertex == vertex) {
-            Q[i].weight = 0;
-        }
-        else {
-            Q[i].weight = DISTANCE_INFINITY;
-        }
+        Q[i++].weight = (adj_list->vertex == vertex) ? 0 : DISTANCE_INFINITY;
     }
     number_of_items_in_q = i;
     /* sort the working queue according the distance from the reference vertex */
@@ -750,17 +707,13 @@ uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, o
 void opal_graph_duplicate(opal_graph_t **dest, opal_graph_t *src)
 {
     opal_adjacency_list_t *aj_list;
-    opal_list_item_t *aj_list_item, *edg_item;
     opal_graph_vertex_t *vertex;
     opal_graph_edge_t *edge, *new_edge;
 
     /* construct a new graph */
     *dest = OBJ_NEW(opal_graph_t);
     /* Run on all the vertices of the src graph */
-    for (aj_list_item = opal_list_get_first(src->adjacency_list);
-         aj_list_item != opal_list_get_end(src->adjacency_list);
-         aj_list_item  = opal_list_get_next(aj_list_item)) {
-        aj_list = (opal_adjacency_list_t *) aj_list_item;
+    OPAL_LIST_FOREACH(aj_list, src->adjacency_list, opal_adjacency_list_t) {
         /* for each vertex in the src graph, construct a new vertex */
         vertex = OBJ_NEW(opal_graph_vertex_t);
         /* associate the new vertex to a vertex from the original graph */
@@ -789,15 +742,9 @@ void opal_graph_duplicate(opal_graph_t **dest, opal_graph_t *src)
      * Now, copy all the edges from the source graph
      */
     /* Run on all the adjscency lists in the graph */
-    for (aj_list_item = opal_list_get_first(src->adjacency_list);
-         aj_list_item != opal_list_get_end(src->adjacency_list);
-         aj_list_item  = opal_list_get_next(aj_list_item)) {
-        aj_list = (opal_adjacency_list_t *) aj_list_item;
+    OPAL_LIST_FOREACH(aj_list, src->adjacency_list, opal_adjacency_list_t) {
         /* for all the edges in the adjscency list */
-        for (edg_item = opal_list_get_first(aj_list->edges);
-             edg_item != opal_list_get_end(aj_list->edges);
-             edg_item = opal_list_get_next(edg_item)) {
-            edge = (opal_graph_edge_t *)edg_item;
+        OPAL_LIST_FOREACH(edge, aj_list->edges, opal_graph_edge_t) {
             /* construct new edge for the new graph */
             new_edge = OBJ_NEW(opal_graph_edge_t);
             /* copy the edge weight from the original edge */
@@ -818,9 +765,7 @@ void opal_graph_duplicate(opal_graph_t **dest, opal_graph_t *src)
 void opal_graph_print(opal_graph_t *graph)
 {
     opal_adjacency_list_t *aj_list;
-    opal_list_item_t *aj_list_item;
     opal_graph_edge_t *edge;
-    opal_list_item_t *edge_item;
     char *tmp_str1, *tmp_str2;
     bool need_free1, need_free2;
 
@@ -828,10 +773,7 @@ void opal_graph_print(opal_graph_t *graph)
     opal_output(0, "      Graph         ");
     opal_output(0, "====================");
     /* run on all the vertices of the graph */
-    for (aj_list_item = opal_list_get_first(graph->adjacency_list);
-         aj_list_item != opal_list_get_end(graph->adjacency_list);
-         aj_list_item  = opal_list_get_next(aj_list_item)) {
-        aj_list = (opal_adjacency_list_t *) aj_list_item;
+    OPAL_LIST_FOREACH(aj_list, graph->adjacency_list, opal_adjacency_list_t) {
         /* print vertex data to temporary string*/
         if (NULL != aj_list->vertex->print_vertex) {
             need_free1 = true;
@@ -844,10 +786,7 @@ void opal_graph_print(opal_graph_t *graph)
         /* print vertex */
         opal_output(0, "V(%s) Connections:",tmp_str1);
         /* run on all the edges of the vertex */
-        for (edge_item = opal_list_get_first(aj_list->edges);
-             edge_item != opal_list_get_end(aj_list->edges);
-             edge_item  = opal_list_get_next(edge_item)) {
-            edge = (opal_graph_edge_t *)edge_item;
+        OPAL_LIST_FOREACH(edge, aj_list->edges, opal_graph_edge_t) {
             /* print the vertex data of the vertex in the end of the edge to a temporary string */
             if (NULL != edge->end->print_vertex) {
                 need_free2 = true;
