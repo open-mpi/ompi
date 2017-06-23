@@ -464,6 +464,10 @@ static void *mca_btl_tcp_endpoint_complete_accept(int fd, int flags, void *conte
         mca_btl_tcp_endpoint_event_init(btl_endpoint);
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(recv) [endpoint_accept]");
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
+        if( mca_btl_tcp_event_base == opal_sync_event_base ) {
+            /* If no progress thread then raise the awarness of the default progress engine */
+            opal_progress_event_users_increment();
+        }
         mca_btl_tcp_endpoint_connected(btl_endpoint);
 
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "accepted");
@@ -513,6 +517,10 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
     btl_endpoint->endpoint_retries++;
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "event_del(recv) [close]");
     opal_event_del(&btl_endpoint->endpoint_recv_event);
+    if( mca_btl_tcp_event_base == opal_sync_event_base ) {
+        /* If no progress thread then lower the awarness of the default progress engine */
+        opal_progress_event_users_decrement();
+    }
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "event_del(send) [close]");
     opal_event_del(&btl_endpoint->endpoint_send_event);
 
@@ -732,6 +740,10 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
             btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
             MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(recv) [start_connect]");
             opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
+            if( mca_btl_tcp_event_base == opal_sync_event_base ) {
+                /* If no progress thread then raise the awarness of the default progress engine */
+                opal_progress_event_users_increment();
+            }
             return OPAL_SUCCESS;
         }
         /* We connected to the peer, but he close the socket before we got a chance to send our guid */
@@ -801,6 +813,10 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
     if(mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) == OPAL_SUCCESS) {
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
+        if( mca_btl_tcp_event_base == opal_sync_event_base ) {
+            /* If no progress thread then raise the awarness of the default progress engine */
+            opal_progress_event_users_increment();
+        }
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, false, "event_add(recv) [complete_connect]");
         return;
     }
