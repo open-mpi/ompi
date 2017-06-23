@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
@@ -99,7 +99,6 @@ struct orte_proc_info_t {
     char **aliases;                     /**< aliases for this node */
     pid_t pid;                          /**< Local process ID for this process */
     orte_proc_type_t proc_type;         /**< Type of process */
-    opal_buffer_t *sync_buf;            /**< buffer to store sync response */
     uint16_t my_port;                   /**< TCP port for out-of-band comm */
     int num_restarts;                   /**< number of times this proc has restarted */
     orte_node_rank_t my_node_rank;      /**< node rank */

@@ -12,7 +12,7 @@
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -69,7 +69,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .aliases =                         NULL,
     .pid =                             0,
     .proc_type =                       ORTE_PROC_TYPE_NONE,
-    .sync_buf =                        NULL,
     .my_port =                         0,
     .num_restarts =                    0,
     .my_node_rank =                    ORTE_NODE_RANK_INVALID,
@@ -265,9 +264,6 @@ int orte_proc_info(void)
                                   &orte_ess_node_rank);
     orte_process_info.my_node_rank = (orte_node_rank_t) orte_ess_node_rank;
 
-    /* setup the sync buffer */
-    orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
-
     return ORTE_SUCCESS;
 }
 
@@ -329,9 +325,6 @@ int orte_proc_info_finalize(void)
     }
 
     orte_process_info.proc_type = ORTE_PROC_TYPE_NONE;
-
-    OBJ_RELEASE(orte_process_info.sync_buf);
-    orte_process_info.sync_buf = NULL;
 
     OBJ_DESTRUCT(&orte_process_info.super);
 
