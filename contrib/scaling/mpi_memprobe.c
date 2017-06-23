@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "mpi.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/argv.h"
 #include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -117,17 +118,19 @@ static void sample(void)
     free(tmp);
     OPAL_LIST_FOREACH(kv, &response, opal_value_t) {
         lt = (opal_list_t*)kv->data.ptr;
-        OPAL_LIST_FOREACH(ival, lt, opal_value_t) {
-            if (0 == strcmp(ival->key, OPAL_PMIX_DAEMON_MEMORY)) {
-                asprintf(&tmp, "\tDaemon: %f", ival->data.fval);
-                opal_argv_append_nosize(&answer, tmp);
-                free(tmp);
-            } else if (0 == strcmp(ival->key, OPAL_PMIX_CLIENT_AVG_MEMORY)) {
-                asprintf(&tmp, "\tClient: %f", ival->data.fval);
-                opal_argv_append_nosize(&answer, tmp);
-                free(tmp);
-            } else {
-                fprintf(stderr, "\tUnknown key: %s", ival->key);
+        if (NULL != lt) {
+            OPAL_LIST_FOREACH(ival, lt, opal_value_t) {
+                if (0 == strcmp(ival->key, OPAL_PMIX_DAEMON_MEMORY)) {
+                    asprintf(&tmp, "\tDaemon: %f", ival->data.fval);
+                    opal_argv_append_nosize(&answer, tmp);
+                    free(tmp);
+                } else if (0 == strcmp(ival->key, OPAL_PMIX_CLIENT_AVG_MEMORY)) {
+                    asprintf(&tmp, "\tClient: %f", ival->data.fval);
+                    opal_argv_append_nosize(&answer, tmp);
+                    free(tmp);
+                } else {
+                    fprintf(stderr, "\tUnknown key: %s", ival->key);
+                }
             }
         }
     }
@@ -149,7 +152,6 @@ static void sample(void)
     }
     OPAL_LIST_DESTRUCT(&response);
 
-
     if (0 == rank) {
         /* send the notification to release the other procs */
         wait_for_release = true;
@@ -162,19 +164,15 @@ static void sample(void)
         active = -1;
         if (OPAL_SUCCESS != opal_pmix.notify_event(MEMPROBE_RELEASE, NULL,
                                                    OPAL_PMIX_RANGE_GLOBAL, &response,
-                                                   notifycbfunc, (void*)&active)) {
+                                                   NULL, NULL)) {
             fprintf(stderr, "Notify event failed\n");
             exit(1);
         }
-        while (-1 == active) {
+    } else {
+        /* now wait for notification */
+        while (wait_for_release) {
             usleep(10);
         }
-        OPAL_LIST_DESTRUCT(&response);
-    }
-
-    /* now wait for notification */
-    while (wait_for_release) {
-        usleep(10);
     }
 }
 

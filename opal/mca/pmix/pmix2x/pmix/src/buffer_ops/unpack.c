@@ -714,8 +714,8 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
             break;
         /********************/
         default:
-        pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)val->type);
-        return PMIX_ERROR;
+            pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)val->type);
+            return PMIX_ERROR;
     }
 
     return PMIX_SUCCESS;
@@ -765,6 +765,7 @@ pmix_status_t pmix_bfrop_unpack_info(pmix_buffer_t *buffer, void *dest,
         m=1;
         tmp = NULL;
         if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_string(buffer, &tmp, &m, PMIX_STRING))) {
+            PMIX_ERROR_LOG(ret);
             return ret;
         }
         if (NULL == tmp) {
@@ -775,6 +776,7 @@ pmix_status_t pmix_bfrop_unpack_info(pmix_buffer_t *buffer, void *dest,
         /* unpack the flags */
         m=1;
         if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_infodirs(buffer, &ptr[i].flags, &m, PMIX_INFO_DIRECTIVES))) {
+            PMIX_ERROR_LOG(ret);
             return ret;
         }
         /* unpack value - since the value structure is statically-defined
@@ -782,12 +784,14 @@ pmix_status_t pmix_bfrop_unpack_info(pmix_buffer_t *buffer, void *dest,
          * avoid the malloc */
          m=1;
          if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_int(buffer, &ptr[i].value.type, &m, PMIX_INT))) {
+            PMIX_ERROR_LOG(ret);
             return ret;
         }
         pmix_output_verbose(20, pmix_globals.debug_output,
                             "pmix_bfrop_unpack: info type %d", ptr[i].value.type);
         m=1;
         if (PMIX_SUCCESS != (ret = unpack_val(buffer, &ptr[i].value))) {
+            PMIX_ERROR_LOG(ret);
             return ret;
         }
     }
@@ -1271,6 +1275,9 @@ pmix_status_t pmix_bfrop_unpack_darray(pmix_buffer_t *buffer, void *dest,
                 break;
             case PMIX_STATUS:
                 nbytes = sizeof(pmix_status_t);
+                break;
+            case PMIX_INFO:
+                nbytes = sizeof(pmix_info_t);
                 break;
             case PMIX_PROC:
                 nbytes = sizeof(pmix_proc_t);
