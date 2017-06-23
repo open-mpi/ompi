@@ -43,11 +43,6 @@
 #include "opal/util/strncpy.h"
 
 #include "opal/util/info.h"
-#ifdef XXX
-#include "ompi/runtime/mpiruntime.h"
-#include "ompi/runtime/params.h"
-#endif
-
 
 /*
  * Local functions
@@ -88,13 +83,13 @@ int opal_info_dup (opal_info_t *info, opal_info_t **newinfo)
     OPAL_THREAD_LOCK(info->i_lock);
     OPAL_LIST_FOREACH(iterator, &info->super, opal_info_entry_t) {
         err = opal_info_set(*newinfo, iterator->ie_key, iterator->ie_value);
-        if (MPI_SUCCESS != err) {
+        if (OPAL_SUCCESS != err) {
             OPAL_THREAD_UNLOCK(info->i_lock);
             return err;
         }
      }
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -115,8 +110,8 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 {
     int err, flag;
     opal_info_entry_t *iterator;
-    char savedkey[MPI_MAX_INFO_KEY];
-    char savedval[MPI_MAX_INFO_VAL];
+    char savedkey[OPAL_MAX_INFO_KEY];
+    char savedval[OPAL_MAX_INFO_VAL];
     char *valptr, *pkey;
     int is_IN_key;
     int exists_IN_key, exists_reg_key;
@@ -144,9 +139,9 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
              exists_reg_key = 1;
 
 // see if there is an __IN_<key> for the current <key>
-             if (strlen(iterator->ie_key) + 5 < MPI_MAX_INFO_KEY) {
+             if (strlen(iterator->ie_key) + 5 < OPAL_MAX_INFO_KEY) {
                  sprintf(savedkey, "__IN_%s", iterator->ie_key);
-                 err = opal_info_get (info, savedkey, MPI_MAX_INFO_VAL,
+                 err = opal_info_get (info, savedkey, OPAL_MAX_INFO_VAL,
                      savedval, &flag);
              } else {
                  flag = 0;
@@ -166,7 +161,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 // so base our behavior on the omit_ignored
                  if (!omit_ignored) {
                      err = opal_info_set(*newinfo, pkey, iterator->ie_value);
-                     if (MPI_SUCCESS != err) {
+                     if (OPAL_SUCCESS != err) {
                          OPAL_THREAD_UNLOCK(info->i_lock);
                          return err;
                      }
@@ -191,7 +186,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
              }
              if (valptr) {
                  err = opal_info_set(*newinfo, pkey, valptr);
-                 if (MPI_SUCCESS != err) {
+                 if (OPAL_SUCCESS != err) {
                      OPAL_THREAD_UNLOCK(info->i_lock);
                      return err;
                  }
@@ -199,7 +194,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
          }
      }
      OPAL_THREAD_UNLOCK(info->i_lock);
-     return MPI_SUCCESS;
+     return OPAL_SUCCESS;
 }
 
 /*
@@ -222,7 +217,7 @@ int opal_info_set (opal_info_t *info, const char *key, const char *value)
 
     new_value = strdup(value);
     if (NULL == new_value) {
-      return MPI_ERR_NO_MEM;
+      return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     OPAL_THREAD_LOCK(info->i_lock);
@@ -238,14 +233,14 @@ int opal_info_set (opal_info_t *info, const char *key, const char *value)
         if (NULL == new_info) {
             free(new_value);
             OPAL_THREAD_UNLOCK(info->i_lock);
-            return MPI_ERR_NO_MEM;
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        strncpy (new_info->ie_key, key, MPI_MAX_INFO_KEY);
+        strncpy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
         new_info->ie_value = new_value;
         opal_list_append (&(info->super), (opal_list_item_t *) new_info);
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -293,7 +288,7 @@ int opal_info_get (opal_info_t *info, const char *key, int valuelen,
                strcpy(value, search->ie_value);
           } else {
                opal_strncpy(value, search->ie_value, valuelen);
-               if (MPI_MAX_INFO_VAL == valuelen) {
+               if (OPAL_MAX_INFO_VAL == valuelen) {
                    value[valuelen-1] = 0;
                } else {
                    value[valuelen] = 0;
@@ -301,7 +296,7 @@ int opal_info_get (opal_info_t *info, const char *key, int valuelen,
           }
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_info_get_value_enum (opal_info_t *info, const char *key, int *value,
@@ -318,7 +313,7 @@ int opal_info_get_value_enum (opal_info_t *info, const char *key, int *value,
     if (NULL == search){
         OPAL_THREAD_UNLOCK(info->i_lock);
         *flag = 0;
-        return MPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* we found a mathing key. pass the string value to the enumerator and
@@ -346,7 +341,7 @@ int opal_info_get_bool(opal_info_t *info, char *key, bool *value, int *flag)
 	*value = opal_str_to_bool(str);
     }
 
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -392,7 +387,7 @@ int opal_info_delete(opal_info_t *info, const char *key)
     search = info_find_key (info, key);
     if (NULL == search){
          OPAL_THREAD_UNLOCK(info->i_lock);
-         return MPI_ERR_INFO_NOKEY;
+         return OPAL_ERR_NOT_FOUND;
     } else {
          /*
           * An entry with this key value was found. Remove the item
@@ -404,7 +399,7 @@ int opal_info_delete(opal_info_t *info, const char *key)
           OBJ_RELEASE(search);
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -429,7 +424,7 @@ int opal_info_get_valuelen (opal_info_t *info, const char *key, int *valuelen,
          *valuelen = strlen(search->ie_value);
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -451,7 +446,7 @@ int opal_info_get_nthkey (opal_info_t *info, int n, char *key)
          if (opal_list_get_end(&(info->super)) ==
              (opal_list_item_t *) iterator) {
              OPAL_THREAD_UNLOCK(info->i_lock);
-             return MPI_ERR_ARG;
+             return OPAL_ERR_BAD_PARAM;
          }
     }
     /*
@@ -459,9 +454,9 @@ int opal_info_get_nthkey (opal_info_t *info, int n, char *key)
      * cast it to opal_info_entry_t before we can use it to
      * access the value
      */
-    strncpy(key, iterator->ie_key, MPI_MAX_INFO_KEY);
+    strncpy(key, iterator->ie_key, OPAL_MAX_INFO_KEY);
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -506,7 +501,7 @@ static void info_destructor(opal_info_t *info)
 static void info_entry_constructor(opal_info_entry_t *entry)
 {
     memset(entry->ie_key, 0, sizeof(entry->ie_key));
-    entry->ie_key[MPI_MAX_INFO_KEY] = 0;
+    entry->ie_key[OPAL_MAX_INFO_KEY] = 0;
 }
 
 

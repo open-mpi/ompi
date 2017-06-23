@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -253,19 +253,19 @@ opal_infosubscribe_testregister(opal_infosubscriber_t *object)
 static int
 save_original_key_val(opal_info_t *info, char *key, char *val, int overwrite)
 {
-    char modkey[MPI_MAX_INFO_KEY];
+    char modkey[OPAL_MAX_INFO_KEY];
     int flag, err;
 
     // Checking strlen, even though it should be unnecessary.
     // This should only happen on predefined keys with short lengths.
-    if (strlen(key) + 5 < MPI_MAX_INFO_KEY) {
+    if (strlen(key) + 5 < OPAL_MAX_INFO_KEY) {
         sprintf(modkey, "__IN_%s", key);
 
         flag = 0;
         opal_info_get(info, modkey, 0, NULL, &flag);
         if (!flag || overwrite) {
             err = opal_info_set(info, modkey, val);
-            if (MPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 return err;
             }
         }
@@ -278,7 +278,7 @@ save_original_key_val(opal_info_t *info, char *key, char *val, int overwrite)
         printf("WARNING: Unexpected key length [%s]\n", key);
 #endif
     }
-    return MPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int
@@ -308,9 +308,9 @@ opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *new_i
 // either way it shouldn't be set, which we'll ensure with an unset
 // in case a previous value exists.
             err = opal_info_delete(object->s_info, iterator->ie_key);
-            err = MPI_SUCCESS; // we don't care if the key was found or not
+            err = OPAL_SUCCESS; // we don't care if the key was found or not
         }
-        if (MPI_SUCCESS != err) {
+        if (OPAL_SUCCESS != err) {
             return err;
         }
 // Save the original at "__IN_<key>":"original"
@@ -378,12 +378,12 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
         }
 // - is there a value already associated with key in this obj's info:
 //   to use in the callback()
-        char *buffer = malloc(MPI_MAX_INFO_VAL+1); // (+1 shouldn't be needed)
+        char *buffer = malloc(OPAL_MAX_INFO_VAL+1); // (+1 shouldn't be needed)
         char *val = value; // start as default value
         int flag = 0;
         char *updated_value;
         int err;
-        opal_info_get(object->s_info, key, MPI_MAX_INFO_VAL, buffer, &flag);
+        opal_info_get(object->s_info, key, OPAL_MAX_INFO_VAL, buffer, &flag);
         if (flag) {
             val = buffer; // become info value if this key was in info
         }
@@ -393,9 +393,9 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
             err = opal_info_set(object->s_info, key, updated_value);
         } else {
             err = opal_info_delete(object->s_info, key);
-            err = MPI_SUCCESS; // we don't care if the key was found or not
+            err = OPAL_SUCCESS; // we don't care if the key was found or not
         }
-        if (MPI_SUCCESS != err) {
+        if (OPAL_SUCCESS != err) {
             free(buffer);
             return err;
         }
