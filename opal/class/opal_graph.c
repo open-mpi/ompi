@@ -257,7 +257,7 @@ void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
 int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge)
 {
     opal_adjacency_list_t *aj_list, *start_aj_list= NULL;
-    bool start_found = false, end_found = false;
+    bool end_found = false;
 
 
     /**
@@ -265,7 +265,6 @@ int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge)
      */
     OPAL_LIST_FOREACH(aj_list, graph->adjacency_list, opal_adjacency_list_t) {
         if (aj_list->vertex == edge->start) {
-            start_found = true;
             start_aj_list = aj_list;
         }
         if (aj_list->vertex == edge->end) {
@@ -276,7 +275,7 @@ int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge)
      * if one of the vertices either the start or the end is not
      * found - return an error.
      */
-    if (false == start_found && false == end_found) {
+    if (NULL == start_aj_list || false == end_found) {
         return OPAL_ERROR;
     }
     /* point the edge to the adjacency list of the start vertex (for easy search) */

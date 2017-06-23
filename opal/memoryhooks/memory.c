@@ -193,7 +193,7 @@ opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata
 int
 opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t* func)
 {
-    callback_list_item_t *cbitem, *found_item;
+    callback_list_item_t *cbitem, *found_item = NULL;
     int ret = OPAL_ERR_NOT_FOUND;
 
     opal_atomic_lock(&release_lock);
