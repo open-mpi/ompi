@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -338,7 +339,7 @@ int opal_info_get_bool(opal_info_t *info, char *key, bool *value, int *flag)
     str[sizeof(str) - 1] = '\0';
     opal_info_get(info, key, sizeof(str) - 1, str, flag);
     if (*flag) {
-	*value = opal_str_to_bool(str);
+        *value = opal_str_to_bool(str);
     }
 
     return OPAL_SUCCESS;
@@ -373,7 +374,7 @@ opal_str_to_bool(char *str)
             /* RHC unrecognized value -- print a warning? */
         }
     }
-    return result;   
+    return result;
 }
 
 /*
@@ -587,4 +588,3 @@ opal_info_value_to_bool(char *value, bool *interp)
 
     return OPAL_ERR_BAD_PARAM;
 }
-

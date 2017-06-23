@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,16 +62,16 @@ struct opal_callback_list_item_t {
 typedef struct opal_callback_list_item_t opal_callback_list_item_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_infosubscriber_t);
-OBJ_CLASS_INSTANCE(opal_infosubscriber_t, 
-                   opal_object_t, 
-                   infosubscriber_construct, 
+OBJ_CLASS_INSTANCE(opal_infosubscriber_t,
+                   opal_object_t,
+                   infosubscriber_construct,
                    infosubscriber_destruct);
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_callback_list_item_t);
 static void opal_callback_list_item_destruct(opal_callback_list_item_t *obj);
-OBJ_CLASS_INSTANCE(opal_callback_list_item_t, 
-                   opal_list_item_t, 
-                   NULL, 
+OBJ_CLASS_INSTANCE(opal_callback_list_item_t,
+                   opal_list_item_t,
+                   NULL,
                    opal_callback_list_item_destruct);
 
 static void infosubscriber_construct(opal_infosubscriber_t *obj) {
@@ -113,10 +114,10 @@ static char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object
 
     if (found_callback) { *found_callback = 0; }
 /*
- * Present the new value to each subscriber.  They can decide to accept it, ignore it, or 
+ * Present the new value to each subscriber.  They can decide to accept it, ignore it, or
  * over-ride it with their own value (like ignore, but they specify what value they want it to have).
  *
- * Since multiple subscribers could set values, only the last setting is kept as the 
+ * Since multiple subscribers could set values, only the last setting is kept as the
  * returned value.
  */
     if (table) {
@@ -125,7 +126,7 @@ static char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object
         if (list) {
             updated_value = new_value;
             OPAL_LIST_FOREACH(item, list, opal_callback_list_item_t) {
-		updated_value = item->callback(object, key, updated_value);
+                updated_value = item->callback(object, key, updated_value);
                 if (found_callback) { *found_callback = 1; }
             }
         }
@@ -186,10 +187,10 @@ opal_infosubscribe_testregister(opal_infosubscriber_t *object)
                 strlen(testing_keys[i]), (void**) &list);
             if (list) {
                 OPAL_LIST_FOREACH(item, list, opal_callback_list_item_t) {
-		    if (0 ==
+                    if (0 ==
                         strcmp(item->default_value, testing_initialvals[i])
                         &&
-		        item->callback == testing_callbacks[i])
+                        item->callback == testing_callbacks[i])
                     {
                         found = 1;
                     }
@@ -234,7 +235,7 @@ opal_infosubscribe_testregister(opal_infosubscriber_t *object)
                     "in hash table\n");
                 exit(-1);
             }
-		
+
             err = opal_hash_table_get_next_key_ptr(table,
                 (void**) &next_key, &key_size, (void**) &list, node, &node);
         }
@@ -294,13 +295,13 @@ opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *new_i
     if (!object->s_info) {
         object->s_info = OBJ_NEW(opal_info_t);
     }
- 
+
     if (NULL != new_info) {
     OPAL_LIST_FOREACH(iterator, &new_info->super, opal_info_entry_t) {
-      
+
         updated_value = opal_infosubscribe_inform_subscribers(object, iterator->ie_key, iterator->ie_value, &found_callback);
         if (updated_value) {
-            err = opal_info_set(object->s_info, iterator->ie_key, updated_value);    
+            err = opal_info_set(object->s_info, iterator->ie_key, updated_value);
         } else {
 // This path would happen if there was no callback for this key,
 // or if there was a callback and it returned null. One way the
@@ -355,15 +356,15 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
             opal_hash_table_set_value_ptr(table, key, strlen(key), list);
         }
 
-	callback_list_item = OBJ_NEW(opal_callback_list_item_t);
+        callback_list_item = OBJ_NEW(opal_callback_list_item_t);
         callback_list_item->callback = callback;
-	if (value) {
+        if (value) {
             callback_list_item->default_value = strdup(value);
         } else {
             callback_list_item->default_value = NULL;
         }
 
-        opal_list_append(list, (opal_list_item_t*) callback_list_item); 
+        opal_list_append(list, (opal_list_item_t*) callback_list_item);
 
 // Trigger callback() on either the default value or the info that's in the
 // object if there is one. Unfortunately there's some code duplication as
@@ -412,7 +413,7 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
     } else {
 /*
  * TODO: This should not happen
- */ 
+ */
     }
 
     return OPAL_SUCCESS;
