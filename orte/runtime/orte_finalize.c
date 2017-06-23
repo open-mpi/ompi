@@ -39,6 +39,7 @@
 #include "orte/runtime/orte_locks.h"
 #include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 
 int orte_finalize(void)
@@ -90,6 +91,9 @@ int orte_finalize(void)
     if (NULL != orte_fork_agent) {
         opal_argv_free(orte_fork_agent);
     }
+
+    /* destruct our process info */
+    OBJ_DESTRUCT(&orte_process_info.super);
 
     /* finalize the opal utilities */
     rc = opal_finalize();
