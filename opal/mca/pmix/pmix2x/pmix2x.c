@@ -1256,8 +1256,10 @@ static void pmix2x_query(opal_list_t *queries,
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     if (0 >= opal_pmix_base.initialized) {
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-        rc = OPAL_ERR_NOT_INITIALIZED;
-        goto CLEANUP;
+        if (NULL != cbfunc) {
+            cbfunc(OPAL_ERR_NOT_INITIALIZED, NULL, cbdata, NULL, NULL);
+        }
+        return;
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
@@ -1323,8 +1325,10 @@ static void pmix2x_log(opal_list_t *info,
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     if (0 >= opal_pmix_base.initialized) {
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-        rc = OPAL_ERR_NOT_INITIALIZED;
-        goto CLEANUP;
+        if (NULL != cbfunc) {
+            cbfunc(OPAL_ERR_NOT_INITIALIZED, cbdata);
+        }
+        return;
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 

@@ -15,7 +15,7 @@
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -402,8 +402,8 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                        which can have 0 or 1 arguments */
                     if (i >= cmd->lcl_argc) {
                     /* If this is a help request, can have no arguments */
-                        if((NULL != option->clo_single_dash_name && 
-                           0 == strcmp(option->clo_single_dash_name, "h")) || 
+                        if((NULL != option->clo_single_dash_name &&
+                           0 == strcmp(option->clo_single_dash_name, "h")) ||
                            (NULL != option->clo_long_name &&
                            0 == strcmp(option->clo_long_name, "help"))) {
                             help_without_arg = true;
@@ -466,7 +466,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
                 }
 
                 /* If there are no options to this command or it is
-                   a help request with no argument, see if we need to 
+                   a help request with no argument, see if we need to
                    set a boolean value to "true". */
 
                 if (0 == option->clo_num_params || help_without_arg) {
