@@ -312,7 +312,7 @@ int pmix2x_fence(opal_list_t *procs, int collect_data)
     pmix_status_t rc;
     opal_namelist_t *ptr;
     char *nsptr;
-    size_t cnt, n;
+    size_t cnt = 0, n;
     pmix_proc_t *parray = NULL;
     pmix_info_t info, *iptr;
 
@@ -729,7 +729,7 @@ int pmix2x_lookup(opal_list_t *data, opal_list_t *info)
     pmix_pdata_t *pdata;
     pmix_info_t *pinfo = NULL;
     pmix_status_t rc;
-    size_t cnt, n, sz;
+    size_t cnt, n, sz = 0;
     opal_value_t *iptr;
     opal_pmix2x_jobid_trkr_t *jptr, *job;
     int ret;
@@ -1000,7 +1000,7 @@ int pmix2x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
     pmix_status_t rc;
     pmix_info_t *info = NULL;
     pmix_app_t *papps;
-    size_t ninfo, napps, n, m;
+    size_t ninfo = 0, napps, n, m;
     opal_value_t *ival;
     opal_pmix_app_t *app;
     char nspace[PMIX_MAX_NSLEN+1];
