@@ -326,8 +326,6 @@ int orte_proc_info_finalize(void)
 
     orte_process_info.proc_type = ORTE_PROC_TYPE_NONE;
 
-    OBJ_DESTRUCT(&orte_process_info.super);
-
     opal_argv_free(orte_process_info.aliases);
 
     init = false;
