@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -39,6 +39,7 @@
 #include "orte/runtime/orte_locks.h"
 #include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 
 int orte_finalize(void)
@@ -84,15 +85,15 @@ int orte_finalize(void)
     orte_schizo.finalize();
     (void) mca_base_framework_close(&orte_schizo_base_framework);
 
-    /* cleanup the process info */
-    orte_proc_info_finalize();
-
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);
 
     if (NULL != orte_fork_agent) {
         opal_argv_free(orte_fork_agent);
     }
+
+    /* destruct our process info */
+    OBJ_DESTRUCT(&orte_process_info.super);
 
     /* finalize the opal utilities */
     rc = opal_finalize();
