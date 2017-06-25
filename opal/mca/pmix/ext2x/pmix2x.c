@@ -685,7 +685,7 @@ void ext2x_value_load(pmix_value_t *v,
             break;
         case OPAL_SIZE:
             v->type = PMIX_SIZE;
-            v->data.size = (size_t)kv->data.size;
+            memcpy(&(v->data.size), &kv->data.size, sizeof(size_t));
             break;
         case OPAL_PID:
             v->type = PMIX_PID;
@@ -856,7 +856,7 @@ int ext2x_value_unload(opal_value_t *kv,
         break;
     case PMIX_SIZE:
         kv->type = OPAL_SIZE;
-        kv->data.size = (int)v->data.size;
+        memcpy(&kv->data.size, &(v->data.size), sizeof(size_t));
         break;
     case PMIX_PID:
         kv->type = OPAL_PID;
