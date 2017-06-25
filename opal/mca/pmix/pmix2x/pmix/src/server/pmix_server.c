@@ -87,24 +87,6 @@ static inline int _my_client(const char *nspace, pmix_rank_t rank);
 
 static pmix_status_t initialize_server_base(pmix_server_module_t *module)
 {
-    char *evar;
-
-    /* look for our namespace, if one was given */
-    if (NULL == (evar = getenv("PMIX_SERVER_NAMESPACE"))) {
-        /* use a fake namespace */
-        (void)strncpy(pmix_globals.myid.nspace, "pmix-server", PMIX_MAX_NSLEN);
-    } else {
-        (void)strncpy(pmix_globals.myid.nspace, evar, PMIX_MAX_NSLEN);
-    }
-    /* look for our rank, if one was given */
-    mypid = getpid();
-    if (NULL == (evar = getenv("PMIX_SERVER_RANK"))) {
-        /* use our pid */
-        pmix_globals.myid.rank = mypid;
-    } else {
-        pmix_globals.myid.rank = strtol(evar, NULL, 10);
-    }
-
     /* setup the server-specific globals */
     PMIX_CONSTRUCT(&pmix_server_globals.clients, pmix_pointer_array_t);
     pmix_pointer_array_init(&pmix_server_globals.clients, 1, INT_MAX, 1);
@@ -131,7 +113,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     pmix_status_t rc;
     size_t n, m;
     pmix_kval_t kv;
-    bool protect;
+    bool protect, nspace_given = false, rank_given = false;
     char *protected[] = {
         PMIX_USERID,
         PMIX_GRPID,
@@ -140,6 +122,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         PMIX_SERVER_SYSTEM_SUPPORT,
         NULL
     };
+    char *evar;
+    pmix_rank_info_t *rinfo;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -159,31 +143,22 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         return rc;
     }
 
-#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    if (PMIX_SUCCESS != (rc = pmix_dstore_init(info, ninfo))) {
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return rc;
-    }
-#endif /* PMIX_ENABLE_DSTORE */
-
-    /* setup the wildcard recv for inbound messages from clients */
-    req = PMIX_NEW(pmix_ptl_posted_recv_t);
-    req->tag = UINT32_MAX;
-    req->cbfunc = server_message_handler;
-    /* add it to the end of the list of recvs */
-    pmix_list_append(&pmix_ptl_globals.posted_recvs, &req->super);
-
-    if (PMIX_SUCCESS != pmix_ptl_base_start_listening(info, ninfo)) {
-        pmix_show_help("help-pmix-server.txt", "listener-thread-start", true);
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return PMIX_ERR_INIT;
-    }
-
     /* check the info keys for info we
-     * need to provide to every client */
+     * need to provide to every client and
+     * directives aimed at us */
     if (NULL != info) {
         PMIX_CONSTRUCT(&kv, pmix_kval_t);
         for (n=0; n < ninfo; n++) {
+            if (0 == strncmp(info[n].key, PMIX_SERVER_NSPACE, PMIX_MAX_KEYLEN)) {
+                (void)strncpy(pmix_globals.myid.nspace, info[n].value.data.string, PMIX_MAX_NSLEN);
+                nspace_given = true;
+                continue;
+            }
+            if (0 == strncmp(info[n].key, PMIX_SERVER_RANK, PMIX_MAX_KEYLEN)) {
+                pmix_globals.myid.rank = info[n].value.data.rank;
+                rank_given = true;
+                continue;
+            }
             /* check the list of protected keys */
             protect = false;
             for (m=0; NULL != protected[m]; m++) {
@@ -213,6 +188,64 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         kv.key = NULL;
         kv.value = NULL;
         PMIX_DESTRUCT(&kv);
+    }
+
+    if (!nspace_given) {
+        /* look for our namespace, if one was given */
+        if (NULL == (evar = getenv("PMIX_SERVER_NAMESPACE"))) {
+            /* use a fake namespace */
+            (void)strncpy(pmix_globals.myid.nspace, "pmix-server", PMIX_MAX_NSLEN);
+        } else {
+            (void)strncpy(pmix_globals.myid.nspace, evar, PMIX_MAX_NSLEN);
+        }
+    }
+    if (!rank_given) {
+        /* look for our rank, if one was given */
+        mypid = getpid();
+        if (NULL == (evar = getenv("PMIX_SERVER_RANK"))) {
+            /* use our pid */
+            pmix_globals.myid.rank = mypid;
+        } else {
+            pmix_globals.myid.rank = strtol(evar, NULL, 10);
+        }
+    }
+
+    /* copy it into mypeer entries */
+    if (NULL == pmix_globals.mypeer->info) {
+        rinfo = PMIX_NEW(pmix_rank_info_t);
+        pmix_globals.mypeer->info = rinfo;
+    } else {
+        rinfo = pmix_globals.mypeer->info;
+    }
+    if (NULL == rinfo->nptr) {
+        rinfo->nptr = PMIX_NEW(pmix_nspace_t);
+        /* ensure our own nspace is first on the list */
+        PMIX_RETAIN(rinfo->nptr);
+        rinfo->nptr->server = PMIX_NEW(pmix_server_nspace_t);
+        pmix_list_prepend(&pmix_globals.nspaces, &rinfo->nptr->super);
+    }
+    (void)strncpy(rinfo->nptr->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+    rinfo->rank = pmix_globals.myid.rank;
+
+
+#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
+    if (PMIX_SUCCESS != (rc = pmix_dstore_init(info, ninfo))) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return rc;
+    }
+#endif /* PMIX_ENABLE_DSTORE */
+
+    /* setup the wildcard recv for inbound messages from clients */
+    req = PMIX_NEW(pmix_ptl_posted_recv_t);
+    req->tag = UINT32_MAX;
+    req->cbfunc = server_message_handler;
+    /* add it to the end of the list of recvs */
+    pmix_list_append(&pmix_ptl_globals.posted_recvs, &req->super);
+
+    if (PMIX_SUCCESS != pmix_ptl_base_start_listening(info, ninfo)) {
+        pmix_show_help("help-pmix-server.txt", "listener-thread-start", true);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
     }
 
     /* get our available security modules */

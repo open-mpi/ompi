@@ -769,6 +769,7 @@ pmix_status_t pmix_bfrop_unpack_info(pmix_buffer_t *buffer, void *dest,
             return ret;
         }
         if (NULL == tmp) {
+            PMIX_ERROR_LOG(PMIX_ERROR);
             return PMIX_ERROR;
         }
         (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
