@@ -41,6 +41,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/session_dir.h"
@@ -1055,6 +1056,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     int i;
     bool found;
     orte_daemon_cmd_flag_t cmd;
+    int32_t flag;
+    opal_value_t *kv;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
@@ -1091,6 +1094,26 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         daemon->rml_uri = rml_uri;
         /* record that this daemon is alive */
         ORTE_FLAG_SET(daemon, ORTE_PROC_FLAG_ALIVE);
+
+        /* unpack the flag indicating the number of connection blobs
+         * in the report */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &flag, &idx, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        for (i=0; i < flag; i++) {
+            idx = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &kv, &idx, OPAL_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+            /* store this in a daemon wireup buffer for later distribution */
+            opal_pmix.store_local(&dname, kv);
+            OBJ_RELEASE(kv);
+        }
 
         /* unpack the node name */
         idx = 1;

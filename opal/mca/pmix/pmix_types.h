@@ -62,6 +62,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_CONNECT_SYSTEM_FIRST          "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
 #define OPAL_PMIX_REGISTER_NODATA               "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
 #define OPAL_PMIX_SERVER_ENABLE_MONITORING      "pmix.srv.monitor"      // (bool) Enable PMIx internal monitoring by server
+#define OPAL_PMIX_SERVER_NSPACE                 "pmix.srv.nspace"       // (char*) Name of the nspace to use for this server
+#define OPAL_PMIX_SERVER_RANK                   "pmix.srv.rank"         // (uint32_t) Rank of this server
 
 
 /* identification attributes */

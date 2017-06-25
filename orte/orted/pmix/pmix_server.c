@@ -223,26 +223,6 @@ int pmix_server_init(void)
     OBJ_CONSTRUCT(&orte_pmix_server_globals.notifications, opal_list_t);
     orte_pmix_server_globals.server = *ORTE_NAME_INVALID;
 
-   /* setup recv for direct modex requests */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX,
-                            ORTE_RML_PERSISTENT, pmix_server_dmdx_recv, NULL);
-
-    /* setup recv for replies to direct modex requests */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX_RESP,
-                            ORTE_RML_PERSISTENT, pmix_server_dmdx_resp, NULL);
-
-    /* setup recv for replies to proxy launch requests */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_LAUNCH_RESP,
-                            ORTE_RML_PERSISTENT, pmix_server_launch_resp, NULL);
-
-    /* setup recv for replies from data server */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT,
-                            ORTE_RML_PERSISTENT, pmix_server_keyval_client, NULL);
-
-    /* setup recv for notifications */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFICATION,
-                            ORTE_RML_PERSISTENT, pmix_server_notify, NULL);
-
     /* ensure the PMIx server uses the proper rendezvous directory */
     opal_setenv("PMIX_SERVER_TMPDIR", orte_process_info.proc_session_dir, true, &environ);
 
@@ -291,6 +271,29 @@ int pmix_server_init(void)
     OPAL_LIST_DESTRUCT(&info);
 
     return rc;
+}
+
+void pmix_server_start(void)
+{
+    /* setup recv for direct modex requests */
+     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX,
+                             ORTE_RML_PERSISTENT, pmix_server_dmdx_recv, NULL);
+
+     /* setup recv for replies to direct modex requests */
+     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX_RESP,
+                             ORTE_RML_PERSISTENT, pmix_server_dmdx_resp, NULL);
+
+     /* setup recv for replies to proxy launch requests */
+     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_LAUNCH_RESP,
+                             ORTE_RML_PERSISTENT, pmix_server_launch_resp, NULL);
+
+     /* setup recv for replies from data server */
+     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT,
+                             ORTE_RML_PERSISTENT, pmix_server_keyval_client, NULL);
+
+     /* setup recv for notifications */
+     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFICATION,
+                             ORTE_RML_PERSISTENT, pmix_server_notify, NULL);
 }
 
 void pmix_server_finalize(void)
