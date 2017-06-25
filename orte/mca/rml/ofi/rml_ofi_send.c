@@ -370,7 +370,7 @@ static void send_msg(int fd, short args, void *cbdata)
     ofi_send_request_t *req = (ofi_send_request_t*)cbdata;
     orte_process_name_t *peer = &(req->send.dst);
     orte_rml_tag_t tag = req->send.tag;
-    char *dest_ep_name, *pmix_key;
+    char *dest_ep_name;
     size_t dest_ep_namelen = 0;
     int ret = OPAL_ERROR;
     uint32_t  total_packets;
@@ -411,20 +411,68 @@ static void send_msg(int fd, short args, void *cbdata)
     memcpy(&ui64, (char*)peer, sizeof(uint64_t));
     if (OPAL_SUCCESS != (ret = opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
                                                                 ui64, (void**)&pr) || NULL == pr)) {
+        uint8_t *data;
+        int32_t sz, cnt;
+        opal_buffer_t modex, *entry;
+        char *prov_name;
+        uint8_t prov_num;
+        size_t entrysize;
+        uint8_t *bytes;
+
         opal_output_verbose(1, orte_rml_base_framework.framework_output,
                             "%s rml:ofi: Send failed to get peer OFI contact info from internal hash - checking modex",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        asprintf(&pmix_key,"%s%d",
-                 orte_rml_ofi.ofi_prov[0].fabric_info->fabric_attr->prov_name,
-                 orte_rml_ofi.ofi_prov[0].ofi_prov_id);
-        OPAL_MODEX_RECV_STRING(ret, pmix_key, peer, (void**)&dest_ep_name, &dest_ep_namelen);
-        free(pmix_key);
+
+        OPAL_MODEX_RECV_STRING(ret, "rml.ofi", peer, (void**)&data, &sz);
         if (OPAL_SUCCESS != ret) {
             snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
             ORTE_RML_SEND_COMPLETE(snd);
             //OBJ_RELEASE( ofi_send_req);
             return;
         }
+        /* load the data into a buffer for unpacking */
+        OBJ_CONSTRUCT(&modex, opal_buffer_t);
+        opal_dss.load(&modex, data, sz);
+        cnt = 1;
+        /* cycle thru the returned providers and see which one we want to use */
+        while (OPAL_SUCCESS == (ret = opal_dss.unpack(&modex, &entry, &cnt, OPAL_BUFFER))) {
+            /* unpack the provider name */
+            cnt = 1;
+            if (OPAL_SUCCESS != (ret = opal_dss.unpack(entry, &prov_name, &cnt, OPAL_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(entry);
+                break;
+            }
+            /* unpack the provider's index on the remote peer - note that there
+             * is no guarantee that the same provider has the same local index! */
+            cnt = 1;
+            if (OPAL_SUCCESS != (ret = opal_dss.unpack(entry, &prov_num, &cnt, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(entry);
+                break;
+            }
+            /* unpack the size of their connection blob */
+            cnt = 1;
+            if (OPAL_SUCCESS != (ret = opal_dss.unpack(entry, &entrysize, &cnt, OPAL_SIZE))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(entry);
+                break;
+            }
+            /* create the necessary space */
+            bytes = (uint8_t*)malloc(entrysize);
+            /* unpack the connection blob */
+            cnt = entrysize;
+            if (OPAL_SUCCESS != (ret = opal_dss.unpack(entry, &bytes, &cnt, OPAL_BYTE))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(entry);
+                break;
+            }
+            /* done with the buffer */
+            OBJ_RELEASE(entry);
+            /* decide if this is the provider we want to use - if so, then we are done.
+             * If not, then we can simply free they bytes and continue looking */
+        }
+        OBJ_DESTRUCT(&modex);  // releases the data returned by the modex_recv
      } else {
          opal_output_verbose(1, orte_rml_base_framework.framework_output,
                             "%s rml:ofi: OFI peer contact info got from hash table",
