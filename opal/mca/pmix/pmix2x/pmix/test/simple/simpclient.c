@@ -269,19 +269,49 @@ int main(int argc, char **argv)
                 PMIX_VALUE_RELEASE(val);
                 free(tmp);
 
-                (void)asprintf(&tmp, "%s-%d-remote-%d", proc.nspace, n, j);
-                if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, tmp, NULL, 0, &val))) {
-                    /* this data should _not_ be found as we are on the same node
-                     * and the data was "put" with a PMIX_REMOTE scope */
-                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned correct", myproc.nspace, myproc.rank, j, tmp);
-                    continue;
+                if (n != myproc.rank) {
+                    (void)asprintf(&tmp, "%s-%d-remote-%d", proc.nspace, n, j);
+                    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, tmp, NULL, 0, &val))) {
+                        /* this data should _not_ be found as we are on the same node
+                         * and the data was "put" with a PMIX_REMOTE scope */
+                        pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned correct", myproc.nspace, myproc.rank, j, tmp);
+                        continue;
+                    }
+                    pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned remote data for a local proc",
+                                myproc.nspace, myproc.rank, j, tmp);
+                    PMIX_VALUE_RELEASE(val);
+                    free(tmp);
                 }
-                pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned remote data for a local proc",
-                            myproc.nspace, myproc.rank, j, tmp);
-                PMIX_VALUE_RELEASE(val);
-                free(tmp);
             }
         }
+    }
+
+    /* now get the data blob for myself */
+    pmix_output(0, "Client ns %s rank %d testing internal modex blob",
+                myproc.nspace, myproc.rank);
+    if (PMIX_SUCCESS == (rc = PMIx_Get(&myproc, NULL, NULL, 0, &val))) {
+        if (PMIX_DATA_ARRAY != val->type) {
+            pmix_output(0, "Client ns %s rank %d did not return an array for its internal modex blob",
+                        myproc.nspace, myproc.rank);
+            PMIX_VALUE_RELEASE(val);
+        } else if (PMIX_INFO != val->data.darray->type) {
+            pmix_output(0, "Client ns %s rank %d returned an internal modex array of type %s instead of PMIX_INFO",
+                        myproc.nspace, myproc.rank, PMIx_Data_type_string(val->data.darray->type));
+            PMIX_VALUE_RELEASE(val);
+        } else if (0 == val->data.darray->size) {
+            pmix_output(0, "Client ns %s rank %d returned an internal modex array of zero length",
+                        myproc.nspace, myproc.rank);
+            PMIX_VALUE_RELEASE(val);
+        } else {
+            pmix_info_t *iptr = (pmix_info_t*)val->data.darray->array;
+            for (n=0; n < val->data.darray->size; n++) {
+                pmix_output(0, "\tKey: %s", iptr[n].key);
+            }
+            PMIX_VALUE_RELEASE(val);
+        }
+    } else {
+        pmix_output(0, "Client ns %s rank %d internal modex blob FAILED with error %s(%d)",
+                    myproc.nspace, myproc.rank, PMIx_Error_string(rc), rc);
     }
 
     /* log something */
