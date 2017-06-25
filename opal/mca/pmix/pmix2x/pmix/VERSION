@@ -13,7 +13,7 @@
 # major, minor, and release are generally combined in the form
 # <major>.<minor>.<release>.
 
-major=2
+major=3
 minor=0
 release=0
 
@@ -23,14 +23,14 @@ release=0
 # The only requirement is that it must be entirely printable ASCII
 # characters and have no white space.
 
-greek=
+greek=a1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=git6fb501d
+repo_rev=git4c2c8d0
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +44,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Jun 19, 2017"
+date="Jun 25, 2017"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library
@@ -75,4 +75,4 @@ date="Jun 19, 2017"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libpmix_so_version=3:0:1
+libpmix_so_version=0:0:0

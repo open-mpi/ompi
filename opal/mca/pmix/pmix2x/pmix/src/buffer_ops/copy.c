@@ -425,7 +425,7 @@ PMIX_EXPORT pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
             break;
         }
         /* allocate space and do the copy */
-        switch (src->type) {
+        switch (src->data.darray->type) {
             case PMIX_UINT8:
             case PMIX_INT8:
             case PMIX_BYTE:

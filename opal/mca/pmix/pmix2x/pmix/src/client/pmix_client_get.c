@@ -111,7 +111,7 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
     PMIX_RELEASE(cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:client get completed");
+                        "pmix:client get completed %d", rc);
 
     return rc;
 }
@@ -464,7 +464,7 @@ static pmix_status_t process_val(pmix_value_t *val,
     }
     nvals = 0;
     for (n=0; n < nsize; n++) {
-        if (PMIX_SUCCESS != (rc = pmix_pointer_array_add(results, &info[n]))) {
+        if (0 > (rc = pmix_pointer_array_add(results, &info[n]))) {
             return rc;
         }
         ++nvals;
@@ -536,25 +536,45 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         /* if the rank is WILDCARD, then they want all the job-level info,
          * so no need to check the modex */
         if (PMIX_RANK_WILDCARD != cb->rank) {
+            rc = PMIX_ERR_NOT_FOUND;
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-            if (PMIX_SUCCESS == (rc = pmix_dstore_fetch(nptr->nspace, cb->rank, NULL, &val))) {
-#else
-            if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->modex, cb->rank, NULL, &val))) {
-#endif /* PMIX_ENABLE_DSTORE */
-                pmix_output_verbose(2, pmix_globals.debug_output,
-                                    "pmix_get[%d]: value retrieved from dstore", __LINE__);
-                if (PMIX_SUCCESS != (rc = process_val(val, &nvals, &results))) {
-                    cb->value_cbfunc(rc, NULL, cb->cbdata);
-                    /* cleanup */
-                    if (NULL != val) {
-                        PMIX_VALUE_RELEASE(val);
+            /* my own data is in the hash table, so don't bother looking
+             * in the dstore if that is what they want */
+            if (pmix_globals.myid.rank != cb->rank) {
+                if (PMIX_SUCCESS == (rc = pmix_dstore_fetch(nptr->nspace, cb->rank, NULL, &val))) {
+                    pmix_output_verbose(2, pmix_globals.debug_output,
+                                        "pmix_get[%d]: value retrieved from dstore", __LINE__);
+                    if (PMIX_SUCCESS != (rc = process_val(val, &nvals, &results))) {
+                        cb->value_cbfunc(rc, NULL, cb->cbdata);
+                        /* cleanup */
+                        if (NULL != val) {
+                            PMIX_VALUE_RELEASE(val);
+                        }
+                        PMIX_RELEASE(cb);
+                        return;
                     }
-                    PMIX_RELEASE(cb);
-                    return;
                 }
-                /* cleanup */
-                PMIX_VALUE_RELEASE(val);
-            } else {
+            }
+#endif /* PMIX_ENABLE_DSTORE */
+            if (PMIX_SUCCESS != rc) {
+                /* if the user was asking about themselves, or we aren't using the dstore,
+                 * then we need to check the hash table */
+                if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->modex, cb->rank, NULL, &val))) {
+                    pmix_output_verbose(2, pmix_globals.debug_output,
+                                        "pmix_get[%d]: value retrieved from hash", __LINE__);
+                    if (PMIX_SUCCESS != (rc = process_val(val, &nvals, &results))) {
+                        cb->value_cbfunc(rc, NULL, cb->cbdata);
+                        /* cleanup */
+                        if (NULL != val) {
+                            PMIX_VALUE_RELEASE(val);
+                        }
+                        PMIX_RELEASE(cb);
+                        return;
+                    }
+                    PMIX_VALUE_RELEASE(val);
+                }
+            }
+            if (PMIX_SUCCESS != rc) {
                 /* if we didn't find a modex for this rank, then we need
                  * to go get it. Thus, the caller wants -all- information for
                  * the specified rank, not just the job-level info. */
@@ -572,12 +592,17 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                 PMIX_RELEASE(cb);
                 return;
             }
-            /* cleanup */
             PMIX_VALUE_RELEASE(val);
         }
         /* now let's package up the results */
         PMIX_VALUE_CREATE(val, 1);
         val->type = PMIX_DATA_ARRAY;
+        val->data.darray = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
+        if (NULL == val->data.darray) {
+            PMIX_VALUE_RELEASE(val);
+            cb->value_cbfunc(PMIX_ERR_NOMEM, NULL, cb->cbdata);
+            return;
+        }
         val->data.darray->type = PMIX_INFO;
         val->data.darray->size = nvals;
         PMIX_INFO_CREATE(iptr, nvals);
@@ -597,14 +622,13 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                 } else {
                     pmix_value_xfer(&iptr[n].value, &info->value);
                 }
-                PMIX_INFO_FREE(info, 1);
+                PMIX_INFO_DESTRUCT(info);
             }
         }
         /* done with results array */
         PMIX_DESTRUCT(&results);
-        /* return the result to the caller */
+        /* return the result to the caller - they are responsible for releasing it */
         cb->value_cbfunc(PMIX_SUCCESS, val, cb->cbdata);
-        PMIX_VALUE_FREE(val, 1);
         PMIX_RELEASE(cb);
         return;
     }
