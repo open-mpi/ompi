@@ -938,20 +938,20 @@ typedef struct pmix_value {
                             PMIX_PROC_INFO_DESTRUCT(_info[_n].value.data.pinfo);    \
                         }                                                           \
                     }                                                               \
-                }                                                                   \
-            } else if (PMIX_BYTE_OBJECT == (m)->data.darray->type) {                \
-                pmix_byte_object_t *_obj =                                          \
-                            (pmix_byte_object_t*)(m)->data.darray->array;           \
-                for (_n=0; _n < (m)->data.darray->size; _n++) {                     \
-                    if (NULL != _obj[_n].bytes) {                                   \
-                        free(_obj[_n].bytes);                                       \
+                } else if (PMIX_BYTE_OBJECT == (m)->data.darray->type) {            \
+                    pmix_byte_object_t *_obj =                                      \
+                                (pmix_byte_object_t*)(m)->data.darray->array;       \
+                    for (_n=0; _n < (m)->data.darray->size; _n++) {                 \
+                        if (NULL != _obj[_n].bytes) {                               \
+                            free(_obj[_n].bytes);                                   \
+                        }                                                           \
                     }                                                               \
                 }                                                                   \
-            }                                                                       \
-            if (NULL != (m)->data.darray->array) {                                  \
                 free((m)->data.darray->array);                                      \
             }                                                                       \
-            free((m)->data.darray);                                                 \
+            if (NULL != (m)->data.darray) {                                         \
+                free((m)->data.darray);                                             \
+            }                                                                       \
         /**** DEPRECATED ****/                                                      \
         } else if (PMIX_INFO_ARRAY == (m)->type) {                                  \
             pmix_info_t *_p = (pmix_info_t*)((m)->data.array->array);               \
