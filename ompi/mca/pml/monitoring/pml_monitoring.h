@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -20,14 +20,15 @@ BEGIN_C_DECLS
 #include <ompi/communicator/communicator.h>
 #include <ompi/datatype/ompi_datatype.h>
 #include <ompi/mca/pml/pml.h>
-#include <ompi/mca/pml/pml.h>
+#include <ompi/mca/pml/base/base.h>
+#include <ompi/mca/common/monitoring/common_monitoring.h>
 #include <opal/mca/base/mca_base_pvar.h>
 
 typedef mca_pml_base_module_t mca_pml_monitoring_module_t;
 
 extern mca_pml_base_component_t pml_selected_component;
 extern mca_pml_base_module_t pml_selected_module;
-extern mca_pml_monitoring_module_t mca_pml_monitoring;
+extern mca_pml_monitoring_module_t mca_pml_monitoring_module;
 OMPI_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_monitoring_component;
 
 /*
@@ -38,11 +39,9 @@ extern int mca_pml_monitoring_add_comm(struct ompi_communicator_t* comm);
 
 extern int mca_pml_monitoring_del_comm(struct ompi_communicator_t* comm);
 
-extern int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
-                                        size_t nprocs);
+extern int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 
-extern int mca_pml_monitoring_del_procs(struct ompi_proc_t **procs,
-                                        size_t nprocs);
+extern int mca_pml_monitoring_del_procs(struct ompi_proc_t **procs, size_t nprocs);
 
 extern int mca_pml_monitoring_enable(bool enable);
 
@@ -137,20 +136,6 @@ extern int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 
 extern int mca_pml_monitoring_start(size_t count,
                                     ompi_request_t** requests);
-
-int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar,
-                                           void *value,
-                                           void *obj_handle);
-
-int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar,
-                                          void *value,
-                                          void *obj_handle);
-
-void finalize_monitoring( void );
-int filter_monitoring( void );
-void mca_pml_monitoring_reset( void );
-int ompi_mca_pml_monitoring_flush(char* filename);
-void monitor_send_data(int world_rank, size_t data_size, int tag);
 
 END_C_DECLS
 

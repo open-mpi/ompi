@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Inria.  All rights reserved.
+ * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -14,123 +14,81 @@
  */
 
 #include <ompi_config.h>
-#include <pml_monitoring.h>
+#include "pml_monitoring.h"
 #include <ompi/constants.h>
 #include <ompi/mca/pml/base/base.h>
+#include <ompi/mca/common/monitoring/common_monitoring.h>
 #include <opal/mca/base/mca_base_component_repository.h>
 
-static int mca_pml_monitoring_enabled = 0;
 static int mca_pml_monitoring_active = 0;
-static int mca_pml_monitoring_current_state = 0;
-static char* mca_pml_monitoring_current_filename = NULL;
+
 mca_pml_base_component_t pml_selected_component = {{0}};
 mca_pml_base_module_t pml_selected_module = {0};
 
-/* Return the current status of the monitoring system 0 if off, 1 if the
- * seperation between internal tags and external tags is enabled. Any other
- * positive value if the segregation between point-to-point and collective is
- * disabled.
+mca_pml_monitoring_module_t mca_pml_monitoring_module = {
+    mca_pml_monitoring_add_procs,
+    mca_pml_monitoring_del_procs,
+    mca_pml_monitoring_enable,
+    NULL,
+    mca_pml_monitoring_add_comm,
+    mca_pml_monitoring_del_comm,
+    mca_pml_monitoring_irecv_init,
+    mca_pml_monitoring_irecv,
+    mca_pml_monitoring_recv,
+    mca_pml_monitoring_isend_init,
+    mca_pml_monitoring_isend,
+    mca_pml_monitoring_send,
+    mca_pml_monitoring_iprobe,
+    mca_pml_monitoring_probe,
+    mca_pml_monitoring_start,
+    mca_pml_monitoring_improbe,
+    mca_pml_monitoring_mprobe,
+    mca_pml_monitoring_imrecv,
+    mca_pml_monitoring_mrecv,
+    mca_pml_monitoring_dump,
+    NULL,
+    65535,
+    INT_MAX
+};
+
+/**
+ * This PML monitors only the processes in the MPI_COMM_WORLD. As OMPI is now lazily
+ * adding peers on the first call to add_procs we need to check how many processes
+ * are in the MPI_COMM_WORLD to create the storage with the right size.
  */
-int filter_monitoring( void )
+int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
+                                 size_t nprocs)
 {
-    return mca_pml_monitoring_current_state;
+    int ret = mca_common_monitoring_add_procs(procs, nprocs);
+    if( OMPI_SUCCESS == ret )
+        ret = pml_selected_module.pml_add_procs(procs, nprocs);
+    return ret;
 }
 
-static int
-mca_pml_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, void *obj)
+/**
+ * Pass the information down the PML stack.
+ */
+int mca_pml_monitoring_del_procs(struct ompi_proc_t **procs,
+                                 size_t nprocs)
 {
-    if( NULL != mca_pml_monitoring_current_filename )
-        free(mca_pml_monitoring_current_filename);
-    if( NULL == value )  /* No more output */
-        mca_pml_monitoring_current_filename = NULL;
-    else {
-        mca_pml_monitoring_current_filename = strdup((char*)value);
-        if( NULL == mca_pml_monitoring_current_filename )
-            return OMPI_ERROR;
-    }
-    return OMPI_SUCCESS;
+    return pml_selected_module.pml_del_procs(procs, nprocs);
 }
 
-static int
-mca_pml_monitoring_get_flush(const struct mca_base_pvar_t *pvar, void *value, void *obj)
+int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
+                            int verbose)
 {
-    return OMPI_SUCCESS;
-}
-
-static int
-mca_pml_monitoring_notify_flush(struct mca_base_pvar_t *pvar, mca_base_pvar_event_t event,
-                                void *obj, int *count)
-{
-    switch (event) {
-    case MCA_BASE_PVAR_HANDLE_BIND:
-        mca_pml_monitoring_reset();
-        *count = (NULL == mca_pml_monitoring_current_filename ? 0 : strlen(mca_pml_monitoring_current_filename));
-    case MCA_BASE_PVAR_HANDLE_UNBIND:
-        return OMPI_SUCCESS;
-    case MCA_BASE_PVAR_HANDLE_START:
-        mca_pml_monitoring_current_state = mca_pml_monitoring_enabled;
-        return OMPI_SUCCESS;
-    case MCA_BASE_PVAR_HANDLE_STOP:
-        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename) )
-            return OMPI_SUCCESS;
-    }
-    return OMPI_ERROR;
-}
-
-static int
-mca_pml_monitoring_messages_notify(mca_base_pvar_t *pvar,
-                                    mca_base_pvar_event_t event,
-                                    void *obj_handle,
-                                    int *count)
-{
-    switch (event) {
-    case MCA_BASE_PVAR_HANDLE_BIND:
-        /* Return the size of the communicator as the number of values */
-        *count = ompi_comm_size ((ompi_communicator_t *) obj_handle);
-    case MCA_BASE_PVAR_HANDLE_UNBIND:
-        return OMPI_SUCCESS;
-    case MCA_BASE_PVAR_HANDLE_START:
-        mca_pml_monitoring_current_state = mca_pml_monitoring_enabled;
-        return OMPI_SUCCESS;
-    case MCA_BASE_PVAR_HANDLE_STOP:
-        mca_pml_monitoring_current_state = 0;
-        return OMPI_SUCCESS;
-    }
-
-    return OMPI_ERROR;
+    return pml_selected_module.pml_dump(comm, verbose);
 }
 
 int mca_pml_monitoring_enable(bool enable)
 {
-    /* If we reach this point we were succesful at hijacking the interface of
-     * the real PML, and we are now correctly interleaved between the upper
-     * layer and the real PML.
-     */
-    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring information"
-                                 "in the provided file", OPAL_INFO_LVL_1, MCA_BASE_PVAR_CLASS_GENERIC,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT,
-                                 0,
-                                 mca_pml_monitoring_get_flush, mca_pml_monitoring_set_flush,
-                                 mca_pml_monitoring_notify_flush, &mca_pml_monitoring_component);
-
-    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of messages "
-                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
-                                  MCA_BASE_PVAR_FLAG_READONLY,
-                                  mca_pml_monitoring_get_messages_count, NULL, mca_pml_monitoring_messages_notify, NULL);
-
-    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
-                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
-                                 mca_pml_monitoring_get_messages_size, NULL, mca_pml_monitoring_messages_notify, NULL);
-
     return pml_selected_module.pml_enable(enable);
 }
 
 static int mca_pml_monitoring_component_open(void)
 {
-    if( mca_pml_monitoring_enabled ) {
+    /* CF: What if we are the only PML available ?? */
+    if( mca_common_monitoring_enabled ) {
         opal_pointer_array_add(&mca_pml_base_pml,
                                strdup(mca_pml_monitoring_component.pmlm_version.mca_component_name));
     }
@@ -139,22 +97,15 @@ static int mca_pml_monitoring_component_open(void)
 
 static int mca_pml_monitoring_component_close(void)
 {
-    if( NULL != mca_pml_monitoring_current_filename ) {
-        free(mca_pml_monitoring_current_filename);
-        mca_pml_monitoring_current_filename = NULL;
-    }
-    if( !mca_pml_monitoring_enabled )
-        return OMPI_SUCCESS;
+    if( !mca_common_monitoring_enabled ) return OMPI_SUCCESS;
 
     /**
-     * If this component is already active, then we are currently monitoring the execution
-     * and this close if the one from MPI_Finalize. Do the clean up and release the extra
-     * reference on ourselves.
+     * If this component is already active, then we are currently monitoring
+     * the execution and this call to close if the one from MPI_Finalize.
+     * Clean up and release the extra reference on ourselves.
      */
     if( mca_pml_monitoring_active ) {  /* Already active, turn off */
         pml_selected_component.pmlm_version.mca_close_component();
-        memset(&pml_selected_component, 0, sizeof(mca_pml_base_component_t));
-        memset(&pml_selected_module, 0, sizeof(mca_pml_base_module_t));
         mca_base_component_repository_release((mca_base_component_t*)&mca_pml_monitoring_component);
         mca_pml_monitoring_active = 0;
         return OMPI_SUCCESS;
@@ -175,12 +126,13 @@ static int mca_pml_monitoring_component_close(void)
     pml_selected_module = mca_pml;
     /* Install our interception layer */
     mca_pml_base_selected_component = mca_pml_monitoring_component;
-    mca_pml = mca_pml_monitoring;
-    /* Restore some of the original valued: progress, flags, tags and context id */
+    mca_pml = mca_pml_monitoring_module;
+    /* Restore some of the original values: progress, flags, tags and context id */
     mca_pml.pml_progress = pml_selected_module.pml_progress;
     mca_pml.pml_max_contextid = pml_selected_module.pml_max_contextid;
     mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
-    mca_pml.pml_flags = pml_selected_module.pml_flags;
+    /* Add MCA_PML_BASE_FLAG_REQUIRE_WORLD flag to ensure the hashtable is properly initialized */
+    mca_pml.pml_flags = pml_selected_module.pml_flags | MCA_PML_BASE_FLAG_REQUIRE_WORLD;
 
     mca_pml_monitoring_active = 1;
 
@@ -192,44 +144,36 @@ mca_pml_monitoring_component_init(int* priority,
                                   bool enable_progress_threads,
                                   bool enable_mpi_threads)
 {
-    if( mca_pml_monitoring_enabled ) {
+    mca_common_monitoring_init();
+    if( mca_common_monitoring_enabled ) {
         *priority = 0;  /* I'm up but don't select me */
-        return &mca_pml_monitoring;
+        return &mca_pml_monitoring_module;
     }
     return NULL;
 }
 
 static int mca_pml_monitoring_component_finish(void)
 {
-    if( mca_pml_monitoring_enabled && mca_pml_monitoring_active ) {
+    if( mca_common_monitoring_enabled && mca_pml_monitoring_active ) {
         /* Free internal data structure */
-        finalize_monitoring();
-        /* Call the original PML and then close */
-        mca_pml_monitoring_active = 0;
-        mca_pml_monitoring_enabled = 0;
+        mca_common_monitoring_finalize();
         /* Restore the original PML */
         mca_pml_base_selected_component = pml_selected_component;
         mca_pml = pml_selected_module;
         /* Redirect the close call to the original PML */
         pml_selected_component.pmlm_finalize();
         /**
-         * We should never release the last ref on the current component or face forever punishement.
+         * We should never release the last ref on the current
+         * component or face forever punishement.
          */
-        /* mca_base_component_repository_release(&mca_pml_monitoring_component.pmlm_version); */
+        /* mca_base_component_repository_release(&mca_common_monitoring_component.pmlm_version); */
     }
     return OMPI_SUCCESS;
 }
 
 static int mca_pml_monitoring_component_register(void)
 {
-    (void)mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version, "enable",
-                                          "Enable the monitoring at the PML level. A value of 0 will disable the monitoring (default). "
-                                          "A value of 1 will aggregate all monitoring information (point-to-point and collective). "
-                                          "Any other value will enable filtered monitoring",
-                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                          OPAL_INFO_LVL_4,
-                                          MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_enabled);
-
+    mca_common_monitoring_register(&mca_pml_monitoring_component);
     return OMPI_SUCCESS;
 }
 
@@ -242,9 +186,7 @@ mca_pml_base_component_2_0_0_t mca_pml_monitoring_component = {
         MCA_PML_BASE_VERSION_2_0_0,
 
         .mca_component_name = "monitoring", /* MCA component name */
-        .mca_component_major_version = OMPI_MAJOR_VERSION,  /* MCA component major version */
-        .mca_component_minor_version = OMPI_MINOR_VERSION,  /* MCA component minor version */
-        .mca_component_release_version = OMPI_RELEASE_VERSION,  /* MCA component release version */
+        MCA_MONITORING_MAKE_VERSION,
         .mca_open_component = mca_pml_monitoring_component_open,  /* component open */
         .mca_close_component = mca_pml_monitoring_component_close, /* component close */
         .mca_register_component_params = mca_pml_monitoring_component_register
@@ -256,6 +198,5 @@ mca_pml_base_component_2_0_0_t mca_pml_monitoring_component = {
 
     .pmlm_init = mca_pml_monitoring_component_init,  /* component init */
     .pmlm_finalize = mca_pml_monitoring_component_finish   /* component finalize */
-
 };
 
