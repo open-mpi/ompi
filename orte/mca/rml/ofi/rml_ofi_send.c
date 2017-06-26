@@ -243,6 +243,9 @@ int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t ofi_prov_id)
                          "%s Adding data for packet %d, pktlength = %lu, cumulative datalen so far = %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ofi_recv_pkt->cur_pkt_num, ofi_recv_pkt->pkt_size, datalen );
                         if (0 == datalen) {
+                            if (NULL != totdata) {
+                                free(totdata);
+                            }
                             totdata = (char *)malloc(ofi_recv_pkt->pkt_size);
                             if( totdata == NULL) {
                                 opal_output_verbose(1, orte_rml_base_framework.framework_output,
@@ -462,7 +465,7 @@ static void send_msg(int fd, short args, void *cbdata)
             bytes = (uint8_t*)malloc(entrysize);
             /* unpack the connection blob */
             cnt = entrysize;
-            if (OPAL_SUCCESS != (ret = opal_dss.unpack(entry, &bytes, &cnt, OPAL_BYTE))) {
+            if (OPAL_SUCCESS != (ret = opal_dss.unpack(entry, bytes, &cnt, OPAL_BYTE))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(entry);
                 break;
@@ -470,7 +473,15 @@ static void send_msg(int fd, short args, void *cbdata)
             /* done with the buffer */
             OBJ_RELEASE(entry);
             /* decide if this is the provider we want to use - if so, then we are done.
-             * If not, then we can simply free they bytes and continue looking */
+             * If not, then we can simply free the bytes and continue looking. For now,
+             * take the first one */
+            pr = OBJ_NEW(orte_rml_ofi_peer_t);
+            pr->ofi_ep = bytes;
+            pr->ofi_ep_len = entrysize;
+            opal_hash_table_set_value_uint64(&orte_rml_ofi.peers, ui64, (void*)pr);
+            dest_ep_name = pr->ofi_ep;
+            dest_ep_namelen = pr->ofi_ep_len;
+            break;
         }
         OBJ_DESTRUCT(&modex);  // releases the data returned by the modex_recv
      } else {

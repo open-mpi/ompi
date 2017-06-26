@@ -134,12 +134,6 @@ void free_ofi_prov_resources( int ofi_prov_id)
         opal_output_verbose(10,orte_rml_base_framework.framework_output,
                        " %s - close ep",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
          CLOSE_FID(orte_rml_ofi.ofi_prov[ofi_prov_id].ep);
-         if (ret)
-         {
-            opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                                " %s - fi_close(ep) failed with error- %d",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ret);
-         }
     }
     if (orte_rml_ofi.ofi_prov[ofi_prov_id].mr_multi_recv) {
         opal_output_verbose(10,orte_rml_base_framework.framework_output,
@@ -745,28 +739,33 @@ static int rml_ofi_component_init(void)
         /* pack the provider's name */
         if (OPAL_SUCCESS != (ret = opal_dss.pack(&entry, &(orte_rml_ofi.ofi_prov[cur_ofi_prov].fabric_info->fabric_attr->prov_name), 1, OPAL_STRING))) {
             OBJ_DESTRUCT(&entry);
+            free_ofi_prov_resources(cur_ofi_prov);
             continue;
         }
         /* pack the provider's local index */
         if (OPAL_SUCCESS != (ret = opal_dss.pack(&entry, &cur_ofi_prov, 1, OPAL_UINT8))) {
             OBJ_DESTRUCT(&entry);
+            free_ofi_prov_resources(cur_ofi_prov);
             continue;
         }
         /* pack the size of the provider's connection blob */
         if (OPAL_SUCCESS != (ret = opal_dss.pack(&entry, &orte_rml_ofi.ofi_prov[cur_ofi_prov].epnamelen, 1, OPAL_SIZE))) {
             OBJ_DESTRUCT(&entry);
+            free_ofi_prov_resources(cur_ofi_prov);
             continue;
         }
         /* pack the blob itself */
-        if (OPAL_SUCCESS != (ret = opal_dss.pack(&entry, &orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name,
+        if (OPAL_SUCCESS != (ret = opal_dss.pack(&entry, orte_rml_ofi.ofi_prov[cur_ofi_prov].ep_name,
                                                  orte_rml_ofi.ofi_prov[cur_ofi_prov].epnamelen, OPAL_BYTE))) {
             OBJ_DESTRUCT(&entry);
+            free_ofi_prov_resources(cur_ofi_prov);
             continue;
         }
         /* add this entry to the overall modex object */
         eptr = &entry;
         if (OPAL_SUCCESS != (ret = opal_dss.pack(&modex, &eptr, 1, OPAL_BUFFER))) {
             OBJ_DESTRUCT(&entry);
+            free_ofi_prov_resources(cur_ofi_prov);
             continue;
         }
         OBJ_DESTRUCT(&entry);
@@ -788,15 +787,6 @@ static int rml_ofi_component_init(void)
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ntohs(ep_sockaddr->sin_port), inet_ntoa(ep_sockaddr->sin_addr));
                 break;
-        }
-        /* end of printing opal_modex_string and port, IP */
-        if (ORTE_SUCCESS != ret) {
-            opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                    "%s:%d: OPAL_MODEX_SEND failed: %s\n",
-                    __FILE__, __LINE__, fi_strerror(-ret));
-            free_ofi_prov_resources(cur_ofi_prov);
-            /*abort this current transport, but check if next transport can be opened*/
-            continue;
         }
 
         /**
@@ -944,7 +934,8 @@ int get_ofi_prov_id( opal_list_t *attributes)
      * (or)  ORTE_RML_OFI_PROV_NAME key with values "socket" or "OPA"
      * if both above attributes are missing return failure
      */
-    if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_ATTRIB, (void**)&transport, OPAL_STRING) )    {
+    if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_ATTRIB, (void**)&transport, OPAL_STRING) &&
+        NULL != transport)    {
         if( 0 == strcmp( transport, "ethernet") ) {
             provider = ethernet;
         } else if ( 0 == strcmp( transport, "fabric") ) {
@@ -953,21 +944,19 @@ int get_ofi_prov_id( opal_list_t *attributes)
     }
     /* if from the transport we don't know which provider we want, then check for the ORTE_RML_OFI_PROV_NAME_ATTRIB */
     if ( NULL == provider) {
-       orte_get_attribute(attributes, ORTE_RML_PROVIDER_ATTRIB, (void**)&provider, OPAL_STRING);
-    }
-    if (NULL != provider)
-    {
-        // loop the orte_rml_ofi.ofi_provs[] and find the provider name that matches
-        for ( prov_num = 0; prov_num < orte_rml_ofi.ofi_prov_open_num && ofi_prov_id == RML_OFI_PROV_ID_INVALID ; prov_num++ ) {
-            cur_fi = orte_rml_ofi.ofi_prov[prov_num].fabric_info;
-            opal_output_verbose(20,orte_rml_base_framework.framework_output,
-               "%s - get_ofi_prov_id() -> comparing %s = %s ",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),provider,cur_fi->fabric_attr->prov_name);
-            if ( strcmp(provider,cur_fi->fabric_attr->prov_name) == 0) {
-                ofi_prov_id = prov_num;
+       if (orte_get_attribute(attributes, ORTE_RML_PROVIDER_ATTRIB, (void**)&provider, OPAL_STRING) &&
+                              NULL != provider) {
+            // loop the orte_rml_ofi.ofi_provs[] and find the provider name that matches
+            for ( prov_num = 0; prov_num < orte_rml_ofi.ofi_prov_open_num && ofi_prov_id == RML_OFI_PROV_ID_INVALID ; prov_num++ ) {
+                cur_fi = orte_rml_ofi.ofi_prov[prov_num].fabric_info;
+                opal_output_verbose(20,orte_rml_base_framework.framework_output,
+                   "%s - get_ofi_prov_id() -> comparing %s = %s ",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),provider,cur_fi->fabric_attr->prov_name);
+                if ( strcmp(provider,cur_fi->fabric_attr->prov_name) == 0) {
+                    ofi_prov_id = prov_num;
+                }
             }
         }
-
     }
 
     opal_output_verbose(20,orte_rml_base_framework.framework_output,
