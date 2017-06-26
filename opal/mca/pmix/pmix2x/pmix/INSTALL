@@ -24,7 +24,7 @@ This file is a *very* short overview of building and installing
 the PMIx library.  Much more information is available on the
 PMIx web site (e.g., see the FAQ section):
 
-    http://pmix.github.io/pmix/master
+    http://pmix.github.io/pmix/pmix
 
 
 Developer Builds
@@ -34,7 +34,7 @@ If you have checked out a DEVELOPER'S COPY of PMIx (i.e., you checked
 out from Git), you should read the HACKING file before attempting to
 build PMIx.  You must then run:
 
-shell$ ./autogen.sh
+shell$ ./autogen.pl
 
 You will need very recent versions of GNU Autoconf, Automake, and
 Libtool.  If autogen.sh fails, read the HACKING file.  If anything
