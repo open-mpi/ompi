@@ -191,7 +191,7 @@ sub mca_process_framework {
             $mca_found->{$framework}->{found} = 1;
             opendir(DIR, $dir) ||
                 my_die "Can't open $dir directory";
-            foreach my $d (readdir(DIR)) {
+            foreach my $d (sort(readdir(DIR))) {
                 # Skip any non-directory, "base", or any dir that
                 # begins with "."
                 next
