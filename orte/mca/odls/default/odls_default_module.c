@@ -181,7 +181,7 @@ static int odls_default_kill_local(pid_t pid, int signum)
          * child processes our child may have
          * started
          */
-        pid = pgrp;
+        pid = -pgrp;
     }
 #endif
 
