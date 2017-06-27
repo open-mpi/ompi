@@ -20,5 +20,6 @@ int mca_pml_monitoring_add_comm(struct ompi_communicator_t* comm)
 
 int mca_pml_monitoring_del_comm(struct ompi_communicator_t* comm)
 {
+    mca_common_monitoring_coll_cache_name(comm);
     return pml_selected_module.pml_del_comm(comm);
 }
