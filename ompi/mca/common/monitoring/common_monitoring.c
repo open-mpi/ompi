@@ -203,10 +203,10 @@ static int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
     return OMPI_ERROR;
 }
 
-void mca_common_monitoring_init( void )
+int mca_common_monitoring_init( void )
 {
-    if( mca_common_monitoring_enabled &&
-        1 < opal_atomic_add_32(&mca_common_monitoring_hold, 1) ) return; /* Already initialized */
+    if( !mca_common_monitoring_enabled ) return OMPI_ERROR;
+    if( 1 < opal_atomic_add_32(&mca_common_monitoring_hold, 1) ) return OMPI_SUCCESS; /* Already initialized */
 
     char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
     /* Initialize constant */
@@ -220,6 +220,7 @@ void mca_common_monitoring_init( void )
     /* Initialize proc translation hashtable */
     common_monitoring_translation_ht = OBJ_NEW(opal_hash_table_t);
     opal_hash_table_init(common_monitoring_translation_ht, 2048);
+    return OMPI_SUCCESS;
 }
 
 void mca_common_monitoring_finalize( void )

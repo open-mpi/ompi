@@ -46,8 +46,7 @@ static int mca_osc_monitoring_component_init(bool enable_progress_threads,
                                              bool enable_mpi_threads)
 {
     OPAL_MONITORING_PRINT_INFO("osc_component_init");
-    mca_common_monitoring_init();
-    return OMPI_SUCCESS;
+    return mca_common_monitoring_init();
 }
 
 static int mca_osc_monitoring_component_finish(void)

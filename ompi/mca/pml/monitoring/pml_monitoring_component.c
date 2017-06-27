@@ -144,8 +144,8 @@ mca_pml_monitoring_component_init(int* priority,
                                   bool enable_progress_threads,
                                   bool enable_mpi_threads)
 {
-    mca_common_monitoring_init();
-    if( mca_common_monitoring_enabled ) {
+    if( (OMPI_SUCCESS == mca_common_monitoring_init()) &&
+        mca_common_monitoring_enabled ) {
         *priority = 0;  /* I'm up but don't select me */
         return &mca_pml_monitoring_module;
     }

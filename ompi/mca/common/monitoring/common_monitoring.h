@@ -46,7 +46,7 @@ extern int mca_common_monitoring_current_state;
 extern opal_hash_table_t *common_monitoring_translation_ht;
 
 OMPI_DECLSPEC void mca_common_monitoring_register(void*pml_monitoring_component);
-OMPI_DECLSPEC void mca_common_monitoring_init( void );
+OMPI_DECLSPEC int mca_common_monitoring_init( void );
 OMPI_DECLSPEC void mca_common_monitoring_finalize( void );
 OMPI_DECLSPEC int mca_common_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 

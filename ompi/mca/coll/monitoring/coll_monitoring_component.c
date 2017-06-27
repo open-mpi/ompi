@@ -106,8 +106,7 @@ static int mca_coll_monitoring_component_init(bool enable_progress_threads,
                                               bool enable_mpi_threads)
 {
     OPAL_MONITORING_PRINT_INFO("coll_module_init");
-    mca_common_monitoring_init();
-    return OMPI_SUCCESS;
+    return mca_common_monitoring_init();
 }
 
 static int mca_coll_monitoring_component_register(void)
