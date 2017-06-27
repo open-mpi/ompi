@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010-2016 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -631,6 +631,9 @@ int ompi_osc_pt2pt_flush_local (int target, struct ompi_win_t *win)
     }
     OPAL_THREAD_UNLOCK(&module->lock);
 
+    /* make some progress */
+    opal_progress ();
+
     return OMPI_SUCCESS;
 }
 
@@ -656,6 +659,9 @@ int ompi_osc_pt2pt_flush_local_all (struct ompi_win_t *win)
         opal_condition_wait(&module->cond, &module->lock);
     }
     OPAL_THREAD_UNLOCK(&module->lock);
+
+    /* make some progress */
+    opal_progress ();
 
     return OMPI_SUCCESS;
 }
