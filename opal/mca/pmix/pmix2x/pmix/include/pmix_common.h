@@ -124,6 +124,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_CONNECT_SYSTEM_FIRST           "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
 #define PMIX_REGISTER_NODATA                "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
 #define PMIX_SERVER_ENABLE_MONITORING       "pmix.srv.monitor"      // (bool) Enable PMIx internal monitoring by server
+#define PMIX_SERVER_NSPACE                  "pmix.srv.nspace"       // (char*) Name of the nspace to use for this server
+#define PMIX_SERVER_RANK                    "pmix.srv.rank"         // (pmix_rank_t) Rank of this server
 
 
 /* identification attributes */
@@ -936,20 +938,20 @@ typedef struct pmix_value {
                             PMIX_PROC_INFO_DESTRUCT(_info[_n].value.data.pinfo);    \
                         }                                                           \
                     }                                                               \
-                }                                                                   \
-            } else if (PMIX_BYTE_OBJECT == (m)->data.darray->type) {                \
-                pmix_byte_object_t *_obj =                                          \
-                            (pmix_byte_object_t*)(m)->data.darray->array;           \
-                for (_n=0; _n < (m)->data.darray->size; _n++) {                     \
-                    if (NULL != _obj[_n].bytes) {                                   \
-                        free(_obj[_n].bytes);                                       \
+                } else if (PMIX_BYTE_OBJECT == (m)->data.darray->type) {            \
+                    pmix_byte_object_t *_obj =                                      \
+                                (pmix_byte_object_t*)(m)->data.darray->array;       \
+                    for (_n=0; _n < (m)->data.darray->size; _n++) {                 \
+                        if (NULL != _obj[_n].bytes) {                               \
+                            free(_obj[_n].bytes);                                   \
+                        }                                                           \
                     }                                                               \
                 }                                                                   \
-            }                                                                       \
-            if (NULL != (m)->data.darray->array) {                                  \
                 free((m)->data.darray->array);                                      \
             }                                                                       \
-            free((m)->data.darray);                                                 \
+            if (NULL != (m)->data.darray) {                                         \
+                free((m)->data.darray);                                             \
+            }                                                                       \
         /**** DEPRECATED ****/                                                      \
         } else if (PMIX_INFO_ARRAY == (m)->type) {                                  \
             pmix_info_t *_p = (pmix_info_t*)((m)->data.array->array);               \

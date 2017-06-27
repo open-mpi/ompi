@@ -226,10 +226,7 @@ void parse_cmd(int argc, char **argv, test_params *params)
     }
 
     // Fix rank if running under SLURM
-#if 0
-    /* the following "if" statement can never be true as rank is
-     * an unsigned 32-bit int */
-    if( 0 > params->rank ){
+    if( PMIX_RANK_UNDEF == params->rank ){
         char *ranklist = getenv("SLURM_GTIDS");
         char *rankno = getenv("SLURM_LOCALID");
         if( NULL != ranklist && NULL != rankno ){
@@ -246,7 +243,6 @@ void parse_cmd(int argc, char **argv, test_params *params)
             pmix_argv_free(argv);
         }
     }
-#endif
 
     // Fix namespace if running under SLURM
     if( NULL == params->nspace ){

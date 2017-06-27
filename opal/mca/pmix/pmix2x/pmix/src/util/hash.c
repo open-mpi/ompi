@@ -106,6 +106,9 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
     pmix_kval_t *hv;
     uint64_t id;
     char *node;
+    pmix_info_t *info;
+    size_t ninfo, n;
+    pmix_value_t *val;
 
     pmix_output_verbose(10, pmix_globals.debug_output,
                         "HASH:FETCH rank %d key %s",
@@ -143,7 +146,36 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
         if (NULL == key) {
             /* we will return the data as an array of pmix_info_t
              * in the kvs pmix_value_t */
-
+            val = (pmix_value_t*)malloc(sizeof(pmix_value_t));
+            if (NULL == val) {
+                return PMIX_ERR_NOMEM;
+            }
+            val->type = PMIX_DATA_ARRAY;
+            val->data.darray = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
+            if (NULL == val->data.darray) {
+                PMIX_VALUE_RELEASE(val);
+                return PMIX_ERR_NOMEM;
+            }
+            val->data.darray->type = PMIX_INFO;
+            val->data.darray->size = 0;
+            val->data.darray->array = NULL;
+            ninfo = pmix_list_get_size(&proc_data->data);
+            PMIX_INFO_CREATE(info, ninfo);
+            if (NULL == info) {
+                PMIX_VALUE_RELEASE(val);
+                return PMIX_ERR_NOMEM;
+            }
+            /* copy the list elements */
+            n=0;
+            PMIX_LIST_FOREACH(hv, &proc_data->data, pmix_kval_t) {
+                (void)strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
+                pmix_value_xfer(&info[n].value, hv->value);
+                ++n;
+            }
+            val->data.darray->size = ninfo;
+            val->data.darray->array = info;
+            *kvs = val;
+            return PMIX_SUCCESS;
         } else {
             /* find the value from within this proc_data object */
             hv = lookup_keyval(&proc_data->data, key);
