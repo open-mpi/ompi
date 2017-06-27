@@ -47,7 +47,7 @@ static opal_hash_table_t *comm_data = NULL;
 static inline void mca_common_monitoring_coll_check_name(mca_monitoring_coll_data_t*data)
 {
     if( data->comm_name && data->p_comm && (data->p_comm->c_flags & OMPI_COMM_NAMEISSET)
-        && data->p_comm->c_name && 0 <  strlen(data->p_comm->c_name)
+        && 0 <  strlen(data->p_comm->c_name)
         && 0 != strncmp(data->p_comm->c_name, data->comm_name, OPAL_MAX_OBJECT_NAME - 1) )
     {
         free(data->comm_name);
@@ -101,7 +101,9 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
         return NULL;
     }
 
-    data->p_comm = comm;
+    data->procs     = NULL;
+    data->comm_name = NULL;
+    data->p_comm    = comm;
     
     /* Allocate hashtable */
     if( NULL == comm_data ) {
