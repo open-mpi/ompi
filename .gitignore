@@ -621,6 +621,11 @@ test/event/event-test
 test/event/time-test
 
 test/monitoring/monitoring_test
+test/monitoring/check_monitoring
+test/monitoring/example_reduce_count
+test/monitoring/test_overhead
+test/monitoring/test_pvar_access
+
 
 test/mpi/environment/chello
 
