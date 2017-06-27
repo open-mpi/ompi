@@ -443,12 +443,6 @@ static void proc_errors(int fd, short args, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
         /* record the first one to fail */
         if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
-            /* output an error message so the user knows what happened */
-            orte_show_help("help-errmgr-base.txt", "node-died", true,
-                           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                           orte_process_info.nodename,
-                           ORTE_NAME_PRINT(proc),
-                           pptr->node->name);
             /* mark the daemon job as failed */
             jdata->state = ORTE_JOB_STATE_COMM_FAILED;
             /* point to the lowest rank to cause the problem */
@@ -456,14 +450,25 @@ static void proc_errors(int fd, short args, void *cbdata)
             /* retain the object so it doesn't get free'd */
             OBJ_RETAIN(pptr);
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
-            /* update our exit code */
-            ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
-            /* just in case the exit code hadn't been set, do it here - this
-             * won't override any reported exit code */
-            ORTE_UPDATE_EXIT_STATUS(ORTE_ERR_COMM_FAILURE);
+            if (!orte_enable_recovery) {
+                /* output an error message so the user knows what happened */
+                orte_show_help("help-errmgr-base.txt", "node-died", true,
+                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                               orte_process_info.nodename,
+                               ORTE_NAME_PRINT(proc),
+                               pptr->node->name);
+                /* update our exit code */
+                ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+                /* just in case the exit code hadn't been set, do it here - this
+                 * won't override any reported exit code */
+                ORTE_UPDATE_EXIT_STATUS(ORTE_ERR_COMM_FAILURE);
+            }
         }
-        /* abort the system */
-        default_hnp_abort(jdata);
+        /* if recovery is enabled, then we are done - otherwise,
+         * abort the system */
+        if (!orte_enable_recovery) {
+            default_hnp_abort(jdata);
+        }
         goto cleanup;
     }
 
@@ -498,7 +503,8 @@ static void proc_errors(int fd, short args, void *cbdata)
   keep_going:
     /* if this is a continuously operating job, then there is nothing more
      * to do - we let the job continue to run */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL)) {
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL) ||
+        ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RECOVERABLE)) {
         /* always mark the waitpid as having fired */
         ORTE_ACTIVATE_PROC_STATE(&pptr->name, ORTE_PROC_STATE_WAITPID_FIRED);
         /* if this is a remote proc, we won't hear anything more about it

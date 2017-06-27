@@ -267,8 +267,10 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* start one orted on each node */
     opal_argv_append(&argc, &argv, "--ntasks-per-node=1");
 
-    /* alert us if any orteds die during startup */
-    opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
+    if (!orte_enable_recovery) {
+        /* kill the job if any orteds die */
+        opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
+    }
 
     /* ensure the orteds are not bound to a single processor,
      * just in case the TaskAffinity option is set by default.
