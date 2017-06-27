@@ -907,7 +907,7 @@ typedef struct pmix_value {
                 free((m)->data.bo.bytes);                                           \
             }                                                                       \
         } else if (PMIX_DATA_ARRAY == (m)->type) {                                  \
-            if (NULL != (m)->data.darray) {                                         \
+            if (NULL != (m)->data.darray && NULL != (m)->data.darray->array) {      \
                 if (PMIX_STRING == (m)->data.darray->type) {                        \
                     char **_str = (char**)(m)->data.darray->array;                  \
                     for (_n=0; _n < (m)->data.darray->size; _n++) {                 \
