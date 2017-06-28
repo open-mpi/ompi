@@ -413,9 +413,11 @@ void pmix2x_server_deregister_client(const opal_process_name_t *proc,
             (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);
             p.rank = pmix2x_convert_opalrank(proc->vpid);
             OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             PMIx_server_deregister_client(&p, lkcbfunc, (void*)&lock);
             OPAL_PMIX_WAIT_THREAD(&lock);
             OPAL_PMIX_DESTRUCT_LOCK(&lock);
+            OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
             break;
         }
     }

@@ -240,9 +240,9 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     size_t n;
     opal_pmix2x_event_t *event;
 
-     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                         "%s RECEIVED NOTIFICATION OF STATUS %d",
-                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), status);
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s RECEIVED NOTIFICATION OF STATUS %d",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), status);
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
