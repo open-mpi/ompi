@@ -80,6 +80,7 @@ void parse_cmd(int argc, char **argv, test_params *params)
             fprintf(stderr, "\t--test-error test error handling api.\n");
             fprintf(stderr, "\t--test-replace N:k0,k1,...,k(N-1)   test key replace for N keys, k0,k1,k(N-1) - key indexes to replace  \n");
             fprintf(stderr, "\t--test-internal N  test store internal key, N - number of internal keys\n");
+            fprintf(stderr, "\t--gds <external gds name>           set GDS module \"--gds hash|ds12\", default is hash\n");
             exit(0);
         } else if (0 == strcmp(argv[i], "--exec") || 0 == strcmp(argv[i], "-e")) {
             i++;
@@ -190,6 +191,9 @@ void parse_cmd(int argc, char **argv, test_params *params)
             } else {
                 params->test_internal = 1;
             }
+        } else if(0 == strcmp(argv[i], "--gds") ) {
+            i++;
+            params->gds_mode = strdup(argv[i]);
         }
 
         else {

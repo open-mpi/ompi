@@ -147,9 +147,9 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             ch->status = (e);                                                       \
             ch->range = (r);                                                        \
             (void)strncpy(ch->source.nspace,                                        \
-                          (p)->info->nptr->nspace,                                  \
+                          (p)->nptr->nspace,                                        \
                           PMIX_MAX_NSLEN);                                          \
-            ch->source.rank = (p)->info->rank;                                      \
+            ch->source.rank = (p)->info->pname.rank;                                \
             ch->ninfo = 2;                                                          \
             ch->final_cbfunc = (f);                                                 \
             ch->final_cbdata = ch;                                                  \
@@ -169,8 +169,8 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
         } else {                                                                    \
             /* add this peer to the array of sources */                             \
-            (void)strncpy(proc.nspace, (p)->info->nptr->nspace, PMIX_MAX_NSLEN);    \
-            proc.rank = (p)->info->rank;                                            \
+            (void)strncpy(proc.nspace, (p)->nptr->nspace, PMIX_MAX_NSLEN);          \
+            proc.rank = (p)->info->pname.rank;                                      \
             ninfo = ch->ninfo + 1;                                                  \
             PMIX_INFO_CREATE(info, ninfo);                                          \
             /* must keep the hdlr name and return object at the end, so prepend */  \

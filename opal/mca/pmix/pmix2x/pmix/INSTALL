@@ -21,10 +21,10 @@ For More Information
 ====================
 
 This file is a *very* short overview of building and installing
-the PMIx library.  Much more information is available on the
-PMIx web site (e.g., see the FAQ section):
+the PMIx library.  Much more information is available in the
+FAQ section on the PMIx web site:
 
-    http://pmix.github.io/pmix/pmix
+    http://pmix.github.io/pmix/faq
 
 
 Developer Builds

@@ -174,7 +174,6 @@ int pmix2x_client_finalize(void)
         }
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-
     rc = PMIx_Finalize(NULL, 0);
 
     return pmix2x_convert_rc(rc);

@@ -55,6 +55,19 @@ AC_CONFIG_MACRO_DIR(./config)
 # because it twiddles random bits of autoconf
 PMIX_LOAD_PLATFORM
 
+PMIX_TOP_BUILDDIR="`pwd`"
+AC_SUBST(PMIX_TOP_BUILDDIR)
+cd "$srcdir"
+PMIX_TOP_SRCDIR="`pwd`"
+AC_SUBST(PMIX_TOP_SRCDIR)
+cd "$PMIX_TOP_BUILDDIR"
+
+AC_MSG_NOTICE([builddir: $PMIX_TOP_BUILDDIR])
+AC_MSG_NOTICE([srcdir: $PMIX_TOP_SRCDIR])
+if test "$PMIX_TOP_BUILDDIR" != "$PMIX_TOP_SRCDIR"; then
+    AC_MSG_NOTICE([Detected VPATH build])
+fi
+
 # setup configure options (e.g., show_title and friends)
 PMIX_CONFIGURE_SETUP
 pmix_show_title "Configuring PMIx"

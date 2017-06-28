@@ -15,7 +15,7 @@ Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -28,7 +28,7 @@ When submitting questions and problems, be sure to include as much
 extra information as possible.  This web page details all the
 information that we request in order to provide assistance:
 
-     http://pmix.github.io/master/community/help/
+     http://pmix.github.io/pmix/community/help/
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the PMIx mailing list, which is hosted by GoogleGroups:
@@ -48,7 +48,7 @@ Thanks for your time.
 
 More information is available in the PMIx FAQ:
 
-    http://pmix.github.io/master/faq/
+    http://pmix.github.io/pmix/faq/
 
 We are in early days, so please be patient - info will grow as questions
 are addressed.
@@ -63,7 +63,7 @@ General notes
 
 - The majority of PMIx's documentation is here in this file, the
   included man pages, and on the web site FAQ
-  (http://pmix.github.io/master/faq).  This will eventually be
+  (http://pmix.github.io/pmix/faq).  This will eventually be
   supplemented with cohesive installation and user documentation files.
 
 - Systems that have been tested are:
@@ -286,7 +286,7 @@ Common Questions
 Many common questions about building and using PMIx are answered
 on the FAQ:
 
-    http://pmix.github.io/master/faq/
+    http://pmix.github.io/pmix/faq/
 
 ===========================================================================
 
@@ -300,7 +300,7 @@ When submitting questions and problems, be sure to include as much
 extra information as possible.  This web page details all the
 information that we request in order to provide assistance:
 
-     http://pmix.github.io/master/community/help/
+     http://pmix.github.io/pmix/community/help/
 
 Questions and comments should generally be sent to the PMIx mailing
 list (pmix@googlegroups.com).  Because of spam, only
