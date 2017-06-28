@@ -62,6 +62,9 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
         myenv = ORTE_SCHIZO_NATIVE_LAUNCHED;
         opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"ess");
         opal_argv_append_nosize(&pushed_vals, "pmi");
+        /* mark that we are native */
+        opal_argv_append_nosize(&pushed_envs, "ORTE_SCHIZO_DETECTION");
+        opal_argv_append_nosize(&pushed_vals, "NATIVE");
         goto setup;
     }
 
@@ -71,6 +74,10 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
         myenv = ORTE_SCHIZO_UNDETERMINED;
         return myenv;
     }
+
+    /* mark that we are in SLURM */
+    opal_argv_append_nosize(&pushed_envs, "ORTE_SCHIZO_DETECTION");
+    opal_argv_append_nosize(&pushed_vals, "SLURM");
 
     /* we are in an allocation, but were we direct launched
      * or are we a singleton? */
