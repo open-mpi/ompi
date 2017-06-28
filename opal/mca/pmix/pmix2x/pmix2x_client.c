@@ -168,7 +168,7 @@ int pmix2x_client_finalize(void)
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     --opal_pmix_base.initialized;
 
-    if (0 < opal_pmix_base.initialized) {
+    if (0 == opal_pmix_base.initialized) {
         /* deregister all event handlers */
         OPAL_LIST_FOREACH_SAFE(event, ev2, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
             OPAL_PMIX_DESTRUCT_LOCK(&event->lock);
