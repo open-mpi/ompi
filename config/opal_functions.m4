@@ -94,9 +94,9 @@ EOF
 # Save some stats about this build
 #
 
-OPAL_CONFIGURE_USER="`whoami`"
-OPAL_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
-OPAL_CONFIGURE_DATE="`date`"
+OPAL_CONFIGURE_USER="${USER:-`whoami`}"
+OPAL_CONFIGURE_HOST="${HOSTNAME:-`(hostname || uname -n) 2> /dev/null | sed 1q`}"
+OPAL_CONFIGURE_DATE="`$srcdir/config/getdate.sh`"
 
 OPAL_LIBNL_SANITY_INIT
 

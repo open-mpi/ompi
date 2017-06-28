@@ -168,6 +168,19 @@ General notes
     using the clang-4.0 system compiler. A workaround is to build
     Open MPI using the GNU compiler.
 
+- Open MPI has taken some steps towards Reproducible Builds
+  (https://reproducible-builds.org/).  Specifically, Open MPI's
+  "configure" and "make" process, by default, records the build date
+  and some system-specific information such as the hostname where Open
+  MPI was built and the username who built it.  If you desire a
+  Reproducible Build, set the $SOURCE_DATE_EPOCH, $USER and $HOSTNAME
+  environment variables before invoking "configure" and "make", and
+  Open MPI will use those values instead of invoking "whoami" and/or
+  "hostname", respectively.  See
+  https://reproducible-builds.org/docs/source-date-epoch/ for
+  information on the expected format and content of the
+  $SOURCE_DATE_EPOCH variable.
+
 Platform Notes
 --------------
 
