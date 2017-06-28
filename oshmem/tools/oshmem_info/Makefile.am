@@ -18,7 +18,7 @@ AM_CPPFLAGS = \
             -DOPAL_CONFIGURE_DATE="\"@OPAL_CONFIGURE_DATE@\"" \
             -DOMPI_BUILD_USER="\"$$USER\"" \
             -DOMPI_BUILD_HOST="\"`(hostname || uname -n) 2> /dev/null | sed 1q`\"" \
-            -DOMPI_BUILD_DATE="\"`date`\"" \
+            -DOMPI_BUILD_DATE="\"`$(top_srcdir)/config/getdate.sh`\"" \
             -DOMPI_BUILD_CFLAGS="\"@CFLAGS@\"" \
             -DOMPI_BUILD_CPPFLAGS="\"@CPPFLAGS@\"" \
             -DOMPI_BUILD_CXXFLAGS="\"@CXXFLAGS@\"" \
@@ -29,6 +29,7 @@ AM_CPPFLAGS = \
             -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
             -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
+
 if OSHMEM_PROFILING
     AM_CPPFLAGS += -DOSHMEM_PROFILING=1
 else

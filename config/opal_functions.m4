@@ -96,7 +96,7 @@ EOF
 
 OPAL_CONFIGURE_USER="`whoami`"
 OPAL_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
-OPAL_CONFIGURE_DATE="`date`"
+OPAL_CONFIGURE_DATE="`date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}"`"
 
 OPAL_LIBNL_SANITY_INIT
 
@@ -118,7 +118,7 @@ AC_DEFUN([OPAL_BASIC_SETUP],[
 
 OPAL_CONFIGURE_USER="`whoami`"
 OPAL_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
-OPAL_CONFIGURE_DATE="`date`"
+OPAL_CONFIGURE_DATE="`date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}"`"
 
 #
 # Make automake clean emacs ~ files for "make clean"
