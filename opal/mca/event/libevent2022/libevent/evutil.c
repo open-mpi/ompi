@@ -2113,7 +2113,7 @@ _evutil_weakrand(void)
  * Volatile pointer to memset: we use this to keep the compiler from
  * eliminating our call to memset.
  */
-void * (*volatile evutil_memset_volatile_)(void *, int, size_t) = memset;
+static void * (*volatile evutil_memset_volatile_)(void *, int, size_t) = memset;
 
 void
 evutil_memclear_(void *mem, size_t len)
