@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2014      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -91,7 +91,7 @@ m4_define([OPAL_GET_VERSION],[
                     $2_REPO_REV=`git describe --tags --always`
                 fi
             else
-                $2_REPO_REV="date`date '+%Y-%m-%d'`"
+                $2_REPO_REV=date`$srcdir/getdate.sh '+%Y-%m-%d'`
             fi
         fi
 
