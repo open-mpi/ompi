@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -259,13 +260,22 @@ int orte_iof_base_write_output(const orte_process_name_t *name, orte_iof_tag_t s
 
     /* is the write event issued? */
     if (!channel->pending) {
+        int rc = -1;
         /* issue it */
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s write:output adding write event",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         channel->pending = true;
         ORTE_POST_OBJECT(channel);
-        opal_event_add(channel->ev, 0);
+        if (channel->always_writable) {
+            /* Regular is always write ready. Activate the handler. */
+            opal_event_active (channel->ev, OPAL_EV_WRITE, 1);
+        } else {
+            rc = opal_event_add(channel->ev, 0);
+            if (rc) {
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            }
+        }
     }
 
     return num_buffered;
@@ -297,13 +307,14 @@ void orte_iof_base_static_dump_output(orte_iof_read_event_t *rev)
     }
 }
 
+#define ORTE_IOF_REGULARF_BLOCK (1024)
 void orte_iof_base_write_handler(int fd, short event, void *cbdata)
 {
     orte_iof_sink_t *sink = (orte_iof_sink_t*)cbdata;
     orte_iof_write_event_t *wev = sink->wev;
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
-    int num_written;
+    int num_written, total_written = 0;
 
     ORTE_ACQUIRE_OBJECT(sink);
 
@@ -333,6 +344,10 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
                 /* leave the write event running so it will call us again
                  * when the fd is ready.
                  */
+                if(wev->always_writable){
+                    /* Schedule another event */
+                    opal_event_active (wev->ev, OPAL_EV_WRITE, 1);
+                }
                 return;
             }
             /* otherwise, something bad happened so all we can do is abort
@@ -356,12 +371,29 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
             /* leave the write event running so it will call us again
              * when the fd is ready
              */
+            if(wev->always_writable){
+                /* Schedule another event */
+                opal_event_active (wev->ev, OPAL_EV_WRITE, 1);
+
+            }
             return;
         }
         OBJ_RELEASE(output);
+
+        total_written += num_written;
+        if(wev->always_writable && (ORTE_IOF_REGULARF_BLOCK <= total_written)){
+            /* If this is a regular file it will never tell us it will block
+             * Write no more than ORTE_IOF_REGULARF_BLOCK at a time allowing
+             * other fds to progress
+             */
+            opal_event_active (wev->ev, OPAL_EV_WRITE, 1);
+            return;
+        }
     }
   ABORT:
-    opal_event_del(wev->ev);
+    if (!wev->always_writable){
+        opal_event_del(wev->ev);
+    }
     wev->pending = false;
     ORTE_POST_OBJECT(wev);
 }

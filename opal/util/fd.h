@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -62,6 +63,37 @@ OPAL_DECLSPEC int opal_fd_write(int fd, int len, const void *buffer);
  * to setting a file descriptor to be close-on-exec.
  */
 OPAL_DECLSPEC int opal_fd_set_cloexec(int fd);
+
+/**
+ * Convenience function to check if fd point to an accessible regular file.
+ *
+ * @param fd File descriptor
+ *
+ * @returns true if "fd" points to a regular file.
+ * @returns false otherwise.
+ */
+OPAL_DECLSPEC bool opal_fd_is_regular(int fd);
+
+/**
+ * Convenience function to check if fd point to an accessible character device.
+ *
+ * @param fd File descriptor
+ *
+ * @returns true if "fd" points to a regular file.
+ * @returns false otherwise.
+ */
+OPAL_DECLSPEC bool opal_fd_is_chardev(int fd);
+
+/**
+ * Convenience function to check if fd point to an accessible block device.
+ *
+ * @param fd File descriptor
+ *
+ * @returns true if "fd" points to a regular file.
+ * @returns false otherwise.
+ */
+OPAL_DECLSPEC bool opal_fd_is_blkdev(int fd);
+
 
 END_C_DECLS
 

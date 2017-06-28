@@ -14,6 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +49,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "orte/mca/mca.h"
 #include "opal/mca/event/event.h"
+#include "opal/util/fd.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/runtime/orte_globals.h"
@@ -84,6 +86,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_job_t);
 typedef struct {
     opal_list_item_t super;
     bool pending;
+    bool always_writable;
     opal_event_t *ev;
     int fd;
     opal_list_t outputs;
@@ -157,6 +160,9 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
+            ep->wev->always_writable = opal_fd_is_regular(fid) ||   \
+                                       opal_fd_is_chardev(fid) ||   \
+                                       opal_fd_is_blkdev(fid);      \
             opal_event_set(orte_event_base,                         \
                            ep->wev->ev, ep->wev->fd,                \
                            OPAL_EV_WRITE,                           \
