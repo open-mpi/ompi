@@ -698,23 +698,13 @@ static int component_startup(void)
 static void component_shutdown(void)
 {
     mca_oob_tcp_peer_t *peer;
-    uint64_t ui64;
-    int i = 0;
+    int i = 0, rc;
+    uint64_t key;
+    void *node;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* cleanup all peers */
-    OPAL_HASH_TABLE_FOREACH(ui64, uint64, peer, &mca_oob_tcp_component.peers) {
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s RELEASING PEER OBJ %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
-        if (NULL != peer) {
-            OBJ_RELEASE(peer);
-        }
-    }
 
     if (0 < orte_oob_base.num_threads) {
         for (i=0; i < orte_oob_base.num_threads; i++) {
@@ -732,6 +722,18 @@ static void component_shutdown(void)
     } else {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "no hnp or not active");
+    }
+
+    /* release all peers from the hash table */
+    rc = opal_hash_table_get_first_key_uint64(&mca_oob_tcp_component.peers, &key,
+                                              (void **)&peer, &node);
+    while (OPAL_SUCCESS == rc) {
+        if (NULL != peer) {
+            OBJ_RELEASE(peer);
+            opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, key, NULL);
+        }
+        rc = opal_hash_table_get_next_key_uint64(&mca_oob_tcp_component.peers, &key,
+                                                 (void **) &peer, node, &node);
     }
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
