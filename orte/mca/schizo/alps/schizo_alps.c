@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,8 +65,15 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
          * launch performance penalty for hwloc at high ppn on knl */
         opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX "orte_bound_at_launch");
         opal_argv_append_nosize(&pushed_vals, "true");
+        /* mark that we are native */
+        opal_argv_append_nosize(&pushed_envs, "ORTE_SCHIZO_DETECTION");
+        opal_argv_append_nosize(&pushed_vals, "NATIVE");
         goto setup;
     }
+
+    /* mark that we are on ALPS */
+    opal_argv_append_nosize(&pushed_envs, "ORTE_SCHIZO_DETECTION");
+    opal_argv_append_nosize(&pushed_vals, "ALPS");
 
     /* see if we are running in a Cray PAGG container */
     fd = fopen(proc_job_file, "r");

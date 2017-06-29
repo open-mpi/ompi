@@ -52,6 +52,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/schizo/schizo.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
@@ -125,7 +126,24 @@ static int rte_init(void)
     opal_pmix_base_set_evbase(orte_event_base);
     /* initialize the selected module */
     if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init(NULL)))) {
-        /* we cannot run */
+        /* we cannot run - this could be due to being direct launched
+         * without the required PMI support being built. Try to detect
+         * that scenario and warn the user */
+        if (ORTE_SCHIZO_DIRECT_LAUNCHED == orte_schizo.check_launch_environment() &&
+            NULL != (envar = getenv("ORTE_SCHIZO_DETECTION"))) {
+            if (0 == strcmp(envar, "SLURM")) {
+                /* yes to both - so emit a hopefully helpful
+                 * error message and abort */
+                orte_show_help_finalize();
+                orte_show_help("help-ess-base.txt", "slurm-error", true);
+                return ORTE_ERR_SILENT;
+            } else if (0 == strcmp(envar, "ALPS")) {
+                /* we were direct launched by ALPS */
+                orte_show_help_finalize();
+                orte_show_help("help-ess-base.txt", "alps-error", true);
+                return ORTE_ERR_SILENT;
+            }
+        }
         error = "pmix init";
         goto error;
     }

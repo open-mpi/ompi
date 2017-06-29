@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +33,7 @@
 #include "opal/mca/pmix/base/base.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/schizo/schizo.h"
 
 #include "orte/mca/ess/ess.h"
@@ -131,6 +132,32 @@ static int component_query(mca_base_module_t **module, int *priority)
         return ORTE_ERROR;
     }
 
+    /* we may be incorrectly trying to run as a singleton - e.g.,
+     * someone direct-launched us under SLURM without building
+     * ORTE --with-slurm or in a slurm environment (so we didn't
+     * autodetect slurm). Try to detect that here. Sadly, we
+     * cannot just use the schizo framework to help us here as
+     * the corresponding schizo component may not have even
+     * been build. So we have to do things a little uglier */
+
+    if (ORTE_SCHIZO_UNMANAGED_SINGLETON == ret) {
+        /* see if we are in a SLURM allocation */
+        if (NULL != getenv("SLURM_NODELIST")) {
+            /* emit a hopefully helpful error message and abort */
+            orte_show_help("help-ess-base.txt", "slurm-error2", true);
+            *module = NULL;
+            *priority = 0;
+            return ORTE_ERR_SILENT;
+        }
+        /* see if we are under ALPS */
+        if (NULL != getenv("ALPS_APP_ID")) {
+            orte_show_help("help-ess-base.txt", "alps-error2", true);
+            *module = NULL;
+            *priority = 0;
+            return ORTE_ERR_SILENT;
+        }
+    }
+
     /* okay, we want to be selected as we must be a singleton */
     *priority = 100;
     *module = (mca_base_module_t *)&orte_ess_singleton_module;
@@ -142,4 +169,3 @@ static int component_close(void)
 {
     return ORTE_SUCCESS;
 }
-
