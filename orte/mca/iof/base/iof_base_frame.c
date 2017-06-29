@@ -270,6 +270,8 @@ static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
     rev->active = false;
     rev->ev = opal_event_alloc();
     rev->sink = NULL;
+    rev->tv.tv_sec = 0;
+    rev->tv.tv_usec = 0;
 }
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
@@ -303,6 +305,8 @@ static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
     wev->fd = -1;
     OBJ_CONSTRUCT(&wev->outputs, opal_list_t);
     wev->ev = opal_event_alloc();
+    wev->tv.tv_sec = 0;
+    wev->tv.tv_usec = 0;
 }
 static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
 {
