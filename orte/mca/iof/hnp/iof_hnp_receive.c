@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,9 +82,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         if (NULL != mca_iof_hnp_component.stdinev &&
             !orte_job_term_ordered &&
             !mca_iof_hnp_component.stdinev->active) {
-            mca_iof_hnp_component.stdinev->active = true;
-            ORTE_POST_OBJECT(mca_iof_hnp_component.stdinev);
-            opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
+            ORTE_IOF_READ_ACTIVATE(mca_iof_hnp_component.stdinev);
         }
         goto CLEAN_RETURN;
     } else if (ORTE_IOF_XOFF & stream) {

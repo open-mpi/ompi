@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,9 +55,7 @@ static void restart_stdin(int fd, short event, void *cbdata)
     if (NULL != mca_iof_hnp_component.stdinev &&
         !orte_job_term_ordered &&
         !mca_iof_hnp_component.stdinev->active) {
-        mca_iof_hnp_component.stdinev->active = true;
-        ORTE_POST_OBJECT(mca_iof_hnp_component.stdinev);
-        opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
+        ORTE_IOF_READ_ACTIVATE(mca_iof_hnp_component.stdinev);
     }
 
     /* if this was a timer callback, then release the timer */
@@ -85,9 +84,9 @@ void orte_iof_hnp_stdin_cb(int fd, short event, void *cbdata)
     should_process = orte_iof_hnp_stdin_check(0);
 
     if (should_process) {
-        mca_iof_hnp_component.stdinev->active = true;
-        opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
+        ORTE_IOF_READ_ACTIVATE(mca_iof_hnp_component.stdinev);
     } else {
+
         opal_event_del(mca_iof_hnp_component.stdinev->ev);
         mca_iof_hnp_component.stdinev->active = false;
     }
@@ -109,6 +108,11 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
     ORTE_ACQUIRE_OBJECT(rev);
 
+    /* As we may use timer events, fd can be bogus (-1)
+     * use the right one here
+     */
+    fd = rev->fd;
+
     /* read up to the fragment size */
     numbytes = read(fd, data, sizeof(data));
 
@@ -123,7 +127,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
-            opal_event_add(rev->ev, 0);
+            ORTE_IOF_READ_ACTIVATE(rev);
             return;
         }
 
@@ -303,8 +307,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     }
 
     /* re-add the event */
-    ORTE_POST_OBJECT(rev);
-    opal_event_add(rev->ev, 0);
-
+    ORTE_IOF_READ_ACTIVATE(rev);
     return;
 }

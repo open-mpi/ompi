@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -190,15 +191,9 @@ SETUP:
      * been defined!
      */
     if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
-        proct->revstdout->active = true;
-        ORTE_POST_OBJECT(proct->revstdout);
-        opal_event_add(proct->revstdout->ev, 0);
-        proct->revstderr->active = true;
-        ORTE_POST_OBJECT(proct->revstderr);
-        opal_event_add(proct->revstderr->ev, 0);
-        proct->revstddiag->active = true;
-        ORTE_POST_OBJECT(proct->revstddiag);
-        opal_event_add(proct->revstddiag->ev, 0);
+        ORTE_IOF_READ_ACTIVATE(proct->revstdout);
+        ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+        ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
     }
     return ORTE_SUCCESS;
 }
@@ -363,7 +358,7 @@ static int orted_ft_event(int state)
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static void stdin_write_handler(int fd, short event, void *cbdata)
+static void stdin_write_handler(int _fd, short event, void *cbdata)
 {
     orte_iof_sink_t *sink = (orte_iof_sink_t*)cbdata;
     orte_iof_write_event_t *wev = sink->wev;
@@ -405,9 +400,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                 /* leave the write event running so it will call us again
                  * when the fd is ready.
                  */
-                wev->pending = true;
-                ORTE_POST_OBJECT(wev);
-                opal_event_add(wev->ev, 0);
+                ORTE_IOF_SINK_ACTIVATE(wev);
                 goto CHECK;
             }
             /* otherwise, something bad happened so all we can do is declare an
@@ -436,9 +429,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* leave the write event running so it will call us again
              * when the fd is ready.
              */
-            wev->pending = true;
-            ORTE_POST_OBJECT(wev);
-            opal_event_add(wev->ev, 0);
+            ORTE_IOF_SINK_ACTIVATE(wev);
             goto CHECK;
         }
         OBJ_RELEASE(output);
