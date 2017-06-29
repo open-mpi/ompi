@@ -1,4 +1,7 @@
 #
+# Copyright (c) 2016      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
 # Copyright (c) 2016      Inria.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -8,6 +11,8 @@
 #
 # $HEADER$
 #
+
+EXTRA_DIST = profile2mat.pl aggregate_profile.pl
 
 sources = common_monitoring.c common_monitoring_coll.c
 headers = common_monitoring.h common_monitoring_coll.h
@@ -19,6 +24,19 @@ component_noinst = libmca_common_monitoring_noinst.la
 
 if MCA_BUILD_ompi_common_monitoring_DSO
 lib_LTLIBRARIES += $(component_install)
+lib_LTLIBRARIES += ompi_monitoring_prof.la
+
+ompi_monitoring_prof_la_SOURCES = monitoring_prof.c
+ompi_monitoring_prof_la_LDFLAGS= \
+    -module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
+ompi_monitoring_prof_la_LIBADD = \
+    $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+    $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+
+if OPAL_INSTALL_BINARIES
+bin_SCRIPTS = profile2mat.pl aggregate_profile.pl
+endif # OPAL_INSTALL_BINARIES
+
 else
 noinst_LTLIBRARIES += $(component_noinst)
 endif
