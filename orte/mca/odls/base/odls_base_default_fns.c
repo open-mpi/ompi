@@ -18,6 +18,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1111,7 +1112,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             /* set the waitpid callback here for thread protection and
              * to ensure we can capture the callback on shortlived apps */
             ORTE_FLAG_SET(child, ORTE_PROC_FLAG_ALIVE);
-            orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
+            orte_wait_cb(child, ompi_odls_base_default_wait_local_proc, NULL);
 
             /* dispatch this child to the next available launch thread */
             cd = OBJ_NEW(orte_odls_spawn_caddy_t);
@@ -1245,7 +1246,7 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
  *  Wait for a callback indicating the child has completed.
  */
 
-void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
+void ompi_odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
 {
     int i;
     orte_job_t *jobdat;
@@ -1825,7 +1826,7 @@ int orte_odls_base_default_restart_proc(orte_proc_t *child,
             goto CLEANUP;
         }
     }
-    orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
+    orte_wait_cb(child, ompi_odls_base_default_wait_local_proc, NULL);
 
     ++orte_odls_globals.next_base;
     if (orte_odls_globals.num_threads <= orte_odls_globals.next_base) {

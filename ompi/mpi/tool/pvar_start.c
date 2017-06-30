@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +39,7 @@ int MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    mpit_lock ();
+    ompi_mpit_lock ();
 
     if (MPI_T_PVAR_ALL_HANDLES == handle) {
         OPAL_LIST_FOREACH(handle, &session->handles, mca_base_pvar_handle_t) {
@@ -53,7 +54,7 @@ int MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
         ret = pvar_handle_start (handle);
     }
 
-    mpit_unlock ();
+    ompi_mpit_unlock ();
 
     return ompit_opal_to_mpit_error (ret);
 }

@@ -455,6 +455,6 @@ static inline void ompi_coll_base_free_reqs(ompi_request_t **reqs, int count)
  * Return the array of requests on the data. If the array was not initialized
  * or if it's size was too small, allocate it to fit the requested size.
  */
-ompi_request_t** coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs);
+ompi_request_t** ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs);
 
 #endif /* MCA_COLL_BASE_EXPORT_H */

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -329,7 +330,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
                        opal_cr_user_inc_callback_fn_t  function,
                        opal_cr_user_inc_callback_fn_t  *prev_function);
 
-    OPAL_DECLSPEC int trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
+    OPAL_DECLSPEC int ompi_trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
                                                 opal_cr_user_inc_callback_state_t state);
 
 

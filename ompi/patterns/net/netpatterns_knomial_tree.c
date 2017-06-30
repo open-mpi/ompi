@@ -6,6 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
 
 /* setup recursive doubleing tree node */
 
-OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
         int num_nodes, int node_rank, int tree_order, int *hier_ranks,
         netpatterns_k_exchange_node_t *exchange_node)
 {
@@ -52,7 +53,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
 
 
     NETPATTERNS_VERBOSE(
-            ("Enter netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
+            ("Enter ompi_netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
                 num_nodes, node_rank, tree_order));
 
     assert(num_nodes > 1);
@@ -504,7 +505,7 @@ Error:
     return OMPI_ERROR;
 }
 
-OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_allgather_tree_node(
+OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_knomial_allgather_tree_node(
         netpatterns_k_exchange_node_t *exchange_node)
 {
     int i;
@@ -531,7 +532,7 @@ OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_allgather_tree_node(
     free(exchange_node->payload_info);
 }
 
-OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_tree_node(
         int num_nodes, int node_rank, int tree_order,
         netpatterns_k_exchange_node_t *exchange_node)
 {
@@ -541,7 +542,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
     int k_base, kpow_num, peer;
 
     NETPATTERNS_VERBOSE(
-            ("Enter netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
+            ("Enter ompi_netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
                 num_nodes, node_rank, tree_order));
 
     assert(num_nodes > 1);
@@ -669,13 +670,13 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
 
 Error:
 
-    netpatterns_cleanup_recursive_knomial_tree_node (exchange_node);
+    ompi_netpatterns_cleanup_recursive_knomial_tree_node (exchange_node);
 
     /* error return */
     return OMPI_ERROR;
 }
 
-OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_tree_node(
+OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_knomial_tree_node(
         netpatterns_k_exchange_node_t *exchange_node)
 {
     int i;
@@ -697,7 +698,7 @@ OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_tree_node(
 }
 
 #if 1
-OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
         netpatterns_pair_exchange_node_t *exchange_node)
 {
     /* local variables */
@@ -705,7 +706,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes
     int n_levels;
     int shift, mask;
 
-    NETPATTERNS_VERBOSE(("Enter netpatterns_setup_recursive_doubling_n_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)", num_nodes, node_rank, tree_order));
+    NETPATTERNS_VERBOSE(("Enter ompi_netpatterns_setup_recursive_doubling_n_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)", num_nodes, node_rank, tree_order));
 
     assert(num_nodes > 1);
     while (tree_order > num_nodes) {
@@ -838,7 +839,7 @@ Error:
     return OMPI_ERROR;
 }
 
-OMPI_DECLSPEC void netpatterns_cleanup_recursive_doubling_tree_node(
+OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_doubling_tree_node(
     netpatterns_pair_exchange_node_t *exchange_node)
 {
     NETPATTERNS_VERBOSE(("About to release rank_extra_sources_array and rank_exchanges"));
@@ -852,15 +853,15 @@ OMPI_DECLSPEC void netpatterns_cleanup_recursive_doubling_tree_node(
 }
 #endif
 
-OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
         netpatterns_pair_exchange_node_t *exchange_node)
 {
-    return netpatterns_setup_recursive_doubling_n_tree_node(num_nodes, node_rank, 2, exchange_node);
+    return ompi_netpatterns_setup_recursive_doubling_n_tree_node(num_nodes, node_rank, 2, exchange_node);
 }
 
 #if 0
 /*OMPI_DECLSPEC int old_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,*/
-OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank,int tree_order,
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank,int tree_order,
         netpatterns_pair_exchange_node_t *exchange_node)
 {
     /* local variables */

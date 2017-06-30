@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -620,7 +621,7 @@ int opal_cr_inc_core_prep(void)
     /*
      * Call User Level INC
      */
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_PRE_CRS_PRE_MPI,
+    if(OPAL_SUCCESS != (ret = ompi_trigger_user_inc_callback(OPAL_CR_INC_PRE_CRS_PRE_MPI,
                                                         OPAL_CR_INC_STATE_PREPARE)) ) {
         return ret;
     }
@@ -640,7 +641,7 @@ int opal_cr_inc_core_prep(void)
     /*
      * Call User Level INC
      */
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_PRE_CRS_POST_MPI,
+    if(OPAL_SUCCESS != (ret = ompi_trigger_user_inc_callback(OPAL_CR_INC_PRE_CRS_POST_MPI,
                                                         OPAL_CR_INC_STATE_PREPARE)) ) {
         return ret;
     }
@@ -728,7 +729,7 @@ int opal_cr_inc_core_recover(int state)
         cb_state = OPAL_CR_INC_STATE_ERROR;
     }
 
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_POST_CRS_PRE_MPI,
+    if(OPAL_SUCCESS != (ret = ompi_trigger_user_inc_callback(OPAL_CR_INC_POST_CRS_PRE_MPI,
                                                         cb_state)) ) {
         return ret;
     }
@@ -745,7 +746,7 @@ int opal_cr_inc_core_recover(int state)
         return ret;
     }
 
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_POST_CRS_POST_MPI,
+    if(OPAL_SUCCESS != (ret = ompi_trigger_user_inc_callback(OPAL_CR_INC_POST_CRS_POST_MPI,
                                                         cb_state)) ) {
         return ret;
     }
@@ -881,7 +882,7 @@ int opal_cr_user_inc_register_callback(opal_cr_user_inc_callback_event_t event,
     return OPAL_SUCCESS;
 }
 
-int trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
+int ompi_trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
                               opal_cr_user_inc_callback_state_t state)
 {
     if( NULL == cur_user_coord_callback[event] ) {

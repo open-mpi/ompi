@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,7 +82,7 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
 
     /* Send data to the children. */
 
-    reqs = coll_base_comm_get_reqs(module->base_data, size);
+    reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     err = MPI_SUCCESS;
@@ -156,7 +157,7 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                 MCA_COLL_BASE_TAG_BCAST, comm,
                                 MPI_STATUS_IGNORE));
     } else {
-        reqs = coll_base_comm_get_reqs(module->base_data, rsize);
+        reqs = ompi_coll_base_comm_get_reqs(module->base_data, rsize);
         if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
         /* root section */

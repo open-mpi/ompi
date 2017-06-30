@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,7 +101,7 @@ static int mca_pml_v_component_register(void)
 static int mca_pml_v_component_open(void)
 {
     int rc;
-    pml_v_output_open(ompi_pml_v_output, ompi_pml_v_verbose);
+    ompi_pml_v_output_open(ompi_pml_v_output, ompi_pml_v_verbose);
 
     V_OUTPUT_VERBOSE(500, "loaded");
 
@@ -111,7 +112,7 @@ static int mca_pml_v_component_open(void)
     }
 
     if( NULL == mca_vprotocol_base_include_list ) {
-        pml_v_output_close();
+        ompi_pml_v_output_close();
         return mca_base_framework_close(&ompi_vprotocol_base_framework);
     }
 
@@ -136,7 +137,7 @@ static int mca_pml_v_component_close(void)
     }
 
     /* Make sure to close out output even if vprotocol isn't in use */
-    pml_v_output_close ();
+    ompi_pml_v_output_close ();
 
     /* Mark that we have changed something */
     snprintf(mca_pml_base_selected_component.pmlm_version.mca_component_name,
@@ -188,7 +189,7 @@ static int mca_pml_v_component_parasite_close(void)
     mca_pml_base_selected_component = mca_pml_v.host_pml_component;
 
     (void) mca_base_framework_close(&ompi_vprotocol_base_framework);
-    pml_v_output_close();
+    ompi_pml_v_output_close();
 
     mca_pml.pml_enable = mca_pml_v.host_pml.pml_enable;
     /* don't need to call the host component's close: pml_base will do it */

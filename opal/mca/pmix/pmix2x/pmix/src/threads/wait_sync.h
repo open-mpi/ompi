@@ -9,6 +9,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +41,7 @@ typedef struct pmix_wait_sync_t {
 #define REQUEST_PENDING        (void*)0L
 #define REQUEST_COMPLETED      (void*)1L
 
-#define PMIX_SYNC_WAIT(sync)    sync_wait_mt (sync)
+#define PMIX_SYNC_WAIT(sync)    ompi_sync_wait_mt (sync)
 
 /* The loop in release handles a race condition between the signaling
  * thread and the destruction of the condition variable. The signaling

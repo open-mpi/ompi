@@ -5,6 +5,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,27 +111,27 @@ struct netpatterns_k_exchange_node_t {
 typedef struct netpatterns_k_exchange_node_t
                netpatterns_k_exchange_node_t;
 
-OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
     netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC void netpatterns_cleanup_recursive_doubling_tree_node(
+OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_doubling_tree_node(
     netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
     netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_tree_node(
    int num_nodes, int node_rank, int tree_order,
    netpatterns_k_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_tree_node(
+OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_knomial_tree_node(
    netpatterns_k_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
         int num_nodes, int node_rank, int tree_order, int *hier_ranks,
         netpatterns_k_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_allgather_tree_node(
+OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_knomial_allgather_tree_node(
         netpatterns_k_exchange_node_t *exchange_node);
 
 /* Input: k_exchange_node structure

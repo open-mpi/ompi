@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,9 +25,9 @@
 #include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-extern opal_mutex_t mpit_big_lock;
+extern opal_mutex_t ompi_mpit_big_lock;
 
-extern volatile uint32_t mpit_init_count;
+extern volatile uint32_t ompi_mpit_init_count;
 extern volatile int32_t initted;
 
 
@@ -34,10 +35,10 @@ int MPI_T_init_thread (int required, int *provided)
 {
     int rc = MPI_SUCCESS;
 
-    mpit_lock ();
+    ompi_mpit_lock ();
 
     do {
-        if (0 != mpit_init_count++) {
+        if (0 != ompi_mpit_init_count++) {
             break;
         }
 
@@ -60,7 +61,7 @@ int MPI_T_init_thread (int required, int *provided)
         ompi_mpi_thread_level (required, provided);
     } while (0);
 
-    mpit_unlock ();
+    ompi_mpit_unlock ();
 
     return rc;
 }

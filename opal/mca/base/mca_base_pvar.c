@@ -7,6 +7,7 @@
  * Copyright (c) 2015      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -148,7 +149,7 @@ static int mca_base_pvar_default_get_value (const mca_base_pvar_t *pvar, void *v
     /* not used */
     (void) obj_handle;
 
-    memmove (value, pvar->ctx, var_type_sizes[pvar->type]);
+    memmove (value, pvar->ctx, ompi_var_type_sizes[pvar->type]);
 
     return OPAL_SUCCESS;
 }
@@ -158,7 +159,7 @@ static int mca_base_pvar_default_set_value (mca_base_pvar_t *pvar, const void *v
     /* not used */
     (void) obj_handle;
 
-    memmove (pvar->ctx, value, var_type_sizes[pvar->type]);
+    memmove (pvar->ctx, value, ompi_var_type_sizes[pvar->type]);
 
     return OPAL_SUCCESS;
 }
@@ -481,7 +482,7 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
 
         /* get the size of this datatype since read functions will expect an
            array of datatype not mca_base_pvar_value_t's. */
-        datatype_size = var_type_sizes[pvar->type];
+        datatype_size = ompi_var_type_sizes[pvar->type];
         if (0 == datatype_size) {
             ret = OPAL_ERROR;
             break;
@@ -689,7 +690,7 @@ int mca_base_pvar_handle_read_value (mca_base_pvar_handle_t *handle, void *value
     if (mca_base_pvar_is_sum (handle->pvar) || mca_base_pvar_is_watermark (handle->pvar) ||
         !mca_base_pvar_handle_is_running (handle)) {
         /* read the value cached in the handle. */
-        memmove (value, handle->current_value, handle->count * var_type_sizes[handle->pvar->type]);
+        memmove (value, handle->current_value, handle->count * ompi_var_type_sizes[handle->pvar->type]);
     } else {
         /* read the value directly from the variable. */
         ret = handle->pvar->get_value (handle->pvar, value, handle->obj_handle);
@@ -718,7 +719,7 @@ int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void
         return ret;
     }
 
-    memmove (handle->current_value, value, handle->count * var_type_sizes[handle->pvar->type]);
+    memmove (handle->current_value, value, handle->count * ompi_var_type_sizes[handle->pvar->type]);
     /* read the value directly from the variable. */
     ret = handle->pvar->set_value (handle->pvar, value, handle->obj_handle);
 
@@ -799,7 +800,7 @@ int mca_base_pvar_handle_reset (mca_base_pvar_handle_t *handle)
     /* reset this handle to a state analagous to when it was created */
     if (mca_base_pvar_is_sum (handle->pvar)) {
         /* reset the running sum to 0 */
-        memset (handle->current_value, 0, handle->count * var_type_sizes[handle->pvar->type]);
+        memset (handle->current_value, 0, handle->count * ompi_var_type_sizes[handle->pvar->type]);
 
         if (mca_base_pvar_handle_is_running (handle)) {
             ret = handle->pvar->get_value (handle->pvar, handle->last_value, handle->obj_handle);
@@ -879,7 +880,7 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
             }
         }
 
-        (void)asprintf(out[0] + line++, "%stype:%s", tmp, var_type_names[pvar->type]);
+        (void)asprintf(out[0] + line++, "%stype:%s", tmp, ompi_var_type_names[pvar->type]);
         free(tmp);  // release tmp storage
     } else {
         /* there will be at most three lines in the pretty print case */
@@ -889,7 +890,7 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
         }
 
         (void)asprintf (out[0] + line++, "performance \"%s\" (type: %s, class: %s)", full_name,
-                        var_type_names[pvar->type], pvar_class_names[pvar->var_class]);
+                        ompi_var_type_names[pvar->type], pvar_class_names[pvar->var_class]);
 
         if (pvar->description) {
             (void)asprintf(out[0] + line++, "%s", pvar->description);

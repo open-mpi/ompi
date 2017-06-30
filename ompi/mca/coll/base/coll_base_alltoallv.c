@@ -16,6 +16,7 @@
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -231,7 +232,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
 
     /* Now, initiate all send/recv to/from others. */
     nreqs = 0;
-    reqs = preq = coll_base_comm_get_reqs(data, 2 * size);
+    reqs = preq = ompi_coll_base_comm_get_reqs(data, 2 * size);
     if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl; }
 
     /* Post all receives first */

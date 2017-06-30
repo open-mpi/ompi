@@ -13,6 +13,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -295,7 +296,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_exch = MPI_Wtime();
 #endif
-    ret = fcoll_base_coll_allgather_array (&iov_size,
+    ret = ompi_fcoll_base_coll_allgather_array (&iov_size,
                                            1,
                                            MPI_INT,
                                            iovec_count_per_process,
@@ -339,7 +340,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_exch = MPI_Wtime();
 #endif
-    ret = fcoll_base_coll_gatherv_array (local_iov_array,
+    ret = ompi_fcoll_base_coll_gatherv_array (local_iov_array,
                                          iov_size,
                                          io_array_type,
                                          global_iov_array,
@@ -500,7 +501,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
         start_exch = MPI_Wtime();
 #endif
         /* gather from each process how many bytes each will be sending */
-        ret = fcoll_base_coll_gather_array (&bytes_to_write_in_cycle,
+        ret = ompi_fcoll_base_coll_gather_array (&bytes_to_write_in_cycle,
                                             1,
                                             MPI_INT,
                                             bytes_per_process,

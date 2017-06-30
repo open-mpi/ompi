@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -164,7 +165,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rcomm_time = MPI_Wtime();
 #endif
-    ret = fcoll_base_coll_allgather_array (&max_data,
+    ret = ompi_fcoll_base_coll_allgather_array (&max_data,
                                            1,
                                            MPI_LONG,
                                            total_bytes_per_process,
@@ -216,7 +217,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rcomm_time = MPI_Wtime();
 #endif
-    ret = fcoll_base_coll_allgather_array (&local_count,
+    ret = ompi_fcoll_base_coll_allgather_array (&local_count,
                                            1,
                                            MPI_INT,
                                            fview_count,
@@ -274,7 +275,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rcomm_time = MPI_Wtime();
 #endif
-    ret =  fcoll_base_coll_allgatherv_array (local_iov_array,
+    ret =  ompi_fcoll_base_coll_allgatherv_array (local_iov_array,
                                              local_count,
                                              fh->f_iov_type,
                                              global_iov_array,
@@ -309,7 +310,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
-        fcoll_base_sort_iovec (global_iov_array, total_fview_count, sorted);
+        ompi_fcoll_base_sort_iovec (global_iov_array, total_fview_count, sorted);
     }
 
     if (NULL != local_iov_array) {

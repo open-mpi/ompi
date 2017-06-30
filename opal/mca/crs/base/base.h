@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,9 +121,9 @@ BEGIN_C_DECLS
     typedef int (*opal_crs_base_self_restart_fn_t)(void);
     typedef int (*opal_crs_base_self_continue_fn_t)(void);
 
-    extern opal_crs_base_self_checkpoint_fn_t crs_base_self_checkpoint_fn;
-    extern opal_crs_base_self_restart_fn_t    crs_base_self_restart_fn;
-    extern opal_crs_base_self_continue_fn_t   crs_base_self_continue_fn;
+    extern opal_crs_base_self_checkpoint_fn_t ompi_crs_base_self_checkpoint_fn;
+    extern opal_crs_base_self_restart_fn_t    ompi_crs_base_self_restart_fn;
+    extern opal_crs_base_self_continue_fn_t   ompi_crs_base_self_continue_fn;
 
     OPAL_DECLSPEC int opal_crs_base_self_register_checkpoint_callback
                       (opal_crs_base_self_checkpoint_fn_t  function);

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -142,7 +143,7 @@ mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
             return OMPI_ERROR;
         }
 
-        reqs = coll_base_comm_get_reqs(module->base_data, size);
+        reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
         if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
         for (i = 0; i < size; ++i) {

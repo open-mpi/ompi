@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -921,7 +922,7 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
 
     //merge_aggrs[0] is considered the new aggregator
     //New aggregator collects group sizes of the groups to be merged
-    ret = fcoll_base_coll_allgather_array (&fh->f_init_procs_per_group,
+    ret = ompi_fcoll_base_coll_allgather_array (&fh->f_init_procs_per_group,
                                            1,
                                            MPI_INT,
                                            sizes_old_group,
@@ -957,7 +958,7 @@ int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
     //New aggregator also collects the grouping distribution
     //This is the actual merge
     //use allgatherv array
-    ret = fcoll_base_coll_allgatherv_array (fh->f_init_procs_in_group,
+    ret = ompi_fcoll_base_coll_allgatherv_array (fh->f_init_procs_in_group,
                                             fh->f_init_procs_per_group,
                                             MPI_INT,
                                             fh->f_procs_in_group,
@@ -1140,7 +1141,7 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
     }
 
     //Gather start offsets across processes in a group on aggregator
-    ret = fcoll_base_coll_allgather_array (start_offset_len,
+    ret = ompi_fcoll_base_coll_allgather_array (start_offset_len,
                                            3,
                                            OMPI_OFFSET_DATATYPE,
                                            start_offsets_lens_tmp,
@@ -1151,7 +1152,7 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
                                            fh->f_init_procs_per_group,
                                            fh->f_comm);
     if ( OMPI_SUCCESS != ret ) {
-        opal_output (1, "mca_io_ompio_prepare_to_grou[: error in fcoll_base_coll_allgather_array\n");
+        opal_output (1, "mca_io_ompio_prepare_to_grou[: error in ompi_fcoll_base_coll_allgather_array\n");
         goto exit;
     }
     end_offsets_tmp = (OMPI_MPI_OFFSET_TYPE* )malloc (fh->f_init_procs_per_group * sizeof(OMPI_MPI_OFFSET_TYPE));
@@ -1191,7 +1192,7 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
         goto exit;
     }
     //Communicate bytes per group between all aggregators
-    ret = fcoll_base_coll_allgather_array (bytes_per_group,
+    ret = ompi_fcoll_base_coll_allgather_array (bytes_per_group,
                                            1,
                                            OMPI_OFFSET_DATATYPE,
                                            aggr_bytes_per_group_tmp,
@@ -1202,7 +1203,7 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
                                            fh->f_init_num_aggrs,
                                            fh->f_comm);
     if ( OMPI_SUCCESS != ret ) {
-        opal_output (1, "mca_io_ompio_prepare_to_grou[: error in fcoll_base_coll_allgather_array 2\n");
+        opal_output (1, "mca_io_ompio_prepare_to_grou[: error in ompi_fcoll_base_coll_allgather_array 2\n");
         free(decision_list_tmp);
         goto exit;
     }
@@ -1276,7 +1277,7 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
     *decision_list = &decision_list_tmp[0];
     }
     //Communicate flag to all group members
-    ret = fcoll_base_coll_bcast_array (ompio_grouping_flag,
+    ret = ompi_fcoll_base_coll_bcast_array (ompio_grouping_flag,
                                        1,
                                        MPI_INT,
                                        0,

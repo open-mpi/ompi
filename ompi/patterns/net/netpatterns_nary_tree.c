@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,7 @@
 
 /* setup an n-array tree */
 
-int netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
+int ompi_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
         netpatterns_tree_node_t *my_node)
 {
     /* local variables */
@@ -159,7 +160,7 @@ Error:
     return OMPI_ERROR;
 }
 
-void netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_node_t *my_node)
+void ompi_netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_node_t *my_node)
 {
     if (my_node->children_ranks) {
 	free (my_node->children_ranks);
@@ -167,11 +168,11 @@ void netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_no
     }
 
     if (0 != my_node->my_rank) {
-	netpatterns_cleanup_recursive_knomial_tree_node (&my_node->k_node);
+	ompi_netpatterns_cleanup_recursive_knomial_tree_node (&my_node->k_node);
     }
 }
 
-int netpatterns_setup_narray_knomial_tree(
+int ompi_netpatterns_setup_narray_knomial_tree(
         int tree_order, int my_rank, int num_nodes,
         netpatterns_narray_knomial_tree_node_t *my_node)
 {
@@ -231,7 +232,7 @@ int netpatterns_setup_narray_knomial_tree(
             my_rank-cum_cnt;
         my_node->level_size = cnt;
 
-        rc = netpatterns_setup_recursive_knomial_tree_node(
+        rc = ompi_netpatterns_setup_recursive_knomial_tree_node(
                 my_node->level_size, my_node->rank_on_level,
                 tree_order, &my_node->k_node);
         if (OMPI_SUCCESS != rc) {
@@ -430,7 +431,7 @@ error:
  * ranks may be rotated based on who the actual root is, to obtain the
  * appropriate communication pattern for such roots.
  */
-OMPI_DECLSPEC int netpatterns_setup_narray_tree_contigous_ranks(
+OMPI_DECLSPEC int ompi_netpatterns_setup_narray_tree_contigous_ranks(
         int tree_order, int num_nodes,
         netpatterns_tree_node_t **tree_nodes)
 {

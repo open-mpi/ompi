@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,7 +96,7 @@ typedef enum {
     MCA_BASE_VAR_TYPE_MAX
 } mca_base_var_type_t;
 
-extern const char *var_type_names[];
+extern const char *ompi_var_type_names[];
 
 /**
  * Source of an MCA variable's value

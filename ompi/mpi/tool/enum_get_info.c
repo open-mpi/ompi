@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +30,7 @@ int MPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    mpit_lock ();
+    ompi_mpit_lock ();
 
     do {
         if (num) {
@@ -43,7 +44,7 @@ int MPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len
         mpit_copy_string (name, name_len, enumtype->enum_name);
     } while (0);
 
-    mpit_unlock ();
+    ompi_mpit_unlock ();
 
     return rc;
 }

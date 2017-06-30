@@ -7,6 +7,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,8 +68,8 @@
 #include "opal/mca/event/event.h"
 
 static struct event_config *config=NULL;
-extern char *event_module_include;
-extern const struct eventop *eventops[];
+extern char *ompi_event_module_include;
+extern const struct eventop *ompi_eventops[];
 
 opal_event_base_t* opal_event_base_create(void)
 {
@@ -93,29 +94,29 @@ int opal_event_init(void)
         dumpit = true;
     }
 
-    if (NULL == event_module_include) {
+    if (NULL == ompi_event_module_include) {
         /* Shouldn't happen, but... */
-        event_module_include = strdup("select");
+        ompi_event_module_include = strdup("select");
     }
-    includes = opal_argv_split(event_module_include,',');
+    includes = opal_argv_split(ompi_event_module_include,',');
 
     /* get a configuration object */
     config = event_config_new();
     /* cycle thru the available subsystems */
-    for (i = 0 ; NULL != eventops[i] ; ++i) {
+    for (i = 0 ; NULL != ompi_eventops[i] ; ++i) {
         /* if this module isn't included in the given ones,
          * then exclude it
          */
         dumpit = true;
         for (j=0; NULL != includes[j]; j++) {
             if (0 == strcmp("all", includes[j]) ||
-                0 == strcmp(eventops[i]->name, includes[j])) {
+                0 == strcmp(ompi_eventops[i]->name, includes[j])) {
                 dumpit = false;
                 break;
             }
         }
         if (dumpit) {
-            event_config_avoid_method(config, eventops[i]->name);
+            event_config_avoid_method(config, ompi_eventops[i]->name);
         }
     }
     opal_argv_free(includes);

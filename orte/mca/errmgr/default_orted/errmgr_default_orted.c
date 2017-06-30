@@ -9,6 +9,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -411,7 +412,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                 goto cleanup;
             }
             /* leave the exit code alone - process this as a waitpid */
-            odls_base_default_wait_local_proc(child, NULL);
+            ompi_odls_base_default_wait_local_proc(child, NULL);
             goto cleanup;
         }
         OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,

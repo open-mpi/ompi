@@ -3,6 +3,7 @@
  * Copyright (c) 2012-213 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,7 @@ int MPI_T_category_get_pvars(int cat_index, int len, int indices[])
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    mpit_lock ();
+    ompi_mpit_lock ();
 
     do {
         rc = mca_base_var_group_get (cat_index, &group);
@@ -49,7 +50,7 @@ int MPI_T_category_get_pvars(int cat_index, int len, int indices[])
         }
     } while (0);
 
-    mpit_unlock ();
+    ompi_mpit_unlock ();
 
     return rc;
 }

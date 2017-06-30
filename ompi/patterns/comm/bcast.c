@@ -5,6 +5,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +30,7 @@
  *  This is a very simple algorithm - binary tree, transmitting the full
  *  message at each step.
  */
-OMPI_DECLSPEC int comm_bcast_pml(void *buffer, int root, int count,
+OMPI_DECLSPEC int ompi_comm_bcast_pml(void *buffer, int root, int count,
         ompi_datatype_t *dtype, int my_rank_in_group,
         int n_peers, int *ranks_in_comm,ompi_communicator_t *comm)
 {
@@ -47,7 +48,7 @@ OMPI_DECLSPEC int comm_bcast_pml(void *buffer, int root, int count,
     /*
      * compute my communication pattern - binary tree
      */
-    rc=netpatterns_setup_narray_tree(2, node_rank, n_peers,
+    rc=ompi_netpatterns_setup_narray_tree(2, node_rank, n_peers,
             &node_data);
     if( OMPI_SUCCESS != rc ) {
         goto Error;

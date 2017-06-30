@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,17 +32,17 @@ typedef struct ompi_mpit_cvar_handle_t {
     void           *bound_object;
 } ompi_mpit_cvar_handle_t;
 
-void mpit_lock (void);
-void mpit_unlock (void);
+void ompi_mpit_lock (void);
+void ompi_mpit_unlock (void);
 
-extern volatile uint32_t mpit_init_count;
+extern volatile uint32_t ompi_mpit_init_count;
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype);
 int ompit_opal_to_mpit_error (int rc);
 
 static inline int mpit_is_initialized (void)
 {
-    return !!mpit_init_count;
+    return !!ompi_mpit_init_count;
 }
 
 static inline void mpit_copy_string (char *dest, int *len, const char *source)

@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,9 +48,9 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-opal_crs_base_self_checkpoint_fn_t crs_base_self_checkpoint_fn = NULL;
-opal_crs_base_self_restart_fn_t    crs_base_self_restart_fn = NULL;
-opal_crs_base_self_continue_fn_t   crs_base_self_continue_fn = NULL;
+opal_crs_base_self_checkpoint_fn_t ompi_crs_base_self_checkpoint_fn = NULL;
+opal_crs_base_self_restart_fn_t    ompi_crs_base_self_restart_fn = NULL;
+opal_crs_base_self_continue_fn_t   ompi_crs_base_self_continue_fn = NULL;
 
 /******************
  * Local Functions
@@ -330,19 +331,19 @@ int opal_crs_base_clear_options(opal_crs_base_ckpt_options_t *target)
 
 int opal_crs_base_self_register_checkpoint_callback(opal_crs_base_self_checkpoint_fn_t  function)
 {
-    crs_base_self_checkpoint_fn = function;
+    ompi_crs_base_self_checkpoint_fn = function;
     return OPAL_SUCCESS;
 }
 
 int opal_crs_base_self_register_restart_callback(opal_crs_base_self_restart_fn_t  function)
 {
-    crs_base_self_restart_fn = function;
+    ompi_crs_base_self_restart_fn = function;
     return OPAL_SUCCESS;
 }
 
 int opal_crs_base_self_register_continue_callback(opal_crs_base_self_continue_fn_t  function)
 {
-    crs_base_self_continue_fn = function;
+    ompi_crs_base_self_continue_fn = function;
     return OPAL_SUCCESS;
 }
 

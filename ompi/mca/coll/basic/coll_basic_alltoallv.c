@@ -15,6 +15,7 @@
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +69,7 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
 
     /* Initiate all send/recv to/from others. */
     nreqs = rsize * 2;
-    preq = coll_base_comm_get_reqs(module->base_data, nreqs);
+    preq = ompi_coll_base_comm_get_reqs(module->base_data, nreqs);
     if( NULL == preq ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* Post all receives first  */

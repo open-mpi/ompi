@@ -814,7 +814,7 @@ end:
 #ifndef WIN32
 static void signal_cb(evutil_socket_t fd, short event, void *arg);
 
-#define current_base event_global_current_base_
+#define current_base ompi_event_global_current_base_
 extern struct event_base *current_base;
 
 static void

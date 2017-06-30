@@ -5,6 +5,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +28,7 @@
 /**
  * All-reduce - subgroup in communicator
  */
-OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
+OMPI_DECLSPEC int ompi_comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         ompi_datatype_t *dtype, int my_rank_in_group,
         int n_peers, int *ranks_in_comm,ompi_communicator_t *comm)
 {
@@ -76,7 +77,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
 
     /* get my reduction communication pattern */
     memset(&my_exchange_node, 0, sizeof(netpatterns_pair_exchange_node_t));
-    rc = netpatterns_setup_recursive_doubling_tree_node(n_peers,
+    rc = ompi_netpatterns_setup_recursive_doubling_tree_node(n_peers,
             my_rank_in_group, &my_exchange_node);
     if(OMPI_SUCCESS != rc){
         return rc;
@@ -283,7 +284,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         }
     }
 
-    netpatterns_cleanup_recursive_doubling_tree_node(&my_exchange_node);
+    ompi_netpatterns_cleanup_recursive_doubling_tree_node(&my_exchange_node);
 
     /* return */
     return OMPI_SUCCESS;

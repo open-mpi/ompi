@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +27,7 @@
 /* setup an multi-nomial tree - for each node in the tree
  *  this returns it's parent, and it's children */
 
-OMPI_DECLSPEC int netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
+OMPI_DECLSPEC int ompi_netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
         netpatterns_tree_node_t *tree_nodes)
 {
     /* local variables */

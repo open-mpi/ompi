@@ -593,7 +593,7 @@ void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line)
             if (OPAL_SUCCESS != ret) {
                 continue;
             }
-            if (0 == strcmp(type, var_type_names[var->mbv_type]) && (var->mbv_info_lvl <= max_level)) {
+            if (0 == strcmp(type, ompi_var_type_names[var->mbv_type]) && (var->mbv_info_lvl <= max_level)) {
                 ret = mca_base_var_dump(var->mbv_index, &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
                 if (OPAL_SUCCESS != ret) {
                     continue;

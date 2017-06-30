@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -342,7 +343,7 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
     /* The root collects and broadcasts the messages. */
 
     else {
-        requests = coll_base_comm_get_reqs(module->base_data, size);
+        requests = ompi_coll_base_comm_get_reqs(module->base_data, size);
         if( NULL == requests ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl; }
 
         for (i = 1; i < size; ++i) {

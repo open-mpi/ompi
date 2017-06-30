@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +53,7 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
-    reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
+    reqs = preqs = ompi_coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* The ordering is defined as -1 then +1 in each dimension in
@@ -139,7 +140,7 @@ mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
     }
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
-    reqs = preqs = coll_base_comm_get_reqs( module->base_data, 2 * degree);
+    reqs = preqs = ompi_coll_base_comm_get_reqs( module->base_data, 2 * degree);
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < degree ; ++neighbor) {
@@ -190,7 +191,7 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
     outedges = dist_graph->out;
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
-    reqs = preqs = coll_base_comm_get_reqs( module->base_data, indegree + outdegree);
+    reqs = preqs = ompi_coll_base_comm_get_reqs( module->base_data, indegree + outdegree);
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < indegree ; ++neighbor) {

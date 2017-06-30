@@ -17,7 +17,7 @@
 
 #include "opal/util/argv.h"
 
-extern char *event_module_include;
+extern char *ompi_event_module_include;
 static struct event_config *config = NULL;
 
 opal_event_base_t* opal_event_base_create(void)
@@ -45,11 +45,11 @@ int opal_event_init(void)
 
     all_available_eventops = event_get_supported_methods();
 
-    if (NULL == event_module_include) {
+    if (NULL == ompi_event_module_include) {
         /* Shouldn't happen, but... */
-        event_module_include = strdup("select");
+        ompi_event_module_include = strdup("select");
     }
-    includes = opal_argv_split(event_module_include,',');
+    includes = opal_argv_split(ompi_event_module_include,',');
 
     /* get a configuration object */
     config = event_config_new();

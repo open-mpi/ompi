@@ -13,6 +13,7 @@
  * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,7 +127,7 @@ OBJ_CLASS_DECLARATION(orte_odls_launch_local_t);
 
 ORTE_DECLSPEC void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata);
 
-ORTE_DECLSPEC void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata);
+ORTE_DECLSPEC void ompi_odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata);
 
 /* define a function type to signal a local proc */
 typedef int (*orte_odls_base_signal_local_fn_t)(pid_t pid, int signum);

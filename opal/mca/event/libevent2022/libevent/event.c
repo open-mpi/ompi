@@ -93,7 +93,7 @@ extern const struct eventop win32ops;
 #endif
 
 /* Array of backends in order of preference. */
-static const struct eventop *eventops[] = {
+static const struct eventop *ompi_eventops[] = {
 #if defined(_EVENT_HAVE_EVENT_PORTS) && _EVENT_HAVE_EVENT_PORTS
 	&evportops,
 #endif
@@ -120,8 +120,8 @@ static const struct eventop *eventops[] = {
 /**** End Open MPI Changes ****/
 
 /* Global state; deprecated */
-struct event_base *event_global_current_base_ = NULL;
-#define current_base event_global_current_base_
+struct event_base *ompi_event_global_current_base_ = NULL;
+#define current_base ompi_event_global_current_base_
 
 /* Global state */
 
@@ -181,7 +181,7 @@ eq_debug_entry(const struct event_debug_entry *a,
 	return a->ptr == b->ptr;
 }
 
-int _event_debug_mode_on = 0;
+int ompi__event_debug_mode_on = 0;
 /* Set if it's too late to enable event_debug_mode. */
 static int event_debug_mode_too_late = 0;
 #ifndef _EVENT_DISABLE_THREAD_SUPPORT
@@ -197,7 +197,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 
 /* Macro: record that ev is now setup (that is, ready for an add) */
 #define _event_debug_note_setup(ev) do {				\
-	if (_event_debug_mode_on) {					\
+	if (ompi__event_debug_mode_on) {					\
 		struct event_debug_entry *dent,find;			\
 		find.ptr = (ev);					\
 		EVLOCK_LOCK(_event_debug_map_lock, 0);			\
@@ -219,7 +219,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 	} while (0)
 /* Macro: record that ev is no longer setup */
 #define _event_debug_note_teardown(ev) do {				\
-	if (_event_debug_mode_on) {					\
+	if (ompi__event_debug_mode_on) {					\
 		struct event_debug_entry *dent,find;			\
 		find.ptr = (ev);					\
 		EVLOCK_LOCK(_event_debug_map_lock, 0);			\
@@ -232,7 +232,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 	} while (0)
 /* Macro: record that ev is now added */
 #define _event_debug_note_add(ev)	do {				\
-	if (_event_debug_mode_on) {					\
+	if (ompi__event_debug_mode_on) {					\
 		struct event_debug_entry *dent,find;			\
 		find.ptr = (ev);					\
 		EVLOCK_LOCK(_event_debug_map_lock, 0);			\
@@ -253,7 +253,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 	} while (0)
 /* Macro: record that ev is no longer added */
 #define _event_debug_note_del(ev) do {					\
-	if (_event_debug_mode_on) {					\
+	if (ompi__event_debug_mode_on) {					\
 		struct event_debug_entry *dent,find;			\
 		find.ptr = (ev);					\
 		EVLOCK_LOCK(_event_debug_map_lock, 0);			\
@@ -274,7 +274,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 	} while (0)
 /* Macro: assert that ev is setup (i.e., okay to add or inspect) */
 #define _event_debug_assert_is_setup(ev) do {				\
-	if (_event_debug_mode_on) {					\
+	if (ompi__event_debug_mode_on) {					\
 		struct event_debug_entry *dent,find;			\
 		find.ptr = (ev);					\
 		EVLOCK_LOCK(_event_debug_map_lock, 0);			\
@@ -293,7 +293,7 @@ HT_GENERATE(event_debug_map, event_debug_entry, node, hash_debug_entry,
 /* Macro: assert that ev is not added (i.e., okay to tear down or set
  * up again) */
 #define _event_debug_assert_not_added(ev) do {				\
-	if (_event_debug_mode_on) {					\
+	if (ompi__event_debug_mode_on) {					\
 		struct event_debug_entry *dent,find;			\
 		find.ptr = (ev);					\
 		EVLOCK_LOCK(_event_debug_map_lock, 0);			\
@@ -521,13 +521,13 @@ void
 event_enable_debug_mode(void)
 {
 #ifndef _EVENT_DISABLE_DEBUG_MODE
-	if (_event_debug_mode_on)
+	if (ompi__event_debug_mode_on)
 		event_errx(1, "%s was called twice!", __func__);
 	if (event_debug_mode_too_late)
 		event_errx(1, "%s must be called *before* creating any events "
 		    "or event_bases",__func__);
 
-	_event_debug_mode_on = 1;
+	ompi__event_debug_mode_on = 1;
 
 	HT_INIT(event_debug_map, &global_debug_map);
 #endif
@@ -590,23 +590,23 @@ event_base_new_with_config(const struct event_config *cfg)
 	should_check_environment =
 	    !(cfg && (cfg->flags & EVENT_BASE_FLAG_IGNORE_ENV));
 
-	for (i = 0; eventops[i] && !base->evbase; i++) {
+	for (i = 0; ompi_eventops[i] && !base->evbase; i++) {
 		if (cfg != NULL) {
 			/* determine if this backend should be avoided */
 			if (event_config_is_avoided_method(cfg,
-				eventops[i]->name))
+				ompi_eventops[i]->name))
 				continue;
-			if ((eventops[i]->features & cfg->require_features)
+			if ((ompi_eventops[i]->features & cfg->require_features)
 			    != cfg->require_features)
 				continue;
 		}
 
 		/* also obey the environment variables */
 		if (should_check_environment &&
-		    event_is_method_disabled(eventops[i]->name))
+		    event_is_method_disabled(ompi_eventops[i]->name))
 			continue;
 
-		base->evsel = eventops[i];
+		base->evsel = ompi_eventops[i];
 
 		base->evbase = base->evsel->init(base);
 	}
@@ -898,7 +898,7 @@ event_get_supported_methods(void)
 	int i = 0, k;
 
 	/* count all methods */
-	for (method = &eventops[0]; *method != NULL; ++method) {
+	for (method = &ompi_eventops[0]; *method != NULL; ++method) {
 		++i;
 	}
 
@@ -908,8 +908,8 @@ event_get_supported_methods(void)
 		return (NULL);
 
 	/* populate the array with the supported methods */
-	for (k = 0, i = 0; eventops[k] != NULL; ++k) {
-		tmp[i++] = eventops[k]->name;
+	for (k = 0, i = 0; ompi_eventops[k] != NULL; ++k) {
+		tmp[i++] = ompi_eventops[k]->name;
 	}
 	tmp[i] = NULL;
 

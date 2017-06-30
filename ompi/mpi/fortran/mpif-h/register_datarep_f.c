@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,12 +96,12 @@ typedef struct intercept_extra_state {
     ompi_mpi2_fortran_datarep_conversion_fn_t *write_fn_f77;
     ompi_mpi2_fortran_datarep_extent_fn_t *extent_fn_f77;
     MPI_Aint *extra_state_f77;
-} intercept_extra_state_t;
+} ompi_intercept_extra_state_t;
 
-OBJ_CLASS_DECLARATION(intercept_extra_state_t);
+OBJ_CLASS_DECLARATION(ompi_intercept_extra_state_t);
 
 #if !OMPI_BUILD_MPI_PROFILING || OPAL_HAVE_WEAK_SYMBOLS
-static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
+static void intercept_extra_state_constructor(ompi_intercept_extra_state_t *obj)
 {
     obj->read_fn_f77 = NULL;
     obj->write_fn_f77 = NULL;
@@ -108,7 +109,7 @@ static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
     obj->extra_state_f77 = NULL;
 }
 
-OBJ_CLASS_INSTANCE(intercept_extra_state_t,
+OBJ_CLASS_INSTANCE(ompi_intercept_extra_state_t,
                    opal_list_item_t,
                    intercept_extra_state_constructor, NULL);
 #endif  /* !OMPI_BUILD_MPI_PROFILING */
@@ -137,10 +138,10 @@ void ompi_register_datarep_f(char *datarep,
     char *c_datarep;
     int c_ierr, ret;
     MPI_Datarep_conversion_function *read_fn_c, *write_fn_c;
-    intercept_extra_state_t *intercept;
+    ompi_intercept_extra_state_t *intercept;
 
     /* Malloc space for the intercept callback data */
-    intercept = OBJ_NEW(intercept_extra_state_t);
+    intercept = OBJ_NEW(ompi_intercept_extra_state_t);
     if (NULL == intercept) {
         c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL,
                                         OMPI_ERR_OUT_OF_RESOURCE, FUNC_NAME);
@@ -210,8 +211,8 @@ static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
     MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
-    intercept_extra_state_t *intercept_data =
-        (intercept_extra_state_t*) extra_state;
+    ompi_intercept_extra_state_t *intercept_data =
+        (ompi_intercept_extra_state_t*) extra_state;
 
     intercept_data->read_fn_f77((char *) userbuf, &type_f77, &count_f77, (char *) filebuf,
                                 &position, intercept_data->extra_state_f77,
@@ -228,8 +229,8 @@ static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
     MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
-    intercept_extra_state_t *intercept_data =
-        (intercept_extra_state_t*) extra_state;
+    ompi_intercept_extra_state_t *intercept_data =
+        (ompi_intercept_extra_state_t*) extra_state;
 
     intercept_data->write_fn_f77((char *) userbuf, &type_f77, &count_f77, (char *) filebuf,
                                  &position, intercept_data->extra_state_f77,
@@ -244,8 +245,8 @@ static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent_f77,
                                void *extra_state)
 {
     MPI_Fint ierr, type_f77 = PMPI_Type_c2f(type_c);
-    intercept_extra_state_t *intercept_data =
-        (intercept_extra_state_t*) extra_state;
+    ompi_intercept_extra_state_t *intercept_data =
+        (ompi_intercept_extra_state_t*) extra_state;
 
     intercept_data->extent_fn_f77(&type_f77, file_extent_f77,
                                  intercept_data->extra_state_f77, &ierr);

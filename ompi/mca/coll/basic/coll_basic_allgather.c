@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +79,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         /* Get a requests arrays of the right size */
-        reqs = coll_base_comm_get_reqs(module->base_data, rsize + 1);
+        reqs = ompi_coll_base_comm_get_reqs(module->base_data, rsize + 1);
         if( NULL == reqs ) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
