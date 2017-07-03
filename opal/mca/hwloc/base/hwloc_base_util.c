@@ -32,6 +32,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_ENDIAN_H
+#include <endian.h>
+#endif
 
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
@@ -2155,7 +2158,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
 char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
 {
     int nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt;
-    char *sig=NULL, *arch=NULL;
+    char *sig=NULL, *arch = NULL, *endian;
     hwloc_obj_t obj;
     unsigned i;
 
@@ -2175,14 +2178,22 @@ char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo)
             break;
         }
     }
-
     if (NULL == arch) {
-        asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH",
-                 nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt);
-    } else {
-        asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH:%s",
-                 nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt, arch);
+        arch = "unknown";
     }
+
+#ifdef __BYTE_ORDER
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    endian = "le";
+#else
+    endian = "be";
+#endif
+#else
+    endian = "unknown";
+#endif
+
+    asprintf(&sig, "%dN:%dS:%dL3:%dL2:%dL1:%dC:%dH:%s:%s",
+             nnuma, nsocket, nl3, nl2, nl1, ncore, nhwt, arch, endian);
     return sig;
 }
 

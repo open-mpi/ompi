@@ -1058,10 +1058,21 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     orte_daemon_cmd_flag_t cmd;
     int32_t flag;
     opal_value_t *kv;
+    char *myendian;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
         jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    }
+
+    /* get my endianness */
+    t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
+    if (NULL == t) {
+        /* should never happen */
+        myendian = "unknown";
+    } else {
+        myendian = strrchr(t->sig, ':');
+        ++myendian;
     }
 
     /* multiple daemons could be in this buffer, so unpack until we exhaust the data */
@@ -1263,8 +1274,24 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 }
                 free(sig);
                 break;
+            } else {
+                /* check if the difference is due to the endianness */
+                ptr = strrchr(sig, ':');
+                ++ptr;
+                if (0 != strcmp(ptr, myendian)) {
+                    /* we don't currently handle multi-endian operations in the
+                     * MPI support */
+                    orte_show_help("help-plm-base", "multi-endian", true,
+                                   nodename, ptr, myendian);
+                    orted_failed_launch = true;
+                    if (NULL != topo) {
+                        hwloc_topology_destroy(topo);
+                    }
+                    goto CLEANUP;
+                }
             }
         }
+
         if (!found) {
             /* nope - save the signature and request the complete topology from that node */
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
