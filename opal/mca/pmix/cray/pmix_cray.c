@@ -559,16 +559,16 @@ static int cray_fini(void) {
 
     if (0 == --pmix_init_count) {
         PMI2_Finalize();
-    }
 
-    if (NULL != pmix_kvs_name) {
-        free(pmix_kvs_name);
-        pmix_kvs_name = NULL;
-    }
+        if (NULL != pmix_kvs_name) {
+            free(pmix_kvs_name);
+            pmix_kvs_name = NULL;
+        }
 
-    if (NULL != pmix_lranks) {
-        free(pmix_lranks);
-        pmix_lranks = NULL;
+        if (NULL != pmix_lranks) {
+            free(pmix_lranks);
+            pmix_lranks = NULL;
+        }
     }
 
     return OPAL_SUCCESS;
