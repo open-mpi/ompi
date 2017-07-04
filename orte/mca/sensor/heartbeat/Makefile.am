@@ -2,6 +2,8 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
 #
 # Copyright (c) 2017      Intel, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -9,7 +11,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-sensor-heartbeat.txt
+dist_ortedata_DATA = help-orte-sensor-heartbeat.txt
 
 sources = \
         sensor_heartbeat.c \
@@ -28,7 +30,7 @@ component_noinst = libmca_sensor_heartbeat.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sensor_heartbeat_la_SOURCES = $(sources)
 mca_sensor_heartbeat_la_LDFLAGS = -module -avoid-version
