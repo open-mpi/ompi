@@ -193,13 +193,22 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
 AC_DEFUN([OPAL_CHECK_GCC_ATOMIC_BUILTINS], [
   AC_MSG_CHECKING([for __atomic builtin atomics])
 
-  AC_TRY_LINK([long tmp, old = 0;], [__atomic_thread_fence(__ATOMIC_SEQ_CST);
+  AC_TRY_LINK([
+#include <stdint.h>
+uint32_t tmp, old = 0;
+uint64_t tmp64, old64 = 0;], [
+__atomic_thread_fence(__ATOMIC_SEQ_CST);
 __atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
-__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);],
+__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
+__atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
     [AC_MSG_RESULT([yes])
      $1],
     [AC_MSG_RESULT([no])
      $2])
+
+  AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
+		     [Whether 64-bit is supported by the __sync builtin atomics])
 
   # Check for 128-bit support
   OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
