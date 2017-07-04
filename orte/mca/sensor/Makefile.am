@@ -2,6 +2,8 @@
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # Copyright (c) 2017      Intel, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,7 +23,7 @@ libmca_sensor_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ortedir = $(ompiincludedir)/$(subdir)
+ortedir = $(orteincludedir)/$(subdir)
 nobase_orte_HEADERS = $(headers)
 endif
 
