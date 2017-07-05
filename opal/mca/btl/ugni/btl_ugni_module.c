@@ -66,10 +66,11 @@ static void mca_btl_ugni_datagram_event (int foo, short bar, void *arg)
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) arg;
     mca_btl_ugni_device_t *device = ugni_module->devices;
+    struct timeval tv = {.tv_sec = 0, .tv_usec = MCA_BTL_UGNI_CONNECT_USEC};
 
     mca_btl_ugni_progress_datagram (device);
 
-    opal_event_evtimer_add (&ugni_module->connection_event, (&(struct timeval) {.tv_sec = 0, .tv_usec = MCA_BTL_UGNI_CONNECT_USEC}));
+    opal_event_evtimer_add (&ugni_module->connection_event, &tv);
 }
 
 int

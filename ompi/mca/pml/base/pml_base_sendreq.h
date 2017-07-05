@@ -15,6 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,8 +116,9 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
 
 #define MCA_PML_BASE_SEND_REQUEST_RESET(request)                        \
     if ((request)->req_bytes_packed > 0) {                              \
+        size_t cnt = 0;                                                 \
         opal_convertor_set_position(&(sendreq)->req_send.req_base.req_convertor, \
-                                    &(size_t){0});                      \
+                                    &cnt);                      \
     }
 
 /**
@@ -153,4 +155,3 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
 END_C_DECLS
 
 #endif
-
