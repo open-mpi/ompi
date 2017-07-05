@@ -158,10 +158,17 @@ typedef struct {
 } ;
 typedef struct orte_rml_ofi_module_t orte_rml_ofi_module_t;
 
+/* For every first send initiated to new peer 
+ * select the peer provider, peer ep-addr, 
+ * local provider and populate in orte_rml_ofi_peer_t instance.
+ * Insert this in hash table.
+ * */
 typedef struct {
     opal_object_t super;
-    void*   ofi_ep;
-    size_t  ofi_ep_len;
+    char*   ofi_prov_name;   /* peer (dest) provider chosen */
+    void*   ofi_ep;          /* peer (dest) ep chosen */
+    size_t  ofi_ep_len;      /* peer (dest) ep length */
+    uint8_t src_prov_id;     /* index of the local (src) provider used for this peer */
 } orte_rml_ofi_peer_t;
 OBJ_CLASS_DECLARATION(orte_rml_ofi_peer_t);
 
@@ -200,6 +207,7 @@ int orte_rml_ofi_error_callback(struct fi_cq_err_entry *error,
 /* OFI Recv handler */
 int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t ofi_prov_id);
 
+bool user_override(void);
 END_C_DECLS
 
 #endif

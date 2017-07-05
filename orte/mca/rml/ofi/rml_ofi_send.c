@@ -26,7 +26,6 @@
 
 #include "rml_ofi.h"
 
-
 static void ofi_req_cons(orte_rml_ofi_request_t *ptr)
 {
     OBJ_CONSTRUCT(&ptr->pkt_list, opal_list_t);
@@ -367,53 +366,18 @@ int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t ofi_prov_id)
   return ORTE_SUCCESS;
 }
 
-
-static void send_msg(int fd, short args, void *cbdata)
+/* populate_peer_ofi_addr
+ * [Desc] This fn does a PMIx Modex recv on "rml.ofi" key
+ *        to get the ofi address blob of all providers on the peer.
+ *        Then it populates the array parameter peer_ofi_addr[] 
+ *        with providername, ofi_ep_name and ofi_ep_namelen
+ *        [in] peer -> peer address
+ *        [out] peer_ofi_addr[] -> array to hold the provider details on the peer
+ *        [Return value] -> total providers on success. OPAL_ERROR if fails to load array.
+ */
+static int populate_peer_ofi_addr(orte_process_name_t *peer, orte_rml_ofi_peer_t *peer_ofi_addr )
 {
-    ofi_send_request_t *req = (ofi_send_request_t*)cbdata;
-    orte_process_name_t *peer = &(req->send.dst);
-    orte_rml_tag_t tag = req->send.tag;
-    char *dest_ep_name;
-    size_t dest_ep_namelen = 0;
-    int ret = OPAL_ERROR;
-    uint32_t  total_packets;
-    fi_addr_t dest_fi_addr;
-    orte_rml_send_t *snd;
-    orte_rml_ofi_request_t* ofi_send_req = OBJ_NEW( orte_rml_ofi_request_t );
-    uint8_t ofi_prov_id = req->ofi_prov_id;
-    orte_rml_ofi_send_pkt_t* ofi_msg_pkt;
-    size_t datalen_per_pkt, hdrsize, data_in_pkt;  // the length of data in per packet excluding the header size
-    orte_rml_ofi_peer_t* pr;
-    uint64_t ui64;
-    struct sockaddr_in* ep_sockaddr;
 
-    snd = OBJ_NEW(orte_rml_send_t);
-    snd->dst = *peer;
-    snd->origin = *ORTE_PROC_MY_NAME;
-    snd->tag = tag;
-    if (NULL != req->send.iov) {
-        snd->iov = req->send.iov;
-        snd->count = req->send.count;
-        snd->cbfunc.iov = req->send.cbfunc.iov;
-    } else {
-        snd->buffer = req->send.buffer;
-        snd->cbfunc.buffer = req->send.cbfunc.buffer;
-    }
-    snd->cbdata = req->send.cbdata;
-
-    opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                         "%s send_msg_transport to peer %s at tag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer), tag);
-
-
-    /* get the peer address from our internal hash table */
-    opal_output_verbose(1, orte_rml_base_framework.framework_output,
-              "%s getting contact info for DAEMON peer %s from internal hash table",
-              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
-    memcpy(&ui64, (char*)peer, sizeof(uint64_t));
-    if (OPAL_SUCCESS != (ret = opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
-                                                                ui64, (void**)&pr) || NULL == pr)) {
         uint8_t *data;
         int32_t sz, cnt;
         opal_buffer_t modex, *entry;
@@ -421,24 +385,26 @@ static void send_msg(int fd, short args, void *cbdata)
         uint8_t prov_num;
         size_t entrysize;
         uint8_t *bytes;
-
-        opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                            "%s rml:ofi: Send failed to get peer OFI contact info from internal hash - checking modex",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        uint8_t tot_prov=0,cur_prov;
+        int ret = OPAL_ERROR;
 
         OPAL_MODEX_RECV_STRING(ret, "rml.ofi", peer, (void**)&data, &sz);
         if (OPAL_SUCCESS != ret) {
-            snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
-            ORTE_RML_SEND_COMPLETE(snd);
-            //OBJ_RELEASE( ofi_send_req);
-            return;
+            opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi::populate_peer_ofi_addr() Modex_Recv Failed for peer %s. ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
+            return OPAL_ERROR;
         }
+
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi::populate_peer_ofi_addr() Modex_Recv Succeeded. ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* load the data into a buffer for unpacking */
         OBJ_CONSTRUCT(&modex, opal_buffer_t);
         opal_dss.load(&modex, data, sz);
         cnt = 1;
         /* cycle thru the returned providers and see which one we want to use */
-        while (OPAL_SUCCESS == (ret = opal_dss.unpack(&modex, &entry, &cnt, OPAL_BUFFER))) {
+        for(cur_prov=0;OPAL_SUCCESS == (ret = opal_dss.unpack(&modex, &entry, &cnt, OPAL_BUFFER));cur_prov++) {
             /* unpack the provider name */
             cnt = 1;
             if (OPAL_SUCCESS != (ret = opal_dss.unpack(entry, &prov_name, &cnt, OPAL_STRING))) {
@@ -472,24 +438,224 @@ static void send_msg(int fd, short args, void *cbdata)
             }
             /* done with the buffer */
             OBJ_RELEASE(entry);
-            /* decide if this is the provider we want to use - if so, then we are done.
-             * If not, then we can simply free the bytes and continue looking. For now,
-             * take the first one */
-            pr = OBJ_NEW(orte_rml_ofi_peer_t);
-            pr->ofi_ep = bytes;
-            pr->ofi_ep_len = entrysize;
-            opal_hash_table_set_value_uint64(&orte_rml_ofi.peers, ui64, (void*)pr);
-            dest_ep_name = pr->ofi_ep;
-            dest_ep_namelen = pr->ofi_ep_len;
-            break;
+            peer_ofi_addr[cur_prov].ofi_prov_name = prov_name;
+            peer_ofi_addr[cur_prov].ofi_ep = bytes;
+            peer_ofi_addr[cur_prov].ofi_ep_len = entrysize;
+            opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                                "%s rml:ofi:populate_peer_ofi_addr() Unpacked peer provider %s ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),peer_ofi_addr[cur_prov].ofi_prov_name);
         }
         OBJ_DESTRUCT(&modex);  // releases the data returned by the modex_recv
+        tot_prov=cur_prov;
+        return tot_prov;
+}
+
+
+/* check_provider_in_peer(prov_name, peer_ofi_addr) 
+ * [Desc] This fn checks for a match of prov_name in the peer_ofi_addr array
+ *        and returns the index of the match or OPAL_ERROR if not found.
+ *        The peer_ofi_addr array has all the ofi providers in peer.
+ *        [in] prov_name -> The provider name we want to use to send this message to peer.
+ *        [in] tot_prov -> total provider entries in array
+ *        [in] peer_ofi_addr[] -> array of provider details on the peer
+ *        [in] local_ofi_prov_idx -> the index of local provider we are comparing with 
+ *                                   (index into orte_rml_ofi.ofi_prov[] array.
+ *        [Return value] -> index that matches provider on success. OPAL_ERROR if no match found.
+ */
+static int check_provider_in_peer( char *prov_name, int tot_prov, orte_rml_ofi_peer_t *peer_ofi_addr, int local_ofi_prov_idx ) 
+{
+    int idx;
+    int ret = OPAL_ERROR;
+
+    for( idx=0; idx < tot_prov; idx++) {
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi:check_provider_in_peer() checking peer  provider %s to match %s ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),peer_ofi_addr[idx].ofi_prov_name,prov_name);
+        if ( 0 == strcmp(prov_name, peer_ofi_addr[idx].ofi_prov_name) ) {
+           /* we found a matching provider on peer */
+            opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                                "%s rml:ofi:check_provider_in_peer() matched  provider %s ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),peer_ofi_addr[idx].ofi_prov_name);
+            if ( 0 == strcmp(prov_name, "sockets") ) {
+                /* check if the address is reachable */
+                struct sockaddr_in *ep_sockaddr, *ep_sockaddr2;
+                opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                                "%s rml:ofi:check_provider_in_peer() checking if sockets provider is reachable ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                ep_sockaddr = (struct sockaddr_in*)peer_ofi_addr[idx].ofi_ep;
+                ep_sockaddr2 = (struct sockaddr_in*)orte_rml_ofi.ofi_prov[local_ofi_prov_idx].ep_name;
+                if (opal_net_samenetwork((struct sockaddr*)ep_sockaddr, (struct sockaddr*)ep_sockaddr2, 24)) {
+                    /* we found same ofi provider reachable via ethernet on peer so return this idx*/
+                    ret = idx;
+                    opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                                "%s rml:ofi:check_provider_in_peer() sockets provider is reachable ",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                    break;
+                }
+           } else {
+                    ret = idx;
+                    break;
+           }   
+        }
+    }
+    return ret;
+}
+
+static void send_msg(int fd, short args, void *cbdata)
+{
+    ofi_send_request_t *req = (ofi_send_request_t*)cbdata;
+    orte_process_name_t *peer = &(req->send.dst);
+    orte_rml_tag_t tag = req->send.tag;
+    char *dest_ep_name;
+    size_t dest_ep_namelen = 0;
+    int ret = OPAL_ERROR, rc;
+    uint32_t  total_packets;
+    fi_addr_t dest_fi_addr;
+    orte_rml_send_t *snd;
+    orte_rml_ofi_request_t* ofi_send_req = OBJ_NEW( orte_rml_ofi_request_t );
+    uint8_t ofi_prov_id = req->ofi_prov_id;
+    orte_rml_ofi_send_pkt_t* ofi_msg_pkt;
+    size_t datalen_per_pkt, hdrsize, data_in_pkt;  // the length of data in per packet excluding the header size
+    orte_rml_ofi_peer_t* pr;
+    uint64_t ui64;
+    struct sockaddr_in* ep_sockaddr;
+    
+    snd = OBJ_NEW(orte_rml_send_t);
+    snd->dst = *peer;
+    snd->origin = *ORTE_PROC_MY_NAME;
+    snd->tag = tag;
+    if (NULL != req->send.iov) {
+        snd->iov = req->send.iov;
+        snd->count = req->send.count;
+        snd->cbfunc.iov = req->send.cbfunc.iov;
+    } else {
+        snd->buffer = req->send.buffer;
+        snd->cbfunc.buffer = req->send.cbfunc.buffer;
+    }
+    snd->cbdata = req->send.cbdata;
+
+    opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                         "%s send_msg_transport to peer %s at tag %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(peer), tag);
+
+    /* get the peer address from our internal hash table */
+    memcpy(&ui64, (char*)peer, sizeof(uint64_t));
+    opal_output_verbose(1, orte_rml_base_framework.framework_output,
+              "%s getting contact info for DAEMON peer %s from internal hash table",
+              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
+    if (OPAL_SUCCESS != (ret = opal_hash_table_get_value_uint64(&orte_rml_ofi.peers,
+                                                                ui64, (void**)&pr) || NULL == pr)) {
+        orte_rml_ofi_peer_t peer_ofi_addr[MAX_OFI_PROVIDERS];
+        int tot_peer_prov=0, peer_prov_id=ofi_prov_id;
+        bool peer_match_found=false;
+
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi:Send peer OFI contact info not found in internal hash - checking modex",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+        /* Do Modex_recv and populate the peer's providers and ofi ep address in peer_ofi_addr[] array */
+        if( OPAL_ERROR == ( tot_peer_prov = populate_peer_ofi_addr( peer, peer_ofi_addr ))) {
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi::send_msg() Error when Populating peer ofi_addr array ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+            ORTE_RML_SEND_COMPLETE(snd);
+            //OBJ_RELEASE( ofi_send_req);
+            return;
+        }
+        /* decide the provider we want to use from the list of providers in peer as per below order.
+         * 1. if the user specified the transport for this conduit (even giving us a prioritized list of candidates), 
+         * then the one we selected is the _only_ one we will use. If the remote peer has a matching endpoint, 
+         * then we use it - otherwise, we error out
+         * 2. if the user did not specify a transport, then we look for matches against _all_ of 
+         * our available transports, starting with fabric and then going to Ethernet, taking the first one that matches.
+         * 3. if we cannot find any match, then we error out
+         */
+        if ( true == user_override() ) {
+            /*case 1. User has specified the provider, find a match in peer for the current selected provider or error out*/       
+            opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                        "%s rml:ofi::send_msg()  Case1. looking for a match for current provider",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            if( OPAL_ERROR == ( peer_prov_id = check_provider_in_peer( orte_rml_ofi.ofi_prov[ofi_prov_id].fabric_info->fabric_attr->prov_name, 
+                                     tot_peer_prov, peer_ofi_addr, ofi_prov_id ) )) {
+                opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi::send_msg() Peer is Unreachable - no common ofi provider ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+            ORTE_RML_SEND_COMPLETE(snd);
+            //OBJ_RELEASE( ofi_send_req);
+            return ;
+            }
+            peer_match_found = true;
+        } else {
+           /* case 2. look for any matching fabric (other than ethernet) provider  */
+            opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                        "%s rml:ofi::send_msg()  Case 2 - looking for any match for fabric provider",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+           for(int cur_prov_id=0; cur_prov_id < orte_rml_ofi.ofi_prov_open_num && !peer_match_found ; cur_prov_id++) {
+               if( 0 != strcmp( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name, "sockets" ) ) {
+                  peer_prov_id = check_provider_in_peer( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name, 
+                                     tot_peer_prov, peer_ofi_addr, cur_prov_id ); 
+                if (OPAL_ERROR != peer_prov_id) {
+                         peer_match_found = true;
+                         ofi_prov_id = cur_prov_id;
+                }
+              }
+           }
+           /* if we haven't found a common provider for local node and peer to send message yet, check for ethernet */
+            opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                        "%s rml:ofi::send_msg()  Case 2 - looking for a match for ethernet provider",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+           for(int cur_prov_id=0; cur_prov_id < orte_rml_ofi.ofi_prov_open_num && !peer_match_found ; cur_prov_id++) {
+               if( 0 == strcmp( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name, "sockets" ) ) {
+                  peer_prov_id = check_provider_in_peer( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name, 
+                                     tot_peer_prov, peer_ofi_addr, cur_prov_id );
+                if (OPAL_ERROR != peer_prov_id) {
+                      peer_match_found = true;
+                      ofi_prov_id = cur_prov_id;
+                }
+              }
+           }
+           /* if we haven't found a common provider yet, then error out - case 3  */
+           if ( !peer_match_found ) {
+                opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi::send_msg() Peer is Unreachable - no common ofi provider ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                ORTE_RML_SEND_COMPLETE(snd);
+                //OBJ_RELEASE( ofi_send_req);
+                return ;
+            }
+        }
+        /* creating a copy of the chosen provider to put it in hashtable 
+         * as the ofi_peer_addr array is local */   
+        pr = OBJ_NEW(orte_rml_ofi_peer_t);
+        pr->ofi_ep_len = peer_ofi_addr[peer_prov_id].ofi_ep_len;
+        pr->ofi_ep = malloc(pr->ofi_ep_len);
+        memcpy(pr->ofi_ep,peer_ofi_addr[peer_prov_id].ofi_ep,pr->ofi_ep_len);
+        pr->ofi_prov_name = strdup(peer_ofi_addr[peer_prov_id].ofi_prov_name);
+        pr->src_prov_id = ofi_prov_id;
+        if(OPAL_SUCCESS != 
+             (rc = opal_hash_table_set_value_uint64(&orte_rml_ofi.peers, ui64, (void*)pr))) {
+             opal_output_verbose(15, orte_rml_base_framework.framework_output,
+                    "%s: ofi address insertion into hash table failed for peer %s ",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(peer));
+             ORTE_ERROR_LOG(rc);
+        }
+        dest_ep_name = pr->ofi_ep;
+        dest_ep_namelen = pr->ofi_ep_len;
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                            "%s rml:ofi: Peer ofi provider details added to hash table. Sending to provider %s on peer %s ",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),pr->ofi_prov_name,ORTE_NAME_PRINT(peer));
      } else {
-         opal_output_verbose(1, orte_rml_base_framework.framework_output,
+        opal_output_verbose(1, orte_rml_base_framework.framework_output,
                             "%s rml:ofi: OFI peer contact info got from hash table",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-         dest_ep_name = pr->ofi_ep;
-         dest_ep_namelen = pr->ofi_ep_len;
+        dest_ep_name = pr->ofi_ep; 
+        dest_ep_namelen = pr->ofi_ep_len;
+        ofi_prov_id = pr->src_prov_id;
     }
 
    //[Debug] printing additional info of IP
@@ -509,7 +675,7 @@ static void send_msg(int fd, short args, void *cbdata)
     }
     //[Debug] end debug
     opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                     "%s OPAL_MODEX_RECV succeeded, %s peer ep name obtained. length=%lu",
+                     "%s peer ep name obtained for %s. length=%lu",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                      ORTE_NAME_PRINT(peer), dest_ep_namelen);
     ret = fi_av_insert(orte_rml_ofi.ofi_prov[ofi_prov_id].av, dest_ep_name,1,&dest_fi_addr,0,NULL);
