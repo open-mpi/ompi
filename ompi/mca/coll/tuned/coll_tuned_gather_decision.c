@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -58,7 +58,6 @@ ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_pa
     int cnt;
 
     for( cnt = 0; NULL != gather_algorithms[cnt].string; cnt++ );
-
     ompi_coll_tuned_forced_max_algorithms[GATHER] = cnt;
 
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
@@ -68,7 +67,7 @@ ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_pa
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &cnt);
+                                           &ompi_coll_tuned_forced_max_algorithms[GATHER]);
 
     /* MPI_T: This variable should eventually be bound to a communicator */
     coll_tuned_gather_forced_algorithm = 0;
