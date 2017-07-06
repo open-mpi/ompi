@@ -3,6 +3,7 @@
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017      IBM Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 # Script to generate the overloaded MPI_SIZEOF interfaces and
@@ -97,7 +98,7 @@ sub queue_sub {
 ${indent}  INTEGER, INTENT(OUT) :: size
 ${indent}  INTEGER$optional_ierror_param, INTENT(OUT) :: ierror";
     $subr->{start} = $start;
-    $subr->{middle} = "${indent}  size = storage_size(x) / 8
+    $subr->{middle} = "${indent}  size = storage_size(xSUBSCRIPT) / 8
 ${indent}  ${optional_ierror_statement}ierror = 0";
     $subr->{end} = "${indent}END SUBROUTINE ^PREFIX^$sub_name^RANK^";
 
@@ -126,6 +127,7 @@ sub generate {
     if (0 == $rank) {
         $str =~ s/\^RANK\^/_scalar/g;
         $str =~ s/\^DIMENSION\^//;
+        $str =~ s/SUBSCRIPT//;
     } else {
         $str =~ s/\^RANK\^/_r$rank/g;
         my $dim;
@@ -135,6 +137,7 @@ sub generate {
             --$d;
         }
         $str =~ s/\^DIMENSION\^/, DIMENSION($dim*)/;
+        $str =~ s/SUBSCRIPT/($dim 1)/;
     }
 
     # All done

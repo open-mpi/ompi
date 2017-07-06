@@ -19,6 +19,7 @@ Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
                         reserved.
+Copyright (c) 2017      IBM Corporation. All rights reserved                        
 
 $COPYRIGHT$
 
@@ -365,8 +366,7 @@ Compiler Notes
   - All Fortran compilers support the mpif.h/shmem.fh-based bindings,
     with one exception: the MPI_SIZEOF interfaces will only be present
     when Open MPI is built with a Fortran compiler that support the
-    INTERFACE keyword and ISO_FORTRAN_ENV.  Most notably, this
-    excludes the GNU Fortran compiler suite before version 4.9.
+    INTERFACE keyword and ISO_FORTRAN_ENV.
 
   - The level of support provided by the mpi module is based on your
     Fortran compiler.
