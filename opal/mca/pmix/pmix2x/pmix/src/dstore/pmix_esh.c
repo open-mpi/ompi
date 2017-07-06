@@ -2472,6 +2472,7 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix
         }
         PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
         kp = PMIX_NEW(pmix_kval_t);
+        cnt = 1;
     }
     PMIX_RELEASE(kp);
 
