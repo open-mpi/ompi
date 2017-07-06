@@ -730,7 +730,10 @@ static void component_shutdown(void)
     while (OPAL_SUCCESS == rc) {
         if (NULL != peer) {
             OBJ_RELEASE(peer);
-            opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, key, NULL);
+            rc = opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, key, NULL);
+            if (OPAL_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
         rc = opal_hash_table_get_next_key_uint64(&mca_oob_tcp_component.peers, &key,
                                                  (void **) &peer, node, &node);
@@ -968,7 +971,10 @@ static int component_set_addr(orte_process_name_t *peer,
             if (ORTE_SUCCESS != (rc = parse_uri(af_family, host, ports, (struct sockaddr_storage*) &(maddr->addr)))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(maddr);
-                opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, ui64, NULL);
+                rc = opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, ui64, NULL);
+                if (ORTE_SUCCESS != rc) {
+                    ORTE_ERROR_LOG(rc);
+                }
                 OBJ_RELEASE(pr);
                 return ORTE_ERR_TAKE_NEXT_OPTION;
             }
