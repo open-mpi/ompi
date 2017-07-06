@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2017      IBM Corporation. All rights reserved. 
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -61,7 +62,7 @@ SUBROUTINE storage_size_complex32_r1(x, size)
     COMPLEX(REAL32), DIMENSION(*)::x
     INTEGER, INTENT(OUT) :: size
 
-    size = storage_size(x) / 8
+    size = storage_size(x(1)) / 8
 END SUBROUTINE storage_size_complex32_r1
 
 SUBROUTINE storage_size_int32_scalar(x, size)
@@ -77,7 +78,7 @@ SUBROUTINE storage_size_int32_r1(x, size)
     INTEGER(INT32), DIMENSION(*)::x
     INTEGER, INTENT(OUT) :: size
 
-    size = storage_size(x) / 8
+    size = storage_size(x(1)) / 8
 END SUBROUTINE storage_size_int32_r1
 
 SUBROUTINE storage_size_real32_scalar(x, size)
@@ -93,7 +94,7 @@ SUBROUTINE storage_size_real32_r1(x, size)
     REAL(REAL32), DIMENSION(*)::x
     INTEGER, INTENT(OUT) :: size
 
-    size = storage_size(x) / 8
+    size = storage_size(x(1)) / 8
 END SUBROUTINE storage_size_real32_r1
 ]])],
              [AS_VAR_SET(fortran_storage_size_var, yes)],
