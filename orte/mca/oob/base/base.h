@@ -125,13 +125,7 @@ ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
                          orte_oob_base_send_nb, ORTE_MSG_PRI);          \
     }while(0)
 
-/* Our contact info is actually subject to change as transports
- * can fail at any time. So a request to obtain our URI requires
- * that we get a snapshot in time. Since the request always comes
- * thru the rml, and we share that event base, we can just cycle
- * across the components to collect the info.
- *
- * During initial wireup, we can only transfer contact info on the daemon
+/* During initial wireup, we can only transfer contact info on the daemon
  * command line. This limits what we can send to a string representation of
  * the actual contact info, which gets sent in a uri-like form. Not every
  * oob module can support this transaction, so this function will loop
@@ -147,36 +141,7 @@ ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
  * Since all components define their address info at component start,
  * it is unchanged and does not require acess via event
  */
-#define ORTE_OOB_GET_URI(u) orte_oob_base_get_addr(u)
 ORTE_DECLSPEC void orte_oob_base_get_addr(char **uri);
-
-/**
- * Extract initial contact information from a string uri
- *
- * During initial wireup, we can only transfer contact info on the daemon
- * command line. This limits what we can send to a string representation of
- * the actual contact info, which gets sent in a uri-like form. Not every
- * oob module can support this transaction, so this function will loop
- * across all oob components/modules, letting each look at the uri and extract
- * info from it if it can.
- */
-typedef struct {
-    opal_object_t super;
-    opal_event_t ev;
-    char *uri;
-} mca_oob_uri_req_t;
-OBJ_CLASS_DECLARATION(mca_oob_uri_req_t);
-
-#define ORTE_OOB_SET_URI(u)                         \
-    do {                                            \
-        mca_oob_uri_req_t *rq;                      \
-        rq = OBJ_NEW(mca_oob_uri_req_t);            \
-        rq->uri = strdup((u));                      \
-        orte_oob_base_set_addr(0, 0, (void*)rq);    \
-    }while(0)
-
-ORTE_DECLSPEC void orte_oob_base_set_addr(int fd, short args, void *cbdata);
-
 
 /* Get the available transports and their attributes */
 #define ORTE_OOB_GET_TRANSPORTS(u) orte_oob_base_get_transports(u)

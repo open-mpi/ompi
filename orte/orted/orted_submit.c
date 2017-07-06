@@ -92,6 +92,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -539,13 +540,30 @@ int orte_submit_init(int argc, char *argv[],
     opal_unsetenv(OPAL_MCA_PREFIX"pmix", &environ);
 
     if (ORTE_PROC_IS_TOOL) {
-        /* set the info in our contact table */
-        orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
+        opal_value_t val;
+
         /* extract the name */
         if (ORTE_SUCCESS != orte_rml_base_parse_uris(orte_process_info.my_hnp_uri, ORTE_PROC_MY_HNP, NULL)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);
             exit(1);
         }
+        /* set the info in our contact table */
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = OPAL_PMIX_PROC_URI;
+        val.type = OPAL_STRING;
+        val.data.string = orte_process_info.my_daemon_uri;
+        if (OPAL_SUCCESS != opal_pmix.store_local(ORTE_PROC_MY_HNP, &val)) {
+            val.key = NULL;
+            val.data.string = NULL;
+            OBJ_DESTRUCT(&val);
+            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);
+            orte_finalize();
+            exit(1);
+        }
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
+
         /* set the route to be direct */
         if (ORTE_SUCCESS != orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);
@@ -994,7 +1012,7 @@ int orte_submit_job(char *argv[], int *index,
         if (NULL != orte_cmd_options.report_uri) {
             FILE *fp;
             char *rml_uri;
-            rml_uri = orte_rml.get_contact_info();
+            orte_oob_base_get_addr(&rml_uri);
             if (0 == strcmp(orte_cmd_options.report_uri, "-")) {
                 /* if '-', then output to stdout */
                 printf("%s\n",  (NULL == rml_uri) ? "NULL" : rml_uri);

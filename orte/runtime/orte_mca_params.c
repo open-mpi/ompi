@@ -783,6 +783,7 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_stack_trace_wait_timeout);
 
+    orte_fwd_mpirun_port = true;
     (void) mca_base_var_register ("orte", "orte", NULL, "fwd_mpirun_port",
                                   "Forward the port used by mpirun so all daemons will use it",
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,

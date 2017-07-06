@@ -106,7 +106,7 @@
 int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
                                               orte_jobid_t job)
 {
-    int rc;
+    int rc, v;
     orte_job_t *jdata=NULL, *jptr;
     orte_job_map_t *map=NULL;
     opal_buffer_t *wireup, jobdata;
@@ -116,6 +116,9 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     void *nptr;
     uint32_t key;
     char *nidmap;
+    orte_proc_t *dmn;
+    opal_value_t *val = NULL, *kv;
+    opal_list_t *modex;
 
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -156,36 +159,106 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        if (!orte_static_ports && !orte_fwd_mpirun_port) {
-            /* pack a flag indicating wiring info is provided */
-            flag = 1;
-            opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
-            /* get wireup info for daemons per the selected routing module */
-            wireup = OBJ_NEW(opal_buffer_t);
-            if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(wireup);
-                return rc;
-            }
-            /* put it in a byte object for xmission */
-            opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
-            /* pack the byte object - zero-byte objects are fine */
-            bo.size = numbytes;
-            boptr = &bo;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(wireup);
-                return rc;
-            }
-            /* release the data since it has now been copied into our buffer */
-            if (NULL != bo.bytes) {
-                free(bo.bytes);
-            }
+        /* get wireup info for daemons */
+        if (NULL == (jptr = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+        }
+        wireup = OBJ_NEW(opal_buffer_t);
+        /* always include data for mpirun as the daemons can't have it yet */
+        val = NULL;
+        if (OPAL_SUCCESS != (rc = opal_pmix.get(ORTE_PROC_MY_NAME, NULL, NULL, &val)) || NULL == val) {
+            ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(wireup);
+            return rc;
         } else {
-            /* pack a flag indicating no wireup data is provided */
-            flag = 0;
-            opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
+            /* the data is returned as a list of key-value pairs in the opal_value_t */
+            if (OPAL_PTR != val->type) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                OBJ_RELEASE(wireup);
+                return ORTE_ERR_NOT_FOUND;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(wireup);
+                return rc;
+            }
+            modex = (opal_list_t*)val->data.ptr;
+            numbytes = (int32_t)opal_list_get_size(modex);
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(wireup);
+                return rc;
+            }
+            OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(wireup);
+                    return rc;
+                }
+            }
+            OPAL_LIST_RELEASE(modex);
+            OBJ_RELEASE(val);
+        }
+        /* if we didn't rollup the connection info, then we have
+         * to provide a complete map of connection info */
+        if (!orte_static_ports && !orte_fwd_mpirun_port) {
+            for (v=1; v < jptr->procs->size; v++) {
+                if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(jptr->procs, v))) {
+                    continue;
+                }
+                val = NULL;
+                if (OPAL_SUCCESS != (rc = opal_pmix.get(&dmn->name, NULL, NULL, &val)) || NULL == val) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(buffer);
+                    return rc;
+                } else {
+                    /* the data is returned as a list of key-value pairs in the opal_value_t */
+                    if (OPAL_PTR != val->type) {
+                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                        OBJ_RELEASE(buffer);
+                        return ORTE_ERR_NOT_FOUND;
+                    }
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &dmn->name, 1, ORTE_NAME))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(buffer);
+                        OBJ_RELEASE(wireup);
+                        return rc;
+                    }
+                    modex = (opal_list_t*)val->data.ptr;
+                    numbytes = (int32_t)opal_list_get_size(modex);
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(buffer);
+                        OBJ_RELEASE(wireup);
+                        return rc;
+                    }
+                    OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(buffer);
+                            OBJ_RELEASE(wireup);
+                            return rc;
+                        }
+                    }
+                    OPAL_LIST_RELEASE(modex);
+                    OBJ_RELEASE(val);
+                }
+            }
+        }
+        /* put it in a byte object for xmission */
+        opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+        OBJ_RELEASE(wireup);
+        /* pack the byte object - zero-byte objects are fine */
+        bo.size = numbytes;
+        boptr = &bo;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* release the data since it has now been copied into our buffer */
+        if (NULL != bo.bytes) {
+            free(bo.bytes);
         }
 
         /* we need to ensure that any new daemons get a complete

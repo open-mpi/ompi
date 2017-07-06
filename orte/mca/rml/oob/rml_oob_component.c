@@ -59,8 +59,6 @@ static int rml_oob_open(void);
 static int rml_oob_close(void);
 static orte_rml_base_module_t* open_conduit(opal_list_t *attributes);
 static orte_rml_pathway_t* query_transports(void);
-static char* get_contact_info(void);
-static void set_contact_info(const char *uri);
 static void close_conduit(orte_rml_base_module_t *mod);
 /**
  * component definition
@@ -86,8 +84,6 @@ orte_rml_component_t mca_rml_oob_component = {
     .priority = 5,
     .open_conduit = open_conduit,
     .query_transports = query_transports,
-    .get_contact_info = get_contact_info,
-    .set_contact_info = set_contact_info,
     .close_conduit = close_conduit
 };
 
@@ -295,17 +291,4 @@ static void close_conduit(orte_rml_base_module_t *md)
     /* the rml_base_stub takes care of clearing the base receive
      * and free'ng the module */
     return;
-}
-
-static char* get_contact_info(void)
-{
-    char *ret;
-
-    ORTE_OOB_GET_URI(&ret);
-    return ret;
-}
-
-static void set_contact_info(const char *uri)
-{
-    ORTE_OOB_SET_URI(uri);
 }

@@ -117,56 +117,6 @@ void orte_rml_API_close_conduit(orte_rml_conduit_t id)
 
 
 
-/** Get contact information for local process */
-char* orte_rml_API_get_contact_info(void)
-{
-    char **rc = NULL, *tmp;
-    orte_rml_base_active_t *active;
-
-    opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                         "%s rml:base:get_contact_info()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* cycle thru the actives and get their contact info */
-    OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
-        if (NULL != active->component->get_contact_info) {
-            tmp = active->component->get_contact_info();
-            if (NULL != tmp) {
-                opal_argv_append_nosize(&rc, tmp);
-                free(tmp);
-            }
-        }
-    }
-    if (NULL != rc) {
-        tmp = opal_argv_join(rc, ';');
-        opal_argv_free(rc);
-    } else {
-        tmp = NULL;
-    }
-    opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                         "%s rml:base:get_contact_info() returning -> %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),tmp);
-    return tmp;
-}
-
-/** Set contact information for remote process */
-void orte_rml_API_set_contact_info(const char *contact_info)
-{
-    orte_rml_base_active_t *active;
-
-    opal_output_verbose(10,orte_rml_base_framework.framework_output,
-                         "%s rml:base:set_contact_info()",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* cycle thru the actives and let all modules parse the info
-     * to extract their relevant portions */
-    OPAL_LIST_FOREACH(active, &orte_rml_base.actives, orte_rml_base_active_t) {
-        if (NULL != active->component->set_contact_info) {
-            active->component->set_contact_info(contact_info);
-        }
-    }
-}
-
 /** Ping process for connectivity check */
 int orte_rml_API_ping(orte_rml_conduit_t conduit_id,
                       const char* contact_info,

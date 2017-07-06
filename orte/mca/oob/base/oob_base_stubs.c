@@ -227,11 +227,13 @@ void orte_oob_base_get_addr(char **uri)
     bool one_added = false;
     mca_base_component_list_item_t *cli;
     mca_oob_base_component_t *component;
+    opal_value_t val;
 
     /* start with our process name */
     if (ORTE_SUCCESS != (rc = orte_util_convert_process_name_to_string(&final, ORTE_PROC_MY_NAME))) {
         ORTE_ERROR_LOG(rc);
-        goto unblock;
+        *uri = NULL;
+        return;
     }
     len = strlen(final);
 
@@ -279,55 +281,18 @@ void orte_oob_base_get_addr(char **uri)
         }
     }
 
-  unblock:
     *uri = final;
-}
-
-/**
- * This function will loop
- * across all oob components, letting each look at the uri and extract
- * info from it if it can. An error is to be returned if NO component
- * can successfully extract a contact.
- */
-static void req_cons(mca_oob_uri_req_t *ptr)
-{
-    ptr->uri = NULL;
-}
-static void req_des(mca_oob_uri_req_t *ptr)
-{
-    if (NULL != ptr->uri) {
-        free(ptr->uri);
+    /* push this into our modex storage */
+    OBJ_CONSTRUCT(&val, opal_value_t);
+    val.key = OPAL_PMIX_PROC_URI;
+    val.type = OPAL_STRING;
+    val.data.string = final;
+    if (OPAL_SUCCESS != (rc = opal_pmix.store_local(ORTE_PROC_MY_NAME, &val))) {
+        ORTE_ERROR_LOG(rc);
     }
-}
-OBJ_CLASS_INSTANCE(mca_oob_uri_req_t,
-                   opal_object_t,
-                   req_cons, req_des);
-
-void orte_oob_base_set_addr(int fd, short args, void *cbdata)
-{
-    mca_oob_uri_req_t *req = (mca_oob_uri_req_t*)cbdata;
-    char *uri;
-
-    ORTE_ACQUIRE_OBJECT(req);
-    uri = req->uri;
-
-    opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s: set_addr to uri %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        (NULL == uri) ? "NULL" : uri);
-
-    /* if the request doesn't contain a URI, then we
-     * have an error
-     */
-    if (NULL == uri) {
-        opal_output(0, "%s: NULL URI", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        ORTE_FORCED_TERMINATE(1);
-        OBJ_RELEASE(req);
-        return;
-    }
-
-    process_uri(uri);
-    OBJ_RELEASE(req);
+    val.key = NULL;
+    val.data.string = NULL;
+    OBJ_DESTRUCT(&val);
 }
 
 static void process_uri(char *uri)

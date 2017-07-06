@@ -28,6 +28,7 @@
 #include "opal/util/output.h"
 #include "opal/threads/tsd.h"
 #include "opal/mca/event/event.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/runtime/opal_progress.h"
 
 #include "opal/dss/dss.h"
@@ -110,15 +111,29 @@ static bool tool_connected = false;
 int orte_util_comm_connect_tool(char *uri)
 {
     int rc;
-
-    /* set the contact info into the comm hash tables*/
-    orte_rml.set_contact_info(uri);
+    opal_value_t val;
 
     /* extract the tool's name and store it */
     if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(uri, &tool, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+    /* set the contact info into the comm hash tables*/
+    OBJ_CONSTRUCT(&val, opal_value_t);
+    val.key = OPAL_PMIX_PROC_URI;
+    val.type = OPAL_STRING;
+    val.data.string = uri;
+    if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&tool, &val))) {
+        ORTE_ERROR_LOG(rc);
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
+        return rc;
+    }
+    val.key = NULL;
+    val.data.string = NULL;
+    OBJ_DESTRUCT(&val);
 
     /* set the route to be direct */
     if (ORTE_SUCCESS != (rc = orte_routed.update_route(NULL, &tool, &tool))) {

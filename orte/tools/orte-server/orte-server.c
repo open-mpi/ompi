@@ -56,6 +56,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/threads.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/orted/orted.h"
 
@@ -204,7 +205,7 @@ int main(int argc, char *argv[])
      * proposed in an email thread by Jeff Squyres
      */
     if (NULL != report_uri) {
-        rml_uri = orte_rml.get_contact_info();
+        orte_oob_base_get_addr(&rml_uri);
         if (0 == strcmp(report_uri, "-")) {
             /* if '-', then output to stdout */
             printf("%s\n", rml_uri);

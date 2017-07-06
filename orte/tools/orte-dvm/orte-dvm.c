@@ -77,6 +77,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/state/state.h"
@@ -324,7 +325,7 @@ int main(int argc, char *argv[])
     opal_finalize();
 
     /* check for request to report uri */
-    uri = orte_rml.get_contact_info();
+    orte_oob_base_get_addr(&uri);
     if (NULL != myglobals.report_uri) {
         FILE *fp;
         if (0 == strcmp(myglobals.report_uri, "-")) {

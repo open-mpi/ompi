@@ -471,7 +471,10 @@ static int rte_init(void)
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
     proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
     proc->pid = orte_process_info.pid;
-    proc->rml_uri = orte_rml.get_contact_info();
+    orte_oob_base_get_addr(&proc->rml_uri);
+    orte_process_info.my_hnp_uri = strdup(proc->rml_uri);
+    /* we are also officially a daemon, so better update that field too */
+    orte_process_info.my_daemon_uri = strdup(proc->rml_uri);
     proc->state = ORTE_PROC_STATE_RUNNING;
     OBJ_RETAIN(node);  /* keep accounting straight */
     proc->node = node;
@@ -615,15 +618,6 @@ static int rte_init(void)
         goto error;
     }
 
-    /* we are an hnp, so update the contact info field for later use */
-    orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
-    if (NULL != proc->rml_uri) {
-        free(proc->rml_uri);
-    }
-    proc->rml_uri = strdup(orte_process_info.my_hnp_uri);
-
-    /* we are also officially a daemon, so better update that field too */
-    orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
     /* setup the orte_show_help system to recv remote output */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                             ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);

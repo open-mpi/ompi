@@ -45,6 +45,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
 
@@ -211,6 +212,7 @@ main(int argc, char *argv[])
     orte_vpid_t vstart, vend;
     int vint;
     char *rtmod;
+    opal_value_t val;
 
     /***************
      * Initialize
@@ -421,14 +423,30 @@ main(int argc, char *argv[])
             target_hnp = OBJ_NEW(orte_hnp_contact_t);
             target_hnp->rml_uri = strdup(hnpuristr);
         }
-        /* set the info in our contact table */
-        orte_rml.set_contact_info(target_hnp->rml_uri);
         /* extract the name */
         if (ORTE_SUCCESS != orte_rml_base_parse_uris(target_hnp->rml_uri, &target_hnp->name, NULL)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
             orte_finalize();
             exit(1);
         }
+        /* set the info in our contact table */
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = OPAL_PMIX_PROC_URI;
+        val.type = OPAL_STRING;
+        val.data.string = target_hnp->rml_uri;
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&target_hnp->name, &val))) {
+            ORTE_ERROR_LOG(ret);
+            val.key = NULL;
+            val.data.string = NULL;
+            OBJ_DESTRUCT(&val);
+            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
+            orte_finalize();
+            exit(1);
+        }
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
+
         /* set the route to be direct */
         if (ORTE_SUCCESS != orte_routed.update_route(rtmod, &target_hnp->name, &target_hnp->name)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);

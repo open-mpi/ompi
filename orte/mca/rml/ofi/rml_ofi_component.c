@@ -82,6 +82,7 @@ static bool init_done = false;
 static char *ofi_transports_supported = NULL;
 static char *initial_ofi_transports_supported = NULL;
 static bool ofi_desired = false;
+static bool routing_desired = false;
 
 /* return true if user override for choice of ofi provider */
 bool user_override(void)
@@ -242,7 +243,7 @@ static int rml_ofi_component_register(void)
 {
     mca_base_component_t *component = &mca_rml_ofi_component.base;
 
-    initial_ofi_transports_supported = strdup("fabric");
+    initial_ofi_transports_supported = "fabric,ethernet";
     ofi_transports_supported = strdup(initial_ofi_transports_supported);
     mca_base_component_var_register(component, "transports",
                                     "Comma-delimited list of transports to support (default=\"fabric,ethernet\"",
@@ -259,6 +260,14 @@ static int rml_ofi_component_register(void)
                                     OPAL_INFO_LVL_2,
                                     MCA_BASE_VAR_SCOPE_LOCAL,
                                     &ofi_desired);
+
+    routing_desired = false;
+    mca_base_component_var_register(component, "routing",
+                                    "Route OFI messages",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_2,
+                                    MCA_BASE_VAR_SCOPE_LOCAL,
+                                    &routing_desired);
 
     return ORTE_SUCCESS;
 }
@@ -931,13 +940,11 @@ static int rml_ofi_component_init(void)
             if transport is not found RML_OFI_PROV_ID_INVALID is returned.
     @[in]attributes  : the attributes passed in to open_conduit reg the transport requested
 */
-int get_ofi_prov_id( opal_list_t *attributes)
+int get_ofi_prov_id(opal_list_t *attributes)
 {
 
-    bool choose_fabric = false, choice_made = false;
     int ofi_prov_id = RML_OFI_PROV_ID_INVALID, prov_num=0;
-    char *provider = NULL, *transport = NULL;
-    char *ethernet="sockets", *fabric="psm2";
+    char **providers = NULL, *provider;
     struct fi_info *cur_fi;
     char *comp_attrib = NULL;
     char **comps;
@@ -954,63 +961,48 @@ int get_ofi_prov_id( opal_list_t *attributes)
     if (orte_get_attribute(attributes, ORTE_RML_TRANSPORT_TYPE, (void**)&comp_attrib, OPAL_STRING) &&
         NULL != comp_attrib) {
         comps = opal_argv_split(comp_attrib, ',');
-        for (i=0; NULL != comps[i] && choice_made == false ; i++) {
+        for (i=0; NULL != comps[i]; i++) {
             if (NULL != strstr(ofi_transports_supported, comps[i])) {
-                if (0 == strcmp( comps[i], "ethernet")) {
+                if (0 == strcmp(comps[i], "ethernet")) {
                     opal_output_verbose(20,orte_rml_base_framework.framework_output,
                         "%s - Opening conduit using OFI ethernet/sockets provider",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                    opal_argv_free(comps);
-                    provider = ethernet;
-                    choose_fabric = false;
-                    choice_made = false;  /* continue to see if fabric is requested */
-                } else if ( 0 == strcmp ( comps[i], "fabric")) {
+                    opal_argv_append_nosize(&providers, "sockets");
+                } else if (0 == strcmp(comps[i], "fabric")) {
                     opal_output_verbose(20,orte_rml_base_framework.framework_output,
                         "%s - Opening conduit using OFI fabric provider",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                    opal_argv_free(comps);
-                    choose_fabric = true;
-                    provider = NULL;
-                    choice_made = true; /* fabric is highest priority so don't check for anymore */
+                    opal_argv_prepend_nosize(&providers, "fabric"); /* fabric is higher priority so prepend it */
                }
            }
        }
     }
     /* if from the transport we don't know which provider we want, then check for the ORTE_RML_OFI_PROV_NAME_ATTRIB */
-    if ( NULL == provider) {
-        if (!orte_get_attribute(attributes, ORTE_RML_PROVIDER_ATTRIB, (void**)&provider, OPAL_STRING)) {
-            /* ensure it remains NULL */
-            provider = NULL;
+    if (NULL == providers) {
+        if (orte_get_attribute(attributes, ORTE_RML_PROVIDER_ATTRIB, (void**)&provider, OPAL_STRING)) {
+            opal_argv_append_nosize(&providers, provider);
+        } else {
+            ofi_prov_id = RML_OFI_PROV_ID_INVALID;
         }
     }
-    /* either ethernet-sockets or specific is requested. Proceed to choose that provider */
-    if ( NULL != provider) {
-            // loop the orte_rml_ofi.ofi_provs[] and find the provider name that matches
-            for ( prov_num = 0; prov_num < orte_rml_ofi.ofi_prov_open_num && ofi_prov_id == RML_OFI_PROV_ID_INVALID ; prov_num++ ) {
+    if (NULL != providers) {
+        /* go down the list of preferences in order */
+        for (i=0; NULL != providers[i] && RML_OFI_PROV_ID_INVALID == ofi_prov_id; i++) {
+            // loop the orte_rml_ofi.ofi_provs[] and see if someone matches
+            for (prov_num = 0; prov_num < orte_rml_ofi.ofi_prov_open_num; prov_num++ ) {
                 cur_fi = orte_rml_ofi.ofi_prov[prov_num].fabric_info;
                 opal_output_verbose(20,orte_rml_base_framework.framework_output,
                    "%s - get_ofi_prov_id() -> comparing %s = %s ",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),provider,cur_fi->fabric_attr->prov_name);
-                if ( strcmp(provider,cur_fi->fabric_attr->prov_name) == 0) {
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        providers[i], cur_fi->fabric_attr->prov_name);
+                if (0 == strcmp(providers[i], cur_fi->fabric_attr->prov_name)) {
                     ofi_prov_id = prov_num;
                     opal_output_verbose(20,orte_rml_base_framework.framework_output,
                                         "%s - Choosing provider %s",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         cur_fi->fabric_attr->prov_name);
+                    break;
                 }
-            }
-    } else if ( choose_fabric ) {
-        // "fabric" is requested, choose the first fabric(non-ethernet)  provider
-        for ( prov_num = 0; prov_num < orte_rml_ofi.ofi_prov_open_num && ofi_prov_id == RML_OFI_PROV_ID_INVALID ; prov_num++ ) {
-            cur_fi = orte_rml_ofi.ofi_prov[prov_num].fabric_info;
-            opal_output_verbose(20,orte_rml_base_framework.framework_output,
-                    "%s -choosing fabric -> comparing %s != %s ",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),ethernet,cur_fi->fabric_attr->prov_name);
-            if ( strcmp(ethernet, cur_fi->fabric_attr->prov_name) != 0) {
-                ofi_prov_id = prov_num;
-                opal_output_verbose(20,orte_rml_base_framework.framework_output,
-                  "%s - Choosing fabric provider %s",
-                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),cur_fi->fabric_attr->prov_name);
             }
         }
     }
@@ -1032,7 +1024,7 @@ static orte_rml_base_module_t* make_module( int ofi_prov_id)
                     "%s - rml_ofi make_module() begin ",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    if ( RML_OFI_PROV_ID_INVALID == ofi_prov_id) {
+    if (RML_OFI_PROV_ID_INVALID == ofi_prov_id) {
         opal_output_verbose(20,orte_rml_base_framework.framework_output,
                     "%s - open_conduit did not select any ofi provider, returning NULL ",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -1043,22 +1035,25 @@ static orte_rml_base_module_t* make_module( int ofi_prov_id)
     /* create a new module   */
     mod = (orte_rml_ofi_module_t*)calloc(1,sizeof(orte_rml_ofi_module_t));
     if (NULL == mod) {
-        opal_output_verbose(20,orte_rml_base_framework.framework_output,
-                    "%s - Module allocation failed, returning NULL ",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
     /* copy the APIs over to it and the OFI provider information */
     memcpy(mod, &orte_rml_ofi, sizeof(orte_rml_ofi_module_t));
     /*  setup the remaining data locations in mod, associate conduit with ofi provider selected*/
     mod->cur_transport_id = ofi_prov_id;
-    /* we always go direct to our target peer, so set the routed to "direct" */
-    mod->api.routed = orte_routed.assign_module("direct");
+    /* set the routed module */
+    if (routing_desired) {
+        mod->api.routed = orte_routed.assign_module(NULL);
+    } else {
+        mod->api.routed = orte_routed.assign_module("direct");
+    }
     if (NULL == mod->api.routed) {
         /* we can't work */
-        opal_output_verbose(20,orte_rml_base_framework.framework_output,
-                    "%s - Failed to get direct routed support, returning NULL ",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output_verbose(1,orte_rml_base_framework.framework_output,
+                    "%s - Failed to get%srouted support, disqualifying ourselves",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    routing_desired ? " " : " direct ");
         free(mod);
         return NULL;
     }
@@ -1077,7 +1072,6 @@ static orte_rml_base_module_t* open_conduit(opal_list_t *attributes)
     char **comps;
     int i;
     orte_attribute_t *attr;
-    opal_list_t provider;
 
     opal_output_verbose(20,orte_rml_base_framework.framework_output,
                     "%s - Entering rml_ofi_open_conduit()",

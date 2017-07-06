@@ -62,27 +62,6 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_rml_base_framework;
 /* select a component */
 ORTE_DECLSPEC int orte_rml_base_select(void);
 
-/**
- * Post receive to get updates regarding contact information
- *
- * Post a non-blocking receive (likely during orte_init()) to receive
- * updated contact information from the HNP when it becomes available.
- * This should be called in any process that needs such updates, and
- * the receive will continue to get update callbacks until
- * orte_rml_base_comm_stop() is called.
- */
-ORTE_DECLSPEC void orte_rml_base_comm_start(void);
-
-
-/**
- * Stop receiving contact information updates
- *
- * Shut down the receive posted during orte_rml_base_comm_start(),
- * likely during orte_finalize().
- */
-ORTE_DECLSPEC void orte_rml_base_comm_stop(void);
-
-
 /*
  *  globals that might be needed
  */
@@ -260,9 +239,6 @@ ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);
 
 
 /* Stub API interfaces to cycle through active plugins */
-char* orte_rml_API_get_contact_info(void);
-void orte_rml_API_set_contact_info(const char *contact_info);
-
 int orte_rml_API_ping(orte_rml_conduit_t conduit_id,
                       const char* contact_info,
                       const struct timeval* tv);

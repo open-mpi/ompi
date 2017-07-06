@@ -330,6 +330,11 @@ static int tcp_component_register(void)
 
     if (NULL != mca_oob_tcp_component.tcp_static_ports ||
         NULL != mca_oob_tcp_component.tcp6_static_ports) {
+        /* can't fwd mpirun port _and_ have static ports */
+        if (ORTE_PROC_IS_HNP && orte_fwd_mpirun_port) {
+            orte_show_help("help-oob-tcp.txt", "static-fwd", true);
+            return ORTE_ERR_NOT_AVAILABLE;
+        }
         orte_static_ports = true;
     }
 
