@@ -17,8 +17,9 @@
 BEGIN_C_DECLS
 
 /* Globally exported variables */
-extern int ompi_coll_spacc_stream;
-extern int ompi_coll_spacc_priority;
+extern int mca_coll_spacc_stream;
+extern int mca_coll_spacc_priority;
+extern int mca_coll_spacc_verbose;
 
 /* API functions */
 
