@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,6 +15,10 @@
  */
 
 #include "opal_config.h"
+
+#ifdef HAVE_IEEE754_H
+#include <ieee754.h>
+#endif
 
 #include <stddef.h>
 #include <stdint.h>
@@ -62,6 +67,64 @@ opal_dt_swap_bytes(void *to_p, const void *from_p, const size_t size, size_t cou
     }
 }
 
+#ifdef HAVE_IEEE754_H
+struct bit128 {
+    unsigned int mantissa3:32;
+    unsigned int mantissa2:32;
+    unsigned int mantissa1:32;
+    unsigned int mantissa0:16;
+    unsigned int exponent:15;
+    unsigned int negative:1;
+};
+
+struct bit80 {
+    unsigned int pad:32;
+    unsigned int empty:16;
+    unsigned int negative:1;
+    unsigned int exponent:15;
+    unsigned int mantissa0:32;
+    unsigned int mantissa1:32;
+};
+
+static inline void
+opal_dt_swap_long_double(void *to_p, const void *from_p, const size_t size, size_t count, uint32_t remoteArch)
+{
+    size_t i;
+    long double*to = (long double *) to_p;
+
+    if ((opal_local_arch&OPAL_ARCH_LDISINTEL) && !(remoteArch&OPAL_ARCH_LDISINTEL)) {
+#ifdef __x86_64
+        for (i=0; i<count; i++, to++) {
+            union ieee854_long_double ld;
+            struct bit128 * b = (struct bit128 *)to;
+            ld.ieee.empty = 0;
+            ld.ieee.mantissa0 = 0x80000000 | (((unsigned int)b->mantissa0 << 15) & 0x7FFF8000) | ((b->mantissa1 >> 17) & 0x00007FFF);
+            ld.ieee.mantissa1 = ((b->mantissa1 << 15) & 0xFFFF8000) | ((b->mantissa2 << 17) & 0x000007FFF);
+            ld.ieee.exponent = b->exponent;
+            ld.ieee.negative = b->negative;
+            MEMCPY( to, &ld, sizeof(long double));
+        }
+#endif
+    } else if (!(opal_local_arch&OPAL_ARCH_LDISINTEL) && (remoteArch&OPAL_ARCH_LDISINTEL)) {
+#ifdef __sparcv9
+        for (i=0; i<count; i++, to++) {
+            union ieee854_long_double ld;
+            struct bit80 * b = (struct bit80 *)to;
+            ld.ieee.mantissa3 = 0;
+            ld.ieee.mantissa2 = 0;
+            ld.ieee.mantissa0 = (b->mantissa0 << 1) | (b->mantissa1 & 0x80000000);
+            ld.ieee.mantissa1 = (b->mantissa1 << 1) & 0xFFFFFFFE;
+            ld.ieee.exponent = b->exponent;
+            ld.ieee.negative = b->negative;
+            MEMCPY( to, &ld, sizeof(long double));
+        }
+#endif
+    }
+}
+#else
+#define opal_dt_swap_long_double(to_p, from_p, size, count, remoteArch)
+#endif
+
 /**
  * BEWARE: Do not use the following macro with composed types such as
  * complex. As the swap is done using the entire type sizeof, the
@@ -69,6 +132,9 @@ opal_dt_swap_bytes(void *to_p, const void *from_p, const size_t size, size_t cou
  * COPY_2SAMETYPE_HETEROGENEOUS.
  */
 #define COPY_TYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
+            COPY_TYPE_HETEROGENEOUS_INTERNAL( TYPENAME, TYPE, 0 )
+
+#define COPY_TYPE_HETEROGENEOUS_INTERNAL( TYPENAME, TYPE, LONG_DOUBLE )                   \
 static int32_t                                                                            \
 copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
                                 const char* from, size_t from_len, ptrdiff_t from_extent, \
@@ -85,9 +151,15 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
         (opal_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                    \
         if( (to_extent == from_extent) && (to_extent == sizeof(TYPE)) ) { \
             opal_dt_swap_bytes(to, from, sizeof(TYPE), count);          \
+            if (LONG_DOUBLE) {                                          \
+                opal_dt_swap_long_double(to, from, sizeof(TYPE), count, pConvertor->remoteArch);\
+            }                                                           \
         } else {                                                        \
             for( i = 0; i < count; i++ ) {                              \
                 opal_dt_swap_bytes(to, from, sizeof(TYPE), 1);          \
+                if (LONG_DOUBLE) {                                      \
+                    opal_dt_swap_long_double(to, from, sizeof(TYPE), 1, pConvertor->remoteArch);\
+                }                                                       \
                 to += to_extent;                                        \
                 from += from_extent;                                    \
             }                                                           \
@@ -108,6 +180,9 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
 }
 
 #define COPY_2SAMETYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
+            COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL( TYPENAME, TYPE, 0)
+
+#define COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL( TYPENAME, TYPE, LONG_DOUBLE)                 \
 static int32_t                                                                            \
 copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,             \
                                 const char* from, size_t from_len, ptrdiff_t from_extent, \
@@ -122,11 +197,17 @@ copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,   
                                                                         \
     if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN) !=             \
         (opal_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                    \
-        if( (to_extent == from_extent) && (to_extent == sizeof(TYPE)) ) { \
+        if( (to_extent == from_extent) && (to_extent == (2 * sizeof(TYPE))) ) { \
             opal_dt_swap_bytes(to, from, sizeof(TYPE), 2 * count);      \
+            if (LONG_DOUBLE) {                                          \
+                opal_dt_swap_long_double(to, from, sizeof(TYPE), 2*count, pConvertor->remoteArch);\
+            }                                                           \
         } else {                                                        \
             for( i = 0; i < count; i++ ) {                              \
                 opal_dt_swap_bytes(to, from, sizeof(TYPE), 2);          \
+                if (LONG_DOUBLE) {                                      \
+                    opal_dt_swap_long_double(to, from, sizeof(TYPE), 2, pConvertor->remoteArch);\
+                }                                                       \
                 to += to_extent;                                        \
                 from += from_extent;                                    \
             }                                                           \
@@ -333,7 +414,7 @@ COPY_TYPE_HETEROGENEOUS( float16, float )
 #elif SIZEOF_DOUBLE == 16
 COPY_TYPE_HETEROGENEOUS( float16, double )
 #elif HAVE_LONG_DOUBLE && SIZEOF_LONG_DOUBLE == 16
-COPY_TYPE_HETEROGENEOUS( float16, long double )
+COPY_TYPE_HETEROGENEOUS_INTERNAL( float16, long double, 1)
 #else
 /* #error No basic type for copy function for opal_datatype_float16 found */
 #define copy_float16_heterogeneous NULL
@@ -354,7 +435,7 @@ COPY_2SAMETYPE_HETEROGENEOUS( double_complex, double )
 #endif
 
 #if HAVE_LONG_DOUBLE__COMPLEX
-COPY_2SAMETYPE_HETEROGENEOUS( long_double_complex, long double )
+COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL( long_double_complex, long double, 1)
 #else
 /* #error No basic type for copy function for opal_datatype_long_double_complex found */
 #define copy_long_double_complex_heterogeneous NULL
