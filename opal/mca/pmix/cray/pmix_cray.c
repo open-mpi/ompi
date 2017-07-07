@@ -784,7 +784,8 @@ static void fencenb(int sd, short args, void *cbdata)
         }
 
         /* unpack and stuff in to the dstore */
-        while (OPAL_SUCCESS == (rc = opal_dss.unpack(buf, &kp, &(int){1}, OPAL_VALUE))) {
+        cnt = 1;
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(buf, &kp, &cnt, OPAL_VALUE))) {
             OPAL_OUTPUT_VERBOSE((20, opal_pmix_base_framework.framework_output,
                                  "%s pmix:cray unpacked kp with key %s type(%d) for id  %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key, kp->type, OPAL_NAME_PRINT(id)));
@@ -794,6 +795,7 @@ static void fencenb(int sd, short args, void *cbdata)
                 goto fn_exit;
             }
             OBJ_RELEASE(kp);
+            cnt = 1;
         }
 
         cptr += r_bytes_and_ranks[i].nbytes;

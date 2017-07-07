@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +35,7 @@ int mca_btl_ugni_add_procs (struct mca_btl_base_module_t* btl, size_t nprocs,
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     int rc;
     void *mmap_start_addr;
+    struct timeval tv = {.tv_sec = 0, .tv_usec = MCA_BTL_UGNI_CONNECT_USEC};
 
     if (false == ugni_module->initialized) {
 
@@ -156,7 +157,7 @@ int mca_btl_ugni_add_procs (struct mca_btl_base_module_t* btl, size_t nprocs,
             mca_btl_ugni_spawn_progress_thread(btl);
         }
 
-        opal_event_evtimer_add (&ugni_module->connection_event, (&(struct timeval) {.tv_sec = 0, .tv_usec = MCA_BTL_UGNI_CONNECT_USEC}));
+        opal_event_evtimer_add (&ugni_module->connection_event, &tv);
 
         ugni_module->initialized = true;
     }

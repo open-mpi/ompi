@@ -2428,6 +2428,7 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix
     rank_meta_info *rinfo = NULL;
     size_t num_elems, free_offset, new_free_offset;
     int data_exist;
+    int32_t cnt;
 
     PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
                          "%s:%d:%s: for rank %u", __FILE__, __LINE__, __func__, rank));
@@ -2458,7 +2459,8 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix
      */
     free_offset = get_free_offset(datadesc);
     kp = PMIX_NEW(pmix_kval_t);
-    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, kp, &(int){1}, PMIX_KVAL))) {
+    cnt = 1;
+    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, kp, &cnt, PMIX_KVAL))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: unpacked key %s", kp->key);
         if (PMIX_SUCCESS != (rc = pmix_sm_store(ns_info, rank, kp, &rinfo, data_exist))) {
@@ -2470,6 +2472,7 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix
         }
         PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
         kp = PMIX_NEW(pmix_kval_t);
+        cnt = 1;
     }
     PMIX_RELEASE(kp);
 
