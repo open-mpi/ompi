@@ -1274,7 +1274,9 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 }
                 free(sig);
                 break;
-            } else {
+            }
+#if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+              else {
                 /* check if the difference is due to the endianness */
                 ptr = strrchr(sig, ':');
                 ++ptr;
@@ -1290,6 +1292,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     goto CLEANUP;
                 }
             }
+#endif
         }
 
         if (!found) {
