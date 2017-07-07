@@ -46,7 +46,7 @@ static inline void pmix_atomic_wmb(void)
     __sync_synchronize();
 }
 
-#define MB() pmix_atomic_mb()
+#define PMIXMB() pmix_atomic_mb()
 
 /**********************************************************************
  *
