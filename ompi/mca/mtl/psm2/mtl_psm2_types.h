@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,8 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -49,6 +50,16 @@ struct mca_mtl_psm2_module_t {
     psm2_mq_t	 mq;
     psm2_epid_t  epid;
     psm2_epaddr_t epaddr;
+    char *psm2_devices;
+    char *psm2_memory;
+    unsigned long psm2_mq_sendreqs_max;
+    unsigned long psm2_mq_recvreqs_max;
+    unsigned long psm2_mq_rndv_hfi_threshold;
+    unsigned long psm2_mq_rndv_shm_threshold;
+    unsigned long psm2_shared_contexts_max;
+    unsigned long psm2_tracemask;
+    bool psm2_recvthread;
+    bool psm2_shared_contexts;
 };
 
 typedef struct mca_mtl_psm2_module_t mca_mtl_psm2_module_t;
