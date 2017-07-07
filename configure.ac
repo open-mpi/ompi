@@ -588,7 +588,7 @@ AC_CACHE_SAVE
 opal_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
-    dlfcn.h endian.h execinfo.h err.h fcntl.h grp.h libgen.h \
+    dlfcn.h endian.h execinfo.h err.h fcntl.h grp.h ieee754 libgen.h \
     libutil.h memory.h netdb.h netinet/in.h netinet/tcp.h \
     poll.h pthread.h pty.h pwd.h sched.h \
     strings.h stropts.h linux/ethtool.h linux/sockios.h \
