@@ -51,24 +51,24 @@
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline void opal_atomic_mb(void)
+static inline void opal_atomic_mb()
 {
     MB();
 }
 
 
-static inline void opal_atomic_rmb(void)
+static inline void opal_atomic_rmb()
 {
     MB();
 }
 
 
-static inline void opal_atomic_wmb(void)
+static inline void opal_atomic_wmb()
 {
     MB();
 }
 
-static inline void opal_atomic_isync(void)
+static inline void opal_atomic_isync()
 {
 }
 

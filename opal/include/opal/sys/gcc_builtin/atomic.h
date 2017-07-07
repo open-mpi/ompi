@@ -46,17 +46,17 @@
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 
 
-static inline void opal_atomic_mb(void)
+static inline void opal_atomic_mb()
 {
     __atomic_thread_fence (__ATOMIC_SEQ_CST);
 }
 
-static inline void opal_atomic_rmb(void)
+static inline void opal_atomic_rmb()
 {
     __atomic_thread_fence (__ATOMIC_ACQUIRE);
 }
 
-static inline void opal_atomic_wmb(void)
+static inline void opal_atomic_wmb()
 {
     __atomic_thread_fence (__ATOMIC_RELEASE);
 }

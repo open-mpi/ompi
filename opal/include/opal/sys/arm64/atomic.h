@@ -14,6 +14,8 @@
  * Copyright (c) 2010      ARM ltd.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,22 +52,22 @@
  *
  *********************************************************************/
 
-static inline void opal_atomic_mb (void)
+static inline void opal_atomic_mb ()
 {
     MB();
 }
 
-static inline void opal_atomic_rmb (void)
+static inline void opal_atomic_rmb ()
 {
     RMB();
 }
 
-static inline void opal_atomic_wmb (void)
+static inline void opal_atomic_wmb ()
 {
     WMB();
 }
 
-static inline void opal_atomic_isync (void)
+static inline void opal_atomic_isync ()
 {
     __asm__ __volatile__ ("isb");
 }

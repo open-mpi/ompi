@@ -13,6 +13,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,17 +32,17 @@
  *********************************************************************/
 #define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
-static inline void opal_atomic_mb(void)
+static inline void opal_atomic_mb()
 {
     __sync_synchronize();
 }
 
-static inline void opal_atomic_rmb(void)
+static inline void opal_atomic_rmb()
 {
     __sync_synchronize();
 }
 
-static inline void opal_atomic_wmb(void)
+static inline void opal_atomic_wmb()
 {
     __sync_synchronize();
 }

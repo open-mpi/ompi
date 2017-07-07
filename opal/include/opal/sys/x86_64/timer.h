@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. ALl rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +44,7 @@ opal_sys_timer_get_cycles(void)
      return ((opal_timer_t)l) | (((opal_timer_t)h) << 32);
 }
 
-static inline bool opal_sys_timer_is_monotonic (void)
+static inline bool opal_sys_timer_is_monotonic ()
 {
     int64_t tmp;
     int32_t cpuid1, cpuid2;

@@ -13,6 +13,8 @@
  * Copyright (c) 2016      Broadcom Limited. All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,7 +120,7 @@ typedef long opal_timer_t;
 
 #define OPAL_HAVE_SYS_TIMER_IS_MONOTONIC 1
 
-static inline bool opal_sys_timer_is_monotonic (void)
+static inline bool opal_sys_timer_is_monotonic ()
 {
     return OPAL_TIMER_MONOTONIC;
 }

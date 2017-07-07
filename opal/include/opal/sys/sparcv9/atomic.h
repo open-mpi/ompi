@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -50,24 +50,24 @@
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline void opal_atomic_mb(void)
+static inline void opal_atomic_mb()
 {
     MEMBAR("#LoadLoad | #LoadStore | #StoreStore | #StoreLoad");
 }
 
 
-static inline void opal_atomic_rmb(void)
+static inline void opal_atomic_rmb()
 {
     MEMBAR("#LoadLoad");
 }
 
 
-static inline void opal_atomic_wmb(void)
+static inline void opal_atomic_wmb()
 {
     MEMBAR("#StoreStore");
 }
 
-static inline void opal_atomic_isync(void)
+static inline void opal_atomic_isync()
 {
 }
 
