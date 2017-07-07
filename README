@@ -368,6 +368,12 @@ Compiler Notes
     when Open MPI is built with a Fortran compiler that support the
     INTERFACE keyword and ISO_FORTRAN_ENV.
 
+    *** The Open MPI team has not tested to determine exactly which
+        version of the GNU Fortran compiler suite started supporting
+        what is required for MPI_SIZEOF.  We know that gfortran v4.8
+        (bundled in RHEL 7.x) supports the MPI_SIZEOF interfaces.
+        However, gfortran 4.4 (bundled in RHEL 6.x) does not.
+
   - The level of support provided by the mpi module is based on your
     Fortran compiler.
 
