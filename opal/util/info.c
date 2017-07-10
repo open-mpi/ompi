@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
@@ -93,6 +93,72 @@ int opal_info_dup (opal_info_t *info, opal_info_t **newinfo)
     return OPAL_SUCCESS;
 }
 
+static int opal_info_get_nolock (opal_info_t *info, const char *key, int valuelen,
+                                 char *value, int *flag)
+{
+    opal_info_entry_t *search;
+    int value_length;
+
+    search = info_find_key (info, key);
+    if (NULL == search){
+        *flag = 0;
+    } else if (value && valuelen) {
+        /*
+         * We have found the element, so we can return the value
+         * Set the flag, value_length and value
+         */
+         *flag = 1;
+         value_length = strlen(search->ie_value);
+         /*
+          * If the stored value is shorter than valuelen, then
+          * we can copy the entire value out. Else, we have to
+          * copy ONLY valuelen bytes out
+          */
+          if (value_length < valuelen ) {
+               strcpy(value, search->ie_value);
+          } else {
+               opal_strncpy(value, search->ie_value, valuelen);
+               if (OPAL_MAX_INFO_VAL == valuelen) {
+                   value[valuelen-1] = 0;
+               } else {
+                   value[valuelen] = 0;
+               }
+          }
+    }
+    return OPAL_SUCCESS;
+}
+
+static int opal_info_set_nolock (opal_info_t *info, const char *key, const char *value)
+{
+    char *new_value;
+    opal_info_entry_t *new_info;
+    opal_info_entry_t *old_info;
+
+    new_value = strdup(value);
+    if (NULL == new_value) {
+      return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    old_info = info_find_key (info, key);
+    if (NULL != old_info) {
+        /*
+         * key already exists. remove the value associated with it
+         */
+        free(old_info->ie_value);
+        old_info->ie_value = new_value;
+    } else {
+        new_info = OBJ_NEW(opal_info_entry_t);
+        if (NULL == new_info) {
+            free(new_value);
+            OPAL_THREAD_UNLOCK(info->i_lock);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        strncpy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
+        new_info->ie_value = new_value;
+        opal_list_append (&(info->super), (opal_list_item_t *) new_info);
+    }
+    return OPAL_SUCCESS;
+}
 /*
  * An object's info can be set, but those settings can be modified by
  * system callbacks. When those callbacks happen, we save a "__IN_<key>"/"val"
@@ -131,7 +197,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 
              is_IN_key = 1;
              exists_IN_key = 1;
-             opal_info_get (info, pkey, 0, NULL, &flag);
+             opal_info_get_nolock (info, pkey, 0, NULL, &flag);
              if (flag) {
                  exists_reg_key = 1;
              }
@@ -142,7 +208,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 // see if there is an __IN_<key> for the current <key>
              if (strlen(iterator->ie_key) + 5 < OPAL_MAX_INFO_KEY) {
                  sprintf(savedkey, "__IN_%s", iterator->ie_key);
-                 err = opal_info_get (info, savedkey, OPAL_MAX_INFO_VAL,
+                 err = opal_info_get_nolock (info, savedkey, OPAL_MAX_INFO_VAL,
                      savedval, &flag);
              } else {
                  flag = 0;
@@ -161,7 +227,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 // this would mean <key> was set by the user but ignored by the system
 // so base our behavior on the omit_ignored
                  if (!omit_ignored) {
-                     err = opal_info_set(*newinfo, pkey, iterator->ie_value);
+                     err = opal_info_set_nolock(*newinfo, pkey, iterator->ie_value);
                      if (OPAL_SUCCESS != err) {
                          OPAL_THREAD_UNLOCK(info->i_lock);
                          return err;
@@ -186,7 +252,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
                  }
              }
              if (valptr) {
-                 err = opal_info_set(*newinfo, pkey, valptr);
+                 err = opal_info_set_nolock(*newinfo, pkey, valptr);
                  if (OPAL_SUCCESS != err) {
                      OPAL_THREAD_UNLOCK(info->i_lock);
                      return err;
@@ -212,34 +278,10 @@ int opal_info_dup_mpistandard (opal_info_t *info, opal_info_t **newinfo)
  */
 int opal_info_set (opal_info_t *info, const char *key, const char *value)
 {
-    char *new_value;
-    opal_info_entry_t *new_info;
-    opal_info_entry_t *old_info;
-
-    new_value = strdup(value);
-    if (NULL == new_value) {
-      return OPAL_ERR_OUT_OF_RESOURCE;
-    }
+    int ret;
 
     OPAL_THREAD_LOCK(info->i_lock);
-    old_info = info_find_key (info, key);
-    if (NULL != old_info) {
-        /*
-         * key already exists. remove the value associated with it
-         */
-        free(old_info->ie_value);
-        old_info->ie_value = new_value;
-    } else {
-        new_info = OBJ_NEW(opal_info_entry_t);
-        if (NULL == new_info) {
-            free(new_value);
-            OPAL_THREAD_UNLOCK(info->i_lock);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-        strncpy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
-        new_info->ie_value = new_value;
-        opal_list_append (&(info->super), (opal_list_item_t *) new_info);
-    }
+    ret = opal_info_set_nolock(info, key, value);
     OPAL_THREAD_UNLOCK(info->i_lock);
     return OPAL_SUCCESS;
 }
@@ -266,38 +308,12 @@ int opal_info_set_value_enum (opal_info_t *info, const char *key, int value,
 int opal_info_get (opal_info_t *info, const char *key, int valuelen,
                    char *value, int *flag)
 {
-    opal_info_entry_t *search;
-    int value_length;
+    int ret;
 
     OPAL_THREAD_LOCK(info->i_lock);
-    search = info_find_key (info, key);
-    if (NULL == search){
-        *flag = 0;
-    } else if (value && valuelen) {
-        /*
-         * We have found the element, so we can return the value
-         * Set the flag, value_length and value
-         */
-         *flag = 1;
-         value_length = strlen(search->ie_value);
-         /*
-          * If the stored value is shorter than valuelen, then
-          * we can copy the entire value out. Else, we have to
-          * copy ONLY valuelen bytes out
-          */
-          if (value_length < valuelen ) {
-               strcpy(value, search->ie_value);
-          } else {
-               opal_strncpy(value, search->ie_value, valuelen);
-               if (OPAL_MAX_INFO_VAL == valuelen) {
-                   value[valuelen-1] = 0;
-               } else {
-                   value[valuelen] = 0;
-               }
-          }
-    }
+    ret = opal_info_get_nolock(info, key, valuelen, value, flag);
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 int opal_info_get_value_enum (opal_info_t *info, const char *key, int *value,
