@@ -286,7 +286,22 @@ fi
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_DLOPEN_SUPPORT, $OPAL_ENABLE_DLOPEN_SUPPORT,
     [Whether we want to enable dlopen support])
 
-opal_want_heterogeneous=0
+#
+# Heterogeneous support
+#
+
+AC_MSG_CHECKING([if want heterogeneous support])
+AC_ARG_ENABLE([heterogeneous],
+    [AC_HELP_STRING([--enable-heterogeneous],
+                    [Enable features required for heterogeneous
+                     platform support (default: disabled)])])
+if test "$enable_heterogeneous" = "yes" ; then
+     AC_MSG_RESULT([yes])
+     opal_want_heterogeneous=1
+else
+     AC_MSG_RESULT([no])
+     opal_want_heterogeneous=0
+fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_HETEROGENEOUS_SUPPORT],
                    [$opal_want_heterogeneous],
                    [Enable features required for heterogeneous support])
