@@ -183,7 +183,7 @@ main(int argc, char *argv[])
     free(legacy);
 
     /* and finally get rid of any lingering pmix-related artifacts */
-    asprintf(&legacy, "rm -f %s/pmix*", orte_process_info.tmpdir_base);
+    asprintf(&legacy, "rm -rf %s/pmix*", orte_process_info.tmpdir_base);
     system(legacy);
     free(legacy);
 
