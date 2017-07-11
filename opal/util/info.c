@@ -93,7 +93,7 @@ int opal_info_dup (opal_info_t *info, opal_info_t **newinfo)
     return OPAL_SUCCESS;
 }
 
-static int opal_info_get_nolock (opal_info_t *info, const char *key, int valuelen,
+static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuelen,
                                  char *value, int *flag)
 {
     opal_info_entry_t *search;
@@ -125,7 +125,6 @@ static int opal_info_get_nolock (opal_info_t *info, const char *key, int valuele
                }
           }
     }
-    return OPAL_SUCCESS;
 }
 
 static int opal_info_set_nolock (opal_info_t *info, const char *key, const char *value)
@@ -208,8 +207,8 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 // see if there is an __IN_<key> for the current <key>
              if (strlen(iterator->ie_key) + 5 < OPAL_MAX_INFO_KEY) {
                  sprintf(savedkey, "__IN_%s", iterator->ie_key);
-                 err = opal_info_get_nolock (info, savedkey, OPAL_MAX_INFO_VAL,
-                     savedval, &flag);
+                 opal_info_get_nolock (info, savedkey, OPAL_MAX_INFO_VAL,
+                                       savedval, &flag);
              } else {
                  flag = 0;
              }
@@ -308,12 +307,10 @@ int opal_info_set_value_enum (opal_info_t *info, const char *key, int value,
 int opal_info_get (opal_info_t *info, const char *key, int valuelen,
                    char *value, int *flag)
 {
-    int ret;
-
     OPAL_THREAD_LOCK(info->i_lock);
-    ret = opal_info_get_nolock(info, key, valuelen, value, flag);
+    opal_info_get_nolock(info, key, valuelen, value, flag);
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return ret;
+    return OPAL_SUCCESS;
 }
 
 int opal_info_get_value_enum (opal_info_t *info, const char *key, int *value,
