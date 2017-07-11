@@ -283,7 +283,7 @@ int opal_info_set (opal_info_t *info, const char *key, const char *value)
     OPAL_THREAD_LOCK(info->i_lock);
     ret = opal_info_set_nolock(info, key, value);
     OPAL_THREAD_UNLOCK(info->i_lock);
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 
