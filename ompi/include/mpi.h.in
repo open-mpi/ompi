@@ -1930,7 +1930,7 @@ OMPI_DECLSPEC  int MPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int 
 OMPI_DECLSPEC  int MPIX_Ineighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
                                            void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[],
                                            MPI_Comm comm, MPI_Info info, MPI_Request *request);
-OMPI_DECLSPEC  int MPIX_Start(MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPIX_Start(MPI_Request *request);
 
 
   /*
@@ -2739,7 +2739,7 @@ OMPI_DECLSPEC  int PMPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int
 OMPI_DECLSPEC  int PMPIX_Ineighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
                                            void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[],
                                            MPI_Comm comm, MPI_Info info, MPI_Request *request);
-OMPI_DECLSPEC  int PMPIX_Start(MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPIX_Start(MPI_Request *request);
 
   /*
    * Tool MPI API

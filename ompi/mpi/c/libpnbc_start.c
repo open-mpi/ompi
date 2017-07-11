@@ -29,7 +29,7 @@
 static const char FUNC_NAME[] = "MPIX_Start";
 
 
-int MPIX_Start(MPI_Comm comm,  MPI_Request *request) {
+int MPIX_Start(MPI_Request *request) {
 
 	//printf("*** Entered PNBC_Start (libpnbc_start.c) ***\n");
 
@@ -104,9 +104,11 @@ int MPIX_Start(MPI_Comm comm,  MPI_Request *request) {
 	        /* Invoke the coll component to perform the back-end operation */
 
 	        //printf("firing libpnbc_start()...\n\n");
-	        err = comm->c_coll->coll_libpnbc_start(request);
-	        //printf("returning libpnbc_start()...\n\n");
+	        
+	        err = (*request)->req_mpi_object.comm->c_coll->coll_libpnbc_start(request);
 
+		
+	        //printf("returning libpnbc_start()...\n\n");
 
 	        OPAL_CR_EXIT_LIBRARY();
 
