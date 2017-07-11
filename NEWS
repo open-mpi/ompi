@@ -8,15 +8,15 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
-Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
-Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+Copyright (c) 2012-2017 Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
@@ -804,6 +804,8 @@ Bug fixes / minor enhancements:
 1.10.3 - 15 June 2016
 ------
 
+- Fix zero-length datatypes.  Thanks to Wei-keng Liao for reporting
+  the issue.
 - Minor manpage cleanups
 - Implement atomic support in OSHMEM/UCX
 - Fix support of MPI_COMBINER_RESIZED. Thanks to James Ramsey
@@ -854,6 +856,22 @@ Bug fixes / minor enhancements:
 - Fix affinity for MPMD jobs running under LSF
 - Fix many Fortran binding bugs
 - Fix `MPI_IN_PLACE`-related bugs
+- Fix PSM/PSM2 support for singleton operations
+- Ensure MPI transports continue to progress during RTE barriers
+- Update HWLOC to 1.9.1 end-of-series
+- Fix a bug in the Java command line parser when the
+  -Djava.library.path options was given by the user
+- Update the MTL/OFI provider selection behavior
+- Add support for clock_gettime on Linux.
+- Correctly detect and configure for Solaris Studio 12.5
+  beta compilers
+- Correctly compute #slots when -host is used for MPMD case
+- Fix a bug in the hcoll collectives due to an uninitialized field
+- Do not set a binding policy when oversubscribing a node
+- Fix hang in intercommunicator operations when oversubscribed
+- Speed up process termination during MPI_Abort
+- Disable backtrace support by default in the PSM/PSM2 libraries to
+  prevent unintentional conflicting behavior.
 
 
 1.10.2: 26 Jan 2016
