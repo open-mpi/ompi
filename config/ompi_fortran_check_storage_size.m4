@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2017      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -27,6 +28,17 @@ dnl
 AC_DEFUN([OMPI_FORTRAN_CHECK_STORAGE_SIZE],[
     AS_VAR_PUSHDEF([fortran_storage_size_var], [ompi_cv_fortran_have_storage_size])
 
+    # Re PR: https://github.com/open-mpi/ompi/pull/3822
+    # We explored correcting the following syntax to compile with gfortran 4.8
+    #   -    size = storage_size(x) / 8
+    #   +    size = storage_size(x(1)) / 8
+    # That allowed gfortran 4.8 to pass this configure test, but fail to
+    # correctly handle mpi_sizeof due to the weak test for INTERFACE in
+    # ompi_fortran_check_interface.m4. Until we can strengthen that configure
+    # check we reverted the commit from PR #3822 to keep the old logic here
+    # so that gfortran 4.8 will disqualify itself correctly for mpi_sizeof()
+    # support.
+    #
     AC_CACHE_CHECK([if Fortran compiler supports STORAGE_SIZE for relevant types],
        fortran_storage_size_var,
        [AC_LANG_PUSH([Fortran])
