@@ -558,6 +558,11 @@ static int cray_fini(void) {
     }
 
     if (0 == --pmix_init_count) {
+
+        opal_output_verbose(10, opal_pmix_base_framework.framework_output,
+                        "%s pmix:cray: calling PMI2_Finalize",
+                        OPAL_NAME_PRINT(pmix_pname));
+
         PMI2_Finalize();
 
         if (NULL != pmix_kvs_name) {
