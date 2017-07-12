@@ -3,7 +3,7 @@
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -175,6 +175,7 @@ static int s2_init(opal_list_t *ilist)
     opal_process_name_t wildcard_rank;
 
     if (0 < pmix_init_count) {
+        ++pmix_init_count;
         return OPAL_SUCCESS;
     }
 
@@ -425,13 +426,13 @@ static int s2_fini(void) {
 
     if (0 == --pmix_init_count) {
         PMI2_Finalize();
-    }
-    if (NULL != pmix_kvs_name) {
-        free(pmix_kvs_name);
-        pmix_kvs_name = NULL;
-    }
-    if (NULL != s2_lranks) {
-        free(s2_lranks);
+        if (NULL != pmix_kvs_name) {
+            free(pmix_kvs_name);
+            pmix_kvs_name = NULL;
+        }
+        if (NULL != s2_lranks) {
+            free(s2_lranks);
+        }
     }
     return OPAL_SUCCESS;
 }
