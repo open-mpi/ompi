@@ -128,7 +128,7 @@ General notes
 - Other systems have been lightly (but not fully tested):
   - Linux (various flavors/distros), 32 bit, with gcc
   - Cygwin 32 & 64 bit with gcc
-  - ARMv4, ARMv5, ARMv6, ARMv7, ARMv8
+  - ARMv6, ARMv7, ARMv8 (aarch64)
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
     with Oracle Solaris Studio 12.5
