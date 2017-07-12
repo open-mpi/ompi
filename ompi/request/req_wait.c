@@ -18,6 +18,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,6 +90,7 @@ int ompi_request_default_wait_any(size_t count,
     size_t i, completed = count, num_requests_null_inactive = 0;
     int rc = OMPI_SUCCESS;
     ompi_request_t *request=NULL;
+    ompi_request_array_t req_array;
     ompi_wait_sync_t sync;
 
     if (OPAL_UNLIKELY(0 == count)) {
@@ -128,7 +130,9 @@ int ompi_request_default_wait_any(size_t count,
         return rc;
     }
 
-    SYNC_WAIT(&sync);
+    req_array.count = count;
+    req_array.requests = requests;
+    SYNC_WAIT(&sync, ompi_request_dump_array_on_hangup, &req_array);
 
   after_sync_wait:
     /* recheck the complete status and clean up the sync primitives.
@@ -201,6 +205,7 @@ int ompi_request_default_wait_all( size_t count,
     size_t i, completed = 0, failed = 0;
     ompi_request_t **rptr;
     ompi_request_t *request;
+    ompi_request_array_t req_array;
     int mpi_error = OMPI_SUCCESS;
     ompi_wait_sync_t sync;
 
@@ -234,7 +239,9 @@ int ompi_request_default_wait_all( size_t count,
     }
 
     /* wait until all requests complete or until an error is triggered. */
-    mpi_error = SYNC_WAIT(&sync);
+    req_array.count = count;
+    req_array.requests = requests;
+    mpi_error = SYNC_WAIT(&sync, ompi_request_dump_array_on_hangup, &req_array);
     if( OPAL_SUCCESS != mpi_error ) {
         /* if we are in an error case, increase the failed to ensure
            proper cleanup during the requests completion. */
@@ -382,6 +389,7 @@ int ompi_request_default_wait_some(size_t count,
     int rc = MPI_SUCCESS;
     ompi_request_t **rptr = NULL;
     ompi_request_t *request = NULL;
+    ompi_request_array_t req_array;
     ompi_wait_sync_t sync;
     size_t sync_sets = 0, sync_unsets = 0;
     
@@ -425,7 +433,9 @@ int ompi_request_default_wait_some(size_t count,
 
     if( 0 == num_requests_done ) {
         /* One completed request is enough to satisfy the some condition */
-        SYNC_WAIT(&sync);
+        req_array.count = count;
+        req_array.requests = requests;
+        SYNC_WAIT(&sync, ompi_request_dump_array_on_hangup, &req_array);
     }
 
     /* Do the final counting and */

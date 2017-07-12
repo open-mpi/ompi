@@ -22,6 +22,7 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -159,6 +160,19 @@ int opal_register_params(void)
                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
                                  &opal_progress_yield_when_idle);
 #endif
+
+    ret = mca_base_var_register ("opal", "opal", "progress", "timeout",
+                                 "If nonzero, the timeout-based hang-up detection feature is enabled. "
+                                 "The absolute value is a time in seconds to wait a completion of an operation. "
+                                 "If positive, the process prints a message and aborts on the timeout. "
+                                 "If negative, the process prints a message and continues on the timeout. "
+                                 "If you want to debug a hang-up situation caused by inter-process communication, "
+                                 "setting opal_abort_delay also is recommended because peer processes also can detect "
+                                 "the hang-up situation and print useful messages before aborting the entire job. "
+                                 "This feature cannot detect all hang-up situations and may give a false-positive.",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &opal_progress_timeout);
 
 #if OPAL_ENABLE_DEBUG
     opal_progress_debug = false;

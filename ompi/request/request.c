@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,6 +60,7 @@ static void ompi_request_construct(ompi_request_t* req)
     req->req_cancel       = NULL;
     req->req_complete_cb  = NULL;
     req->req_complete_cb_data = NULL;
+    req->req_dump         = NULL;
     req->req_f_to_c_index = MPI_UNDEFINED;
     req->req_mpi_object.comm = (struct ompi_communicator_t*) NULL;
 }
@@ -181,4 +183,20 @@ int ompi_request_finalize(void)
     OBJ_DESTRUCT( &ompi_request_empty );
     OBJ_DESTRUCT( &ompi_request_f_to_c_table );
     return OMPI_SUCCESS;
+}
+
+void ompi_request_dump_on_hangup(FILE * file, char * prefix, void * cbdata)
+{
+    ompi_request_t* request = (ompi_request_t*) cbdata;
+    if (request->req_complete != REQUEST_COMPLETED && request->req_dump) {
+        request->req_dump(file, prefix, request);
+    }
+}
+
+void ompi_request_dump_array_on_hangup(FILE * file, char * prefix, void * cbdata)
+{
+    ompi_request_array_t* array = (ompi_request_array_t*) cbdata;
+    for (size_t i = 0; i < array->count; i++) {
+        ompi_request_dump_on_hangup(file, prefix, array->requests[i]);
+    }
 }

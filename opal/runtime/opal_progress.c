@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,6 +34,9 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/backtrace/backtrace.h"
+#include "opal/util/proc.h"
+#include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_params.h"
 
@@ -48,6 +52,7 @@ bool opal_progress_debug = false;
  */
 static int opal_progress_event_flag = OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK;
 int opal_progress_spin_count = 10000;
+int opal_progress_timeout = 0;
 
 
 /*
@@ -479,4 +484,61 @@ int opal_progress_unregister (opal_progress_callback_t cb)
     opal_atomic_unlock(&progress_lock);
 
     return ret;
+}
+
+void opal_progress_handle_hangup(opal_progress_hangup_callback_fn_t cbfunc,
+                                 void *cbdata)
+{
+    static bool once_called;
+    FILE *stream = NULL;
+    char prefix[100 + OPAL_MAXHOSTNAMELEN];
+    bool need_close = false;
+
+    if (0 <= opal_stacktrace_output_fileno) {
+        stream = fdopen(opal_stacktrace_output_fileno, "a");
+        if (stream == NULL) {
+            opal_output(0,
+                        "Error: Failed to open the stacktrace file descriptor. "
+                        "Default: stderr\n\tFile descriptor: %d\n\tErrno: %s",
+                        opal_stacktrace_output_fileno, strerror(errno));
+        }
+    } else if (NULL != opal_stacktrace_output_filename) {
+        opal_stacktrace_set_output_filename();
+        stream = fopen(opal_stacktrace_output_filename, once_called ? "a" : "w");
+        if (stream == NULL) {
+            opal_output(0,
+                        "Error: Failed to open the stacktrace output file. "
+                        "Default: stderr\n\tFilename: %s\n\tErrno: %s",
+                        opal_stacktrace_output_filename, strerror(errno));
+        }
+        need_close = stream != NULL;
+    }
+    if (stream == NULL) {
+        stream = stderr;
+    }
+
+    snprintf(prefix, sizeof(prefix), "[%s:%05d] ",
+             opal_process_info.nodename, (int) getpid());
+
+    fprintf(stream, "%sPossible hang-up (no progress) is detected on %s\n",
+            prefix, (*opal_process_name_print)(OPAL_PROC_MY_NAME));
+    fflush(stream);
+
+    opal_backtrace_print(stream, prefix, 1);
+
+    if (cbfunc != NULL) {
+        (*cbfunc)(stream, prefix, cbdata);
+        fflush(stream);
+    }
+
+    if (need_close) {
+        fclose(stream);
+    }
+
+    once_called = true;
+
+    if (opal_progress_timeout > 0) {
+        opal_delay_abort();
+        exit(1);
+    }
 }

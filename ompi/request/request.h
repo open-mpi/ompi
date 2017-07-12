@@ -15,6 +15,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +75,16 @@ typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag
  */
 typedef int (*ompi_request_complete_fn_t)(struct ompi_request_t* request);
 
+/*
+ * Optional function called when a hang-up situation is detected.
+ * If this function is called with a request, it means the request has not
+ * completed within opal_progress_timeout seconds in a blocking operation
+ * or MPI_WAIT{|ANY|ALL|SOME} function call. Implementers can dump any data
+ * for debugging purposes.
+ */
+typedef int (*ompi_request_dump_fn_t)(FILE* file, char* prefix,
+                                      struct ompi_request_t* request);
+
 /**
  * Forward declaration
  */
@@ -113,6 +124,7 @@ struct ompi_request_t {
     ompi_request_cancel_fn_t req_cancel;        /**< Optional function to cancel the request */
     ompi_request_complete_fn_t req_complete_cb; /**< Called when the request is MPI completed */
     void *req_complete_cb_data;
+    ompi_request_dump_fn_t req_dump;            /**< Called when a hang-up situation is detected */
     ompi_mpi_object_t req_mpi_object;           /**< Pointer to MPI object that created this request */
 };
 
@@ -313,6 +325,14 @@ typedef struct ompi_request_fns_t {
 } ompi_request_fns_t;
 
 /**
+ * Array of ompi_request_t pointers.
+ */
+typedef struct ompi_request_array_t {
+    size_t count;              /**< Number of requests */
+    ompi_request_t **requests; /**< Array of pointers of requests */
+} ompi_request_array_t;
+
+/**
  * Globals used for tracking requests and request completion.
  */
 OMPI_DECLSPEC extern opal_pointer_array_t   ompi_request_f_to_c_table;
@@ -337,6 +357,24 @@ OMPI_DECLSPEC int ompi_request_persistent_proc_null_free(ompi_request_t **reques
  * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
  */
 int ompi_request_finalize(void);
+
+/**
+ * Function used for OPAL_PROGRESS_WHILE to dump one request data on hang-up.
+ *
+ * @param file   File stream to output hang-up situation information.
+ * @param prefix Desired prefix for each line of hang-up situation information.
+ * @param cbdata Pointer to an ompi_request_t object.
+ */
+void ompi_request_dump_on_hangup(FILE * file, char * prefix, void * cbdata);
+
+/**
+ * Function used for OPAL_PROGRESS_WHILE to dump multiple request data on hang-up.
+ *
+ * @param file   File stream to output hang-up situation information.
+ * @param prefix Desired prefix for each line of hang-up situation information.
+ * @param cbdata Pointer to an ompi_request_array_t object.
+ */
+void ompi_request_dump_array_on_hangup(FILE * file, char * prefix, void * cbdata);
 
 /**
  * Cancel a pending request.
@@ -379,7 +417,7 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
         WAIT_SYNC_INIT(&sync, 1);
 
         if (OPAL_ATOMIC_CMPSET_PTR(&req->req_complete, REQUEST_PENDING, &sync)) {
-            SYNC_WAIT(&sync);
+            SYNC_WAIT(&sync, ompi_request_dump_on_hangup, req);
         } else {
             /* completed before we had a chance to swap in the sync object */
             WAIT_SYNC_SIGNALLED(&sync);
@@ -388,9 +426,8 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
         assert(REQUEST_COMPLETE(req));
         WAIT_SYNC_RELEASE(&sync);
     } else {
-        while(!REQUEST_COMPLETE(req)) {
-            opal_progress();
-        }
+        OPAL_PROGRESS_WHILE(!REQUEST_COMPLETE(req),
+                            true, ompi_request_dump_on_hangup, req);
     }
 }
 

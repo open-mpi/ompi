@@ -18,6 +18,7 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,11 +130,98 @@ static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int c
     return OMPI_SUCCESS;
 }
 
+static int mca_pml_ob1_send_request_dump(FILE* file, char* prefix,
+                                         struct ompi_request_t* request)
+{
+    char crequest[64], cpeer[64], ctag[64];
+    char ccomm[MPI_MAX_OBJECT_NAME+64], ctype[MPI_MAX_OBJECT_NAME+64];
+    mca_pml_base_request_t* basereq = (mca_pml_base_request_t*) request;
+    mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*) request;
+    opal_proc_t* proc = &basereq->req_proc->super;
+    ompi_communicator_t* comm = basereq->req_comm;
+    ompi_datatype_t* type = basereq->req_datatype;
+
+    if( MPI_UNDEFINED == request->req_f_to_c_index ) {
+        snprintf(crequest, sizeof(crequest), "(c=%p f=%s)",
+                 (void*) request, "UNDEFINED");
+    } else {
+        snprintf(crequest, sizeof(crequest), "(c=%p f=%d)",
+                 (void*) request, request->req_f_to_c_index);
+    }
+
+    snprintf(ccomm, sizeof(ccomm), "%s (c=%p f=%d id=%" PRIu32 " my_rank=%d)",
+             comm->c_name, (void*) comm, comm->c_f_to_c_index,
+             comm->c_contextid, comm->c_my_rank);
+
+    if( OMPI_ANY_SOURCE == basereq->req_peer ) {
+        snprintf(cpeer, sizeof(cpeer), "%s", "ANY_SOURCE");
+    } else if( NULL == proc ) {
+        snprintf(cpeer, sizeof(cpeer), "%" PRId32, basereq->req_peer);
+    } else {
+        snprintf(cpeer, sizeof(cpeer),
+                 "%" PRId32 " (jobid=%" PRIu32 " vpid=%" PRIu32 ")",
+                 basereq->req_peer,
+                 proc->proc_name.jobid, proc->proc_name.vpid);
+    }
+
+    if( OMPI_ANY_TAG == basereq->req_tag ) {
+        snprintf(ctag, sizeof(ctag), "%s", "ANY_TAG");
+    } else {
+        snprintf(ctag, sizeof(ctag), "%" PRId32, basereq->req_tag);
+    }
+
+    if( 0 == basereq->req_count ) {
+        snprintf(ctype, sizeof(ctype), "N/A");
+    } else {
+        snprintf(ctype, sizeof(ctype), "%s (c=%p f=%" PRId32 " id=%" PRId32 ")",
+                 type->name, (void*) type, type->d_f_to_c_index, type->id);
+    }
+
+    fprintf(file,
+            "%s"
+            "send request %s "
+            "to rank=%s on communicator=%s with tag=%s "
+            "for datatype=%s x count=%lu in addr=%p ["
+            "complete=%s state=%d "
+            "type=%d pml_complete=%s free_called=%s sequence=%" PRIu64 " "
+            "send_mode=%d "
+            "bytes_packed=%lu "
+            "recv=%p "
+            "state=%" PRId32 " "
+            "throttle_sends=%s "
+            "pipeline_depth=%lu "
+            "bytes_delivered=%lu "
+            "rdma_cnt=%" PRIu32 " "
+            "pending=%d]\n",
+            prefix,
+            crequest,
+            cpeer, ccomm, ctag,
+            ctype, basereq->req_count, basereq->req_addr,
+            (request->req_complete == REQUEST_COMPLETED) ? "y" : "n",
+            (int) request->req_state,
+            (int) basereq->req_type,
+            basereq->req_pml_complete ? "y" : "n",
+            basereq->req_free_called ? "y" : "n",
+            basereq->req_sequence,
+            (int) sendreq->req_send.req_send_mode,
+            sendreq->req_send.req_bytes_packed,
+            sendreq->req_recv.pval,
+            sendreq->req_state,
+            sendreq->req_throttle_sends ? "y" : "n",
+            sendreq->req_pipeline_depth,
+            sendreq->req_bytes_delivered,
+            sendreq->req_rdma_cnt,
+            sendreq->req_pending);
+
+    return OMPI_SUCCESS;
+}
+
 static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
 {
     req->req_send.req_base.req_type = MCA_PML_REQUEST_SEND;
     req->req_send.req_base.req_ompi.req_free = mca_pml_ob1_send_request_free;
     req->req_send.req_base.req_ompi.req_cancel = mca_pml_ob1_send_request_cancel;
+    req->req_send.req_base.req_ompi.req_dump = mca_pml_ob1_send_request_dump;
     req->req_rdma_cnt = 0;
     req->req_throttle_sends = false;
     req->rdma_frag = NULL;

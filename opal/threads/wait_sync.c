@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,9 @@ static ompi_wait_sync_t* wait_sync_list = NULL;
         pthread_mutex_unlock( &(who)->lock);           \
     } while(0)
 
-int sync_wait_mt(ompi_wait_sync_t *sync)
+int sync_wait_mt(ompi_wait_sync_t *sync,
+                 opal_progress_hangup_callback_fn_t hangup_cbfunc,
+                 void *hangup_cbdata)
 {
     /* Don't stop if the waiting synchronization is completed. We avoid the
      * race condition around the release of the synchronization using the
@@ -80,9 +83,9 @@ int sync_wait_mt(ompi_wait_sync_t *sync)
     }
 
     pthread_mutex_unlock(&sync->lock);
-    while(sync->count > 0) {  /* progress till completion */
-        opal_progress();  /* don't progress with the sync lock locked or you'll deadlock */
-    }
+    /* progress till completion */
+    /* don't progress with the sync lock locked or you'll deadlock */
+    OPAL_PROGRESS_WHILE(sync->count > 0, true, NULL, NULL);
     assert(sync == wait_sync_list);
 
  i_am_done:

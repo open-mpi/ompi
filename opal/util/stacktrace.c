@@ -67,7 +67,7 @@ static char *unable_to_print_msg = "Unable to print stack trace!\n";
  * -or, if VPID is available-
  * stacktrace.VPID.PID
  */
-static void set_stacktrace_filename(void) {
+void opal_stacktrace_set_output_filename(void) {
     opal_proc_t *my_proc = opal_proc_local_get();
 
     if( NULL == my_proc ) {
@@ -122,7 +122,7 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 
     /* Update the file name with the RANK, if available */
     if( 0 < opal_stacktrace_output_filename_max_len ) {
-        set_stacktrace_filename();
+        opal_stacktrace_set_output_filename();
         opal_stacktrace_output_fileno = open(opal_stacktrace_output_filename,
                                              O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR);
         if( 0 > opal_stacktrace_output_fileno ) {
@@ -452,7 +452,7 @@ void opal_stackframe_output(int stream)
 
         /* Update the file name with the RANK, if available */
         if( 0 < opal_stacktrace_output_filename_max_len ) {
-            set_stacktrace_filename();
+            opal_stacktrace_set_output_filename();
             opal_stacktrace_output_fileno = open(opal_stacktrace_output_filename,
                                                  O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR);
             if( 0 > opal_stacktrace_output_fileno ) {
@@ -540,8 +540,12 @@ int opal_util_register_stackhandlers (void)
     }
 
     /* Setup the output stream to use */
-    if( NULL == opal_stacktrace_output_filename ||
-        0 == strcasecmp(opal_stacktrace_output_filename, "none") ) {
+    if( NULL == opal_stacktrace_output_filename ) {
+        opal_stacktrace_output_fileno = -1;
+    }
+    else if( 0 == strcasecmp(opal_stacktrace_output_filename, "none") ) {
+        free(opal_stacktrace_output_filename);
+        opal_stacktrace_output_filename = NULL;
         opal_stacktrace_output_fileno = -1;
     }
     else if( 0 == strcasecmp(opal_stacktrace_output_filename, "stdout") ) {
@@ -558,7 +562,7 @@ int opal_util_register_stackhandlers (void)
         // Magic number: 8 = space for .PID and .RANK (allow 7 digits each)
         opal_stacktrace_output_filename_max_len = strlen("stacktrace") + 8 + 8;
         opal_stacktrace_output_filename = (char*)malloc(sizeof(char) * opal_stacktrace_output_filename_max_len);
-        set_stacktrace_filename();
+        opal_stacktrace_set_output_filename();
         opal_stacktrace_output_fileno = -1;
     }
     else if( 0 == strncasecmp(opal_stacktrace_output_filename, "file:", 5) ) {
@@ -572,7 +576,7 @@ int opal_util_register_stackhandlers (void)
         // Magic number: 8 = space for .PID and .RANK (allow 7 digits each)
         opal_stacktrace_output_filename_max_len = strlen(opal_stacktrace_output_filename_base) + 8 + 8;
         opal_stacktrace_output_filename = (char*)malloc(sizeof(char) * opal_stacktrace_output_filename_max_len);
-        set_stacktrace_filename();
+        opal_stacktrace_set_output_filename();
         opal_stacktrace_output_fileno = -1;
 
         free(filename_cpy);
