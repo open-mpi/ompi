@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -66,12 +66,12 @@ int MPI_Add_error_class(int *errorclass)
     ** in attribute/attribute.c and attribute/attribute_predefined.c
     ** why we have to call the fortran attr_set function
     */
-    rc  = ompi_attr_set_fortran_mpi1 (COMM_ATTR,
-				      MPI_COMM_WORLD,
-				      &MPI_COMM_WORLD->c_keyhash,
-				      MPI_LASTUSEDCODE,
-				      ompi_mpi_errcode_lastused,
-				      true);
+    rc  = ompi_attr_set_fint (COMM_ATTR,
+                              MPI_COMM_WORLD,
+                              &MPI_COMM_WORLD->c_keyhash,
+                              MPI_LASTUSEDCODE,
+                              ompi_mpi_errcode_lastused,
+                              true);
     if ( MPI_SUCCESS != rc ) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, rc, FUNC_NAME);
     }
