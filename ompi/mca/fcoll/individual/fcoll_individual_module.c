@@ -61,8 +61,8 @@ mca_fcoll_individual_component_file_query (mca_io_ompio_file_t *fh, int *priorit
     }
 
     if (mca_fcoll_base_query_table (fh, "individual")) {
-        if (*priority < 50) {
-            *priority = 50;
+        if (*priority < 30) {
+            *priority = 30;
         }
 	if ( 2 >= fh->f_size ) {
 	    *priority = 100;
