@@ -238,9 +238,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     /* Then, we need to know if the processes are bound */
     /* We make the hypothesis that all processes are in  */
     /* the same state : all bound or none bound */
-    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
-        goto fallback;
-    }
     root_obj = hwloc_get_root_obj(opal_hwloc_topology);
     if (NULL == root_obj) goto fallback;
 
@@ -254,7 +251,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
      * all the calls that involve collective communications, so we have to lay the logic
      * accordingly.
      */
-    
     if(hwloc_bitmap_isincluded(root_obj->cpuset,set)){ /* processes are not bound on the machine */
 #ifdef __DEBUG__
         if (0 == rank)
@@ -296,7 +292,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                                        num_objs_in_node,num_procs_in_node,
                                                        nodes_roots,lindex_to_grank,comm_old);
         }
-      
+
         if (!oversubscribed_pus) {
             /* Update the data used to compute the correct binding */
             if(hwloc_bitmap_isincluded(root_obj->cpuset,set)){ /* processes are not bound on the machine */
