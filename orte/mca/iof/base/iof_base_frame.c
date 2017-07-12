@@ -15,6 +15,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -269,6 +270,8 @@ static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
     rev->active = false;
     rev->ev = opal_event_alloc();
     rev->sink = NULL;
+    rev->tv.tv_sec = 0;
+    rev->tv.tv_usec = 0;
 }
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
@@ -298,9 +301,12 @@ OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
 static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
 {
     wev->pending = false;
+    wev->always_writable = false;
     wev->fd = -1;
     OBJ_CONSTRUCT(&wev->outputs, opal_list_t);
     wev->ev = opal_event_alloc();
+    wev->tv.tv_sec = 0;
+    wev->tv.tv_usec = 0;
 }
 static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
 {
