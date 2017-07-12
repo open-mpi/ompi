@@ -134,6 +134,21 @@ static int opal_timer_linux_find_freq(void)
         }
     }
 
+#if ((OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64))
+    if (0 == opal_timer_linux_freq && opal_sys_timer_is_monotonic()) {
+        /* tsc is exposed through bogomips ~> loops_per_jiffy ~> tsc_khz */
+        loc = find_info(fp, "bogomips", buf, 1024);
+        if (NULL != loc) {
+            ret = sscanf(loc, "%f", &cpu_f);
+            if (1 == ret) {
+                /* number is in MHz * 2 and has 2 decimal digits
+                   convert to Hz and make an integer */
+                opal_timer_linux_freq = (opal_timer_t) (cpu_f * 100.0f) * 5000;
+            }
+        }
+    }
+#endif
+
     if (0 == opal_timer_linux_freq) {
         /* find the CPU speed - most timers are 1:1 with CPU speed */
         loc = find_info(fp, "cpu MHz", buf, 1024);
