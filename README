@@ -185,6 +185,16 @@ Compiler Notes
   for more details:
   https://github.com/open-mpi/ompi/issues/3612
 
+- Compiling Fortran programs using the mpi_f08 module on PowerPC with
+  the PGI (tested 17.5) or XL (tested v15.1.5) Fortran compilers and GNU
+  linker after 2.25.1 and before 2.28 will likely experience runtime failures.
+  This was noticed on Ubuntu 16.04 which uses the 2.26.1 version of ld by
+  default. However, this issue impacts any OS running the impacted
+  version of ld. This GNU linker regression will be fixed in version 2.28.
+  Below is a link to the GNU bug on this issue:
+    https://sourceware.org/bugzilla/show_bug.cgi?id=21306
+  The XL compiler will have a fix for this issue in their next release.
+
 - On NetBSD-6 (at least AMD64 and i386), and possibly on OpenBSD,
   libtool misidentifies properties of f95/g95, leading to obscure
   compile-time failures if used to build Open MPI.  You can work
