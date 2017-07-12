@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -267,7 +268,7 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
         */
         char *ptmp;
         ompi_request_t *first_segment_req;
-        reqs = coll_base_comm_get_reqs(module->base_data, size);
+        reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
         if (NULL == reqs) { ret = -1; line = __LINE__; goto error_hndl; }
 
         ompi_datatype_type_size(rdtype, &typelng);

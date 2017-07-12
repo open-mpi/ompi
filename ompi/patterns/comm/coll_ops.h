@@ -3,6 +3,7 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,14 +27,14 @@ BEGIN_C_DECLS
 
 
 
-OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
+OMPI_DECLSPEC int ompi_comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         ompi_datatype_t *dtype, int my_rank_in_group, int n_peers,
         int *ranks_in_comm,ompi_communicator_t *comm);
-OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
+OMPI_DECLSPEC int ompi_comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         ompi_datatype_t *dtype, int my_rank_in_group,
         struct ompi_op_t *op, int n_peers,int *ranks_in_comm,
         ompi_communicator_t *comm);
-OMPI_DECLSPEC int comm_bcast_pml(void *buffer, int root, int count,
+OMPI_DECLSPEC int ompi_comm_bcast_pml(void *buffer, int root, int count,
         ompi_datatype_t *dtype, int my_rank_in_group,
         int n_peers, int *ranks_in_comm,ompi_communicator_t
         *comm);

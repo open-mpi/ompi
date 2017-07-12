@@ -13,6 +13,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,7 +84,7 @@ typedef struct {
 
 static void tuple_list_item_constructor(tuple_list_item_t *obj);
 static void tuple_list_item_destructor(tuple_list_item_t *obj);
-OBJ_CLASS_INSTANCE(tuple_list_item_t, opal_list_item_t,
+static OBJ_CLASS_INSTANCE(tuple_list_item_t, opal_list_item_t,
                    tuple_list_item_constructor,
                    tuple_list_item_destructor);
 

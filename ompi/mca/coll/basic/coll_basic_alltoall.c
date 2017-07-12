@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,7 +78,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
     nreqs = size * 2;
-    req = rreq = coll_base_comm_get_reqs( module->base_data, nreqs);
+    req = rreq = ompi_coll_base_comm_get_reqs( module->base_data, nreqs);
     if( NULL == req ) { return OMPI_ERR_OUT_OF_RESOURCE; }
     sreq = rreq + size;
 

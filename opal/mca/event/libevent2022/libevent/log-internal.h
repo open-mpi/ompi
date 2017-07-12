@@ -57,7 +57,7 @@ void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 #undef EV_CHECK_FMT
 
 /****    OMPI CHANGE    ****/
-extern int event_enable_debug_output;
+extern int ompi_event_enable_debug_output;
 /**** END OMPI CHANGE  ****/
 
 #endif

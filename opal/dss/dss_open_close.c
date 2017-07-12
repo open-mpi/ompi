@@ -14,6 +14,7 @@
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +44,7 @@ static opal_dss_buffer_type_t default_buf_type = OPAL_DSS_BUFFER_NON_DESC;
 /* variable group id */
 static int opal_dss_group_id = -1;
 
-mca_base_var_enum_value_t buffer_type_values[] = {
+static mca_base_var_enum_value_t buffer_type_values[] = {
     {OPAL_DSS_BUFFER_NON_DESC, "non-described"},
     {OPAL_DSS_BUFFER_FULLY_DESC, "described"},
     {0, NULL}

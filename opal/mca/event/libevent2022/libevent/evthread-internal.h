@@ -47,55 +47,55 @@ struct event_base;
 #if ! defined(_EVENT_DISABLE_THREAD_SUPPORT) && defined(EVTHREAD_EXPOSE_STRUCTS)
 /* Global function pointers to lock-related functions. NULL if locking isn't
    enabled. */
-extern struct evthread_lock_callbacks _evthread_lock_fns;
-extern struct evthread_condition_callbacks _evthread_cond_fns;
-extern unsigned long (*_evthread_id_fn)(void);
-extern int _evthread_lock_debugging_enabled;
+extern struct evthread_lock_callbacks ompi__evthread_lock_fns;
+extern struct evthread_condition_callbacks ompi__evthread_cond_fns;
+extern unsigned long (*ompi__evthread_id_fn)(void);
+extern int ompi__evthread_lock_debugging_enabled;
 
 /** Return the ID of the current thread, or 1 if threading isn't enabled. */
 #define EVTHREAD_GET_ID() \
-	(_evthread_id_fn ? _evthread_id_fn() : 1)
+	(ompi__evthread_id_fn ? ompi__evthread_id_fn() : 1)
 
 /** Return true iff we're in the thread that is currently (or most recently)
  * running a given event_base's loop. Requires lock. */
 #define EVBASE_IN_THREAD(base)				 \
-	(_evthread_id_fn == NULL ||			 \
-	(base)->th_owner_id == _evthread_id_fn())
+	(ompi__evthread_id_fn == NULL ||			 \
+	(base)->th_owner_id == ompi__evthread_id_fn())
 
 /** Return true iff we need to notify the base's main thread about changes to
  * its state, because it's currently running the main loop in another
  * thread. Requires lock. */
 #define EVBASE_NEED_NOTIFY(base)			 \
-	(_evthread_id_fn != NULL &&			 \
+	(ompi__evthread_id_fn != NULL &&			 \
 	    (base)->running_loop &&			 \
-	    (base)->th_owner_id != _evthread_id_fn())
+	    (base)->th_owner_id != ompi__evthread_id_fn())
 
 /** Allocate a new lock, and store it in lockvar, a void*.  Sets lockvar to
     NULL if locking is not enabled. */
 #define EVTHREAD_ALLOC_LOCK(lockvar, locktype)		\
-	((lockvar) = _evthread_lock_fns.alloc ?		\
-	    _evthread_lock_fns.alloc(locktype) : NULL)
+	((lockvar) = ompi__evthread_lock_fns.alloc ?		\
+	    ompi__evthread_lock_fns.alloc(locktype) : NULL)
 
 /** Free a given lock, if it is present and locking is enabled. */
 #define EVTHREAD_FREE_LOCK(lockvar, locktype)				\
 	do {								\
 		void *_lock_tmp_ = (lockvar);				\
-		if (_lock_tmp_ && _evthread_lock_fns.free)		\
-			_evthread_lock_fns.free(_lock_tmp_, (locktype)); \
+		if (_lock_tmp_ && ompi__evthread_lock_fns.free)		\
+			ompi__evthread_lock_fns.free(_lock_tmp_, (locktype)); \
 	} while (0)
 
 /** Acquire a lock. */
 #define EVLOCK_LOCK(lockvar,mode)					\
 	do {								\
 		if (lockvar)						\
-			_evthread_lock_fns.lock(mode, lockvar);		\
+			ompi__evthread_lock_fns.lock(mode, lockvar);		\
 	} while (0)
 
 /** Release a lock */
 #define EVLOCK_UNLOCK(lockvar,mode)					\
 	do {								\
 		if (lockvar)						\
-			_evthread_lock_fns.unlock(mode, lockvar);	\
+			ompi__evthread_lock_fns.unlock(mode, lockvar);	\
 	} while (0)
 
 /** Helper: put lockvar1 and lockvar2 into pointerwise ascending order. */
@@ -123,7 +123,7 @@ extern int _evthread_lock_debugging_enabled;
  * locked and held by us. */
 #define EVLOCK_ASSERT_LOCKED(lock)					\
 	do {								\
-		if ((lock) && _evthread_lock_debugging_enabled) {	\
+		if ((lock) && ompi__evthread_lock_debugging_enabled) {	\
 			EVUTIL_ASSERT(_evthread_is_debug_lock_held(lock)); \
 		}							\
 	} while (0)
@@ -134,8 +134,8 @@ static inline int EVLOCK_TRY_LOCK(void *lock);
 static inline int
 EVLOCK_TRY_LOCK(void *lock)
 {
-	if (lock && _evthread_lock_fns.lock) {
-		int r = _evthread_lock_fns.lock(EVTHREAD_TRY, lock);
+	if (lock && ompi__evthread_lock_fns.lock) {
+		int r = ompi__evthread_lock_fns.lock(EVTHREAD_TRY, lock);
 		return !r;
 	} else {
 		/* Locking is disabled either globally or for this thing;
@@ -147,35 +147,35 @@ EVLOCK_TRY_LOCK(void *lock)
 /** Allocate a new condition variable and store it in the void *, condvar */
 #define EVTHREAD_ALLOC_COND(condvar)					\
 	do {								\
-		(condvar) = _evthread_cond_fns.alloc_condition ?	\
-		    _evthread_cond_fns.alloc_condition(0) : NULL;	\
+		(condvar) = ompi__evthread_cond_fns.alloc_condition ?	\
+		    ompi__evthread_cond_fns.alloc_condition(0) : NULL;	\
 	} while (0)
 /** Deallocate and free a condition variable in condvar */
 #define EVTHREAD_FREE_COND(cond)					\
 	do {								\
 		if (cond)						\
-			_evthread_cond_fns.free_condition((cond));	\
+			ompi__evthread_cond_fns.free_condition((cond));	\
 	} while (0)
 /** Signal one thread waiting on cond */
 #define EVTHREAD_COND_SIGNAL(cond)					\
-	( (cond) ? _evthread_cond_fns.signal_condition((cond), 0) : 0 )
+	( (cond) ? ompi__evthread_cond_fns.signal_condition((cond), 0) : 0 )
 /** Signal all threads waiting on cond */
 #define EVTHREAD_COND_BROADCAST(cond)					\
-	( (cond) ? _evthread_cond_fns.signal_condition((cond), 1) : 0 )
+	( (cond) ? ompi__evthread_cond_fns.signal_condition((cond), 1) : 0 )
 /** Wait until the condition 'cond' is signalled.  Must be called while
  * holding 'lock'.  The lock will be released until the condition is
  * signalled, at which point it will be acquired again.  Returns 0 for
  * success, -1 for failure. */
 #define EVTHREAD_COND_WAIT(cond, lock)					\
-	( (cond) ? _evthread_cond_fns.wait_condition((cond), (lock), NULL) : 0 )
+	( (cond) ? ompi__evthread_cond_fns.wait_condition((cond), (lock), NULL) : 0 )
 /** As EVTHREAD_COND_WAIT, but gives up after 'tv' has elapsed.  Returns 1
  * on timeout. */
 #define EVTHREAD_COND_WAIT_TIMED(cond, lock, tv)			\
-	( (cond) ? _evthread_cond_fns.wait_condition((cond), (lock), (tv)) : 0 )
+	( (cond) ? ompi__evthread_cond_fns.wait_condition((cond), (lock), (tv)) : 0 )
 
 /** True iff locking functions have been configured. */
 #define EVTHREAD_LOCKING_ENABLED()		\
-	(_evthread_lock_fns.lock != NULL)
+	(ompi__evthread_lock_fns.lock != NULL)
 
 #elif ! defined(_EVENT_DISABLE_THREAD_SUPPORT)
 

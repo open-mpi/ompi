@@ -3,6 +3,7 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -152,7 +153,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
     }
 
     /* get my reduction communication pattern */
-    ret=netpatterns_setup_recursive_doubling_tree_node(n_peers,my_rank,&my_exchange_node);
+    ret=ompi_netpatterns_setup_recursive_doubling_tree_node(n_peers,my_rank,&my_exchange_node);
     if(OMPI_SUCCESS != ret){
         return ret;
     }

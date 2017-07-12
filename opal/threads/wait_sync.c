@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,7 @@ static ompi_wait_sync_t* wait_sync_list = NULL;
         pthread_mutex_unlock( &(who)->lock);           \
     } while(0)
 
-int sync_wait_mt(ompi_wait_sync_t *sync)
+int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
 {
     /* Don't stop if the waiting synchronization is completed. We avoid the
      * race condition around the release of the synchronization using the

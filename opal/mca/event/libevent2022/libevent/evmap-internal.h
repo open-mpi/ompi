@@ -51,7 +51,7 @@ void evmap_signal_clear(struct event_signal_map* ctx);
 
 /** Add an IO event (some combination of EV_READ or EV_WRITE) to an
     event_base's list of events on a given file descriptor, and tell the
-    underlying eventops about the fd if its state has changed.
+    underlying ompi_eventops about the fd if its state has changed.
 
     Requires that ev is not already added.
 
@@ -62,7 +62,7 @@ void evmap_signal_clear(struct event_signal_map* ctx);
 int evmap_io_add(struct event_base *base, evutil_socket_t fd, struct event *ev);
 /** Remove an IO event (some combination of EV_READ or EV_WRITE) to an
     event_base's list of events on a given file descriptor, and tell the
-    underlying eventops about the fd if its state has changed.
+    underlying ompi_eventops about the fd if its state has changed.
 
     @param base the event_base to operate on.
     @param fd the file descriptor corresponding to ev.

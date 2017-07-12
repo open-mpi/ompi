@@ -3,6 +3,7 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+  * Copyright (c) 2017      IBM Corporation. All rights reserved.
   * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,21 +21,21 @@
 
 BEGIN_C_DECLS
 
-int netpatterns_base_err(const char* fmt, ...);
-int netpatterns_register_mca_params(void);
+int ompi_netpatterns_base_err(const char* fmt, ...);
+int ompi_netpatterns_register_mca_params(void);
 
 #if OPAL_ENABLE_DEBUG
-extern int netpatterns_base_verbose; /* disabled by default */
-OMPI_DECLSPEC extern int netpatterns_base_err(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
+extern int ompi_netpatterns_base_verbose; /* disabled by default */
+OMPI_DECLSPEC extern int ompi_netpatterns_base_err(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
 #define NETPATTERNS_VERBOSE(args)                                \
     do {                                                         \
-        if(netpatterns_base_verbose > 0) {           \
-            netpatterns_base_err("[%s]%s[%s:%d:%s] ",\
+        if(ompi_netpatterns_base_verbose > 0) {           \
+            ompi_netpatterns_base_err("[%s]%s[%s:%d:%s] ",\
                     ompi_process_info.nodename,                  \
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),          \
                     __FILE__, __LINE__, __func__);               \
-            netpatterns_base_err args;               \
-            netpatterns_base_err("\n");              \
+            ompi_netpatterns_base_err args;               \
+            ompi_netpatterns_base_err("\n");              \
         }                                                        \
     } while(0);
 #else
@@ -121,24 +122,24 @@ netpatterns_narray_knomial_tree_node_t;
 
 
 /* Init code for common_netpatterns */
-OMPI_DECLSPEC int netpatterns_init(void);
+OMPI_DECLSPEC int ompi_netpatterns_init(void);
 
 /* setup an n-array tree */
-OMPI_DECLSPEC int netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
+OMPI_DECLSPEC int ompi_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
         netpatterns_tree_node_t *my_node);
 /* setup an n-array tree with k-nomial levels */
-OMPI_DECLSPEC int netpatterns_setup_narray_knomial_tree( int tree_order, int my_rank, int num_nodes,
+OMPI_DECLSPEC int ompi_netpatterns_setup_narray_knomial_tree( int tree_order, int my_rank, int num_nodes,
         netpatterns_narray_knomial_tree_node_t *my_node);
 /* cleanup an n-array tree setup by the above function */
-OMPI_DECLSPEC void netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_node_t *my_node);
+OMPI_DECLSPEC void ompi_netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_node_t *my_node);
 
 /* setup an multi-nomial tree - for each node in the tree
  *  this returns it's parent, and it's children
  */
-OMPI_DECLSPEC int netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
+OMPI_DECLSPEC int ompi_netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
         netpatterns_tree_node_t *tree_nodes);
 
-OMPI_DECLSPEC int netpatterns_setup_narray_tree_contigous_ranks(int tree_order,
+OMPI_DECLSPEC int ompi_netpatterns_setup_narray_tree_contigous_ranks(int tree_order,
         int num_nodes, netpatterns_tree_node_t **tree_nodes);
 
 /* calculate the nearest power of radix that is equal to or greater

@@ -15,6 +15,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,7 +90,7 @@ static opal_event_t int_handler;
 static opal_event_t epipe_handler;
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
-char *log_path = NULL;
+static char *log_path = NULL;
 static void shutdown_signal(int fd, short flags, void *arg);
 static void signal_callback(int fd, short flags, void *arg);
 static void epipe_signal_callback(int fd, short flags, void *arg);

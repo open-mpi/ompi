@@ -14,6 +14,7 @@
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -134,7 +135,7 @@ BEGIN_C_DECLS
         /** Thread safety */
         opal_recursive_mutex_t lcl_mutex;
 
-        /** List of cmd_line_option_t's (defined internally) */
+        /** List of ompi_cmd_line_option_t's (defined internally) */
         opal_list_t lcl_options;
 
         /** Duplicate of argc from opal_cmd_line_parse() */
@@ -142,7 +143,7 @@ BEGIN_C_DECLS
         /** Duplicate of argv from opal_cmd_line_parse() */
         char **lcl_argv;
 
-        /** Parsed output; list of cmd_line_param_t's (defined internally) */
+        /** Parsed output; list of ompi_cmd_line_param_t's (defined internally) */
         opal_list_t lcl_params;
 
         /** List of tail (unprocessed) arguments */

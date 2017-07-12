@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,9 +34,9 @@ int MPI_T_pvar_get_index (const char *name, int var_class, int *pvar_index)
         return MPI_ERR_ARG;
     }
 
-    mpit_lock ();
+    ompi_mpit_lock ();
     ret = mca_base_pvar_find_by_name (name, var_class, pvar_index);
-    mpit_unlock ();
+    ompi_mpit_unlock ();
     if (OPAL_SUCCESS != ret) {
         return MPI_T_ERR_INVALID_NAME;
     }

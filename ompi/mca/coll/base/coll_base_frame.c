@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,7 +110,7 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
 OBJ_CLASS_INSTANCE(mca_coll_base_comm_t, opal_object_t,
                    coll_base_comm_construct, coll_base_comm_destruct);
 
-ompi_request_t** coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs)
+ompi_request_t** ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs)
 {
     if( 0 == nreqs ) return NULL;
 

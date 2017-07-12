@@ -287,7 +287,7 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
 
             int creq = 0;
 
-            sreq = coll_base_comm_get_reqs(module->base_data, max_outstanding_reqs);
+            sreq = ompi_coll_base_comm_get_reqs(module->base_data, max_outstanding_reqs);
             if (NULL == sreq) { line = __LINE__; ret = -1; goto error_hndl; }
 
             /* post first group of requests */

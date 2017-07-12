@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -274,7 +275,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                                                  fh->f_comm->c_coll->coll_allgather_module);
     }
     else {
-        ret = fcoll_base_coll_allgather_array (broken_total_lengths,
+        ret = ompi_fcoll_base_coll_allgather_array (broken_total_lengths,
                                                dynamic_gen2_num_io_procs,
                                                MPI_LONG,
                                                total_bytes_per_process,
@@ -333,7 +334,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                                                 fh->f_comm->c_coll->coll_allgather_module);            
     }
     else {
-        ret = fcoll_base_coll_allgather_array (broken_counts,
+        ret = ompi_fcoll_base_coll_allgather_array (broken_counts,
                                                dynamic_gen2_num_io_procs,
                                                MPI_INT,
                                                result_counts,
@@ -420,7 +421,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                                                       fh->f_comm->c_coll->coll_allgatherv_module );
         }
         else {
-            ret = fcoll_base_coll_allgatherv_array (broken_iov_arrays[i],
+            ret = ompi_fcoll_base_coll_allgatherv_array (broken_iov_arrays[i],
                                                     broken_counts[i],
                                                     fh->f_iov_type,
                                                     aggr_data[i]->global_iov_array,
@@ -455,7 +456,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
-            fcoll_base_sort_iovec (aggr_data[i]->global_iov_array, total_fview_count, aggr_data[i]->sorted);
+            ompi_fcoll_base_sort_iovec (aggr_data[i]->global_iov_array, total_fview_count, aggr_data[i]->sorted);
         }
         
         if (NULL != local_iov_array){

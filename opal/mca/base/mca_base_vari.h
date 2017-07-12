@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,8 +72,8 @@ typedef enum {
 #define VAR_IS_SETTABLE(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_SETTABLE))
 #define VAR_IS_DEPRECATED(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_DEPRECATED))
 
-extern const char *var_type_names[];
-extern const size_t var_type_sizes[];
+extern const char *ompi_var_type_names[];
+extern const size_t ompi_var_type_sizes[];
 extern bool mca_base_var_initialized;
 
 /**

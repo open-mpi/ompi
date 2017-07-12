@@ -45,12 +45,12 @@
 #endif
 
 /* globals */
-GLOBAL int _evthread_lock_debugging_enabled = 0;
-GLOBAL struct evthread_lock_callbacks _evthread_lock_fns = {
+GLOBAL int ompi__evthread_lock_debugging_enabled = 0;
+GLOBAL struct evthread_lock_callbacks ompi__evthread_lock_fns = {
 	0, 0, NULL, NULL, NULL, NULL
 };
-GLOBAL unsigned long (*_evthread_id_fn)(void) = NULL;
-GLOBAL struct evthread_condition_callbacks _evthread_cond_fns = {
+GLOBAL unsigned long (*ompi__evthread_id_fn)(void) = NULL;
+GLOBAL struct evthread_condition_callbacks ompi__evthread_cond_fns = {
 	0, NULL, NULL, NULL, NULL
 };
 
@@ -65,21 +65,21 @@ static struct evthread_condition_callbacks _original_cond_fns = {
 void
 evthread_set_id_callback(unsigned long (*id_fn)(void))
 {
-	_evthread_id_fn = id_fn;
+	ompi__evthread_id_fn = id_fn;
 }
 
 int
 evthread_set_lock_callbacks(const struct evthread_lock_callbacks *cbs)
 {
 	struct evthread_lock_callbacks *target =
-	    _evthread_lock_debugging_enabled
-	    ? &_original_lock_fns : &_evthread_lock_fns;
+	    ompi__evthread_lock_debugging_enabled
+	    ? &_original_lock_fns : &ompi__evthread_lock_fns;
 
 	if (!cbs) {
 		if (target->alloc)
 			event_warnx("Trying to disable lock functions after "
 			    "they have been set up will probaby not work.");
-		memset(target, 0, sizeof(_evthread_lock_fns));
+		memset(target, 0, sizeof(ompi__evthread_lock_fns));
 		return 0;
 	}
 	if (target->alloc) {
@@ -98,7 +98,7 @@ evthread_set_lock_callbacks(const struct evthread_lock_callbacks *cbs)
 		return -1;
 	}
 	if (cbs->alloc && cbs->free && cbs->lock && cbs->unlock) {
-		memcpy(target, cbs, sizeof(_evthread_lock_fns));
+		memcpy(target, cbs, sizeof(ompi__evthread_lock_fns));
 		return event_global_setup_locks_(1);
 	} else {
 		return -1;
@@ -109,15 +109,15 @@ int
 evthread_set_condition_callbacks(const struct evthread_condition_callbacks *cbs)
 {
 	struct evthread_condition_callbacks *target =
-	    _evthread_lock_debugging_enabled
-	    ? &_original_cond_fns : &_evthread_cond_fns;
+	    ompi__evthread_lock_debugging_enabled
+	    ? &_original_cond_fns : &ompi__evthread_cond_fns;
 
 	if (!cbs) {
 		if (target->alloc_condition)
 			event_warnx("Trying to disable condition functions "
 			    "after they have been set up will probaby not "
 			    "work.");
-		memset(target, 0, sizeof(_evthread_cond_fns));
+		memset(target, 0, sizeof(ompi__evthread_cond_fns));
 		return 0;
 	}
 	if (target->alloc_condition) {
@@ -136,12 +136,12 @@ evthread_set_condition_callbacks(const struct evthread_condition_callbacks *cbs)
 	}
 	if (cbs->alloc_condition && cbs->free_condition &&
 	    cbs->signal_condition && cbs->wait_condition) {
-		memcpy(target, cbs, sizeof(_evthread_cond_fns));
+		memcpy(target, cbs, sizeof(ompi__evthread_cond_fns));
 	}
-	if (_evthread_lock_debugging_enabled) {
-		_evthread_cond_fns.alloc_condition = cbs->alloc_condition;
-		_evthread_cond_fns.free_condition = cbs->free_condition;
-		_evthread_cond_fns.signal_condition = cbs->signal_condition;
+	if (ompi__evthread_lock_debugging_enabled) {
+		ompi__evthread_cond_fns.alloc_condition = cbs->alloc_condition;
+		ompi__evthread_cond_fns.free_condition = cbs->free_condition;
+		ompi__evthread_cond_fns.signal_condition = cbs->signal_condition;
 	}
 	return 0;
 }
@@ -197,9 +197,9 @@ evthread_debug_lock_mark_locked(unsigned mode, struct debug_lock *lock)
 	++lock->count;
 	if (!(lock->locktype & EVTHREAD_LOCKTYPE_RECURSIVE))
 		EVUTIL_ASSERT(lock->count == 1);
-	if (_evthread_id_fn) {
+	if (ompi__evthread_id_fn) {
 		unsigned long me;
-		me = _evthread_id_fn();
+		me = ompi__evthread_id_fn();
 		if (lock->count > 1)
 			EVUTIL_ASSERT(lock->held_by == me);
 		lock->held_by = me;
@@ -230,8 +230,8 @@ evthread_debug_lock_mark_unlocked(unsigned mode, struct debug_lock *lock)
 		EVUTIL_ASSERT(mode & (EVTHREAD_READ|EVTHREAD_WRITE));
 	else
 		EVUTIL_ASSERT((mode & (EVTHREAD_READ|EVTHREAD_WRITE)) == 0);
-	if (_evthread_id_fn) {
-		EVUTIL_ASSERT(lock->held_by == _evthread_id_fn());
+	if (ompi__evthread_id_fn) {
+		EVUTIL_ASSERT(lock->held_by == ompi__evthread_id_fn());
 		if (lock->count == 1)
 			lock->held_by = 0;
 	}
@@ -274,17 +274,17 @@ evthread_enable_lock_debuging(void)
 		debug_lock_lock,
 		debug_lock_unlock
 	};
-	if (_evthread_lock_debugging_enabled)
+	if (ompi__evthread_lock_debugging_enabled)
 		return;
-	memcpy(&_original_lock_fns, &_evthread_lock_fns,
+	memcpy(&_original_lock_fns, &ompi__evthread_lock_fns,
 	    sizeof(struct evthread_lock_callbacks));
-	memcpy(&_evthread_lock_fns, &cbs,
+	memcpy(&ompi__evthread_lock_fns, &cbs,
 	    sizeof(struct evthread_lock_callbacks));
 
-	memcpy(&_original_cond_fns, &_evthread_cond_fns,
+	memcpy(&_original_cond_fns, &ompi__evthread_cond_fns,
 	    sizeof(struct evthread_condition_callbacks));
-	_evthread_cond_fns.wait_condition = debug_cond_wait;
-	_evthread_lock_debugging_enabled = 1;
+	ompi__evthread_cond_fns.wait_condition = debug_cond_wait;
+	ompi__evthread_lock_debugging_enabled = 1;
 
 	/* XXX return value should get checked. */
 	event_global_setup_locks_(0);
@@ -296,8 +296,8 @@ _evthread_is_debug_lock_held(void *lock_)
 	struct debug_lock *lock = lock_;
 	if (! lock->count)
 		return 0;
-	if (_evthread_id_fn) {
-		unsigned long me = _evthread_id_fn();
+	if (ompi__evthread_id_fn) {
+		unsigned long me = ompi__evthread_id_fn();
 		if (lock->held_by != me)
 			return 0;
 	}
@@ -344,15 +344,15 @@ evthread_setup_global_lock_(void *lock_, unsigned locktype, int enable_locks)
 		lock->count = 0;
 		lock->held_by = 0;
 		return lock;
-	} else if (enable_locks && ! _evthread_lock_debugging_enabled) {
+	} else if (enable_locks && ! ompi__evthread_lock_debugging_enabled) {
 		/* Case 3: allocate a regular lock */
 		EVUTIL_ASSERT(lock_ == NULL);
-		return _evthread_lock_fns.alloc(locktype);
+		return ompi__evthread_lock_fns.alloc(locktype);
 	} else {
 		/* Case 4: Fill in a debug lock with a real lock */
 		struct debug_lock *lock = lock_;
 		EVUTIL_ASSERT(enable_locks &&
-		              _evthread_lock_debugging_enabled);
+		              ompi__evthread_lock_debugging_enabled);
 		EVUTIL_ASSERT(lock->locktype == locktype);
 		EVUTIL_ASSERT(lock->lock == NULL);
 		lock->lock = _original_lock_fns.alloc(
@@ -371,74 +371,74 @@ evthread_setup_global_lock_(void *lock_, unsigned locktype, int enable_locks)
 unsigned long
 _evthreadimpl_get_id()
 {
-	return _evthread_id_fn ? _evthread_id_fn() : 1;
+	return ompi__evthread_id_fn ? ompi__evthread_id_fn() : 1;
 }
 void *
 _evthreadimpl_lock_alloc(unsigned locktype)
 {
-	return _evthread_lock_fns.alloc ?
-	    _evthread_lock_fns.alloc(locktype) : NULL;
+	return ompi__evthread_lock_fns.alloc ?
+	    ompi__evthread_lock_fns.alloc(locktype) : NULL;
 }
 void
 _evthreadimpl_lock_free(void *lock, unsigned locktype)
 {
-	if (_evthread_lock_fns.free)
-		_evthread_lock_fns.free(lock, locktype);
+	if (ompi__evthread_lock_fns.free)
+		ompi__evthread_lock_fns.free(lock, locktype);
 }
 int
 _evthreadimpl_lock_lock(unsigned mode, void *lock)
 {
-	if (_evthread_lock_fns.lock)
-		return _evthread_lock_fns.lock(mode, lock);
+	if (ompi__evthread_lock_fns.lock)
+		return ompi__evthread_lock_fns.lock(mode, lock);
 	else
 		return 0;
 }
 int
 _evthreadimpl_lock_unlock(unsigned mode, void *lock)
 {
-	if (_evthread_lock_fns.unlock)
-		return _evthread_lock_fns.unlock(mode, lock);
+	if (ompi__evthread_lock_fns.unlock)
+		return ompi__evthread_lock_fns.unlock(mode, lock);
 	else
 		return 0;
 }
 void *
 _evthreadimpl_cond_alloc(unsigned condtype)
 {
-	return _evthread_cond_fns.alloc_condition ?
-	    _evthread_cond_fns.alloc_condition(condtype) : NULL;
+	return ompi__evthread_cond_fns.alloc_condition ?
+	    ompi__evthread_cond_fns.alloc_condition(condtype) : NULL;
 }
 void
 _evthreadimpl_cond_free(void *cond)
 {
-	if (_evthread_cond_fns.free_condition)
-		_evthread_cond_fns.free_condition(cond);
+	if (ompi__evthread_cond_fns.free_condition)
+		ompi__evthread_cond_fns.free_condition(cond);
 }
 int
 _evthreadimpl_cond_signal(void *cond, int broadcast)
 {
-	if (_evthread_cond_fns.signal_condition)
-		return _evthread_cond_fns.signal_condition(cond, broadcast);
+	if (ompi__evthread_cond_fns.signal_condition)
+		return ompi__evthread_cond_fns.signal_condition(cond, broadcast);
 	else
 		return 0;
 }
 int
 _evthreadimpl_cond_wait(void *cond, void *lock, const struct timeval *tv)
 {
-	if (_evthread_cond_fns.wait_condition)
-		return _evthread_cond_fns.wait_condition(cond, lock, tv);
+	if (ompi__evthread_cond_fns.wait_condition)
+		return ompi__evthread_cond_fns.wait_condition(cond, lock, tv);
 	else
 		return 0;
 }
 int
 _evthreadimpl_is_lock_debugging_enabled(void)
 {
-	return _evthread_lock_debugging_enabled;
+	return ompi__evthread_lock_debugging_enabled;
 }
 
 int
 _evthreadimpl_locking_enabled(void)
 {
-	return _evthread_lock_fns.lock != NULL;
+	return ompi__evthread_lock_fns.lock != NULL;
 }
 #endif
 

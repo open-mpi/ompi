@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2017      IBM Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 
@@ -66,6 +67,7 @@ my $HELP = 0;
 # Defaults
 my $my_search_name = "Cisco";
 my $my_formal_name = "Cisco Systems, Inc.  All rights reserved.";
+my $my_manual_list = "";
 
 # Protected directories
 my @protected = qw(
@@ -80,6 +82,8 @@ $my_search_name = $ENV{OMPI_COPYRIGHT_SEARCH_NAME}
     if (defined($ENV{OMPI_COPYRIGHT_SEARCH_NAME}));
 $my_formal_name = $ENV{OMPI_COPYRIGHT_FORMAL_NAME}
     if (defined($ENV{OMPI_COPYRIGHT_FORMAL_NAME}));
+$my_manual_list = $ENV{OMPI_COPYRIGHT_MANUAL_LIST}
+    if (defined($ENV{OMPI_COPYRIGHT_MANUAL_LIST}));
 
 GetOptions(
     "help" => \$HELP,
@@ -87,6 +91,7 @@ GetOptions(
     "check-only" => \$CHECK_ONLY,
     "search-name=s" => \$my_search_name,
     "formal-name=s" => \$my_formal_name,
+    "manual-list=s" => \$my_manual_list,
 ) or die "unable to parse options, stopped";
 
 if ($HELP) {
@@ -98,6 +103,7 @@ $0 [options]
 --check-only         exit(111) if there are files with copyrights to edit
 --search-name=NAME   Set search name to NAME
 --formal-same=NAME   Set formal name to NAME
+--manual-list=FNAME  Use specified file as list of files to mod copyright
 EOT
     exit(0);
 }
@@ -143,6 +149,8 @@ $vcs = "hg"
     if (-d "$top/.hg");
 $vcs = "svn"
     if (-d "$top/.svn");
+$vcs = "manual"
+    if ("$my_manual_list" ne "");
 
 my @files = find_modified_files($vcs);
 
@@ -362,6 +370,9 @@ sub find_modified_files {
             }
         }
         close(CMD);
+    }
+    elsif ($vcs eq "manual") {
+        @files = split(/\n/, `cat $my_manual_list`);
     }
     else {
         die "unknown VCS '$vcs', stopped";

@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +35,7 @@
 #include "ompi/mca/common/ompio/common_ompio.h"
 
 
-int fcoll_base_coll_allgatherv_array (void *sbuf,
+int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
                                       int scount,
                                       ompi_datatype_t *sdtype,
                                       void *rbuf,
@@ -76,7 +77,7 @@ int fcoll_base_coll_allgatherv_array (void *sbuf,
         send_type = sdtype;
     }
 
-    err = fcoll_base_coll_gatherv_array (send_buf,
+    err = ompi_fcoll_base_coll_gatherv_array (send_buf,
                                          rcounts[j],
                                          send_type,
                                          rbuf,
@@ -104,7 +105,7 @@ int fcoll_base_coll_allgatherv_array (void *sbuf,
         return err;
     }
     
-    fcoll_base_coll_bcast_array (rbuf,
+    ompi_fcoll_base_coll_bcast_array (rbuf,
                                  1,
                                  newtype,
                                  root_index,
@@ -117,7 +118,7 @@ int fcoll_base_coll_allgatherv_array (void *sbuf,
     return OMPI_SUCCESS;
 }
 
-int fcoll_base_coll_gatherv_array (void *sbuf,
+int ompi_fcoll_base_coll_gatherv_array (void *sbuf,
                                    int scount,
                                    ompi_datatype_t *sdtype,
                                    void *rbuf,
@@ -206,7 +207,7 @@ int fcoll_base_coll_gatherv_array (void *sbuf,
     return err;
 }
 
-int fcoll_base_coll_scatterv_array (void *sbuf,
+int ompi_fcoll_base_coll_scatterv_array (void *sbuf,
                                     int *scounts,
                                     int *disps,
                                     ompi_datatype_t *sdtype,
@@ -296,7 +297,7 @@ int fcoll_base_coll_scatterv_array (void *sbuf,
     return err;
 }
 
-int fcoll_base_coll_allgather_array (void *sbuf,
+int ompi_fcoll_base_coll_allgather_array (void *sbuf,
                                      int scount,
                                      ompi_datatype_t *sdtype,
                                      void *rbuf,
@@ -324,7 +325,7 @@ int fcoll_base_coll_allgather_array (void *sbuf,
     }
 
     /* Gather and broadcast. */
-    err = fcoll_base_coll_gather_array (sbuf,
+    err = ompi_fcoll_base_coll_gather_array (sbuf,
                                         scount,
                                         sdtype,
                                         rbuf,
@@ -336,7 +337,7 @@ int fcoll_base_coll_allgather_array (void *sbuf,
                                         comm);
     
     if (OMPI_SUCCESS == err) {
-        err = fcoll_base_coll_bcast_array (rbuf,
+        err = ompi_fcoll_base_coll_bcast_array (rbuf,
                                            rcount * procs_per_group,
                                            rdtype,
                                            root_index,
@@ -349,7 +350,7 @@ int fcoll_base_coll_allgather_array (void *sbuf,
     return err;
 }
 
-int fcoll_base_coll_gather_array (void *sbuf,
+int ompi_fcoll_base_coll_gather_array (void *sbuf,
                                   int scount,
                                   ompi_datatype_t *sdtype,
                                   void *rbuf,
@@ -439,7 +440,7 @@ int fcoll_base_coll_gather_array (void *sbuf,
     return err;
 }
 
-int fcoll_base_coll_bcast_array (void *buff,
+int ompi_fcoll_base_coll_bcast_array (void *buff,
                                  int count,
                                  ompi_datatype_t *datatype,
                                  int root_index,

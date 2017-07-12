@@ -49,7 +49,7 @@ mca_coll_basic_neighbor_alltoallw_cart(const void *sbuf, const int scounts[], co
 
     if (0 == cart->ndims) return OMPI_SUCCESS;
 
-    reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
+    reqs = preqs = ompi_coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* post receives first */
@@ -134,7 +134,7 @@ mca_coll_basic_neighbor_alltoallw_graph(const void *sbuf, const int scounts[], c
     mca_topo_base_graph_neighbors_count (comm, rank, &degree);
     if (0 == degree) return OMPI_SUCCESS;
 
-    reqs = preqs = coll_base_comm_get_reqs( module->base_data, 2 * degree );
+    reqs = preqs = ompi_coll_base_comm_get_reqs( module->base_data, 2 * degree );
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     edges = graph->edges;
@@ -195,7 +195,7 @@ mca_coll_basic_neighbor_alltoallw_dist_graph(const void *sbuf, const int scounts
 
     if (0 == indegree+outdegree) return OMPI_SUCCESS;
 
-    reqs = preqs = coll_base_comm_get_reqs( module->base_data, indegree + outdegree );
+    reqs = preqs = ompi_coll_base_comm_get_reqs( module->base_data, indegree + outdegree );
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* post all receives first */

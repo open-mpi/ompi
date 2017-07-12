@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,18 +14,18 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-opal_mutex_t mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
+opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
-volatile uint32_t mpit_init_count = 0;
+volatile uint32_t ompi_mpit_init_count = 0;
 
-void mpit_lock (void)
+void ompi_mpit_lock (void)
 {
-    opal_mutex_lock (&mpit_big_lock);
+    opal_mutex_lock (&ompi_mpit_big_lock);
 }
 
-void mpit_unlock (void)
+void ompi_mpit_unlock (void)
 {
-    opal_mutex_unlock (&mpit_big_lock);
+    opal_mutex_unlock (&ompi_mpit_big_lock);
 }
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)

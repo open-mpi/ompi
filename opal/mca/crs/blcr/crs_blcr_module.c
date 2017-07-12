@@ -10,6 +10,7 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -640,7 +641,7 @@ static int opal_crs_blcr_thread_callback(void *arg) {
     else
 #endif
     {
-        if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_CRS_PRE_CKPT,
+        if(OPAL_SUCCESS != (ret = ompi_trigger_user_inc_callback(OPAL_CR_INC_CRS_PRE_CKPT,
                                                             OPAL_CR_INC_STATE_PREPARE)) ) {
             ;
         }
@@ -665,7 +666,7 @@ static int opal_crs_blcr_thread_callback(void *arg) {
         blcr_current_state = OPAL_CRS_CONTINUE;
     }
 
-    if( OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_CRS_POST_CKPT,
+    if( OPAL_SUCCESS != (ret = ompi_trigger_user_inc_callback(OPAL_CR_INC_CRS_POST_CKPT,
                                                          (blcr_current_state == OPAL_CRS_CONTINUE ?
                                                           OPAL_CR_INC_STATE_CONTINUE :
                                                           OPAL_CR_INC_STATE_RESTART))) ) {

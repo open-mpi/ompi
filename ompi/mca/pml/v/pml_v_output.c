@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +20,7 @@
 #endif
 #include <string.h>
 
-int pml_v_output_open(char *output, int verbosity) {
+int ompi_pml_v_output_open(char *output, int verbosity) {
     opal_output_stream_t lds;
     char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
 
@@ -49,7 +50,7 @@ int pml_v_output_open(char *output, int verbosity) {
     return mca_pml_v.output;
 }
 
-void pml_v_output_close(void) {
+void ompi_pml_v_output_close(void) {
     opal_output_close(mca_pml_v.output);
     mca_pml_v.output = -1;
 }

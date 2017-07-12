@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -179,7 +180,7 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
     /* Initiate all send/recv to/from others. */
 
     nreqs = 0;
-    reqs = preq = coll_base_comm_get_reqs(module->base_data, 2 * size);
+    reqs = preq = ompi_coll_base_comm_get_reqs(module->base_data, 2 * size);
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* Post all receives first -- a simple optimization */
@@ -269,7 +270,7 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
 
     /* Initiate all send/recv to/from others. */
     nreqs = 0;
-    reqs = preq = coll_base_comm_get_reqs(module->base_data, 2 * size);
+    reqs = preq = ompi_coll_base_comm_get_reqs(module->base_data, 2 * size);
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     /* Post all receives first -- a simple optimization */

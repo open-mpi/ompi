@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,11 +35,11 @@ int MPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
         return MPI_T_ERR_INVALID_HANDLE;
     }
 
-    mpit_lock ();
+    ompi_mpit_lock ();
 
     ret = mca_base_pvar_handle_read_value (handle, buf);
 
-    mpit_unlock ();
+    ompi_mpit_unlock ();
 
     return ompit_opal_to_mpit_error (ret);
 }
