@@ -58,11 +58,13 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     mca_io_ompio_file_t * shfileHandle, *ompio_fh;
     char * filename_basename;
     char * sm_filename;
+    int sm_filename_length;
     struct mca_sharedfp_sm_offset * sm_offset_ptr;
     struct mca_sharedfp_sm_offset sm_offset;
     mca_io_ompio_data_t *data;
     int sm_fd;
     int rank;
+    uint32_t comm_cid;
 
     /*----------------------------------------------------*/
     /*Open the same file again without shared file pointer*/
@@ -131,25 +133,20 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     ** and then mapping it to memory
     ** For sharedfp we also want to put the file backed shared memory into the tmp directory
     */
-    /*sprintf(sm_filename,"%s%s",filename,".sm");*/
-    filename_basename = basename((void *)filename);
-    sm_filename = (char*) malloc( sizeof(char) * (strlen(filename_basename)+strlen(ompi_process_info.job_session_dir)+64) );
+    filename_basename = basename(filename);
+    /* format is "%s/%s_cid-%d.sm", see below */
+    sm_filename_length = strlen(ompi_process_info.job_session_dir) + 1 + strlen(filename_basename) + 5 + (3*sizeof(uint32_t)+1) + 4;
+    sm_filename = (char*) malloc( sizeof(char) * sm_filename_length);
     if (NULL == sm_filename) {
+        opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc sm_filename\n");
         free(sm_data);
         free(sh);
         free(shfileHandle);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    opal_jobid_t masterjobid;
-    if ( 0 == comm->c_my_rank ) {
-        ompi_proc_t *masterproc = ompi_group_peer_lookup(comm->c_local_group, 0 );
-        masterjobid = OMPI_CAST_RTE_NAME(&masterproc->super.proc_name)->jobid;
-    }
-    comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
-                               comm->c_coll->coll_bcast_module );
-
-    sprintf(sm_filename,"%s/OMPIO_%s_%d_%s",ompi_process_info.job_session_dir, filename_basename, masterjobid, ".sm");
+    comm_cid = ompi_comm_get_cid(comm);
+    sprintf(sm_filename, "%s/%s_cid-%d.sm", ompi_process_info.job_session_dir, filename_basename, comm_cid);
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
