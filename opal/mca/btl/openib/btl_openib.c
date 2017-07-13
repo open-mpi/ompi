@@ -226,7 +226,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
         rc = ibv_resize_cq(device->ib_cq[cq], cq_size);
         /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS
          * but should return ENOSYS. So it is reason for abs */
-        if(rc && ENOSYS != abs(rc)) {
+        if(rc && ENOSYS != abs(rc) && EOPNOTSUPP != abs(rc)) {
             BTL_ERROR(("cannot resize completion queue, error: %d", rc));
             return OPAL_ERROR;
         }
