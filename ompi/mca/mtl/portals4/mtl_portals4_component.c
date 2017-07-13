@@ -202,6 +202,16 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.max_msg_size_mtl);
 
+    ompi_mtl_portals4.get_retransmit_timeout=10000;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "get_retransmit_timeout",
+                                           "PtlGET retransmission timeout in usec",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.get_retransmit_timeout);
+
     OBJ_RELEASE(new_enum);
     if (0 > ret) {
         return OMPI_ERR_NOT_SUPPORTED;
