@@ -714,12 +714,14 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             local_pattern = (double *)calloc(num_procs_in_node, sizeof(double));
         }
         /* Extract the local communication pattern */
-        for(i = 0; i < topo->indegree; i++)
-            if (grank_to_lrank[topo->in[i]] != -1)
-                local_pattern[grank_to_lrank[topo->in[i]]] += topo->inw[i];
-        for(i = 0; i < topo->outdegree; i++)
-            if (grank_to_lrank[topo->out[i]] != -1)
-                local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
+        if( true == topo->weighted ) {
+            for(i = 0; i < topo->indegree; i++)
+                if (grank_to_lrank[topo->in[i]] != -1)
+                    local_pattern[grank_to_lrank[topo->in[i]]] += topo->inw[i];
+            for(i = 0; i < topo->outdegree; i++)
+                if (grank_to_lrank[topo->out[i]] != -1)
+                    local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
+        }
         if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_gather((rank == lindex_to_grank[0] ? MPI_IN_PLACE : local_pattern),
                                                                   num_procs_in_node, MPI_DOUBLE,
                                                                   local_pattern, num_procs_in_node, MPI_DOUBLE,
