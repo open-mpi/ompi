@@ -267,9 +267,6 @@ Compiler Notes
   version of the Intel 12.1 Linux compiler suite, the problem will go
   away.
 
-- It has been reported that Pathscale 5.0.5 and 6.0.527 compilers
-  give an internal compiler error when trying to Open MPI.
-
 - Early versions of the Portland Group 6.0 compiler have problems
   creating the C++ MPI bindings as a shared library (e.g., v6.0-1).
   Tests with later versions show that this has been fixed (e.g.,
@@ -290,6 +287,9 @@ Compiler Notes
   also automatically add "-Msignextend" when the C and C++ MPI wrapper
   compilers are used to compile user MPI applications.
 
+- It has been reported that Pathscale 5.0.5 and 6.0.527 compilers
+  give an internal compiler error when trying to Open MPI.
+
 - Using the MPI C++ bindings with older versions of the Pathscale
   compiler on some platforms is an old issue that seems to be a
   problem when Pathscale uses a back-end GCC 3.x compiler. Here's a
@@ -307,6 +307,12 @@ Compiler Notes
 
   Note the MPI C++ bindings have been deprecated by the MPI Forum and
   may not be supported in future releases.
+
+- As of July 2017, the Pathscale compiler suite apparently has no
+  further commercial support, and it does not look like there will be
+  further releases.  Any issues discovered regarding building /
+  running Open MPI with the Pathscale compiler suite therefore may not
+  be able to be resolved.
 
 - Using the Absoft compiler to build the MPI Fortran bindings on Suse
   9.3 is known to fail due to a Libtool compatibility issue.
