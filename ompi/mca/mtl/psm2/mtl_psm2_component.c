@@ -115,7 +115,7 @@ static void ompi_mtl_psm2_set_shadow_env (struct ompi_mtl_psm2_shadow_variable *
 {
     mca_base_var_storage_t *storage = variable->storage;
     char *env_value;
-    int ret;
+    int ret = 0;
 
     switch (variable->variable_type) {
     case MCA_BASE_VAR_TYPE_BOOL:
@@ -230,10 +230,11 @@ ompi_mtl_psm2_component_register(void)
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &param_priority);
 
-
     for (int i = 0 ; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0 ; ++i) {
         ompi_mtl_psm2_register_shadow_env (ompi_mtl_psm2_shadow_variables + i);
     }
+
+    ompi_mtl_psm2_register_pvars();
 
     return OMPI_SUCCESS;
 }

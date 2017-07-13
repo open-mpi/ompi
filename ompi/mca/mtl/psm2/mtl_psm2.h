@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -103,6 +103,7 @@ extern int ompi_mtl_psm2_finalize(struct mca_mtl_base_module_t* mtl);
 
 int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs);
 
+extern int ompi_mtl_psm2_register_pvars(void);
 
 
 END_C_DECLS
