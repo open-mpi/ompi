@@ -470,17 +470,12 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
         pptr = NULL;
     }
 
-    if (NULL != info) {
-        ninfo = opal_list_get_size(info);
-        if (0 < ninfo) {
-            PMIX_INFO_CREATE(pinfo, ninfo);
-            n=0;
-            OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-                (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&pinfo[n].value, ival);
-            }
-        } else {
-            pinfo = NULL;
+    if (NULL != info && 0 < (ninfo = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(pinfo, ninfo);
+        n=0;
+        OPAL_LIST_FOREACH(ival, info, opal_value_t) {
+            (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
+            pmix1_value_load(&pinfo[n].value, ival);
         }
     } else {
         pinfo = NULL;
@@ -563,15 +558,12 @@ int pmix1_getnb(const opal_process_name_t *proc, const char *key,
         op->p.rank = PMIX_RANK_WILDCARD;
     }
 
-    if (NULL != info) {
-        op->sz = opal_list_get_size(info);
-        if (0 < op->sz) {
-            PMIX_INFO_CREATE(op->info, op->sz);
-            n=0;
-            OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-                (void)strncpy(op->info[n].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&op->info[n].value, ival);
-            }
+    if (NULL != info && 0 < (op->sz = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(op->info, op->sz);
+        n=0;
+        OPAL_LIST_FOREACH(ival, info, opal_value_t) {
+            (void)strncpy(op->info[n].key, ival->key, PMIX_MAX_KEYLEN);
+            pmix1_value_load(&op->info[n].value, ival);
         }
     }
 
@@ -683,8 +675,7 @@ int pmix1_lookup(opal_list_t *data, opal_list_t *info)
         (void)strncpy(pdata[n++].key, d->value.key, PMIX_MAX_KEYLEN);
     }
 
-    if (NULL != info) {
-        ninfo = opal_list_get_size(info);
+    if (NULL != info && (0 < (ninfo = opal_list_get_size(info)))) {
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
@@ -832,16 +823,13 @@ int pmix1_lookupnb(char **keys, opal_list_t *info,
     op->lkcbfunc = cbfunc;
     op->cbdata = cbdata;
 
-    if (NULL != info) {
-        op->sz = opal_list_get_size(info);
-        if (0 < op->sz) {
-            PMIX_INFO_CREATE(op->info, op->sz);
-            n=0;
-            OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-                (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&op->info[n].value, iptr);
-                ++n;
-            }
+    if (NULL != info && 0 < (op->sz = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(op->info, op->sz);
+        n=0;
+        OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            pmix1_value_load(&op->info[n].value, iptr);
+            ++n;
         }
     }
 
@@ -857,8 +845,7 @@ int pmix1_unpublish(char **keys, opal_list_t *info)
     pmix_info_t *pinfo;
     opal_value_t *iptr;
 
-    if (NULL != info) {
-        ninfo = opal_list_get_size(info);
+    if (NULL != info && 0 < (ninfo = opal_list_get_size(info))) {
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
@@ -890,16 +877,13 @@ int pmix1_unpublishnb(char **keys, opal_list_t *info,
     op->opcbfunc = cbfunc;
     op->cbdata = cbdata;
 
-    if (NULL != info) {
-        op->sz = opal_list_get_size(info);
-        if (0 < op->sz) {
-            PMIX_INFO_CREATE(op->info, op->sz);
-            n=0;
-            OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-                (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&op->info[n].value, iptr);
-                ++n;
-            }
+    if (NULL != info && 0 < (op->sz = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(op->info, op->sz);
+        n=0;
+        OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            pmix1_value_load(&op->info[n].value, iptr);
+            ++n;
         }
     }
 

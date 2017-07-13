@@ -139,8 +139,7 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
     }
 
     /* convert the list to an array of pmix_info_t */
-    if (NULL != info) {
-        sz = opal_list_get_size(info);
+    if (NULL != info && 0 < (sz = opal_list_get_size(info))) {
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
@@ -248,8 +247,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     opal_list_append(&mca_pmix_ext1x_component.jobids, &job->super);
 
     /* convert the list to an array of pmix_info_t */
-    if (NULL != info) {
-        sz = opal_list_get_size(info);
+    if (NULL != info && 0 < (sz = opal_list_get_size(info))) {
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
@@ -260,14 +258,16 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
                  * that list to another array */
                 pmapinfo = (opal_list_t*)kv->data.ptr;
                 szmap = opal_list_get_size(pmapinfo);
-                PMIX_INFO_CREATE(pmap, szmap);
-                pinfo[n].value.data.array.array = (struct pmix_info_t*)pmap;
-                pinfo[n].value.data.array.size = szmap;
-                m = 0;
-                OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {
-                    (void)strncpy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);
-                    pmix1_value_load(&pmap[m].value, k2);
-                    ++m;
+                if (0 < szmap) {
+                    PMIX_INFO_CREATE(pmap, szmap);
+                    pinfo[n].value.data.array.array = (struct pmix_info_t*)pmap;
+                    pinfo[n].value.data.array.size = szmap;
+                    m = 0;
+                    OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {
+                        (void)strncpy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);
+                        pmix1_value_load(&pmap[m].value, k2);
+                        ++m;
+                    }
                 }
                 OPAL_LIST_RELEASE(pmapinfo);
             } else {
@@ -429,8 +429,7 @@ int pmix1_server_notify_error(int status,
     op->cbdata = cbdata;
 
     /* convert the list to an array of pmix_info_t */
-    if (NULL != info) {
-        sz = opal_list_get_size(info);
+    if (NULL != info && 0 < (sz = opal_list_get_size(info))) {
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {

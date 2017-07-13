@@ -921,15 +921,12 @@ static void info_cbfunc(int status,
     pcaddy->status = ext2x_convert_opalrc(status);
 
     /* convert the list to a pmix_info_t array */
-    if (NULL != info) {
-        pcaddy->ninfo = opal_list_get_size(info);
-        if (0 < pcaddy->ninfo) {
-            PMIX_INFO_CREATE(pcaddy->info, pcaddy->ninfo);
-            n = 0;
-            OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-                (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-                ext2x_value_load(&pcaddy->info[n].value, kv);
-            }
+    if (NULL != info && 0 < (pcaddy->ninfo = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(pcaddy->info, pcaddy->ninfo);
+        n = 0;
+        OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+            (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+            ext2x_value_load(&pcaddy->info[n].value, kv);
         }
     }
     /* we are done with the incoming data */
