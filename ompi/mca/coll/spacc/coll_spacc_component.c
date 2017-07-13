@@ -24,6 +24,7 @@ const char *ompi_coll_spacc_component_version_string =
 int mca_coll_spacc_priority = 5;
 int mca_coll_spacc_stream = -1;
 int mca_coll_spacc_verbose = 0;
+int mca_coll_spacc_alltoallv_block_size = 4;
 
 /*
  * Local function
@@ -82,6 +83,12 @@ static int spacc_register(void)
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_coll_spacc_verbose);
+    (void)mca_base_component_var_register(&mca_coll_spacc_component.super.collm_version,
+                                          "alltoallv_block_size", "Alltoallv block size",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_coll_spacc_alltoallv_block_size);
     return OMPI_SUCCESS;
 }
 
