@@ -75,7 +75,6 @@ struct ompi_coll_libnbc_component_t {
     opal_free_list_t requests;
     opal_list_t active_requests;
     int32_t active_comms;
-    opal_atomic_lock_t progress_lock; /* protect from recursive calls */
     opal_mutex_t lock;                /* protect access to the active_requests list */
 };
 typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;
