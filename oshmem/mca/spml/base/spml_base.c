@@ -14,11 +14,8 @@
 #include "opal/datatype/opal_convertor.h"
 #include "orte/include/orte/types.h"
 #include "orte/runtime/orte_globals.h"
-#include "oshmem/mca/spml/yoda/spml_yoda.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/spml/base/base.h"
-#include "oshmem/mca/spml/yoda/spml_yoda_putreq.h"
-#include "oshmem/mca/spml/yoda/spml_yoda_getreq.h"
 #include "opal/mca/btl/btl.h"
 
 #define SPML_BASE_DO_CMP(_res, _addr, _op, _val) \

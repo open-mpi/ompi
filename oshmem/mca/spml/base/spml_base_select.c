@@ -147,12 +147,7 @@ int mca_spml_base_select(bool enable_progress_threads, bool enable_mpi_threads)
             if (NULL == tmp_val) {
                 continue;
             }
-            if (0 == strncmp(tmp_val, "yoda", 4) && !mca_bml_base_inited()) {
-                orte_errmgr.abort(1, "SPML %s cannot be selected becasue no btls are available. Please make sure that ob1 pml is selected by ompi (-mca pml ob1)", tmp_val);
-            }
-            else {
-                orte_errmgr.abort(1, "SPML %s cannot be selected", tmp_val);
-            }
+            orte_errmgr.abort(1, "SPML %s cannot be selected", tmp_val);
         }
         if (0 == i) {
             orte_errmgr.abort(2,
