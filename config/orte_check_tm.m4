@@ -129,13 +129,20 @@ AC_DEFUN([ORTE_CHECK_TM],[
                        [$orte_check_tm_libdir],
                        [orte_check_tm_found="yes"],
                        [_OPAL_CHECK_PACKAGE_LIB([$1],
-                             [torque],
+                             [pbs],
                              [tm_init],
-                             [],
+                             [-lcrypto],
                              [$orte_check_tm_dir],
                              [$orte_check_tm_libdir],
                              [orte_check_tm_found="yes"],
-                             [orte_check_tm_found="no"])])])])
+                             [_OPAL_CHECK_PACKAGE_LIB([$1],
+                                   [torque],
+                                   [tm_init],
+                                   [],
+                                   [$orte_check_tm_dir],
+                                   [$orte_check_tm_libdir],
+                                   [orte_check_tm_found="yes"],
+                                   [orte_check_tm_found="no"])])])])])
 
     CPPFLAGS="$orte_check_package_$1_save_CPPFLAGS"
     LDFLAGS="$orte_check_package_$1_save_LDFLAGS"
