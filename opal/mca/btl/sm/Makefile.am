@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -20,14 +20,7 @@
 
 dist_opaldata_DATA = help-mpi-btl-sm.txt
 
-libmca_btl_sm_la_sources = \
-    btl_sm.c \
-    btl_sm.h \
-    btl_sm_component.c \
-    btl_sm_endpoint.h \
-    btl_sm_fifo.h \
-    btl_sm_frag.c \
-    btl_sm_frag.h
+libmca_btl_sm_la_sources = btl_sm_component.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -41,19 +34,10 @@ component_noinst = libmca_btl_sm.la
 component_install =
 endif
 
-# See opal/mca/common/sm/Makefile.am for an explanation of
-# libmca_common_sm.la.
-
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
 mca_btl_sm_la_LDFLAGS = -module -avoid-version
-mca_btl_sm_la_LIBADD = \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/lib@OPAL_LIB_PREFIX@mca_common_sm.la
-if OPAL_cuda_support
-mca_btl_sm_la_LIBADD += \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_PREFIX@mca_common_cuda.la
-endif
 mca_btl_sm_la_CPPFLAGS = $(btl_sm_CPPFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
