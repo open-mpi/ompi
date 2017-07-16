@@ -17,7 +17,7 @@
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -71,6 +71,7 @@ static int mca_btl_sm_component_register(void)
                 if (strcmp(names[i], "sm") == 0) {
                     opal_show_help("help-mpi-btl-sm.txt", "btl sm is dead",
                                    true);
+                    opal_argv_free(names);
                     return OPAL_ERROR;
                 }
             }
