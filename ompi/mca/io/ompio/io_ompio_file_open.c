@@ -245,12 +245,12 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
                 
                 shared_fp_base_module = ompio_fh->f_sharedfp;
                 ret = shared_fp_base_module->sharedfp_seek(ompio_fh,current_size, MPI_SEEK_SET);
-            }
-            else {
-                opal_output(1, "mca_common_ompio_file_open: Could not adjust position of "
-                            "shared file pointer with MPI_MODE_APPEND\n");
-                ret = MPI_ERR_OTHER;
-                goto fn_fail;
+                if ( MPI_SUCCESS != ret ) {
+                    opal_output(1, "mca_common_ompio_file_open: Could not adjust position of "
+                                "shared file pointer with MPI_MODE_APPEND\n");
+                    ret = MPI_ERR_OTHER;
+                    goto fn_fail;
+                }
             }
         }
     }
