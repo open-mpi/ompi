@@ -11,6 +11,9 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved
+# Copyright (c) 2017      Los Alamos National Security, LLC.
+#                         All rights reserved.
+#   
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,6 +38,7 @@ mtl_psm2_sources = \
 	       mtl_psm2_recv.c \
 	       mtl_psm2_request.h \
 	       mtl_psm2_send.c \
+	       mtl_psm2_stats.c \
 	       mtl_psm2_types.h
 
 # Make the output library in this directory, and name it either
