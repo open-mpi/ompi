@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -343,9 +343,8 @@ int mca_base_component_pvar_register (const mca_base_component_t *component, con
                                       int bind, mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
                                       mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify, void *ctx)
 {
-    /* XXX -- component_update -- We will stash the project name in the component */
     /* invalidate this variable if the component's group is deregistered */
-    return mca_base_pvar_register(NULL, component->mca_type_name, component->mca_component_name,
+    return mca_base_pvar_register(component->mca_project_name, component->mca_type_name, component->mca_component_name,
                                   name, description, verbosity, var_class, type, enumerator, bind,
                                   flags | MCA_BASE_PVAR_FLAG_IWG, get_value, set_value, notify, ctx);
 }
