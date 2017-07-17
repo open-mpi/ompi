@@ -626,19 +626,21 @@ Network Support
       or
       shell$ mpirun --mca pml cm ...
 
-- Similarly, there are two OpenSHMEM network models available: "yoda",
-  and "ikrit". "yoda" also uses the BTL components for supported
-  networks. "ikrit" interfaces directly with Mellanox MXM.
+- Similarly, there are two OpenSHMEM network models available: "ucx",
+  and "ikrit":
+  - "ucx" interfaces directly with UCX;
+  - "ikrit" interfaces directly with Mellanox MXM.
 
-  - "yoda" supports a variety of networks that can be used:
-
-    - OpenFabrics: InfiniBand, iWARP, and RoCE
-    - Loopback (send-to-self)
-    - Shared memory
-    - TCP
-    - usNIC
-
-  - "ikrit" only supports Mellanox MXM.
+- UCX is the Unified Communication X (UCX) communication library 
+  (http://www.openucx.org/).
+  This is an open-source project developed in collaboration between
+  industry, laboratories, and academia to create an open-source
+  production grade communication framework for data centric and 
+  high-performance applications.
+  UCX currently supports:
+  - OFA Verbs;
+  - Cray's uGNI;
+  - NVIDIA CUDA drivers.
 
 - MXM is the Mellanox Messaging Accelerator library utilizing a full
   range of IB transports to provide the following messaging services
