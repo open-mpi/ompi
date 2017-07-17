@@ -1286,15 +1286,11 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
                                        fh->f_comm);   
 
 exit:
-    if (NULL != aggr_bytes_per_group_tmp) {
-        free(aggr_bytes_per_group_tmp);
-    }
-    if (NULL != start_offsets_lens_tmp) {
-        free(start_offsets_lens_tmp);
-    }
-    if (NULL != end_offsets_tmp) {
-        free(end_offsets_tmp);
-    }
+    /* Do not free aggr_bytes_per_group_tmp, 
+    ** start_offsets_lens_tmp, and end_offsets_tmp
+    ** here. The memory is released in the layer above.
+    */
+
 
     return ret;
 }
