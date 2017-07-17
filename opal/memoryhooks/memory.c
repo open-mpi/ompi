@@ -60,7 +60,7 @@ opal_mem_hooks_init(void)
 {
     OBJ_CONSTRUCT(&release_cb_list, opal_list_t);
 
-    opal_atomic_init(&release_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_lock_init(&release_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
 
     /* delay running callbacks until there is something in the
        registration */

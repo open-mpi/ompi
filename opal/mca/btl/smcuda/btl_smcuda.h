@@ -269,8 +269,8 @@ static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
     fifo->queue = (volatile void **) VIRTUAL2RELATIVE(fifo->queue_recv);
 
     /* initialize the locks */
-    opal_atomic_init(&(fifo->head_lock), OPAL_ATOMIC_UNLOCKED);
-    opal_atomic_init(&(fifo->tail_lock), OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_lock_init(&(fifo->head_lock), OPAL_ATOMIC_LOCK_UNLOCKED);
+    opal_atomic_lock_init(&(fifo->tail_lock), OPAL_ATOMIC_LOCK_UNLOCKED);
     opal_atomic_unlock(&(fifo->head_lock));  /* should be unnecessary */
     opal_atomic_unlock(&(fifo->tail_lock));  /* should be unnecessary */
 

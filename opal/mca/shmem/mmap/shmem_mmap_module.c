@@ -427,7 +427,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         opal_atomic_rmb();
 
         /* init segment lock */
-        opal_atomic_init(&seg_hdrp->lock, OPAL_ATOMIC_UNLOCKED);
+        opal_atomic_lock_init(&seg_hdrp->lock, OPAL_ATOMIC_LOCK_UNLOCKED);
         /* i was the creator of this segment, so note that fact */
         seg_hdrp->cpid = my_pid;
 

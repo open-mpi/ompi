@@ -102,7 +102,7 @@ int
 opal_progress_init(void)
 {
     /* reentrant issues */
-    opal_atomic_init(&progress_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_lock_init(&progress_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
 
     /* set the event tick rate */
     opal_progress_set_event_poll_rate(10000);
