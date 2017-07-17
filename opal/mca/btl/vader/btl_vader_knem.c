@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -109,7 +109,6 @@ int mca_btl_vader_knem_init (void)
     struct knem_cmd_info knem_info;
     int rc;
 
-    signal (SIGSEGV, SIG_DFL);
     /* Open the knem device.  Try to print a helpful message if we
        fail to open it. */
     mca_btl_vader.knem_fd = open("/dev/knem", O_RDWR);
