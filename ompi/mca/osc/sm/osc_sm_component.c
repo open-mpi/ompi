@@ -322,7 +322,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     *base = module->bases[ompi_comm_rank(module->comm)];
 
-    opal_atomic_init(&module->my_node_state->accumulate_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_lock_init(&module->my_node_state->accumulate_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
 
     /* share everyone's displacement units. */
     module->disp_units = malloc(sizeof(int) * comm_size);

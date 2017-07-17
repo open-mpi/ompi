@@ -129,8 +129,8 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * Enumeration of lock states
  */
 enum {
-    OPAL_ATOMIC_UNLOCKED = 0,
-    OPAL_ATOMIC_LOCKED = 1
+    OPAL_ATOMIC_LOCK_UNLOCKED = 0,
+    OPAL_ATOMIC_LOCK_LOCKED = 1
 };
 
 /**********************************************************************
@@ -277,7 +277,7 @@ void opal_atomic_wmb(void);
 #if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
 static inline
 #endif
-void opal_atomic_init(opal_atomic_lock_t* lock, int32_t value);
+void opal_atomic_lock_init(opal_atomic_lock_t* lock, int32_t value);
 
 
 /**

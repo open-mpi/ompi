@@ -401,7 +401,7 @@ static inline int32_t opal_atomic_sub_ptr( volatile void* addr,
  * Lock initialization function. It set the lock to UNLOCKED.
  */
 static inline void
-opal_atomic_init( opal_atomic_lock_t* lock, int32_t value )
+opal_atomic_lock_init( opal_atomic_lock_t* lock, int32_t value )
 {
    lock->u.lock = value;
 }
@@ -411,7 +411,7 @@ static inline int
 opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
     int ret = opal_atomic_cmpset_acq_32( &(lock->u.lock),
-                                         OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED);
+                                         OPAL_ATOMIC_LOCK_UNLOCKED, OPAL_ATOMIC_LOCK_LOCKED);
     return (ret == 0) ? 1 : 0;
 }
 
@@ -420,8 +420,8 @@ static inline void
 opal_atomic_lock(opal_atomic_lock_t *lock)
 {
    while( !opal_atomic_cmpset_acq_32( &(lock->u.lock),
-                                      OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED) ) {
-      while (lock->u.lock == OPAL_ATOMIC_LOCKED) {
+                                      OPAL_ATOMIC_LOCK_UNLOCKED, OPAL_ATOMIC_LOCK_LOCKED) ) {
+      while (lock->u.lock == OPAL_ATOMIC_LOCK_LOCKED) {
          /* spin */ ;
       }
    }
@@ -432,7 +432,7 @@ static inline void
 opal_atomic_unlock(opal_atomic_lock_t *lock)
 {
    opal_atomic_wmb();
-   lock->u.lock=OPAL_ATOMIC_UNLOCKED;
+   lock->u.lock=OPAL_ATOMIC_LOCK_UNLOCKED;
 }
 
 #endif /* OPAL_HAVE_ATOMIC_SPINLOCKS */

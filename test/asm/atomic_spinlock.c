@@ -123,7 +123,7 @@ main(int argc, char *argv[])
     }
     num_threads = atoi(argv[1]);
 
-    opal_atomic_init(&lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_lock_init(&lock, OPAL_ATOMIC_LOCK_UNLOCKED);
     ret = atomic_spinlock_test_th(&lock, TEST_REPS, 0, num_threads);
 
     return ret;

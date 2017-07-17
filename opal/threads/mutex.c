@@ -58,7 +58,7 @@ static void opal_mutex_construct(opal_mutex_t *m)
 #endif /* OPAL_ENABLE_DEBUG */
 
 #if OPAL_HAVE_ATOMIC_SPINLOCKS
-    opal_atomic_init( &m->m_lock_atomic, OPAL_ATOMIC_UNLOCKED );
+    opal_atomic_lock_init( &m->m_lock_atomic, OPAL_ATOMIC_LOCK_UNLOCKED );
 #endif
 }
 
@@ -89,7 +89,7 @@ static void opal_recursive_mutex_construct(opal_recursive_mutex_t *m)
     pthread_mutexattr_destroy(&attr);
 
 #if OPAL_HAVE_ATOMIC_SPINLOCKS
-    opal_atomic_init( &m->m_lock_atomic, OPAL_ATOMIC_UNLOCKED );
+    opal_atomic_lock_init( &m->m_lock_atomic, OPAL_ATOMIC_LOCK_UNLOCKED );
 #endif
 }
 

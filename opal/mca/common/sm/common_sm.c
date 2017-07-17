@@ -122,7 +122,7 @@ attach_and_init(opal_shmem_ds_t *shmem_bufp,
         /* initialize some segment information */
         size_t mem_offset = map->module_data_addr -
                             (unsigned char *)map->module_seg;
-        opal_atomic_init(&map->module_seg->seg_lock, OPAL_ATOMIC_UNLOCKED);
+        opal_atomic_lock_init(&map->module_seg->seg_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
         map->module_seg->seg_inited = 0;
         map->module_seg->seg_num_procs_inited = 0;
         map->module_seg->seg_offset = mem_offset;

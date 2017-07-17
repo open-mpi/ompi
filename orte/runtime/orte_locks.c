@@ -35,12 +35,12 @@ opal_atomic_lock_t orte_quit_lock = {{0}};
 int orte_locks_init(void)
 {
     /* for everyone */
-    opal_atomic_init(&orte_finalize_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_lock_init(&orte_finalize_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
 
     /* for HNPs */
-    opal_atomic_init(&orte_abort_inprogress_lock, OPAL_ATOMIC_UNLOCKED);
-    opal_atomic_init(&orte_jobs_complete_lock, OPAL_ATOMIC_UNLOCKED);
-    opal_atomic_init(&orte_quit_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_lock_init(&orte_abort_inprogress_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
+    opal_atomic_lock_init(&orte_jobs_complete_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
+    opal_atomic_lock_init(&orte_quit_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
 
     return ORTE_SUCCESS;
 }
