@@ -13,6 +13,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -32,12 +34,12 @@
  * the message came from an external (to
  * this component) source
  */
-typedef enum {
-    MCA_OOB_TCP_IDENT,
-    MCA_OOB_TCP_PROBE,
-    MCA_OOB_TCP_PING,
-    MCA_OOB_TCP_USER
-} mca_oob_tcp_msg_type_t;
+typedef uint8_t mca_oob_tcp_msg_type_t;
+
+#define MCA_OOB_TCP_IDENT 1
+#define MCA_OOB_TCP_PROBE 2
+#define MCA_OOB_TCP_PING  3
+#define MCA_OOB_TCP_USER  4
 
 #define ORTE_MAX_RTD_SIZE  31
 
@@ -54,14 +56,14 @@ typedef struct {
      * and let some other module try to send it
      */
     orte_process_name_t     dst;
-    /* type of message */
-    mca_oob_tcp_msg_type_t type;
     /* the rml tag where this message is headed */
     orte_rml_tag_t tag;
     /* the seq number of this message */
     uint32_t seq_num;
     /* number of bytes in message */
     uint32_t nbytes;
+    /* type of message */
+    mca_oob_tcp_msg_type_t type;
     /* routed module to be used */
     char routed[ORTE_MAX_RTD_SIZE+1];
 } mca_oob_tcp_hdr_t;
@@ -71,7 +73,6 @@ typedef struct {
 #define MCA_OOB_TCP_HDR_NTOH(h)                \
     ORTE_PROCESS_NAME_NTOH((h)->origin);        \
     ORTE_PROCESS_NAME_NTOH((h)->dst);           \
-    (h)->type = ntohl((h)->type);               \
     (h)->tag = ORTE_RML_TAG_NTOH((h)->tag);     \
     (h)->nbytes = ntohl((h)->nbytes);
 
@@ -81,7 +82,6 @@ typedef struct {
 #define MCA_OOB_TCP_HDR_HTON(h)                \
     ORTE_PROCESS_NAME_HTON((h)->origin);        \
     ORTE_PROCESS_NAME_HTON((h)->dst);           \
-    (h)->type = htonl((h)->type);               \
     (h)->tag = ORTE_RML_TAG_HTON((h)->tag);     \
     (h)->nbytes = htonl((h)->nbytes);
 
