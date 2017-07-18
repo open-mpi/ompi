@@ -55,6 +55,11 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
 
     ORTE_ACQUIRE_OBJECT(rev);
 
+    /* As we may use timer events, fd can be bogus (-1)
+     * use the right one here
+     */
+    fd = rev->fd;
+
     /* read up to the fragment size */
 #if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
@@ -83,7 +88,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
             /* either we have a connection error or it was a non-blocking read */
             if (EAGAIN == errno || EINTR == errno) {
                 /* non-blocking, retry */
-                opal_event_add(rev->ev, 0);
+                ORTE_IOF_READ_ACTIVATE(rev);
                 return;
             }
 
@@ -103,8 +108,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     }
     if (!proct->copy) {
         /* re-add the event */
-        ORTE_POST_OBJECT(rev);
-        opal_event_add(rev->ev, 0);
+        ORTE_IOF_READ_ACTIVATE(rev);
         return;
     }
 
@@ -141,8 +145,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                                     orte_rml_send_callback, NULL);
 
     /* re-add the event */
-    ORTE_POST_OBJECT(rev);
-    opal_event_add(rev->ev, 0);
+    ORTE_IOF_READ_ACTIVATE(rev);
 
     return;
 

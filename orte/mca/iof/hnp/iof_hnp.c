@@ -16,6 +16,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -214,16 +215,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                     }
                 }
             }
-            proct->revstdout->active = true;
-            ORTE_POST_OBJECT(proct->revstdout);
-            opal_event_add(proct->revstdout->ev, 0);
-            proct->revstderr->active = true;
-            ORTE_POST_OBJECT(proct->revstderr);
-            opal_event_add(proct->revstderr->ev, 0);
-            proct->revstddiag->active = true;
-            ORTE_POST_OBJECT(proct->revstddiag);
-            opal_event_add(proct->revstddiag->ev, 0);
-        }
+            ORTE_IOF_READ_ACTIVATE(proct->revstdout);
+            ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+            ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
+       }
         return ORTE_SUCCESS;
     }
 
@@ -302,9 +297,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * but may delay its activation
              */
             if (!(src_tag & ORTE_IOF_STDIN) || orte_iof_hnp_stdin_check(fd)) {
-                mca_iof_hnp_component.stdinev->active = true;
-                ORTE_POST_OBJECT(proct->revstdout);
-                opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
+                ORTE_IOF_READ_ACTIVATE(mca_iof_hnp_component.stdinev);
             }
         } else {
             /* if we are not looking at a tty, just setup a read event
@@ -518,7 +511,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     orte_iof_write_event_t *wev = sink->wev;
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
-    int num_written;
+    int num_written, total_written = 0;
 
     ORTE_ACQUIRE_OBJECT(sink);
 
@@ -545,12 +538,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                                  "%s iof:hnp closing fd %d on write event due to zero bytes output",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
-            OBJ_RELEASE(wev);
-            sink->wev = NULL;
-            /* just leave - we don't want to restart the
-             * read event!
-             */
-            return;
+            goto finish;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
@@ -564,10 +552,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                 /* leave the write event running so it will call us again
                  * when the fd is ready.
                  */
-                wev->pending = true;
-                ORTE_POST_OBJECT(wev);
-                opal_event_add(wev->ev, 0);
-                goto CHECK;
+                goto re_enter;
             }
             /* otherwise, something bad happened so all we can do is declare an
              * error and abort
@@ -576,9 +561,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                                  "%s iof:hnp closing fd %d on write event due to negative bytes written",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
-            OBJ_RELEASE(wev);
-            sink->wev = NULL;
-            return;
+            goto finish;
         } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s hnp:stdin:write:handler incomplete write %d - adjusting data",
@@ -590,15 +573,19 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* leave the write event running so it will call us again
              * when the fd is ready.
              */
-            wev->pending = true;
-            ORTE_POST_OBJECT(wev);
-            opal_event_add(wev->ev, 0);
-            goto CHECK;
+            goto re_enter;
         }
         OBJ_RELEASE(output);
-    }
 
-  CHECK:
+        total_written += num_written;
+        if ((ORTE_IOF_SINK_BLOCKSIZE <= total_written) && wev->always_writable) {
+            goto re_enter;
+        }
+    }
+    goto check;
+re_enter:
+    ORTE_IOF_SINK_ACTIVATE(wev);
+check:
     if (NULL != mca_iof_hnp_component.stdinev &&
         !orte_abnormal_term_ordered &&
         !mca_iof_hnp_component.stdinev->active) {
@@ -618,11 +605,14 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* restart the read */
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "restarting read event"));
-            mca_iof_hnp_component.stdinev->active = true;
-            ORTE_POST_OBJECT(mca_iof_hnp_component.stdinev);
-            opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
+            ORTE_IOF_READ_ACTIVATE(mca_iof_hnp_component.stdinev);
         }
     }
+    return;
+finish:
+    OBJ_RELEASE(wev);
+    sink->wev = NULL;
+    return;
 }
 
 static int hnp_output(const orte_process_name_t* peer,
