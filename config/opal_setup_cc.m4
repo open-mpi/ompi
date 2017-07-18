@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+dnl Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -22,6 +22,105 @@ dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
 dnl
+
+AC_DEFUN([OPAL_CC_HELPER],[
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper_tmp])
+    AC_MSG_CHECKING([$1])
+
+    opal_prog_cc_c11_helper_tmp=0
+
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$3],[$4])],[
+                          $2=yes
+                          opal_prog_cc_c11_helper_tmp=1], [$2=no])
+
+    AC_DEFINE_UNQUOTED([$5], [$opal_prog_cc_c11_helper_tmp], [$6])
+
+    AC_MSG_RESULT([$$2])
+    OPAL_VAR_SCOPE_POP
+])
+
+
+AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper_CFLAGS_save opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available])
+
+    opal_prog_cc_c11_helper_CFLAGS_save=$CFLAGS
+    CFLAGS="$CFLAGS $1"
+
+    OPAL_CC_HELPER([if $CC $1 supports C11 thread local storage], [opal_prog_cc_c11_helper__Thread_local_available],
+                   [],[[static _Thread_local int  foo = 1;++foo;]], [OPAL_C_HAVE__THREAD_LOCAL],
+                   [Whether C compiler supports __Thread_local])
+
+    OPAL_CC_HELPER([if $CC $1 supports C11 atomic variables], [opal_prog_cc_c11_helper_atomic_var_available],
+                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]], [OPAL_C_HAVE_ATOMIC_CONV_VAR],
+                   [Whether C compiler support atomic convenience variables in stdatomic.h])
+
+    OPAL_CC_HELPER([if $CC $1 supports C11 _Atomic keyword], [opal_prog_cc_c11_helper__Atomic_available],
+                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]], [OPAL_C_HAVE__ATOMIC],
+                   [Whether C compiler supports __Atomic keyword])
+
+    OPAL_CC_HELPER([if $CC $1 supports C11 _Generic keyword], [opal_prog_cc_c11_helper__Generic_available],
+                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]], [OPAL_C_HAVE__GENERIC],
+                   [Whether C compiler supports __Generic keyword])
+
+    OPAL_CC_HELPER([if $CC $1 supports C11 _Static_assert], [opal_prog_cc_c11_helper__static_assert_available],
+                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]], [OPAL_C_HAVE__STATIC_ASSERT],
+                   [Whether C compiler support _Static_assert keyword])
+
+    dnl At this time Open MPI only needs thread local and the atomic convenience types for C11 support. These
+    dnl will likely be required in the future.
+    AS_IF([test "x$opal_prog_cc_c11_helper__Thread_local_available" = "xyes" && test "x$opal_prog_cc_c11_helper_atomic_var_available" = "xyes"],
+          [$2], [$3])
+
+    CFLAGS=$opal_prog_cc_c11_helper_CFLAGS_save
+
+    OPAL_VAR_SCOPE_POP
+])
+
+AC_DEFUN([OPAL_PROG_CC_C11],[
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_flags])
+    if test -z "$opal_cv_c11_supported" ; then
+        opal_cv_c11_supported=no
+        opal_cv_c11_flag_required=yes
+
+        AC_MSG_CHECKING([if $CC requires a flag for C11])
+
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if __STDC_VERSION__ < 201112L
+#error "Without any CLI flags, this compiler does not support C11"
+#endif
+                                           ]],[])],
+                          [opal_cv_c11_flag_required=no])
+
+        AC_MSG_RESULT([$opal_cv_c11_flag_required])
+
+        if test "x$opal_cv_c11_flag_required" = "xno" ; then
+            AC_MSG_NOTICE([verifying $CC supports C11 without a flag])
+            OPAL_PROG_CC_C11_HELPER([], [], [opal_cv_c11_flag_required=yes])
+        fi
+
+        if test "x$opal_cv_c11_flag_required" = "xyes" ; then
+            opal_prog_cc_c11_flags="-std=gnu11 -std=c11 -c11"
+
+            AC_MSG_NOTICE([checking if $CC supports C11 with a flag])
+            opal_cv_c11_flag=
+            for flag in $(echo $opal_prog_cc_c11_flags | tr ' ' '\n') ; do
+                OPAL_PROG_CC_C11_HELPER([$flag],[opal_cv_c11_flag=$flag],[])
+                if test "x$opal_cv_c11_flag" != "x" ; then
+                    CFLAGS="$CFLAGS $opal_cv_c11_flag"
+                    AC_MSG_NOTICE([using $flag to enable C11 support])
+                    opal_cv_c11_supported=yes
+                    break
+                fi
+            done
+        else
+            AC_MSG_NOTICE([no flag required for C11 support])
+            opal_cv_c11_supported=yes
+        fi
+    fi
+
+    OPAL_VAR_SCOPE_POP
+])
+
 
 # OPAL_SETUP_CC()
 # ---------------
@@ -41,14 +140,25 @@ AC_DEFUN([OPAL_SETUP_CC],[
     WRAPPER_CC="$CC"
     AC_SUBST([WRAPPER_CC])
 
-    # From Open MPI 1.7 on we require a C99 compiant compiler
-    AC_PROG_CC_C99
-    # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
-    if test "x$ac_cv_prog_cc_c99" = xno ; then
-        AC_MSG_WARN([Open MPI requires a C99 compiler])
-        AC_MSG_ERROR([Aborting.])
-    fi
+    OPAL_PROG_CC_C11
 
+    if test $opal_cv_c11_supported = no ; then
+        # It is not currently an error if C11 support is not available. Uncomment the
+        # following lines and update the warning when we require a C11 compiler.
+        # AC_MSG_WARNING([Open MPI requires a C11 (or newer) compiler])
+        # AC_MSG_ERROR([Aborting.])
+        # From Open MPI 1.7 on we require a C99 compiant compiler
+        AC_PROG_CC_C99
+        # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
+        if test "x$ac_cv_prog_cc_c99" = xno ; then
+            AC_MSG_WARN([Open MPI requires a C99 (or newer) compiler. C11 is recommended.])
+            AC_MSG_ERROR([Aborting.])
+        fi
+
+        # Get the correct result for C11 support flags now that the compiler flags have
+        # changed
+        OPAL_PROG_CC_C11_HELPER([],[],[])
+    fi
 
     OPAL_C_COMPILER_VENDOR([opal_c_vendor])
 
