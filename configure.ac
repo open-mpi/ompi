@@ -439,6 +439,11 @@ AC_CHECK_SIZEOF(wchar_t)
 
 AC_CHECK_SIZEOF(pid_t)
 
+# Check sizes of atomic types so we can define fixed-width types in OPAL
+AC_CHECK_SIZEOF(atomic_short, [],[[#include <stdatomic.h>]])
+AC_CHECK_SIZEOF(atomic_int,[],[[#include <stdatomic.h>]])
+AC_CHECK_SIZEOF(atomic_long,[],[[#include <stdatomic.h>]])
+AC_CHECK_SIZEOF(atomic_llong,[],[[#include <stdatomic.h>]])
 
 #
 # Check for type alignments
