@@ -87,6 +87,7 @@ typedef struct {
  * Private functions
  */
 static void construct(opal_object_t *stream);
+static void destruct(opal_object_t *stream);
 static int do_open(int output_id, opal_output_stream_t * lds);
 static int open_file(int i);
 static void free_descriptor(int output_id);
@@ -120,7 +121,7 @@ static bool syslog_opened = false;
 #endif
 static char *redirect_syslog_ident = NULL;
 
-OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, NULL);
+OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, destruct);
 
 /*
  * Setup the output stream infrastructure
@@ -535,6 +536,15 @@ static void construct(opal_object_t *obj)
     stream->lds_want_file = false;
     stream->lds_want_file_append = false;
     stream->lds_file_suffix = NULL;
+}
+static void destruct(opal_object_t *obj)
+{
+    opal_output_stream_t *stream = (opal_output_stream_t*) obj;
+
+    if( NULL != stream->lds_file_suffix ) {
+        free(stream->lds_file_suffix);
+        stream->lds_file_suffix = NULL;
+    }
 }
 
 /*
