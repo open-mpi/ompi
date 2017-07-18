@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_KEYVAL,
                            pmpi_comm_create_keyval_,
                            pmpi_comm_create_keyval__,
                            pompi_comm_create_keyval_f,
-                           (ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
+                           (ompi_aint_copy_attr_function* comm_copy_attr_fn, ompi_aint_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
                            (comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierr) )
 #endif
 #endif
@@ -59,7 +59,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
                            mpi_comm_create_keyval_,
                            mpi_comm_create_keyval__,
                            ompi_comm_create_keyval_f,
-                           (ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
+                           (ompi_aint_copy_attr_function* comm_copy_attr_fn, ompi_aint_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
                            (comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierr) )
 #else
 #define ompi_comm_create_keyval_f pompi_comm_create_keyval_f
@@ -69,8 +69,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
 
 
-void ompi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn,
-                              ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn,
+void ompi_comm_create_keyval_f(ompi_aint_copy_attr_function* comm_copy_attr_fn,
+                              ompi_aint_delete_attr_function* comm_delete_attr_fn,
                               MPI_Fint *comm_keyval,
                               MPI_Aint *extra_state, MPI_Fint *ierr)
 {
@@ -79,8 +79,8 @@ void ompi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_a
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
-    copy_fn.attr_mpi2_fortran_copy_fn = comm_copy_attr_fn;
-    del_fn.attr_mpi2_fortran_delete_fn = comm_delete_attr_fn;
+    copy_fn.attr_aint_copy_fn = comm_copy_attr_fn;
+    del_fn.attr_aint_delete_fn = comm_delete_attr_fn;
 
     /* Note that we only set the "F77" bit and exclude the "F77_OLD"
        bit, indicating that the callbacks should use the new MPI-2

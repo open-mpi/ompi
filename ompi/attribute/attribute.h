@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +43,7 @@
  */
 #define OMPI_KEYVAL_PREDEFINED     0x0001
 #define OMPI_KEYVAL_F77            0x0002
-#define OMPI_KEYVAL_F77_MPI1       0x0004
+#define OMPI_KEYVAL_F77_INT        0x0004
 
 
 BEGIN_C_DECLS
@@ -62,14 +64,14 @@ typedef enum ompi_attribute_type_t ompi_attribute_type_t;
    delete. These will only be used here and not in the front end
    functions. */
 
-typedef void (ompi_mpi1_fortran_copy_attr_function)(MPI_Fint *oldobj,
+typedef void (ompi_fint_copy_attr_function)(MPI_Fint *oldobj,
                                                     MPI_Fint *keyval,
                                                     MPI_Fint *extra_state,
                                                     MPI_Fint *attr_in,
                                                     MPI_Fint *attr_out,
                                                     ompi_fortran_logical_t *flag,
                                                     MPI_Fint *ierr);
-typedef void (ompi_mpi1_fortran_delete_attr_function)(MPI_Fint *obj,
+typedef void (ompi_fint_delete_attr_function)(MPI_Fint *obj,
                                                       MPI_Fint *keyval,
                                                       MPI_Fint *attr_in,
                                                       MPI_Fint *extra_state,
@@ -79,18 +81,18 @@ typedef void (ompi_mpi1_fortran_delete_attr_function)(MPI_Fint *obj,
    delete. These will only be used here and not in the front end
    functions. */
 
-typedef void (ompi_mpi2_fortran_copy_attr_function)(MPI_Fint *oldobj,
-                                                    MPI_Fint *keyval,
-                                                    void *extra_state,
-                                                    void *attr_in,
-                                                    void *attr_out,
-                                                    ompi_fortran_logical_t *flag,
-                                                    MPI_Fint *ierr);
-typedef void (ompi_mpi2_fortran_delete_attr_function)(MPI_Fint *obj,
-                                                      MPI_Fint *keyval,
-                                                      void *attr_in,
-                                                      void *extra_state,
-                                                      MPI_Fint *ierr);
+typedef void (ompi_aint_copy_attr_function)(MPI_Fint *oldobj,
+                                            MPI_Fint *keyval,
+                                            void *extra_state,
+                                            void *attr_in,
+                                            void *attr_out,
+                                            ompi_fortran_logical_t *flag,
+                                            MPI_Fint *ierr);
+typedef void (ompi_aint_delete_attr_function)(MPI_Fint *obj,
+                                              MPI_Fint *keyval,
+                                              void *attr_in,
+                                              void *extra_state,
+                                              MPI_Fint *ierr);
 /*
  * Internally the copy function for all kinds of MPI objects has one more
  * argument, the pointer to the new object. Therefore, we can do on the
@@ -124,13 +126,13 @@ union ompi_attribute_fn_ptr_union_t {
 
     /* For Fortran old MPI-1 callback functions */
 
-    ompi_mpi1_fortran_delete_attr_function *attr_mpi1_fortran_delete_fn;
-    ompi_mpi1_fortran_copy_attr_function   *attr_mpi1_fortran_copy_fn;
+    ompi_fint_delete_attr_function *attr_fint_delete_fn;
+    ompi_fint_copy_attr_function   *attr_fint_copy_fn;
 
     /* For Fortran new MPI-2 callback functions */
 
-    ompi_mpi2_fortran_delete_attr_function *attr_mpi2_fortran_delete_fn;
-    ompi_mpi2_fortran_copy_attr_function   *attr_mpi2_fortran_copy_fn;
+    ompi_aint_delete_attr_function *attr_aint_delete_fn;
+    ompi_aint_copy_attr_function   *attr_aint_copy_fn;
 };
 
 typedef union ompi_attribute_fn_ptr_union_t ompi_attribute_fn_ptr_union_t;
@@ -297,8 +299,8 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
  *
- * All three of these functions (ompi_attr_set_c(),
- * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
+ * All four of these functions (ompi_attr_set_c(), ompi_attr_set_int(),
+ * ompi_attr_set_fint(), and ompi_attr_set_aint())
  * could have been combined into one function that took some kind of
  * (void*) and an enum to indicate which way to translate the final
  * representation, but that just seemed to make an already complicated
@@ -311,6 +313,35 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
 int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
                     opal_hash_table_t **attr_hash,
                     int key, void *attribute, bool predefined);
+
+/**
+ * Set an int predefined attribute in a form valid for C.
+ *
+ * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
+ * @param object         The actual Comm/Win/Datatype object (IN)
+ * @param attr_hash      The attribute hash table hanging on the object(IN/OUT)
+ * @param key            Key val for the attribute (IN)
+ * @param attribute      The actual attribute value (IN)
+ * @param predefined     Whether the key is predefined or not 0/1 (IN)
+ * @return OMPI error code
+ *
+ * If (*attr_hash) == NULL, a new hash will be created and
+ * initialized.
+ *
+ * All four of these functions (ompi_attr_set_c(), ompi_attr_set_int(),
+ * ompi_attr_set_fint(), and ompi_attr_set_aint())
+ * could have been combined into one function that took some kind of
+ * (void*) and an enum to indicate which way to translate the final
+ * representation, but that just seemed to make an already complicated
+ * situation more complicated through yet another layer of
+ * indirection.
+ *
+ * So yes, this is more code, but it's clearer and less error-prone
+ * (read: better) this way.
+ */
+int ompi_attr_set_int(ompi_attribute_type_t type, void *object,
+                      opal_hash_table_t **attr_hash,
+                      int key, int attribute, bool predefined);
 
 /**
  * Set an attribute on the comm/win/datatype in a form valid for
@@ -327,8 +358,8 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
  *
- * All three of these functions (ompi_attr_set_c(),
- * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
+ * All four of these functions (ompi_attr_set_c(), ompi_attr_set_int(),
+ * ompi_attr_set_fint(), and ompi_attr_set_aint())
  * could have been combined into one function that took some kind of
  * (void*) and an enum to indicate which way to translate the final
  * representation, but that just seemed to make an already complicated
@@ -338,10 +369,10 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * So yes, this is more code, but it's clearer and less error-prone
  * (read: better) this way.
  */
-OMPI_DECLSPEC int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
-                                             opal_hash_table_t **attr_hash,
-                                             int key, MPI_Fint attribute,
-                                             bool predefined);
+OMPI_DECLSPEC int ompi_attr_set_fint(ompi_attribute_type_t type, void *object,
+                                     opal_hash_table_t **attr_hash,
+                                     int key, MPI_Fint attribute,
+                                     bool predefined);
 
 /**
  * Set an attribute on the comm/win/datatype in a form valid for
@@ -358,8 +389,8 @@ OMPI_DECLSPEC int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *o
  * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
  *
- * All three of these functions (ompi_attr_set_c(),
- * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
+ * All four of these functions (ompi_attr_set_c(), ompi_attr_set_int(),
+ * ompi_attr_set_fint(), and ompi_attr_set_aint())
  * could have been combined into one function that took some kind of
  * (void*) and an enum to indicate which way to translate the final
  * representation, but that just seemed to make an already complicated
@@ -369,10 +400,10 @@ OMPI_DECLSPEC int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *o
  * So yes, this is more code, but it's clearer and less error-prone
  * (read: better) this way.
  */
-OMPI_DECLSPEC int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
-                                             opal_hash_table_t **attr_hash,
-                                             int key, MPI_Aint attribute,
-                                             bool predefined);
+OMPI_DECLSPEC int ompi_attr_set_aint(ompi_attribute_type_t type, void *object,
+                                     opal_hash_table_t **attr_hash,
+                                     int key, MPI_Aint attribute,
+                                     bool predefined);
 
 /**
  * Get an attribute on the comm/win/datatype in a form valid for C.
@@ -385,7 +416,7 @@ OMPI_DECLSPEC int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *o
  * @return OMPI error code
  *
  * All three of these functions (ompi_attr_get_c(),
- * ompi_attr_get_fortran_mpi1(), and ompi_attr_get_fortran_mpi2())
+ * ompi_attr_get_fint(), and ompi_attr_get_aint())
  * could have been combined into one function that took some kind of
  * (void*) and an enum to indicate which way to translate the final
  * representation, but that just seemed to make an already complicated
@@ -412,7 +443,7 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * @return OMPI error code
  *
  * All three of these functions (ompi_attr_get_c(),
- * ompi_attr_get_fortran_mpi1(), and ompi_attr_get_fortran_mpi2())
+ * ompi_attr_get_fint(), and ompi_attr_get_aint())
  * could have been combined into one function that took some kind of
  * (void*) and an enum to indicate which way to translate the final
  * representation, but that just seemed to make an already complicated
@@ -423,8 +454,8 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * (read: better) this way.
  */
 
-    OMPI_DECLSPEC int ompi_attr_get_fortran_mpi1(opal_hash_table_t *attr_hash, int key,
-                                                 MPI_Fint *attribute, int *flag);
+    OMPI_DECLSPEC int ompi_attr_get_fint(opal_hash_table_t *attr_hash, int key,
+                                         MPI_Fint *attribute, int *flag);
 
 
 /**
@@ -439,7 +470,7 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * @return OMPI error code
  *
  * All three of these functions (ompi_attr_get_c(),
- * ompi_attr_get_fortran_mpi1(), and ompi_attr_get_fortran_mpi2())
+ * ompi_attr_get_fint(), and ompi_attr_get_aint())
  * could have been combined into one function that took some kind of
  * (void*) and an enum to indicate which way to translate the final
  * representation, but that just seemed to make an already complicated
@@ -450,8 +481,8 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * (read: better) this way.
  */
 
-OMPI_DECLSPEC int ompi_attr_get_fortran_mpi2(opal_hash_table_t *attr_hash, int key,
-                                             MPI_Aint *attribute, int *flag);
+OMPI_DECLSPEC int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key,
+                                     MPI_Aint *attribute, int *flag);
 
 
 /**
