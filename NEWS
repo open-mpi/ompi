@@ -79,11 +79,8 @@ Changes in behavior compared to prior versions:
 
 Removed legacy support:
 - "yoda" SPML component is removed from the Open SHMEM codebase. It was utilizing
-  Open MPI BTL components for supported networks.
-  Currently avalable SPML components are:
-  - "ikrit" based on Mellanox Messaging Accelerator (MXM) communication library;
-  - "ucx" based on the open-source Unified Communication X (UCX) communication
-    library (http://www.openucx.org/).
+  Open MPI BTL components for supported networks. Please see README for the currently
+  available options.
 
 Known issues (to be addressed in v3.0.1):
 
