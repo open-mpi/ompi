@@ -4,6 +4,8 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All
+ *                         rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -156,6 +158,7 @@ static int s1_init(opal_list_t *ilist)
     opal_process_name_t wildcard_rank;
 
     if (0 < pmix_init_count) {
+        ++pmix_init_count;
         return OPAL_SUCCESS;
     }
 
@@ -446,10 +449,9 @@ static int s1_fini(void) {
 
     if (0 == --pmix_init_count) {
         PMI_Finalize ();
+        // teardown hash table
+        opal_pmix_base_hash_finalize();
     }
-
-    // teardown hash table
-    opal_pmix_base_hash_finalize();
 
     return OPAL_SUCCESS;
 }
