@@ -88,12 +88,11 @@ static bool signals_set=false;
 static opal_event_t term_handler;
 static opal_event_t int_handler;
 static opal_event_t epipe_handler;
-static opal_event_t sigusr1_handler;
-static opal_event_t sigusr2_handler;
 static char *log_path = NULL;
 static void shutdown_signal(int fd, short flags, void *arg);
-static void signal_callback(int fd, short flags, void *arg);
 static void epipe_signal_callback(int fd, short flags, void *arg);
+static void signal_forward_callback(int fd, short event, void *arg);
+static opal_event_t *forward_signals_events = NULL;
 
 static void setup_sighandler(int signal, opal_event_t *ev,
                              opal_event_cbfunc_t cbfunc)
@@ -119,6 +118,8 @@ int orte_ess_base_orted_setup(void)
     unsigned i, j;
     orte_topology_t *t;
     opal_list_t transports;
+    orte_ess_base_signal_t *sig;
+    int idx;
 
     /* my name is set, xfer it to the OPAL layer */
     orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
@@ -128,6 +129,7 @@ int orte_ess_base_orted_setup(void)
     opal_proc_local_set(&orte_process_info.super);
 
     plm_in_use = false;
+
     /* setup callback for SIGPIPE */
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /* Set signal handlers to catch kill signals so we can properly clean up
@@ -135,10 +137,22 @@ int orte_ess_base_orted_setup(void)
      */
     setup_sighandler(SIGTERM, &term_handler, shutdown_signal);
     setup_sighandler(SIGINT, &int_handler, shutdown_signal);
-    /** setup callbacks for signals we should ignore */
-    setup_sighandler(SIGUSR1, &sigusr1_handler, signal_callback);
-    setup_sighandler(SIGUSR2, &sigusr2_handler, signal_callback);
+    /** setup callbacks for signals we should forward */
+    if (0 < (idx = opal_list_get_size(&orte_ess_base_signals))) {
+        forward_signals_events = (opal_event_t*)malloc(sizeof(opal_event_t) * idx);
+        if (NULL == forward_signals_events) {
+            ret = ORTE_ERR_OUT_OF_RESOURCE;
+            error = "unable to malloc";
+            goto error;
+        }
+        idx = 0;
+        OPAL_LIST_FOREACH(sig, &orte_ess_base_signals, orte_ess_base_signal_t) {
+            setup_sighandler(sig->signal, forward_signals_events + idx, signal_forward_callback);
+            ++idx;
+        }
+    }
     signals_set = true;
+
 
     /* get the local topology */
     if (NULL == opal_hwloc_topology) {
@@ -653,14 +667,24 @@ int orte_ess_base_orted_setup(void)
 
 int orte_ess_base_orted_finalize(void)
 {
+    orte_ess_base_signal_t *sig;
+    unsigned int i;
+
     if (signals_set) {
-        /* Release all local signal handlers */
         opal_event_del(&epipe_handler);
         opal_event_del(&term_handler);
         opal_event_del(&int_handler);
-        opal_event_signal_del(&sigusr1_handler);
-        opal_event_signal_del(&sigusr2_handler);
+        /** Remove the USR signal handlers */
+        i = 0;
+        OPAL_LIST_FOREACH(sig, &orte_ess_base_signals, orte_ess_base_signal_t) {
+            opal_event_signal_del(forward_signals_events + i);
+            ++i;
+        }
+        free (forward_signals_events);
+        forward_signals_events = NULL;
+        signals_set = false;
     }
+
     /* cleanup */
     if (NULL != log_path) {
         unlink(log_path);
@@ -717,7 +741,51 @@ static void epipe_signal_callback(int fd, short flags, void *arg)
     return;
 }
 
-static void signal_callback(int fd, short event, void *arg)
+/* Pass user signals to the local application processes */
+static void signal_forward_callback(int fd, short event, void *arg)
 {
-    /* just ignore these signals */
+    opal_event_t *signal = (opal_event_t*)arg;
+    int32_t signum, rc;
+    opal_buffer_t *cmd;
+    orte_daemon_cmd_flag_t command=ORTE_DAEMON_SIGNAL_LOCAL_PROCS;
+    orte_jobid_t job = ORTE_JOBID_WILDCARD;
+
+    signum = OPAL_EVENT_SIGNAL(signal);
+    if (!orte_execute_quiet){
+        fprintf(stderr, "%s: Forwarding signal %d to job\n",
+                orte_basename, signum);
+    }
+
+    cmd = OBJ_NEW(opal_buffer_t);
+
+    /* pack the command */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return;
+    }
+
+    /* pack the jobid */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return;
+    }
+
+    /* pack the signal */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &signum, 1, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return;
+    }
+
+    /* send it to ourselves */
+    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
+                                          ORTE_PROC_MY_NAME, cmd,
+                                          ORTE_RML_TAG_DAEMON,
+                                          NULL, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+    }
+
 }
