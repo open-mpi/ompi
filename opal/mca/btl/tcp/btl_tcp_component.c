@@ -1300,11 +1300,62 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     opal_socklen_t addr_len = sizeof(addr);
     mca_btl_tcp_proc_t* btl_proc;
     int retval;
+    char str[128];
+    size_t len = strlen(mca_btl_tcp_magic_id_string);
 
     OBJ_RELEASE(event);
 
+    /* Receive the magic string */
+    assert(len < sizeof(str));
+    str[0] = '\0';
+    /* TODO: recv_blocking() will block forever, without timeout
+     * There is chance of spin forever if it tries to connect to old version
+     * as older version will send just process id which won't be long enough
+     * to cross sizeof(str) length. Probably better to have a timeout
+     * (say, 10 seconds) for receiving the magic string, and giving up after that.
+     * Will be reiterating this logic in my next iteration
+     */
+    retval = mca_btl_tcp_recv_blocking(sd, str, len);
+    if (retval > 0) {
+        str[retval] = '\0';
+    }
+
+    /* An unknown process attempted to connect to Open MPI via TCP.
+     * Open MPI uses a "magic" string to trivially verify that the connecting
+     * process is a fellow Open MPI process.  An MPI process accepted a TCP
+     * connection but did not receive the correct magic string.  This might
+     * indicate an Open MPI version mismatch between different MPI processes
+     * in the same job, or it may indicate that some other agent is
+     * mistakenly attempting to connect to Open MPI's TCP listening sockets.
+
+     * This attempted connection will be ignored; your MPI job may or may not
+     * continue properly.
+     */
+    if (retval != (int) len) {
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "server did not receive magic string. "
+                            "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
+                            opal_process_info.nodename,
+                            getpid(), "server",
+                            (len > 0) ? str : "<nothing>", "string length");
+
+        /* The other side probably isn't OMPI, so just hang up */
+        CLOSE_THE_SOCKET(sd);
+        return;
+    }
+    if (0 != strncmp(str, mca_btl_tcp_magic_id_string, len)) {
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "server did not receive right magic string. "
+                            "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
+                            opal_process_info.nodename,
+                            getpid(), "server", str,
+                            "string value");
+        /* The other side probably isn't OMPI, so just hang up */
+        CLOSE_THE_SOCKET(sd);
+        return;
+    }
     /* recv the process identifier */
-    retval = recv(sd, (char *)&guid, sizeof(guid), 0);
+    retval = mca_btl_tcp_recv_blocking(sd, (char *)&guid, sizeof(guid));
     if(retval != sizeof(guid)) {
         CLOSE_THE_SOCKET(sd);
         return;

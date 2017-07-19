@@ -62,6 +62,10 @@
 #include "btl_tcp_frag.h"
 #include "btl_tcp_addr.h"
 
+/*
+ * Magic ID string send during connect/accept handshake
+ */
+const char mca_btl_tcp_magic_id_string[] = "OPAL-TCP-BTL";
 
 /*
  * Initialize state of the endpoint instance.
@@ -393,9 +397,24 @@ mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpoint,
 
 static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
 {
-    /* send process identifier to remote endpoint */
+
     opal_process_name_t guid = opal_proc_local_get()->proc_name;
 
+    int len = (int) strlen(mca_btl_tcp_magic_id_string);
+
+    /* send magic string to the remote endpoint, identifying me as a
+       fellow Open MPI TCP BTL */
+    if (mca_btl_tcp_endpoint_send_blocking(btl_endpoint,
+                                           mca_btl_tcp_magic_id_string,
+                                           len) != len) {
+        opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail",
+                       true, opal_process_info.nodename,
+                       getpid(),
+                       "failed to send magic ID string");
+        return OPAL_ERR_UNREACH;
+    }
+
+    /* send process identifier to remote endpoint */
     OPAL_PROCESS_NAME_HTON(guid);
     if(mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) !=
           sizeof(guid)) {
@@ -572,12 +591,39 @@ static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpo
  *  Receive the endpoints globally unique process identification from a newly
  *  connected socket and verify the expected response. If so, move the
  *  socket to a connected state.
+ *
+ *  NOTE: The return codes from this function are checked in
+ *  mca_btl_tcp_endpoint_recv_handler().  Don't change them here
+ *  without also changing the handling in _recv_handler()!
  */
 static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
 {
-    size_t s;
+    size_t s, len = strlen(mca_btl_tcp_magic_id_string);;
     opal_process_name_t guid;
     mca_btl_tcp_proc_t* btl_proc = btl_endpoint->endpoint_proc;
+    char msg[1024];
+
+    /* First get magic string indicating that the connector is an Open MPI TCP BTL */
+    assert(len < sizeof(msg));
+    msg[0] = '\0';
+    s = mca_btl_tcp_endpoint_recv_blocking(btl_endpoint, msg, len);
+    if (s > 0) {
+        msg[s] = '\0';
+    }
+    if (s != len) {
+        opal_show_help("help-mpi-btl-tcp.txt", "did not receive magic string",
+                       true, opal_process_info.nodename,
+                       getpid(), "client",
+                       (s > 0) ? msg : "<nothing>", "string length");
+        return OPAL_ERR_BAD_PARAM;
+    }
+    if (0 != strncmp(msg, mca_btl_tcp_magic_id_string, len)) {
+        opal_show_help("help-mpi-btl-tcp.txt", "did not receive magic string",
+                       true, opal_process_info.nodename,
+                       getpid(), "client", msg,
+                       "string value");
+        return OPAL_ERR_BAD_PARAM;
+    }
 
     s = mca_btl_tcp_endpoint_recv_blocking(btl_endpoint,
                                            &guid, sizeof(opal_process_name_t));

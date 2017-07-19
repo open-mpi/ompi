@@ -75,6 +75,9 @@ typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_tcp_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_endpoint_t);
 
+/* Magic socket handshake string */
+extern const char mca_btl_tcp_magic_id_string[];
+
 void mca_btl_tcp_set_socket_options(int sd);
 void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t*);
 int  mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t*, struct mca_btl_tcp_frag_t*);
