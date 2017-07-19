@@ -729,7 +729,9 @@ static int mca_btl_tcp_component_create_instances(void)
         char* if_name = *argv;
         int if_index = opal_ifnametokindex(if_name);
         if(if_index < 0) {
-            BTL_ERROR(("invalid interface \"%s\"", if_name));
+            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, "include", opal_process_info.nodename,
+                           if_name, "Unknown interface name");
             ret = OPAL_ERR_NOT_FOUND;
             goto cleanup;
         }
@@ -960,15 +962,20 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
-                   strerror(opal_socket_errno), opal_socket_errno));
+        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                       true, opal_process_info.nodename,
+                       getpid(), "fcntl(sd, F_GETFL, 0)",
+                       strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
         return OPAL_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
-                       strerror(opal_socket_errno), opal_socket_errno));
+            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           "fcntl(sd, F_SETFL, flags & O_NONBLOCK)",
+                           strerror(opal_socket_errno), opal_socket_errno);
             CLOSE_THE_SOCKET(sd);
             return OPAL_ERROR;
         }

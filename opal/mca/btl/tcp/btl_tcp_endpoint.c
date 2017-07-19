@@ -721,13 +721,23 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
-                   strerror(opal_socket_errno), opal_socket_errno));
+        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                       true, opal_process_info.nodename,
+                       getpid(), "fcntl(sd, F_GETFL, 0)",
+                       strerror(opal_socket_errno), opal_socket_errno);
+        /* Upper layer will handler the error */
+        return OPAL_ERR_UNREACH;
     } else {
         flags |= O_NONBLOCK;
-        if(fcntl(btl_endpoint->endpoint_sd, F_SETFL, flags) < 0)
-            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
-                       strerror(opal_socket_errno), opal_socket_errno));
+        if(fcntl(btl_endpoint->endpoint_sd, F_SETFL, flags) < 0) {
+            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           "fcntl(sd, F_SETFL, flags & O_NONBLOCK)",
+                           strerror(opal_socket_errno), opal_socket_errno);
+            /* Upper layer will handler the error */
+            return OPAL_ERR_UNREACH;
+        }
     }
 
     /* start the connect - will likely fail with EINPROGRESS */
@@ -778,7 +788,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
  * later. Otherwise, send this processes identifier to the endpoint on the
  * newly connected socket.
  */
-static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_endpoint)
+static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_endpoint)
 {
     int so_error = 0;
     opal_socklen_t so_length = sizeof(so_error);
@@ -794,32 +804,49 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
 
     /* check connect completion status */
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
-        BTL_ERROR(("getsockopt() to %s failed: %s (%d)",
+        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                       true, opal_process_info.nodename,
+                       getpid(), "fcntl(sd, F_GETFL, 0)",
+                       strerror(opal_socket_errno), opal_socket_errno);
+        BTL_ERROR(("getsockopt() to %s:%d failed: %s (%d)",
                    opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
+                   ((struct sockaddr_in*) &endpoint_addr)->sin_port,
                    strerror(opal_socket_errno), opal_socket_errno));
         mca_btl_tcp_endpoint_close(btl_endpoint);
-        return;
+        return OPAL_ERROR;
     }
     if(so_error == EINPROGRESS || so_error == EWOULDBLOCK) {
-        return;
+        return OPAL_SUCCESS;
     }
     if(so_error != 0) {
-        BTL_ERROR(("connect() to %s failed: %s (%d)",
-                   opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
-                   strerror(so_error), so_error));
+        char *msg;
+        asprintf(&msg, "connect() to %s:%d failed",
+                 opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
+                 ntohs(((struct sockaddr_in*) &endpoint_addr)->sin_port));
+        opal_show_help("help-mpi-btl-tcp.txt", "client connect fail",
+                       true, opal_process_info.nodename,
+                       getpid(), msg,
+                       strerror(opal_socket_errno), opal_socket_errno);
+        free(msg);
         mca_btl_tcp_endpoint_close(btl_endpoint);
-        return;
+        return OPAL_ERROR;
     }
+
+    opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                        "btl:tcp: connect() to %s:%d completed (complete_connect), sending connect ACK",
+                        opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
+                        ntohs(((struct sockaddr_in*) &endpoint_addr)->sin_port));
 
     if(mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) == OPAL_SUCCESS) {
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECT_ACK;
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, false, "event_add(recv) [complete_connect]");
-        return;
+        return OPAL_SUCCESS;
     }
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, " [complete_connect]");
     btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
     mca_btl_tcp_endpoint_close(btl_endpoint);
+    return OPAL_ERROR;
 }
 
 
