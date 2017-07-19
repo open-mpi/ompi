@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +53,7 @@ int orte_ess_base_std_buffering = -1;
 int orte_ess_base_num_procs = -1;
 char *orte_ess_base_jobid = NULL;
 char *orte_ess_base_vpid = NULL;
-opal_list_t orte_ess_base_signals = {0};
+opal_list_t orte_ess_base_signals = {{0}};
 
 static mca_base_var_enum_value_t stream_buffering_values[] = {
   {-1, "default"},
