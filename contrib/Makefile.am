@@ -15,6 +15,8 @@
 # Copyright (c) 2013-2016 Los Alamos National Security, Inc.  All rights
 #                         reserved.
 # Copyright (c) 2013      Intel Corporation.  All rights reserved.
+# Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,6 +37,7 @@ EXTRA_DIST = \
         completion/mpirun.sh \
         completion/mpirun.zsh \
 	dist/make_dist_tarball \
+	dist/make-authors.pl \
 	dist/linux/openmpi.spec \
 	dist/mofed/compile_debian_mlnx_example.in \
 	dist/mofed/debian \
