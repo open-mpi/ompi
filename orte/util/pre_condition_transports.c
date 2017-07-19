@@ -12,7 +12,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,7 +130,7 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
 }
 
 
-int orte_pre_condition_transports(orte_job_t *jdata)
+int orte_pre_condition_transports(orte_job_t *jdata, char **key)
 {
     uint64_t unique_key[2];
     int n;
@@ -164,23 +164,28 @@ int orte_pre_condition_transports(orte_job_t *jdata)
     }
 
     /* record it in case this job executes a dynamic spawn */
-    orte_set_attribute(&jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, string_key, OPAL_STRING);
+    if (NULL != jdata) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_TRANSPORT_KEY, ORTE_ATTR_LOCAL, string_key, OPAL_STRING);
 
-    if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        free(string_key);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    for (n=0; n < jdata->apps->size; n++) {
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
-            continue;
+        if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(string_key);
+            return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        opal_setenv(cs_env, string_key, true, &app->env);
-    }
 
-    free(cs_env);
-    free(string_key);
+        for (n=0; n < jdata->apps->size; n++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+                continue;
+            }
+            opal_setenv(cs_env, string_key, true, &app->env);
+        }
+        free(cs_env);
+        free(string_key);
+    } else if (NULL != key) {
+        *key = string_key;
+    } else {
+        free(string_key);
+    }
 
     return ORTE_SUCCESS;
 }

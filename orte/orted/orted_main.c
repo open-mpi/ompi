@@ -578,7 +578,7 @@ int orte_daemon(int argc, char *argv[])
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
 
         /* set the ORTE_JOB_TRANSPORT_KEY from the environment */
-        orte_pre_condition_transports(jdata);
+        orte_pre_condition_transports(jdata, NULL);
 
         /* register the singleton's nspace with our PMIx server */
         if (ORTE_SUCCESS != (ret = orte_pmix_server_register_nspace(jdata, false))) {

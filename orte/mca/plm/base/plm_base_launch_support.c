@@ -332,7 +332,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
             }
             free(key);
         } else {
-            if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(caddy->jdata))) {
+            if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(caddy->jdata, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
@@ -342,7 +342,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     } else {
         /* this will also record the transport key attribute in the job object, and
          * adds the key envar to each app */
-        if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(caddy->jdata))) {
+        if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(caddy->jdata, NULL))) {
             ORTE_ERROR_LOG(rc);
             ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
