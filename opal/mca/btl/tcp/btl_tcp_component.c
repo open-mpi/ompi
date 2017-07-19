@@ -858,13 +858,18 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         freeaddrinfo (res);
 
 #ifdef IPV6_V6ONLY
-        /* in case of AF_INET6, disable v4-mapped addresses */
+        /* If this OS supports the "IPV6_V6ONLY" constant, then set it
+           on this socket.  It specifies that *only* V6 connections
+           should be accepted on this socket (vs. allowing incoming
+           both V4 and V6 connections -- which is actually defined
+           behavior for V6<-->V4 interop stuff).  See
+           https://github.com/open-mpi/ompi/commit/95d7e08a6617530d57b6700c57738b351bfccbf8 for some
+           more details. */
         if (AF_INET6 == af_family) {
             int flg = 1;
             if (setsockopt (sd, IPPROTO_IPV6, IPV6_V6ONLY,
                             (char *) &flg, sizeof (flg)) < 0) {
-                opal_output(0,
-                    "mca_btl_tcp_create_listen: unable to disable v4-mapped addresses\n");
+                BTL_ERROR((0, "mca_btl_tcp_create_listen: unable to set IPV6_V6ONLY\n"));
             }
         }
 #endif /* IPV6_V6ONLY */
@@ -906,6 +911,10 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 #else
             ((struct sockaddr_in*) &inaddr)->sin_port = htons(port + index);
 #endif  /* OPAL_ENABLE_IPV6 */
+            opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                "btl:tcp: Attempting to bind to %s port %d",
+                                (AF_INET == af_family) ? "AF_INET" : "AF_INET6",
+                                port + index);
             if(bind(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
                 if( (EADDRINUSE == opal_socket_errno) || (EADDRNOTAVAIL == opal_socket_errno) ) {
                     continue;
@@ -915,6 +924,10 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
                 CLOSE_THE_SOCKET(sd);
                 return OPAL_ERROR;
             }
+            opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                "btl:tcp: Successfully bound to %s port %d",
+                                (AF_INET == af_family) ? "AF_INET" : "AF_INET6",
+                                port + index);
             goto socket_binded;
         }
 #if OPAL_ENABLE_IPV6
@@ -945,6 +958,9 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     if (AF_INET6 == af_family) {
         mca_btl_tcp_component.tcp6_listen_port = ((struct sockaddr_in6*) &inaddr)->sin6_port;
         mca_btl_tcp_component.tcp6_listen_sd = sd;
+        opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                            "btl:tcp: my listening v6 socket port is %d",
+                            ntohs(mca_btl_tcp_component.tcp6_listen_port));
     } else
 #endif
     {
@@ -1143,6 +1159,8 @@ static int mca_btl_tcp_component_exchange(void)
                      addrs[current_addr].addr_ifkindex =
                          opal_ifindextokindex (index);
                      current_addr++;
+                     opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                         "btl:tcp: using ipv6 interface %s", ifn);
                  }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
