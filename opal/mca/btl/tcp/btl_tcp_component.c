@@ -964,8 +964,13 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     } else
 #endif
     {
+        char str[16];
         mca_btl_tcp_component.tcp_listen_port = ((struct sockaddr_in*) &inaddr)->sin_port;
         mca_btl_tcp_component.tcp_listen_sd = sd;
+        inet_ntop(AF_INET, &(((struct sockaddr_in*)&inaddr)->sin_addr), str, sizeof(str));
+        opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                            "btl:tcp: my listening v4 socket is %s:%u",
+                            str, ntohs(mca_btl_tcp_component.tcp_listen_port));
     }
 
     /* setup listen backlog to maximum allowed by kernel */
@@ -1104,6 +1109,7 @@ static int mca_btl_tcp_component_exchange(void)
      size_t current_addr = 0;
 
      if(mca_btl_tcp_component.tcp_num_btls != 0) {
+         char ifn[32];
          mca_btl_tcp_addr_t *addrs = (mca_btl_tcp_addr_t *)malloc(size);
          memset(addrs, 0, size);
 
@@ -1121,6 +1127,9 @@ static int mca_btl_tcp_component_exchange(void)
                      continue;
                  }
 
+                 opal_ifindextoname(index, ifn, sizeof(ifn));
+                 opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                     "btl:tcp: examining interface %s", ifn);
                  if (OPAL_SUCCESS !=
                      opal_ifindextoaddr(index, (struct sockaddr*) &my_ss,
                                         sizeof (my_ss))) {
@@ -1144,6 +1153,8 @@ static int mca_btl_tcp_component_exchange(void)
                      addrs[current_addr].addr_ifkindex =
                          opal_ifindextokindex (index);
                      current_addr++;
+                     opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                         "btl:tcp: using ipv4 interface %s", ifn);
                  } else
 #endif
                  if ((AF_INET == my_ss.ss_family) &&
@@ -1382,6 +1393,9 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     /* recv the process identifier */
     retval = mca_btl_tcp_recv_blocking(sd, (char *)&guid, sizeof(guid));
     if(retval != sizeof(guid)) {
+        opal_show_help("help-mpi-btl-tcp.txt", "server did not get guid",
+                        true, opal_process_info.nodename,
+                        getpid());
         CLOSE_THE_SOCKET(sd);
         return;
     }
@@ -1389,31 +1403,66 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
-                   strerror(opal_socket_errno), opal_socket_errno));
+        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                       true, opal_process_info.nodename,
+                       getpid(), "fcntl(sd, F_GETFL, 0)",
+                       strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
-                       strerror(opal_socket_errno), opal_socket_errno));
+            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           "fcntl(sd, F_SETFL, flags & O_NONBLOCK)",
+                           strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
         }
     }
 
     /* lookup the corresponding process */
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if(NULL == btl_proc) {
+        opal_show_help("help-mpi-btl-tcp.txt",
+                       "server accept cannot find guid",
+                       true, opal_process_info.nodename,
+                       getpid());
         CLOSE_THE_SOCKET(sd);
         return;
     }
 
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
-        BTL_ERROR(("getpeername() failed: %s (%d)",
-                   strerror(opal_socket_errno), opal_socket_errno));
+        opal_show_help("help-mpi-btl-tcp.txt",
+                       "server getpeername failed",
+                       true, opal_process_info.nodename,
+                       getpid(),
+                       strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
         return;
     }
 
     /* are there any existing peer instances willing to accept this connection */
     (void)mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd);
+
+    switch (addr.ss_family) {
+        case AF_INET:
+            inet_ntop(AF_INET, &(((struct sockaddr_in*) &addr)->sin_addr), str, sizeof(str));
+            break;
+
+    #if OPAL_ENABLE_IPV6
+        case AF_INET6:
+            inet_ntop(AF_INET6, &(((struct sockaddr_in6*) &addr)->sin6_addr), str, sizeof(str));
+            break;
+    #endif
+
+        default:
+            BTL_ERROR(("Got an accept() from an unknown address family -- this shouldn't happen"));
+            CLOSE_THE_SOCKET(sd);
+            return;
+
+    }
+    opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                        "btl:tcp: now connected to %s, process %s", str,
+                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name));
 }

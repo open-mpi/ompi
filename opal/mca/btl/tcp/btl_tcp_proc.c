@@ -509,10 +509,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         default:
             opal_output(0, "unknown address family for tcp: %d\n",
                         endpoint_addr_ss.ss_family);
-            /*
-             * return OPAL_UNREACH or some error, as this is not
-             * good
-             */
+            return OPAL_ERR_UNREACH;
         }
     }
 
@@ -554,14 +551,26 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
             if(NULL != proc_data->local_interfaces[i]->ipv4_address &&
                NULL != peer_interfaces[j]->ipv4_address) {
 
+                /* Convert the IPv4 addresses into nicely-printable strings for verbose debugging output */
+                inet_ntop(AF_INET, &(((struct sockaddr_in*) proc_data->local_interfaces[i]->ipv4_address))->sin_addr,
+                          str_local, sizeof(str_local));
+                inet_ntop(AF_INET, &(((struct sockaddr_in*) peer_interfaces[j]->ipv4_address))->sin_addr,
+                          str_remote, sizeof(str_remote));
+
                 if(opal_net_addr_isipv4public((struct sockaddr*) local_interface->ipv4_address) &&
                    opal_net_addr_isipv4public((struct sockaddr*) peer_interfaces[j]->ipv4_address)) {
                     if(opal_net_samenetwork((struct sockaddr*) local_interface->ipv4_address,
                                             (struct sockaddr*) peer_interfaces[j]->ipv4_address,
                                             local_interface->ipv4_netmask)) {
                         proc_data->weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
+                        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                            "btl:tcp: path from %s to %s: IPV4 PUBLIC SAME NETWORK",
+                                            str_local, str_remote);
                     } else {
                         proc_data->weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
+                        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                            "btl:tcp: path from %s to %s: IPV4 PUBLIC DIFFERENT NETWORK",
+                                            str_local, str_remote);
                     }
                     proc_data->best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
                     continue;
@@ -570,8 +579,14 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                                         (struct sockaddr*) peer_interfaces[j]->ipv4_address,
                                         local_interface->ipv4_netmask)) {
                     proc_data->weights[i][j] = CQ_PRIVATE_SAME_NETWORK;
+                    opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                       "btl:tcp: path from %s to %s: IPV4 PRIVATE SAME NETWORK",
+                                       str_local, str_remote);
                 } else {
                     proc_data->weights[i][j] = CQ_PRIVATE_DIFFERENT_NETWORK;
+                    opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                       "btl:tcp: path from %s to %s: IPV4 PRIVATE DIFFERENT NETWORK",
+                                       str_local, str_remote);
                 }
                 proc_data->best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
                 continue;
@@ -673,6 +688,12 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
             rc = OPAL_SUCCESS;
         }
     }
+    if (OPAL_ERR_UNREACH == rc) {
+        opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                            "btl:tcp: host %s, process %s UNREACHABLE",
+                            proc_hostname,
+                            OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name));
+    }
 
     for(i = 0; i < perm_size; ++i) {
         free(proc_data->weights[i]);
@@ -729,7 +750,7 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_
                     OBJ_RELEASE(btl_proc);
                     return OPAL_SUCCESS;
                 }
-                /* The endpoint_addr may still be NULL if this enpoint is
+                /* The endpoint_addr may still be NULL if this endpoint is
                    being removed early in the wireup sequence (e.g., if it
                    is unreachable by all other procs) */
                 if (NULL != btl_endpoint->endpoint_addr) {
