@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,7 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC int orte_pre_condition_transports(orte_job_t *jdata);
+ORTE_DECLSPEC int orte_pre_condition_transports(orte_job_t *jdata, char **key);
 
 ORTE_DECLSPEC char* orte_pre_condition_transports_print(uint64_t *unique_key);
 
