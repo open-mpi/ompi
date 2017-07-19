@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -132,9 +134,6 @@ typedef enum {
  */
 OPAL_DECLSPEC extern opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa;
 
-/* some critical helper functions */
-OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(hwloc_topology_t topo);
-
 /**
  * Discover / load the hwloc topology (i.e., call hwloc_topology_init() and
  * hwloc_topology_load()).
@@ -150,8 +149,6 @@ OPAL_DECLSPEC int opal_hwloc_base_set_topology(char *topofile);
  * Free the hwloc topology.
  */
 OPAL_DECLSPEC void opal_hwloc_base_free_topology(hwloc_topology_t topo);
-OPAL_DECLSPEC hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
-                                                                hwloc_obj_t obj);
 OPAL_DECLSPEC unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
                                                               hwloc_obj_type_t target,
                                                               unsigned cache_level,

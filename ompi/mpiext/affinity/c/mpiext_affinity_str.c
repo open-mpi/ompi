@@ -131,7 +131,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* get our root object */
     root = hwloc_get_root_obj(opal_hwloc_topology);
-    rootset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+    rootset = root->cpuset;
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();
@@ -324,7 +324,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* get our root object */
     root = hwloc_get_root_obj(opal_hwloc_topology);
-    rootset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+    rootset = root->cpuset;
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();

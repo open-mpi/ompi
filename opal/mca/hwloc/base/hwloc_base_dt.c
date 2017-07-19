@@ -136,11 +136,6 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
             goto cleanup;
         }
 
-        /* filter the cpus thru any default cpu set */
-        if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(t))) {
-            goto cleanup;
-        }
-
         /* pass it back */
         tarray[i] = t;
 
@@ -265,18 +260,6 @@ static void print_hwloc_obj(char **output, char *prefix,
     if (NULL != obj->cpuset) {
         hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->cpuset);
         asprintf(&tmp2, "%s%sCpuset:  %s", tmp, pfx, string);
-        free(tmp);
-        tmp = tmp2;
-    }
-    if (NULL != obj->online_cpuset) {
-        hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->online_cpuset);
-        asprintf(&tmp2, "%s%sOnline:  %s", tmp, pfx, string);
-        free(tmp);
-        tmp = tmp2;
-    }
-    if (NULL != obj->allowed_cpuset) {
-        hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->allowed_cpuset);
-        asprintf(&tmp2, "%s%sAllowed: %s", tmp, pfx, string);
         free(tmp);
         tmp = tmp2;
     }
