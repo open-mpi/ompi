@@ -1,22 +1,46 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 #
 
 use strict;
 
 use Data::Dumper;
+use Getopt::Long;
+use Cwd;
 
 # Ensure that we're in the root of a writeable Git clone
 my $in_git_clone = 1;
+my $skip_ok = 0;
+my $quiet = 0;
+my $srcdir = ".";
+my $destdir = getcwd();
 
-$in_git_clone = 0
-    if (! -d ".git" || ! -f "AUTHORS");
+GetOptions("skip-ok" => \$skip_ok,
+	   "quiet" => \$quiet,
+	   "srcdir=s" => \$srcdir,
+	   "destdir=s" => \$destdir)
+    or die("Error in command line arguments\n");
+
+# we still work with git old enough to not have the -C option, and the
+# --git-dir option screws up .mailmap, so just jump into the source
+# directory and make life easier.
+chdir($srcdir);
+
+if (! -d ".git") {
+    if ($skip_ok == 0) {
+	print STDERR "I don't seem to be in a git repo :(\n";
+	exit(1);
+    } else {
+	# called from make dist, just exit quietly (for case where
+	# user runs "make dist" from a dist tarball)
+	exit(0);
+    }
+}
 
 ######################################################################
-
-my $header_sep = "-----";
-my $unknown_org = "********* NO ORGANIZATION SET ********";
 
 my $people;
 
@@ -24,138 +48,67 @@ my $people;
 
 # Run git log to get a list of committers
 
-open (GIT, "git log --format=tformat:'%aN <%aE>'|") || die "Can't run 'git log'.";
+open (GIT, "git log --no-merges --format=tformat:'%aN <%aE>'|") || die "Can't run 'git log'.";
 while (<GIT>) {
     chomp;
     m/^\s*(.+)\s+<(.+)>\s*$/;
+
+    my $email = lc($2);
+
+    # special case from the SVN migration
+    if ($email eq 'no-author@open-mpi.org') { next; }
+    # skip the mpi bot...
+    if ($email eq 'mpiteam@open-mpi.org') { next; }
 
     if (!exists($people->{$1})) {
         # The person doesn't exist, so save a new entry
         $people->{$1} = {
             name => $1,
-            org => $unknown_org,
             emails => {
-                lc($2) => 1,
+                $email => 1,
             }
         };
 
-
-        print "Found Git committer: $1 <$2>\n";
+        if ($quiet == 0) { print STDOUT "Found Git committer: $1 <$email>\n"; }
     } else {
         # The person already exists, so just add (or overwrite) this
         # email address
-        $people->{$1}->{emails}->{$2} = 1;
+        $people->{$1}->{emails}->{$email} = 1;
     }
 }
 close(GIT);
 
-######################################################################
-
-# Read the existing AUTHORS file
-
-my $header;
-
-print "Matching Git emails to existing names/affiliations...\n";
-
-sub save {
-    my $current = shift;
-
-    print "Saving person from AUTHORS: $current->{name}\n";
-
-    # We may overwrite an entry written from the git log, but that's
-    # ok
-    $people->{$current->{name}} = $current;
+if (scalar(keys(%{$people})) == 0) {
+    print STDERR "Found no author entries, assuming git broke.  Aborting!\n";
+    exit(1);
 }
-
-open (AUTHORS, "AUTHORS") || die "Can't open AUTHORS file";
-my $in_header = 1;
-my $current = undef;
-while (<AUTHORS>) {
-    chomp;
-    my $line = $_;
-
-    # Slurp down header lines until we hit a line that begins with
-    # $header_sep
-    if ($in_header) {
-        $header .= "$line\n";
-
-        if ($_ =~ /^$header_sep/) {
-            $in_header = 0;
-
-            # There should be a blank line after this, too
-            $header .= "\n";
-        }
-        next;
-    }
-
-    # Skip blank lines
-    next
-        if ($line =~ /^\s*$/);
-
-    # Format of body:
-    #
-    # NAME, Affiliation 1[, Affiliation 2[...]]
-    #   Email address 1
-    #   [Email address 2]
-    #   [...]
-    # NAME, Affiliation 1[, Affiliation 2[...]]
-    #   Email address 1
-    #   [Email address 2]
-    #   [...]
-
-    # Found a new email address for an existing person
-    if ($line =~ /^  /) {
-        m/^  (.+)$/;
-        $current->{emails}->{lc($1)} = 1;
-
-        next;
-    } else {
-        # Found a new person; save the old entry
-        save($current)
-            if (defined($current));
-
-        $current = undef;
-        $current->{org} = $unknown_org;
-        if ($line =~ m/^(.+?),\s+(.+)$/) {
-            $current->{name} = $1;
-            $current->{org} = $2;
-        } else {
-            $current->{name} = $line;
-        }
-
-        next;
-    }
-}
-
-save($current)
-    if (defined($current));
-
-close(AUTHORS);
 
 ######################################################################
 
 # Output a new AUTHORS file
 
-open (AUTHORS, ">AUTHORS.new") || die "Can't write to AUTHORS file";
+open (AUTHORS, ">$destdir/AUTHORS") || die "Can't write to AUTHORS file";
 
+my $header = <<'END_HEADER';
+Open MPI Authors
+================
+
+The following cumulative list contains the names and email addresses
+of all individuals who have committed code to the Open MPI repository
+(either directly or through a third party, such as through a
+Github.com pull request).  Note that these email addresses are not
+guaranteed to be current; they are simply a unique indicator of the
+individual who committed them.
+
+
+END_HEADER
 print AUTHORS $header;
 
-my @people_with_unknown_orgs;
 my $email_dups;
 
 my @sorted_people = sort(keys(%{$people}));
 foreach my $p (@sorted_people) {
-    print AUTHORS $p;
-    if (exists($people->{$p}->{org})) {
-        my $org = $people->{$p}->{org};
-        if ($org ne $unknown_org) {
-            print AUTHORS ", $org";
-        } else {
-            # Record this so that we can warn about it
-            push(@people_with_unknown_orgs, $p);
-        }
-    }
-    print AUTHORS "\n";
+    print AUTHORS "$p\n";
 
     foreach my $e (sort(keys(%{$people->{$p}->{emails}}))) {
         # Sanity check: make sure this email address does not show up
@@ -191,38 +144,27 @@ foreach my $p (@sorted_people) {
 }
 close(AUTHORS);
 
-# We have a new AUTHORS file!  Replace the old one.
-unlink("AUTHORS");
-rename("AUTHORS.new", "AUTHORS");
-
-print "New AUTHORS file written.\n";
+print STDOUT "New AUTHORS file written.\n";
 
 ######################################################################
 
 # Output any relevant warnings
 
 my $warned = 0;
-if ($#people_with_unknown_orgs >= 0) {
-    $warned = 1;
-    print "\n*** WARNING: The following people have unspecified organiations:\n";
-    foreach my $p (@people_with_unknown_orgs) {
-        print "***   $p\n";
-    }
-}
 
 my @k = sort(keys(%{$email_dups}));
 if ($#k >= 0) {
     $warned = 1;
-    print "\n*** WARNING: The following people had the same email address:\n";
+    print STDERR "\n*** WARNING: The following people had the same email address:\n";
     foreach my $p (@k) {
-        print "***   $p, $email_dups->{$p}\n";
+        print STDERR "***   $p, $email_dups->{$p}\n";
     }
 }
 
 if ($warned) {
-    print "
+    print STDERR "
 *******************************************************************************
-*** YOU SHOULD EDIT THE .mailmap AND/OR AUTHORS FILE TO RESOLVE THESE WARNINGS!
+*** YOU SHOULD EDIT THE .mailmap FILE TO RESOLVE THESE WARNINGS!
 *******************************************************************************\n";
 }
 
