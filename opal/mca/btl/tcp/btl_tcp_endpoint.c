@@ -371,31 +371,18 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
 
 
 /*
- * A blocking send on a non-blocking socket. Used to send the small amount of connection
- * information that identifies the endpoints endpoint.
+ * A blocking send on a non-blocking socket. Used to send the small
+ * amount of connection information that identifies the endpoints endpoint.
  */
 static int
 mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpoint,
-                                   void* data, size_t size)
+                                   const void* data, size_t size)
 {
-    unsigned char* ptr = (unsigned char*)data;
-    size_t cnt = 0;
-    while(cnt < size) {
-        int retval = send(btl_endpoint->endpoint_sd, (const char *)ptr+cnt, size-cnt, 0);
-        if(retval < 0) {
-            if(opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-                BTL_ERROR(("send(%d, %p, %lu/%lu) failed: %s (%d)",
-                           btl_endpoint->endpoint_sd, data, cnt, size,
-                           strerror(opal_socket_errno), opal_socket_errno));
-                btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
-                mca_btl_tcp_endpoint_close(btl_endpoint);
-                return -1;
-            }
-            continue;
-        }
-        cnt += retval;
+    int ret = mca_btl_tcp_send_blocking(btl_endpoint->endpoint_sd, data, size);
+    if (ret < 0) {
+        mca_btl_tcp_endpoint_close(btl_endpoint);
     }
-    return cnt;
+    return ret;
 }
 
 
@@ -573,31 +560,11 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoint
  */
 static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpoint, void* data, size_t size)
 {
-    unsigned char* ptr = (unsigned char*)data;
-    size_t cnt = 0;
-    while(cnt < size) {
-        int retval = recv(btl_endpoint->endpoint_sd, (char *)ptr+cnt, size-cnt, 0);
-
-        /* remote closed connection */
-        if(retval == 0) {
-            mca_btl_tcp_endpoint_close(btl_endpoint);
-            return cnt;
-        }
-
-        /* socket is non-blocking so handle errors */
-        if(retval < 0) {
-            if(opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-                BTL_ERROR(("recv(%d, %lu/%lu) failed: %s (%d)",
-                           btl_endpoint->endpoint_sd, cnt, size, strerror(opal_socket_errno), opal_socket_errno));
-                btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
-                mca_btl_tcp_endpoint_close(btl_endpoint);
-                return -1;
-            }
-            continue;
-        }
-        cnt += retval;
+    int ret = mca_btl_tcp_recv_blocking(btl_endpoint->endpoint_sd, data, size);
+    if (ret <= 0) {
+        mca_btl_tcp_endpoint_close(btl_endpoint);
     }
-    return cnt;
+    return ret;
 }
 
 
