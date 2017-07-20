@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -47,14 +47,14 @@ BEGIN_C_DECLS
 /*
  * MCA Framework
  */
-PMIX_EXPORT extern pmix_mca_base_framework_t pmix_pnet_base_framework;
+extern pmix_mca_base_framework_t pmix_pnet_base_framework;
 /**
  * PNET select function
  *
  * Cycle across available components and construct the list
  * of active modules
  */
-PMIX_EXPORT pmix_status_t pmix_pnet_base_select(void);
+pmix_status_t pmix_pnet_base_select(void);
 
 /**
  * Track an active component / module
@@ -78,13 +78,13 @@ typedef struct pmix_pnet_globals_t pmix_pnet_globals_t;
 
 extern pmix_pnet_globals_t pmix_pnet_globals;
 
-PMIX_EXPORT pmix_status_t pmix_pnet_base_setup_app(char *nspace, pmix_list_t *ilist);
-PMIX_EXPORT pmix_status_t pmix_pnet_base_setup_local_network(char *nspace,
-                                                             pmix_info_t info[],
-                                                             size_t ninfo);
-PMIX_EXPORT pmix_status_t pmix_pnet_base_setup_fork(const pmix_proc_t *peer, char ***env);
-PMIX_EXPORT void pmix_pnet_base_child_finalized(pmix_peer_t *peer);
-PMIX_EXPORT void pmix_pnet_base_local_app_finalized(char *nspace);
+pmix_status_t pmix_pnet_base_setup_app(char *nspace, pmix_list_t *ilist);
+pmix_status_t pmix_pnet_base_setup_local_network(char *nspace,
+                                                 pmix_info_t info[],
+                                                 size_t ninfo);
+pmix_status_t pmix_pnet_base_setup_fork(const pmix_proc_t *peer, char ***env);
+void pmix_pnet_base_child_finalized(pmix_peer_t *peer);
+void pmix_pnet_base_local_app_finalized(char *nspace);
 
 END_C_DECLS
 

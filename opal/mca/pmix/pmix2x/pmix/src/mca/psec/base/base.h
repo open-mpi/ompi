@@ -46,14 +46,14 @@ BEGIN_C_DECLS
 /*
  * MCA Framework
  */
-PMIX_EXPORT extern pmix_mca_base_framework_t pmix_psec_base_framework;
+extern pmix_mca_base_framework_t pmix_psec_base_framework;
 /**
  * PSEC select function
  *
  * Cycle across available components and construct the list
  * of active modules
  */
-PMIX_EXPORT pmix_status_t pmix_psec_base_select(void);
+pmix_status_t pmix_psec_base_select(void);
 
 /**
  * Track an active component / module
