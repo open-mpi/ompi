@@ -47,8 +47,8 @@
 /* ...or the v6-specific equivalent... */
 
 #define PMIXMB()  __asm__ __volatile__ ("mcr p15, 0, r0, c7, c10, 5" : : : "memory")
-#define PMIXRMB() MB()
-#define PMIXWMB() MB()
+#define PMIXRMB() PMIXMB()
+#define PMIXWMB() PMIXMB()
 
 #else
 
@@ -56,8 +56,8 @@
 /* ...otherwise use the Linux kernel-provided barrier */
 
 #define PMIXMB() (*((void (*)(void))(0xffff0fa0)))()
-#define PMIXRMB() MB()
-#define PMIXWMB() MB()
+#define PMIXRMB() PMIXMB()
+#define PMIXWMB() PMIXMB()
 
 #endif
 

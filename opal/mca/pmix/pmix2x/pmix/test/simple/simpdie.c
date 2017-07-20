@@ -32,7 +32,6 @@
 #include <time.h>
 
 #include "src/class/pmix_object.h"
-#include "src/buffer_ops/types.h"
 #include "src/util/argv.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"

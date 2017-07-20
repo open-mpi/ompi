@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -161,9 +161,13 @@ void set_client_argv(test_params *params, char ***argv)
     }
     if (params->test_internal) {
         char tmp[32];
-        sprintf(tmp, "%d", params->test_internal);
+        snprintf(tmp, 32, "%d", params->test_internal);
         pmix_argv_append_nosize(argv, "--test-internal");
         pmix_argv_append_nosize(argv, tmp);
+    }
+    if (params->gds_mode) {
+        pmix_argv_append_nosize(argv, "--gds");
+        pmix_argv_append_nosize(argv, params->gds_mode);
     }
 }
 

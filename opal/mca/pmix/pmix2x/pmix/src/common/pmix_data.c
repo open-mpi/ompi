@@ -34,7 +34,8 @@
 #include <pmix_common.h>
 #include <pmix_rename.h>
 
-#include "src/buffer_ops/buffer_ops.h"
+#include "src/mca/bfrops/bfrops.h"
+#include "src/include/pmix_globals.h"
 
 #define PMIX_EMBED_DATA_BUFFER(b, db)                   \
     do {                                                \
@@ -78,7 +79,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
     PMIX_EMBED_DATA_BUFFER(&buf, buffer);
 
     /* pack the value */
-    rc = pmix_bfrop.pack(&buf, src, num_vals, type);
+    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer,
+                     &buf, src, num_vals, type);
 
     /* extract the data buffer - the pointers may have changed */
     PMIX_EXTRACT_DATA_BUFFER(&buf, buffer);
@@ -102,7 +104,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_unpack(pmix_data_buffer_t *buffer, void *des
     PMIX_EMBED_DATA_BUFFER(&buf, buffer);
 
     /* unpack the value */
-    rc = pmix_bfrop.unpack(&buf, dest, max_num_values, type);
+    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                       &buf, dest, max_num_values, type);
 
     /* extract the data buffer - the pointers may have changed */
     PMIX_EXTRACT_DATA_BUFFER(&buf, buffer);
@@ -117,7 +120,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_copy(void **dest, void *src,
     pmix_status_t rc;
 
     /* copy the value */
-    rc = pmix_bfrop.copy(dest, src, type);
+    PMIX_BFROPS_COPY(rc, pmix_globals.mypeer,
+                     dest, src, type);
 
     return rc;
 }
@@ -128,7 +132,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_print(char **output, char *prefix,
     pmix_status_t rc;
 
     /* print the value */
-    rc = pmix_bfrop.print(output, prefix, src, type);
+    PMIX_BFROPS_PRINT(rc, pmix_globals.mypeer,
+                      output, prefix, src, type);
 
     return rc;
 }
@@ -148,7 +153,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_copy_payload(pmix_data_buffer_t *dest,
     PMIX_EMBED_DATA_BUFFER(&buf2, src);
 
     /* copy payload */
-    rc = pmix_bfrop.copy_payload(&buf1, &buf2);
+    PMIX_BFROPS_COPY_PAYLOAD(rc, pmix_globals.mypeer,
+                             &buf1, &buf2);
 
     /* extract the dest data buffer - the pointers may have changed */
     PMIX_EXTRACT_DATA_BUFFER(&buf1, dest);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -29,7 +29,7 @@
 
 static pmix_status_t none_init(void);
 static void none_finalize(void);
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len);
 
@@ -53,7 +53,7 @@ static void none_finalize(void)
                         "psec: none finalize");
 }
 
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len)
 {

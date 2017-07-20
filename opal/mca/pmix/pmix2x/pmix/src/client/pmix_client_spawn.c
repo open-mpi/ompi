@@ -47,15 +47,15 @@
 #include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
-#include "src/buffer_ops/buffer_ops.h"
 #include "src/threads/threads.h"
+#include "src/mca/bfrops/bfrops.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
+#include "src/mca/gds/gds.h"
 #include "src/mca/ptl/ptl.h"
 
 #include "pmix_client_ops.h"
-#include "src/include/pmix_jobdata.h"
 
 static void wait_cbfunc(struct pmix_peer_t *pr,
                         pmix_ptl_hdr_t *hdr,
@@ -104,7 +104,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     if (NULL != nspace) {
-        (void)strncpy(nspace, cb->nspace, PMIX_MAX_NSLEN);
+        (void)strncpy(nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
     }
     PMIX_RELEASE(cb);
 
@@ -139,20 +139,26 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
 
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+    PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                     msg, &cmd, 1, PMIX_CMD);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
 
     /* pack the job-level directives */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+    PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                     msg, &ninfo, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
     if (0 < ninfo) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, job_info, ninfo, PMIX_INFO))) {
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                         msg, job_info, ninfo, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(msg);
             return rc;
@@ -160,28 +166,34 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     }
 
     /* pack the apps */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &napps, 1, PMIX_SIZE))) {
+    PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                     msg, &napps, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
     if (0 < napps) {
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, apps, napps, PMIX_APP))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                         msg, apps, napps, PMIX_APP);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(msg);
+            return rc;
+        }
     }
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->spawn_cbfunc = cbfunc;
+    cb->cbfunc.spawnfn = cbfunc;
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
+    PMIX_PTL_SEND_RECV(rc, pmix_client_globals.myserver,
+                       msg, wait_cbfunc, (void*)cb);
+    if (PMIX_SUCCESS != rc) {
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -209,16 +221,25 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
     /* init */
     memset(nspace, 0, PMIX_MAX_NSLEN+1);
 
+    if (NULL == buf) {
+        ret = PMIX_ERR_BAD_PARAM;
+        goto report;
+    }
+
     /* unpack the returned status */
     cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_STATUS))) {
+    PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                       buf, &ret, &cnt, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         ret = rc;
     }
     if (PMIX_SUCCESS == ret) {
         /* unpack the namespace */
         cnt = 1;
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &n2, &cnt, PMIX_STRING))) {
+        PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                           buf, &n2, &cnt, PMIX_STRING);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             ret = rc;
         }
@@ -226,19 +247,21 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
                         "pmix:client recv '%s'", n2);
 
         if (NULL != n2) {
+            /* protect length */
             (void)strncpy(nspace, n2, PMIX_MAX_NSLEN);
-#if !(defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1))
-            /* extract and process any proc-related info for this nspace */
-            pmix_job_data_htable_store(nspace, buf);
-#endif
             free(n2);
+            PMIX_GDS_STORE_JOB_INFO(rc, pmix_globals.mypeer, nspace, buf);
+            /* extract and process any job-related info for this nspace */
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
         }
     }
 
-    if (NULL != cb->spawn_cbfunc) {
-        cb->spawn_cbfunc(ret, nspace, cb->cbdata);
+  report:
+    if (NULL != cb->cbfunc.spawnfn) {
+        cb->cbfunc.spawnfn(ret, nspace, cb->cbdata);
     }
-    cb->cbdata = NULL;
     PMIX_RELEASE(cb);
 }
 
@@ -249,7 +272,7 @@ static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata)
     PMIX_ACQUIRE_OBJECT(cb);
     cb->status = status;
     if (NULL != nspace) {
-        (void)strncpy(cb->nspace, nspace, PMIX_MAX_NSLEN);
+        cb->pname.nspace = strdup(nspace);
     }
     PMIX_POST_OBJECT(cb);
     PMIX_WAKEUP_THREAD(&cb->lock);

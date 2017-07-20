@@ -302,7 +302,11 @@ opal/mca/event/libevent*/libevent/libevent_pthreads.pc
 opal/mca/event/libevent*/libevent/include/event2/event-config.h
 
 opal/mca/hwloc/hwloc*/hwloc/include/hwloc/autogen/config.h
+opal/mca/hwloc/hwloc*/hwloc/include/hwloc/autogen/config.h.in
 opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
+opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h.in
+opal/mca/hwloc/base/static-components.h.new.extern
+opal/mca/hwloc/base/static-components.h.new.struct
 
 opal/mca/installdirs/config/install_dirs.h
 
@@ -310,8 +314,6 @@ opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h
 opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h.in
 opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in
 opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h
-opal/mca/hwloc/base/static-components.h.new.extern
-opal/mca/hwloc/base/static-components.h.new.struct
 opal/mca/pmix/pmix2x/pmix/src/include/frameworks.h
 opal/mca/pmix/pmix2x/pmix/src/mca/pinstalldirs/config/pinstall_dirs.h
 opal/mca/pmix/pmix2x/pmix/config/autogen_found_items.m4
