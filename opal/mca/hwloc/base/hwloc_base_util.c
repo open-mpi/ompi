@@ -305,8 +305,7 @@ int opal_hwloc_base_get_topology(void)
     } else if (NULL == opal_hwloc_base_topo_file) {
         if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
             0 != hwloc_topology_set_flags(opal_hwloc_topology,
-                                          (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
-                                           HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
+                                          HWLOC_TOPOLOGY_FLAG_IO_DEVICES) ||
             0 != hwloc_topology_load(opal_hwloc_topology)) {
             return OPAL_ERR_NOT_SUPPORTED;
         }
@@ -356,7 +355,6 @@ int opal_hwloc_base_set_topology(char *topofile)
      */
     if (0 != hwloc_topology_set_flags(opal_hwloc_topology,
                                       (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                                       HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
                                        HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
         hwloc_topology_destroy(opal_hwloc_topology);
         return OPAL_ERR_NOT_SUPPORTED;

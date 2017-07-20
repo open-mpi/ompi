@@ -74,7 +74,6 @@ int main(int argc, char* argv[])
      */
     if (0 != hwloc_topology_set_flags(my_topology,
                                       (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                                       HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
                                        HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
         hwloc_topology_destroy(my_topology);
         return OPAL_ERR_NOT_SUPPORTED;

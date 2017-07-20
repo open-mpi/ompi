@@ -107,7 +107,6 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
          * explicitly set a flag so hwloc sets things up correctly
          */
         if (0 != hwloc_topology_set_flags(t, (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                                              HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
                                               HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
             rc = OPAL_ERROR;
             hwloc_topology_destroy(t);
