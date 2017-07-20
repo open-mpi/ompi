@@ -1077,7 +1077,7 @@ AC_CACHE_SAVE
 # visible again
 #
 ###########################################################
-OPAL_SETUP_FT_OPTIONS
+dnl OPAL_SETUP_FT_OPTIONS
 ###########################################################
 # The following line is always required as it contains the
 # AC_DEFINE and AM_CONDITIONAL calls that set variables used
