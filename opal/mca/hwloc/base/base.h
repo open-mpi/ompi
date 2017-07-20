@@ -19,6 +19,12 @@
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 
+#if HWLOC_API_VERSION < 0x20000
+#define HWLOC_OBJ_L3CACHE HWLOC_OBJ_CACHE
+#define HWLOC_OBJ_L2CACHE HWLOC_OBJ_CACHE
+#define HWLOC_OBJ_L1CACHE HWLOC_OBJ_CACHE
+#endif
+
 /*
  * Global functions for MCA overall hwloc open and close
  */
@@ -82,6 +88,20 @@ OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
         }                                                               \
         hwloc_bitmap_free(bind);                                        \
     } while(0);
+
+#if HWLOC_API_VERSION < 0x20000
+#define OPAL_HWLOC_MAKE_OBJ_CACHE(level, obj, cache_level)              \
+    do {                                                                \
+        obj = HWLOC_OBJ_CACHE;                                          \
+        cache_level = level;                                            \
+    } while(0)
+#else
+#define OPAL_HWLOC_MAKE_OBJ_CACHE(level, obj, cache_level)              \
+    do {                                                                \
+        obj = HWLOC_OBJ_L##level##CACHE;                                \
+        cache_level = 0;                                                \
+    } while(0)
+#endif
 
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
                                                                           char *cpuset1, char *cpuset2);
@@ -282,6 +302,9 @@ OPAL_DECLSPEC char* opal_hwloc_base_get_location(char *locality,
 
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_compute_relative_locality(char *loc1, char *loc2);
 
+OPAL_DECLSPEC int opal_hwloc_base_topology_export_xmlbuffer(hwloc_topology_t topology, char **xmlpath, int *buflen);
+
+OPAL_DECLSPEC int opal_hwloc_base_topology_set_flags (hwloc_topology_t topology, unsigned long flags, bool io);
 END_C_DECLS
 
 #endif /* OPAL_HWLOC_BASE_H */

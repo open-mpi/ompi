@@ -159,7 +159,11 @@ tm_topology_t* hwloc_to_tm(char *filename,double **pcost)
     exit(-1);
   }
 
+#if HWLOC_API_VERSION < 0x20000
   hwloc_topology_ignore_all_keep_structure(topology);
+#else
+#warning FIXME hwloc v2
+#endif
   hwloc_topology_load(topology);
 
 
@@ -229,7 +233,11 @@ tm_topology_t* get_local_topo_with_hwloc(void)
 
   /* Build the topology */
   hwloc_topology_init(&topology);
+#if HWLOC_API_VERSION < 0x20000
   hwloc_topology_ignore_all_keep_structure(topology);
+#else
+#warning FIXME hwloc v2
+#endif
   hwloc_topology_load(topology);
 
   /* Test if symetric */

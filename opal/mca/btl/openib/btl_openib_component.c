@@ -19,7 +19,7 @@
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
@@ -2331,6 +2331,7 @@ static float get_ib_dev_distance(struct ibv_device *dev)
        because we have no way of measuring. */
     float distance = 0;
 
+#if HWLOC_API_VERSION < 0x20000
     /* Override any distance logic so all devices are used */
     if (0 != mca_btl_openib_component.ignore_locality ||
         OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
@@ -2475,6 +2476,9 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL != my_cpuset) {
         hwloc_bitmap_free(my_cpuset);
     }
+#else
+#warning FIXME get_ib_dev_distance is not implemented with hwloc v2
+#endif
 
     return distance;
 }

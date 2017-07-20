@@ -135,7 +135,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             /* since we are loading this from an external source, we have to
              * explicitly set a flag so hwloc sets things up correctly
              */
-            if (0 != hwloc_topology_set_flags(topo, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM)) {
+            if (0 != opal_hwloc_base_topology_set_flags(topo, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM, false)) {
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "hwloc_topology_set_flags");

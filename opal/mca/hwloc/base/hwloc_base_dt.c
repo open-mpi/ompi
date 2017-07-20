@@ -31,7 +31,7 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
         t = tarray[i];
 
         /* extract an xml-buffer representation of the tree */
-        if (0 != hwloc_topology_export_xmlbuffer(t, &xmlbuffer, &len)) {
+        if (0 != opal_hwloc_base_topology_export_xmlbuffer(t, &xmlbuffer, &len)) {
             return OPAL_ERROR;
         }
 
@@ -106,8 +106,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         /* since we are loading this from an external source, we have to
          * explicitly set a flag so hwloc sets things up correctly
          */
-        if (0 != hwloc_topology_set_flags(t, (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
-                                              HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
+        if (0 != opal_hwloc_base_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM, true)) {
             rc = OPAL_ERROR;
             hwloc_topology_destroy(t);
             goto cleanup;
@@ -191,10 +190,10 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
      * where we really need to do a tree-wise search so we only compare
      * the things we care about, and ignore stuff like MAC addresses
      */
-    if (0 != hwloc_topology_export_xmlbuffer(t1, &x1, &l1)) {
+    if (0 != opal_hwloc_base_topology_export_xmlbuffer(t1, &x1, &l1)) {
         return OPAL_EQUAL;
     }
-    if (0 != hwloc_topology_export_xmlbuffer(t2, &x2, &l2)) {
+    if (0 != opal_hwloc_base_topology_export_xmlbuffer(t2, &x2, &l2)) {
         free(x1);
         return OPAL_EQUAL;
     }

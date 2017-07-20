@@ -171,9 +171,11 @@ static int bind_upwards(orte_job_t *jdata,
                                 hwloc_obj_type_string(target),
                                 hwloc_obj_type_string(obj->type));
             if (target == obj->type) {
+#if HWLOC_API_VERSION < 0x20000
                 if (HWLOC_OBJ_CACHE == target && cache_level != obj->attr->cache.depth) {
                     continue;
                 }
+#endif
                 /* get its index */
                 if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology->topo, obj, OPAL_HWLOC_AVAILABLE))) {
                     ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -726,16 +728,13 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         hwb = HWLOC_OBJ_SOCKET;
         break;
     case OPAL_BIND_TO_L3CACHE:
-        hwb = HWLOC_OBJ_CACHE;
-        clvl = 3;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(3, hwb, clvl);
         break;
     case OPAL_BIND_TO_L2CACHE:
-        hwb = HWLOC_OBJ_CACHE;
-        clvl = 2;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(2, hwb, clvl);
         break;
     case OPAL_BIND_TO_L1CACHE:
-        hwb = HWLOC_OBJ_CACHE;
-        clvl = 1;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(1, hwb, clvl);
         break;
     case OPAL_BIND_TO_CORE:
         hwb = HWLOC_OBJ_CORE;
@@ -763,16 +762,13 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         hwm = HWLOC_OBJ_SOCKET;
         break;
     case ORTE_MAPPING_BYL3CACHE:
-        hwm = HWLOC_OBJ_CACHE;
-        clvm = 3;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(3, hwm, clvm);
         break;
     case ORTE_MAPPING_BYL2CACHE:
-        hwm = HWLOC_OBJ_CACHE;
-        clvm = 2;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(2, hwm, clvm);
         break;
     case ORTE_MAPPING_BYL1CACHE:
-        hwm = HWLOC_OBJ_CACHE;
-        clvm = 1;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(1, hwm, clvm);
         break;
     case ORTE_MAPPING_BYCORE:
         hwm = HWLOC_OBJ_CORE;
@@ -915,28 +911,30 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
             }
         } else {
             /* determine the relative depth on this node */
+#if HWLOC_API_VERSION < 0x20000
             if (HWLOC_OBJ_CACHE == hwb) {
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
                 bind_depth = hwloc_get_cache_type_depth(node->topology->topo, clvl, (hwloc_obj_cache_type_t)-1);
-            } else {
+            } else
+#endif
                 bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
-            }
             if (0 > bind_depth) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
                                true, hwloc_obj_type_string(hwb), node->name);
                 return ORTE_ERR_SILENT;
             }
+#if HWLOC_API_VERSION < 0x20000
             if (HWLOC_OBJ_CACHE == hwm) {
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
                 map_depth = hwloc_get_cache_type_depth(node->topology->topo, clvm, (hwloc_obj_cache_type_t)-1);
-            } else {
+            } else
+#endif
                 map_depth = hwloc_get_type_depth(node->topology->topo, hwm);
-            }
             if (0 > map_depth) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",

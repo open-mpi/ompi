@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -466,6 +468,8 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
     orte_proc_t *proc, *pptr;
     int rc;
     bool one_found;
+    hwloc_obj_type_t target;
+    unsigned cache_level;
 
     map = jdata->map;
 
@@ -508,7 +512,8 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: computing ranks by L3cache for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_CACHE, 3))) {
+        OPAL_HWLOC_MAKE_OBJ_CACHE(3, target, cache_level);
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, target, cache_level))) {
             if (ORTE_ERR_NOT_SUPPORTED == rc &&
                 !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
                 ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
@@ -523,7 +528,8 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: computing ranks by L2cache for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_CACHE, 2))) {
+        OPAL_HWLOC_MAKE_OBJ_CACHE(2, target, cache_level);
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, target, cache_level))) {
             if (ORTE_ERR_NOT_SUPPORTED == rc &&
                 !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
                 ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
@@ -538,7 +544,8 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: computing ranks by L1cache for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_CACHE, 1))) {
+        OPAL_HWLOC_MAKE_OBJ_CACHE(1, target, cache_level);
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, target, cache_level))) {
             if (ORTE_ERR_NOT_SUPPORTED == rc &&
                 !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
                 ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);

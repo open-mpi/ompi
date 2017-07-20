@@ -232,14 +232,11 @@ int orte_ess_base_proc_binding(void)
                         goto error;
                     }
                     if (OPAL_BIND_TO_L1CACHE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                        target = HWLOC_OBJ_CACHE;
-                        cache_level = 1;
+                        OPAL_HWLOC_MAKE_OBJ_CACHE(1, target, cache_level);
                     } else if (OPAL_BIND_TO_L2CACHE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                        target = HWLOC_OBJ_CACHE;
-                        cache_level = 2;
+                        OPAL_HWLOC_MAKE_OBJ_CACHE(2, target, cache_level);
                     } else if (OPAL_BIND_TO_L3CACHE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                        target = HWLOC_OBJ_CACHE;
-                        cache_level = 3;
+                        OPAL_HWLOC_MAKE_OBJ_CACHE(3, target, cache_level);
                     } else if (OPAL_BIND_TO_SOCKET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                         target = HWLOC_OBJ_SOCKET;
                     } else if (OPAL_BIND_TO_NUMA == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
@@ -251,9 +248,11 @@ int orte_ess_base_proc_binding(void)
                     }
                     for (obj = obj->parent; NULL != obj; obj = obj->parent) {
                         if (target == obj->type) {
+#if HWLOC_API_VERSION < 0x20000
                             if (HWLOC_OBJ_CACHE == target && cache_level != obj->attr->cache.depth) {
                                 continue;
                             }
+#endif
                             /* this is the place! */
                             cpus = obj->cpuset;
                             if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
