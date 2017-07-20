@@ -177,6 +177,11 @@ Compiler Notes
   source directory path names that was resolved in 9.0-4 (9.0-3 is
   known to be broken in this regard).
 
+- Open MPI does not support the PGI compiler suite on OS X or MacOS.
+  See issues below for more details:
+  https://github.com/open-mpi/ompi/issues/2604
+  https://github.com/open-mpi/ompi/issues/2605
+
 - OpenSHMEM Fortran bindings do not support the `no underscore` Fortran
   symbol convention. IBM's xlf compilers build in that mode by default.
   As such, IBM's xlf compilers cannot build/link the OpenSHMEM Fortran
