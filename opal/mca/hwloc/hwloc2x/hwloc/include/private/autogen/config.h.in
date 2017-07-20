@@ -627,15 +627,11 @@
 /* Define to 1 on x86_64 */
 #undef HWLOC_X86_64_ARCH
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Define to 1 if scotch is netlocscotch is enabled */
 #undef NETLOC_SCOTCH
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -725,4 +721,3 @@
 
 
 #endif /* HWLOC_CONFIGURE_H */
-

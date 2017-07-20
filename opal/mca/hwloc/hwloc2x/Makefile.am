@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014-2015 Intel, Inc. All right reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      Research Organization for Information Science
@@ -11,8 +11,6 @@
 #
 # $HEADER$
 #
-
-EXTRA_DIST = autogen.subdirs
 
 SUBDIRS = hwloc
 DIST_SUBDIRS=hwloc
