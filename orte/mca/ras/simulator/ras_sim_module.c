@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  *
@@ -135,7 +135,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             /* since we are loading this from an external source, we have to
              * explicitly set a flag so hwloc sets things up correctly
              */
-            if (0 != hwloc_topology_set_flags(topo, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM)) {
+            if (0 != opal_hwloc_base_topology_set_flags(topo, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM, false)) {
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "hwloc_topology_set_flags");
@@ -202,13 +202,6 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
                 orte_show_help("help-ras-simulator.txt",
                                "hwloc API fail", true,
                                __FILE__, __LINE__, "hwloc_topology_load");
-                hwloc_topology_destroy(topo);
-                goto error_silent;
-            }
-            if (OPAL_SUCCESS != opal_hwloc_base_filter_cpus(topo)) {
-                orte_show_help("help-ras-simulator.txt",
-                               "hwloc API fail", true,
-                               __FILE__, __LINE__, "opal_hwloc_base_filter_cpus");
                 hwloc_topology_destroy(topo);
                 goto error_silent;
             }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -50,9 +50,9 @@ hwloc_obj_type_t opal_hwloc_levels[] = {
     HWLOC_OBJ_MACHINE,
     HWLOC_OBJ_NODE,
     HWLOC_OBJ_SOCKET,
-    HWLOC_OBJ_CACHE,
-    HWLOC_OBJ_CACHE,
-    HWLOC_OBJ_CACHE,
+    HWLOC_OBJ_L3CACHE,
+    HWLOC_OBJ_L2CACHE,
+    HWLOC_OBJ_L1CACHE,
     HWLOC_OBJ_CORE,
     HWLOC_OBJ_PU
 };

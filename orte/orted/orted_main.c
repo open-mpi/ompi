@@ -362,7 +362,7 @@ int orte_daemon(int argc, char *argv[])
     if (NULL != orte_daemon_cores) {
         char **cores=NULL, tmp[128];
         hwloc_obj_t pu;
-        hwloc_cpuset_t ours, pucpus, res;
+        hwloc_cpuset_t ours, res;
         int core;
 
         /* could be a collection of comma-delimited ranges, so
@@ -372,7 +372,6 @@ int orte_daemon(int argc, char *argv[])
         if (NULL != cores) {
             ours = hwloc_bitmap_alloc();
             hwloc_bitmap_zero(ours);
-            pucpus = hwloc_bitmap_alloc();
             res = hwloc_bitmap_alloc();
             for (i=0; NULL != cores[i]; i++) {
                 core = strtoul(cores[i], NULL, 10);
@@ -387,12 +386,10 @@ int orte_daemon(int argc, char *argv[])
                                    orte_daemon_cores);
                     ret = ORTE_ERR_NOT_SUPPORTED;
                     hwloc_bitmap_free(ours);
-                    hwloc_bitmap_free(pucpus);
                     hwloc_bitmap_free(res);
                     goto DONE;
                 }
-                hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
-                hwloc_bitmap_or(res, ours, pucpus);
+                hwloc_bitmap_or(res, ours, pu->cpuset);
                 hwloc_bitmap_copy(ours, res);
             }
             /* if the result is all zeros, then don't bind */
@@ -406,7 +403,6 @@ int orte_daemon(int argc, char *argv[])
             }
             /* cleanup */
             hwloc_bitmap_free(ours);
-            hwloc_bitmap_free(pucpus);
             hwloc_bitmap_free(res);
             opal_argv_free(cores);
         }

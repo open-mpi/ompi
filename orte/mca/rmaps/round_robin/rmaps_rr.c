@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,6 +95,8 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
 
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->apps->size; i++) {
+        hwloc_obj_type_t target;
+        unsigned cache_level;
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
@@ -171,8 +175,9 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                                           app->num_procs);
             }
         } else if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
-                                     app->num_procs, HWLOC_OBJ_CACHE, 1);
+            OPAL_HWLOC_MAKE_OBJ_CACHE(1, target, cache_level);
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots, app->num_procs,
+                                     target, cache_level);
             if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
@@ -183,8 +188,9 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                                           app->num_procs);
             }
         } else if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
-                                     app->num_procs, HWLOC_OBJ_CACHE, 2);
+            OPAL_HWLOC_MAKE_OBJ_CACHE(2, target, cache_level);
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots, app->num_procs,
+                                     target, cache_level);
             if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
@@ -195,8 +201,9 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                                           app->num_procs);
             }
         } else if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
-                                     app->num_procs, HWLOC_OBJ_CACHE, 3);
+            OPAL_HWLOC_MAKE_OBJ_CACHE(3, target, cache_level);
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots, app->num_procs,
+                                     target, cache_level);
             if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
@@ -272,6 +279,8 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
 static int orte_rmaps_rr_assign_locations(orte_job_t *jdata)
 {
     mca_base_component_t *c = &mca_rmaps_round_robin_component.base_version;
+    hwloc_obj_type_t target;
+    unsigned cache_level;
     int rc;
 
     if (NULL == jdata->map->last_mapper ||
@@ -316,7 +325,8 @@ static int orte_rmaps_rr_assign_locations(orte_job_t *jdata)
             rc = orte_rmaps_rr_assign_root_level(jdata);
         }
     } else if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-        rc = orte_rmaps_rr_assign_byobj(jdata, HWLOC_OBJ_CACHE, 1);
+        OPAL_HWLOC_MAKE_OBJ_CACHE(1, target, cache_level);
+        rc = orte_rmaps_rr_assign_byobj(jdata, target, cache_level);
         if (ORTE_ERR_NOT_FOUND == rc) {
             /* if the mapper couldn't map by this object because
              * it isn't available, but the error allows us to try
@@ -326,7 +336,8 @@ static int orte_rmaps_rr_assign_locations(orte_job_t *jdata)
             rc = orte_rmaps_rr_assign_root_level(jdata);
         }
     } else if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-        rc = orte_rmaps_rr_assign_byobj(jdata, HWLOC_OBJ_CACHE, 2);
+        OPAL_HWLOC_MAKE_OBJ_CACHE(2, target, cache_level);
+        rc = orte_rmaps_rr_assign_byobj(jdata, target, cache_level);
         if (ORTE_ERR_NOT_FOUND == rc) {
             /* if the mapper couldn't map by this object because
              * it isn't available, but the error allows us to try
@@ -336,7 +347,8 @@ static int orte_rmaps_rr_assign_locations(orte_job_t *jdata)
             rc = orte_rmaps_rr_assign_root_level(jdata);
         }
     } else if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-        rc = orte_rmaps_rr_assign_byobj(jdata, HWLOC_OBJ_CACHE, 3);
+        OPAL_HWLOC_MAKE_OBJ_CACHE(3, target, cache_level);
+        rc = orte_rmaps_rr_assign_byobj(jdata, target, cache_level);
         if (ORTE_ERR_NOT_FOUND == rc) {
             /* if the mapper couldn't map by this object because
              * it isn't available, but the error allows us to try

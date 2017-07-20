@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -133,7 +133,6 @@ static int bind_upwards(orte_job_t *jdata,
     orte_job_map_t *map;
     orte_proc_t *proc;
     hwloc_obj_t obj;
-    hwloc_cpuset_t cpus;
     unsigned int idx, ncpus;
     opal_hwloc_obj_data_t *data;
     hwloc_obj_t locale;
@@ -172,9 +171,11 @@ static int bind_upwards(orte_job_t *jdata,
                                 hwloc_obj_type_string(target),
                                 hwloc_obj_type_string(obj->type));
             if (target == obj->type) {
+#if HWLOC_API_VERSION < 0x20000
                 if (HWLOC_OBJ_CACHE == target && cache_level != obj->attr->cache.depth) {
                     continue;
                 }
+#endif
                 /* get its index */
                 if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology->topo, obj, OPAL_HWLOC_AVAILABLE))) {
                     ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -210,8 +211,7 @@ static int bind_upwards(orte_job_t *jdata,
                     }
                 }
                 /* bind it here */
-                cpus = opal_hwloc_base_get_available_cpus(node->topology->topo, obj);
-                hwloc_bitmap_list_asprintf(&cpu_bitmap, cpus);
+                hwloc_bitmap_list_asprintf(&cpu_bitmap, obj->cpuset);
                 orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
                 /* record the location */
                 orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
@@ -250,7 +250,6 @@ static int bind_downwards(orte_job_t *jdata,
     orte_job_map_t *map;
     orte_proc_t *proc;
     hwloc_obj_t trg_obj, nxt_obj;
-    hwloc_cpuset_t cpus;
     unsigned int ncpus;
     opal_hwloc_obj_data_t *data;
     int total_cpus;
@@ -344,8 +343,7 @@ static int bind_downwards(orte_job_t *jdata,
                 }
             }
             /* bind the proc here */
-            cpus = opal_hwloc_base_get_available_cpus(node->topology->topo, trg_obj);
-            hwloc_bitmap_or(totalcpuset, totalcpuset, cpus);
+            hwloc_bitmap_or(totalcpuset, totalcpuset, trg_obj->cpuset);
             /* track total #cpus */
             total_cpus += ncpus;
             /* move to the next location, in case we need it */
@@ -395,7 +393,6 @@ static int bind_in_place(orte_job_t *jdata,
     orte_job_map_t *map;
     orte_node_t *node;
     orte_proc_t *proc;
-    hwloc_cpuset_t cpus;
     unsigned int idx, ncpus;
     struct hwloc_topology_support *support;
     opal_hwloc_obj_data_t *data;
@@ -566,8 +563,7 @@ static int bind_in_place(orte_job_t *jdata,
                                 ORTE_NAME_PRINT(&proc->name),
                                 hwloc_obj_type_string(locale->type), idx);
             /* bind the proc here */
-            cpus = opal_hwloc_base_get_available_cpus(node->topology->topo, locale);
-            hwloc_bitmap_list_asprintf(&cpu_bitmap, cpus);
+            hwloc_bitmap_list_asprintf(&cpu_bitmap, locale->cpuset);
             orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
             /* update the location, in case it changed */
             orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, ORTE_ATTR_LOCAL, locale, OPAL_PTR);
@@ -732,16 +728,13 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         hwb = HWLOC_OBJ_SOCKET;
         break;
     case OPAL_BIND_TO_L3CACHE:
-        hwb = HWLOC_OBJ_CACHE;
-        clvl = 3;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(3, hwb, clvl);
         break;
     case OPAL_BIND_TO_L2CACHE:
-        hwb = HWLOC_OBJ_CACHE;
-        clvl = 2;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(2, hwb, clvl);
         break;
     case OPAL_BIND_TO_L1CACHE:
-        hwb = HWLOC_OBJ_CACHE;
-        clvl = 1;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(1, hwb, clvl);
         break;
     case OPAL_BIND_TO_CORE:
         hwb = HWLOC_OBJ_CORE;
@@ -769,16 +762,13 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         hwm = HWLOC_OBJ_SOCKET;
         break;
     case ORTE_MAPPING_BYL3CACHE:
-        hwm = HWLOC_OBJ_CACHE;
-        clvm = 3;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(3, hwm, clvm);
         break;
     case ORTE_MAPPING_BYL2CACHE:
-        hwm = HWLOC_OBJ_CACHE;
-        clvm = 2;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(2, hwm, clvm);
         break;
     case ORTE_MAPPING_BYL1CACHE:
-        hwm = HWLOC_OBJ_CACHE;
-        clvm = 1;
+        OPAL_HWLOC_MAKE_OBJ_CACHE(1, hwm, clvm);
         break;
     case ORTE_MAPPING_BYCORE:
         hwm = HWLOC_OBJ_CORE;
@@ -921,28 +911,30 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
             }
         } else {
             /* determine the relative depth on this node */
+#if HWLOC_API_VERSION < 0x20000
             if (HWLOC_OBJ_CACHE == hwb) {
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
                 bind_depth = hwloc_get_cache_type_depth(node->topology->topo, clvl, (hwloc_obj_cache_type_t)-1);
-            } else {
+            } else
+#endif
                 bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
-            }
             if (0 > bind_depth) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
                                true, hwloc_obj_type_string(hwb), node->name);
                 return ORTE_ERR_SILENT;
             }
+#if HWLOC_API_VERSION < 0x20000
             if (HWLOC_OBJ_CACHE == hwm) {
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
                 map_depth = hwloc_get_cache_type_depth(node->topology->topo, clvm, (hwloc_obj_cache_type_t)-1);
-            } else {
+            } else
+#endif
                 map_depth = hwloc_get_type_depth(node->topology->topo, hwm);
-            }
             if (0 > map_depth) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",

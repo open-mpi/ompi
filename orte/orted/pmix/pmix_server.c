@@ -235,7 +235,7 @@ int pmix_server_init(void)
         int len;
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
-        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
+        if (0 != opal_hwloc_base_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
             OBJ_RELEASE(kv);
             OBJ_DESTRUCT(&info);
             return ORTE_ERROR;

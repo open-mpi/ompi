@@ -944,8 +944,6 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
         orted_failed_launch = true;
         goto CLEANUP;
     }
-    /* filter the topology as we'll need it that way later */
-    opal_hwloc_base_filter_cpus(topo);
     /* record the final topology */
     t->topo = topo;
 

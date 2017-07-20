@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,6 +18,12 @@
 #include "opal/dss/dss_types.h"
 
 #include "opal/mca/hwloc/hwloc-internal.h"
+
+#if HWLOC_API_VERSION < 0x20000
+#define HWLOC_OBJ_L3CACHE HWLOC_OBJ_CACHE
+#define HWLOC_OBJ_L2CACHE HWLOC_OBJ_CACHE
+#define HWLOC_OBJ_L1CACHE HWLOC_OBJ_CACHE
+#endif
 
 /*
  * Global functions for MCA overall hwloc open and close
@@ -81,6 +89,20 @@ OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
         hwloc_bitmap_free(bind);                                        \
     } while(0);
 
+#if HWLOC_API_VERSION < 0x20000
+#define OPAL_HWLOC_MAKE_OBJ_CACHE(level, obj, cache_level)              \
+    do {                                                                \
+        obj = HWLOC_OBJ_CACHE;                                          \
+        cache_level = level;                                            \
+    } while(0)
+#else
+#define OPAL_HWLOC_MAKE_OBJ_CACHE(level, obj, cache_level)              \
+    do {                                                                \
+        obj = HWLOC_OBJ_L##level##CACHE;                                \
+        cache_level = 0;                                                \
+    } while(0)
+#endif
+
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
                                                                           char *cpuset1, char *cpuset2);
 
@@ -132,9 +154,6 @@ typedef enum {
  */
 OPAL_DECLSPEC extern opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa;
 
-/* some critical helper functions */
-OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(hwloc_topology_t topo);
-
 /**
  * Discover / load the hwloc topology (i.e., call hwloc_topology_init() and
  * hwloc_topology_load()).
@@ -150,8 +169,6 @@ OPAL_DECLSPEC int opal_hwloc_base_set_topology(char *topofile);
  * Free the hwloc topology.
  */
 OPAL_DECLSPEC void opal_hwloc_base_free_topology(hwloc_topology_t topo);
-OPAL_DECLSPEC hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
-                                                                hwloc_obj_t obj);
 OPAL_DECLSPEC unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
                                                               hwloc_obj_type_t target,
                                                               unsigned cache_level,
@@ -285,6 +302,9 @@ OPAL_DECLSPEC char* opal_hwloc_base_get_location(char *locality,
 
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_compute_relative_locality(char *loc1, char *loc2);
 
+OPAL_DECLSPEC int opal_hwloc_base_topology_export_xmlbuffer(hwloc_topology_t topology, char **xmlpath, int *buflen);
+
+OPAL_DECLSPEC int opal_hwloc_base_topology_set_flags (hwloc_topology_t topology, unsigned long flags, bool io);
 END_C_DECLS
 
 #endif /* OPAL_HWLOC_BASE_H */
