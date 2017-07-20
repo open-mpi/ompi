@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -322,7 +322,7 @@ void pmix_server_finalize(void)
 }
 
 static void send_error(int status, opal_process_name_t *idreq,
-                       orte_process_name_t *remote)
+                       orte_process_name_t *remote, int remote_room)
 {
     opal_buffer_t *reply;
     int rc;
@@ -331,20 +331,28 @@ static void send_error(int status, opal_process_name_t *idreq,
     /* pack the status */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &status, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(reply);
-        return;
+        goto error;
     }
     /* pack the id of the requested proc */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, idreq, 1, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(reply);
-        return;
+        goto error;
     }
+
+    /* pack the remote daemon's request room number */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &remote_room, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+
     /* send the response */
     orte_rml.send_buffer_nb(orte_mgmt_conduit,
                             remote, reply,
                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
                             orte_rml_send_callback, NULL);
+    return;
+error:
+    OBJ_RELEASE(reply);
     return;
 }
 
@@ -472,18 +480,18 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
         if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
             orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
             OBJ_RELEASE(req);
-            send_error(rc, &idreq, sender);
+            send_error(rc, &idreq, sender, room_num);
         }
         return;
     }
     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
         /* this is truly an error, so notify the sender */
-        send_error(ORTE_ERR_NOT_FOUND, &idreq, sender);
+        send_error(ORTE_ERR_NOT_FOUND, &idreq, sender, room_num);
         return;
     }
     if (!ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
         /* send back an error - they obviously have made a mistake */
-        send_error(ORTE_ERR_NOT_FOUND, &idreq, sender);
+        send_error(ORTE_ERR_NOT_FOUND, &idreq, sender, room_num);
         return;
     }
     /* track the request since the call down to the PMIx server
@@ -499,7 +507,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
         orte_show_help("help-orted.txt", "noroom", true, req->operation, orte_pmix_server_globals.num_rooms);
         OBJ_RELEASE(req);
-        send_error(rc, &idreq, sender);
+        send_error(rc, &idreq, sender, room_num);
         return;
     }
 
@@ -508,7 +516,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         opal_hotel_checkout(&orte_pmix_server_globals.reqs, req->room_num);
         OBJ_RELEASE(req);
-        send_error(rc, &idreq, sender);
+        send_error(rc, &idreq, sender, room_num);
         return;
     }
     return;
