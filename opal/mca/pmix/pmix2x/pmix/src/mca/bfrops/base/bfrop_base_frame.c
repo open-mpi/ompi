@@ -182,33 +182,3 @@ static void kvdes(pmix_kval_t *k)
 PMIX_CLASS_INSTANCE(pmix_kval_t,
                    pmix_list_item_t,
                    kvcon, kvdes);
-
-static void rcon(pmix_regex_range_t *p)
-{
-    p->start = 0;
-    p->cnt = 0;
-}
-PMIX_CLASS_INSTANCE(pmix_regex_range_t,
-                    pmix_list_item_t,
-                    rcon, NULL);
-
-static void rvcon(pmix_regex_value_t *p)
-{
-    p->prefix = NULL;
-    p->suffix = NULL;
-    p->num_digits = 0;
-    PMIX_CONSTRUCT(&p->ranges, pmix_list_t);
-}
-static void rvdes(pmix_regex_value_t *p)
-{
-    if (NULL != p->prefix) {
-        free(p->prefix);
-    }
-    if (NULL != p->suffix) {
-        free(p->suffix);
-    }
-    PMIX_LIST_DESTRUCT(&p->ranges);
-}
-PMIX_CLASS_INSTANCE(pmix_regex_value_t,
-                    pmix_list_item_t,
-                    rvcon, rvdes);

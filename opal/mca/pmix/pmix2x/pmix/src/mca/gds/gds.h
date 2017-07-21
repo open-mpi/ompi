@@ -71,6 +71,37 @@ typedef pmix_status_t (*pmix_gds_base_assign_module_fn_t)(pmix_info_t *info,
                                                           size_t ninfo,
                                                           int *priority);
 
+/* SERVER FN: assemble the keys buffer for server answer */
+typedef pmix_status_t (*pmix_gds_base_module_assemb_kvs_req_fn_t)(const pmix_proc_t *proc,
+                                                            pmix_list_t *kvs,
+                                                            pmix_buffer_t *buf,
+                                                            void *cbdata);
+
+/* define a macro for server keys answer based on peer */
+#define PMIX_GDS_ASSEMB_KVS_REQ(s, p, r, k, b, c)                           \
+    do {                                                                    \
+        pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;                 \
+        (s) = PMIX_SUCCESS;                                                 \
+        if (NULL != _g->assemb_kvs_req) {                                   \
+            (s) = _g->assemb_kvs_req(r, k, b, (void*)c);                    \
+        }                                                                   \
+    } while(0)
+
+
+/* CLIENT FN: unpack buffer and key processing */
+typedef pmix_status_t (*pmix_gds_base_module_accept_kvs_resp_fn_t)(pmix_buffer_t *buf);
+
+/* define a macro for client key processing from a server response based on peer */
+#define PMIX_GDS_ACCEPT_KVS_RESP(s, p, b)                                   \
+    do {                                                                    \
+        pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;                 \
+        (s) = PMIX_SUCCESS;                                                 \
+        if (NULL != _g->accept_kvs_resp) {                                  \
+            (s) = _g->accept_kvs_resp(b);                                   \
+        }                                                                   \
+    } while (0)
+
+
 /* SERVER FN: cache job-level info in the server's GDS until client
  * procs connect and we discover which GDS module to use for them.
  * Note that this is essentially the same function as store_job_info,
@@ -350,6 +381,8 @@ typedef struct {
     pmix_gds_base_module_setup_fork_fn_t            setup_fork;
     pmix_gds_base_module_add_nspace_fn_t            add_nspace;
     pmix_gds_base_module_del_nspace_fn_t            del_nspace;
+    pmix_gds_base_module_assemb_kvs_req_fn_t        assemb_kvs_req;
+    pmix_gds_base_module_accept_kvs_resp_fn_t       accept_kvs_resp;
 
 } pmix_gds_base_module_t;
 

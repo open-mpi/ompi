@@ -13,8 +13,8 @@
 # major, minor, and release are generally combined in the form
 # <major>.<minor>.<release>.
 
-major=3
-minor=0
+major=2
+minor=1
 release=0
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
@@ -30,7 +30,7 @@ greek=
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=gitd26d689
+repo_rev=git59f8ecb
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +44,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Jul 06, 2017"
+date="Jul 21, 2017"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library

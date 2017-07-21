@@ -80,6 +80,13 @@ static pmix_status_t nspace_add(const char *nspace,
 
 static pmix_status_t nspace_del(const char *nspace);
 
+static pmix_status_t assemb_kvs_req(const pmix_proc_t *proc,
+                              pmix_list_t *kvs,
+                              pmix_buffer_t *bo,
+                              void *cbdata);
+
+static pmix_status_t accept_kvs_resp(pmix_buffer_t *buf);
+
 pmix_gds_base_module_t pmix_hash_module = {
     .name = "hash",
     .init = hash_init,
@@ -93,7 +100,9 @@ pmix_gds_base_module_t pmix_hash_module = {
     .fetch = hash_fetch,
     .setup_fork = setup_fork,
     .add_nspace = nspace_add,
-    .del_nspace = nspace_del
+    .del_nspace = nspace_del,
+    .assemb_kvs_req = assemb_kvs_req,
+    .accept_kvs_resp = accept_kvs_resp
 };
 
 typedef struct {
@@ -1584,4 +1593,101 @@ static pmix_status_t nspace_del(const char *nspace)
 {
     /* we don't need to do anything here */
     return PMIX_SUCCESS;
+}
+
+static pmix_status_t assemb_kvs_req(const pmix_proc_t *proc,
+                              pmix_list_t *kvs,
+                              pmix_buffer_t *buf,
+                              void *cbdata)
+{
+    pmix_status_t rc = PMIX_SUCCESS;
+    pmix_server_caddy_t *cd = (pmix_server_caddy_t*)cbdata;
+    pmix_kval_t *kv;
+
+    PMIX_BFROPS_PACK(rc, cd->peer, buf, proc, 1, PMIX_PROC);
+    if (PMIX_SUCCESS != rc) {
+        return rc;
+    }
+    PMIX_LIST_FOREACH(kv, kvs, pmix_kval_t) {
+        PMIX_BFROPS_PACK(rc, cd->peer, buf, kv, 1, PMIX_KVAL);
+        if (PMIX_SUCCESS != rc) {
+            return rc;
+        }
+    }
+    return rc;
+}
+
+static pmix_status_t accept_kvs_resp(pmix_buffer_t *buf)
+{
+    pmix_status_t rc = PMIX_SUCCESS;
+    int32_t cnt;
+    pmix_byte_object_t bo;
+    pmix_buffer_t pbkt;
+    pmix_kval_t *kv;
+    pmix_proc_t proct;
+
+    /* the incoming payload is provided as a set of packed
+     * byte objects, one for each rank. A pmix_proc_t is the first
+     * entry in the byte object. If the rank=PMIX_RANK_WILDCARD,
+     * then that byte object contains job level info
+     * for the provided nspace. Otherwise, the byte
+     * object contains the pmix_kval_t's that were "put" by the
+     * referenced process */
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                       buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    while (PMIX_SUCCESS == rc) {
+        /* setup the byte object for unpacking */
+        PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
+        PMIX_LOAD_BUFFER(pmix_client_globals.myserver,
+                         &pbkt, bo.bytes, bo.size);
+        /* unpack the id of the providing process */
+        cnt = 1;
+        PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                           &pbkt, &proct, &cnt, PMIX_PROC);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            return rc;
+        }
+        cnt = 1;
+        kv = PMIX_NEW(pmix_kval_t);
+        PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                           &pbkt, kv, &cnt, PMIX_KVAL);
+        while (PMIX_SUCCESS == rc) {
+            /* let the GDS component for this peer store it - if
+             * the kval contains shmem connection info, then the
+             * component will know what to do about it (or else
+             * we selected the wrong component for this peer!) */
+
+            PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, &proct, PMIX_INTERNAL, kv);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(kv);
+                PMIX_DESTRUCT(&pbkt);
+                return rc;
+            }
+            PMIX_RELEASE(kv);  // maintain accounting
+            /* get the next one */
+            kv = PMIX_NEW(pmix_kval_t);
+            cnt = 1;
+            PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                               &pbkt, kv, &cnt, PMIX_KVAL);
+        }
+        PMIX_RELEASE(kv);  // maintain accounting
+        if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_DESTRUCT(&pbkt);
+            return rc;
+        }
+        PMIX_DESTRUCT(&pbkt);
+        /* get the next one */
+        cnt = 1;
+        PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                           buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    }
+    if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    return rc;
 }
