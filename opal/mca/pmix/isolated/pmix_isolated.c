@@ -122,12 +122,18 @@ static int isolated_init(opal_list_t *ilist)
 {
     int rc;
     opal_value_t kv;
+    opal_process_name_t wildcard;
 
-    if (0 < isolated_init_count) {
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    ++isolated_init_count;
+    if (1 < isolated_init_count) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
         return OPAL_SUCCESS;
     }
 
-    ++isolated_init_count;
+
+    wildcard.jobid = 1;
+    wildcard.vpid = OPAL_VPID_WILDCARD;
 
     /* store our name in the opal_proc_t so that
      * debug messages will make sense - an upper
@@ -172,6 +178,17 @@ static int isolated_init(opal_list_t *ilist)
     kv.type = OPAL_UINT32;
     kv.data.uint32 = 1;
     if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&kv);
+        goto err_exit;
+    }
+    OBJ_DESTRUCT(&kv);
+
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_PMIX_MAX_PROCS);
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = 1;
+    if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&wildcard, &kv))) {
         OPAL_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
         goto err_exit;
@@ -246,30 +263,35 @@ static int isolated_init(opal_list_t *ilist)
     }
     OBJ_DESTRUCT(&kv);
 
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     return OPAL_SUCCESS;
 
   err_exit:
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     return rc;
 }
 
 static int isolated_fini(void)
 {
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    --opal_pmix_base.initialized;
+
     if (0 == isolated_init_count) {
-        return OPAL_SUCCESS;
+        opal_pmix_base_hash_finalize();
     }
 
-    if (0 != --isolated_init_count) {
-        return OPAL_SUCCESS;
-    }
-    opal_pmix_base_hash_finalize();
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     return OPAL_SUCCESS;
 }
 
 static int isolated_initialized(void)
 {
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     if (0 < isolated_init_count) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
         return 1;
     }
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     return 0;
 }
 
@@ -325,13 +347,16 @@ static int isolated_put(opal_pmix_scope_t scope,
 {
     int rc;
 
-    opal_output_verbose(10, opal_pmix_base_framework.framework_output,
-                        "%s pmix:isolated isolated_put key %s scope %d\n",
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated_put key %s scope %d",
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kv->key, scope);
 
-    if (!isolated_init_count) {
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    if (0 == isolated_init_count) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
         return OPAL_ERROR;
     }
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     rc = opal_pmix_base_store(&isolated_pname, kv);
 
@@ -340,18 +365,31 @@ static int isolated_put(opal_pmix_scope_t scope,
 
 static int isolated_commit(void)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated commit",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
     return OPAL_SUCCESS;
 }
 
 static int isolated_fence(opal_list_t *procs, int collect_data)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated fence",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_SUCCESS;
 }
 
 static int isolated_fence_nb(opal_list_t *procs, int collect_data,
                              opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated fence_nb",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, cbdata);
+    }
+    return OPAL_SUCCESS;
 }
 
 static int isolated_get(const opal_process_name_t *id,
@@ -383,39 +421,60 @@ static int isolated_get(const opal_process_name_t *id,
 static int isolated_get_nb(const opal_process_name_t *id, const char *key,
                            opal_list_t *info, opal_pmix_value_cbfunc_t cbfunc, void *cbdata)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated get_nb",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int isolated_publish(opal_list_t *info)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated publish",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int isolated_publish_nb(opal_list_t *info,
                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated publish_nb",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int isolated_lookup(opal_list_t *data, opal_list_t *info)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated lookup",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int isolated_lookup_nb(char **keys, opal_list_t *info,
                               opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated lookup_nb",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int isolated_unpublish(char **keys, opal_list_t *info)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated unpublish",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int isolated_unpublish_nb(char **keys, opal_list_t *info,
                                  opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated unpublish_nb",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
@@ -427,6 +486,10 @@ static const char *isolated_get_version(void)
 static int isolated_store_local(const opal_process_name_t *proc,
                                 opal_value_t *val)
 {
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:isolated isolated store_local",
+                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
     opal_pmix_base_store(proc, val);
 
     return OPAL_SUCCESS;
