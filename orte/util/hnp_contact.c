@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +41,10 @@
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
@@ -77,7 +79,7 @@ int orte_write_hnp_contact_file(char *filename)
     FILE *fp;
     char *my_uri;
 
-    my_uri = orte_rml.get_contact_info();
+    orte_oob_base_get_addr(&my_uri);
     if (NULL == my_uri) {
         return ORTE_ERROR;
     }
@@ -104,6 +106,7 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
     char *hnp_uri, *pidstr;
     FILE *fp;
     int rc;
+    opal_value_t val;
 
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
@@ -133,15 +136,29 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
     fclose(fp);
 
     if (connect) {
-        /* set the contact info into the comm hash tables*/
-        orte_rml.set_contact_info(hnp_uri);
-
         /* extract the HNP's name and store it */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(hnp_uri, &hnp->name, NULL))) {
             ORTE_ERROR_LOG(rc);
             free(hnp_uri);
             return rc;
         }
+
+        /* set the contact info into the comm hash tables*/
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = OPAL_PMIX_PROC_URI;
+        val.type = OPAL_STRING;
+        val.data.string = hnp_uri;
+        if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&hnp->name, &val))) {
+            ORTE_ERROR_LOG(rc);
+            val.key = NULL;
+            val.data.string = NULL;
+            OBJ_DESTRUCT(&val);
+            free(hnp_uri);
+            return rc;
+        }
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
 
         /* set the route to be direct */
         if (ORTE_SUCCESS != (rc = orte_routed.update_route(NULL, &hnp->name, &hnp->name))) {

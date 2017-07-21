@@ -563,7 +563,7 @@ static void send_msg(int fd, short args, void *cbdata)
             snd->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
             ORTE_RML_SEND_COMPLETE(snd);
             //OBJ_RELEASE( ofi_send_req);
-            return;
+            return ;
         }
         /* decide the provider we want to use from the list of providers in peer as per below order.
          * 1. if the user specified the transport for this conduit (even giving us a prioritized list of candidates),

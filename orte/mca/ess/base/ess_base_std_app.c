@@ -198,6 +198,8 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         }
     }
     if (NULL != orte_process_info.my_daemon_uri) {
+        opal_value_t val;
+
         /* extract the daemon's name so we can update the routing table */
         if (ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
                                                             ORTE_PROC_MY_DAEMON, NULL))) {
@@ -205,11 +207,25 @@ int orte_ess_base_app_setup(bool db_restrict_local)
             error = "orte_rml_parse_daemon";
             goto error;
         }
-        /* Set the contact info in the RML - this won't actually establish
-         * the connection, but just tells the RML how to reach the daemon
+        /* Set the contact info in the database - this won't actually establish
+         * the connection, but just tells us how to reach the daemon
          * if/when we attempt to send to it
          */
-        orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = OPAL_PMIX_PROC_URI;
+        val.type = OPAL_STRING;
+        val.data.string = orte_process_info.my_daemon_uri;
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_DAEMON, &val))) {
+            ORTE_ERROR_LOG(ret);
+            val.key = NULL;
+            val.data.string = NULL;
+            OBJ_DESTRUCT(&val);
+            error = "store DAEMON URI";
+            goto error;
+        }
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
     }
 
     /* setup the errmgr */

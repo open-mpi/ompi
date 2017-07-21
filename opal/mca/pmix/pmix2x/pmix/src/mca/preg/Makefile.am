@@ -27,7 +27,7 @@ noinst_LTLIBRARIES = libmca_preg.la
 libmca_preg_la_SOURCES =
 
 # local files
-headers = preg.h preg_types.h
+headers = preg.h
 sources =
 
 # Conditionally install the header files

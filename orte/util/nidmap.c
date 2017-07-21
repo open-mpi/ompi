@@ -101,11 +101,10 @@ int orte_util_build_daemon_nidmap(void)
     int rc;
     struct hostent *h;
     orte_node_t *node;
-    opal_buffer_t buf;
     opal_process_name_t proc;
     char *uri, *addr;
     char *proc_name;
-    opal_value_t kv;
+    opal_value_t kv, val;
 
     /* install the entry for the HNP */
     proc.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -122,7 +121,9 @@ int orte_util_build_daemon_nidmap(void)
     OBJ_DESTRUCT(&kv);
 
     /* we must have already built the node pool, so cycle across it */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    OBJ_CONSTRUCT(&val, opal_value_t);
+    val.key = OPAL_PMIX_PROC_URI;
+    val.type = OPAL_STRING;
     for (i=0; i < orte_node_pool->size; i++) {
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             continue;
@@ -180,20 +181,25 @@ int orte_util_build_daemon_nidmap(void)
                              "%s orte:util:build:daemon:nidmap node %s daemon %d addr %s uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              node->name, i+1, addr, uri));
-        /* if this is the HNP, then store it */
+        /* if this is the HNP, then save it */
         if (!ORTE_PROC_IS_HNP && 0 == i) {
             orte_process_info.my_hnp_uri = strdup(uri);
         }
-        opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
+        val.data.string = uri;
+        if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&proc, &val))) {
+            ORTE_ERROR_LOG(rc);
+            val.key = NULL;
+            val.data.string = NULL;
+            OBJ_DESTRUCT(&val);
+            return rc;
+        }
+
         free(proc_name);
         free(uri);
     }
-
-    /* load the hash tables */
-    if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    OBJ_DESTRUCT(&buf);
+    val.key = NULL;
+    val.data.string = NULL;
+    OBJ_DESTRUCT(&val);
 
     return rc;
 }

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -296,45 +296,6 @@ typedef int (*orte_rml_API_query_transports_fn_t)(opal_list_t *transports);
 typedef char* (*orte_rml_API_query_routed_fn_t)(orte_rml_conduit_t id);
 
 /**
- * Get a "contact info" string for the local process
- *
- * Get a "contact info" string that can be used by other processes to
- * share the contact information for the given process.  The "contact
- * info" string includes the process identifier for the given process
- * and uses only basic ascii characters.  It should be quoted when
- * evaluated by a shell, although no special escaping is necessary.
- *
- * @note The function may return a contact info string which contains
- * multiple addresses.
- *
- * @retval non-NULL The contact information for this process
- * @retval NULL     An error occurred when trying to get the current
- *                  process contact info
- */
-typedef char* (*orte_rml_API_get_contact_info_fn_t)(void);
-
-
-/**
- * Update the RML with a remote process's contact info
- *
- * Update the RML with a remote process's contact information, as
- * returned from the get_contact_info() function on the remote
- * process.  Before a send can be initiated to a remote process,
- * either this function must be called for that process or that
- * process must have already established a connection to the local
- * process.
- *
- * @note The user may not always explicitly call this function
- * directly, but may instead cause it to be called through one of the
- * contact setup functions available in
- * orte/mca/rml/base/rml_contact.h.
- *
- * @param[in] contact_info The contact information string of a peer
- */
-typedef void (*orte_rml_API_set_contact_info_fn_t)(const char *contact_info);
-
-
-/**
  * "Ping" another process to determine availability
  *
  * Ping another process to determine if it is available.  This
@@ -477,11 +438,6 @@ typedef struct {
     /** Shutdown the conduit and clean up resources */
     orte_rml_API_close_conduit_fn_t             close_conduit;
 
-    /** Get contact information for local process */
-    orte_rml_API_get_contact_info_fn_t          get_contact_info;
-    /** Set contact information for remote process */
-    orte_rml_API_set_contact_info_fn_t          set_contact_info;
-
     /** Ping process for connectivity check */
     orte_rml_API_ping_fn_t                      ping;
 
@@ -543,12 +499,6 @@ typedef orte_rml_base_module_t* (*orte_rml_component_open_conduit_fn_t)(opal_lis
  */
 typedef orte_rml_pathway_t* (*orte_rml_component_query_transports_fn_t)(void);
 
-/* Get the contact info for this component */
-typedef char* (*orte_rml_component_get_contact_info_fn_t)(void);
-
-/* Set contact info */
-typedef void (*orte_rml_component_set_contact_info_fn_t)(const char *uri);
-
 /** Close conduit - allow the specific component to
  *  cleanup the module for this conduit
  */
@@ -571,8 +521,6 @@ typedef struct orte_rml_component_t {
     /* Component interface functions */
     orte_rml_component_open_conduit_fn_t        open_conduit;
     orte_rml_component_query_transports_fn_t    query_transports;
-    orte_rml_component_get_contact_info_fn_t    get_contact_info;
-    orte_rml_component_set_contact_info_fn_t    set_contact_info;
     orte_rml_module_close_conduit_fn_t          close_conduit;
 } orte_rml_component_t;
 

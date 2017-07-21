@@ -1042,7 +1042,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                    opal_buffer_t *buffer,
                                    orte_rml_tag_t tag, void *cbdata)
 {
-    char *rml_uri = NULL, *ptr;
+    char *ptr;
     int rc, idx;
     orte_proc_t *daemon=NULL;
     orte_job_t *jdata;
@@ -1077,16 +1077,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     idx = 1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(buffer, &dname, &idx, ORTE_NAME))) {
         char *nodename = NULL;
-        /* unpack its contact info */
-        idx = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            orted_failed_launch = true;
-            goto CLEANUP;
-        }
-
-        /* set the contact info into the hash table */
-        orte_rml.set_contact_info(rml_uri);
 
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch from daemon %s",
@@ -1100,7 +1090,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
         daemon->state = ORTE_PROC_STATE_RUNNING;
-        daemon->rml_uri = rml_uri;
         /* record that this daemon is alive */
         ORTE_FLAG_SET(daemon, ORTE_PROC_FLAG_ALIVE);
 

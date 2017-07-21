@@ -243,6 +243,7 @@ int pmix2x_store_local(const opal_process_name_t *proc, opal_value_t *val)
     pmix_status_t rc;
     pmix_proc_t p;
     char *nsptr;
+    opal_pmix2x_jobid_trkr_t *job;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
@@ -254,7 +255,13 @@ int pmix2x_store_local(const opal_process_name_t *proc, opal_value_t *val)
 
     if (NULL != proc) {
         if (NULL == (nsptr = pmix2x_convert_jobid(proc->jobid))) {
-            return OPAL_ERR_NOT_FOUND;
+            job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
+            (void)opal_snprintf_jobid(job->nspace, PMIX_MAX_NSLEN, proc->jobid);
+            job->jobid = proc->jobid;
+            OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+            opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+            nsptr = job->nspace;
         }
         (void)strncpy(p.nspace, nsptr, PMIX_MAX_NSLEN);
         p.rank = pmix2x_convert_opalrank(proc->vpid);

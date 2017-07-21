@@ -68,6 +68,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -722,7 +723,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
         /* send back contact info */
-        contact_info = orte_rml.get_contact_info();
+        orte_oob_base_get_addr(&contact_info);
 
         if (NULL == contact_info) {
             ORTE_ERROR_LOG(ORTE_ERROR);

@@ -50,7 +50,7 @@
 static int init_server(void)
 {
     char *server;
-    opal_buffer_t buf;
+    opal_value_t val;
     char input[1024], *filename;
     FILE *fp;
     int rc;
@@ -103,20 +103,27 @@ static int init_server(void)
         } else {
             server = strdup(orte_data_server_uri);
         }
-        /* setup our route to the server */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        opal_dss.pack(&buf, &server, 1, OPAL_STRING);
-        if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
-            ORTE_ERROR_LOG(rc);
-            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            return rc;
-        }
-        OBJ_DESTRUCT(&buf);
         /* parse the URI to get the server's name */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(server, &orte_pmix_server_globals.server, NULL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* setup our route to the server */
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = OPAL_PMIX_PROC_URI;
+        val.type = OPAL_STRING;
+        val.data.string = server;
+        if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&orte_pmix_server_globals.server, &val))) {
+            ORTE_ERROR_LOG(rc);
+            val.key = NULL;
+            val.data.string = NULL;
+            OBJ_DESTRUCT(&val);
+            return rc;
+        }
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
+
         /* check if we are to wait for the server to start - resolves
          * a race condition that can occur when the server is run
          * as a background job - e.g., in scripts

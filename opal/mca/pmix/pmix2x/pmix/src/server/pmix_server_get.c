@@ -122,9 +122,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     pmix_dmdx_local_t *lcd;
     bool local;
     bool localonly = false;
-    pmix_buffer_t pbkt, pkt;
+    pmix_buffer_t pbkt;
     pmix_byte_object_t bo;
     pmix_cb_t cb;
+    pmix_kval_t *kv;
     pmix_proc_t proc;
     char *data;
     size_t sz, n;
@@ -276,7 +277,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
          * can retrieve the info from that GDS. Otherwise,
          * we need to retrieve it from our own */
         PMIX_CONSTRUCT(&cb, pmix_cb_t);
-        peer = pmix_globals.mypeer;
+            peer = pmix_globals.mypeer;
         /* this data is for a local client, so give the gds the
          * option of returning a complete copy of the data,
          * or returning a pointer to local storage */
@@ -288,17 +289,29 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
             PMIX_DESTRUCT(&cb);
             return rc;
         }
-        PMIX_CONSTRUCT(&pkt, pmix_buffer_t);
-        /* assemble the provided data into a byte object */
-        PMIX_GDS_ASSEMB_KVS_REQ(rc, peer, &proc, &cb.kvs, &pkt, cd);
+        /* we do have it, so let's pack it for return */
+        PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
+        /* start with the proc name */
+        PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, &proc, 1, PMIX_PROC);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_DESTRUCT(&pbkt);
             PMIX_DESTRUCT(&cb);
             return rc;
         }
-        PMIX_UNLOAD_BUFFER(&pkt, bo.bytes, bo.size);
-        PMIX_DESTRUCT(&pkt);
+        PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
+            PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, kv, 1, PMIX_KVAL);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_DESTRUCT(&pbkt);
+                PMIX_DESTRUCT(&cb);
+                return rc;
+            }
+        }
+        PMIX_DESTRUCT(&cb);
+        /* extract the byte object */
+        PMIX_UNLOAD_BUFFER(&pbkt, bo.bytes, bo.size);
+        PMIX_DESTRUCT(&pbkt);
         /* pack it into the payload */
         PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
         PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, &bo, 1, PMIX_BYTE_OBJECT);
@@ -500,6 +513,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
     pmix_rank_info_t *iptr;
     pmix_proc_t proc;
     pmix_cb_t cb;
+    pmix_kval_t *kv;
     pmix_peer_t *peer;
     pmix_byte_object_t bo;
     char *data = NULL;
@@ -582,14 +596,21 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
         peer = pmix_globals.mypeer;
         PMIX_GDS_FETCH_KV(rc, peer, &cb);
         if (PMIX_SUCCESS == rc) {
-            PMIX_CONSTRUCT(&pkt, pmix_buffer_t);
             /* assemble the provided data into a byte object */
-            PMIX_GDS_ASSEMB_KVS_REQ(rc, peer, &proc, &cb.kvs, &pkt, cd);
-            if (rc != PMIX_SUCCESS) {
-                PMIX_DESTRUCT(&pkt);
+            PMIX_CONSTRUCT(&pkt, pmix_buffer_t);
+            PMIX_BFROPS_PACK(rc, cd->peer, &pkt, &proc, 1, PMIX_PROC);
+            if (PMIX_SUCCESS != rc) {
                 PMIX_DESTRUCT(&pbkt);
                 PMIX_DESTRUCT(&cb);
                 return rc;
+            }
+            PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
+                PMIX_BFROPS_PACK(rc, cd->peer, &pkt, kv, 1, PMIX_KVAL);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_DESTRUCT(&pkt);
+                    PMIX_DESTRUCT(&cb);
+                    return rc;
+                }
             }
             PMIX_UNLOAD_BUFFER(&pkt, bo.bytes, bo.size);
             PMIX_DESTRUCT(&pkt);
@@ -617,17 +638,24 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
         cb.proc = &proc;
         cb.scope = scope;
         cb.copy = false;
-        PMIX_GDS_FETCH_KV(rc, peer, &cb);
+        PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
         if (PMIX_SUCCESS == rc) {
             found = true;
-            PMIX_CONSTRUCT(&pkt, pmix_buffer_t);
             /* assemble the provided data into a byte object */
-            PMIX_GDS_ASSEMB_KVS_REQ(rc, peer, &proc, &cb.kvs, &pkt, cd);
-            if (rc != PMIX_SUCCESS) {
-                PMIX_DESTRUCT(&pkt);
+            PMIX_CONSTRUCT(&pkt, pmix_buffer_t);
+            PMIX_BFROPS_PACK(rc, cd->peer, &pkt, &proc, 1, PMIX_PROC);
+            if (PMIX_SUCCESS != rc) {
                 PMIX_DESTRUCT(&pbkt);
                 PMIX_DESTRUCT(&cb);
                 return rc;
+            }
+            PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
+                PMIX_BFROPS_PACK(rc, cd->peer, &pkt, kv, 1, PMIX_KVAL);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_DESTRUCT(&pkt);
+                    PMIX_DESTRUCT(&cb);
+                    return rc;
+                }
             }
             PMIX_UNLOAD_BUFFER(&pkt, bo.bytes, bo.size);
             PMIX_DESTRUCT(&pkt);
@@ -648,12 +676,6 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
         /* pass it back */
         cbfunc(rc, data, sz, cbdata, relfn, data);
         return rc;
-    }
-
-    if ((PMIX_LOCAL == scope) && !found) {
-        /* pass PMIX_ERR_NOT_FOUND for local request if it's not found*/
-        cbfunc(PMIX_ERR_NOT_FOUND, NULL, 0, cbdata, NULL, NULL);
-        return PMIX_SUCCESS;
     }
 
     return PMIX_ERR_NOT_FOUND;

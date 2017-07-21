@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2016      Intel, Inc. All rights reserved.
+# Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +25,6 @@ headers += \
 
 libmca_rml_la_SOURCES += \
 	base/rml_base_frame.c \
-	base/rml_base_receive.c \
 	base/rml_base_contact.c \
     base/rml_base_msg_handlers.c \
     base/rml_base_stubs.c

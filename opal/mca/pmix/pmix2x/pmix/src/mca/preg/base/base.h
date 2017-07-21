@@ -46,14 +46,14 @@ BEGIN_C_DECLS
 /*
  * MCA Framework
  */
-PMIX_EXPORT extern pmix_mca_base_framework_t pmix_preg_base_framework;
+extern pmix_mca_base_framework_t pmix_preg_base_framework;
 /**
  * PREG select function
  *
  * Cycle across available components and construct the list
  * of active modules
  */
-PMIX_EXPORT pmix_status_t pmix_preg_base_select(void);
+pmix_status_t pmix_preg_base_select(void);
 
 /**
  * Track an active component / module
@@ -75,7 +75,7 @@ struct pmix_preg_globals_t {
 };
 typedef struct pmix_preg_globals_t pmix_preg_globals_t;
 
-PMIX_EXPORT extern pmix_preg_globals_t pmix_preg_globals;
+extern pmix_preg_globals_t pmix_preg_globals;
 
 PMIX_EXPORT pmix_status_t pmix_preg_base_generate_node_regex(const char *input,
                                                              char **regex);

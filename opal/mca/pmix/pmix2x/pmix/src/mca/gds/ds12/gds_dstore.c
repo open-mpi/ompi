@@ -2483,8 +2483,9 @@ inline pmix_status_t _dstore_fetch(const char *nspace, pmix_rank_t rank, const c
                     PMIX_ERROR_LOG(rc);
                     goto done;
                 }
+
                 strncpy(info[kval_cnt - 1].key, ESH_KNAME_PTR(addr), ESH_KNAME_LEN((char *)addr));
-                pmix_value_xfer(&info[kval_cnt - 1].value, &val);
+                PMIX_BFROPS_VALUE_LOAD(pmix_globals.mypeer, &(info[kval_cnt - 1].value), &val.data, val.type);
                 PMIX_VALUE_DESTRUCT(&val);
                 buffer.base_ptr = NULL;
                 buffer.bytes_used = 0;
@@ -2544,6 +2545,9 @@ done:
 
     if( rc != PMIX_SUCCESS ){
         if( NULL == key ) {
+            if( NULL != kval ) {
+                PMIX_VALUE_RELEASE(kval);
+            }
             if( NULL != info ) {
                 PMIX_INFO_FREE(info, ninfo);
             }
@@ -2804,6 +2808,16 @@ static pmix_status_t dstore_assign_module(pmix_info_t *info, size_t ninfo,
         }
     }
 
+<<<<<<< c632784ca34c467055eadcb4efe84a25e5a3911b:opal/mca/pmix/pmix2x/pmix/src/dstore/pmix_esh.c
+    rank_meta_info *rinfo = NULL;
+    size_t num_elems, free_offset, new_free_offset;
+    int data_exist;
+    int32_t cnt;
+||||||| merged common ancestors
+    rank_meta_info *rinfo = NULL;
+    size_t num_elems, free_offset, new_free_offset;
+    int data_exist;
+=======
 #if 0
     if PMIX_GDS_MODULE != "ds12"
         *proirity = 0;
@@ -2812,6 +2826,7 @@ static pmix_status_t dstore_assign_module(pmix_info_t *info, size_t ninfo,
 #endif
     return PMIX_SUCCESS;
 }
+>>>>>>> Update PMIx and continue work on RML/OFI component:opal/mca/pmix/pmix2x/pmix/src/mca/gds/ds12/gds_dstore.c
 
 static inline int _my_client(const char *nspace, pmix_rank_t rank)
 {
@@ -2895,9 +2910,36 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
         if (_my_client(proc.nspace, proc.rank)) {
             break;
         }
+<<<<<<< c632784ca34c467055eadcb4efe84a25e5a3911b:opal/mca/pmix/pmix2x/pmix/src/dstore/pmix_esh.c
+    }
+    /* incoming buffer may contain several inner buffers for different scopes,
+     * so unpack these buffers, and then unpack kvals from each modex buffer,
+     * storing them in the shared memory dstore.
+     */
+    free_offset = get_free_offset(datadesc);
+    kp = PMIX_NEW(pmix_kval_t);
+    cnt = 1;
+    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, kp, &cnt, PMIX_KVAL))) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix: unpacked key %s", kp->key);
+        if (PMIX_SUCCESS != (rc = pmix_sm_store(ns_info, rank, kp, &rinfo, data_exist))) {
+||||||| merged common ancestors
+    }
+    /* incoming buffer may contain several inner buffers for different scopes,
+     * so unpack these buffers, and then unpack kvals from each modex buffer,
+     * storing them in the shared memory dstore.
+     */
+    free_offset = get_free_offset(datadesc);
+    kp = PMIX_NEW(pmix_kval_t);
+    while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, kp, &(int){1}, PMIX_KVAL))) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix: unpacked key %s", kp->key);
+        if (PMIX_SUCCESS != (rc = pmix_sm_store(ns_info, rank, kp, &rinfo, data_exist))) {
+=======
         /* store this in the hash table */
         PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, &proc, PMIX_REMOTE, kv);
         if (PMIX_SUCCESS != rc) {
+>>>>>>> Update PMIx and continue work on RML/OFI component:opal/mca/pmix/pmix2x/pmix/src/mca/gds/ds12/gds_dstore.c
             PMIX_ERROR_LOG(rc);
             bo->bytes = pbkt.base_ptr;
             bo->size = pbkt.bytes_used; // restore the incoming data
@@ -2905,6 +2947,14 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
             PMIX_DESTRUCT(&pbkt);
             return rc;
         }
+<<<<<<< c632784ca34c467055eadcb4efe84a25e5a3911b:opal/mca/pmix/pmix2x/pmix/src/dstore/pmix_esh.c
+        PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
+        kp = PMIX_NEW(pmix_kval_t);
+        cnt = 1;
+||||||| merged common ancestors
+        PMIX_RELEASE(kp); // maintain acctg - hash_store does a retain
+        kp = PMIX_NEW(pmix_kval_t);
+=======
         if (PMIX_SUCCESS != (rc = dstore_store(&proc, PMIX_REMOTE, kv))) {
             PMIX_ERROR_LOG(rc);
         }
@@ -2913,6 +2963,7 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
         kv = PMIX_NEW(pmix_kval_t);
         cnt = 1;
         PMIX_BFROPS_UNPACK(rc, peer, &pbkt, kv, &cnt, PMIX_KVAL);
+>>>>>>> Update PMIx and continue work on RML/OFI component:opal/mca/pmix/pmix2x/pmix/src/mca/gds/ds12/gds_dstore.c
     }
     PMIX_RELEASE(kv);  // maintain accounting
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {

@@ -41,8 +41,6 @@
 
 /* Initialising stub fns in the global var used by other modules */
 orte_rml_base_API_t orte_rml = {
-    .get_contact_info       = orte_rml_API_get_contact_info,
-    .set_contact_info       = orte_rml_API_set_contact_info,
     .ping                   = orte_rml_API_ping,
     .send_nb                = orte_rml_API_send_nb,
     .send_buffer_nb         = orte_rml_API_send_buffer_nb,

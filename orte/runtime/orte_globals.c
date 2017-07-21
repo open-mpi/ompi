@@ -83,7 +83,7 @@ char *orte_data_server_uri = NULL;
 bool orte_static_ports = false;
 char *orte_oob_static_ports = NULL;
 bool orte_standalone_operation = false;
-bool orte_fwd_mpirun_port = false;
+bool orte_fwd_mpirun_port = true;
 
 bool orte_keep_fqdn_hostnames = false;
 bool orte_have_fqdn_allocation = false;
