@@ -106,6 +106,7 @@ static int init_server(void)
         /* parse the URI to get the server's name */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(server, &orte_pmix_server_globals.server, NULL))) {
             ORTE_ERROR_LOG(rc);
+            free(server);
             return rc;
         }
         /* setup our route to the server */
@@ -116,12 +117,10 @@ static int init_server(void)
         if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&orte_pmix_server_globals.server, &val))) {
             ORTE_ERROR_LOG(rc);
             val.key = NULL;
-            val.data.string = NULL;
             OBJ_DESTRUCT(&val);
             return rc;
         }
         val.key = NULL;
-        val.data.string = NULL;
         OBJ_DESTRUCT(&val);
 
         /* check if we are to wait for the server to start - resolves

@@ -2886,15 +2886,19 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
         PMIX_DESTRUCT(&pbkt);
         return rc;
     }
+    /* don't store blobs to the sm dstore from local clients */
+    if (_my_client(proc.nspace, proc.rank)) {
+        bo->bytes = pbkt.base_ptr;
+        bo->size = pbkt.bytes_used; // restore the incoming data
+        pbkt.base_ptr = NULL;
+        PMIX_DESTRUCT(&pbkt);
+        return PMIX_SUCCESS;
+    }
     /* unpack the remaining values until we hit the end of the buffer */
     cnt = 1;
     kv = PMIX_NEW(pmix_kval_t);
     PMIX_BFROPS_UNPACK(rc, peer, &pbkt, kv, &cnt, PMIX_KVAL);
     while (PMIX_SUCCESS == rc) {
-        /* don't store blobs to the sm dstore from local clients */
-        if (_my_client(proc.nspace, proc.rank)) {
-            break;
-        }
         /* store this in the hash table */
         PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, &proc, PMIX_REMOTE, kv);
         if (PMIX_SUCCESS != rc) {
