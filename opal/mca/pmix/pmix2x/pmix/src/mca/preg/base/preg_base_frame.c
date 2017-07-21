@@ -83,3 +83,33 @@ PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, preg, "PMIx Regex Operations",
 PMIX_CLASS_INSTANCE(pmix_preg_base_active_module_t,
                     pmix_list_item_t,
                     NULL, NULL);
+
+static void rcon(pmix_regex_range_t *p)
+{
+    p->start = 0;
+    p->cnt = 0;
+}
+PMIX_CLASS_INSTANCE(pmix_regex_range_t,
+                    pmix_list_item_t,
+                    rcon, NULL);
+
+static void rvcon(pmix_regex_value_t *p)
+{
+    p->prefix = NULL;
+    p->suffix = NULL;
+    p->num_digits = 0;
+    PMIX_CONSTRUCT(&p->ranges, pmix_list_t);
+}
+static void rvdes(pmix_regex_value_t *p)
+{
+    if (NULL != p->prefix) {
+        free(p->prefix);
+    }
+    if (NULL != p->suffix) {
+        free(p->suffix);
+    }
+    PMIX_LIST_DESTRUCT(&p->ranges);
+}
+PMIX_CLASS_INSTANCE(pmix_regex_value_t,
+                    pmix_list_item_t,
+                    rvcon, rvdes);

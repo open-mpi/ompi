@@ -53,7 +53,7 @@ PMIX_EXPORT extern pmix_mca_base_framework_t pmix_ptl_base_framework;
  * Cycle across available components and construct the list
  * of active modules
  */
-pmix_status_t pmix_ptl_base_select(void);
+PMIX_EXPORT pmix_status_t pmix_ptl_base_select(void);
 
 /**
  * Track an active component

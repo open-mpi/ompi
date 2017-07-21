@@ -966,13 +966,6 @@ static void _commitfn(int sd, short args, void *cbdata)
     if (pmix_globals.commits_pending) {
         /* fetch and pack the local values */
         scope = PMIX_LOCAL;
-        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                         msgout, &scope, 1, PMIX_SCOPE);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msgout);
-            goto error;
-        }
         /* allow the GDS module to pass us this info
          * as a local connection as this data would
          * only go to another local client */
@@ -980,44 +973,40 @@ static void _commitfn(int sd, short args, void *cbdata)
         cb->scope = scope;
         cb->copy = false;
         PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, cb);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msgout);
-            goto error;
-        }
-
-        PMIX_CONSTRUCT(&bkt, pmix_buffer_t);
-        PMIX_LIST_FOREACH_SAFE(kv, kvn, &cb->kvs, pmix_kval_t) {
+        if (PMIX_SUCCESS == rc) {
             PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                             &bkt, kv, 1, PMIX_KVAL);
+                             msgout, &scope, 1, PMIX_SCOPE);
             if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
-                PMIX_DESTRUCT(&bkt);
                 PMIX_RELEASE(msgout);
                 goto error;
             }
-            pmix_list_remove_item(&cb->kvs, &kv->super);
-            PMIX_RELEASE(kv);
-        }
-        /* now pack the result */
-        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                         msgout, &bkt, 1, PMIX_BUFFER);
-        PMIX_DESTRUCT(&bkt);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msgout);
-            goto error;
+            PMIX_CONSTRUCT(&bkt, pmix_buffer_t);
+            PMIX_LIST_FOREACH_SAFE(kv, kvn, &cb->kvs, pmix_kval_t) {
+                PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                                 &bkt, kv, 1, PMIX_KVAL);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_DESTRUCT(&bkt);
+                    PMIX_RELEASE(msgout);
+                    goto error;
+                }
+                pmix_list_remove_item(&cb->kvs, &kv->super);
+                PMIX_RELEASE(kv);
+            }
+            /* now pack the result */
+            PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                             msgout, &bkt, 1, PMIX_BUFFER);
+            PMIX_DESTRUCT(&bkt);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msgout);
+                goto error;
+            }
         }
 
         /* fetch and pack the remote values */
         scope = PMIX_REMOTE;
-        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                         msgout, &scope, 1, PMIX_SCOPE);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msgout);
-            goto error;
-        }
         /* we need real copies here as this data will
          * go to remote procs - so a connection will
          * not suffice */
@@ -1025,33 +1014,36 @@ static void _commitfn(int sd, short args, void *cbdata)
         cb->scope = scope;
         cb->copy = true;
         PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, cb);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msgout);
-            goto error;
-        }
-
-        PMIX_CONSTRUCT(&bkt, pmix_buffer_t);
-        PMIX_LIST_FOREACH_SAFE(kv, kvn, &cb->kvs, pmix_kval_t) {
+        if (PMIX_SUCCESS == rc) {
             PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                             &bkt, kv, 1, PMIX_KVAL);
+                             msgout, &scope, 1, PMIX_SCOPE);
             if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
-                PMIX_DESTRUCT(&bkt);
                 PMIX_RELEASE(msgout);
                 goto error;
             }
-            pmix_list_remove_item(&cb->kvs, &kv->super);
-            PMIX_RELEASE(kv);
-        }
-        /* now pack the result */
-        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                         msgout, &bkt, 1, PMIX_BUFFER);
-        PMIX_DESTRUCT(&bkt);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msgout);
-            goto error;
+            PMIX_CONSTRUCT(&bkt, pmix_buffer_t);
+            PMIX_LIST_FOREACH_SAFE(kv, kvn, &cb->kvs, pmix_kval_t) {
+                PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                                 &bkt, kv, 1, PMIX_KVAL);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_DESTRUCT(&bkt);
+                    PMIX_RELEASE(msgout);
+                    goto error;
+                }
+                pmix_list_remove_item(&cb->kvs, &kv->super);
+                PMIX_RELEASE(kv);
+            }
+            /* now pack the result */
+            PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                             msgout, &bkt, 1, PMIX_BUFFER);
+            PMIX_DESTRUCT(&bkt);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msgout);
+                goto error;
+            }
         }
 
         /* record that all committed data to-date has been sent */

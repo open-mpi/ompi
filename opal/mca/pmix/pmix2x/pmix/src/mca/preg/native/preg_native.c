@@ -238,7 +238,7 @@ static pmix_status_t generate_node_regex(const char *input,
         /* if no ranges, then just add the name */
         if (0 == pmix_list_get_size(&vreg->ranges)) {
             if (NULL != vreg->prefix) {
-                pmix_argv_append_nosize(&regexargs, tmp);
+                pmix_argv_append_nosize(&regexargs, vreg->prefix);
             }
             PMIX_RELEASE(vreg);
             continue;
