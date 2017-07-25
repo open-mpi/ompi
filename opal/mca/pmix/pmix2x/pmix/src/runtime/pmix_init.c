@@ -270,11 +270,11 @@ int pmix_rte_init(pmix_proc_type_t type,
         goto return_error;
     }
 
-    /* tell libevent that we need thread support */
-    pmix_event_use_threads();
-
     /* if an external event base wasn't provide, create one */
     if (!pmix_globals.external_evbase) {
+        /* tell libevent that we need thread support */
+        pmix_event_use_threads();
+
         /* create an event base and progress thread for us */
         if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
             error = "progress thread";
