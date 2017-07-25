@@ -63,7 +63,7 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
     int k=0, p=0, g=0;
     int total_procs = 0; 
 
-    if ( 0 < fh->f_stripe_size ) {
+    if ( 0 >= fh->f_stripe_size ) {
         stripe_size = OMPIO_DEFAULT_STRIPE_SIZE;
     }
 

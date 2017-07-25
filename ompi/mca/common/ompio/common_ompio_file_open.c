@@ -129,11 +129,6 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
         goto fn_fail;
     }
 
-    if (OMPI_SUCCESS != (ret = mca_fcoll_base_file_select (ompio_fh,
-                                                           NULL))) {
-        opal_output(1, "mca_fcoll_base_file_select() failed\n");
-        goto fn_fail;
-    }
 
     ompio_fh->f_sharedfp_component = NULL; /*component*/
     ompio_fh->f_sharedfp           = NULL; /*module*/
@@ -162,6 +157,12 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 
     if ( OMPI_SUCCESS != ret ) {
 	ret = MPI_ERR_FILE;
+        goto fn_fail;
+    }
+
+    if (OMPI_SUCCESS != (ret = mca_fcoll_base_file_select (ompio_fh,
+                                                           NULL))) {
+        opal_output(1, "mca_fcoll_base_file_select() failed\n");
         goto fn_fail;
     }
 
@@ -420,7 +421,7 @@ int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 
         /* Default file View */
         fh->f_iov_type = MPI_DATATYPE_NULL;
-        fh->f_stripe_size = mca_io_ompio_bytes_per_agg;
+        fh->f_stripe_size = 0;
 	/*Decoded iovec of the file-view*/
 	fh->f_decoded_iov = NULL;
         fh->f_etype = NULL;
