@@ -1040,7 +1040,7 @@ pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg);
     (r) = pmix_argv_append_nosize(&(a), (b))
 
 pmix_status_t pmix_setenv(const char *name, const char *value,
-                              bool overwrite, char ***env);
+                          bool overwrite, char ***env);
 #define PMIX_SETENV(r, a, b, c) \
     (r) = pmix_setenv((a), (b), true, (c))
 

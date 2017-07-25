@@ -68,7 +68,7 @@ BEGIN_C_DECLS
  *
  * The caller is responsible for freeing the returned string.
  */
-char *pmix_basename(const char* filename) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT char *pmix_basename(const char* filename) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
 /**
  * Return the dirname of a filename.
@@ -107,7 +107,7 @@ char *pmix_basename(const char* filename) __pmix_attribute_malloc__ __pmix_attri
  *
  * The caller is responsible for freeing the returned string.
  */
-char *pmix_dirname(const char* filename) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT char *pmix_dirname(const char* filename) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
 END_C_DECLS
 

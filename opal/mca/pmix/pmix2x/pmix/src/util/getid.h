@@ -23,7 +23,7 @@
 BEGIN_C_DECLS
 
 /* lookup the effective uid and gid of a socket */
-pmix_status_t pmix_util_getid(int sd, uid_t *uid, gid_t *gid);
+PMIX_EXPORT pmix_status_t pmix_util_getid(int sd, uid_t *uid, gid_t *gid);
 
 END_C_DECLS
 
