@@ -49,6 +49,10 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
         return 1;
     }
 
+    /* in order to work around a long standing ob1 bug (see #3845) we have to always
+     * make the callback. once this is fixed in ob1 we can restore the code below. */
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+
     /* header (+ optional inline data) */
     frag->hdr->len = total_size;
     /* type of message, pt-2-pt, one-sided, etc */
@@ -69,6 +73,9 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
         return OPAL_SUCCESS;
     }
 
+    return OPAL_SUCCESS;
+
+#if 0
     if ((frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) ||
         !(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
@@ -79,4 +86,5 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     /* data is gone (from the pml's perspective). frag callback/release will
        happen later */
     return 1;
+#endif
 }
