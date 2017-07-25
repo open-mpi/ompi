@@ -845,77 +845,53 @@ int opal_dss_print_name(char **output, char *prefix, opal_process_name_t *name, 
 int opal_dss_print_jobid(char **output, char *prefix,
                          opal_process_name_t *src, opal_data_type_t type)
 {
-    char *prefx;
+    char *prefx = " ";
 
     /* deal with NULL prefix */
-    if (NULL == prefix) asprintf(&prefx, " ");
-    else prefx = prefix;
+    if (NULL != prefix) prefx = prefix;
 
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_JOBID\tValue: NULL pointer", prefx);
-        if (prefx != prefix) {
-            free(prefx);
-        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_JOBID\tValue: %s", prefx, opal_jobid_print(src->jobid));
-    if (prefx != prefix) {
-        free(prefx);
-    }
-
     return OPAL_SUCCESS;
 }
 
 int opal_dss_print_vpid(char **output, char *prefix,
                          opal_process_name_t *src, opal_data_type_t type)
 {
-    char *prefx;
+    char *prefx = " ";
 
     /* deal with NULL prefix */
-    if (NULL == prefix) asprintf(&prefx, " ");
-    else prefx = prefix;
+    if (NULL != prefix) prefx = prefix;
 
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_VPID\tValue: NULL pointer", prefx);
-        if (prefx != prefix) {
-            free(prefx);
-        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_VPID\tValue: %s", prefx, opal_vpid_print(src->vpid));
-    if (prefx != prefix) {
-        free(prefx);
-    }
-
     return OPAL_SUCCESS;
 }
 
 int opal_dss_print_status(char **output, char *prefix,
                           int *src, opal_data_type_t type)
 {
-    char *prefx;
+    char *prefx = " ";
 
     /* deal with NULL prefix */
-    if (NULL == prefix) asprintf(&prefx, " ");
-    else prefx = prefix;
+    if (NULL != prefix) prefx = prefix;
 
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_STATUS\tValue: NULL pointer", prefx);
-        if (prefx != prefix) {
-            free(prefx);
-        }
         return OPAL_SUCCESS;
     }
 
     asprintf(output, "%sData type: OPAL_STATUS\tValue: %s", prefx, opal_strerror(*src));
-    if (prefx != prefix) {
-        free(prefx);
-    }
-
     return OPAL_SUCCESS;
 }
