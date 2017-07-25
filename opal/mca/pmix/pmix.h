@@ -694,6 +694,23 @@ typedef int (*opal_pmix_base_module_server_notify_event_fn_t)(int status,
 
 
 /************************************************************
+ *                         TOOL APIs                        *
+ ************************************************************/
+/* Initialize the PMIx tool support
+ * When called the library will check for the required connection
+ * information of the local server and will establish the connection.
+ * The connection info can be provided either in the environment or
+ * in the list of attributes. If the information is not found, or the
+ * server connection fails, then an appropriate error constant will
+ * be returned.
+ */
+typedef int (*opal_pmix_base_module_tool_init_fn_t)(opal_list_t *ilist);
+
+/* Finalize the PMIx tool support */
+typedef int (*opal_pmix_base_module_tool_fini_fn_t)(void);
+
+
+/************************************************************
  *                       UTILITY APIs                       *
  ************************************************************/
 
@@ -837,6 +854,9 @@ typedef struct {
     opal_pmix_base_module_server_setup_fork_fn_t            server_setup_fork;
     opal_pmix_base_module_server_dmodex_request_fn_t        server_dmodex_request;
     opal_pmix_base_module_server_notify_event_fn_t          server_notify_event;
+    /* tool APIs */
+    opal_pmix_base_module_tool_init_fn_t                    tool_init;
+    opal_pmix_base_module_tool_fini_fn_t                    tool_finalize;
     /* Utility APIs */
     opal_pmix_base_module_get_version_fn_t                  get_version;
     opal_pmix_base_module_register_fn_t                     register_evhandler;

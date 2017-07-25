@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  *
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
@@ -35,6 +35,7 @@
 #endif
 
 #include "opal/mca/event/event.h"
+#include "opal/mca/pmix/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/arch.h"
@@ -67,9 +68,75 @@ int orte_ess_base_tool_setup(void)
     int ret;
     char *error = NULL;
     opal_list_t transports;
+    orte_jobid_t jobid;
+    orte_vpid_t vpid;
 
-    /* my name is set, xfer it to the OPAL layer */
-    orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
+    /* setup the PMIx framework - ensure it skips all non-PMIx components,
+     * but do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+
+    /* initialize - PMIx may set our name here if we attach to
+     * a PMIx server */
+    if (NULL != opal_pmix.tool_init) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.tool_init(NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_pmix.init";
+            goto error;
+        }
+        ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
+        ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
+    } else {
+        /* if we connected to a PMIx server, then we were assigned
+         * a name that we should use. Otherwise, we have to define
+         * one here */
+        if (NULL != orte_ess_base_jobid &&
+            NULL != orte_ess_base_vpid) {
+            opal_output_verbose(2, orte_ess_base_framework.framework_output,
+                                "ess:tool:obtaining name from environment");
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
+                return(ret);
+            }
+            ORTE_PROC_MY_NAME->jobid = jobid;
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, orte_ess_base_vpid))) {
+                return(ret);
+            }
+            ORTE_PROC_MY_NAME->vpid = vpid;
+        } else {
+            /* If we are a tool with no name, then define it here */
+            uint16_t jobfam;
+            uint32_t hash32;
+            uint32_t bias;
+
+            opal_output_verbose(2, orte_ess_base_framework.framework_output,
+                                "ess:tool:computing name");
+            /* hash the nodename */
+            OPAL_HASH_STR(orte_process_info.nodename, hash32);
+            bias = (uint32_t)orte_process_info.pid;
+            /* fold in the bias */
+            hash32 = hash32 ^ bias;
+
+            /* now compress to 16-bits */
+            jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
+
+            /* set the name */
+            ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
+            ORTE_PROC_MY_NAME->vpid = 0;
+        }
+        /* my name is set, xfer it to the OPAL layer */
+        orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
+    }
     orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
     orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
     orte_process_info.super.proc_arch = opal_local_arch;
@@ -131,7 +198,7 @@ int orte_ess_base_tool_setup(void)
         goto error;
     }
 
-        /* get a conduit for our use - we never route IO over fabric */
+    /* get a conduit for our use - we never route IO over fabric */
     OBJ_CONSTRUCT(&transports, opal_list_t);
     orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
                        ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
@@ -242,6 +309,8 @@ int orte_ess_base_tool_finalize(void)
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
+
+    (void) mca_base_framework_close(&opal_pmix_base_framework);
 
     return ORTE_SUCCESS;
 }

@@ -250,6 +250,10 @@ OPAL_MODULE_DECLSPEC int pmix2x_resolve_peers(const char *nodename, opal_jobid_t
                                              opal_list_t *procs);
 OPAL_MODULE_DECLSPEC int pmix2x_resolve_nodes(opal_jobid_t jobid, char **nodelist);
 
+/****  TOOL FUNCTIONS  ****/
+OPAL_MODULE_DECLSPEC int pmix2x_tool_init(opal_list_t *info);
+OPAL_MODULE_DECLSPEC int pmix2x_tool_fini(void);
+
 /****  COMMON FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int pmix2x_store_local(const opal_process_name_t *proc,
                                              opal_value_t *val);
