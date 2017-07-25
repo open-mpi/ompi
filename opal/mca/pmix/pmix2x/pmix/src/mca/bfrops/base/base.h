@@ -177,7 +177,7 @@ PMIX_EXPORT extern pmix_bfrops_globals_t pmix_bfrops_globals;
     /** prpmix_status_t function */
     pmix_bfrop_print_fn_t odti_print_fn;
 } pmix_bfrop_type_info_t;
-PMIX_CLASS_DECLARATION(pmix_bfrop_type_info_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_bfrop_type_info_t);
 
 /* macro for registering data types - overwrite an existing
  * duplicate one based on type name */

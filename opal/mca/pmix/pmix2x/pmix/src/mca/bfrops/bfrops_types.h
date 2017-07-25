@@ -64,7 +64,7 @@ typedef struct {
     char *key;
     pmix_value_t *value;
 } pmix_kval_t;
-PMIX_CLASS_DECLARATION(pmix_kval_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_kval_t);
 
 
 /**
@@ -89,7 +89,7 @@ typedef struct {
         including overhead -- packed in the buffer) */
     size_t bytes_used;
 } pmix_buffer_t;
-PMIX_CLASS_DECLARATION(pmix_buffer_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_buffer_t);
 
 /* Convenience macro for loading a data blob into a pmix_buffer_t
  *

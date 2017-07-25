@@ -83,13 +83,13 @@ BEGIN_C_DECLS
  *
  * The class for the list container.
  */
-PMIX_CLASS_DECLARATION(pmix_list_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_list_t);
 /**
  * \internal
  *
  * Base class for items that are put in list (pmix_list_t) containers.
  */
-PMIX_CLASS_DECLARATION(pmix_list_item_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_list_item_t);
 
 
 /**
