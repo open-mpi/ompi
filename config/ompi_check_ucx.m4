@@ -21,7 +21,6 @@
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_UCX],[
     if test -z "$ompi_check_ucx_happy" ; then
-        _x_ac_ucx_dirs="/usr /usr/local /opt/ucx"
 	AC_ARG_WITH([ucx],
 		    [AC_HELP_STRING([--with-ucx(=DIR)],
 				    [Build with Unified Communication X library support])])
@@ -33,7 +32,12 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
 	AS_IF([test "$with_ucx" != "no"],
               [AS_IF([test ! -z "$with_ucx" && test "$with_ucx" != "yes"],
-                     [_x_ac_ucx_dirs="$with_ucx"])
+                     [_x_ac_ucx_dirs="$with_ucx"],
+                     [
+                        PKG_CHECK_MODULES_STATIC([ucx],[ucx],
+                                          [_x_ac_ucx_dirs=`$PKG_CONFIG --variable=prefix ucx`],
+                                          [_x_ac_ucx_dirs="/usr /usr/local /opt/ucx"])
+                     ])
                 for ompi_check_ucx_dir in $_x_ac_ucx_dirs; do
                     AS_IF([test ! -z "$with_ucx_libdir" && test "$with_ucx_libdir" != "yes"],
                           [
