@@ -65,7 +65,6 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_SERVER_NSPACE                 "pmix.srv.nspace"       // (char*) Name of the nspace to use for this server
 #define OPAL_PMIX_SERVER_RANK                   "pmix.srv.rank"         // (uint32_t) Rank of this server
 
-
 /* identification attributes */
 #define OPAL_PMIX_USERID                        "pmix.euid"             // (uint32_t) effective user id
 #define OPAL_PMIX_GRPID                         "pmix.egid"             // (uint32_t) effective group id

@@ -34,6 +34,7 @@
 #include "opal/mca/pmix/base/base.h"
 #include "pmix2x.h"
 #include "pmix.h"
+#include "pmix_tool.h"
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
@@ -97,7 +98,9 @@ int pmix2x_client_init(opal_list_t *ilist)
         PMIX_INFO_FREE(pinfo, ninfo);
     }
     if (PMIX_SUCCESS != rc) {
-        return pmix2x_convert_rc(rc);
+        dbg = pmix2x_convert_rc(rc);
+        OPAL_ERROR_LOG(dbg);
+        return dbg;
     }
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
@@ -178,6 +181,120 @@ int pmix2x_client_finalize(void)
 
     return pmix2x_convert_rc(rc);
 }
+
+int pmix2x_tool_init(opal_list_t *info)
+{
+    pmix_info_t *pinfo;
+    size_t ninfo, n;
+    opal_pmix2x_jobid_trkr_t *job;
+    opal_value_t *val;
+    pmix_status_t rc;
+    int ret;
+    opal_process_name_t pname;
+    opal_pmix2x_event_t *event;
+
+    opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                        "PMIx_tool init");
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+
+    /* convert the incoming list to info structs */
+    if (NULL != info && 0 < (ninfo = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(pinfo, ninfo);
+        n=0;
+        OPAL_LIST_FOREACH(val, info, opal_value_t) {
+            (void)strncpy(pinfo[n].key, val->key, PMIX_MAX_KEYLEN);
+            pmix2x_value_load(&pinfo[n].value, val);
+            ++n;
+        }
+    } else {
+        pinfo = NULL;
+        ninfo = 0;
+    }
+
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+    rc = PMIx_tool_init(&my_proc, pinfo, ninfo);
+    if (NULL != pinfo) {
+        PMIX_INFO_FREE(pinfo, ninfo);
+    }
+    if (PMIX_SUCCESS != rc) {
+        ret = pmix2x_convert_rc(rc);
+        OPAL_ERROR_LOG(ret);
+        return ret;
+    }
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+
+    ++opal_pmix_base.initialized;
+    if (1 < opal_pmix_base.initialized) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+        return OPAL_SUCCESS;
+    }
+
+    /* store our jobid and rank */
+    if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
+        /* if we were launched by the OMPI RTE, then
+         * the jobid is in a special format - so get it */
+        mca_pmix_pmix2x_component.native_launch = true;
+        opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
+    } else {
+        /* we were launched by someone else, so make the
+         * jobid just be the hash of the nspace */
+        OPAL_HASH_JOBID(my_proc.nspace, pname.jobid);
+    }
+    /* insert this into our list of jobids - it will be the
+     * first, and so we'll check it first */
+    job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
+    (void)strncpy(job->nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+    job->jobid = pname.jobid;
+    opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
+
+    pname.vpid = pmix2x_convert_rank(my_proc.rank);
+    opal_proc_set_name(&pname);
+
+    /* release the thread in case the event handler fires when
+     * registered */
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+
+    /* register the default event handler */
+    event = OBJ_NEW(opal_pmix2x_event_t);
+    opal_list_append(&mca_pmix_pmix2x_component.events, &event->super);
+    PMIX_INFO_CREATE(pinfo, 1);
+    PMIX_INFO_LOAD(&pinfo[0], PMIX_EVENT_HDLR_NAME, "OPAL-PMIX-2X-DEFAULT", PMIX_STRING);
+    PMIx_Register_event_handler(NULL, 0, NULL, 0, pmix2x_event_hdlr, errreg_cbfunc, event);
+    OPAL_PMIX_WAIT_THREAD(&event->lock);
+    PMIX_INFO_FREE(pinfo, 1);
+
+    return OPAL_SUCCESS;
+}
+
+int pmix2x_tool_fini(void)
+{
+    pmix_status_t rc;
+    opal_pmix2x_event_t *event, *ev2;
+
+    opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                        "PMIx_tool finalize");
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    --opal_pmix_base.initialized;
+
+    if (0 == opal_pmix_base.initialized) {
+        /* deregister all event handlers */
+        OPAL_LIST_FOREACH_SAFE(event, ev2, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
+            OPAL_PMIX_DESTRUCT_LOCK(&event->lock);
+            OPAL_PMIX_CONSTRUCT_LOCK(&event->lock);
+            PMIx_Deregister_event_handler(event->index, dereg_cbfunc, (void*)event);
+            OPAL_PMIX_WAIT_THREAD(&event->lock);
+            opal_list_remove_item(&mca_pmix_pmix2x_component.events, &event->super);
+            OBJ_RELEASE(event);
+        }
+    }
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+    rc = PMIx_tool_finalize();
+
+    return pmix2x_convert_rc(rc);
+}
+
 
 int pmix2x_initialized(void)
 {

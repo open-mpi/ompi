@@ -364,12 +364,15 @@ int orte_submit_init(int argc, char *argv[],
         exit(0);
     }
 
+    /* if they already set our proc type, then leave it alone */
+    if (ORTE_PROC_TYPE_NONE == orte_process_info.proc_type) {
    /* set the flags - if they gave us a -hnp option, then
-     * we are a tool. If not, then we are an HNP */
-    if (NULL == orte_cmd_options.hnp) {
-        orte_process_info.proc_type = ORTE_PROC_HNP;
-    } else {
-        orte_process_info.proc_type = ORTE_PROC_TOOL;
+         * we are a tool. If not, then we are an HNP */
+        if (NULL == orte_cmd_options.hnp) {
+            orte_process_info.proc_type = ORTE_PROC_HNP;
+        } else {
+            orte_process_info.proc_type = ORTE_PROC_TOOL;
+        }
     }
     if (ORTE_PROC_IS_TOOL) {
         if (0 == strncasecmp(orte_cmd_options.hnp, "file", strlen("file"))) {
@@ -541,7 +544,6 @@ int orte_submit_init(int argc, char *argv[],
 
     if (ORTE_PROC_IS_TOOL) {
         opal_value_t val;
-
         /* extract the name */
         if (ORTE_SUCCESS != orte_rml_base_parse_uris(orte_process_info.my_hnp_uri, ORTE_PROC_MY_HNP, NULL)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);

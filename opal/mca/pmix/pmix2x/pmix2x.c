@@ -110,6 +110,9 @@ const opal_pmix_base_module_t opal_pmix_pmix2x_module = {
     .server_setup_fork = pmix2x_server_setup_fork,
     .server_dmodex_request = pmix2x_server_dmodex,
     .server_notify_event = pmix2x_server_notify_event,
+    /* tool APIs */
+    .tool_init = pmix2x_tool_init,
+    .tool_finalize = pmix2x_tool_fini,
     /* utility APIs */
     .get_version = PMIx_Get_version,
     .register_evhandler = register_handler,
