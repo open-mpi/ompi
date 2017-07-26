@@ -118,7 +118,6 @@ hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
     return obj;
 }
 
-#if HWLOC_API_VERSION < 0x20000
 /* determine the node-level available cpuset based on
  * online vs allowed vs user-specified cpus
  */
@@ -146,8 +145,12 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     /* process any specified default cpu set against this topology */
     if (NULL == opal_hwloc_base_cpu_list) {
         /* get the root available cpuset */
-        avail = hwloc_bitmap_alloc();
-        hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
+        #if HWLOC_API_VERSION < 0x20000
+            avail = hwloc_bitmap_alloc();
+            hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
+        #else
+            avail = hwloc_bitmap_dup(root->allowed_cpuset);
+        #endif
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base: no cpus specified - using root available cpuset"));
     } else {
@@ -166,7 +169,12 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                 /* only one cpu given - get that object */
                 cpu = strtoul(range[0], NULL, 10);
                 if (NULL != (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
-                    hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                    #if HWLOC_API_VERSION < 0x20000
+                        hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                    #else
+                        hwloc_bitmap_free(pucpus);
+                        pucpus = hwloc_bitmap_dup(pu->allowed_cpuset);
+                    #endif
                     hwloc_bitmap_or(res, avail, pucpus);
                     hwloc_bitmap_copy(avail, res);
                     data = (opal_hwloc_obj_data_t*)pu->userdata;
@@ -183,7 +191,12 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                 end = strtoul(range[1], NULL, 10);
                 for (cpu=start; cpu <= end; cpu++) {
                     if (NULL != (pu = opal_hwloc_base_get_pu(topo, cpu, OPAL_HWLOC_LOGICAL))) {
-                        hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                        #if HWLOC_API_VERSION < 0x20000
+                            hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                        #else
+                            hwloc_bitmap_free(pucpus);
+                            pucpus = hwloc_bitmap_dup(pu->allowed_cpuset);
+                        #endif
                         hwloc_bitmap_or(res, avail, pucpus);
                         hwloc_bitmap_copy(avail, res);
                         data = (opal_hwloc_obj_data_t*)pu->userdata;
@@ -212,7 +225,6 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
 
     return OPAL_SUCCESS;
 }
-#endif
 
 static void fill_cache_line_size(void)
 {
@@ -345,54 +357,22 @@ int opal_hwloc_base_get_topology(void)
             return OPAL_ERROR;
         }
         free(val);
-#if HWLOC_API_VERSION < 0x20000
         /* filter the cpus thru any default cpu set */
         if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
             hwloc_topology_destroy(opal_hwloc_topology);
             return rc;
         }
-#else
-        /* setup the summary cpuset to make things consistent */
-        root = hwloc_get_root_obj(opal_hwloc_topology);
-
-        if (NULL == root->userdata) {
-            root->userdata = (void*)OBJ_NEW(opal_hwloc_topo_data_t);
-        }
-        sum = (opal_hwloc_topo_data_t*)root->userdata;
-
-        /* should only ever enter here once, but check anyway */
-        if (NULL == sum->available) {
-            sum->available = hwloc_bitmap_dup(root->allowed_cpuset);
-            return OPAL_SUCCESS;
-        }
-#endif
     } else if (NULL == opal_hwloc_base_topo_file) {
         if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
             0 != opal_hwloc_base_topology_set_flags(opal_hwloc_topology, 0, true) ||
             0 != hwloc_topology_load(opal_hwloc_topology)) {
             return OPAL_ERR_NOT_SUPPORTED;
         }
-#if HWLOC_API_VERSION < 0x20000
         /* filter the cpus thru any default cpu set */
         if (OPAL_SUCCESS != (rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
             hwloc_topology_destroy(opal_hwloc_topology);
             return rc;
         }
-#else
-        /* setup the summary cpuset to make things consistent */
-        root = hwloc_get_root_obj(opal_hwloc_topology);
-
-        if (NULL == root->userdata) {
-            root->userdata = (void*)OBJ_NEW(opal_hwloc_topo_data_t);
-        }
-        sum = (opal_hwloc_topo_data_t*)root->userdata;
-
-        /* should only ever enter here once, but check anyway */
-        if (NULL == sum->available) {
-            sum->available = hwloc_bitmap_dup(root->allowed_cpuset);
-            return OPAL_SUCCESS;
-        }
-#endif
     } else {
         if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file))) {
             return rc;
