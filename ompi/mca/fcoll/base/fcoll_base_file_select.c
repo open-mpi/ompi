@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -279,7 +279,8 @@ int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
     }
     if (!strcmp (name, "two_phase")) {
         if ((int)file->f_cc_size < file->f_bytes_per_agg &&
-            file->f_cc_size < file->f_stripe_size) {
+            (0 == file->f_stripe_size || file->f_cc_size < file->f_stripe_size) && 
+	    (LUSTRE != file->f_fstype) ) {
             return 1;
         }
     }
