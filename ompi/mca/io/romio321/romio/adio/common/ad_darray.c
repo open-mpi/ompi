@@ -195,8 +195,30 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
 
     }
 
-    *st_offset = (MPI_Aint)blksize * (MPI_Aint)rank;
-     /* in terms of no. of elements of type oldtype in this dimension */
+    /* In the first iteration, we need to set the displacement in that
+       dimension correctly. */
+    if ( ((order == MPI_ORDER_FORTRAN) && (dim == 0)) ||
+         ((order == MPI_ORDER_C) && (dim == ndims-1)) ) {
+        MPI_Datatype type_tmp, type_tmp1, types[3];
+        MPI_Aint disps[1];
+        int blklens[1];
+        types[0] = *type_new;
+        disps[0] = (MPI_Aint)rank * (MPI_Aint)blksize * orig_extent;
+        blklens[0] = 1;
+        MPI_Type_create_struct(1, blklens, disps, types, &type_tmp1);
+        MPI_Type_create_resized (type_tmp1, 0, orig_extent * (MPI_Aint)array_of_gsizes[dim], &type_tmp);
+        MPI_Type_free(&type_tmp1);
+        MPI_Type_free(type_new);
+        *type_new = type_tmp;
+
+        *st_offset = 0;  /* set it to 0 because it is taken care of in
+                            the struct above */
+    }
+    else {
+        *st_offset = (MPI_Aint)blksize * (MPI_Aint)rank;
+         /* in terms of no. of elements of type oldtype in this dimension */
+    }
+
     if (mysize == 0) *st_offset = 0;
 
     return MPI_SUCCESS;
