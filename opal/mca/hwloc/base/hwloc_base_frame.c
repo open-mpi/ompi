@@ -120,7 +120,7 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
     (void) mca_base_var_register("opal", "hwloc", "base", "binding_policy",
                                  "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, "
                                  "l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is "
-                                 "the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: "
+                                 "the default when np<=2, and \"numa\" is the default when np>2). Allowed qualifiers: "
                                  "overload-allowed, if-supported",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_binding_policy);
