@@ -146,7 +146,7 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             OPAL_NAME_PRINT(*(p)), (s)));                                \
         OBJ_CONSTRUCT(&(_ilist), opal_list_t);                                           \
         _info = OBJ_NEW(opal_value_t);                                                   \
-        _info->key = strdup(OPAL_PMIX_IMMEDIATE);                                        \
+        _info->key = strdup(OPAL_PMIX_OPTIONAL);                                         \
         _info->type = OPAL_BOOL;                                                         \
         _info->data.flag = true;                                                         \
         opal_list_append(&(_ilist), &(_info)->super);                                    \
