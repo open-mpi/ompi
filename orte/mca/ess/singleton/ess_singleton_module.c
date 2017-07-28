@@ -249,7 +249,7 @@ static int rte_init(void)
 
 
     /* get our app number from PMI - ok if not found */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_APPNUM,
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_APPNUM,
                           ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS == ret) {
         orte_process_info.app_num = u32;
