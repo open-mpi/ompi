@@ -682,3 +682,6 @@ test/util/opal_path_nfs
 test/util/opal_path_nfs.out
 test/util/opal_bit_ops
 test/util/bipartite_graph
+
+opal/test/reachable/reachable_netlink
+opal/test/reachable/reachable_weighted
