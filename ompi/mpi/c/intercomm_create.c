@@ -190,10 +190,6 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          new_group_pointer                             /* remote group */
                          );
 
-    if ( NULL == newcomp ) {
-        rc = MPI_ERR_INTERN;
-        goto err_exit;
-    }
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }

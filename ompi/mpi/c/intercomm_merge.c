@@ -109,10 +109,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                          new_group_pointer,        /* local group */
                          NULL                      /* remote group */
                          );
-    if ( NULL == newcomp ) {
-        rc = MPI_ERR_INTERN;
-        goto exit;
-    }
     if ( MPI_SUCCESS != rc ) {
         goto exit;
     }
