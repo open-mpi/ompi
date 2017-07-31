@@ -69,6 +69,7 @@
 #include "ompi/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 #include "ompi/mca/pml/pml_constants.h"
+#include "ompi/request/request.h"
 
 BEGIN_C_DECLS
 
@@ -350,14 +351,11 @@ typedef int (*mca_pml_base_module_send_fn_t)(
 /**
  * Initiate one or more persistent requests.
  *
- * @param count    Number of requests
- * @param request  Array of persistent requests
- * @return         OMPI_SUCCESS or failure status.
+ * @param count (IN)        Number of requests
+ * @param requests (IN/OUT) Array of persistent requests
+ * @return                  OMPI_SUCCESS or failure status.
  */
-typedef int (*mca_pml_base_module_start_fn_t)(
-    size_t count,
-    struct ompi_request_t** requests
-);
+typedef ompi_request_start_fn_t mca_pml_base_module_start_fn_t;
 
 /**
  * Probe to poll for pending recv.

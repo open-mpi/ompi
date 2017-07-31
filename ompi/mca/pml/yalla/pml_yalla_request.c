@@ -149,6 +149,7 @@ static void init_base_req(mca_pml_yalla_base_request_t *req)
 {
     OMPI_REQUEST_INIT(&req->ompi, false);
     req->ompi.req_type             = OMPI_REQUEST_PML;
+    req->ompi.req_start            = mca_pml_yalla_start;
     req->ompi.req_cancel           = NULL;
     req->ompi.req_complete_cb      = NULL;
     req->ompi.req_complete_cb_data = NULL;

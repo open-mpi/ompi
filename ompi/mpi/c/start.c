@@ -68,7 +68,7 @@ int MPI_Start(MPI_Request *request)
     case OMPI_REQUEST_PML:
         OPAL_CR_ENTER_LIBRARY();
 
-        ret = MCA_PML_CALL(start(1, request));
+        ret = (*request)->req_start(1, request);
 
         OPAL_CR_EXIT_LIBRARY();
         return ret;

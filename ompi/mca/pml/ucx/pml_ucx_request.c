@@ -136,6 +136,7 @@ static void mca_pml_ucx_request_init_common(ompi_request_t* ompi_req,
     OMPI_REQUEST_INIT(ompi_req, req_persistent);
     ompi_req->req_type             = OMPI_REQUEST_PML;
     ompi_req->req_state            = state;
+    ompi_req->req_start            = mca_pml_ucx_start;
     ompi_req->req_free             = req_free;
     ompi_req->req_cancel           = req_cancel;
     /* This field is used to attach persistant request to a temporary req.
