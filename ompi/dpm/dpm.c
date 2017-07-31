@@ -467,8 +467,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                          group,                    /* local group */
                          new_group_pointer         /* remote group */
                          );
-    if ( NULL == newcomp ) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
+    if (OMPI_SUCCESS != rc) {
         goto exit;
     }
 

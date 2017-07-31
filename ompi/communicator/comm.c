@@ -158,6 +158,9 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
 
     /* ompi_comm_allocate */
     newcomm = OBJ_NEW(ompi_communicator_t);
+    if (NULL == newcomm) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     newcomm->super.s_info = NULL;
     /* fill in the inscribing hyper-cube dimensions */
     newcomm->c_cube_dim = opal_cube_dim(local_size);
@@ -351,11 +354,6 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                          remote_group);            /* remote group */
 
     if ( OMPI_SUCCESS != rc ) {
-        goto exit;
-    }
-
-    if ( NULL == newcomm ) {
-        rc =  MPI_ERR_INTERN;
         goto exit;
     }
 
@@ -580,10 +578,6 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
                          local_group,       /* local group */
                          remote_group);     /* remote group */
 
-    if ( NULL == newcomp ) {
-        rc =  MPI_ERR_INTERN;
-        goto exit;
-    }
     if ( OMPI_SUCCESS != rc  ) {
         goto exit;
     }
@@ -1004,11 +998,7 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
                           true,                                   /* copy the topo */
                           comm->c_local_group,                    /* local group */
                           remote_group );                         /* remote group */
-    if ( NULL == newcomp ) {
-        rc =  MPI_ERR_INTERN;
-        return rc;
-    }
-    if ( MPI_SUCCESS != rc) {
+    if ( OMPI_SUCCESS != rc) {
         return rc;
     }
 
@@ -1103,7 +1093,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
                             group,                                  /* local group */
                             remote_group,                           /* remote group */
                             subreq);                                /* new subrequest */
-    if (NULL == context->newcomp) {
+    if (OMPI_SUCCESS != rc) {
         ompi_comm_request_return (request);
         return rc;
     }
@@ -1210,11 +1200,7 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
                           true,                                   /* copy the topo */
                           group,                                  /* local group */
                           NULL);                                  /* remote group */
-    if ( NULL == newcomp ) {
-        rc =  MPI_ERR_INTERN;
-        return rc;
-    }
-    if ( MPI_SUCCESS != rc) {
+    if ( OMPI_SUCCESS != rc) {
         return rc;
     }
 
