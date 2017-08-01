@@ -9,7 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +28,6 @@
 #include <unistd.h>
 #endif
 
-#include "opal/util/opal_environ.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
@@ -41,7 +39,6 @@ int orte_ess_base_std_prolog(void)
 {
     int ret;
     char *error = NULL;
-    char *evar;
 
     /* Initialize the ORTE data type support */
     if (ORTE_SUCCESS != (ret = orte_dt_init())) {
@@ -58,10 +55,6 @@ int orte_ess_base_std_prolog(void)
             error = "orte_wait_init";
             goto error;
         }
-    }
-    /* check for OPAL_PREFIX */
-    if (NULL != (evar = getenv("OPAL_PREFIX"))) {
-        opal_setenv("PMIX_PREFIX", evar, false, &environ);
     }
 
     return ORTE_SUCCESS;
