@@ -18,7 +18,7 @@
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
@@ -2330,32 +2330,41 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     /* If we don't have hwloc, we'll default to a distance of 0,
        because we have no way of measuring. */
     float distance = 0;
+    float a, b;
+    int i;
+    hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
+    hwloc_obj_t my_obj, ibv_obj, node_obj;
+    struct hwloc_distances_s *hwloc_distances = NULL;
 
-#if HWLOC_API_VERSION < 0x20000
     /* Override any distance logic so all devices are used */
     if (0 != mca_btl_openib_component.ignore_locality ||
         OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
         return distance;
     }
 
-    float a, b;
-    int i;
-    hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
-    hwloc_obj_t my_obj, ibv_obj, node_obj;
-
-    /* Note that this struct is owned by hwloc; there's no need to
-       free it at the end of time */
-    static const struct hwloc_distances_s *hwloc_distances = NULL;
+#if HWLOC_API_VERSION >= 0x20000
+    unsigned int j, distances_nr = 1;
+    int ibvindex, myindex;
+#endif
 
     if (NULL == hwloc_distances) {
-        hwloc_distances =
-            hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
-                                                    HWLOC_OBJ_NODE);
-    }
+        #if HWLOC_API_VERSION < 0x20000
+            hwloc_distances =
+                hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
+                                                        HWLOC_OBJ_NODE);
+            /* If we got no info, just return 0 */
+            if (NULL == hwloc_distances || NULL == hwloc_distances->latency) {
+                goto out;
+            }
 
-    /* If we got no info, just return 0 */
-    if (NULL == hwloc_distances || NULL == hwloc_distances->latency) {
-        goto out;
+        #else
+            if (0 != hwloc_distances_get_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE,
+                                                 &distances_nr, &hwloc_distances,
+                                                 HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0) || 0 == distances_nr) {
+                hwloc_distances = NULL;
+                goto out;
+            }
+        #endif
     }
 
     /* Next, find the NUMA node where this IBV device is located */
@@ -2373,16 +2382,31 @@ static float get_ib_dev_distance(struct ibv_device *dev)
 
     opal_output_verbose(5, opal_btl_base_framework.framework_output,
                         "hwloc_distances->nbobjs=%d", hwloc_distances->nbobjs);
+#if HWLOC_API_VERSION < 0x20000
     for (i = 0; i < (int)(2 *  hwloc_distances->nbobjs); i++) {
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "hwloc_distances->latency[%d]=%f", i, hwloc_distances->latency[i]);
     }
+#else
+    for (i = 0; i < (int)hwloc_distances->nbobjs; i++) {
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "hwloc_distances->values[%d]=%"PRIu64, i, hwloc_distances->values[i]);
+    }
+#endif
 
     /* If ibv_obj is a NUMA node or below, we're good. */
     switch (ibv_obj->type) {
     case HWLOC_OBJ_NODE:
     case HWLOC_OBJ_SOCKET:
+#if HWLOC_API_VERSION < 0x20000
     case HWLOC_OBJ_CACHE:
+#else
+    case HWLOC_OBJ_L1CACHE:
+    case HWLOC_OBJ_L2CACHE:
+    case HWLOC_OBJ_L3CACHE:
+    case HWLOC_OBJ_L4CACHE:
+    case HWLOC_OBJ_L5CACHE:
+#endif
     case HWLOC_OBJ_CORE:
     case HWLOC_OBJ_PU:
         while (NULL != ibv_obj && ibv_obj->type != HWLOC_OBJ_NODE) {
@@ -2402,6 +2426,22 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL == ibv_obj) {
         goto out;
     }
+    #if HWLOC_API_VERSION >= 0x20000
+        /* the new matrix format isn't quite as friendly, so we have to
+         * do an exhaustive search to find the index of this object
+         * in that array */
+        ibvindex = -1;
+        for (j=0; j < distances_nr; j++) {
+            if (ibv_obj == hwloc_distances->objs[j]) {
+                ibvindex = j;
+                break;
+            }
+        }
+        if (-1 == ibvindex) {
+            OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
+            goto out;
+        }
+    #endif
 
     opal_output_verbose(5, opal_btl_base_framework.framework_output,
                         "ibv_obj->logical_index=%d", ibv_obj->logical_index);
@@ -2424,7 +2464,15 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     switch (my_obj->type) {
     case HWLOC_OBJ_NODE:
     case HWLOC_OBJ_SOCKET:
-    case HWLOC_OBJ_CACHE:
+    #if HWLOC_API_VERSION < 0x20000
+        case HWLOC_OBJ_CACHE:
+    #else
+        case HWLOC_OBJ_L1CACHE:
+        case HWLOC_OBJ_L2CACHE:
+        case HWLOC_OBJ_L3CACHE:
+        case HWLOC_OBJ_L4CACHE:
+        case HWLOC_OBJ_L5CACHE:
+    #endif
     case HWLOC_OBJ_CORE:
     case HWLOC_OBJ_PU:
         while (NULL != my_obj && my_obj->type != HWLOC_OBJ_NODE) {
@@ -2435,12 +2483,31 @@ static float get_ib_dev_distance(struct ibv_device *dev)
                                 "my_obj->logical_index=%d", my_obj->logical_index);
             /* Distance may be asymetrical, so calculate both of them
                and take the max */
-            a = hwloc_distances->latency[my_obj->logical_index +
-                                         (ibv_obj->logical_index *
-                                          hwloc_distances->nbobjs)];
-            b = hwloc_distances->latency[ibv_obj->logical_index +
-                                         (my_obj->logical_index *
-                                          hwloc_distances->nbobjs)];
+            #if HWLOC_API_VERSION < 0x20000
+                a = hwloc_distances->latency[my_obj->logical_index +
+                                             (ibv_obj->logical_index *
+                                              hwloc_distances->nbobjs)];
+                b = hwloc_distances->latency[ibv_obj->logical_index +
+                                             (my_obj->logical_index *
+                                              hwloc_distances->nbobjs)];
+            #else
+                /* the new matrix format isn't quite as friendly, so we have to
+                 * do an exhaustive search to find the index of this object
+                 * in that array */
+                myindex = -1;
+                for (j=0; j < distances_nr; j++) {
+                    if (my_obj == hwloc_distances->objs[j]) {
+                        myindex = j;
+                        break;
+                    }
+                }
+                if (-1 == myindex) {
+                    OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
+                    goto out;
+                }
+                a = (float)hwloc_distances->values[myindex + (ibvindex * hwloc_distances->nbobjs)];
+                b = (float)hwloc_distances->values[ibvindex + (myindex * hwloc_distances->nbobjs)];
+            #endif
             distance = (a > b) ? a : b;
         }
         break;
@@ -2456,13 +2523,28 @@ static float get_ib_dev_distance(struct ibv_device *dev)
              node_obj = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
                                                             ibv_obj->cpuset,
                                                             HWLOC_OBJ_NODE, ++i)) {
-
-            a = hwloc_distances->latency[node_obj->logical_index +
-                                         (ibv_obj->logical_index *
-                                          hwloc_distances->nbobjs)];
-            b = hwloc_distances->latency[ibv_obj->logical_index +
-                                         (node_obj->logical_index *
-                                          hwloc_distances->nbobjs)];
+            #if HWLOC_API_VERSION < 0x20000
+                a = hwloc_distances->latency[node_obj->logical_index +
+                                             (ibv_obj->logical_index *
+                                              hwloc_distances->nbobjs)];
+                b = hwloc_distances->latency[ibv_obj->logical_index +
+                                             (node_obj->logical_index *
+                                              hwloc_distances->nbobjs)];
+            #else
+                unsigned int j;
+                j = node_obj->logical_index + (ibv_obj->logical_index * hwloc_distances->nbobjs);
+                if (j < distances_nr) {
+                    a = (float)hwloc_distances->values[j];
+                } else {
+                    goto out;
+                }
+                j = ibv_obj->logical_index + (node_obj->logical_index * hwloc_distances->nbobjs);
+                if (j < distances_nr) {
+                    b = (float)hwloc_distances->values[j];
+                } else {
+                    goto out;
+                }
+            #endif
             a = (a > b) ? a : b;
             distance = (a > distance) ? a : distance;
         }
@@ -2476,10 +2558,12 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL != my_cpuset) {
         hwloc_bitmap_free(my_cpuset);
     }
-#else
-#warning FIXME get_ib_dev_distance is not implemented with hwloc v2
-#endif
 
+#if HWLOC_API_VERSION < 0x20000
+    if (NULL != hwloc_distances) {
+        hwloc_distances_release(opal_hwloc_topology, hwloc_distances);
+    }
+#endif
     return distance;
 }
 

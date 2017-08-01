@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,22 +26,34 @@
  */
 static hwloc_obj_t my_numa_node = NULL;
 static int num_numa_nodes = 0;
-static const struct hwloc_distances_s *matrix = NULL;
+static struct hwloc_distances_s *matrix = NULL;
+#if HWLOC_API_VERSION >= 0x20000
+static unsigned int matrix_nr = 1;
+#endif
 
 /*
  * Get the hwloc distance matrix (if we don't already have it).
- *
- * Note that the matrix data structure belongs to hwloc; we are not
- * responsibile for freeing it.
  */
 static int get_distance_matrix(void)
 {
+#if HWLOC_API_VERSION < 0x20000
+    /* Note that the matrix data structure belongs to hwloc; we are not
+     * responsible for freeing it. */
+
     if (NULL == matrix) {
         matrix = hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
                                                          HWLOC_OBJ_NODE);
     }
 
     return (NULL == matrix) ? OPAL_ERROR : OPAL_SUCCESS;
+#else
+    if (0 != hwloc_distances_get_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE,
+                                         &matrix_nr, &matrix,
+                                         HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0) || 0 == matrix_nr) {
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+#endif
 }
 
 /*
@@ -219,6 +231,7 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
 
     /* Lookup the distance between my NUMA node and the NUMA node of
        the device */
+#if HWLOC_API_VERSION < 0x20000
     if (NULL != dev_numa) {
         module->numa_distance =
             matrix->latency[dev_numa->logical_index * num_numa_nodes +
@@ -229,6 +242,40 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
                             module->linux_device_name,
                             module->numa_distance);
     }
+#else
+    if (NULL != dev_numa) {
+        int myindex, devindex;
+        unsigned int j;
+        myindex = -1;
+        for (j=0; j < matrix_nr; j++) {
+            if (my_numa_node == matrix->objs[j]) {
+                myindex = j;
+                break;
+            }
+        }
+        if (-1 == myindex) {
+            return OPAL_SUCCESS;
+        }
+        devindex = -1;
+        for (j=0; j < matrix_nr; j++) {
+            if (dev_numa == matrix->objs[j]) {
+                devindex = j;
+                break;
+            }
+        }
+        if (-1 == devindex) {
+            return OPAL_SUCCESS;
+        }
+
+        module->numa_distance =
+            matrix->values[(devindex * num_numa_nodes) + myindex];
+
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic:filter_numa: %s is distance %d from me",
+                            module->linux_device_name,
+                            module->numa_distance);
+    }
+#endif
 
     return OPAL_SUCCESS;
 }

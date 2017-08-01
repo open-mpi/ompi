@@ -303,9 +303,7 @@ opal/mca/event/libevent*/libevent/libevent_pthreads.pc
 opal/mca/event/libevent*/libevent/include/event2/event-config.h
 
 opal/mca/hwloc/hwloc*/hwloc/include/hwloc/autogen/config.h
-opal/mca/hwloc/hwloc*/hwloc/include/hwloc/autogen/config.h.in
 opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
-opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h.in
 opal/mca/hwloc/base/static-components.h.new.extern
 opal/mca/hwloc/base/static-components.h.new.struct
 
@@ -362,6 +360,7 @@ orte/test/mpi/accept
 orte/test/mpi/attach
 orte/test/mpi/bad_exit
 orte/test/mpi/bcast_loop
+orte/test/mpi/binding
 orte/test/mpi/concurrent_spawn
 orte/test/mpi/connect
 orte/test/mpi/crisscross

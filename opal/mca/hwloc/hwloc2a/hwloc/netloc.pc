@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: netloc
+Description: Network locality detection and management library
+Version: master-201707200234-3db801d
+Cflags: -I${includedir}
+Libs: -L${libdir} -lnetloc -lhwloc
+Libs.private:

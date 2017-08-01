@@ -252,6 +252,9 @@ int orte_ess_base_proc_binding(void)
                             if (HWLOC_OBJ_CACHE == target && cache_level != obj->attr->cache.depth) {
                                 continue;
                             }
+#else
+                            /* do something with cache_level to stop the compiler complaints */
+                            ++cache_level;
 #endif
                             /* this is the place! */
                             cpus = obj->cpuset;
