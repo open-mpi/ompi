@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -61,10 +61,6 @@
 #ifdef OPAL_DISABLE_INLINE_ASM
 #undef OPAL_C_GCC_INLINE_ASSEMBLY
 #define OPAL_C_GCC_INLINE_ASSEMBLY 0
-#undef OPAL_C_DEC_INLINE_ASSEMBLY
-#define OPAL_C_DEC_INLINE_ASSEMBLY 0
-#undef OPAL_C_XLC_INLINE_ASSEMBLY
-#define OPAL_C_XLC_INLINE_ASSEMBLY 0
 #endif
 
 /* define OPAL_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
@@ -73,12 +69,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 /* We no longer support inline assembly for C++ as OPAL is a C-only interface */
 #define OPAL_GCC_INLINE_ASSEMBLY 0
-#define OPAL_DEC_INLINE_ASSEMBLY 0
-#define OPAL_XLC_INLINE_ASSEMBLY 0
 #else
 #define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
-#define OPAL_DEC_INLINE_ASSEMBLY OPAL_C_DEC_INLINE_ASSEMBLY
-#define OPAL_XLC_INLINE_ASSEMBLY OPAL_C_XLC_INLINE_ASSEMBLY
 #endif
 
 

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2016      Broadcom Limited. All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -42,16 +42,6 @@
 #ifdef OPAL_DISABLE_INLINE_ASM
 #undef OPAL_C_GCC_INLINE_ASSEMBLY
 #define OPAL_C_GCC_INLINE_ASSEMBLY 0
-#undef OPAL_CXX_GCC_INLINE_ASSEMBLY
-#define OPAL_CXX_GCC_INLINE_ASSEMBLY 0
-#undef OPAL_C_DEC_INLINE_ASSEMBLY
-#define OPAL_C_DEC_INLINE_ASSEMBLY 0
-#undef OPAL_CXX_DEC_INLINE_ASSEMBLY
-#define OPAL_CXX_DEC_INLINE_ASSEMBLY 0
-#undef OPAL_C_XLC_INLINE_ASSEMBLY
-#define OPAL_C_XLC_INLINE_ASSEMBLY 0
-#undef OPAL_CXX_XLC_INLINE_ASSEMBLY
-#define OPAL_CXX_XLC_INLINE_ASSEMBLY 0
 #endif
 
 /* define OPAL_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
@@ -59,12 +49,8 @@
    are in C or C++ */
 #if defined(c_plusplus) || defined(__cplusplus)
 #define OPAL_GCC_INLINE_ASSEMBLY OPAL_CXX_GCC_INLINE_ASSEMBLY
-#define OPAL_DEC_INLINE_ASSEMBLY OPAL_CXX_DEC_INLINE_ASSEMBLY
-#define OPAL_XLC_INLINE_ASSEMBLY OPAL_CXX_XLC_INLINE_ASSEMBLY
 #else
 #define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
-#define OPAL_DEC_INLINE_ASSEMBLY OPAL_C_DEC_INLINE_ASSEMBLY
-#define OPAL_XLC_INLINE_ASSEMBLY OPAL_C_XLC_INLINE_ASSEMBLY
 #endif
 
 /**********************************************************************
