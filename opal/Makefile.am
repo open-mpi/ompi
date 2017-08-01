@@ -22,7 +22,6 @@
 
 SUBDIRS = \
 	include \
-	asm \
         datatype \
         etc \
         util \
@@ -37,7 +36,6 @@ SUBDIRS = \
 # therefore make distclean will fail).
 DIST_SUBDIRS = \
 	include \
-	asm \
         datatype \
         etc \
 	util \
@@ -50,7 +48,6 @@ DIST_SUBDIRS = \
 lib_LTLIBRARIES = lib@OPAL_LIB_PREFIX@open-pal.la
 lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES =
 lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
-        asm/libasm.la \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
