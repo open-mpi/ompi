@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -135,7 +135,7 @@ void opal_atomic_isync(void)
  * it will emit lwz instead of ld to load the 64-bit operand. */
 #define OPAL_ASM_VALUE64(x) (void *)(intptr_t) (x)
 #else
-#define OPAL_ASM_VALUE64(x) x
+#define OPAL_ASM_VALUE64(x) (int64_t) (x)
 #endif
 
 
@@ -158,31 +158,21 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
    return (ret == oldval);
 }
 
-static inline int32_t opal_atomic_ll_32 (volatile int32_t *addr)
-{
-   int32_t ret;
+#define opal_atomic_ll_32(addr, value)                          \
+    __asm__ __volatile__ ("ldarx    %0, 0, %1        \n\t"      \
+                          : "=&r" ((int32_t) (value))           \
+                          : "r" ((volatile int32_t *) (addr)))
 
-   __asm__ __volatile__ ("lwarx   %0, 0, %1  \n\t"
-                         : "=&r" (ret)
-                         : "r" (addr)
-                         );
-   return ret;
-}
-
-static inline int opal_atomic_sc_32 (volatile int32_t *addr, int32_t newval)
-{
-    int32_t ret, foo;
-
-    __asm__ __volatile__ ("   stwcx.  %4, 0, %3  \n\t"
-                          "   li      %0,0       \n\t"
-                          "   bne-    1f         \n\t"
-                          "   ori     %0,%0,1    \n\t"
-                          "1:"
-                          : "=r" (ret), "=m" (*addr), "=r" (foo)
-                          : "r" (addr), "r" (newval)
-                          : "cc", "memory");
-    return ret;
-}
+#define opal_atomic_sc_32(addr, newval, ret)                   \
+    __asm__ __volatile__ ("   stwcx.  %2, 0, %1  \n\t"         \
+                          "   li      %0,0       \n\t"         \
+                          "   bne-    1f         \n\t"         \
+                          "   ori     %0,%0,1    \n\t"                  \
+                          "1:"                                          \
+                          : "=r" ((int32_t) ret)                        \
+                          : "r" ((volatile int32_t *) (addr)),          \
+                            "r" ((int32_t) newval)                      \
+                          : "cc", "memory")
 
 /* these two functions aren't inlined in the non-gcc case because then
    there would be two function calls (since neither cmpset_32 nor
@@ -280,31 +270,21 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
    return (ret == oldval);
 }
 
-static inline int64_t opal_atomic_ll_64(volatile int64_t *addr)
-{
-   int64_t ret;
+#define opal_atomic_ll_64(addr, value)                                  \
+        __asm__ __volatile__ ("ldarx    %0, 0, %1        \n\t"          \
+                              : "=&r" (OPAL_ASM_VALUE64(value))         \
+                              : "r" ((volatile int64_t *) (addr)))
 
-   __asm__ __volatile__ ("ldarx   %0, 0, %1  \n\t"
-                         : "=&r" (ret)
-                         : "r" (addr)
-                         );
-   return ret;
-}
-
-static inline int opal_atomic_sc_64(volatile int64_t *addr, int64_t newval)
-{
-    int32_t ret;
-
-    __asm__ __volatile__ ("   stdcx.  %2, 0, %1  \n\t"
-                          "   li      %0,0       \n\t"
-                          "   bne-    1f         \n\t"
-                          "   ori     %0,%0,1    \n\t"
-                          "1:"
-                          : "=r" (ret)
-                          : "r" (addr), "r" (OPAL_ASM_VALUE64(newval))
-                          : "cc", "memory");
-    return ret;
-}
+#define opal_atomic_sc_64(addr, newval, ret)                    \
+    __asm__ __volatile__ ("   stdcx.  %2, 0, %1  \n\t"          \
+                          "   li      %0,0       \n\t"          \
+                          "   bne-    1f         \n\t"          \
+                          "   ori     %0,%0,1    \n\t"          \
+                          "1:"                                  \
+                          : "=r" ((ret))                        \
+                          : "r" ((volatile int64_t *) (addr)),  \
+                            "r" (OPAL_ASM_VALUE64(newval))      \
+                          : "cc", "memory")
 
 /* these two functions aren't inlined in the non-gcc case because then
    there would be two function calls (since neither cmpset_64 nor

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      ARM ltd.  All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -150,28 +150,19 @@ static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
     return (ret == oldval);
 }
 
-static inline int32_t opal_atomic_ll_32 (volatile int32_t *addr)
-{
-    int32_t ret;
+#define opal_atomic_ll_32(addr, value)                           \
+    __asm__ __volatile__ ("ldaxr    %w0, [%1]        \n"         \
+                          : "=&r" ((int32_t) (value))            \
+                          : "r" ((volatile int32_t *) (addr)))
 
-    __asm__ __volatile__ ("ldaxr    %w0, [%1]          \n"
-                          : "=&r" (ret)
-                          : "r" (addr));
-
-    return ret;
-}
-
-static inline int opal_atomic_sc_32 (volatile int32_t *addr, int32_t newval)
-{
-    int ret;
-
-    __asm__ __volatile__ ("stlxr    %w0, %w2, [%1]     \n"
-                          : "=&r" (ret)
-                          : "r" (addr), "r" (newval)
-                          : "cc", "memory");
-
-    return ret == 0;
-}
+#define opal_atomic_sc_32(addr, newval, ret)                            \
+    do {                                                                \
+        __asm__ __volatile__ ("stlxr    %w0, %w2, [%1]    \n"           \
+                              : "=&r" ((int) (ret))                     \
+                              : "r" ((volatile int32_t *) (addr)), "r" ((int32_t) (newval)) \
+                              : "cc", "memory");                        \
+        (ret) = ((ret) == 0);                                           \
+    } while (0)
 
 static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
@@ -251,28 +242,19 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
     return (ret == oldval);
 }
 
-static inline int64_t opal_atomic_ll_64 (volatile int64_t *addr)
-{
-    int64_t ret;
+#define opal_atomic_ll_64(addr, value)                          \
+    __asm__ __volatile__ ("ldaxr    %0, [%1]        \n"         \
+                          : "=&r" ((int64_t) (value))           \
+                          : "r" ((volatile int64_t *) (addr)))
 
-    __asm__ __volatile__ ("ldaxr    %0, [%1]        \n"
-                          : "=&r" (ret)
-                          : "r" (addr));
-
-    return ret;
-}
-
-static inline int opal_atomic_sc_64 (volatile int64_t *addr, int64_t newval)
-{
-    int ret;
-
-    __asm__ __volatile__ ("stlxr    %w0, %2, [%1]    \n"
-                          : "=&r" (ret)
-                          : "r" (addr), "r" (newval)
-                          : "cc", "memory");
-
-    return ret == 0;
-}
+#define opal_atomic_sc_64(addr, newval, ret)                    \
+    do {                                                        \
+        __asm__ __volatile__ ("stlxr    %w0, %2, [%1]    \n"    \
+                              : "=&r" ((int) (ret))                     \
+                              : "r" ((volatile int64_t *) (addr)), "r" ((int64_t) (newval)) \
+                              : "cc", "memory");                        \
+        (ret) = ((ret) == 0);                                           \
+    } while (0)
 
 #define OPAL_ASM_MAKE_ATOMIC(type, bits, name, inst, reg)                   \
     static inline type opal_atomic_ ## name ## _ ## bits (volatile type *addr, type value) \

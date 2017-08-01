@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reseved.
  * $COPYRIGHT$
  *
@@ -215,28 +215,33 @@ static inline opal_list_item_t *opal_fifo_push_atomic (opal_fifo_t *fifo,
  */
 static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 {
-    opal_list_item_t *item, *next;
-
 #if OPAL_HAVE_ATOMIC_LLSC_PTR
+    register opal_list_item_t *ghost = &fifo->opal_fifo_ghost;
+    register opal_list_item_t *item, *next;
+    register opal_list_item_t volatile * volatile * head = &fifo->opal_fifo_head.data.item;
+    int ret;
+
     /* use load-linked store-conditional to avoid ABA issues */
     do {
-        item = opal_atomic_ll_ptr (&fifo->opal_fifo_head.data.item);
-        if (&fifo->opal_fifo_ghost == item) {
-            if (&fifo->opal_fifo_ghost == fifo->opal_fifo_tail.data.item) {
+        opal_atomic_ll_ptr(head, item);
+        next = (opal_list_item_t *) item->opal_list_next;
+        if (ghost != item) {
+            opal_atomic_sc_ptr(head, next, ret);
+            if (ret) {
+                break;
+            }
+        } else {
+            if (ghost == fifo->opal_fifo_tail.data.item) {
                 return NULL;
             }
 
             /* fifo does not appear empty. wait for the fifo to be made
              * consistent by conflicting thread. */
-            continue;
-        }
-
-        next = (opal_list_item_t *) item->opal_list_next;
-        if (opal_atomic_sc_ptr (&fifo->opal_fifo_head.data.item, next)) {
-            break;
         }
     } while (1);
 #else
+    opal_list_item_t *item, *next;
+
     /* protect against ABA issues by "locking" the head */
     do {
         if (opal_atomic_cmpset_32 ((int32_t *) &fifo->opal_fifo_head.data.counter, 0, 1)) {
