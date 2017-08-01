@@ -29,6 +29,7 @@
 #include "opal/hash_string.h"
 #include "opal/threads/threads.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"
@@ -65,6 +66,7 @@ int pmix2x_client_init(opal_list_t *ilist)
     pmix_info_t *pinfo;
     size_t ninfo, n;
     opal_value_t *ival;
+    char *evar;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client init");
@@ -75,6 +77,9 @@ int pmix2x_client_init(opal_list_t *ilist)
         if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
+        }
+        if (NULL != (evar = getenv("OPAL_PREFIX"))) {
+            opal_setenv("PMIX_PREFIX", evar, false, &environ);
         }
     }
 
