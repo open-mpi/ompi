@@ -207,9 +207,6 @@ __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
     [AC_MSG_RESULT([no])
      $2])
 
-  AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
-		     [Whether 64-bit is supported by the __sync builtin atomics])
-
   # Check for 128-bit support
   OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
 ])
