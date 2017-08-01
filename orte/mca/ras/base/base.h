@@ -49,6 +49,7 @@ typedef struct orte_ras_base_t {
     bool allocation_read;
     orte_ras_base_module_t *active_module;
     int total_slots_alloc;
+    bool launch_orted_on_hn;
 } orte_ras_base_t;
 
 ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;
