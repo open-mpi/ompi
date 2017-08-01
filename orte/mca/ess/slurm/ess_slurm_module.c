@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,7 +79,7 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
+        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;

@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -112,8 +112,6 @@ int orte_ess_base_orted_setup(char **hosts)
     char *param;
     hwloc_obj_t obj;
     unsigned i, j;
-    orte_topology_t *t;
-    opal_list_t transports;
     orte_ess_base_signal_t *sig;
     int idx;
 
@@ -740,10 +738,10 @@ static void signal_forward_callback(int fd, short event, void *arg)
     }
 
     /* send it to ourselves */
-    if (0 > (rc = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                          ORTE_PROC_MY_NAME, cmd,
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, cmd,
                                           ORTE_RML_TAG_DAEMON,
                                           NULL, NULL))) {
+
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
     }
