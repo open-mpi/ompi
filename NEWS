@@ -65,6 +65,11 @@ Master (not on release branches yet)
   via --enable-mpi-cxx.
 - Removed embedded VampirTrace.  It is in maintenance mode since 2013.
   Please consider Score-P (score-p.org) as an external replacement.
+- Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
+  MPI processes on the same node where mpirun is executing using a separate
+  orte daemon, rather than the mpirun process.   This may be useful to set to
+  true when using SLURM, as it improves interoperability with SLURM's signal
+  propagation tools.  By default it is set to false, except for Cray XC systems.
 
 3.0.0 -- July, 2017
 -------------------
