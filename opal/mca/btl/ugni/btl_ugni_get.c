@@ -134,7 +134,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *endpoint,
 {
     mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (endpoint);
     size_t size;
-    int rc;
+    int rc = OPAL_SUCCESS;
 
     BTL_VERBOSE(("starting eager get for remote ctx: %p", hdr.eager.ctx));
 
