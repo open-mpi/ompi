@@ -36,6 +36,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/base/base.h"
@@ -99,6 +100,7 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
     opal_pmix2x_event_t *event;
     opal_pmix2x_jobid_trkr_t *job;
     opal_pmix_lock_t lk;
+    char *evar;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
@@ -106,6 +108,9 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
         if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
+        }
+        if (NULL != (evar = getenv("OPAL_PREFIX"))) {
+            opal_setenv("PMIX_PREFIX", evar, false, &environ);
         }
     }
     ++opal_pmix_base.initialized;
