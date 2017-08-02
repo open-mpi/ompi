@@ -4,7 +4,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
@@ -109,8 +109,9 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
         }
-        if (NULL != (evar = getenv("OPAL_PREFIX"))) {
-            opal_setenv("PMIX_PREFIX", evar, false, &environ);
+        if ((NULL != (evar = getenv("OPAL_PREFIX"))) && 
+            (NULL == getenv("PMIX_INSTALL_PREFIX"))) {
+            opal_setenv("PMIX_INSTALL_PREFIX", evar, false, &environ);
         }
     }
     ++opal_pmix_base.initialized;
