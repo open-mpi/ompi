@@ -12,4 +12,5 @@ void intCIV_exit(int_CIVector * v);
 int intCIV_set(int_CIVector * v, int i, int val);
 int intCIV_get(int_CIVector * v, int i);
 
+
 #endif /*INTEGER_CONSTANT_INITIALIZED_VECTOR*/
