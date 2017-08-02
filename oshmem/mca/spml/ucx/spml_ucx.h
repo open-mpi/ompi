@@ -112,6 +112,7 @@ extern void mca_spml_ucx_memuse_hook(void *addr, size_t length);
 
 extern void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
 extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey);
+extern void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *, int pe);
 
 extern int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs);

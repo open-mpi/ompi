@@ -175,6 +175,11 @@ void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey)
 {
 }
 
+void *mca_spml_base_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *mkey, int pe)
+{
+    return NULL;
+}
+
 int mca_spml_base_put_nb(void *dst_addr, size_t size,
                          void *src_addr, int dst, void **handle)
 {

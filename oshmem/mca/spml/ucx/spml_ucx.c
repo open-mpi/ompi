@@ -64,6 +64,7 @@ mca_spml_ucx_t mca_spml_ucx = {
                                every spml */
         mca_spml_ucx_rmkey_unpack,
         mca_spml_ucx_rmkey_free,
+        mca_spml_ucx_rmkey_ptr,
         mca_spml_ucx_memuse_hook,
         (void*)&mca_spml_ucx
     },
@@ -351,6 +352,23 @@ void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey)
     }
     ucx_mkey = (spml_ucx_mkey_t *)(mkey->spml_context);
     ucp_rkey_destroy(ucx_mkey->rkey);
+}
+
+void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *mkey, int pe)
+{
+#if (((UCP_API_MAJOR >= 1) && (UCP_API_MINOR >= 3)) || (UCP_API_MAJOR >= 2))
+    void *rva;
+    ucs_status_t err;
+    spml_ucx_mkey_t *ucx_mkey = (spml_ucx_mkey_t *)(mkey->spml_context);
+
+    err = ucp_rkey_ptr(ucx_mkey->rkey, (uint64_t)dst_addr, &rva);
+    if (UCS_OK != err) {
+        return NULL;
+    }
+    return rva;
+#else
+    return NULL;
+#endif
 }
 
 static void mca_spml_ucx_cache_mkey(sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
