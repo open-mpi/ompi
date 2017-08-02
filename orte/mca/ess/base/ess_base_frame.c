@@ -161,13 +161,34 @@ static struct known_signal known_signals[] = {
     {SIGHUP, "SIGHUP", false},
     {SIGINT, "SIGINT", false},
     {SIGKILL, "SIGKILL", false},
+    {SIGPIPE, "SIGPIPE", false},
+#ifdef SIGQUIT
+    {SIGQUIT, "SIGQUIT", false},
+#endif
+#ifdef SIGTRAP
+    {SIGTRAP, "SIGTRAP", true},
+#endif
+#ifdef SIGTSTP
+    {SIGTSTP, "SIGTSTP", true},
+#endif
+#ifdef SIGABRT
+    {SIGABRT, "SIGABRT", true},
+#endif
+#ifdef SIGCONT
+    {SIGCONT, "SIGCONT", true},
+#endif
 #ifdef SIGSYS
     {SIGSYS, "SIGSYS", true},
 #endif
 #ifdef SIGXCPU
     {SIGXCPU, "SIGXCPU", true},
 #endif
+#ifdef SIGXFSZ
     {SIGXFSZ, "SIGXFSZ", true},
+#endif
+#ifdef SIGALRM
+    {SIGALRM, "SIGALRM", true},
+#endif
 #ifdef SIGVTALRM
     {SIGVTALRM, "SIGVTALRM", true},
 #endif
