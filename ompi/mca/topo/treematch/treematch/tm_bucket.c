@@ -31,7 +31,7 @@ static int ilog2(int val)
 
 static int verbose_level = ERROR;
 
-bucket_list_t global_bl = {0};
+static bucket_list_t global_bl;
 
 int tab_cmp(const void*,const void*);
 int old_bucket_id(int,int,bucket_list_t);
@@ -47,12 +47,12 @@ void fill_buckets(bucket_list_t);
 int is_power_of_2(int);
 void partial_sort(bucket_list_t *,double **,int);
 void next_bucket_elem(bucket_list_t,int *,int *);
-int add_edge_3(tree_t *,tree_t *,int,int,int *);
-void FREE_bucket(bucket_t *);
-void FREE_tab_bucket(bucket_t **,int);
-void FREE_bucket_list(bucket_list_t);
-void partial_update_val (int nb_args, void **args);
-
+int add_edge_3(tm_tree_t *,tm_tree_t *,int,int,int *);
+void free_bucket(bucket_t *);
+void free_tab_bucket(bucket_t **,int);
+void free_bucket_list(bucket_list_t);
+void partial_update_val (int nb_args, void **args, int thread_id);
+double bucket_grouping(tm_affinity_mat_t *,tm_tree_t *, tm_tree_t *, int ,int);
 int tab_cmp(const void* x1,const void* x2)
 {
   int *e1 = NULL,*e2 = NULL,i1,i2,j1,j2;
@@ -146,7 +146,7 @@ void check_bucket(bucket_t *b,double **tab,double inf, double sup)
     j = b->bucket[k].j;
     if((tab[i][j] < inf) || (tab[i][j] > sup)){
       if(verbose_level >= CRITICAL)
-	  printf("[%d] (%d,%d):%f not in [%f,%f]\n",k,i,j,tab[i][j],inf,sup);
+	fprintf(stderr,"[%d] (%d,%d):%f not in [%f,%f]\n",k,i,j,tab[i][j],inf,sup);
       exit(-1);
     }
   }
@@ -197,15 +197,20 @@ void add_to_bucket(int id,int i,int j,bucket_list_t bucket_list)
     n = bucket_list->nb_buckets;
     size = N*N/n;
     /* display_bucket(bucket);*/
-    bucket->bucket = (coord*)realloc(bucket->bucket,sizeof(coord)*(size + bucket->bucket_len));
+    if(verbose_level >= DEBUG){
+      printf("Extending bucket %d (%p) from size %d to size %d!\n",
+             id, (void*)bucket->bucket, bucket->nb_elem, bucket->nb_elem+size);
+    }
+
+    bucket->bucket = (coord*)REALLOC(bucket->bucket,sizeof(coord)*(size + bucket->bucket_len));
     bucket->bucket_len += size;
 
-    if(verbose_level >= DEBUG){
-      printf("MALLOC/realloc: %d\n",id);
-      printf("(%d,%d)\n",i,j);
-      display_bucket(bucket);
-      printf("\n");
-    }
+    /* if(verbose_level >= DEBUG){ */
+    /*   printf("MALLOC/realloc: %d\n",id); */
+    /*   printf("(%d,%d)\n",i,j); */
+    /*   display_bucket(bucket); */
+    /*   printf("\n"); */
+    /* } */
 
   }
 
@@ -289,7 +294,13 @@ void partial_sort(bucket_list_t *bl,double **tab,int N)
   bucket_list_t bucket_list;
   int nb_buckets, nb_bits;
 
-  /* after these operations, nb_bucket is a power of 2 interger close to log2(N)*/
+  if( N <= 0){
+    if(verbose_level >= ERROR )
+      fprintf(stderr,"Error: tryng to group a matrix of size %d<=0!\n",N);
+    return;
+  }
+
+  /* after these operations, nb_buckets is a power of 2 interger close to log2(N)*/
 
   nb_buckets = (int)floor(CmiLog2(N));
 
@@ -404,7 +415,7 @@ void next_bucket_elem(bucket_list_t bucket_list,int *i,int *j)
 }
 
 
-int add_edge_3(tree_t *tab_node, tree_t *parent,int i,int j,int *nb_groups)
+int add_edge_3(tm_tree_t *tab_node, tm_tree_t *parent,int i,int j,int *nb_groups)
 {
   /* printf("%d <-> %d ?\n",tab_node[i].id,tab_node[j].id); */
   if((!tab_node[i].parent) && (!tab_node[j].parent)){
@@ -453,7 +464,7 @@ int add_edge_3(tree_t *tab_node, tree_t *parent,int i,int j,int *nb_groups)
   return 0;
 }
 
-int try_add_edge(tree_t *tab_node, tree_t *parent,int arity,int i,int j,int *nb_groups)
+int try_add_edge(tm_tree_t *tab_node, tm_tree_t *parent,int arity,int i,int j,int *nb_groups)
 {
   assert( i != j );
 
@@ -481,40 +492,40 @@ int try_add_edge(tree_t *tab_node, tree_t *parent,int arity,int i,int j,int *nb_
   }
 }
 
-void FREE_bucket(bucket_t *bucket)
+void free_bucket(bucket_t *bucket)
 {
   FREE(bucket->bucket);
   FREE(bucket);
 }
 
-void FREE_tab_bucket(bucket_t **bucket_tab,int N)
+void free_tab_bucket(bucket_t **bucket_tab,int N)
 {
   int i;
   for( i = 0 ; i < N ; i++ )
-    FREE_bucket(bucket_tab[i]);
+    free_bucket(bucket_tab[i]);
   FREE(bucket_tab);
 }
 
-void FREE_bucket_list(bucket_list_t bucket_list)
+void free_bucket_list(bucket_list_t bucket_list)
 {
-  /* Do not FREE the tab field it is used elsewhere */
-  FREE_tab_bucket(bucket_list->bucket_tab,bucket_list->nb_buckets);
+  /* Do not free the tab field it is used elsewhere */
+  free_tab_bucket(bucket_list->bucket_tab,bucket_list->nb_buckets);
   FREE(bucket_list->pivot);
   FREE(bucket_list->pivot_tree);
   FREE(bucket_list);
 }
 
-void partial_update_val (int nb_args, void **args){
+void partial_update_val (int nb_args, void **args, int thread_id){
   int inf = *(int*)args[0];
   int sup = *(int*)args[1];
-  affinity_mat_t *aff_mat = (affinity_mat_t*)args[2];
-  tree_t *new_tab_node = (tree_t*)args[3];
+  tm_affinity_mat_t *aff_mat = (tm_affinity_mat_t*)args[2];
+  tm_tree_t *new_tab_node = (tm_tree_t*)args[3];
   double *res=(double*)args[4];
   int l;
 
-  if(nb_args != 6){
+  if(nb_args != 5){
     if(verbose_level >= ERROR)
-      fprintf(stderr,"Wrong number of args in %s: %d\n",__func__, nb_args);
+      fprintf(stderr,"(Thread: %d) Wrong number of args in %s: %d\n",thread_id, __func__, nb_args);
     exit(-1);
   }
 
@@ -524,7 +535,7 @@ void partial_update_val (int nb_args, void **args){
     }
 }
 
-void bucket_grouping(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_node,
+double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t *new_tab_node,
 		     int arity,int M)
 {
   bucket_list_t bucket_list;
@@ -536,9 +547,11 @@ void bucket_grouping(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_n
   int N = aff_mat->order;
   double **mat = aff_mat->mat;
 
-  verbose_level = get_verbose_level();
+  verbose_level = tm_get_verbose_level();
   if(verbose_level >= INFO )
     printf("starting sort of N=%d elements\n",N);
+
+
 
   TIC;
   partial_sort(&bucket_list,mat,N);
@@ -662,8 +675,8 @@ void bucket_grouping(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_n
     printf("Bucket: %d, indice:%d\n",bucket_list->cur_bucket,bucket_list->bucket_indice);
     printf("val=%f\n",val);
   }
-  FREE_bucket_list(bucket_list);
+  free_bucket_list(bucket_list);
 
-  /*  exit(-1); */
-  /*  display_grouping(new_tab_node,M,arity,val); */
+  return val;
 }
+

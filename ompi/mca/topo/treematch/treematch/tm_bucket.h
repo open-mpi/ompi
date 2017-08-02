@@ -28,7 +28,8 @@ typedef struct{
 
 typedef _bucket_list_t *bucket_list_t;
 
-void bucket_grouping(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_node,
-		     int arity,int M);
-int try_add_edge(tree_t *tab_node, tree_t *parent,int arity,int i,int j,int *nb_groups);
+double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t *new_tab_node, 
+		       int arity,int M);
+int try_add_edge(tm_tree_t *tab_node, tm_tree_t *parent,int arity,int i,int j,int *nb_groups);
 #endif
+
