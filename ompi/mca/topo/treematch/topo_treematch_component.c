@@ -62,12 +62,6 @@ mca_topo_treematch_component_2_2_0_t mca_topo_treematch_component =
 
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
-    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
-    if(NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
     return OMPI_SUCCESS;
 }
 
@@ -101,4 +95,3 @@ static int mca_topo_treematch_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_topo_treematch_component.reorder_mode);
     return OMPI_SUCCESS;
 }
-
