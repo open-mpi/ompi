@@ -198,7 +198,11 @@ tm_topology_t* hwloc_to_tm(char *filename)
     exit(-1);
   }
 
+#if HWLOC_API_VERSION >= 0x00020000
+  hwloc_topology_set_all_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_STRUCTURE);
+#else  /* HWLOC_API_VERSION >= 0x00020000 */
   hwloc_topology_ignore_all_keep_structure(topology);
+#endif  /* HWLOC_API_VERSION >= 0x00020000 */
   hwloc_topology_load(topology);
 
 
@@ -291,7 +295,11 @@ tm_topology_t* get_local_topo_with_hwloc(void)
 
   /* Build the topology */
   hwloc_topology_init(&topology);
+#if HWLOC_API_VERSION >= 0x00020000
+  hwloc_topology_set_all_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_STRUCTURE);
+#else  /* HWLOC_API_VERSION >= 0x00020000 */
   hwloc_topology_ignore_all_keep_structure(topology);
+#endif  /* HWLOC_API_VERSION >= 0x00020000 */
   hwloc_topology_load(topology);
 
   /* Test if symetric */
