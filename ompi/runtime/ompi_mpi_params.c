@@ -62,7 +62,7 @@ bool ompi_mpi_keep_fqdn_hostnames = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
-bool ompi_mpi_yield_when_idle = true;
+bool ompi_mpi_yield_when_idle = false;
 int ompi_mpi_event_tick_rate = -1;
 char *ompi_mpi_show_mca_params_string = NULL;
 bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
@@ -107,7 +107,7 @@ int ompi_mpi_register_params(void)
      */
     /* JMS: Need ORTE data here -- set this to 0 when
        exactly/under-subscribed, or 1 when oversubscribed */
-    ompi_mpi_yield_when_idle = true;
+    ompi_mpi_yield_when_idle = false;
     (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
                                  "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
