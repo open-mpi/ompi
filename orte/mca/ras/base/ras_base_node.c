@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -78,33 +78,24 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
 
     /* get the hnp node's info */
     hnp_node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-#if SLURM_CRAY_ENV
-    /* if we are in a Cray-SLURM environment, then we cannot
-     * launch procs local to the HNP. The problem
-     * is the MPI processes launched on the head node (where the
-     * ORTE_PROC_IS_HNP evalues to true) get launched by a daemon
-     * (mpirun) which is not a child of a slurmd daemon.  This
-     * means that any RDMA credentials obtained via the odls/alps
-     * local launcher are incorrect. Test for this condition. If
-     * found, then take steps to ensure we launch a daemon on
-     * the same node as mpirun and that it gets used to fork
-     * local procs instead of mpirun so they get the proper
-     * credential */
-    if (NULL != hnp_node) {
-        OPAL_LIST_FOREACH(node, nodes, orte_node_t) {
-            if (orte_ifislocal(node->name)) {
-                orte_hnp_is_allocated = true;
-                break;
+
+    if ((orte_ras_base.launch_orted_on_hn == true) &&
+        (orte_managed_allocation)) {
+        if (NULL != hnp_node) {
+            OPAL_LIST_FOREACH(node, nodes, orte_node_t) {
+                if (orte_ifislocal(node->name)) {
+                    orte_hnp_is_allocated = true;
+                    break;
+                }
+            }
+            if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) &
+                ORTE_MAPPING_NO_USE_LOCAL)) {
+                hnp_node->name = strdup("mpirun");
+                skiphnp = true;
+                ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_USE_LOCAL);
             }
         }
-        if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping) & ORTE_MAPPING_NO_USE_LOCAL)) {
-            hnp_node->name = strdup("mpirun");
-            skiphnp = true;
-            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_USE_LOCAL);
-        }
     }
-#endif
-
 
     /* cycle through the list */
     while (NULL != (item = opal_list_remove_first(nodes))) {
