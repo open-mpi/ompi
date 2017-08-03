@@ -19,6 +19,8 @@ Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
                         reserved.
+Copyright (c) 2017      Research Organization for Information Science
+                        and Technology (RIST). All rights reserved.
 
 $COPYRIGHT$
 
@@ -547,24 +549,6 @@ OpenSHMEM Functionality and Features
 
 MPI Collectives
 ---------------
-
-- The "hierarch" coll component (i.e., an implementation of MPI
-  collective operations) attempts to discover network layers of
-  latency in order to segregate individual "local" and "global"
-  operations as part of the overall collective operation.  In this
-  way, network traffic can be reduced -- or possibly even minimized
-  (similar to MagPIe).  The current "hierarch" component only
-  separates MPI processes into on- and off-node groups.
-
-  Hierarch has had sufficient correctness testing, but has not
-  received much performance tuning.  As such, hierarch is not
-  activated by default -- it must be enabled manually by setting its
-  priority level to 100:
-
-    mpirun --mca coll_hierarch_priority 100 ...
-
-  We would appreciate feedback from the user community about how well
-  hierarch works for your applications.
 
 - The "fca" coll component: the Mellanox Fabric Collective Accelerator
   (FCA) is a solution for offloading collective operations from the
