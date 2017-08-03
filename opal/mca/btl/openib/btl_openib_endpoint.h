@@ -141,7 +141,7 @@ typedef struct mca_btl_openib_endpoint_srq_qp_t {
 typedef struct mca_btl_openib_qp_t {
     struct ibv_qp *lcl_qp;
     uint32_t lcl_psn;
-    int32_t  sd_wqe;      /**< number of available send wqe entries */
+    volatile int32_t  sd_wqe;      /**< number of available send wqe entries */
     int32_t  sd_wqe_inflight;
     int wqe_count;
     int users;
