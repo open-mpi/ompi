@@ -107,6 +107,10 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
         }
+        /* check the evars for a mismatch */
+        if (OPAL_SUCCESS != (dbg = opal_pmix_pmix2x_check_evars())) {
+            return dbg;
+        }
     }
     ++opal_pmix_base.initialized;
 

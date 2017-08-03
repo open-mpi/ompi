@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -11,6 +11,8 @@
 #
 
 EXTRA_DIST = autogen.subdirs
+
+dist_opaldata_DATA = help-pmix-pmix2x.txt
 
 SUBDIRS = pmix
 
