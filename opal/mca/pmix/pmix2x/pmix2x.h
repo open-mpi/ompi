@@ -46,6 +46,7 @@ typedef struct {
   int cache_size;
   opal_list_t cache;
   opal_list_t dmdx;
+  bool silence_warning;
 } mca_pmix_pmix2x_component_t;
 
 OPAL_DECLSPEC extern mca_pmix_pmix2x_component_t mca_pmix_pmix2x_component;
@@ -290,6 +291,8 @@ OPAL_MODULE_DECLSPEC int pmix2x_server_notify_event(int status,
 
 
 /****  COMPONENT UTILITY FUNCTIONS  ****/
+OPAL_MODULE_DECLSPEC int opal_pmix_pmix2x_check_evars(void);
+
 OPAL_MODULE_DECLSPEC void pmix2x_event_hdlr(size_t evhdlr_registration_id,
                                             pmix_status_t status, const pmix_proc_t *source,
                                             pmix_info_t info[], size_t ninfo,

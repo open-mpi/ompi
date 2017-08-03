@@ -100,7 +100,6 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
     opal_pmix2x_event_t *event;
     opal_pmix2x_jobid_trkr_t *job;
     opal_pmix_lock_t lk;
-    char *evar;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
@@ -109,9 +108,9 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
         }
-        if ((NULL != (evar = getenv("OPAL_PREFIX"))) && 
-            (NULL == getenv("PMIX_INSTALL_PREFIX"))) {
-            opal_setenv("PMIX_INSTALL_PREFIX", evar, false, &environ);
+        /* check the evars for a mismatch */
+        if (OPAL_SUCCESS != (dbg = opal_pmix_pmix2x_check_evars())) {
+            return dbg;
         }
     }
     ++opal_pmix_base.initialized;
