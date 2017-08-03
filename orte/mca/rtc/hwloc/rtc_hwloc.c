@@ -66,9 +66,7 @@ static size_t shmemsize = 0;
 static size_t shmemaddr;
 static char *shmemfile = NULL;
 static int shmemfd = -1;
-#endif
 
-#if HWLOC_API_VERSION >= 0x20000
 static int parse_map_line(const char *line,
                           unsigned long *beginp,
                           unsigned long *endp,
@@ -112,8 +110,8 @@ static int init(void)
 
     if (ORTE_SUCCESS != (rc = find_hole(mca_rtc_hwloc_component.kind,
                                         &shmemaddr, shmemsize))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+        /* we couldn't find a hole, so don't use the shmem support */
+        return ORTE_SUCCESS;
     }
     /* create the shmem file in our session dir so it
      * will automatically get cleaned up */
@@ -182,7 +180,8 @@ static void assign(orte_job_t *jdata)
     opal_list_t *cache;
     opal_value_t *kv;
 
-    if (VM_HOLE_NONE == mca_rtc_hwloc_component.kind) {
+    if (VM_HOLE_NONE == mca_rtc_hwloc_component.kind ||
+        NULL == shmemfile) {
         return;
     }
     /* add the shmem address and size to the job-level info that
