@@ -3,6 +3,8 @@
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +47,8 @@ orte_rtc_hwloc_component_t mca_rtc_hwloc_component = {
     .kind = VM_HOLE_BIGGEST
 };
 
-static char *vmhole = "biggest";
+static char *biggest = "biggest";
+static char *vmhole;
 
 static int rtc_hwloc_register(void)
 {
@@ -60,6 +63,7 @@ static int rtc_hwloc_register(void)
                                             &my_priority);
 
     mca_rtc_hwloc_component.kind = VM_HOLE_BIGGEST;
+    vmhole = biggest;
     (void) mca_base_component_var_register(c, "vmhole",
                                            "Kind of VM hole to identify - none, begin, biggest, libs, heap, stack (default=biggest)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
