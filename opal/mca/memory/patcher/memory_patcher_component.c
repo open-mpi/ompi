@@ -59,11 +59,6 @@ static int patcher_query (int *);
 
 static int mca_memory_patcher_priority;
 
-/* NTH: we can't currently allow madvise to be intercepted due to a
- * deadlock when running with glibc. In the future, we may re-enable
- * this hook if the deadlock can be resolved. */
-#define WANT_INTERCEPT_MADVISE 0
-
 opal_memory_patcher_component_t mca_memory_patcher_component = {
     .super = {
         .memoryc_version = {
@@ -249,7 +244,6 @@ static void *intercept_mremap (void *start, size_t oldlen, void *new_address, si
 
 #endif
 
-#if WANT_INTERCEPT_MADVISE
 #if defined (SYS_madvise)
 
 static int (*original_madvise) (void *, size_t, int);
@@ -284,7 +278,6 @@ static int intercept_madvise (void *start, size_t length, int advice)
 }
 
 #endif
-#endif // WANT_INTERCEPT_MADVISE
 
 #if defined SYS_brk
 
@@ -503,14 +496,12 @@ static int patcher_open (void)
     }
 #endif
 
-#if WANT_INTERCEPT_MADVISE
 #if defined (SYS_madvise)
     rc = opal_patcher->patch_symbol ("madvise", (uintptr_t)intercept_madvise, (uintptr_t *) &original_madvise);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 #endif
-#endif // WANT_INTERCEPT_MADVISE
 
 #if defined(SYS_shmdt) && defined(__linux__)
     rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
