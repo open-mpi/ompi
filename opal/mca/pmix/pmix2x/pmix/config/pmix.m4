@@ -745,7 +745,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         pmix_config_prefix[Makefile]
         pmix_config_prefix[config/Makefile]
         pmix_config_prefix[include/Makefile]
-        pmix_config_prefix[src/atomics/asm/Makefile]
         pmix_config_prefix[src/Makefile]
         pmix_config_prefix[src/util/keyval/Makefile]
         pmix_config_prefix[src/mca/base/Makefile]
@@ -925,7 +924,6 @@ AC_DEFINE_UNQUOTED([PMIX_WANT_PRETTY_PRINT_STACKTRACE],
                    [$WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
-#
 # Do we want the shared memory datastore usage?
 #
 
@@ -944,6 +942,7 @@ AC_DEFINE_UNQUOTED([PMIX_ENABLE_DSTORE],
                  [$WANT_DSTORE],
                  [if want shared memory dstore feature])
 
+#
 #
 # Use pthread-based locking
 #
