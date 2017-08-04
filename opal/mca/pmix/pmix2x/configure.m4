@@ -53,7 +53,7 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
                   [AC_HELP_STRING([--enable-pmix-timing],
                                   [Enable PMIx timing measurements (default: disabled)])])
     AC_MSG_CHECKING([if PMIx timing is enabled])
-    if test "$enable_pmix_timing" == "yes"; then
+    if test "$enable_pmix_timing" = "yes"; then
         AC_MSG_RESULT([yes])
         opal_pmix_pmix2x_timing_flag=--enable-pmix-timing
     else
