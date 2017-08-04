@@ -976,12 +976,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of __sync builtin atomics (default: enabled)])],
-         [], [enable_builtin_atomics="yes"])
+         [Enable use of __sync builtin atomics (default: disabled)])],
+         [], [enable_builtin_atomics="no"])
     AC_ARG_ENABLE([osx-builtin-atomics],
       [AC_HELP_STRING([--enable-osx-builtin-atomics],
-         [Enable use of OSX builtin atomics (default: enabled)])],
-         [], [enable_osx_builtin_atomics="yes"])
+         [Enable use of OSX builtin atomics (default: disabled)])],
+         [], [enable_osx_builtin_atomics="no"])
 
     opal_cv_asm_builtin="BUILTIN_NO"
     if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
