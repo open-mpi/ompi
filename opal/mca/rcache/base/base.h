@@ -58,6 +58,12 @@ OPAL_DECLSPEC mca_rcache_base_component_t *mca_rcache_base_component_lookup(cons
 OPAL_DECLSPEC mca_rcache_base_module_t *mca_rcache_base_module_lookup (const char *name);
 OPAL_DECLSPEC int mca_rcache_base_module_destroy(mca_rcache_base_module_t *module);
 
+extern opal_free_list_t mca_rcache_base_vma_tree_items;
+extern bool mca_rcache_base_vma_tree_items_inited;
+extern unsigned int mca_rcache_base_vma_tree_items_min;
+extern int mca_rcache_base_vma_tree_items_max;
+extern unsigned int mca_rcache_base_vma_tree_items_inc;
+
 /* only used within base -- no need to DECLSPEC */
 extern int mca_rcache_base_used_mem_hooks;
 
