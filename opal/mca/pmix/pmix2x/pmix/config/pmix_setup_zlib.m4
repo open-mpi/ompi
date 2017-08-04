@@ -56,7 +56,7 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
                            [$pmix_zlib_libdir],
                            [pmix_zlib_support=1],
                            [pmix_zlib_support=0])
-        if test $pmix_zlib_support == "1"; then
+        if test $pmix_zlib_support = "1"; then
             LIBS="$LIBS -lz"
             PMIX_EMBEDDED_LIBS="$PMIX_EMBEDDED_LIBS -lz"
             if test "$pmix_zlib_standard_header_location" != "yes"; then

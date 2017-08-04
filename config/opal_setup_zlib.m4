@@ -56,7 +56,7 @@ AC_DEFUN([OPAL_ZLIB_CONFIG],[
                            [$opal_zlib_libdir],
                            [opal_zlib_support=1],
                            [opal_zlib_support=0])
-        if test $opal_zlib_support == "1"; then
+        if test $opal_zlib_support = "1"; then
             LIBS="$LIBS -lz"
             if test "$opal_zlib_standard_header_location" != "yes"; then
                 CPPFLAGS="$CPPFLAGS $opal_zlib_CPPFLAGS"
