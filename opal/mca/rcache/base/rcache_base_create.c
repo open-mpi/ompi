@@ -29,6 +29,7 @@
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/base/rcache_base_mem_cb.h"
+#include "rcache_base_vma_tree.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
 
