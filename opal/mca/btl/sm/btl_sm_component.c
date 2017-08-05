@@ -15,7 +15,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -33,6 +33,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/argv.h"
 #include "opal/constants.h"
 
 static int mca_btl_sm_component_register(void);
