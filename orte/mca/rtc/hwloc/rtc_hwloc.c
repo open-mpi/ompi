@@ -549,7 +549,6 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
 {
     unsigned long biggestbegin = 0;
     unsigned long biggestsize = 0;
-    unsigned long prevbegin = 0;
     unsigned long prevend = 0;
     orte_rtc_hwloc_vm_map_kind_t prevmkind = VM_MAP_OTHER;
     int in_libs = 0;
@@ -562,8 +561,8 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
     }
 
     while (fgets(line, sizeof(line), file) != NULL) {
-        unsigned long begin, end;
-        orte_rtc_hwloc_vm_map_kind_t mkind;
+        unsigned long begin=0, end=0;
+        orte_rtc_hwloc_vm_map_kind_t mkind=VM_MAP_OTHER;
 
         if (!parse_map_line(line, &begin, &end, &mkind)) {
             opal_output_verbose(90, orte_rtc_base_framework.framework_output,
@@ -577,7 +576,6 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
 
             switch (hkind) {
                 case VM_HOLE_BEGIN:
-                    assert(!prevbegin);
                     fclose(file);
                     return use_hole(0, begin, addrp, size);
 
@@ -635,7 +633,6 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
           break;
         }
 
-        prevbegin = begin;
         prevend = end;
         prevmkind = mkind;
 

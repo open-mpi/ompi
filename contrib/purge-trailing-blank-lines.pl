@@ -53,7 +53,7 @@ sub quiet_print {
 # Find the top-level source tree dir
 my $start = cwd();
 my $top = $start;
-while (! -f "$top/AUTHORS") {
+while (! -f "$top/HACKING") {
     chdir("..");
     $top = cwd();
     die "Can't find top-level directory"
