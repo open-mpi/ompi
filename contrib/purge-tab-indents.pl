@@ -57,7 +57,7 @@ my @exts = qw(.h .c);
 # Find the top-level OMPI source tree dir
 my $start = cwd();
 my $top = $start;
-while (! -f "$top/AUTHORS") {
+while (! -f "$top/HACKING") {
     chdir("..");
     $top = cwd();
     die "Can't find top-level directory"

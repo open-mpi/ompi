@@ -165,6 +165,8 @@ OPAL_DECLSPEC int opal_hwloc_base_get_topology(void);
  */
 OPAL_DECLSPEC int opal_hwloc_base_set_topology(char *topofile);
 
+OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(hwloc_topology_t topo);
+
 /**
  * Free the hwloc topology.
  */

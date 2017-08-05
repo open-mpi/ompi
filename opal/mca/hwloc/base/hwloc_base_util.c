@@ -272,11 +272,9 @@ int opal_hwloc_base_get_topology(void)
     opal_process_name_t wildcard_rank;
     char *val = NULL;
 #if HWLOC_API_VERSION >= 0x20000
-        int rc2, rc3, fd;
-        uint64_t addr, *aptr, size, *sptr;
-        char *shmemfile;
-    hwloc_obj_t root;
-    opal_hwloc_topo_data_t *sum;
+    int rc2, rc3, fd;
+    uint64_t addr, *aptr, size, *sptr;
+    char *shmemfile;
 #endif
 
     OPAL_OUTPUT_VERBOSE((2, opal_hwloc_base_framework.framework_output,
