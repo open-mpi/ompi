@@ -115,6 +115,7 @@ segment_create(map_segment_t *ds_buf,
     void *addr = NULL;
     int shmid = MAP_SEGMENT_SHM_INVALID;
     int flags;
+    int try_hp;
 
     assert(ds_buf);
 
@@ -129,14 +130,28 @@ segment_create(map_segment_t *ds_buf,
      * real_size here
      */
     flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR;
+    try_hp = mca_sshmem_sysv_component.use_hp;
 #if defined (SHM_HUGETLB)
-    flags |= ((0 != mca_sshmem_sysv_component.use_hp) ? SHM_HUGETLB : 0);
+    flags |= ((0 != try_hp) ? SHM_HUGETLB : 0);
     size = ((size + sshmem_sysv_gethugepagesize() - 1) / sshmem_sysv_gethugepagesize()) * sshmem_sysv_gethugepagesize();
 #endif
 
     /* Create a new shared memory segment and save the shmid. */
+retry_alloc:
     shmid = shmget(IPC_PRIVATE, size, flags);
     if (shmid == MAP_SEGMENT_SHM_INVALID) {
+        /* hugepage alloc was set to auto. Hopefully it failed because there are no
+         * enough hugepages on the system. Turn it off and retry.
+         */
+        if (-1 == try_hp) {
+            OPAL_OUTPUT_VERBOSE(
+                    (10, oshmem_sshmem_base_framework.framework_output,
+                     "failed to allocate %llu bytes with huge pages. "
+                     "Using regular pages", (unsigned long long)size));
+            flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR;
+            try_hp = 0;
+            goto retry_alloc;
+        }
         opal_show_help("help-oshmem-sshmem.txt",
                        "create segment failure",
                        true,
