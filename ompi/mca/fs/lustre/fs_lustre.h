@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,7 +33,7 @@ extern int mca_fs_lustre_stripe_width;
 
 BEGIN_C_DECLS
 
-#include <lustre/liblustreapi.h>
+#include <lustre/lustreapi.h>
 #include <lustre/lustre_user.h>
 
 #ifndef LOV_MAX_STRIPE_COUNT
