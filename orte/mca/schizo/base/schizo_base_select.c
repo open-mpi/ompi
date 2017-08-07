@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -94,6 +94,12 @@ int orte_schizo_base_select(void)
             /* must be lowest priority - add to end */
             opal_list_append(&orte_schizo_base.active_modules, &newmodule->super);
         }
+    }
+
+    /* we really need at least one component in order to operate */
+    if (0 == opal_list_get_size(&orte_schizo_base.active_modules)) {
+        orte_show_help("help-opal-runtime.txt", "no-plugins", true, "SCHIZO");
+        return OPAL_ERR_SILENT;
     }
 
     if (4 < opal_output_get_verbosity(orte_schizo_base_framework.framework_output)) {

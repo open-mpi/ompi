@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -66,3 +67,20 @@ WARNING: Cannot set both the MCA parameters opal_leave_pinned (a.k.a.,
 mpi_leave_pinned) and opal_leave_pinned_pipeline (a.k.a.,
 mpi_leave_pinned_pipeline) to "true".  Defaulting to mpi_leave_pinned
 ONLY.
+#
+[no-plugins]
+We were unable to find any usable plugins for the %s framework. This
+framework requires at least one plugin in order to operate. This can be caused
+by any of the following:
+
+* we were unable to build any of the plugins due to some combination
+  of configure directives and available system support
+
+* no plugin was selected due to some combination of MCA parameter
+  directives versus built plugins (i.e., you excluded all the plugins
+  that were built and/or could execute)
+
+* the OPAL_PREFIX environment variable is doesn't point to any location that
+  includes at least one usable plugin for this framework.
+
+Please check your installation and environment.

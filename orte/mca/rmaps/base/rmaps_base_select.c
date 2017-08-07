@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,8 +22,10 @@
 
 #include <string.h>
 
-#include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/mca/mca.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/base.h"
 
@@ -99,6 +102,12 @@ int orte_rmaps_base_select(void)
             /* must be lowest priority - add to end */
             opal_list_append(&orte_rmaps_base.selected_modules, &newmodule->super);
         }
+    }
+
+    /* we really need at least one component in order to operate */
+    if (0 == opal_list_get_size(&orte_rmaps_base.selected_modules)) {
+        orte_show_help("help-opal-runtime.txt", "no-plugins", true, "RMAPS");
+        return OPAL_ERR_SILENT;
     }
 
     if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
