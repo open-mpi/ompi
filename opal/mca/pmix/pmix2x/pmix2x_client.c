@@ -18,6 +18,7 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 #include "opal/types.h"
+#include "opal/mca/installdirs/installdirs.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -78,9 +79,17 @@ int pmix2x_client_init(opal_list_t *ilist)
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
         }
-        if ((NULL != (evar = getenv("OPAL_PREFIX"))) && 
-            (NULL == getenv("PMIX_INSTALL_PREFIX"))) {
+        if (NULL != (evar = getenv("OPAL_PREFIX"))) {
+            /* OMPI installation was relocated. We need to propagate this to
+             * internal PMIx as well
+             */
             opal_setenv("PMIX_INSTALL_PREFIX", evar, false, &environ);
+        } else if(NULL != getenv("PMIX_INSTALL_PREFIX")) {
+            /* we use internal version of PMIx, need to override this
+             * envar so we wont get corrupted configuration
+             */
+            opal_setenv("PMIX_INSTALL_PREFIX", opal_install_dirs.prefix,
+                        false, &environ);
         }
     }
 
