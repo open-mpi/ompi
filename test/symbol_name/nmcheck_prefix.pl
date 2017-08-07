@@ -33,6 +33,7 @@ sub main {
         "lib${mpi}.so",
         "lib${mpi}_mpifh.so",
         "lib${mpi}_usempi.so",
+        "lib${mpi}_usempi_ignore_tkr.so",
         "libopen-rte.so",
         "libopen-pal.so" )
     {
@@ -113,8 +114,9 @@ sub check_lib_for_bad_exports {
     @symbols = grep(!/^_fini$/, @symbols);
     @symbols = grep(!/^_init$/, @symbols);
     @symbols = grep(!/^_edata$/, @symbols);
-    @symbols = grep(!/^_end$/, @symbols);
-    @symbols = grep(!/^__bss_start$/, @symbols);
+    @symbols = grep(!/^_+end_*$/, @symbols);
+    @symbols = grep(!/^_+bss_start_*$/, @symbols);
+    @symbols = grep(!/^_+bss_end_*$/, @symbols);
     @symbols = grep(!/^__malloc_initialize_hook$/, @symbols);
 
     # The symbols can now be split into two groups: fatal and warning.
