@@ -156,6 +156,18 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_RENAME)
     AC_CONFIG_FILES(pmix_config_prefix[include/pmix_rename.h])
 
+    # Add any extra lib?
+    AC_ARG_WITH([pmix-extra-lib],
+                AC_HELP_STRING([--with-pmix-extra-lib=LIB],
+                               [Link the output PMIx library to this extra lib (used in embedded mode)]))
+    AC_MSG_CHECKING([for extra lib])
+    AS_IF([test ! -z "$with_pmix_extra_lib"],
+          [AC_MSG_RESULT([$with_pmix_extra_lib])
+           PMIX_EXTRA_LIB=$with_pmix_extra_lib],
+          [AC_MSG_RESULT([no])
+           PMIX_EXTRA_LIB=])
+    AC_SUBST(PMIX_EXTRA_LIB)
+
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
         PMIX_GCC_CFLAGS="-Wall -Wmissing-prototypes -Wundef"
