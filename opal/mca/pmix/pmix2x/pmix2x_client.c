@@ -31,6 +31,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
 #include "opal/mca/pmix/base/base.h"
 #include "pmix2x.h"
@@ -66,7 +67,6 @@ int pmix2x_client_init(opal_list_t *ilist)
     pmix_info_t *pinfo;
     size_t ninfo, n;
     opal_value_t *ival;
-    char *evar;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client init");
@@ -78,9 +78,9 @@ int pmix2x_client_init(opal_list_t *ilist)
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
         }
-        if ((NULL != (evar = getenv("OPAL_PREFIX"))) && 
-            (NULL == getenv("PMIX_INSTALL_PREFIX"))) {
-            opal_setenv("PMIX_INSTALL_PREFIX", evar, false, &environ);
+        /* check the evars for a mismatch */
+        if (OPAL_SUCCESS != (dbg = opal_pmix_pmix2x_check_evars())) {
+            return dbg;
         }
     }
 

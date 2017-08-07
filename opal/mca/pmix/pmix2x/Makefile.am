@@ -12,6 +12,8 @@
 
 EXTRA_DIST = autogen.subdirs
 
+dist_opaldata_DATA = help-pmix-pmix2x.txt
+
 SUBDIRS = pmix
 
 sources = \
