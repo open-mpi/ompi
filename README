@@ -15,7 +15,7 @@ Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008-2017 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
                         reserved.
@@ -620,11 +620,11 @@ Network Support
   - "ucx" interfaces directly with UCX;
   - "ikrit" interfaces directly with Mellanox MXM.
 
-- UCX is the Unified Communication X (UCX) communication library 
+- UCX is the Unified Communication X (UCX) communication library
   (http://www.openucx.org/).
   This is an open-source project developed in collaboration between
   industry, laboratories, and academia to create an open-source
-  production grade communication framework for data centric and 
+  production grade communication framework for data centric and
   high-performance applications.
   UCX currently supports:
   - OFA Verbs;
@@ -719,6 +719,11 @@ Open MPI Extensions
 Building Open MPI
 -----------------
 
+If you have checked out a DEVELOPER'S COPY of Open MPI (i.e., you
+cloned from Git), you really need to read the HACKING file before
+attempting to build Open MPI. Really.
+
+If you have downloaded a tarball, then things are much simpler.
 Open MPI uses a traditional configure script paired with "make" to
 build.  Typical installs can be of the pattern:
 
@@ -1257,7 +1262,7 @@ MPI FUNCTIONALITY
 
 --disable-io-ompio
   Disable the ompio MPI-IO component
- 
+
 --enable-sparse-groups
   Enable the usage of sparse groups. This would save memory
   significantly especially if you are creating large
