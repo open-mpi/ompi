@@ -132,7 +132,6 @@ mca_rcache_base_vma_item_t *mca_rcache_base_vma_new (mca_rcache_base_vma_module_
     return vma_item;
 }
 
-/* NTH: this function MUST not allocate or deallocate memory */
 static void mca_rcache_base_vma_return (mca_rcache_base_vma_module_t *vma_module, mca_rcache_base_vma_item_t *vma_item)
 {
     opal_list_item_t *item;
