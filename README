@@ -719,10 +719,12 @@ Open MPI Extensions
 Building Open MPI
 -----------------
 
-Open MPI uses a traditional configure script paired with "make" to
-build.  Typical installs can be of the pattern:
+Building Open MPI is typically a combination of running a perl "autoconf" script followed by "configure" and "make". Typical installs can be of the pattern:
 
-shell$ ./configure [...options...]
+shell$ ./autogen.pl
+[...lots of output...]
+shell$ ./configure --prefix=/where/to/install
+[...lots of output...]
 shell$ make [-j N] all install
     (use an integer value of N for parallel builds)
 

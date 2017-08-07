@@ -47,13 +47,15 @@ performance penalty at run-time because of extra debugging overhead.
 User Builds
 ===========
 
-Building Open MPI is typically a combination of running "configure"
-and "make".  Execute the following commands to install the Open MPI
+Building Open MPI is typically a combination of running a perl "autoconf" script followed by "configure" and "make".  Execute the following commands to install the Open MPI
 system from within the directory at the top of the tree:
 
+shell$ ./autogen.pl
+[...lots of output...]
 shell$ ./configure --prefix=/where/to/install
 [...lots of output...]
-shell$ make all install
+shell$ make [-j N] all install
+    (use an integer value of N for parallel builds)
 
 If you need special access to install, then you can execute "make
 all" as a user with write permissions in the build tree, and a
