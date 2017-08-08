@@ -247,9 +247,10 @@ int mca_base_component_repository_add (const char *path)
         fprintf(stderr, "\n-------------------------------------------------------\n");
         fprintf(stderr, "No usable directories were found in the provided path\n");
         fprintf(stderr, "when searching for available plugins. This usually indicates\n");
-        fprintf(stderr, "either that the OPAL installation was moved, or that the\n");
-        fprintf(stderr, "OPAL_PREFIX environmental variable is set and pointing\n");
-        fprintf(stderr, "to an incorrect or non-existent location.\n\n");
+        fprintf(stderr, "that the OPAL installation was moved, or the OPAL_PREFIX\n");
+        fprintf(stderr, "environmental variable or \"mca_base_component_path\"\n");
+        fprintf(stderr, "MCA parameter is set and pointing to an incorrect or \n");
+        fprintf(stderr, "non-existent location.\n\n");
         fprintf(stderr, "Please correct the situation and try again.\n");
         fprintf(stderr, "-------------------------------------------------------\n\n");
         rc = OPAL_ERR_SILENT;

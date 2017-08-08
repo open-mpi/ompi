@@ -80,7 +80,8 @@ by any of the following:
   directives versus built plugins (i.e., you excluded all the plugins
   that were built and/or could execute)
 
-* the OPAL_PREFIX environment variable is doesn't point to any location that
-  includes at least one usable plugin for this framework.
+* the OPAL_PREFIX environment variable, or the MCA parameter
+  "mca_base_component_path", is set and doesn't point to any location
+  that includes at least one usable plugin for this framework.
 
 Please check your installation and environment.
