@@ -14,6 +14,7 @@
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2017      IBM Corporation. All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,7 +23,7 @@
 #
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class threads datatype util dss symbol_name
+SUBDIRS = support asm class threads datatype util dss
 if PROJECT_OMPI
 SUBDIRS += monitoring
 endif
