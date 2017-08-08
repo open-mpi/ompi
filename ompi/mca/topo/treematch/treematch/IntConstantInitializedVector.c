@@ -2,13 +2,12 @@
 #include <stdio.h>
 #include "IntConstantInitializedVector.h"
 
-
 int intCIV_isInitialized(int_CIVector * v, int i)
 {
   if(v->top == 0)
     return 0;
   if(v->from[i] >= 0)
-    if(v->from[i] < v->top && v->to[v->from[i]] == i)
+    if(v->from[i] < v->top && v->to[v->from[i]] == i) 
     return 1;
   return 0;
 }
@@ -45,7 +44,7 @@ int intCIV_set(int_CIVector * v, int i, int val)
       v->top++;
     }
   v->vec[i] = val;
-  return 0;
+  return 0;  
 }
 
 int intCIV_get(int_CIVector * v, int i)

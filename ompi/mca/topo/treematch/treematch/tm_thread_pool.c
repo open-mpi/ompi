@@ -1,13 +1,18 @@
 #include <pthread.h>
 #include "tm_thread_pool.h"
 #include "tm_verbose.h"
-#include "opal/mca/hwloc/hwloc-internal.h"
+#include <hwloc.h>
 #include "tm_verbose.h"
 #include "tm_tree.h"
 #include <errno.h>
+#include <limits.h>
 
+typedef enum _mapping_policy {COMPACT, SCATTER} mapping_policy_t;
+
+static mapping_policy_t mapping_policy = COMPACT;
 static int verbose_level = ERROR;
 static thread_pool_t *pool = NULL;
+static unsigned int max_nb_threads = INT_MAX;
 
 static thread_pool_t *get_thread_pool(void);
 static void execute_work(work_t *work);
@@ -16,39 +21,21 @@ static void *thread_loop(void *arg);
 static void add_work(pthread_mutex_t *list_lock, pthread_cond_t *cond_var, work_t *working_list, work_t *work);
 static thread_pool_t *create_threads(void);
 
-static void f1 (int nb_args, void **args);
-static void f2 (int nb_args, void **args);
+static void f1 (int nb_args, void **args, int thread_id);
+static void f2 (int nb_args, void **args, int thread_id);
 static void destroy_work(work_t *work);
 
+#define MIN(a, b) ((a)<(b)?(a):(b))
+#define MAX(a, b) ((a)>(b)?(a):(b))
 
-void f1 (int nb_args, void **args){
-  int a, b;
-  a = *(int*)args[0];
-  b = *(int*)args[1];
-  printf("nb_args=%d, a=%d, b=%d\n",nb_args,a,b);
+
+
+void tm_set_max_nb_threads(unsigned int val){
+  max_nb_threads = val;
 }
-
-
-void f2 (int nb_args, void **args){
-  int n, *tab;
-  int *res;
-  int i,j;
-  n = *(int*)args[0];
-  tab = (int*)args[1];
-  res=(int*)args[2];
-
-  for(j=0;j<1000000;j++){
-    *res=0;
-    for (i=0;i<n;i++)
-      *res+=tab[i];
-  }
-
-  printf("done: %d!\n",nb_args);
-}
-
 
 void execute_work(work_t *work){
-  work->task(work->nb_args, work->args);
+  work->task(work->nb_args, work->args, work->thread_id);
 }
 
 int bind_myself_to_core(hwloc_topology_t topology, int id){
@@ -57,10 +44,29 @@ int bind_myself_to_core(hwloc_topology_t topology, int id){
   char *str;
   int binding_res;
   int depth = hwloc_topology_get_depth(topology);
+  int nb_cores = hwloc_get_nbobjs_by_depth(topology, depth-1);
+  int my_core;
+  int nb_threads = get_nb_threads();
   /* printf("depth=%d\n",depth); */
 
+  switch (mapping_policy){
+  case SCATTER:
+    my_core = id*(nb_cores/nb_threads);
+    break;
+  default:
+    if(verbose_level>=WARNING){
+      printf("Wrong scheduling policy. Using COMPACT\n");
+    }
+  case COMPACT:
+    my_core = id%nb_cores;
+  }
+
+    if(verbose_level>=INFO){
+       printf("Mapping thread %d on core %d\n",id,my_core);
+   }
+
     /* Get my core. */
-    obj = hwloc_get_obj_by_depth(topology, depth-1, id);
+    obj = hwloc_get_obj_by_depth(topology, depth-1, my_core);
     if (obj) {
       /* Get a copy of its cpuset that we may modify. */
       cpuset = hwloc_bitmap_dup(obj->cpuset);
@@ -71,7 +77,7 @@ int bind_myself_to_core(hwloc_topology_t topology, int id){
 
 
       /*hwloc_bitmap_asprintf(&str, cpuset);
-      printf("Binding thread %d to cpuset %s\n", id,str);
+      printf("Binding thread %d to cpuset %s\n", my_core,str);
       FREE(str);
       */
 
@@ -81,8 +87,8 @@ int bind_myself_to_core(hwloc_topology_t topology, int id){
 	int error = errno;
 	hwloc_bitmap_asprintf(&str, obj->cpuset);
 	if(verbose_level>=WARNING)
-	  fprintf(stderr,"%d Couldn't bind to cpuset %s: %s\n", id, str, strerror(error));
-	FREE(str);
+	  printf("Thread %d couldn't bind to cpuset %s: %s.\n This thread is not bound to any core...\n", my_core, str, strerror(error));
+	free(str); /* str is allocated by hlwoc, free it normally*/
 	return 0;
       }
       /* FREE our cpuset copy */
@@ -90,7 +96,7 @@ int bind_myself_to_core(hwloc_topology_t topology, int id){
       return 1;
     }else{
       if(verbose_level>=WARNING)
-	fprintf(stderr,"No valid object for core id %d!\n",id);
+	printf("No valid object for core id %d!\n",my_core);
       return 0;
     }
 }
@@ -161,6 +167,7 @@ void wait_work_completion(work_t *work){
 
 int submit_work(work_t *work, int thread_id){
   if( (thread_id>=0) && (thread_id< pool->nb_threads)){
+    work->thread_id = thread_id;
     add_work(&pool->list_lock[thread_id], &pool->cond_var[thread_id], &pool->working_list[thread_id], work);
     return 1;
   }
@@ -171,11 +178,11 @@ thread_pool_t *create_threads(){
   hwloc_topology_t topology;
   int i;
   local_thread_t *local;
-  int nb_cores;
+  int nb_threads;
+  unsigned int nb_cores;
   int depth;
 
-  verbose_level = get_verbose_level();
-
+  verbose_level = tm_get_verbose_level();
 
     /*Get number of cores: set 1 thread per core*/
   /* Allocate and initialize topology object. */
@@ -187,7 +194,7 @@ thread_pool_t *create_threads(){
   depth = hwloc_topology_get_depth(topology);
   if (depth == -1 ) {
     if(verbose_level>=CRITICAL)
-      fprintf(stderr,"Error: topology with unknown depth\n");
+      fprintf(stderr,"Error: HWLOC unable to find the depth of the topology of this node!\n");
     exit(-1);
   }
 
@@ -195,19 +202,23 @@ thread_pool_t *create_threads(){
 
   /* at depth 'depth' it is necessary a PU/core where we can execute things*/
   nb_cores = hwloc_get_nbobjs_by_depth(topology, depth-1);
+  nb_threads = MIN(nb_cores,  max_nb_threads);
+
+  if(verbose_level>=INFO)
+    printf("nb_threads = %d\n",nb_threads);
 
   pool = (thread_pool_t*) MALLOC(sizeof(thread_pool_t));
   pool -> topology = topology;
-  pool -> nb_threads = nb_cores;
-  pool -> thread_list = (pthread_t*)MALLOC(sizeof(pthread_t)*nb_cores);
-  pool -> working_list = (work_t*)CALLOC(nb_cores,sizeof(work_t));
-  pool -> cond_var = (pthread_cond_t*)MALLOC(sizeof(pthread_cond_t)*nb_cores);
-  pool -> list_lock = (pthread_mutex_t*)MALLOC(sizeof(pthread_mutex_t)*nb_cores);
+  pool -> nb_threads = nb_threads;
+  pool -> thread_list = (pthread_t*)MALLOC(sizeof(pthread_t)*nb_threads);
+  pool -> working_list = (work_t*)CALLOC(nb_threads,sizeof(work_t));
+  pool -> cond_var = (pthread_cond_t*)MALLOC(sizeof(pthread_cond_t)*nb_threads);
+  pool -> list_lock = (pthread_mutex_t*)MALLOC(sizeof(pthread_mutex_t)*nb_threads);
 
-  local=(local_thread_t*)MALLOC(sizeof(local_thread_t)*nb_cores);
+  local=(local_thread_t*)MALLOC(sizeof(local_thread_t)*nb_threads);
   pool->local = local;
 
-  for (i=0;i<nb_cores;i++){
+  for (i=0;i<nb_threads;i++){
     local[i].topology = topology;
     local[i].id = i;
     local[i].working_list = &pool->working_list[i];
@@ -245,11 +256,12 @@ void terminate_thread_pool(){
 
     for (id=0;id<pool->nb_threads;id++){
       pthread_join(pool->thread_list[id],(void **) &ret);
+      FREE(ret);
       pthread_cond_destroy(pool->cond_var +id);
       pthread_mutex_destroy(pool->list_lock +id);
       if (pool->working_list[id].next != NULL)
 	if(verbose_level >= WARNING)
-	  fprintf(stderr,"Working list of thread %d not empty!\n",id);
+	  printf("Working list of thread %d not empty!\n",id);
     }
 
     hwloc_topology_destroy(pool->topology);
@@ -272,7 +284,7 @@ int get_nb_threads(){
 }
 
 
-work_t *create_work(int nb_args, void **args, void (*task) (int, void **)){
+work_t *create_work(int nb_args, void **args, void (*task) (int, void **, int)){
   work_t *work;
   work = MALLOC(sizeof(work_t));
   work -> nb_args = nb_args;
@@ -292,6 +304,34 @@ void destroy_work(work_t *work){
   pthread_mutex_destroy(&work->mutex);
   FREE(work);
 }
+
+/* CODE example 2 functions  and  test driver*/
+
+void f1 (int nb_args, void **args, int thread_id){
+  int a, b;
+  a = *(int*)args[0];
+  b = *(int*)args[1];
+  printf("id: %d, nb_args=%d, a=%d, b=%d\n",thread_id, nb_args,a,b);
+}
+
+
+void f2 (int nb_args, void **args, int thread_id){
+  int n, *tab;
+  int *res;
+  int i,j;
+  n = *(int*)args[0];
+  tab = (int*)args[1];
+  res=(int*)args[2];
+
+  for(j=0;j<1000000;j++){
+    *res=0;
+    for (i=0;i<n;i++)
+      *res+=tab[i];
+  }
+
+  printf("id: %d, done: %d!\n",thread_id, nb_args);
+}
+
 
 
 int test_main(void){
