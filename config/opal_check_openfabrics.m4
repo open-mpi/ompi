@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -301,12 +301,13 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
 
 AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM_ARGS],[
     #
-    # ConnectX XRC support
+    # ConnectX XRC support - disabled see issue #3890
     #
-    AC_ARG_ENABLE([openib-connectx-xrc],
-        [AC_HELP_STRING([--enable-openib-connectx-xrc],
-                        [Enable ConnectX XRC support in the openib BTL. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
-                        [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
+dnl    AC_ARG_ENABLE([openib-connectx-xrc],
+dnl        [AC_HELP_STRING([--enable-openib-connectx-xrc],
+dnl                        [Enable ConnectX XRC support in the openib BTL. (default: disabled)])],
+dnl                        [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="no"])
+    enable_connectx_xrc="no"
     #
     # Unconnect Datagram (UD) based connection manager
     #
