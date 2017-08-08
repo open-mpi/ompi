@@ -80,6 +80,7 @@ int pmix2x_client_init(opal_list_t *ilist)
         }
         /* check the evars for a mismatch */
         if (OPAL_SUCCESS != (dbg = opal_pmix_pmix2x_check_evars())) {
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return dbg;
         }
     }
