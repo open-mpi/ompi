@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,16 +54,16 @@ pmix_status_t pmix_remove_errhandler(int errhandler_ref);
 
 void pmix_get_errorgroup(pmix_status_t status, char *pmix_error_group);
 
-PMIX_DECLSPEC pmix_status_t pmix_lookup_errhandler(pmix_notification_fn_t err,
+PMIX_EXPORT pmix_status_t pmix_lookup_errhandler(pmix_notification_fn_t err,
                                                    int *index);
 
-PMIX_DECLSPEC pmix_status_t pmix_add_errhandler(pmix_notification_fn_t err,
+PMIX_EXPORT pmix_status_t pmix_add_errhandler(pmix_notification_fn_t err,
                                                 pmix_info_t *info, int ninfo,
                                                 int *index);
 
-PMIX_DECLSPEC pmix_status_t pmix_remove_errhandler(int errhandler_ref);
+PMIX_EXPORT pmix_status_t pmix_remove_errhandler(int errhandler_ref);
 
-PMIX_DECLSPEC void pmix_get_errorgroup ( pmix_status_t status, char *pmix_error_group);
+PMIX_EXPORT void pmix_get_errorgroup ( pmix_status_t status, char *pmix_error_group);
 
 END_C_DECLS
 
