@@ -110,6 +110,7 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
         }
         /* check the evars for a mismatch */
         if (OPAL_SUCCESS != (dbg = opal_pmix_pmix2x_check_evars())) {
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return dbg;
         }
     }
