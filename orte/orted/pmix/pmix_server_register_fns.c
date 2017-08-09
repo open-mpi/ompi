@@ -45,7 +45,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/rmaps/base/base.h"
 
 #include "pmix_server_internal.h"
 #include "pmix_server.h"
@@ -263,6 +263,29 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
         kv->data.uint64 = machine->memory.total_memory;
         opal_list_append(info, &kv->super);
     }
+
+    /* pass the mapping policy used for this job */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_MAPBY);
+    kv->type = OPAL_STRING;
+    kv->data.string = strdup(orte_rmaps_base_print_mapping(jdata->map->mapping));
+    opal_list_append(info, &kv->super);
+
+    /* pass the ranking policy used for this job */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_RANKBY);
+    kv->type = OPAL_STRING;
+    kv->data.string = strdup(orte_rmaps_base_print_ranking(jdata->map->ranking));
+    opal_list_append(info, &kv->super);
+
+    /* pass the binding policy used for this job */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_BINDTO);
+    kv->type = OPAL_STRING;
+    kv->data.string = strdup(opal_hwloc_base_print_binding(jdata->map->binding));
+    opal_list_append(info, &kv->super);
+
+
 
     /* register any local clients */
     vpid = ORTE_VPID_MAX;
