@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +19,7 @@
 # $HEADER$
 #
 
+VERBOSE=1
 noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 ompilib_LTLIBRARIES = libompi_dbg_msgq.la
 
