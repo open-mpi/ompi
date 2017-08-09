@@ -53,13 +53,50 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.1.2 -- August, 2017
---------------------
+2.1.2 -- September, 2017
+------------------------
 
 Bug fixes/minor improvements:
-- Remove IB XRC support from the OpenIB BTL due to lack of support.
+
+- Update internal PMIx version to 1.2.3.
+- Fix some problems when using the NAG Fortran compiler to build Open MPI
+  and when using the compiler wrappers.  Thanks to Neil Carlson for reporting.
+- Fix a compilation problem with the SM BTL.  Thanks to Paul Hargrove for
+  reporting.
+- Fix a problem with MPI_IALLTOALLW when using zero-length messages.
+  Thanks to Dahai Guo for reporting.
+- Fix a problem with C11 generic type interface for SHMEM_G.  Thanks
+  to Nick Park for reporting.
+- Switch to using the lustreapi.h include file when building Open MPI
+  with Lustre support.
+- Fix a problem in the OB1 PML that led to hangs with OSU collective tests.
+- Fix a progression issue with MPI_WIN_FLUSH_LOCAL.  Thanks to
+  Joseph Schuchart for reporting.
+- Fix an issue with recent versions of PBSPro requiring libcrypto.
+  Thanks to Petr Hanousek for reporting.
+- Fix a problem when using MPI_ANY_SOURCE with MPI_SENDRECV.
+- Fix an issue that prevented signals from being propagated to ORTE
+  daemons.
+- Ensure that signals are forwarded from ORTE daemons to all processes
+  in the process group created by the daemons.  Thanks to Ted Sussman
+  for reporting.
+- Fix a problem with launching a job under a debugger. Thanks to
+  Greg Lee for reporting.
+- Fix a problem with Open MPI native I/O MPI_FILE_OPEN when using
+  a communicator having an associated topology.  Thanks to
+  Wei-keng Liao for reporting.
+- Fix an issue when using MPI_ACCUMULATE with derived datatypes.
+- Fix a problem with Fortran bindings that led to compilation errors
+  for user defined reduction operations.  Thanks to Nathan Weeks for
+  reporting.
+- Fix ROMIO issues with large writes/reads when using NFS file systems.
+- Fix definition of Fortran MPI_ARGV_NULL and MPI_ARGVS_NULL.
+- Enable use of the head node of a SLURM allocation on Cray XC systems.
+- Fix a problem with synchronous sends when using the UCX PML.
+- Use default socket buffer size to improve TCP BTL performance.
 - Remove support for big endian PowerPC.
 - Remove support for XL compilers older than v13.1
+- Remove IB XRC support from the OpenIB BTL due to loss of maintainer.
 
 2.1.1 -- April, 2017
 --------------------
