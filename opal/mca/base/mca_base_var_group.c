@@ -321,8 +321,7 @@ int mca_base_var_group_register (const char *project_name, const char *framework
 int mca_base_var_group_component_register (const mca_base_component_t *component,
                                            const char *description)
 {
-    /* 1.7 components do not store the project */
-    return group_register (NULL, component->mca_type_name,
+    return group_register (component->mca_project_name, component->mca_type_name,
                            component->mca_component_name, description);
 }
 
