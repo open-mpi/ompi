@@ -17,7 +17,7 @@ dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
+dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
@@ -244,11 +244,7 @@ OMPI_BUILD_FORTRAN_F08_SUBARRAYS=0
 AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -lt $OMPI_FORTRAN_USEMPIF08_BINDINGS],
       [AC_MSG_RESULT([none (use mpi_f08 disabled)])],
       [AS_IF([test "$enable_mpi_f08_subarray_prototype" = "yes"],
-             [OMPI_BUILD_FORTRAN_F08_SUBARRAYS=1
-              AC_MSG_RESULT([extra crispy (subarray prototype)])
-              AC_MSG_WARN([Sorry, the subarray prototype is no longer available])
-              AC_MSG_WARN([Contact your favorite OMPI developer and ask for it to be re-enabled])
-              AC_MSG_ERROR([Cannot continue])],
+             [OMPI_BUILD_FORTRAN_F08_SUBARRAYS=1],
              [AC_MSG_RESULT([regular (no subarray support)])])
       ])
 AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
