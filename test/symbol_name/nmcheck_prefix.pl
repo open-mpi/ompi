@@ -8,8 +8,8 @@ sub main {
         print "(where ompi/ opal/ orte/ test/ etc live)\n";
         print "And optionally OMPI_LIBMPI_NAME should be set\n";
         print "if MPI is configured with some name other than\n";
-        print "\"mpi\" for that.\n";
-        exit -1;
+        print "\"mpi\" for that, so we'll skip this test for now.\n";
+        exit 0;
     }
 
 # env var MYBASE should be the top dir where ompi/ opal/ orte/ test/ etc live.

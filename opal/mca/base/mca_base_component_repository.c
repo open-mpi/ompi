@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -202,9 +203,11 @@ static int file_exists(const char *filename, const char *ext)
 
 int mca_base_component_repository_add (const char *path)
 {
+    int rc=OPAL_SUCCESS;
 #if OPAL_HAVE_DL_SUPPORT
     char *path_to_use = NULL, *dir, *ctx;
     const char sep[] = {OPAL_ENV_SEP, '\0'};
+    bool found_one = false;
 
     if (NULL == path) {
         /* nothing to do */
@@ -223,16 +226,39 @@ int mca_base_component_repository_add (const char *path)
             dir = mca_base_system_default_path;
         }
 
-        if (0 != opal_dl_foreachfile(dir, process_repository_item, NULL)) {
-            break;
+        rc = opal_dl_foreachfile(dir, process_repository_item, NULL);
+        if (OPAL_SUCCESS == rc) {
+            found_one = true;
         }
     } while (NULL != (dir = strtok_r (NULL, sep, &ctx)));
 
     free (path_to_use);
 
+    if (found_one) {
+        return OPAL_SUCCESS;
+    } else {
+        /* we were unable to find even one available directory
+         * in this search path. This typically means that the
+         * user has pointed us to an incorrect location. We
+         * cannot use show_help as the show_help file is quite
+         * likely also not going to be found, so let's print
+         * a helpful error message as we know we are going
+         * to exit out in this case */
+        fprintf(stderr, "\n-------------------------------------------------------\n");
+        fprintf(stderr, "No usable directories were found in the provided path\n");
+        fprintf(stderr, "when searching for available plugins. This usually indicates\n");
+        fprintf(stderr, "that the OPAL installation was moved, or the OPAL_PREFIX\n");
+        fprintf(stderr, "environmental variable or \"mca_base_component_path\"\n");
+        fprintf(stderr, "MCA parameter is set and pointing to an incorrect or \n");
+        fprintf(stderr, "non-existent location.\n\n");
+        fprintf(stderr, "Please correct the situation and try again.\n");
+        fprintf(stderr, "-------------------------------------------------------\n\n");
+        rc = OPAL_ERR_SILENT;
+    }
+
 #endif /* OPAL_HAVE_DL_SUPPORT */
 
-    return OPAL_SUCCESS;
+    return rc;
 }
 
 
