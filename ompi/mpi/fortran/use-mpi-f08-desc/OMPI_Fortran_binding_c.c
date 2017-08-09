@@ -4,6 +4,7 @@
 
 #include "ompi_config.h"
 #include "ISO_Fortran_binding.h"
+#include <malloc.h>
 #include <stdio.h>
 
 #define DEBUG_PRINT 0
