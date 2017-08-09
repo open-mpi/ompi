@@ -10,7 +10,7 @@
  *                         rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -706,6 +706,25 @@ int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
   opal_list_append(&mca_coll_libnbc_component.active_requests, &(handle->super.super.super));
   OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
+  return OMPI_SUCCESS;
+}
+
+int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf) {
+  int res;
+  NBC_Handle *handle;
+  res = NBC_Init_handle (comm, &handle, module);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    return res;
+  }
+  handle->tmpbuf = tmpbuf;
+
+  res = NBC_Start (handle, schedule);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    NBC_Return_handle (handle);
+    return res;
+  }
+
+  *request = (ompi_request_t *) handle;
   return OMPI_SUCCESS;
 }
 
