@@ -923,7 +923,7 @@ AC_DEFUN([PMIX_CONFIG_ASM],[
     AS_IF([test "$pmix_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
           [PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"], [])])
     AS_IF([test "$pmix_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
-          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
+          [AC_MSG_WARN([__sync builtin atomics requested but not found.])])
 
         PMIX_CHECK_ASM_PROC
         PMIX_CHECK_ASM_TEXT
