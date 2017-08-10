@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
@@ -90,9 +90,9 @@ SUBDIRS = \
         mpi/fortran/mpif-h \
         $(OMPI_MPIEXT_USEMPI_DIR) \
         $(OMPI_FORTRAN_USEMPI_DIR) \
-        $(OMPI_FORTRAN_USEMPIF08_MOD) \
+        mpi/fortran/use-mpi-f08/mod \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
-        $(OMPI_FORTRAN_USEMPIF08_DIR) \
+        mpi/fortran/use-mpi-f08 \
         mpi/fortran/mpiext \
         $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
         $(OMPI_CONTRIB_SUBDIRS)
@@ -121,8 +121,6 @@ DIST_SUBDIRS = \
         mpi/fortran/use-mpi-ignore-tkr \
         mpi/fortran/use-mpi-f08 \
         mpi/fortran/use-mpi-f08/mod \
-        mpi/fortran/use-mpi-f08-desc \
-        mpi/fortran/use-mpi-f08-desc/mod \
         mpi/fortran/mpiext \
         mpi/java \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
