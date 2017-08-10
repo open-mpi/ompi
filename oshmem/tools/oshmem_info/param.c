@@ -2,7 +2,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
- * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -146,6 +146,16 @@ void oshmem_info_do_config(bool want_all)
     paramcheck = "runtime";
 #endif
 
+    /* The current mpi_f08 implementation does not support Fortran
+       subarrays.  However, someday it may/will.  Hence, I'm leaving
+       in all the logic that checks to see whether subarrays are
+       supported, but I'm just hard-coding
+       OMPI_BUILD_FORTRAN_F08_SUBARRAYS to 0 (we used to have a
+       prototype mpi_f08 module that implemented a handful of
+       descriptor-based interfaces and supported subarrays, but that
+       has been removed). */
+    const int OMPI_BUILD_FORTRAN_F08_SUBARRAYS = 0;
+
     /* setup the strings that don't require allocations*/
     cxx = OMPI_BUILD_CXX_BINDINGS ? "yes" : "no";
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) {
@@ -190,7 +200,7 @@ void oshmem_info_do_config(bool want_all)
         } else {
             int first = 1;
             snprintf(f08_msg, sizeof(f08_msg),
-                     "The mpi_f08 module is available, but due to limitations in the %s compiler, does not support the following: ",
+                     "The mpi_f08 module is available, but due to limitations in the %s compiler and/or Open MPI, does not support the following: ",
                      OMPI_FC);
             if (!OMPI_BUILD_FORTRAN_F08_SUBARRAYS) {
                 append(f08_msg, sizeof(f08_msg), &first, "array subsections");
