@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -60,23 +60,38 @@ include src/server/Makefile.am
 include src/sec/Makefile.am
 include src/common/Makefile.am
 
+include src/atomics/asm/Makefile.am
+include src/atomics/sys/Makefile.include
+
 if WANT_DSTORE
 include src/sm/Makefile.am
 include src/dstore/Makefile.am
 endif
 
 if PMIX_EMBEDDED_MODE
-noinst_LTLIBRARIES = libpmix.la
+noinst_LTLIBRARIES = libpmix.la libasm.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS =
 
 else
 
-lib_LTLIBRARIES = libpmix.la
+lib_LTLIBRARIES = libpmix.la libasm.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
-SUBDIRS = . test examples
+SUBDIRS = . test examples src/atomics/asm
 endif
+
+# ASM Start
+if PMIX_HAVE_ASM_FILE
+nodist_libasm_la_SOURCES = src/atomics/asm/atomic-asm.S
+libasm_la_DEPENDENCIES = src/atomics/asm/generated/@PMIX_ASM_FILE@
+else
+nodist_libasm_la_SOURCES =
+libasm_la_DEPENDENCIES =
+endif
+
+dist_libasm_la_SOURCES = src/atomics/asm/asm.c
+# ASM End
 
 if WANT_INSTALL_HEADERS
 pmixdir = $(pmixincludedir)/$(subdir)
@@ -99,9 +114,27 @@ EXTRA_DIST += README INSTALL VERSION LICENSE autogen.sh \
              test/test_common.h test/cli_stages.h \
              test/server_callbacks.h test/test_fence.h \
              test/test_publish.h test/test_resolve_peers.h \
-             test/test_spawn.h test/utils.h test/test_cd.h
+             test/test_spawn.h test/utils.h test/test_cd.h \
+             src/atomics/asm/asm-data.txt \
+             src/atomics/asm/generate-asm.pl \
+	src/atomics/asm/generate-all-asm.pl \
+	src/atomics/asm/base/aix.conf \
+	src/atomics/asm/base/default.conf \
+	src/atomics/asm/base/X86_64.asm \
+	src/atomics/asm/base/ARM.asm \
+	src/atomics/asm/base/IA32.asm \
+	src/atomics/asm/base/IA64.asm \
+	src/atomics/asm/base/MIPS.asm \
+	src/atomics/asm/base/POWERPC32.asm \
+	src/atomics/asm/base/POWERPC64.asm \
+	src/atomics/asm/base/SPARCV9_32.asm \
+	src/atomics/asm/base/SPARCV9_64.asm
 
 
+#
+# Copy over all the generated files
+#
 dist-hook:
+	mkdir "${distdir}/src/atomics/asm/generated"
+	$(PERL) "$(top_srcdir)/src/atomics/asm/generate-all-asm.pl" "$(PERL)" "$(srcdir)/src/atomics/asm" "$(distdir)/src/atomics/asm"
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(PMIX_VERSION)" "$(PMIX_REPO_REV)"
-

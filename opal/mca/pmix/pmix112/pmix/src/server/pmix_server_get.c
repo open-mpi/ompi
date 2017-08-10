@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +66,7 @@ extern pmix_server_module_t pmix_host_server;
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
+    volatile bool active;
     pmix_status_t status;
     const char *data;
     size_t ndata;
@@ -518,6 +519,9 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
     pmix_nspace_t *ns, *nptr;
     pmix_status_t rc;
 
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(caddy);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                     "[%s:%d] process dmdx reply from %s:%d",
                     __FILE__, __LINE__,
@@ -603,9 +607,5 @@ static void dmdx_cbfunc(pmix_status_t status,
                         "[%s:%d] queue dmdx reply for %s:%d",
                         __FILE__, __LINE__,
                         caddy->lcd->proc.nspace, caddy->lcd->proc.rank);
-    event_assign(&caddy->ev, pmix_globals.evbase, -1, EV_WRITE,
-                 _process_dmdx_reply, caddy);
-    event_priority_set(&caddy->ev, 0);
-    event_active(&caddy->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(caddy, _process_dmdx_reply);
 }
-

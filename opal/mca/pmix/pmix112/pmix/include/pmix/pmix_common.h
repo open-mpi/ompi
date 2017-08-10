@@ -52,6 +52,12 @@
 #include <string.h>
 #include <sys/time.h> /* for struct timeval */
 
+#ifdef PMIX_HAVE_VISIBILITY
+#define PMIX_EXPORT __attribute__((__visibility__("default")))
+#else
+#define PMIX_EXPORT
+#endif
+
 #include <pmix_version.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -854,17 +860,17 @@ typedef void (*pmix_value_cbfunc_t)(pmix_status_t status,
  * using a new set of info values.
  *
  * See pmix_common.h for a description of the notification function */
-void PMIx_Register_errhandler(pmix_info_t info[], size_t ninfo,
-                              pmix_notification_fn_t errhandler,
-                              pmix_errhandler_reg_cbfunc_t cbfunc,
-                              void *cbdata);
+PMIX_EXPORT void PMIx_Register_errhandler(pmix_info_t info[], size_t ninfo,
+                                          pmix_notification_fn_t errhandler,
+                                          pmix_errhandler_reg_cbfunc_t cbfunc,
+                                          void *cbdata);
 
 /* deregister the errhandler
  * errhandler_ref is the reference returned by PMIx for the errhandler
  * to pmix_errhandler_reg_cbfunc_t */
-void PMIx_Deregister_errhandler(int errhandler_ref,
-                                pmix_op_cbfunc_t cbfunc,
-                                void *cbdata);
+PMIX_EXPORT void PMIx_Deregister_errhandler(int errhandler_ref,
+                                            pmix_op_cbfunc_t cbfunc,
+                                            void *cbdata);
 /* Report an error to a process for notification via any
  * registered errhandler. The errhandler registration can be
  * called by both the server and the client application. On the
@@ -901,26 +907,26 @@ void PMIx_Deregister_errhandler(int errhandler_ref,
  * time. Note that the caller is required to maintain the input
  * data until the callback function has been executed!
 */
-pmix_status_t PMIx_Notify_error(pmix_status_t status,
-                                pmix_proc_t procs[], size_t nprocs,
-                                pmix_proc_t error_procs[], size_t error_nprocs,
-                                pmix_info_t info[], size_t ninfo,
-                                pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Notify_error(pmix_status_t status,
+                                            pmix_proc_t procs[], size_t nprocs,
+                                            pmix_proc_t error_procs[], size_t error_nprocs,
+                                            pmix_info_t info[], size_t ninfo,
+                                            pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Provide a string representation of a pmix_status_t value. Note
  * that the provided string is statically defined and must NOT be
  * free'd */
-const char* PMIx_Error_string(pmix_status_t status);
+PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t status);
 
 /* Get the PMIx version string. Note that the provided string is
  * statically defined and must NOT be free'd  */
-const char* PMIx_Get_version(void);
+PMIX_EXPORT const char* PMIx_Get_version(void);
 
 /* Store some data locally for retrieval by other areas of the
  * proc. This is data that has only internal scope - it will
  * never be "pushed" externally */
-pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
-                                  const char *key, pmix_value_t *val);
+PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
+                                              const char *key, pmix_value_t *val);
 
 
 /* Key-Value pair management macros */

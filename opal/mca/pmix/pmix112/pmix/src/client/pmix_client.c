@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,6 +168,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         "pmix:client recv callback activated with %d bytes",
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
 
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -184,6 +185,9 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
      * unpack it to maintain sequence */
      if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &nspace, &cnt, PMIX_STRING))) {
         PMIX_ERROR_LOG(rc);
+        cb->status = PMIX_ERROR;
+        PMIX_POST_OBJECT(cb);
+        cb->active = false;
         return;
     }
     /* decode it */
@@ -191,6 +195,7 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
         pmix_job_data_htable_store(nspace, buf);
 #endif
     cb->status = PMIX_SUCCESS;
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -390,7 +395,6 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc)
         pmix_output_finalize();
         pmix_class_finalize();
         return -1;
-
     }
 
     /* setup an object to track server connection */
@@ -501,7 +505,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(void)
 }
 
 PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
-               pmix_proc_t procs[], size_t nprocs)
+                                     pmix_proc_t procs[], size_t nprocs)
 {
     pmix_buffer_t *bfr;
     pmix_cmd_t cmd = PMIX_ABORT_CMD;
@@ -577,6 +581,9 @@ static void _putfn(int sd, short args, void *cbdata)
     pmix_kval_t *kv;
     pmix_nspace_t *ns;
 
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
+
     /* setup to xfer the data */
     kv = PMIX_NEW(pmix_kval_t);
     kv->key = strdup(cb->key);  // need to copy as the input belongs to the user
@@ -627,6 +634,8 @@ static void _putfn(int sd, short args, void *cbdata)
   done:
     PMIX_RELEASE(kv);  // maintain accounting
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -668,6 +677,9 @@ static void _commitfn(int sd, short args, void *cbdata)
     pmix_scope_t scope;
     pmix_buffer_t *msgout;
     pmix_cmd_t cmd=PMIX_COMMIT_CMD;
+
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
 
     msgout = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
@@ -714,6 +726,8 @@ static void _commitfn(int sd, short args, void *cbdata)
 
   done:
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -759,6 +773,9 @@ static void _peersfn(int sd, short args, void *cbdata)
     pmix_nrec_t *nptr;
 #endif
     size_t i;
+
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
 
     /* cycle across our known nspaces */
     tmp = NULL;
@@ -814,6 +831,8 @@ static void _peersfn(int sd, short args, void *cbdata)
 
   done:
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -860,6 +879,9 @@ static void _nodesfn(int sd, short args, void *cbdata)
     pmix_nspace_t *nsptr;
     pmix_nrec_t *nptr;
 
+    /* need to acquire the cb object from its originating thread */
+    PMIX_ACQUIRE_OBJECT(cb);
+
     /* cycle across our known nspaces */
     tmp = NULL;
     PMIX_LIST_FOREACH(nsptr, &pmix_globals.nspaces, pmix_nspace_t) {
@@ -879,6 +901,8 @@ static void _nodesfn(int sd, short args, void *cbdata)
     }
 
     cb->pstatus = rc;
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
 
@@ -1180,8 +1204,8 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
     /* unpack the status code */
     cnt = 1;
     if ((PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_INT))) ||
-                         (PMIX_SUCCESS != ret)) {   
-        /* This is not an actual error since the server may not support registration events */ 
+                         (PMIX_SUCCESS != ret)) {
+        /* This is not an actual error since the server may not support registration events */
         /* remove the err handler and call the error handler reg completion callback fn.*/
         rc = pmix_remove_errhandler(cb->errhandler_ref);
         /* call the callback with error */

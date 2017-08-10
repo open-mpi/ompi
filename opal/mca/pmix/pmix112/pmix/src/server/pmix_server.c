@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -450,6 +450,8 @@ static void _register_nspace(int sd, short args, void *cbdata)
     int32_t cnt;
 #endif
 
+    PMIX_ACQUIRE_OBJECT(caddy);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _register_nspace %s", cd->proc.nspace);
 
@@ -661,6 +663,8 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
     pmix_peer_t *peer;
     pmix_status_t rc = PMIX_SUCCESS;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_nspace %s",
                         cd->proc.nspace);
@@ -727,6 +731,8 @@ void pmix_server_execute_collective(int sd, short args, void *cbdata)
     pmix_buffer_t bucket, xfer;
     pmix_rank_info_t *info;
     pmix_value_t *val;
+
+    PMIX_ACQUIRE_OBJECT(tcd);
 
     /* we don't need to check for non-NULL APIs here as
      * that was already done when the tracker was created */
@@ -808,6 +814,8 @@ static void _register_client(int sd, short args, void *cbdata)
     pmix_trkr_caddy_t *tcd;
     bool all_def;
     size_t i;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _register_client for nspace %s rank %d",
@@ -948,6 +956,8 @@ static void _deregister_client(int sd, short args, void *cbdata)
     int i;
     pmix_peer_t *peer;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _deregister_client for nspace %s rank %d",
                         cd->proc.nspace, cd->proc.rank);
@@ -1054,6 +1064,8 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     pmix_dmdx_remote_t *dcd;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "DMODX LOOKING FOR %s:%d",
                         cd->proc.nspace, cd->proc.rank);
@@ -1118,11 +1130,11 @@ static void _dmodex_req(int sd, short args, void *cbdata)
      * may not be a contribution */
     if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->server->myremote, info->rank, "modex", &val)) &&
         NULL != val) {
-    data = val->data.bo.bytes;
-    sz = val->data.bo.size;
-    /* protect the data */
-    val->data.bo.bytes = NULL;
-    val->data.bo.size = 0;
+        data = val->data.bo.bytes;
+        sz = val->data.bo.size;
+        /* protect the data */
+        val->data.bo.bytes = NULL;
+        val->data.bo.size = 0;
         PMIX_VALUE_RELEASE(val);
     }
 
@@ -1131,6 +1143,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     if (NULL != data) {
         free(data);
     }
+    PMIX_POST_OBJECT(cd);
     cd->active = false;
 }
 
@@ -1387,6 +1400,7 @@ static void reg_errhandler(int sd, short args, void *cbdata)
                              "pmix_server_register_errhandler - success index =%d", index);
          cd->cbfunc.errregcbfn(rc, index, cd->cbdata);
     }
+    PMIX_POST_OBJECT(cd);
     cd->active = false;
     PMIX_RELEASE(cd);
 }
@@ -1421,6 +1435,7 @@ static void dereg_errhandler(int sd, short args, void *cbdata)
     if (NULL != cd->cbfunc.opcbfn) {
         cd->cbfunc.opcbfn(rc, cd->cbdata);
     }
+    PMIX_POST_OBJECT(cd);
     cd->active = false;
 }
 
@@ -1446,6 +1461,8 @@ static void _store_internal(int sd, short args, void *cbdata)
     pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
     pmix_nspace_t *ns, *nsptr;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     ns = NULL;
     PMIX_LIST_FOREACH(nsptr, &pmix_globals.nspaces, pmix_nspace_t) {
         if (0 == strncmp(cd->nspace, nsptr->nspace, PMIX_MAX_NSLEN)) {
@@ -1459,11 +1476,12 @@ static void _store_internal(int sd, short args, void *cbdata)
     } else {
         cd->status = pmix_hash_store(&ns->internal, cd->rank, cd->kv);
     }
+    PMIX_POST_OBJECT(cd);
     cd->active = false;
  }
 
-PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
-                                              const char *key, pmix_value_t *val)
+ PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
+                                               const char *key, pmix_value_t *val)
 {
     pmix_shift_caddy_t *cd;
     pmix_status_t rc;
@@ -1879,12 +1897,15 @@ static void _spcb(int sd, short args, void *cbdata)
     pmix_buffer_t *reply;
     pmix_status_t rc;
 
+    PMIX_ACQUIRE_OBJECT(cd);
+
     /* setup the reply with the returned status */
     reply = PMIX_NEW(pmix_buffer_t);
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &cd->status, 1, PMIX_INT))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(cd->cd);
         cd->active = false;
+        PMIX_POST_OBJECT(cd);
         return;
     }
     if (PMIX_SUCCESS == cd->status) {
@@ -1911,6 +1932,7 @@ static void _spcb(int sd, short args, void *cbdata)
     PMIX_SERVER_QUEUE_REPLY(cd->cd->peer, cd->cd->hdr.tag, reply);
     /* cleanup */
     PMIX_RELEASE(cd->cd);
+    PMIX_POST_OBJECT(cd);
     cd->active = false;
 }
 
@@ -1979,6 +2001,8 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt = 1;
     char byte;
+
+    PMIX_ACQUIRE_OBJECT(scd);
 
     /* pass the blobs being returned */
     PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
@@ -2237,6 +2261,8 @@ static void _cnct(int sd, short args, void *cbdata)
     char **nspaces=NULL;
     pmix_nspace_t *nptr;
     pmix_buffer_t *job_info_ptr;
+
+    PMIX_ACQUIRE_OBJECT(cd);
 
     /* setup the reply, starting with the returned status */
     reply = PMIX_NEW(pmix_buffer_t);

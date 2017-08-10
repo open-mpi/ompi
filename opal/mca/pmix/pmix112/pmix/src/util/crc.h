@@ -24,7 +24,7 @@
 #define _PMIX_CRC_H_
 
 #include <src/include/pmix_config.h>
-
+#include <pmix/pmix_common.h>
 
 #include <stddef.h>
 

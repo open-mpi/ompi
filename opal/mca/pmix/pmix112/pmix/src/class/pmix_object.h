@@ -119,6 +119,7 @@
 #define PMIX_OBJECT_H
 
 #include <src/include/pmix_config.h>
+#include <pmix/pmix_common.h>
 
 #include <assert.h>
 #ifdef HAVE_STDLIB_H
@@ -173,6 +174,7 @@ struct pmix_class_t {
 #else
 #define PMIX_PMIX_STATIC_INIT(BASE_CLASS) { PMIX_CLASS(BASE_CLASS), 1 }
 #endif
+#define PMIX_OBJ_STATIC_INIT(BASE_CLASS) PMIX_PMIX_STATIC_INIT(BASE_CLASS)
 
 /**
  * Base object.

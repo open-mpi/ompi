@@ -35,7 +35,7 @@ noinst_PROGRAMS =
 
 noinst_SCRIPTS = pmix_client_otheruser.sh
 
-if WANT_PMIX_BACKWARD
+if WANT_PMI_BACKWARD
 noinst_PROGRAMS += pmi_client pmi2_client
 endif
 
@@ -49,7 +49,7 @@ pmix_test_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmix_test_LDADD = \
 	$(top_builddir)/libpmix.la
 
-if WANT_PMIX_BACKWARD
+if WANT_PMI_BACKWARD
 pmi_client_SOURCES = $(headers) \
         pmi_client.c
 pmi_client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
