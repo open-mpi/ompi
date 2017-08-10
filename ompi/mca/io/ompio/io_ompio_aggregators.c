@@ -101,7 +101,6 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
     ** allowed for the given no. of processes.
     */
     dtime_threshold = (double) mca_io_ompio_aggregators_cutoff_threshold / 100.0;
-    if ( fh->f_rank == 0 ) printf ("%d %lf\n", mca_io_ompio_aggregators_cutoff_threshold, dtime_threshold );
 
     /* Determine whether to use the formula for 1-D or 2-D data decomposition. Anything
     ** that is not 1-D is assumed to be 2-D in this version

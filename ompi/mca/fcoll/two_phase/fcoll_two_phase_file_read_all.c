@@ -27,6 +27,7 @@
 #include "fcoll_two_phase.h"
 #include "mpi.h"
 #include "ompi/constants.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 #include "ompi/mca/io/io.h"
@@ -199,7 +200,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     }
 
     if (two_phase_num_io_procs > fh->f_size){
-	two_phase_num_io_procs = fh->f_size;
+        two_phase_num_io_procs = fh->f_size;
     }
 
     aggregator_list = (int *) calloc (two_phase_num_io_procs, sizeof(int));
@@ -208,9 +209,16 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	goto exit;
     }
 
-    for (i=0; i< two_phase_num_io_procs; i++){
-	aggregator_list[i] = i * fh->f_size / two_phase_num_io_procs;
+    if ( OMPI_COMM_IS_MAPBY_NODE (&ompi_mpi_comm_world.comm) ) {
+        for (i =0; i< two_phase_num_io_procs; i++){
+            aggregator_list[i] = i;
+        }
     }
+    else {
+        for (i =0; i< two_phase_num_io_procs; i++){
+            aggregator_list[i] = i * fh->f_size / two_phase_num_io_procs;
+        }
+    }        
 
     ret = fh->f_generate_current_file_view ((struct mca_io_ompio_file_t *)fh,
 					    max_data,
