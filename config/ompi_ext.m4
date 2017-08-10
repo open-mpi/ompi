@@ -5,7 +5,7 @@ dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
+dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2017      The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
@@ -216,8 +216,7 @@ EOF
 
     # Only build this mpi_f08_ext module if we're building the "use
     # mpi_f08" module *and* it's the non-descriptor one.
-    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
-           test $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 0],
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS]
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=1],
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=0])
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPIF08_EXT,
