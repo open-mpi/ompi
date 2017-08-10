@@ -285,9 +285,11 @@ int pmix_rte_init(pmix_proc_type_t type,
 
     return PMIX_SUCCESS;
 
- return_error:
-    pmix_show_help( "help-pmix-runtime.txt",
-                    "pmix_init:startup:internal-failure", true,
-                    error, ret );
+  return_error:
+    if (PMIX_ERR_SILENT != ret) {
+        pmix_show_help( "help-pmix-runtime.txt",
+                        "pmix_init:startup:internal-failure", true,
+                        error, ret );
+    }
     return ret;
 }

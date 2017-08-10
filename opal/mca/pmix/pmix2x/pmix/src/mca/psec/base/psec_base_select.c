@@ -24,6 +24,8 @@
 
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
+#include "src/util/error.h"
+#include "src/util/show_help.h"
 
 #include "src/mca/psec/base/base.h"
 
@@ -98,6 +100,12 @@ int pmix_psec_base_select(void)
             /* must be lowest priority - add to end */
             pmix_list_append(&pmix_psec_globals.actives, &newmodule->super);
         }
+    }
+
+    /* if no modules were found, then that's an error as we require at least one */
+    if (0 == pmix_list_get_size(&pmix_psec_globals.actives)) {
+        pmix_show_help("help-pmix-runtime.txt", "no-plugins", true, "PSEC");
+        return PMIX_ERR_SILENT;
     }
 
     if (4 < pmix_output_get_verbosity(pmix_psec_base_framework.framework_output)) {

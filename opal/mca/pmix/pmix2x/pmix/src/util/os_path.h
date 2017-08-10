@@ -43,7 +43,7 @@
 #define PMIX_OS_PATH_H
 
 #include <src/include/pmix_config.h>
-
+#include <pmix_common.h>
 
 #include <stdio.h>
 #include <stdarg.h>

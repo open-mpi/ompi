@@ -91,6 +91,7 @@
 #define PMIX_SHOW_HELP_H
 
 #include <src/include/pmix_config.h>
+#include <pmix_common.h>
 
 #include <stdarg.h>
 

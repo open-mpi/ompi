@@ -24,6 +24,8 @@
 
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
+#include "src/util/error.h"
+#include "src/util/show_help.h"
 
 #include "src/mca/bfrops/base/base.h"
 
@@ -106,6 +108,12 @@ int pmix_bfrop_base_select(void)
             /* must be lowest priority - add to end */
             pmix_list_append(&pmix_bfrops_globals.actives, &newmodule->super);
         }
+    }
+
+    /* if no modules were found, then that's an error as we require at least one */
+    if (0 == pmix_list_get_size(&pmix_bfrops_globals.actives)) {
+        pmix_show_help("help-pmix-runtime.txt", "no-plugins", true, "BFROPS");
+        return PMIX_ERR_SILENT;
     }
 
     if (4 < pmix_output_get_verbosity(pmix_bfrops_base_framework.framework_output)) {

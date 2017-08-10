@@ -325,12 +325,6 @@
 #    define __pmix_attribute_unused__
 #endif
 
-#if PMIX_HAVE_ATTRIBUTE_VISIBILITY
-#    define __pmix_attribute_visibility__(a) __attribute__((__visibility__(a)))
-#else
-#    define __pmix_attribute_visibility__(a)
-#endif
-
 #if PMIX_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
 #    define __pmix_attribute_warn_unused_result__ __attribute__((__warn_unused_result__))
 #else
@@ -341,16 +335,6 @@
 #    define __pmix_attribute_destructor__    __attribute__((__destructor__))
 #else
 #    define __pmix_attribute_destructor__
-#endif
-
-#ifdef PMIX_C_HAVE_VISIBILITY
-# if PMIX_C_HAVE_VISIBILITY
-#  define PMIX_EXPORT __pmix_attribute_visibility__("default")
-# else
-#  define PMIX_EXPORT
-# endif
-#else
-# define PMIX_EXPORT
 #endif
 
 /*

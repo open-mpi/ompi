@@ -23,8 +23,6 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(gds_ds12_CPPFLAGS)
-
 headers = \
         gds_dstore.h
 
@@ -51,10 +49,8 @@ endif
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_gds_ds12_la_SOURCES = $(component_sources)
-mca_gds_ds12_la_LIBADD = $(gds_ds12_LIBS)
-mca_gds_ds12_la_LDFLAGS = -module -avoid-version $(gds_ds12_LDFLAGS)
+mca_gds_ds12_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
 libmca_gds_ds12_la_SOURCES = $(lib_sources)
-libmca_gds_ds12_la_LIBADD = $(gds_dstore_LIBS)
-libmca_gds_ds12_la_LDFLAGS = -module -avoid-version $(gds_ds12_LDFLAGS)
+libmca_gds_ds12_la_LDFLAGS = -module -avoid-version
