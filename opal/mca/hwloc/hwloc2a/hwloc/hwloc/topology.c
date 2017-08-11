@@ -651,6 +651,7 @@ hwloc__duplicate_object(struct hwloc_topology *newtopology,
 {
   struct hwloc_tma *tma = newtopology->tma;
   hwloc_obj_t *level;
+  unsigned level_width;
   size_t len;
   unsigned i;
   hwloc_obj_t child;
@@ -700,6 +701,7 @@ hwloc__duplicate_object(struct hwloc_topology *newtopology,
   if ((int) src->depth < 0) {
     i = HWLOC_SLEVEL_FROM_DEPTH(src->depth);
     level = newtopology->slevels[i].objs;
+    level_width = newtopology->slevels[i].nbobjs;
     /* deal with first/last pointers of special levels, even if not really needed */
     if (!newobj->logical_index)
       newtopology->slevels[i].first = newobj;
@@ -707,12 +709,21 @@ hwloc__duplicate_object(struct hwloc_topology *newtopology,
       newtopology->slevels[i].last = newobj;
   } else {
     level = newtopology->levels[src->depth];
+    level_width = newtopology->level_nbobjects[src->depth];
   }
-  /* place us for real and link to previous cousin */
+  /* place us for real */
+  assert(newobj->logical_index < level_width);
   level[newobj->logical_index] = newobj;
-  if (newobj->logical_index) {
+  /* link to already-inserted cousins
+   * (hwloc_pci_belowroot_apply_locality() can cause out-of-order logical indexes)
+   */
+  if (newobj->logical_index > 0 && level[newobj->logical_index-1]) {
     newobj->prev_cousin = level[newobj->logical_index-1];
     level[newobj->logical_index-1]->next_cousin = newobj;
+  }
+  if (newobj->logical_index < level_width-1 && level[newobj->logical_index+1]) {
+    newobj->next_cousin = level[newobj->logical_index+1];
+    level[newobj->logical_index+1]->prev_cousin = newobj;
   }
 
   /* prepare for children */
