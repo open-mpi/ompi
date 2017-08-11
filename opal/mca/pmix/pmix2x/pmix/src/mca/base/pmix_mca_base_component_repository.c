@@ -212,7 +212,6 @@ int pmix_mca_base_component_repository_add (const char *path)
     return PMIX_SUCCESS;
 }
 
-
 /*
  * Initialize the repository
  */

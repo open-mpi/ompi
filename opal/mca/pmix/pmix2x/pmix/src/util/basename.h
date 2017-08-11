@@ -27,7 +27,7 @@
 #define PMIX_BASENAME_H
 
 #include <src/include/pmix_config.h>
-
+#include <pmix_common.h>
 
 BEGIN_C_DECLS
 

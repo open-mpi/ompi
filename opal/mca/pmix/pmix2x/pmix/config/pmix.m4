@@ -757,7 +757,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         pmix_config_prefix[Makefile]
         pmix_config_prefix[config/Makefile]
         pmix_config_prefix[include/Makefile]
-        pmix_config_prefix[src/atomics/asm/Makefile]
         pmix_config_prefix[src/Makefile]
         pmix_config_prefix[src/util/keyval/Makefile]
         pmix_config_prefix[src/mca/base/Makefile]
@@ -936,25 +935,6 @@ fi
 AC_DEFINE_UNQUOTED([PMIX_WANT_PRETTY_PRINT_STACKTRACE],
                    [$WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
-
-#
-# Do we want the shared memory datastore usage?
-#
-
-AC_MSG_CHECKING([if want shared memory datastore])
-AC_ARG_ENABLE([dstore],
-              [AC_HELP_STRING([--disable-dstore],
-                              [Using shared memory datastore (default: enabled)])])
-if test "$enable_dstore" = "no" ; then
-    AC_MSG_RESULT([no])
-    WANT_DSTORE=0
-else
-    AC_MSG_RESULT([yes])
-    WANT_DSTORE=1
-fi
-AC_DEFINE_UNQUOTED([PMIX_ENABLE_DSTORE],
-                 [$WANT_DSTORE],
-                 [if want shared memory dstore feature])
 
 #
 # Use pthread-based locking

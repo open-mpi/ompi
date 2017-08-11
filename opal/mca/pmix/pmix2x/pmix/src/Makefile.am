@@ -24,7 +24,6 @@
 ACLOCAL_AMFLAGS = -I ./config
 
 SUBDIRS = \
-	atomics/asm \
 	util/keyval \
     mca/base \
     $(MCA_pmix_FRAMEWORKS_SUBDIRS) \
@@ -33,7 +32,6 @@ SUBDIRS = \
     $(MCA_pmix_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 DIST_SUBDIRS = \
-	atomics/asm \
 	util/keyval \
     mca/base \
     $(MCA_pmix_FRAMEWORKS_SUBDIRS) \

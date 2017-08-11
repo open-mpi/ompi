@@ -48,6 +48,12 @@
 #ifndef PMI_H
 #define PMI_H
 
+#ifdef PMIX_HAVE_VISIBILITY
+#define PMIX_EXPORT __attribute__((__visibility__("default")))
+#else
+#define PMIX_EXPORT
+#endif
+
 /* prototypes for the PMI interface in MPICH2 */
 
 #if defined(__cplusplus)
@@ -119,7 +125,7 @@ this process was created by 'PMI_Spawn_multiple'.  'spawned' will be 'PMI_TRUE' 
 this process group has a parent and 'PMI_FALSE' if it does not.
 
 @*/
-int PMI_Init( int *spawned );
+PMIX_EXPORT int PMI_Init( int *spawned );
 
 /*@
 PMI_Initialized - check if PMI has been initialized
@@ -139,7 +145,7 @@ On successful output, initialized will either be 'PMI_TRUE' or 'PMI_FALSE'.
 - PMI_FALSE - initialize has not been called or previously failed.
 
 @*/
-int PMI_Initialized( PMI_BOOL *initialized );
+PMIX_EXPORT int PMI_Initialized( PMI_BOOL *initialized );
 
 /*@
 PMI_Finalize - finalize the Process Manager Interface
@@ -152,7 +158,7 @@ Notes:
  Finalize PMI for this process group.
 
 @*/
-int PMI_Finalize( void );
+PMIX_EXPORT int PMI_Finalize( void );
 
 /*@
 PMI_Get_size - obtain the size of the process group
@@ -170,7 +176,7 @@ This function returns the size of the process group to which the local process
 belongs.
 
 @*/
-int PMI_Get_size( int *size );
+PMIX_EXPORT int PMI_Get_size( int *size );
 
 /*@
 PMI_Get_rank - obtain the rank of the local process in the process group
@@ -187,7 +193,7 @@ Notes:
 This function returns the rank of the local process in its process group.
 
 @*/
-int PMI_Get_rank( int *rank );
+PMIX_EXPORT int PMI_Get_rank( int *rank );
 
 /*@
 PMI_Get_universe_size - obtain the universe size
@@ -202,7 +208,7 @@ Return values:
 
 
 @*/
-int PMI_Get_universe_size( int *size );
+PMIX_EXPORT int PMI_Get_universe_size( int *size );
 
 /*@
 PMI_Get_appnum - obtain the application number
@@ -217,7 +223,7 @@ Return values:
 
 
 @*/
-int PMI_Get_appnum( int *appnum );
+PMIX_EXPORT int PMI_Get_appnum( int *appnum );
 
 /*@
 PMI_Publish_name - publish a name
@@ -233,7 +239,7 @@ Return values:
 
 
 @*/
-int PMI_Publish_name( const char service_name[], const char port[] );
+PMIX_EXPORT int PMI_Publish_name( const char service_name[], const char port[] );
 
 /*@
 PMI_Unpublish_name - unpublish a name
@@ -248,7 +254,7 @@ Return values:
 
 
 @*/
-int PMI_Unpublish_name( const char service_name[] );
+PMIX_EXPORT int PMI_Unpublish_name( const char service_name[] );
 
 /*@
 PMI_Lookup_name - lookup a service by name
@@ -266,7 +272,7 @@ Return values:
 
 
 @*/
-int PMI_Lookup_name( const char service_name[], char port[] );
+PMIX_EXPORT int PMI_Lookup_name( const char service_name[], char port[] );
 
 /*@
 PMI_Get_id - obtain the id of the process group
@@ -289,7 +295,7 @@ that the local process belongs to.  The string passed in must be at least
 as long as the number returned by 'PMI_Get_id_length_max()'.
 
 @*/
-int PMI_Get_id( char id_str[], int length );
+PMIX_EXPORT int PMI_Get_id( char id_str[], int length );
 
 /*@
 PMI_Get_kvs_domain_id - obtain the id of the PMI domain
@@ -312,7 +318,7 @@ where keyval spaces can be shared.  The string passed in must be at least
 as long as the number returned by 'PMI_Get_id_length_max()'.
 
 @*/
-int PMI_Get_kvs_domain_id( char id_str[], int length );
+PMIX_EXPORT int PMI_Get_kvs_domain_id( char id_str[], int length );
 
 /*@
 PMI_Get_id_length_max - obtain the maximum length of an id string
@@ -329,7 +335,7 @@ Notes:
 This function returns the maximum length of a process group id string.
 
 @*/
-int PMI_Get_id_length_max( int *length );
+PMIX_EXPORT int PMI_Get_id_length_max( int *length );
 
 /*@
 PMI_Barrier - barrier across the process group
@@ -344,7 +350,7 @@ the local process belongs to.  It will not return until all the processes
 have called 'PMI_Barrier()'.
 
 @*/
-int PMI_Barrier( void );
+PMIX_EXPORT int PMI_Barrier( void );
 
 /*@
 PMI_Get_clique_size - obtain the number of processes on the local node
@@ -364,7 +370,7 @@ function to distinguish between processes that can communicate through IPC
 mechanisms (e.g., shared memory) and other network mechanisms.
 
 @*/
-int PMI_Get_clique_size( int *size );
+PMIX_EXPORT int PMI_Get_clique_size( int *size );
 
 /*@
 PMI_Get_clique_ranks - get the ranks of the local processes in the process group
@@ -389,7 +395,7 @@ communicate through IPC mechanisms (e.g., shared memory) and other network
 mechanisms.
 
 @*/
-int PMI_Get_clique_ranks( int ranks[], int length);
+PMIX_EXPORT int PMI_Get_clique_ranks( int ranks[], int length);
 
 /*@
 PMI_Abort - abort the process group associated with this process
@@ -401,7 +407,7 @@ Input Parameters:
 Return values:
 . none - this function should not return
 @*/
-int PMI_Abort(int exit_code, const char error_msg[]);
+PMIX_EXPORT int PMI_Abort(int exit_code, const char error_msg[]);
 
 /* PMI Keymap functions */
 /*@
@@ -426,7 +432,7 @@ kvsname, must be at least as long as the value returned by
 'PMI_KVS_Get_name_length_max()'.
 
 @*/
-int PMI_KVS_Get_my_name( char kvsname[], int length );
+PMIX_EXPORT int PMI_KVS_Get_my_name( char kvsname[], int length );
 
 /*@
 PMI_KVS_Get_name_length_max - obtain the length necessary to store a kvsname
@@ -448,7 +454,7 @@ different implementations may allow different maximum lengths; by using a
 routine here, we can interface with a variety of implementations of PMI.
 
 @*/
-int PMI_KVS_Get_name_length_max( int *length );
+PMIX_EXPORT int PMI_KVS_Get_name_length_max( int *length );
 
 /*@
 PMI_KVS_Get_key_length_max - obtain the length necessary to store a key
@@ -465,7 +471,7 @@ Notes:
 This function returns the string length required to store a key.
 
 @*/
-int PMI_KVS_Get_key_length_max( int *length );
+PMIX_EXPORT int PMI_KVS_Get_key_length_max( int *length );
 
 /*@
 PMI_KVS_Get_value_length_max - obtain the length necessary to store a value
@@ -483,7 +489,7 @@ This function returns the string length required to store a value from a
 keyval space.
 
 @*/
-int PMI_KVS_Get_value_length_max( int *length );
+PMIX_EXPORT int PMI_KVS_Get_value_length_max( int *length );
 
 /*@
 PMI_KVS_Create - create a new keyval space
@@ -508,7 +514,7 @@ parameter, kvsname, must be at least as long as the value returned by
 'PMI_KVS_Get_name_length_max()'.
 
 @*/
-int PMI_KVS_Create( char kvsname[], int length );
+PMIX_EXPORT int PMI_KVS_Create( char kvsname[], int length );
 
 /*@
 PMI_KVS_Destroy - destroy keyval space
@@ -525,7 +531,7 @@ Notes:
 This function destroys a keyval space created by 'PMI_KVS_Create()'.
 
 @*/
-int PMI_KVS_Destroy( const char kvsname[] );
+PMIX_EXPORT int PMI_KVS_Destroy( const char kvsname[] );
 
 /*@
 PMI_KVS_Put - put a key/value pair in a keyval space
@@ -551,7 +557,7 @@ space must be unique to the keyval space.  You may not put more than once
 with the same key.
 
 @*/
-int PMI_KVS_Put( const char kvsname[], const char key[], const char value[]);
+PMIX_EXPORT int PMI_KVS_Put( const char kvsname[], const char key[], const char value[]);
 
 /*@
 PMI_KVS_Commit - commit all previous puts to the keyval space
@@ -569,7 +575,7 @@ This function commits all previous puts since the last 'PMI_KVS_Commit()' into
 the specified keyval space. It is a process local operation.
 
 @*/
-int PMI_KVS_Commit( const char kvsname[] );
+PMIX_EXPORT int PMI_KVS_Commit( const char kvsname[] );
 
 /*@
 PMI_KVS_Get - get a key/value pair from a keyval space
@@ -594,7 +600,7 @@ Notes:
 This function gets the value of the specified key in the keyval space.
 
 @*/
-int PMI_KVS_Get( const char kvsname[], const char key[], char value[], int length);
+PMIX_EXPORT int PMI_KVS_Get( const char kvsname[], const char key[], char value[], int length);
 
 /*@
 PMI_KVS_Iter_first - initialize the iterator and get the first value
@@ -625,7 +631,7 @@ the values returned by 'PMI_KVS_Get_key_length_max()' and
 'PMI_KVS_Get_value_length_max()'.
 
 @*/
-int PMI_KVS_Iter_first(const char kvsname[], char key[], int key_len, char val[], int val_len);
+PMIX_EXPORT int PMI_KVS_Iter_first(const char kvsname[], char key[], int key_len, char val[], int val_len);
 
 /*@
 PMI_KVS_Iter_next - get the next keyval pair from the keyval space
@@ -656,7 +662,7 @@ key and val, must be at least as long as the values returned by
 'PMI_KVS_Get_key_length_max()' and 'PMI_KVS_Get_value_length_max()'.
 
 @*/
-int PMI_KVS_Iter_next(const char kvsname[], char key[], int key_len, char val[], int val_len);
+PMIX_EXPORT int PMI_KVS_Iter_next(const char kvsname[], char key[], int key_len, char val[], int val_len);
 
 /* PMI Process Creation functions */
 
@@ -710,15 +716,15 @@ maxprocs.  The acceptable number of processes spawned may be controlled by
 mpiexec in the MPI-2 standard.  Environment variables may be passed to the
 spawned processes through PMI implementation specific 'info_keyval' parameters.
 @*/
-int PMI_Spawn_multiple(int count,
-                       const char * cmds[],
-                       const char ** argvs[],
-                       const int maxprocs[],
-                       const int info_keyval_sizesp[],
-                       const PMI_keyval_t * info_keyval_vectors[],
-                       int preput_keyval_size,
-                       const PMI_keyval_t preput_keyval_vector[],
-                       int errors[]);
+PMIX_EXPORT int PMI_Spawn_multiple(int count,
+                                   const char * cmds[],
+                                   const char ** argvs[],
+                                   const int maxprocs[],
+                                   const int info_keyval_sizesp[],
+                                   const PMI_keyval_t * info_keyval_vectors[],
+                                   int preput_keyval_size,
+                                   const PMI_keyval_t preput_keyval_vector[],
+                                   int errors[]);
 
 
 /*@
@@ -752,7 +758,7 @@ arguments in the args array, this function may parse more than one argument as l
 as the options are contiguous in the args array.
 
 @*/
-int PMI_Parse_option(int num_args, char *args[], int *num_parsed, PMI_keyval_t **keyvalp, int *size);
+PMIX_EXPORT int PMI_Parse_option(int num_args, char *args[], int *num_parsed, PMI_keyval_t **keyvalp, int *size);
 
 /*@
 PMI_Args_to_keyval - create keyval structures from command line arguments
@@ -779,7 +785,7 @@ not be used to free this array as there is no requirement that the array be
 allocated with 'malloc()'.
 
 @*/
-int PMI_Args_to_keyval(int *argcp, char *((*argvp)[]), PMI_keyval_t **keyvalp, int *size);
+PMIX_EXPORT int PMI_Args_to_keyval(int *argcp, char *((*argvp)[]), PMI_keyval_t **keyvalp, int *size);
 
 /*@
 PMI_Free_keyvals - free the keyval structures created by PMI_Args_to_keyval
@@ -798,7 +804,7 @@ Notes:
  Using this routine instead of 'free' allows the PMI package to track
  allocation of storage or to use interal storage as it sees fit.
 @*/
-int PMI_Free_keyvals(PMI_keyval_t keyvalp[], int size);
+PMIX_EXPORT int PMI_Free_keyvals(PMI_keyval_t keyvalp[], int size);
 
 /*@
 PMI_Get_options - get a string of command line argument descriptions that may be printed to the user
@@ -820,7 +826,7 @@ Return values:
 Notes:
  This function returns the command line options specific to the pmi implementation
 @*/
-int PMI_Get_options(char *str, int *length);
+PMIX_EXPORT int PMI_Get_options(char *str, int *length);
 
 #if defined(__cplusplus)
 }

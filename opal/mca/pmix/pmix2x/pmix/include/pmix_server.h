@@ -378,13 +378,13 @@ typedef struct pmix_server_module_2_0_0_t {
  * also may include the PMIX_SERVER_TOOL_SUPPORT key, thereby
  * indicating that the daemon is willing to accept connection
  * requests from tools */
-pmix_status_t PMIx_server_init(pmix_server_module_t *module,
-                               pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
+                                           pmix_info_t info[], size_t ninfo);
 
 /* Finalize the server support library. If internal comm is
  * in-use, the server will shut it down at this time. All
  * memory usage is released */
-pmix_status_t PMIx_server_finalize(void);
+PMIX_EXPORT pmix_status_t PMIx_server_finalize(void);
 
 /* given a semicolon-separated list of input values, generate
  * a regex that can be passed down to the client for parsing.
@@ -402,7 +402,7 @@ pmix_status_t PMIx_server_finalize(void);
  * parsing the provided regex. Other parsers may be supported - see
  * the pmix_client.h header for a list.
  */
-pmix_status_t PMIx_generate_regex(const char *input, char **regex);
+PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regex);
 
 /* The input is expected to consist of a comma-separated list
  * of ranges. Thus, an input of:
@@ -415,7 +415,7 @@ pmix_status_t PMIx_generate_regex(const char *input, char **regex);
  * parsing the provided regex. Other parsers may be supported - see
  * the pmix_client.h header for a list.
  */
-pmix_status_t PMIx_generate_ppn(const char *input, char **ppn);
+PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **ppn);
 
 /* Setup the data about a particular nspace so it can
  * be passed to any child process upon startup. The PMIx
@@ -442,7 +442,7 @@ pmix_status_t PMIx_generate_ppn(const char *input, char **ppn);
  * for the PMIx server library to correctly handle collectives
  * as a collective operation call can occur before all the
  * procs have been started */
-pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
+PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
                                           pmix_info_t info[], size_t ninfo,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 
@@ -451,8 +451,8 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
  * intended to support persistent PMIx servers by providing
  * an opportunity for the host RM to tell the PMIx server
  * library to release all memory for a completed job */
-void PMIx_server_deregister_nspace(const char nspace[],
-                                   pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT void PMIx_server_deregister_nspace(const char nspace[],
+                                               pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Register a client process with the PMIx server library. The
  * expected user ID and group ID of the child process helps the
@@ -467,24 +467,24 @@ void PMIx_server_deregister_nspace(const char nspace[],
  * return that object when the client calls "finalize", thus
  * allowing the host server to access the object without
  * performing a lookup. */
-pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
-                                          uid_t uid, gid_t gid,
-                                          void *server_object,
-                                          pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
+                                                      uid_t uid, gid_t gid,
+                                                      void *server_object,
+                                                      pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Deregister a client and purge all data relating to it. The
  * deregister_nspace API will automatically delete all client
  * info for that nspace - this API is therefore intended solely
  * for use in exception cases */
-void PMIx_server_deregister_client(const pmix_proc_t *proc,
-                                   pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT void PMIx_server_deregister_client(const pmix_proc_t *proc,
+                                               pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Setup the environment of a child process to be forked
  * by the host so it can correctly interact with the PMIx
  * server. The PMIx client needs some setup information
  * so it can properly connect back to the server. This function
  * will set appropriate environmental variables for this purpose. */
-pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char ***env);
+PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char ***env);
 
 /* Define a callback function the PMIx server will use to return
  * direct modex requests to the host server. The PMIx server
@@ -502,9 +502,9 @@ typedef void (*pmix_dmodex_response_fn_t)(pmix_status_t status,
  * request into the PMIx server. The PMIx server will return a blob
  * (once it becomes available) via the cbfunc - the host
  * server shall send the blob back to the original requestor */
-pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
-                                         pmix_dmodex_response_fn_t cbfunc,
-                                         void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
+                                                     pmix_dmodex_response_fn_t cbfunc,
+                                                     void *cbdata);
 
 /* define a callback function for the setup_application API. The returned info
  * array is owned by the PMIx server library and will be free'd when the
@@ -521,18 +521,18 @@ typedef void (*pmix_setup_application_cbfunc_t)(pmix_status_t status,
  * is defined as a non-blocking operation in case network
  * libraries need to perform some action before responding. The
  * returned env will be distributed along with the application */
-pmix_status_t PMIx_server_setup_application(const char nspace[],
-                                            pmix_info_t info[], size_t ninfo,
-                                            pmix_setup_application_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const char nspace[],
+                                                        pmix_info_t info[], size_t ninfo,
+                                                        pmix_setup_application_cbfunc_t cbfunc, void *cbdata);
 
 /* Provide a function by which the local PMIx server can perform
  * any application-specific operations prior to spawning local
  * clients of a given application. For example, a network library
  * might need to setup the local driver for "instant on" addressing.
  */
-pmix_status_t PMIx_server_setup_local_support(const char nspace[],
-                                              pmix_info_t info[], size_t ninfo,
-                                              pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_server_setup_local_support(const char nspace[],
+                                                          pmix_info_t info[], size_t ninfo,
+                                                          pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

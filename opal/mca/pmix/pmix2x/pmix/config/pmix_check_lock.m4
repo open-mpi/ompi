@@ -55,7 +55,6 @@ AC_DEFUN([PMIX_CHECK_DSTOR_LOCK],[
         if test "$_x_ac_fcntl_lock_found" = "0"; then
             AC_MSG_ERROR([dstore: no available locking mechanisms was found. Can not continue. Try disabling dstore])
         fi
-        LIBS="$orig_libs"
     fi
-
+    LIBS="$orig_libs"
 ])

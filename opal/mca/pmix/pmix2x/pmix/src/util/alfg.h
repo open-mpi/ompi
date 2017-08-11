@@ -14,6 +14,7 @@
 #define PMIX_ALFG_H
 
 #include <src/include/pmix_config.h>
+#include <pmix_common.h>
 
 #include "src/include/pmix_stdint.h"
 

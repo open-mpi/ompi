@@ -216,12 +216,12 @@ static void parse_verbose(char *e, pmix_output_stream_t *lds)
             have_output = true;
         }
 
-        else if (strcasecmp(ptr, "file") == 0) {
+        else if (strcasecmp(ptr, "file") == 0 || strcasecmp(ptr, "file:") == 0) {
             lds->lds_want_file = true;
             have_output = true;
         } else if (strncasecmp(ptr, "file:", 5) == 0) {
             lds->lds_want_file = true;
-            lds->lds_file_suffix = ptr + 5;
+            lds->lds_file_suffix = strdup(ptr + 5);
             have_output = true;
         } else if (strcasecmp(ptr, "fileappend") == 0) {
             lds->lds_want_file = true;
