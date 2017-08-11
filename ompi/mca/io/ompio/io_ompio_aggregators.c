@@ -47,14 +47,13 @@
 **
 ** The first group functions determines the number of aggregators based on various characteristics
 ** 
-** 1. simple_grouping: A simple heuristic based on the amount of data written and size of 
-**    of the temporary buffer used by aggregator processes
+** 1. simple_grouping: A heuristic based on a cost model
 ** 2. fview_based_grouping: analysis the fileview to detect regular patterns
 ** 3. cart_based_grouping: uses a cartesian communicator to derive certain (probable) properties
 **    of the access pattern
 */
 
-int mca_io_base_check_params ( size_t, size_t, int, int);
+
 static double cost_calc (int P, int P_agg, size_t Data_proc, size_t coll_buffer, int dim );
 #define DIM1 1
 #define DIM2 2
@@ -68,9 +67,16 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
     int total_procs = 0; 
     int num_groups=1;
 
-    double time1=0.0, time2=0.0, dtime=0.0, dtime2=0.0, dtime_diff=0.0;
+    double time=0.0, time_prev=0.0, dtime=0.0, dtime_abs=0.0, dtime_diff=0.0, dtime_prev=0.0;
     double dtime_threshold=0.0;
-    int mode=1;
+
+    /* This is the threshold for absolute improvement. It is not 
+    ** exposed as an MCA parameter to avoid overwhelming users. It is 
+    ** mostly relevant for smaller process counts and data volumes. 
+    */
+    double time_threshold=0.001; 
+
+    int incr=1, mode=1;
     int P_a, P_a_prev;
 
     /* The aggregator selection algorithm is based on the formulas described
@@ -107,43 +113,71 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
     */ 
     mode = ( fh->f_cc_size == fh->f_view_size ) ? 1 : 2;
 
-    for ( P_a = 1; P_a <= fh->f_size; P_a *= 2 ) {
-	time1 = cost_calc ( fh->f_size, P_a, fh->f_view_size, (size_t) fh->f_bytes_per_agg, mode );
-	if ( P_a != 1 ) {
-	    dtime = (time2 - time1) / time2;
-	    dtime_diff = fabs(dtime2 - dtime);
+    /* Determine the increment size when searching the optimal
+    ** no. of aggregators 
+    */
+    if ( fh->f_size < 16 ) {
+	incr = 2;
+    }
+    else if (fh->f_size < 128 ) {
+	incr = 4;
+    }
+    else if ( fh->f_size < 4096 ) {
+	incr = 16;
+    }
+    else {
+	incr = 32;
+    }
+
+    P_a = 1;
+    time_prev = cost_calc ( fh->f_size, P_a, fh->f_view_size, (size_t) fh->f_bytes_per_agg, mode );
+    P_a_prev = P_a;
+    for ( P_a = incr; P_a <= fh->f_size; P_a += incr ) {
+	time = cost_calc ( fh->f_size, P_a, fh->f_view_size, (size_t) fh->f_bytes_per_agg, mode );
+	dtime_abs = (time_prev - time);
+	dtime = dtime_abs / time_prev;
+	dtime_diff = ( P_a == incr ) ? dtime : (dtime_prev - dtime);
 #ifdef OMPIO_DEBUG
-	    printf(" d_p = %ld P_a = %d time1 = %lf dtime = %lf dtime_diff=%lf\n", fh->f_view_size, P_a, time1, dtime, dtime_diff );
+	if ( 0 == fh->f_rank  ){
+	    printf(" d_p = %ld P_a = %d time = %lf dtime = %lf dtime_abs =%lf dtime_diff=%lf\n", 
+		   fh->f_view_size, P_a, time, dtime, dtime_abs, dtime_diff );
+	}
 #endif
-	    if ( dtime_diff < dtime_threshold ) {
+	if ( dtime_diff < dtime_threshold ) {
+	    /* The relative improvement compared to the last number
+	    ** of aggregators was below a certain threshold. This is typically
+	    ** the dominating factor for large data volumes and larger process
+	    ** counts 
+	    */
 #ifdef OMPIO_DEBUG
-		printf(" For P=%d d_p=%ld b_c=%d chosen P_a = %d \n", fh->f_size, fh->f_view_size, fh->f_bytes_per_agg, P_a_prev);
-#endif
-		num_groups = P_a_prev;
-		break;
+	    if ( 0 == fh->f_rank ) {
+		printf("dtime_diff below threshold\n");
 	    }
+#endif
+	    break;
 	}
-	else {	      
-	    time2 = time1;
+	if ( dtime_abs < time_threshold ) {
+	    /* The absolute improvement compared to the last number 
+	    ** of aggregators was below a given threshold. This is typically
+	    ** important for small data valomes and smallers process counts
+	    */
+#ifdef OMPIO_DEBUG
+	    if ( 0 == fh->f_rank ) {
+		printf("dtime_abs below threshold\n");
+	    }
+#endif
+	    break;
 	}
-	dtime2 = dtime;
+	time_prev = time;
+	dtime_prev = dtime;
 	P_a_prev = P_a;	
     }
-    
+    num_groups = P_a_prev;
 #ifdef OMPIO_DEBUG
-    if ( fh->f_rank == 0 ) {
-        if ( mca_io_base_check_params ( fh->f_view_size, fh->f_cc_size, fh->f_bytes_per_agg, -1 ) ) {
-	    if ( fh->f_view_size == MCA_IO_DEFAULT_FILE_VIEW_SIZE && MCA_IO_DEFAULT_FILE_VIEW_SIZE == fh->f_cc_size ) {
-		/* This is the default file view, not interested in it */
-	    }
-	    else {
-		printf("fstype=%d view_size=%ld cc_size=%ld stripe_size=%ld\n", fh->f_fstype, fh->f_view_size, 
-		       fh->f_cc_size, fh->f_stripe_size);
-	    }
-        }
-    }
+    printf(" For P=%d d_p=%ld b_c=%d threshold=%f chosen P_a = %d \n", 
+	   fh->f_size, fh->f_view_size, fh->f_bytes_per_agg, dtime_threshold, P_a_prev);
 #endif
-
+    
     /* Cap the maximum number of aggregators.*/
     if ( num_groups > (fh->f_size/mca_io_ompio_max_aggregators_ratio)) {
 	num_groups = (fh->f_size/mca_io_ompio_max_aggregators_ratio);
@@ -488,6 +522,9 @@ int mca_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
     /* Forced number of aggregators
     ** calculate the offset at which each group of processes will start 
     */
+    if ( num_aggregators > fh->f_size ) {
+	num_aggregators = fh->f_size;
+    }
     procs_per_group = ceil ((float)fh->f_size/num_aggregators);
 
     /* calculate the number of processes in the local group */
@@ -1370,73 +1407,77 @@ exit:
     return ret;
 }
 
-
+/*
+** This is the actual formula of the cost function from the paper.
+** One change made here is to use floating point values for
+** all parameters, since the ceil() function leads to sometimes
+** unexpected jumps in the execution time. Using float leads to 
+** more consistent predictions for the no. of aggregators.
+*/
 static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
 {
-  int  n_as, m_s, n_s;
-  int n_ar;
-  double t_send, t_recv, t_tot;
+    float  n_as=1.0, m_s=1.0, n_s=1.0;
+    float  n_ar=1.0;
+    double t_send, t_recv, t_tot;
 
-  /* LogGP parameters based on DDR InfiniBand values */
-  double L=.00000184;
-  double o=.00000149;
-  double g=.0000119;
-  double G=.00000000067;
-  
-  long file_domain = (P * d_p) / P_a;
-  int n_r = ceil ((float)file_domain/(float) b_c);
-//  printf("p=%d, p_a =%d, d_p= %d, b_c=%d, iter=%d\n",
-//         P, P_a, d_p, b_c, iteration);
-  switch (dim) {
-      case DIM1:
-      {
-	  if( d_p > b_c ){
-	      //printf("case 1\n");
-	      n_ar = 1;
-	      n_as = 1;
-	      m_s = b_c;
-	      n_s = ceil((float)d_p/(float)b_c);
-	  }
-	  else {
-	      n_ar = ceil((float)b_c/(float)d_p);
-	      n_as = 1;
-	      m_s = d_p;
-	      n_s = 1;
-	  }
-	  break;
-      }	  
-      case DIM2:
-      {
-	  int P_x, P_y, c;
-
-	  P_x = P_y = (int) sqrt(P);
-	  c = ceil((float)P_a / (float)P_x);
-
-	  n_ar = P_y;
-	  n_as = c;
-	  if ( d_p > (P_a*b_c/P )) {
-	      m_s = (int)fmin(b_c / P_y, d_p);
-	  }
-	  else {
-	      m_s = (int)fmin(d_p * P_x / P_a, d_p);
-	  }
-	  break;	  
-      }
-      default :
-	  printf("stop putting random values\n");
-	  break;
-  } 
-  
-  n_s = ceil(((float) d_p / (float)(n_as * m_s)));
-//  printf("n_r=%d \t n_ar = %d \t n_as =%d \t n_s=%d \t m_s= %d\n",n_r, n_ar, n_as, n_s, m_s);
-
-  if(m_s < 33554432)
-    g = .00000108;
-
-  t_send = n_s * (L + 2 * o + (n_as -1) * g + (m_s - 1) * n_as * G);
-  t_recv=  n_r * (L + 2 * o + (n_ar -1) * g + (m_s - 1) * n_ar * G);;
-  t_tot = t_send + t_recv;
-
-//  printf("%lf\t%lf\t%lf\n", t_send, t_recv, t_tot);
-  return t_tot;
+    /* LogGP parameters based on DDR InfiniBand values */
+    double L=.00000184;
+    double o=.00000149;
+    double g=.0000119;
+    double G=.00000000067;
+    
+    long file_domain = (P * d_p) / P_a;
+    float n_r = (float)file_domain/(float) b_c;
+    
+    switch (dim) {
+	case DIM1:
+	{
+	    if( d_p > b_c ){
+		//printf("case 1\n");
+		n_ar = 1;
+		n_as = 1;
+		m_s = b_c;
+		n_s = (float)d_p/(float)b_c;
+	    }
+	    else {
+		n_ar = (float)b_c/(float)d_p;
+		n_as = 1;
+		m_s = d_p;
+		n_s = 1;
+	    }
+	    break;
+	}	  
+	case DIM2:
+	{
+	    int P_x, P_y, c;
+	    
+	    P_x = P_y = (int) sqrt(P);
+	    c = (float) P_a / (float)P_x;
+	    
+	    n_ar = (float) P_y;
+	    n_as = (float) c;
+	    if ( d_p > (P_a*b_c/P )) {
+		m_s = fmin(b_c / P_y, d_p);
+	    }
+	    else {
+		m_s = fmin(d_p * P_x / P_a, d_p);
+	    }
+	    break;	  
+	}
+	default :
+	    printf("stop putting random values\n");
+	    break;
+    } 
+    
+    n_s = (float) d_p / (float)(n_as * m_s);
+    
+    if( m_s < 33554432) {
+	g = .00000108;
+    }	
+    t_send = n_s * (L + 2 * o + (n_as -1) * g + (m_s - 1) * n_as * G);
+    t_recv=  n_r * (L + 2 * o + (n_ar -1) * g + (m_s - 1) * n_ar * G);;
+    t_tot = t_send + t_recv;
+    
+    return t_tot;
 }
+    
