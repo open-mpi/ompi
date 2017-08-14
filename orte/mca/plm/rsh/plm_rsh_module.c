@@ -17,7 +17,6 @@
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Mellanox Technologies, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -345,7 +344,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
     bool found;
     char *lib_base=NULL, *bin_base=NULL;
     char *opal_prefix = getenv("OPAL_PREFIX");
-    char *pmix_prefix = getenv("PMIX_INSTALL_PREFIX");
     char* full_orted_cmd = NULL;
 
     /* Figure out the basenames for the libdir and bindir.  This
@@ -499,16 +497,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * we have to insert the orted_prefix in the right place
              */
             (void)asprintf (&final_cmd,
-                            "%s%s%s %s%s%s PATH=%s%s$PATH ; export PATH ; "
+                            "%s%s%s PATH=%s%s$PATH ; export PATH ; "
                             "LD_LIBRARY_PATH=%s%s$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                             "DYLD_LIBRARY_PATH=%s%s$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
                             "%s %s",
                             (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
                             (opal_prefix != NULL ? opal_prefix : " "),
                             (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
-                            (pmix_prefix != NULL ? "PMIX_INSTALL_PREFIX=" : " "),
-                            (pmix_prefix != NULL ? pmix_prefix : " "),
-                            (pmix_prefix != NULL ? " ; export PMIX_INSTALL_PREFIX;" : " "),
                             (NULL != bin_base ? bin_base : " "),
                             (NULL != bin_base ? ":" : " "),
                             (NULL != lib_base ? lib_base : " "),
