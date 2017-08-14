@@ -913,16 +913,15 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of __sync builtin atomics (default: enabled)])],
-         [], [enable_builtin_atomics="yes"])
+         [Enable use of __sync builtin atomics (default: enabled)])])
 
     opal_cv_asm_builtin="BUILTIN_NO"
-    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
-       OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])
-    fi
-    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
-       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
-    fi
+    AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
+          [OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])])
+    AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
+          [OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])])
+    AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
+          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
 
         OPAL_CHECK_ASM_PROC
         OPAL_CHECK_ASM_TEXT
