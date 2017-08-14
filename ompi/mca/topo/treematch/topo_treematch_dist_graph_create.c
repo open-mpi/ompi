@@ -36,23 +36,6 @@
 
 #include "opal/mca/pmix/pmix.h"
 
-#define ERR_EXIT(ERR)                           \
-    do {                                        \
-        free (nodes_roots);                     \
-        free (tracker);                         \
-        free (colors);                          \
-        free(local_pattern);                    \
-        return (ERR); }                         \
-    while(0);
-
-#define FALLBACK()                  \
-    do { free(nodes_roots);         \
-        free(lindex_to_grank);      \
-        if( NULL != set) hwloc_bitmap_free(set);     \
-        goto fallback; }            \
-    while(0);
-
-#define MY_STRING_SIZE 64
 /*#define __DEBUG__ 1  */
 
 /**
@@ -142,8 +125,8 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     mca_topo_base_comm_dist_graph_2_2_0_t *topo = NULL;
     ompi_proc_t *proc = NULL;
     MPI_Request  *reqs = NULL;
-    hwloc_cpuset_t set;
-    hwloc_obj_t object,root_obj;
+    hwloc_cpuset_t set = NULL;
+    hwloc_obj_t object, root_obj;
     hwloc_obj_t *tracker = NULL;
     double *local_pattern = NULL;
     int *vpids, *colors = NULL;
@@ -226,8 +209,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
          * and create a duplicate of the original communicator */
         free(vpids);
         free(colors);
-        err = OMPI_SUCCESS;  /* return with success */
-        goto fallback;
+        goto fallback; /* return with success */
     }
     /* compute local roots ranks in comm_old */
     /* Only the global root needs to do this */
@@ -305,12 +287,20 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             obj_rank = ompi_process_info.my_local_rank%num_objs_in_node;
             effective_depth = depth;
             object = hwloc_get_obj_by_depth(opal_hwloc_topology, effective_depth, obj_rank);
-            if( NULL == object) FALLBACK();
+            if( NULL == object) {
+                free(colors);
+                hwloc_bitmap_free(set);
+                goto fallback;  /* return with success */
+            }
 
             hwloc_bitmap_copy(set, object->cpuset);
             hwloc_bitmap_singlify(set); /* we don't want the process to move */
             hwloc_err = hwloc_set_cpubind(opal_hwloc_topology, set, 0);
-            if( -1 == hwloc_err) FALLBACK();
+            if( -1 == hwloc_err) {
+                free(colors);
+                hwloc_bitmap_free(set);
+                goto fallback;  /* return with success */
+            }
 #ifdef __DEBUG__
             fprintf(stdout,"Process not bound : binding on OBJ#%i \n",obj_rank);
 #endif
@@ -324,7 +314,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 #ifdef __DEBUG__
         fprintf(stdout, "Oversubscribing PUs resources => Rank Reordering Impossible \n");
 #endif
-        FALLBACK();
+        free(colors);
+        hwloc_bitmap_free(set);
+        goto fallback;  /* return with success */
     }
 
     reqs = (MPI_Request *)calloc(num_procs_in_node-1, sizeof(MPI_Request));
@@ -363,17 +355,23 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
         for(i = 1;  i < num_procs_in_node; i++) {
             if (OMPI_SUCCESS != ( err = MCA_PML_CALL(irecv(&localrank_to_objnum[i], 1, MPI_INT,
-                                                           lindex_to_grank[i], -111, comm_old, &reqs[i-1]))))
-                return err;
+                                                           lindex_to_grank[i], -111, comm_old, &reqs[i-1])))) {
+                free(reqs);
+                goto release_and_return;
+            }
         }
         if (OMPI_SUCCESS != ( err = ompi_request_wait_all(num_procs_in_node-1,
-                                                          reqs, MPI_STATUSES_IGNORE)))
-            return err;
+                                                          reqs, MPI_STATUSES_IGNORE))) {
+            free(reqs);
+            goto release_and_return;
+        }
     } else {
         /* sending my core number to my local master on the node */
         if (OMPI_SUCCESS != (err = MCA_PML_CALL(send(&obj_rank, 1, MPI_INT, lindex_to_grank[0],
-                                                     -111, MCA_PML_BASE_SEND_STANDARD, comm_old))))
-            return err;
+                                                     -111, MCA_PML_BASE_SEND_STANDARD, comm_old)))) {
+            free(reqs);
+            goto release_and_return;
+        }
     }
     free(reqs); reqs = NULL;
 
@@ -897,6 +895,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     if (NULL != lindex_to_grank) free(lindex_to_grank);
     if (NULL != nodes_roots) free(nodes_roots);  /* only on root */
     if (NULL != localrank_to_objnum) free(localrank_to_objnum);
-    hwloc_bitmap_free(set);
-    return err;
+    if( NULL != set) hwloc_bitmap_free(set);
+    /* As the reordering is optional, if we encountered an error during the reordering,
+     * we can safely return with just a duplicate of the original communicator associated
+     * with the topology. */
+    if( OMPI_SUCCESS != err ) goto fallback;
+    return OMPI_SUCCESS;
 }
