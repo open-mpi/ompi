@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +36,8 @@ BEGIN_C_DECLS
 
 typedef struct {
     pmix_ptl_base_component_t super;
-    char *tmpdir;
+    char *session_tmpdir;
+    char *system_tmpdir;
     char *if_include;
     char *if_exclude;
     int ipv4_port;
@@ -44,7 +45,9 @@ typedef struct {
     bool disable_ipv4_family;
     bool disable_ipv6_family;
     struct sockaddr_storage connection;
-    char *filename;
+    char *session_filename;
+    char *system_filename;
+    pid_t tool_pid;
 } pmix_ptl_tcp_component_t;
 
 extern pmix_ptl_tcp_component_t mca_ptl_tcp_component;

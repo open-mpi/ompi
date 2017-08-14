@@ -80,8 +80,8 @@ extern "C" {
  * and subsequent operations. Pass a _NULL_ value for the array pointer
  * is supported if no directives are desired.
  */
- pmix_status_t PMIx_Init(pmix_proc_t *proc,
-                         pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
+                                    pmix_info_t info[], size_t ninfo);
 
 /* Finalize the PMIx client, closing the connection to the local server.
  * An error code will be returned if, for some reason, the connection
@@ -94,14 +94,14 @@ extern "C" {
  * internal barrier operation. This attribute directs PMIx_Finalize to
  * execute a barrier as part of the finalize operation.
  */
- pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo);
 
 
 /* Returns _true_ if the PMIx client has been successfully initialized,
  * returns _false_ otherwise. Note that the function only reports the
  * internal state of the PMIx client - it does not verify an active
  * connection with the server, nor that the server is functional. */
- int PMIx_Initialized(void);
+PMIX_EXPORT int PMIx_Initialized(void);
 
 
 /* Request that the provided array of procs be aborted, returning the
@@ -121,22 +121,22 @@ extern "C" {
  * caused by multiple processes calling PMIx_Abort are left to the
  * server implementation to resolve with regard to which status is
  * returned and what messages (if any) are printed. */
- pmix_status_t PMIx_Abort(int status, const char msg[],
-                          pmix_proc_t procs[], size_t nprocs);
+PMIX_EXPORT pmix_status_t PMIx_Abort(int status, const char msg[],
+                                     pmix_proc_t procs[], size_t nprocs);
 
 
 /* Push a value into the client's namespace. The client library will cache
  * the information locally until _PMIx_Commit_ is called. The provided scope
  * value is passed to the local PMIx server, which will distribute the data
  * as directed. */
- pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val);
+PMIX_EXPORT pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val);
 
 
 /* Push all previously _PMIx_Put_ values to the local PMIx server.
  * This is an asynchronous operation - the library will immediately
  * return to the caller while the data is transmitted to the local
  * server in the background */
- pmix_status_t PMIx_Commit(void);
+PMIX_EXPORT pmix_status_t PMIx_Commit(void);
 
 
 /* Execute a blocking barrier across the processes identified in the
@@ -174,14 +174,14 @@ extern "C" {
  *     the timeout parameter can help avoid "hangs" due to programming errors
  *     that prevent one or more procs from reaching the "fence".
  */
- pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
-                          const pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
+                                     const pmix_info_t info[], size_t ninfo);
 
 /* Non-blocking version of PMIx_Fence. Note that the function will return
  * an error if a _NULL_ callback function is given. */
- pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs,
-                             const pmix_info_t info[], size_t ninfo,
-                             pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs,
+                                        const pmix_info_t info[], size_t ninfo,
+                                        pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
 /* Retrieve information for the specified _key_ as published by the process
@@ -200,17 +200,17 @@ extern "C" {
  *     an error. The timeout parameter can help avoid "hangs" due to programming
  *     errors that prevent the target proc from ever exposing its data.
  */
- pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
-                        const pmix_info_t info[], size_t ninfo,
-                        pmix_value_t **val);
+PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
+                                   const pmix_info_t info[], size_t ninfo,
+                                   pmix_value_t **val);
 
 /* A non-blocking operation version of PMIx_Get - the callback function will
  * be executed once the specified data has been _PMIx_Put_
  * by the identified process and retrieved by the local server. The info
  * array is used as described above for the blocking form of this call. */
- pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char key[],
-                           const pmix_info_t info[], size_t ninfo,
-                           pmix_value_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char key[],
+                                      const pmix_info_t info[], size_t ninfo,
+                                      pmix_value_cbfunc_t cbfunc, void *cbdata);
 
 
 /* Publish the data in the info array for lookup. By default,
@@ -232,9 +232,9 @@ extern "C" {
  * return immediately, executing the callback when the server confirms
  * availability of the data.
  */
- pmix_status_t PMIx_Publish(const pmix_info_t info[], size_t ninfo);
- pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo,
-                               pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Publish(const pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo,
+                                          pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
 /* Lookup information published by this or another process. By default,
@@ -273,8 +273,8 @@ extern "C" {
  * (b) PMIX_TIMEOUT - max time to wait for data to become available.
  *
  */
- pmix_status_t PMIx_Lookup(pmix_pdata_t data[], size_t ndata,
-                           const pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Lookup(pmix_pdata_t data[], size_t ndata,
+                                      const pmix_info_t info[], size_t ninfo);
 
 /* Non-blocking form of the _PMIx_Lookup_ function. Data for
  * the provided NULL-terminated keys array will be returned
@@ -282,8 +282,8 @@ extern "C" {
  * behavior is to _not_ wait for data to be published. The
  * info keys can be used to modify the behavior as previously
  * described */
- pmix_status_t PMIx_Lookup_nb(char **keys, const pmix_info_t info[], size_t ninfo,
-                              pmix_lookup_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Lookup_nb(char **keys, const pmix_info_t info[], size_t ninfo,
+                                         pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 
 
 /* Unpublish data posted by this process using the given keys.
@@ -294,15 +294,15 @@ extern "C" {
  * By default, the range is assumed to be PMIX_SESSION. Changes
  * to the range, and any additional directives, can be provided
  * in the pmix_info_t array */
- pmix_status_t PMIx_Unpublish(char **keys,
-                              const pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Unpublish(char **keys,
+                                         const pmix_info_t info[], size_t ninfo);
 
 /* Non-blocking form of the _PMIx_Unpublish_ function. The
  * callback function will be executed once the server confirms
  * removal of the specified data. */
- pmix_status_t PMIx_Unpublish_nb(char **keys,
-                                 const pmix_info_t info[], size_t ninfo,
-                                 pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Unpublish_nb(char **keys,
+                                            const pmix_info_t info[], size_t ninfo,
+                                            pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
 /* Spawn a new job. The assigned namespace of the spawned applications
@@ -335,17 +335,17 @@ extern "C" {
  * (c) PMIX_NOTIFY_COMPLETION - notify the parent process when the
  *     child job terminates, either normally or with error
  */
- pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
-                          const pmix_app_t apps[], size_t napps,
-                          char nspace[]);
+PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
+                                     const pmix_app_t apps[], size_t napps,
+                                     char nspace[]);
 
 
 /* Non-blocking form of the _PMIx_Spawn_ function. The callback
  * will be executed upon launch of the specified applications,
  * or upon failure to launch any of them. */
- pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
-                             const pmix_app_t apps[], size_t napps,
-                             pmix_spawn_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
+                                        const pmix_app_t apps[], size_t napps,
+                                        pmix_spawn_cbfunc_t cbfunc, void *cbdata);
 
 /* Record the specified processes as "connected". Both blocking and non-blocking
  * versions are provided. This means that the resource manager should treat the
@@ -367,12 +367,12 @@ extern "C" {
  * user-level directives regarding the algorithm to be used for the collective
  * operation involved in the "connect", timeout constraints, and other options
  * available from the host RM */
- pmix_status_t PMIx_Connect(const pmix_proc_t procs[], size_t nprocs,
-                            const pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Connect(const pmix_proc_t procs[], size_t nprocs,
+                                       const pmix_info_t info[], size_t ninfo);
 
- pmix_status_t PMIx_Connect_nb(const pmix_proc_t procs[], size_t nprocs,
-                               const pmix_info_t info[], size_t ninfo,
-                               pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Connect_nb(const pmix_proc_t procs[], size_t nprocs,
+                                          const pmix_info_t info[], size_t ninfo,
+                                          pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Disconnect a previously connected set of processes. An error will be returned
  * if the specified set of procs was not previously "connected". As above, a process
@@ -380,12 +380,12 @@ extern "C" {
  * is not allowed to reconnect to a set of procs that has not fully completed
  * disconnect - i.e., you have to fully disconnect before you can reconnect to the
  * _same_ group of processes. The info array is used as above. */
- pmix_status_t PMIx_Disconnect(const pmix_proc_t procs[], size_t nprocs,
-                               const pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_Disconnect(const pmix_proc_t procs[], size_t nprocs,
+                                          const pmix_info_t info[], size_t ninfo);
 
- pmix_status_t PMIx_Disconnect_nb(const pmix_proc_t ranges[], size_t nprocs,
-                                  const pmix_info_t info[], size_t ninfo,
-                                  pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Disconnect_nb(const pmix_proc_t ranges[], size_t nprocs,
+                                             const pmix_info_t info[], size_t ninfo,
+                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Given a node name, return an array of processes within the specified nspace
  * on that node. If the nspace is NULL, then all processes on the node will
@@ -394,15 +394,15 @@ extern "C" {
  * for releasing the array when done with it - the PMIX_PROC_FREE macro is
  * provided for this purpose.
  */
- pmix_status_t PMIx_Resolve_peers(const char *nodename, const char *nspace,
-                                  pmix_proc_t **procs, size_t *nprocs);
+PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename, const char *nspace,
+                                             pmix_proc_t **procs, size_t *nprocs);
 
 
 /* Given an nspace, return the list of nodes hosting processes within
  * that nspace. The returned string will contain a comma-delimited list
  * of nodenames. The caller is responsible for releasing the string
  * when done with it */
- pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist);
+PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist);
 
 /* Query information about the system in general - can include
  * a list of active nspaces, network topology, etc. Also can be
@@ -420,8 +420,8 @@ extern "C" {
  * PMIX_ERR_PARTIAL_SUCCESS - some of the data has been returned
  * PMIX_ERR_NOT_SUPPORTED - the host RM does not support this function
  */
-pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nqueries,
-                                 pmix_info_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nqueries,
+                                             pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* Log data to a central data service/store, subject to the
  * services offered by the host resource manager. The data to
@@ -433,9 +433,9 @@ pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nqueries,
  * has been completed. The data array must be maintained until
  * the callback is provided
  */
-pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
-                          const pmix_info_t directives[], size_t ndirs,
-                          pmix_op_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
+                                      const pmix_info_t directives[], size_t ndirs,
+                                      pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Request an allocation operation from the host resource manager.
  * Several broad categories are envisioned, including the ability to:
@@ -469,9 +469,9 @@ pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
  *   lieue of preemption. A corresponding ability to "reacquire" resources
  *   previously released is included.
  */
-pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
-                                         pmix_info_t *info, size_t ninfo,
-                                         pmix_info_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
+                                                     pmix_info_t *info, size_t ninfo,
+                                                     pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* Request a job control action. The targets array identifies the
  * processes to which the requested job control action is to be applied.
@@ -487,9 +487,9 @@ pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
  * when the callback function completes - this will be used to release
  * any provided pmix_info_t array.
  */
-pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_t ntargets,
-                                  const pmix_info_t directives[], size_t ndirs,
-                                  pmix_info_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_t ntargets,
+                                              const pmix_info_t directives[], size_t ndirs,
+                                              pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* Request that something be monitored - e.g., that the server monitor
  * this process for periodic heartbeats as an indication that the process
@@ -518,9 +518,9 @@ pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_t ntargets,
  *
  * Note: a process can send a heartbeat to the server using the PMIx_Heartbeat
  * macro provided below*/
-pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pmix_status_t error,
-                                      const pmix_info_t directives[], size_t ndirs,
-                                      pmix_info_cbfunc_t cbfunc, void *cbdata);
+PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pmix_status_t error,
+                                                  const pmix_info_t directives[], size_t ndirs,
+                                                  pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* define a special macro to simplify sending of a heartbeat */
 #define PMIx_Heartbeat()                                                    \

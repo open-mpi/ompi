@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -39,7 +39,7 @@
  * special, since be mark it as already initialized, with no parent
  * and no constructor or destructor.
  */
-pmix_class_t pmix_object_t_class = {
+PMIX_EXPORT pmix_class_t pmix_object_t_class = {
     "pmix_object_t",      /* name */
     NULL,                 /* parent class */
     NULL,                 /* constructor */
@@ -224,4 +224,3 @@ static void expand_array(void)
         classes[i] = NULL;
     }
 }
-

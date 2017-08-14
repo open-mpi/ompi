@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,7 @@
 #define PMIX_PRINTF_H
 
 #include <src/include/pmix_config.h>
-
+#include <pmix_common.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -129,4 +129,3 @@ int  pmix_vasprintf(char **ptr, const char *fmt, va_list ap) __pmix_attribute_fo
 END_C_DECLS
 
 #endif /* PMIX_PRINTF_H */
-

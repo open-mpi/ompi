@@ -23,14 +23,14 @@ release=1
 # The only requirement is that it must be entirely printable ASCII
 # characters and have no white space.
 
-greek=
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=git3cee345
+repo_rev=gitda9b50e
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +44,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Aug 04, 2017"
+date="Aug 14, 2017"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library
@@ -75,4 +75,4 @@ date="Aug 04, 2017"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libpmix_so_version=3:0:1
+libpmix_so_version=3:1:1
