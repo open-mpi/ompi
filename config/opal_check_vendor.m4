@@ -12,6 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved
+dnl Copyright (c) 2017      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -114,6 +115,18 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
           [OPAL_IF_IFELSE([defined(__FUJITSU)],
                [opal_check_compiler_vendor_result="fujitsu"])])
 
+    # IBM XL C/C++
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)],
+               [opal_check_compiler_vendor_result="ibm"
+                xlc_major_version=`$CC -qversion 2>&1 | tail -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1`
+                xlc_minor_version=`$CC -qversion 2>&1 | tail -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 2`
+                AS_IF([ (test "$xlc_major_version" -lt "13" ) || (test "$xlc_major_version" -eq "13" && test "$xlc_minor_version" -lt "1" )],
+                    [AC_MSG_ERROR(["XL Compiler versions less than 13.1 not supported. Detected $xlc_major_version.$xlc_minor_version"])])
+               ],
+               [OPAL_IF_IFELSE([defined(_AIX) && !defined(__GNUC__)],
+                    [opal_check_compiler_vendor_result="ibm"])])])
+
     # GNU
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [OPAL_IFDEF_IFELSE([__GNUC__],
@@ -131,7 +144,7 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
                    AC_MSG_WARN([Detected gccfss being used to compile Open MPI.])
                    AC_MSG_WARN([Because of several issues Open MPI does not support])
                    AC_MSG_WARN([the gccfss compiler.  Please use a different compiler.])
-                   AC_MSG_WARN([If you didn't think you used gccfss you may want to])
+                   AC_MSG_WARN([If you did not think you used gccfss you may want to])
                    AC_MSG_WARN([check to see if the compiler you think you used is])
                    AC_MSG_WARN([actually a link to gccfss.])
                    AC_MSG_ERROR([Cannot continue])
@@ -180,13 +193,6 @@ AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [OPAL_IF_IFELSE([defined(__HP_cc) || defined(__HP_aCC)],
                [opal_check_compiler_vendor_result="hp"])])
-
-    # IBM XL C/C++
-    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
-          [OPAL_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)],
-               [opal_check_compiler_vendor_result="ibm"],
-               [OPAL_IF_IFELSE([defined(_AIX) && !defined(__GNUC__)],
-                    [opal_check_compiler_vendor_result="ibm"])])])
 
     # KAI C++ (rest in peace)
     AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
