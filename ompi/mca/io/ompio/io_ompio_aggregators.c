@@ -47,41 +47,148 @@
 **
 ** The first group functions determines the number of aggregators based on various characteristics
 ** 
-** 1. simple_grouping:aA simple heuristic based on the amount of data written and size of 
-**    of the temporary buffer used by aggregator processes
+** 1. simple_grouping: A heuristic based on a cost model
 ** 2. fview_based_grouping: analysis the fileview to detect regular patterns
 ** 3. cart_based_grouping: uses a cartesian communicator to derive certain (probable) properties
 **    of the access pattern
 */
 
+
+static double cost_calc (int P, int P_agg, size_t Data_proc, size_t coll_buffer, int dim );
+#define DIM1 1
+#define DIM2 2
+
 int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
-                                 int *num_groups,
+                                 int *num_groups_out,
                                  mca_io_ompio_contg *contg_groups)
 {
-    size_t stripe_size = (size_t) fh->f_stripe_size;
     int group_size  = 0;
     int k=0, p=0, g=0;
     int total_procs = 0; 
+    int num_groups=1;
 
-    if ( 0 >= fh->f_stripe_size ) {
-        stripe_size = OMPIO_DEFAULT_STRIPE_SIZE;
-    }
+    double time=0.0, time_prev=0.0, dtime=0.0, dtime_abs=0.0, dtime_diff=0.0, dtime_prev=0.0;
+    double dtime_threshold=0.0;
 
-    if ( 0 != fh->f_cc_size && stripe_size > fh->f_cc_size ) {
-        group_size  = (((int)stripe_size/(int)fh->f_cc_size) > fh->f_size ) ? fh->f_size : ((int)stripe_size/(int)fh->f_cc_size);
-        *num_groups = fh->f_size / group_size;
+    /* This is the threshold for absolute improvement. It is not 
+    ** exposed as an MCA parameter to avoid overwhelming users. It is 
+    ** mostly relevant for smaller process counts and data volumes. 
+    */
+    double time_threshold=0.001; 
+
+    int incr=1, mode=1;
+    int P_a, P_a_prev;
+
+    /* The aggregator selection algorithm is based on the formulas described
+    ** in: Shweta Jha, Edgar Gabriel, 'Performance Models for Communication in
+    ** Collective I/O operations', Proceedings of the 17th IEEE/ACM Symposium
+    ** on Cluster, Cloud and Grid Computing, Workshop on Theoretical
+    ** Approaches to Performance Evaluation, Modeling and Simulation, 2017.
+    **
+    ** The current implementation is based on the 1-D and 2-D models derived for the even
+    ** file partitioning strategy in the paper. Note, that the formulas currently only model
+    ** the communication aspect of collective I/O operations. There are two extensions in this
+    ** implementation: 
+    ** 
+    ** 1. Since the resulting formula has an asymptotic behavior w.r.t. the
+    ** no. of aggregators, this version determines the no. of aggregators to
+    ** be used iteratively and stops increasing the no. of aggregators if the
+    ** benefits of increasing the aggregators is below a certain threshold
+    ** value relative to the last number tested. The aggresivnes of cutting of
+    ** the increasie in the number of aggregators is controlled by the new mca
+    ** parameter mca_io_ompio_aggregator_cutoff_threshold.  Lower values for
+    ** this parameter will lead to higher number of aggregators (useful e.g
+    ** for PVFS2 and GPFS file systems), while higher number will lead to
+    ** lower no. of aggregators (useful for regular UNIX or NFS file systems).
+    **
+    ** 2. The algorithm further caps the maximum no. of aggregators used to not exceed
+    ** (no. of processes / mca_io_ompio_max_aggregators_ratio), i.e. a higher value
+    ** for mca_io_ompio_max_aggregators will decrease the maximum number of aggregators
+    ** allowed for the given no. of processes.
+    */
+    dtime_threshold = (double) mca_io_ompio_aggregators_cutoff_threshold / 100.0;
+
+    /* Determine whether to use the formula for 1-D or 2-D data decomposition. Anything
+    ** that is not 1-D is assumed to be 2-D in this version
+    */ 
+    mode = ( fh->f_cc_size == fh->f_view_size ) ? 1 : 2;
+
+    /* Determine the increment size when searching the optimal
+    ** no. of aggregators 
+    */
+    if ( fh->f_size < 16 ) {
+	incr = 2;
     }
-    else if ( fh->f_cc_size <= OMPIO_CONTG_FACTOR * stripe_size) {
-        *num_groups = fh->f_size/OMPIO_CONTG_FACTOR > 0 ? (fh->f_size/OMPIO_CONTG_FACTOR) : 1 ;
-        group_size  = OMPIO_CONTG_FACTOR;
-    } 
+    else if (fh->f_size < 128 ) {
+	incr = 4;
+    }
+    else if ( fh->f_size < 4096 ) {
+	incr = 16;
+    }
     else {
-        *num_groups = fh->f_size;
-        group_size  = 1;
+	incr = 32;
     }
 
-    for ( k=0, p=0; p<*num_groups; p++ ) {
-        if ( p == (*num_groups - 1) ) {
+    P_a = 1;
+    time_prev = cost_calc ( fh->f_size, P_a, fh->f_view_size, (size_t) fh->f_bytes_per_agg, mode );
+    P_a_prev = P_a;
+    for ( P_a = incr; P_a <= fh->f_size; P_a += incr ) {
+	time = cost_calc ( fh->f_size, P_a, fh->f_view_size, (size_t) fh->f_bytes_per_agg, mode );
+	dtime_abs = (time_prev - time);
+	dtime = dtime_abs / time_prev;
+	dtime_diff = ( P_a == incr ) ? dtime : (dtime_prev - dtime);
+#ifdef OMPIO_DEBUG
+	if ( 0 == fh->f_rank  ){
+	    printf(" d_p = %ld P_a = %d time = %lf dtime = %lf dtime_abs =%lf dtime_diff=%lf\n", 
+		   fh->f_view_size, P_a, time, dtime, dtime_abs, dtime_diff );
+	}
+#endif
+	if ( dtime_diff < dtime_threshold ) {
+	    /* The relative improvement compared to the last number
+	    ** of aggregators was below a certain threshold. This is typically
+	    ** the dominating factor for large data volumes and larger process
+	    ** counts 
+	    */
+#ifdef OMPIO_DEBUG
+	    if ( 0 == fh->f_rank ) {
+		printf("dtime_diff below threshold\n");
+	    }
+#endif
+	    break;
+	}
+	if ( dtime_abs < time_threshold ) {
+	    /* The absolute improvement compared to the last number 
+	    ** of aggregators was below a given threshold. This is typically
+	    ** important for small data valomes and smallers process counts
+	    */
+#ifdef OMPIO_DEBUG
+	    if ( 0 == fh->f_rank ) {
+		printf("dtime_abs below threshold\n");
+	    }
+#endif
+	    break;
+	}
+	time_prev = time;
+	dtime_prev = dtime;
+	P_a_prev = P_a;	
+    }
+    num_groups = P_a_prev;
+#ifdef OMPIO_DEBUG
+    printf(" For P=%d d_p=%ld b_c=%d threshold=%f chosen P_a = %d \n", 
+	   fh->f_size, fh->f_view_size, fh->f_bytes_per_agg, dtime_threshold, P_a_prev);
+#endif
+    
+    /* Cap the maximum number of aggregators.*/
+    if ( num_groups > (fh->f_size/mca_io_ompio_max_aggregators_ratio)) {
+	num_groups = (fh->f_size/mca_io_ompio_max_aggregators_ratio);
+    }
+    if ( 1 >= num_groups ) {
+	num_groups = 1;
+    }
+    group_size = fh->f_size / num_groups;
+
+    for ( k=0, p=0; p<num_groups; p++ ) {
+        if ( p == (num_groups - 1) ) {
             contg_groups[p].procs_per_contg_group = fh->f_size - total_procs;
         }
         else {
@@ -93,6 +200,8 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
             k++;
         }
     }
+
+    *num_groups_out = num_groups;
     return OMPI_SUCCESS;
 }
 
@@ -413,6 +522,9 @@ int mca_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
     /* Forced number of aggregators
     ** calculate the offset at which each group of processes will start 
     */
+    if ( num_aggregators > fh->f_size ) {
+	num_aggregators = fh->f_size;
+    }
     procs_per_group = ceil ((float)fh->f_size/num_aggregators);
 
     /* calculate the number of processes in the local group */
@@ -1295,4 +1407,77 @@ exit:
     return ret;
 }
 
+/*
+** This is the actual formula of the cost function from the paper.
+** One change made here is to use floating point values for
+** all parameters, since the ceil() function leads to sometimes
+** unexpected jumps in the execution time. Using float leads to 
+** more consistent predictions for the no. of aggregators.
+*/
+static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
+{
+    float  n_as=1.0, m_s=1.0, n_s=1.0;
+    float  n_ar=1.0;
+    double t_send, t_recv, t_tot;
 
+    /* LogGP parameters based on DDR InfiniBand values */
+    double L=.00000184;
+    double o=.00000149;
+    double g=.0000119;
+    double G=.00000000067;
+    
+    long file_domain = (P * d_p) / P_a;
+    float n_r = (float)file_domain/(float) b_c;
+    
+    switch (dim) {
+	case DIM1:
+	{
+	    if( d_p > b_c ){
+		//printf("case 1\n");
+		n_ar = 1;
+		n_as = 1;
+		m_s = b_c;
+		n_s = (float)d_p/(float)b_c;
+	    }
+	    else {
+		n_ar = (float)b_c/(float)d_p;
+		n_as = 1;
+		m_s = d_p;
+		n_s = 1;
+	    }
+	    break;
+	}	  
+	case DIM2:
+	{
+	    int P_x, P_y, c;
+	    
+	    P_x = P_y = (int) sqrt(P);
+	    c = (float) P_a / (float)P_x;
+	    
+	    n_ar = (float) P_y;
+	    n_as = (float) c;
+	    if ( d_p > (P_a*b_c/P )) {
+		m_s = fmin(b_c / P_y, d_p);
+	    }
+	    else {
+		m_s = fmin(d_p * P_x / P_a, d_p);
+	    }
+	    break;	  
+	}
+	default :
+	    printf("stop putting random values\n");
+	    break;
+    } 
+    
+    n_s = (float) d_p / (float)(n_as * m_s);
+    
+    if( m_s < 33554432) {
+	g = .00000108;
+    }	
+    t_send = n_s * (L + 2 * o + (n_as -1) * g + (m_s - 1) * n_as * G);
+    t_recv=  n_r * (L + 2 * o + (n_ar -1) * g + (m_s - 1) * n_ar * G);;
+    t_tot = t_send + t_recv;
+    
+    return t_tot;
+}
+    

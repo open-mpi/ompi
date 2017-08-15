@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2017 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
@@ -60,6 +60,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_DIST_GRAPH   0x00000400
 #define OMPI_COMM_PML_ADDED    0x00001000
 #define OMPI_COMM_EXTRA_RETAIN 0x00004000
+#define OMPI_COMM_MAPBY_NODE   0x00008000
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -76,12 +77,14 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_IS_TOPO(comm) (OMPI_COMM_IS_CART((comm)) || \
                                  OMPI_COMM_IS_GRAPH((comm)) || \
                                  OMPI_COMM_IS_DIST_GRAPH((comm)))
+#define OMPI_COMM_IS_MAPBY_NODE(comm) ((comm)->c_flags & OMPI_COMM_MAPBY_NODE)
 
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
 
 #define OMPI_COMM_SET_PML_ADDED(comm) ((comm)->c_flags |= OMPI_COMM_PML_ADDED)
 #define OMPI_COMM_SET_EXTRA_RETAIN(comm) ((comm)->c_flags |= OMPI_COMM_EXTRA_RETAIN)
+#define OMPI_COMM_SET_MAPBY_NODE(comm) ((comm)->c_flags |= OMPI_COMM_MAPBY_NODE)
 
 /* a set of special tags: */
 

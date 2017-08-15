@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 University of Houston. All rights reserved.
+ * Copyright (c) 2006-2017 University of Houston. All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
@@ -35,6 +35,7 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/util/info_subscriber.h"
+#include "opal/mca/pmix/pmix.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
@@ -150,6 +151,23 @@ int ompi_comm_init(void)
        because MPI_COMM_WORLD has some predefined attributes. */
     ompi_attr_hash_init(&ompi_mpi_comm_world.comm.c_keyhash);
 
+    /* Check for the binding policy used. We are only interested in 
+       whether mapby-node has been set right now (could be extended later)
+       and only on MPI_COMM_WORLD, since for all other sub-communicators
+       it is virtually impossible to identify their layout across nodes
+       in the most generic sense. This is used by OMPIO for deciding which
+       ranks to use for aggregators
+    */
+    opal_process_name_t wildcard = {ORTE_PROC_MY_NAME->jobid, OPAL_VPID_WILDCARD};
+    char *str=NULL;
+    int rc;
+    
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_MAPBY, &wildcard, &str, OPAL_STRING);
+    if ( 0 == rc ) {
+        if ( strstr ( str, "BYNODE") ) {
+            OMPI_COMM_SET_MAPBY_NODE(&ompi_mpi_comm_world.comm);
+        }
+    }
     /* Setup MPI_COMM_SELF */
     OBJ_CONSTRUCT(&ompi_mpi_comm_self, ompi_communicator_t);
     assert(ompi_mpi_comm_self.comm.c_f_to_c_index == 1);
