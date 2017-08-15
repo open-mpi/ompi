@@ -71,6 +71,31 @@ static int mca_topo_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&ompi_topo_base_framework, flags);
 }
 
+int mca_topo_base_neighbor_count (ompi_communicator_t *comm, int *indegree, int *outdegree) {
+  if (OMPI_COMM_IS_CART(comm)) {
+    /* cartesian */
+    /* outdegree is always 2*ndims because we need to iterate over
+       empty buffers for MPI_PROC_NULL */
+    *outdegree = *indegree = 2 * comm->c_topo->mtc.cart->ndims;
+  } else if (OMPI_COMM_IS_GRAPH(comm)) {
+    /* graph */
+    int rank, nneighbors;
+
+    rank = ompi_comm_rank (comm);
+    mca_topo_base_graph_neighbors_count (comm, rank, &nneighbors);
+
+    *outdegree = *indegree = nneighbors;
+  } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
+    /* graph */
+    *indegree = comm->c_topo->mtc.dist_graph->indegree;
+    *outdegree = comm->c_topo->mtc.dist_graph->outdegree;
+  } else {
+    return OMPI_ERR_BAD_PARAM;
+  }
+
+  return OMPI_SUCCESS;
+}
+
 MCA_BASE_FRAMEWORK_DECLARE(ompi, topo, "OMPI Topo", NULL,
                            mca_topo_base_open, mca_topo_base_close,
                            mca_topo_base_static_components, 0);
