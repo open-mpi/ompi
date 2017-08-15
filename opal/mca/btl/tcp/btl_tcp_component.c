@@ -54,6 +54,9 @@
 #endif
 #include <ctype.h>
 #include <limits.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/mca/event/event.h"
 #include "opal/util/ethtool.h"
@@ -1335,26 +1338,47 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     struct sockaddr_storage addr;
     opal_socklen_t addr_len = sizeof(addr);
     mca_btl_tcp_proc_t* btl_proc;
-    int retval;
+    bool sockopt = true;
+    size_t retval, len = strlen(mca_btl_tcp_magic_id_string);
+    mca_btl_tcp_endpoint_hs_msg_t hs_msg;
+    struct timeval save, tv;
+    socklen_t rcvtimeo_save_len = sizeof(save);
     char str[128];
-    size_t len = strlen(mca_btl_tcp_magic_id_string);
+
+    /* Note, Socket will be in blocking mode during intial handshake
+     * hence setting SO_RCVTIMEO to say 2 seconds here to avoid chance 
+     * of spin forever if it tries to connect to old version
+     * as older version will send just process id which won't be long enough
+     * to cross sizeof(str) length + process id struct
+     * or when the remote side isn't OMPI where it's not going to send
+     * any data*/
+
+    /* get the current timeout value so we can reset to it */
+    if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &rcvtimeo_save_len)) {
+        if (ENOPROTOOPT == errno) {
+            sockopt = false;
+        } else {
+	    opal_output_verbose(20, opal_btl_base_framework.framework_output,
+				"Cannot get current recv timeout value of the socket"
+		                "Local_host:%s PID:%d",
+				opal_process_info.nodename, getpid());
+	    return;
+        }
+    } else {
+        tv.tv_sec = 2;
+        tv.tv_usec = 0;
+        if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+				"Cannot set new recv timeout value of the socket"
+				"Local_host:%s PID:%d",
+				opal_process_info.nodename, getpid());
+           return;
+       }
+    }
 
     OBJ_RELEASE(event);
-
-    /* Receive the magic string */
-    assert(len < sizeof(str));
-    str[0] = '\0';
-    /* TODO: recv_blocking() will block forever, without timeout
-     * There is chance of spin forever if it tries to connect to old version
-     * as older version will send just process id which won't be long enough
-     * to cross sizeof(str) length. Probably better to have a timeout
-     * (say, 10 seconds) for receiving the magic string, and giving up after that.
-     * Will be reiterating this logic in my next iteration
-     */
-    retval = mca_btl_tcp_recv_blocking(sd, str, len);
-    if (retval > 0) {
-        str[retval] = '\0';
-    }
+    retval = mca_btl_tcp_recv_blocking(sd, (void *)&hs_msg, sizeof(hs_msg));
+    guid = hs_msg.guid;  
 
     /* An unknown process attempted to connect to Open MPI via TCP.
      * Open MPI uses a "magic" string to trivially verify that the connecting
@@ -1367,38 +1391,42 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
      * This attempted connection will be ignored; your MPI job may or may not
      * continue properly.
      */
-    if (retval != (int) len) {
-        opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                            "server did not receive magic string. "
+     if (sizeof(hs_msg) != retval) {
+         opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "server did not receive entire connect ACK "
                             "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
                             opal_process_info.nodename,
                             getpid(), "server",
-                            (len > 0) ? str : "<nothing>", "string length");
+                            (retval > 0) ? hs_msg.magic_id : "<nothing>", 
+                            "handshake message length");
 
-        /* The other side probably isn't OMPI, so just hang up */
-        CLOSE_THE_SOCKET(sd);
-        return;
+         /* The other side probably isn't OMPI, so just hang up */
+         CLOSE_THE_SOCKET(sd);
+         return;
     }
-    if (0 != strncmp(str, mca_btl_tcp_magic_id_string, len)) {
+    if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
         opal_output_verbose(20, opal_btl_base_framework.framework_output,
                             "server did not receive right magic string. "
                             "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
                             opal_process_info.nodename,
-                            getpid(), "server", str,
+                            getpid(), "server", hs_msg.magic_id,
                             "string value");
         /* The other side probably isn't OMPI, so just hang up */
         CLOSE_THE_SOCKET(sd);
         return;
     }
-    /* recv the process identifier */
-    retval = mca_btl_tcp_recv_blocking(sd, (char *)&guid, sizeof(guid));
-    if(retval != sizeof(guid)) {
-        opal_show_help("help-mpi-btl-tcp.txt", "server did not get guid",
-                        true, opal_process_info.nodename,
-                        getpid());
-        CLOSE_THE_SOCKET(sd);
-        return;
-    }
+    
+    if (sockopt) {
+       /* reset RECVTIMEO option to its original state */
+       if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sizeof(save))) {
+           opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                               "Cannot reset recv timeout value"
+                               "Local_host:%s PID:%d",
+                               opal_process_info.nodename, getpid());
+          return;
+       }
+    } 
+    
     OPAL_PROCESS_NAME_NTOH(guid);
 
     /* now set socket up to be non-blocking */

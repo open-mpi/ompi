@@ -536,9 +536,13 @@ void mca_btl_tcp_dump(struct mca_btl_base_module_t* base_btl,
 
 
 /*
- * A blocking recv on a non-blocking socket. Used to receive the small
- * amount of connection information that identifies the endpoints
- * endpoint.
+ * A blocking recv for both blocking and non-blocking socket. 
+ * Used to receive the small amount of connection information 
+ * that identifies the endpoints
+ * 
+ * when the socket is blocking (the caller introduces timeout) 
+ * which happens during initial handshake otherwise socket is 
+ * non-blocking most of the time.
  */
 
 int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
