@@ -15,6 +15,8 @@ dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -75,6 +77,22 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
 #     <flag>_prefix, configure is not.  There's no known use case for
 #     doing so, and we'd like to force the issue.
 AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
+    AC_ARG_WITH([wrapper-cc],
+                [AC_HELP_STRING([--with-wrapper-cc],
+                                [C compiler to use when using mpicc])])
+
+    AS_IF([test "$with_wrapper_cc" = "yes" || test "$with_wrapper_cc" = "no"],
+          [AC_MSG_ERROR([--with-wrapper-cc must have an argument.])])
+    if test -n "$with_wrapper_cc" ; then
+        WRAPPER_CC="$with_wrapper_cc"
+    else
+        # Just grab the compiler. If the user wants to also set CFLAGS there
+        # is an option for that.
+        WRAPPER_CC=$(echo "$CC" | cut -d' ' -f1)
+    fi
+
+    AC_SUBST([WRAPPER_CC])
+
     AC_ARG_WITH([wrapper-cflags],
                 [AC_HELP_STRING([--with-wrapper-cflags],
                                 [Extra flags to add to CFLAGS when using mpicc])])
