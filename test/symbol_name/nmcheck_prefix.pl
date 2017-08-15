@@ -111,6 +111,15 @@ sub check_lib_for_bad_exports {
     @symbols = grep(!/^NBC_/i, @symbols);
     @symbols = grep(!/^mca_/, @symbols);
 
+# in libmpi_usempi_ignore_tkr.so someone posted an MTT test where
+# the compiler produced symbols like
+#   [error]   MPI
+#   [error]   _Cmpi_fortran_status_ignore
+#   [error]   _Cmpi_fortran_statuses_ignore
+# which we shouldn't identify as bad:
+    @symbols = grep(!/^MPI$/, @symbols);
+    @symbols = grep(!/^_Cmpi_$/, @symbols);
+
     @symbols = grep(!/^_fini$/, @symbols);
     @symbols = grep(!/^_init$/, @symbols);
     @symbols = grep(!/^_edata$/, @symbols);
