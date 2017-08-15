@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,6 +115,13 @@ static int init(void)
         /* we couldn't find a hole, so don't use the shmem support */
         return ORTE_SUCCESS;
     }
+    shmemaddr = mmap(NULL, shmemsize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    if (MAP_FAILED == shmemaddr) {
+        opal_output(0, "%s could not mmap %ld bytes for shmem",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), shmemsize);
+        return ORTE_ERROR;
+    }
+
     /* create the shmem file in our session dir so it
      * will automatically get cleaned up */
     asprintf(&shmemfile, "%s/hwloc.sm", orte_process_info.jobfam_session_dir);
@@ -148,6 +157,7 @@ static int init(void)
         shmemfile = NULL;
         return rc;
     }
+    munmap(shmemaddr, shmemsize);
     /* populate the shmem segment with the topology */
     if (0 != (rc = hwloc_shmem_topology_write(opal_hwloc_topology, shmemfd, 0,
                                               (void*)shmemaddr, shmemsize, 0))) {
