@@ -33,6 +33,7 @@ const char *opal_pmix_pmix2x_component_version_string =
 /*
  * Local function
  */
+static int external_register(void);
 static int external_open(void);
 static int external_close(void);
 static int external_component_query(mca_base_module_t **module, int *priority);
@@ -65,6 +66,7 @@ mca_pmix_pmix2x_component_t mca_pmix_pmix2x_component = {
             .mca_open_component = external_open,
             .mca_close_component = external_close,
             .mca_query_component = external_component_query,
+            .mca_register_component_params = external_register
         },
         /* Next the MCA v1.0.0 component meta data */
         .base_data = {
@@ -74,6 +76,21 @@ mca_pmix_pmix2x_component_t mca_pmix_pmix2x_component = {
     },
     .native_launch = false
 };
+
+static int external_register(void)
+{
+    mca_base_component_t *component = &mca_pmix_pmix2x_component.super.base_version;
+
+    mca_pmix_pmix2x_component.silence_warning = false;
+    (void) mca_base_component_var_register (component, "silence_warning",
+                                            "Silence warning about PMIX_INSTALL_PREFIX",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_4,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_pmix_pmix2x_component.silence_warning);
+
+    return OPAL_SUCCESS;
+}
 
 static int external_open(void)
 {

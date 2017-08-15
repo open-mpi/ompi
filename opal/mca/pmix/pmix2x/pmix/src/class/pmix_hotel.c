@@ -131,7 +131,7 @@ static void destructor(pmix_hotel_t *h)
     }
 }
 
-PMIX_CLASS_INSTANCE(pmix_hotel_t,
-                    pmix_object_t,
-                    constructor,
-                    destructor);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_hotel_t,
+                                pmix_object_t,
+                                constructor,
+                                destructor);

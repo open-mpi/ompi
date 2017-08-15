@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -17,13 +17,6 @@ typedef struct {
     int in_progress;
     char nspace[PMIX_MAX_NSLEN];
 } spawn_cbdata;
-
-#define PMIX_WAIT_FOR_COMPLETION(a)             \
-    do {                                        \
-        while ((a)) {                           \
-            usleep(10);                         \
-        }                                       \
-    } while (0)
 
 static void spawn_cb(pmix_status_t status,
                       char nspace[], void *cbdata)
@@ -84,4 +77,3 @@ int test_spawn(char *my_nspace, int my_rank)
     TEST_VERBOSE(("%s:%d: Spawn non-blocking test succeded.", my_nspace, my_rank));
     return PMIX_SUCCESS;
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -16,11 +16,13 @@
 static void get_cb(pmix_status_t status, pmix_value_t *kv, void *cbdata)
 {
     get_cbdata *cb = (get_cbdata*)cbdata;
+    PMIX_ACQUIRE_OBJECT(cb);
     if (PMIX_SUCCESS == status) {
         pmix_value_xfer(cb->kv, kv);
     }
-    cb->in_progress = 0;
     cb->status = status;
+    PMIX_POST_OBJECT(cb);
+    cb->in_progress = 0;
 }
 
 static void add_noise(char *noise_param, char *my_nspace, pmix_rank_t my_rank)
@@ -434,4 +436,3 @@ int test_job_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
     }
     return PMIX_SUCCESS;
 }
-

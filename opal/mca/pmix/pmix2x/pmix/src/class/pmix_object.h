@@ -121,6 +121,7 @@
 #define PMIX_OBJECT_H
 
 #include <src/include/pmix_config.h>
+#include <pmix_common.h>
 
 #include <assert.h>
 #ifdef HAVE_STDLIB_H

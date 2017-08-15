@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +36,7 @@ static void pmix_value_array_destruct(pmix_value_array_t* array)
         free(array->array_items);
 }
 
-PMIX_CLASS_INSTANCE(
+PMIX_EXPORT PMIX_CLASS_INSTANCE(
     pmix_value_array_t,
     pmix_object_t,
     pmix_value_array_construct,
@@ -64,4 +64,3 @@ int pmix_value_array_set_size(pmix_value_array_t* array, size_t size)
     array->array_size = size;
     return PMIX_SUCCESS;
 }
-

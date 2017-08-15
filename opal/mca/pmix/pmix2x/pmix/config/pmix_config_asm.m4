@@ -13,7 +13,7 @@ dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
+dnl Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
@@ -194,9 +194,15 @@ AC_DEFUN([PMIX_CHECK_GCC_BUILTIN_CSWAP_INT128], [
 AC_DEFUN([PMIX_CHECK_GCC_ATOMIC_BUILTINS], [
   AC_MSG_CHECKING([for __atomic builtin atomics])
 
-  AC_TRY_LINK([long tmp, old = 0;], [__atomic_thread_fence(__ATOMIC_SEQ_CST);
+  AC_TRY_LINK([
+#include <stdint.h>
+uint32_t tmp, old = 0;
+uint64_t tmp64, old64 = 0;], [
+__atomic_thread_fence(__ATOMIC_SEQ_CST);
 __atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
-__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);],
+__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
+__atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
     [AC_MSG_RESULT([yes])
      $1],
     [AC_MSG_RESULT([no])
@@ -879,6 +885,7 @@ return ret;
 
     if test "$asm_result" = "yes" ; then
         PMIX_C_GCC_INLINE_ASSEMBLY=1
+	pmix_cv_asm_inline_supported="yes"
     else
         PMIX_C_GCC_INLINE_ASSEMBLY=0
     fi
@@ -889,70 +896,6 @@ return ret;
 
     unset PMIX_C_GCC_INLINE_ASSEMBLY assembly asm_result
 ])dnl
-
-
-dnl #################################################################
-dnl
-dnl PMIX_CHECK_INLINE_DEC
-dnl
-dnl DEFINE PMIX_DEC to 0 or 1 depending on DEC
-dnl                support
-dnl
-dnl #################################################################
-AC_DEFUN([PMIX_CHECK_INLINE_C_DEC],[
-
-    AC_MSG_CHECKING([if $CC supports DEC inline assembly])
-
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT
-#include <c_asm.h>],
-[[asm("");
-return 0;]])],
-        [asm_result="yes"], [asm_result="no"])
-
-    AC_MSG_RESULT([$asm_result])
-
-    if test "$asm_result" = "yes" ; then
-        PMIX_C_DEC_INLINE_ASSEMBLY=1
-    else
-        PMIX_C_DEC_INLINE_ASSEMBLY=0
-    fi
-
-    AC_DEFINE_UNQUOTED([PMIX_C_DEC_INLINE_ASSEMBLY],
-                       [$PMIX_C_DEC_INLINE_ASSEMBLY],
-                       [Whether C compiler supports DEC style inline assembly])
-
-    unset PMIX_C_DEC_INLINE_ASSEMBLY asm_result
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl PMIX_CHECK_INLINE_XLC
-dnl
-dnl DEFINE PMIX_XLC to 0 or 1 depending on XLC
-dnl                support
-dnl
-dnl #################################################################
-AC_DEFUN([PMIX_CHECK_INLINE_C_XLC],[
-
-    AC_MSG_CHECKING([if $CC supports XLC inline assembly])
-
-    PMIX_C_XLC_INLINE_ASSEMBLY=0
-    asm_result="no"
-    if test "$CC" = "xlc" ; then
-        PMIX_XLC_INLINE_ASSEMBLY=1
-        asm_result="yes"
-    fi
-
-    AC_MSG_RESULT([$asm_result])
-    AC_DEFINE_UNQUOTED([PMIX_C_XLC_INLINE_ASSEMBLY],
-                       [$PMIX_C_XLC_INLINE_ASSEMBLY],
-                       [Whether C compiler supports XLC style inline assembly])
-
-    unset PMIX_C_XLC_INLINE_ASSEMBLY
-])dnl
-
 
 dnl #################################################################
 dnl
@@ -975,12 +918,12 @@ AC_DEFUN([PMIX_CONFIG_ASM],[
          [], [enable_builtin_atomics="yes"])
 
     pmix_cv_asm_builtin="BUILTIN_NO"
-    if test "$pmix_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
-       PMIX_CHECK_GCC_ATOMIC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_GCC"], [])
-    fi
-    if test "$pmix_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
-       PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"], [])
-    fi
+    AS_IF([test "$pmix_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
+          [PMIX_CHECK_GCC_ATOMIC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_GCC"], [])])
+    AS_IF([test "$pmix_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
+          [PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"], [])])
+    AS_IF([test "$pmix_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
+          [AC_MSG_WARN([__sync builtin atomics requested but not found - proceeding with inline atomics])])
 
         PMIX_CHECK_ASM_PROC
         PMIX_CHECK_ASM_TEXT
@@ -1084,17 +1027,19 @@ AC_DEFUN([PMIX_CONFIG_ASM],[
             fi
             PMIX_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
             ;;
-
         # There is no current difference between s390 and s390x
         # But use two different defines in case some come later
         # as s390 is 31bits while s390x is 64bits
         s390-*)
             pmix_cv_asm_arch="S390"
+            PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"],
+              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
         s390x-*)
             pmix_cv_asm_arch="S390X"
+            PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"],
+              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
-
         sparc*-*)
             # SPARC v9 (and above) are the only ones with 64bit support
             # if compiling 32 bit, see if we are v9 (aka v8plus) or
@@ -1156,10 +1101,9 @@ AC_MSG_ERROR([Can not continue.])
             ;;
          esac
 
+	 pmix_cv_asm_inline_supported="no"
          # now that we know our architecture, try to inline assemble
          PMIX_CHECK_INLINE_C_GCC([$PMIX_GCC_INLINE_ASSIGN])
-         PMIX_CHECK_INLINE_C_DEC
-         PMIX_CHECK_INLINE_C_XLC
 
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
@@ -1244,64 +1188,10 @@ AC_DEFUN([PMIX_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$pmix_cv_asm_arch" != "WINDOWS" && test "$pmix_cv_asm_builtin" != "BUILTIN_SYNC" && test "$pmix_cv_asm_builtin" != "BUILTIN_GCC" && test "$pmix_cv_asm_builtin" != "BUILTIN_OSX" ; then
-    # see if we have a pre-built one already
-    AC_MSG_CHECKING([for pre-built assembly file])
-    pmix_cv_asm_file=""
-    if $GREP "$pmix_cv_asm_arch" "${PMIX_TOP_SRCDIR}/src/atomics/asm/asm-data.txt" | $FGREP "$pmix_cv_asm_format" >conftest.out 2>&1 ; then
-        pmix_cv_asm_file="`cut -f3 conftest.out`"
-        if test ! "$pmix_cv_asm_file" = "" ; then
-            pmix_cv_asm_file="atomic-${pmix_cv_asm_file}.s"
-            if test -f "${PMIX_TOP_SRCDIR}/src/atomics/asm/generated/${pmix_cv_asm_file}" ; then
-                AC_MSG_RESULT([yes ($pmix_cv_asm_file)])
-            else
-                AC_MSG_RESULT([no ($pmix_cv_asm_file not found)])
-                pmix_cv_asm_file=""
-            fi
-        fi
-    else
-        AC_MSG_RESULT([no (not in asm-data)])
-    fi
-    rm -rf conftest.*
-
-    if test "$pmix_cv_asm_file" = "" ; then
-        # Can we generate a file?
-        AC_MSG_CHECKING([whether possible to generate assembly file])
-        mkdir -p pmix/asm/generated
-        pmix_cv_asm_file="atomic-local.s"
-        pmix_try='$PERL $PMIX_TOP_SRCDIR/src/atomics/asm/generate-asm.pl $pmix_cv_asm_arch "$pmix_cv_asm_format" $PMIX_TOP_SRCDIR/src/atomics/asm/base $PMIX_TOP_BUILDDIR/src/atomics/asm/generated/$pmix_cv_asm_file >conftest.out 2>&1'
-        if AC_TRY_EVAL(pmix_try) ; then
-            # save the warnings
-            cat conftest.out >&AC_FD_CC
-            AC_MSG_RESULT([yes])
-        else
-            # save output
-            cat conftest.out >&AC_FD_CC
-            pmix_cv_asm_file=""
-            AC_MSG_RESULT([failed])
-            AC_MSG_WARN([Could not build atomic operations assembly file.])
-            AC_MSG_WARN([There will be no atomic operations for this build.])
-        fi
-    fi
-    rm -rf conftest.*
+if test "$pmix_cv_asm_arch" != "WINDOWS" && test "$pmix_cv_asm_builtin" != "BUILTIN_SYNC" && test "$pmix_cv_asm_builtin" != "BUILTIN_GCC" && test "$pmix_cv_asm_builtin" != "BUILTIN_OSX"  && test "$pmix_cv_asm_inline_arch" = "no" ; then
+    AC_MSG_ERROR([no atomic support available. exiting])
 else
     # On windows with VC++, atomics are done with compiler primitives
     pmix_cv_asm_file=""
 fi
-
-    AC_MSG_CHECKING([for atomic assembly filename])
-    if test "$pmix_cv_asm_file" = "" ; then
-        AC_MSG_RESULT([none])
-        result=0
-    else
-        AC_MSG_RESULT([$pmix_cv_asm_file])
-        result=1
-    fi
-
-    AC_DEFINE_UNQUOTED([PMIX_HAVE_ASM_FILE], [$result],
-                       [Whether there is an atomic assembly file available])
-    AM_CONDITIONAL([PMIX_HAVE_ASM_FILE], [test "$result" = "1"])
-
-    PMIX_ASM_FILE=$pmix_cv_asm_file
-    AC_SUBST(PMIX_ASM_FILE)
 ])dnl

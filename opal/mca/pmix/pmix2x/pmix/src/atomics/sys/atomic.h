@@ -62,10 +62,6 @@
 #ifdef PMIX_DISABLE_INLINE_ASM
 #undef PMIX_C_GCC_INLINE_ASSEMBLY
 #define PMIX_C_GCC_INLINE_ASSEMBLY 0
-#undef PMIX_C_DEC_INLINE_ASSEMBLY
-#define PMIX_C_DEC_INLINE_ASSEMBLY 0
-#undef PMIX_C_XLC_INLINE_ASSEMBLY
-#define PMIX_C_XLC_INLINE_ASSEMBLY 0
 #endif
 
 /* define PMIX_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
@@ -74,12 +70,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 /* We no longer support inline assembly for C++ as PMIX is a C-only interface */
 #define PMIX_GCC_INLINE_ASSEMBLY 0
-#define PMIX_DEC_INLINE_ASSEMBLY 0
-#define PMIX_XLC_INLINE_ASSEMBLY 0
 #else
 #define PMIX_GCC_INLINE_ASSEMBLY PMIX_C_GCC_INLINE_ASSEMBLY
-#define PMIX_DEC_INLINE_ASSEMBLY PMIX_C_DEC_INLINE_ASSEMBLY
-#define PMIX_XLC_INLINE_ASSEMBLY PMIX_C_XLC_INLINE_ASSEMBLY
 #endif
 
 

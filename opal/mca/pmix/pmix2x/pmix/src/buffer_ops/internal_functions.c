@@ -113,6 +113,5 @@ pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t
 pmix_status_t pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type)
 {
     int32_t cnt = 1;
-
     return pmix_bfrop_unpack_datatype(buffer, type, &cnt, PMIX_DATA_TYPE);
 }

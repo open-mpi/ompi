@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -39,7 +39,7 @@
  * Merge two environ-like char arrays, ensuring that there are no
  * duplicate entires
  */
-char **pmix_environ_merge(char **minor, char **major)
+PMIX_EXPORT char **pmix_environ_merge(char **minor, char **major)
 {
     int i;
     char **ret = NULL;
@@ -93,8 +93,10 @@ char **pmix_environ_merge(char **minor, char **major)
  * Portable version of setenv(), allowing editing of any environ-like
  * array
  */
- pmix_status_t pmix_setenv(const char *name, const char *value, bool overwrite,
-                char ***env)
+PMIX_EXPORT pmix_status_t pmix_setenv(const char *name,
+                                      const char *value,
+                                      bool overwrite,
+                                      char ***env)
 {
     int i;
     char *newvalue, *compare;
@@ -176,7 +178,7 @@ char **pmix_environ_merge(char **minor, char **major)
  * Portable version of unsetenv(), allowing editing of any
  * environ-like array
  */
- pmix_status_t pmix_unsetenv(const char *name, char ***env)
+PMIX_EXPORT pmix_status_t pmix_unsetenv(const char *name, char ***env)
 {
     int i;
     char *compare;
@@ -220,7 +222,7 @@ char **pmix_environ_merge(char **minor, char **major)
     return (found) ? PMIX_SUCCESS : PMIX_ERR_NOT_FOUND;
 }
 
-const char* pmix_tmp_directory( void )
+PMIX_EXPORT const char* pmix_tmp_directory( void )
 {
     const char* str;
 
@@ -231,10 +233,9 @@ const char* pmix_tmp_directory( void )
     return str;
 }
 
-const char* pmix_home_directory( void )
+PMIX_EXPORT const char* pmix_home_directory( void )
 {
     char* home = getenv("HOME");
 
     return home;
 }
-

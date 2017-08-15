@@ -32,9 +32,9 @@ static void pmix_pointer_array_construct(pmix_pointer_array_t *);
 static void pmix_pointer_array_destruct(pmix_pointer_array_t *);
 static bool grow_table(pmix_pointer_array_t *table, int at_least);
 
-PMIX_CLASS_INSTANCE(pmix_pointer_array_t, pmix_object_t,
-                    pmix_pointer_array_construct,
-                    pmix_pointer_array_destruct);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_pointer_array_t, pmix_object_t,
+                                pmix_pointer_array_construct,
+                                pmix_pointer_array_destruct);
 
 /*
  * pmix_pointer_array constructor

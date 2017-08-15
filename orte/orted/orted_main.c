@@ -285,8 +285,9 @@ int orte_daemon(int argc, char *argv[])
      */
     orte_launch_environ = opal_argv_copy(environ);
 
-    /* purge any ess flag set in the environ when we were launched */
+    /* purge any ess/pmix flags set in the environ when we were launched */
     opal_unsetenv(OPAL_MCA_PREFIX"ess", &orte_launch_environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"pmix", &orte_launch_environ);
 
     /* if orte_daemon_debug is set, let someone know we are alive right
      * away just in case we have a problem along the way
