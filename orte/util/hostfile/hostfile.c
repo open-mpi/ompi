@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -661,7 +661,6 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
             orte_node_t *node = (orte_node_t*)item2;
             if (0 == strcmp(node_from_file->name, node->name)) {
                 /* match - remove it */
-                opal_output(0, "HOST %s ON EXCLUDE LIST - REMOVING", node->name);
                 opal_list_remove_item(&newnodes, item2);
                 OBJ_RELEASE(item2);
                 break;
@@ -795,7 +794,8 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                      * to the specified count - this allows people
                      * to subdivide an allocation
                      */
-                    if (node_from_file->slots < node_from_list->slots) {
+                    if (ORTE_FLAG_TEST(node_from_file, ORTE_NODE_FLAG_SLOTS_GIVEN) &&
+                        node_from_file->slots < node_from_list->slots) {
                         node_from_list->slots = node_from_file->slots;
                     }
                     if (remove) {
