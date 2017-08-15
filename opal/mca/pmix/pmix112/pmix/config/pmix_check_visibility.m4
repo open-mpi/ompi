@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -86,7 +87,7 @@ AC_DEFUN([PMIX_CHECK_VISIBILITY],[
         unset pmix_add
     fi
 
-    AC_DEFINE_UNQUOTED([PMIX_C_HAVE_VISIBILITY], [$WANT_VISIBILITY],
+    AC_DEFINE_UNQUOTED([PMIX_HAVE_VISIBILITY], [$WANT_VISIBILITY],
             [Whether C compiler supports symbol visibility or not])
     AM_CONDITIONAL([WANT_HIDDEN],[test "$WANT_VISIBILITY" = "1"])
 ])

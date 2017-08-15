@@ -180,6 +180,8 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_CHECK_TYPES(uint32_t)
     AC_CHECK_TYPES(int64_t)
     AC_CHECK_TYPES(uint64_t)
+    AC_CHECK_TYPES(__int128)
+    AC_CHECK_TYPES(uint128_t)
     AC_CHECK_TYPES(long long)
 
     AC_CHECK_TYPES(intptr_t)
@@ -302,6 +304,17 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     PMIX_CHECK_ATTRIBUTES
     PMIX_CHECK_COMPILER_VERSION_ID
+
+    ##################################
+    # Assembler Configuration
+    ##################################
+
+    pmix_show_subtitle "Assembler"
+
+    AM_PROG_AS
+    AC_PATH_PROG(PERL, perl, perl)
+    PMIX_CONFIG_ASM
+
 
     ##################################
     # Header files
@@ -555,6 +568,16 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_C_BIGENDIAN
     PMIX_CHECK_BROKEN_QSORT
 
+    #
+    # What is the local equivalent of "ln -s"
+    #
+
+    AC_PROG_LN_S
+
+    AC_PROG_GREP
+    AC_PROG_EGREP
+
+
     ##################################
     # Visibility
     ##################################
@@ -643,7 +666,10 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     pmix_show_subtitle "Final output"
 
-    AC_CONFIG_FILES(pmix_config_prefix[Makefile])
+    AC_CONFIG_FILES(
+        pmix_config_prefix[Makefile]
+        pmix_config_prefix[src/atomics/asm/Makefile]
+        )
 
     # Success
     $2
@@ -848,15 +874,15 @@ AC_DEFINE_UNQUOTED([PMIX_ENABLE_TIMING], [$WANT_TIMING],
 # Install backward compatibility support for PMI-1 and PMI-2
 #
 AC_MSG_CHECKING([if want backward compatibility for PMI-1 and PMI-2])
-AC_ARG_ENABLE(pmix-backward-compatibility,
-              AC_HELP_STRING([--enable-pmix-backward-compatibility],
+AC_ARG_ENABLE(pmi-backward-compatibility,
+              AC_HELP_STRING([--enable-pmi-backward-compatibility],
                              [enable PMIx support for PMI-1 and PMI-2 (default: enabled)]))
-if test "$enable_pmix_backward_compatibility" = "no"; then
+if test "$enable_pmi_backward_compatibility" = "no"; then
     AC_MSG_RESULT([no])
-    WANT_PMIX_BACKWARD=0
+    WANT_PMI_BACKWARD=0
 else
     AC_MSG_RESULT([yes])
-    WANT_PMIX_BACKWARD=1
+    WANT_PMI_BACKWARD=1
 fi
 
 ])dnl
@@ -875,7 +901,7 @@ AC_DEFUN([PMIX_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([PMIX_WANT_MUNGE], [test "$pmix_munge_support" = "1"])
         AM_CONDITIONAL([PMIX_WANT_SASL], [test "$pmix_sasl_support" = "1"])
         AM_CONDITIONAL([WANT_DSTORE],[test "x$enable_dstore" != "xno"])
-        AM_CONDITIONAL(WANT_PMIX_BACKWARD, test "$WANT_PMIX_BACKWARD" = 1)
+        AM_CONDITIONAL(WANT_PMI_BACKWARD, test "$WANT_PMI_BACKWARD" = 1)
     ])
     pmix_did_am_conditionals=yes
 ])dnl

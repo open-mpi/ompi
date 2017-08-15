@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
 #include "src/class/pmix_value_array.h"
+#include "src/atomics/sys/atomic.h"
 
 BEGIN_C_DECLS
 
@@ -290,11 +292,24 @@ typedef struct {
 } pmix_job_data_caddy_t;
 PMIX_CLASS_DECLARATION(pmix_job_data_caddy_t);
 
-#define PMIX_THREADSHIFT(r, c)                       \
+/* provide a macro for forward-proofing the shifting
+ * of objects between threads - at some point, we
+ * may revamp our threading model */
+
+/* post an object to another thread - for now, we
+ * only have a memory barrier */
+#define PMIX_POST_OBJECT(o)     pmix_atomic_wmb()
+
+/* acquire an object from another thread - for now,
+ * we only have a memory barrier */
+#define PMIX_ACQUIRE_OBJECT(o)  pmix_atomic_rmb()
+
+#define PMIX_THREADSHIFT(r, c)                        \
  do {                                                 \
     (r)->active = true;                               \
     event_assign(&((r)->ev), pmix_globals.evbase,     \
                  -1, EV_WRITE, (c), (r));             \
+    PMIX_POST_OBJECT((r));                            \
     event_active(&((r)->ev), EV_WRITE, 1);            \
 } while (0)
 
@@ -304,6 +319,7 @@ PMIX_CLASS_DECLARATION(pmix_job_data_caddy_t);
         while ((a)) {                           \
             usleep(10);                         \
         }                                       \
+        PMIX_ACQUIRE_OBJECT((a));               \
     } while (0)
 
 

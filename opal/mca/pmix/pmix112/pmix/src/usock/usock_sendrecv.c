@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
@@ -53,6 +53,9 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
     pmix_server_trkr_t *trk;
     pmix_rank_info_t *rinfo, *rnext;
     pmix_trkr_caddy_t *tcd;
+    pmix_usock_posted_recv_t *rcv;
+    pmix_buffer_t buf;
+    pmix_usock_hdr_t hdr;
 
     /* stop all events */
     if (peer->recv_ev_active) {
@@ -112,6 +115,21 @@ static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
         /* if I am a client, there is only
          * one connection we can have */
         pmix_globals.connected = false;
+        /* it is possible that we have sendrecv's in progress where
+         * we are waiting for a response to arrive. Since we have
+         * lost connection to the server, that will never happen.
+         * Thus, to preclude any chance of hanging, cycle thru
+         * the list of posted recvs and complete any that are
+         * the return call from a sendrecv - i.e., any that are
+         * waiting on dynamic tags */
+        PMIX_CONSTRUCT(&buf, pmix_buffer_t);
+        hdr.nbytes = 0; // initialize the hdr to something safe
+        PMIX_LIST_FOREACH(rcv, &pmix_usock_globals.posted_recvs, pmix_usock_posted_recv_t) {
+            if (UINT_MAX != rcv->tag && NULL != rcv->cbfunc) {
+                rcv->cbfunc(peer, &hdr, &buf, rcv->cbdata);
+            }
+        }
+        PMIX_DESTRUCT(&buf);
     }
     PMIX_REPORT_ERROR(err);
 }

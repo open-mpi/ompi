@@ -18,7 +18,7 @@ include_HEADERS = \
         include/pmix_server.h \
         include/pmix_version.h.in
 
-if WANT_PMIX_BACKWARD
+if WANT_PMI_BACKWARD
 include_HEADERS += \
         include/pmi.h \
         include/pmi2.h

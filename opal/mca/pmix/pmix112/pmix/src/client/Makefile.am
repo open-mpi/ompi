@@ -20,7 +20,7 @@ sources += \
         src/client/pmix_client_spawn.c \
         src/client/pmix_client_connect.c
 
-if WANT_PMIX_BACKWARD
+if WANT_PMI_BACKWARD
 sources += \
         src/client/pmi1.c \
         src/client/pmi2.c
