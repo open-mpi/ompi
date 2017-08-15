@@ -668,7 +668,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     AC_CONFIG_FILES(
         pmix_config_prefix[Makefile]
-        pmix_config_prefix[src/atomics/asm/Makefile]
         )
 
     # Success

@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
 Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
@@ -20,8 +20,21 @@ other, a single NEWS-worthy item might apply to different series. For
 example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
-1.2.3 -- TBD
+1.2.4 -- TBD
 ----------------------
+
+
+1.2.3 -- 24 Aug. 2017
+----------------------
+- Resolve visibility issues for public APIs (PR #451)
+- Atomics update - remove custom ASM atomics (PR #458)
+- Fix job-fence test (PR #423)
+- Replace stale PMIX_DECLSPEC with PMIX_EXPORT (PR #448)
+- Memory barrier fixes for thread shifting (PR #387)
+- Fix race condition in dmodex (PR #346)
+- Allow disable backward compatability for PMI-1/2 (PR #350)
+- Fix segv in PMIx_server_deregister_nspace (PR #343)
+- Fix possible hang in PMIx_Abort (PR #339)
 
 
 1.2.2 -- 21 March 2017

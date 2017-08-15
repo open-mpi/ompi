@@ -271,12 +271,13 @@ typedef struct {
                 nanosleep(&ts,NULL);                                                                                \
                 count++;                                                                                            \
             }                                                                                                       \
+            PMIX_ACQUIRE_OBJECT(&cbdata);                                                                            \
         }                                                                                                           \
     }                                                                                                               \
     if (PMIX_SUCCESS == rc) {                                                                                       \
         if( PMIX_SUCCESS != cbdata.status ){                                                                        \
-            if( !( rc == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
-                TEST_VERBOSE(("%s:%d: PMIx_Get_nb failed: %d from %s:%d, key=%s",                                   \
+            if( !( cbdata.status == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
+                TEST_ERROR(("%s:%d: PMIx_Get_nb failed: %d from %s:%d, key=%s",                                   \
                             my_nspace, my_rank, rc, my_nspace, r));                                                 \
             }                                                                                                       \
             rc = PMIX_ERROR;                                                                                        \
@@ -285,7 +286,7 @@ typedef struct {
             rc = PMIX_ERROR;                                                                                        \
         }                                                                                                           \
         else if (val->type != PMIX_VAL_TYPE_ ## dtype || PMIX_VAL_CMP(dtype, PMIX_VAL_FIELD_ ## dtype((val)), data)) {  \
-            TEST_VERBOSE(("%s:%u: from %s:%d Key %s value or type mismatch,"                                        \
+            TEST_ERROR(("%s:%u: from %s:%d Key %s value or type mismatch,"                                        \
                         " want type %d get type %d",                                                                \
                         my_nspace, my_rank, ns, r, key, PMIX_VAL_TYPE_ ## dtype, val->type));                    \
             rc = PMIX_ERROR;                                                                                        \

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -609,3 +609,4 @@ static void dmdx_cbfunc(pmix_status_t status,
                         caddy->lcd->proc.nspace, caddy->lcd->proc.rank);
     PMIX_THREADSHIFT(caddy, _process_dmdx_reply);
 }
+

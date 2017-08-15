@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -183,7 +183,7 @@ static pmix_status_t unpack_return(pmix_buffer_t *data)
     }
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "client:unpack fence received status %d", ret);
-    return PMIX_SUCCESS;
+    return ret;
 }
 
 static pmix_status_t pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
@@ -255,3 +255,4 @@ static void op_cbfunc(pmix_status_t status, void *cbdata)
     PMIX_POST_OBJECT(cb);
     cb->active = false;
 }
+
