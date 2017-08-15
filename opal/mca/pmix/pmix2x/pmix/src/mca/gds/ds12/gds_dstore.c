@@ -253,7 +253,8 @@ static pmix_status_t dstore_store(const pmix_proc_t *proc,
                                 pmix_kval_t *kv);
 
 static pmix_status_t _dstore_fetch(const char *nspace,
-                                pmix_rank_t rank, const char *key, pmix_value_t **kvs);
+                                pmix_rank_t rank,
+                                const char *key, pmix_value_t **kvs);
 
 static pmix_status_t dstore_fetch(const pmix_proc_t *proc,
                                 pmix_scope_t scope, bool copy,
@@ -1411,7 +1412,8 @@ static int set_rank_meta_info(ns_track_elem_t *ns_info, rank_meta_info *rinfo)
     PMIX_OUTPUT_VERBOSE((2, pmix_gds_base_framework.framework_output,
                          "%s:%d:%s: nspace %s, add rank %lu offset %lu count %lu meta info",
                          __FILE__, __LINE__, __func__,
-                         ns_info->ns_map.name, rinfo->rank, rinfo->offset, rinfo->count));
+                         ns_info->ns_map.name, (unsigned long)rinfo->rank,
+                         (unsigned long)rinfo->offset, (unsigned long)rinfo->count));
 
     tmp = ns_info->meta_seg;
     if (1 == _direct_mode) {
@@ -1577,7 +1579,7 @@ static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg,
          * warn a user about it and fail. */
         offset = 0; /* offset cannot be 0 in normal case, so we use this value to indicate a problem. */
         pmix_output(0, "PLEASE set NS_DATA_SEG_SIZE to value which is larger when %lu.",
-                    sizeof(size_t) + strlen(key) + 1 + sizeof(size_t) + size + EXT_SLOT_SIZE());
+                    (unsigned long)(sizeof(size_t) + strlen(key) + 1 + sizeof(size_t) + size + EXT_SLOT_SIZE()));
         return offset;
     }
 
@@ -1618,7 +1620,11 @@ static size_t put_data_to_the_end(ns_track_elem_t *ns_info, seg_desc_t *dataseg,
     memcpy(addr, &data_ended, sizeof(size_t));
     PMIX_OUTPUT_VERBOSE((1, pmix_gds_base_framework.framework_output,
                          "%s:%d:%s: key %s, rel start offset %lu, rel end offset %lu, abs shift %lu size %lu",
-                         __FILE__, __LINE__, __func__, key, offset, data_ended, id * _data_segment_size, size));
+                         __FILE__, __LINE__, __func__,
+                         key, (unsigned long)offset,
+                         (unsigned long)data_ended,
+                         (unsigned long)(id * _data_segment_size),
+                         (unsigned long)size));
     return global_offset;
 }
 
@@ -1703,8 +1709,10 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix_kval_t
                 memcpy(&offset, ESH_DATA_PTR(addr), sizeof(size_t));
                 if (0 < offset) {
                     PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
-                                "%s:%d:%s: for rank %u, replace flag %d %s is filled with %lu value",
-                                __FILE__, __LINE__, __func__, rank, data_exist, ESH_REGION_EXTENSION, offset));
+                                "%s:%d:%s: for rank %lu, replace flag %d %s is filled with %lu value",
+                                __FILE__, __LINE__, __func__,
+                                (unsigned long)rank, data_exist,
+                                ESH_REGION_EXTENSION, (unsigned long)offset));
                     /* go to next item, updating address */
                     addr = _get_data_region_by_offset(datadesc, offset);
                     if (NULL == addr) {
@@ -2260,7 +2268,8 @@ static pmix_status_t dstore_store(const pmix_proc_t *proc,
     return rc;
 }
 
-inline pmix_status_t _dstore_fetch(const char *nspace, pmix_rank_t rank, const char *key, pmix_value_t **kvs)
+static pmix_status_t _dstore_fetch(const char *nspace, pmix_rank_t rank,
+                                   const char *key, pmix_value_t **kvs)
 {
     ns_seg_info_t *ns_info = NULL;
     pmix_status_t rc = PMIX_ERROR, lock_rc;
