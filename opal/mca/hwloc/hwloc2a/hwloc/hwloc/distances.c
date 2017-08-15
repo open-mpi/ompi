@@ -269,7 +269,7 @@ int hwloc_internal_distances_add_by_index(hwloc_topology_t topology,
   /* cannot group without objects,
    * and we don't group from XML anyway since the hwloc that generated the XML should have grouped already.
    */
-  if (flags & HWLOC_DISTANCES_FLAG_GROUP) {
+  if (flags & HWLOC_DISTANCES_ADD_FLAG_GROUP) {
     errno = EINVAL;
     goto err;
   }
@@ -291,12 +291,12 @@ int hwloc_internal_distances_add(hwloc_topology_t topology,
     goto err;
   }
 
-  if (topology->grouping && (flags & HWLOC_DISTANCES_FLAG_GROUP)) {
+  if (topology->grouping && (flags & HWLOC_DISTANCES_ADD_FLAG_GROUP)) {
     float full_accuracy = 0.f;
     float *accuracies;
     unsigned nbaccuracies;
 
-    if (flags & HWLOC_DISTANCES_FLAG_GROUP_INACCURATE) {
+    if (flags & HWLOC_DISTANCES_ADD_FLAG_GROUP_INACCURATE) {
       accuracies = topology->grouping_accuracies;
       nbaccuracies = topology->grouping_nbaccuracies;
     } else {
@@ -335,7 +335,7 @@ int hwloc_internal_distances_add(hwloc_topology_t topology,
 #define HWLOC_DISTANCES_KIND_FROM_ALL (HWLOC_DISTANCES_KIND_FROM_OS|HWLOC_DISTANCES_KIND_FROM_USER)
 #define HWLOC_DISTANCES_KIND_MEANS_ALL (HWLOC_DISTANCES_KIND_MEANS_LATENCY|HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH)
 #define HWLOC_DISTANCES_KIND_ALL (HWLOC_DISTANCES_KIND_FROM_ALL|HWLOC_DISTANCES_KIND_MEANS_ALL)
-#define HWLOC_DISTANCES_FLAG_ALL (HWLOC_DISTANCES_FLAG_GROUP|HWLOC_DISTANCES_FLAG_GROUP_INACCURATE)
+#define HWLOC_DISTANCES_ADD_FLAG_ALL (HWLOC_DISTANCES_ADD_FLAG_GROUP|HWLOC_DISTANCES_ADD_FLAG_GROUP_INACCURATE)
 
 /* The actual function exported to the user
  */
@@ -356,7 +356,7 @@ int hwloc_distances_add(hwloc_topology_t topology,
   if ((kind & ~HWLOC_DISTANCES_KIND_ALL)
       || hwloc_weight_long(kind & HWLOC_DISTANCES_KIND_FROM_ALL) != 1
       || hwloc_weight_long(kind & HWLOC_DISTANCES_KIND_MEANS_ALL) != 1
-      || (flags & ~HWLOC_DISTANCES_FLAG_ALL)) {
+      || (flags & ~HWLOC_DISTANCES_ADD_FLAG_ALL)) {
     errno = EINVAL;
     return -1;
   }

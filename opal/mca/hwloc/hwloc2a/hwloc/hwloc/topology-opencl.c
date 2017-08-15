@@ -141,9 +141,9 @@ hwloc_opencl_discover(struct hwloc_backend *backend)
 
       parent = NULL;
 #ifdef CL_DEVICE_TOPOLOGY_AMD
-      parent = hwloc_pci_belowroot_find_by_busid(topology, 0, amdtopo.pcie.bus, amdtopo.pcie.device, amdtopo.pcie.function);
+      parent = hwloc_pcidisc_find_by_busid(topology, 0, amdtopo.pcie.bus, amdtopo.pcie.device, amdtopo.pcie.function);
       if (!parent)
-        parent = hwloc_pci_find_busid_parent(topology, 0, amdtopo.pcie.bus, amdtopo.pcie.device, amdtopo.pcie.function);
+        parent = hwloc_pcidisc_find_busid_parent(topology, 0, amdtopo.pcie.bus, amdtopo.pcie.device, amdtopo.pcie.function);
 #endif
       if (!parent)
         parent = hwloc_get_root_obj(topology);

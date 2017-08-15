@@ -327,14 +327,14 @@ hwloc_pci_add_object(struct hwloc_obj *parent, struct hwloc_obj **parent_io_firs
 }
 
 void
-hwloc_pci_tree_insert_by_busid(struct hwloc_obj **treep,
-                               struct hwloc_obj *obj)
+hwloc_pcidisc_tree_insert_by_busid(struct hwloc_obj **treep,
+                                   struct hwloc_obj *obj)
 {
   hwloc_pci_add_object(NULL /* no parent on top of tree */, treep, obj);
 }
 
 int
-hwloc_pci_tree_attach_belowroot(struct hwloc_topology *topology, struct hwloc_obj *old_tree)
+hwloc_pcidisc_tree_attach(struct hwloc_topology *topology, struct hwloc_obj *old_tree)
 {
   struct hwloc_obj **next_hb_p;
   enum hwloc_type_filter_e bfilter;
@@ -539,8 +539,8 @@ hwloc__pci_find_busid_parent(struct hwloc_topology *topology, struct hwloc_pcide
 }
 
 struct hwloc_obj *
-hwloc_pci_find_busid_parent(struct hwloc_topology *topology,
-                            unsigned domain, unsigned bus, unsigned dev, unsigned func)
+hwloc_pcidisc_find_busid_parent(struct hwloc_topology *topology,
+                                unsigned domain, unsigned bus, unsigned dev, unsigned func)
 {
   struct hwloc_pcidev_attr_s busid;
   busid.domain = domain;
@@ -652,8 +652,8 @@ hwloc__pci_belowroot_find_by_busid(hwloc_obj_t parent,
 }
 
 struct hwloc_obj *
-hwloc_pci_belowroot_find_by_busid(struct hwloc_topology *topology,
-                                  unsigned domain, unsigned bus, unsigned dev, unsigned func)
+hwloc_pcidisc_find_by_busid(struct hwloc_topology *topology,
+                            unsigned domain, unsigned bus, unsigned dev, unsigned func)
 {
   hwloc_obj_t root = hwloc_get_root_obj(topology);
   hwloc_obj_t parent = hwloc__pci_belowroot_find_by_busid(root, domain, bus, dev, func);
@@ -670,7 +670,7 @@ hwloc_pci_belowroot_find_by_busid(struct hwloc_topology *topology,
 #define HWLOC_PCI_CAP_LIST_NEXT 1
 
 unsigned
-hwloc_pci_find_cap(const unsigned char *config, unsigned cap)
+hwloc_pcidisc_find_cap(const unsigned char *config, unsigned cap)
 {
   unsigned char seen[256] = { 0 };
   unsigned char ptr; /* unsigned char to make sure we stay within the 256-byte config space */
@@ -702,8 +702,8 @@ hwloc_pci_find_cap(const unsigned char *config, unsigned cap)
 #define HWLOC_PCI_EXP_LNKSTA_WIDTH 0x03f0
 
 int
-hwloc_pci_find_linkspeed(const unsigned char *config,
-                         unsigned offset, float *linkspeed)
+hwloc_pcidisc_find_linkspeed(const unsigned char *config,
+                             unsigned offset, float *linkspeed)
 {
   unsigned linksta, speed, width;
   float lanespeed;
@@ -733,7 +733,7 @@ hwloc_pci_find_linkspeed(const unsigned char *config,
 #define HWLOC_PCI_CLASS_BRIDGE_PCI 0x0604
 
 hwloc_obj_type_t
-hwloc_pci_check_bridge_type(unsigned device_class, const unsigned char *config)
+hwloc_pcidisc_check_bridge_type(unsigned device_class, const unsigned char *config)
 {
   unsigned char headertype;
 
@@ -750,8 +750,8 @@ hwloc_pci_check_bridge_type(unsigned device_class, const unsigned char *config)
 #define HWLOC_PCI_SUBORDINATE_BUS 0x1a
 
 int
-hwloc_pci_setup_bridge_attr(hwloc_obj_t obj,
-                            const unsigned char *config)
+hwloc_pcidisc_setup_bridge_attr(hwloc_obj_t obj,
+                                const unsigned char *config)
 {
   struct hwloc_bridge_attr_s *battr = &obj->attr->bridge;
   struct hwloc_pcidev_attr_s *pattr = &battr->upstream.pci;

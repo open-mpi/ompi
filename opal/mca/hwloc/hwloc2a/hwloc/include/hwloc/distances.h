@@ -40,7 +40,11 @@ extern "C" {
  */
 struct hwloc_distances_s {
   unsigned nbobjs;              /**< \brief Number of objects described by the distance matrix. */
-  hwloc_obj_t *objs;            /**< \brief Array of objects described by the distance matrix. */
+  hwloc_obj_t *objs;            /**< \brief Array of objects described by the distance matrix.
+                                 * These objects are not in any particular order,
+                                 * see hwloc_distances_obj_index() and hwloc_distances_obj_pair_values()
+                                 * for easy ways to find objects in this array and their corresponding values.
+                                 */
   unsigned long kind;           /**< \brief OR'ed set of ::hwloc_distances_kind_e. */
   hwloc_uint64_t *values;       /**< \brief Matrix of distances between objects, stored as a one-dimension array.
                                  *
@@ -147,22 +151,65 @@ hwloc_distances_release(hwloc_topology_t topology, struct hwloc_distances_s *dis
 
 
 
+/** \defgroup hwlocality_distances_consult Helpers for consulting distances structures
+ * @{
+ */
+
+/** \brief Find the index of an object in a distances structure.
+ *
+ * \return -1 if object \p obj is not involved in structure \p distances.
+ */
+static __hwloc_inline int
+hwloc_distances_obj_index(struct hwloc_distances_s *distances, hwloc_obj_t obj)
+{
+  unsigned i;
+  for(i=0; i<distances->nbobjs; i++)
+    if (distances->objs[i] == obj)
+      return (int)i;
+  return -1;
+}
+
+/** \brief Find the values between two objects in a distances structure.
+ *
+ * The distance from \p obj1 to \p obj2 is stored in the value pointed by
+ * \p value1to2 and reciprocally.
+ *
+ * \return -1 if object \p obj1 or \p obj2 is not involved in structure \p distances.
+ */
+static __hwloc_inline int
+hwloc_distances_obj_pair_values(struct hwloc_distances_s *distances,
+                                hwloc_obj_t obj1, hwloc_obj_t obj2,
+                                hwloc_uint64_t *value1to2, hwloc_uint64_t *value2to1)
+{
+  int i1 = hwloc_distances_obj_index(distances, obj1);
+  int i2 = hwloc_distances_obj_index(distances, obj2);
+  if (i1 < 0 || i2 < 0)
+    return -1;
+  *value1to2 = distances->values[i1 * distances->nbobjs + i2];
+  *value2to1 = distances->values[i2 * distances->nbobjs + i1];
+  return 0;
+}
+
+/** @} */
+
+
+
 /** \defgroup hwlocality_distances_add Add or remove distances between objects
  * @{
  */
 
 /** \brief Flags for adding a new distances to a topology. */
-enum hwloc_distances_flag_e {
+enum hwloc_distances_add_flag_e {
   /** \brief Try to group objects based on the newly provided distance information.
    * \hideinitializer
    */
-  HWLOC_DISTANCES_FLAG_GROUP = (1UL<<0),
+  HWLOC_DISTANCES_ADD_FLAG_GROUP = (1UL<<0),
   /** \brief If grouping, consider the distance values as inaccurate and relax the
    * comparisons during the grouping algorithms. The actual accuracy may be modified
    * through the HWLOC_GROUPING_ACCURACY environment variable (see \ref envvar).
    * \hideinitializer
    */
-  HWLOC_DISTANCES_FLAG_GROUP_INACCURATE = (1UL<<1)
+  HWLOC_DISTANCES_ADD_FLAG_GROUP_INACCURATE = (1UL<<1)
 };
 
 /** \brief Provide a distance matrix.
@@ -175,7 +222,7 @@ enum hwloc_distances_flag_e {
  * \p kind specifies the kind of distance as a OR'ed set of ::hwloc_distances_kind_e.
  *
  * \p flags configures the behavior of the function using an optional OR'ed set of
- * ::hwloc_distances_flag_e.
+ * ::hwloc_distances_add_flag_e.
  *
  * Objects must be of the same type. They cannot be of type Group.
  */

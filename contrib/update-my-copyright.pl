@@ -71,9 +71,9 @@ my $my_manual_list = "";
 
 # Protected directories
 my @protected = qw(
-    opal\\/mca\\/pmi\\/pmix.+?\\/pmix\\/
+    opal\\/mca\\/pmix\\/pmix.+?\\/pmix\\/
     opal\\/mca\\/hwloc\\/hwloc.+?\\/hwloc\\/
-    opal\\/mca\\/libevent\\/libevent.+?\\/libevent\\/
+    opal\\/mca\\/event\\/libevent.+?\\/libevent\\/
     contrib\\/update-my-copyright.pl
 );
 

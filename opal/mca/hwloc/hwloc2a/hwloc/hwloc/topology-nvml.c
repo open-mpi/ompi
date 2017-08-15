@@ -69,9 +69,9 @@ hwloc_nvml_discover(struct hwloc_backend *backend)
 
     parent = NULL;
     if (NVML_SUCCESS == nvmlDeviceGetPciInfo(device, &pci)) {
-      parent = hwloc_pci_belowroot_find_by_busid(topology, pci.domain, pci.bus, pci.device, 0);
+      parent = hwloc_pcidisc_find_by_busid(topology, pci.domain, pci.bus, pci.device, 0);
       if (!parent)
-        parent = hwloc_pci_find_busid_parent(topology, pci.domain, pci.bus, pci.device, 0);
+        parent = hwloc_pcidisc_find_busid_parent(topology, pci.domain, pci.bus, pci.device, 0);
 #if HAVE_DECL_NVMLDEVICEGETMAXPCIELINKGENERATION
       if (parent && parent->type == HWLOC_OBJ_PCI_DEVICE) {
         unsigned maxwidth = 0, maxgen = 0;

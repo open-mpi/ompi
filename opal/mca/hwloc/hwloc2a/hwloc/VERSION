@@ -18,17 +18,17 @@ release=0
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=
+greek=a1
 
 # The date when this release was created
 
-date="Jul 21, 2017"
+date="Unreleased developer copy"
 
 # If snapshot=1, then use the value from snapshot_version as the
 # entire hwloc version (i.e., ignore major, minor, release, and
 # greek).  This is only set to 1 when making snapshot tarballs.
-snapshot=0
-snapshot_version=${major}.${minor}.${release}${greek}-git
+snapshot=1
+snapshot_version=shmem-20170815.1857.git2478ce8
 
 # The shared library version of hwloc's public library.  This version
 # is maintained in accordance with the "Library Interface Versions"

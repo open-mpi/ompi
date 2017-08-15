@@ -107,19 +107,19 @@ hwloc_shmem_topology_write(hwloc_topology_t topology,
 
   err = write(fd, &header, sizeof(header));
   if (err != sizeof(header))
-    return -2;
+    return -1;
 
   err = ftruncate(fd, fileoffset + length);
   if (err < 0)
-    return -3;
+    return -1;
 
   mmap_res = mmap(mmap_address, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, fileoffset);
   if (mmap_res == MAP_FAILED)
-    return -4;
+    return -1;
   if (mmap_res != mmap_address) {
     munmap(mmap_res, length);
     errno = EBUSY;
-    return -5;
+    return -1;
   }
 
   tma.malloc = tma_shmem_malloc;

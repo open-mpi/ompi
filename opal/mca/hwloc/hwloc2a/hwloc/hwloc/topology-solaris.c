@@ -425,7 +425,7 @@ hwloc_look_lgrp(struct hwloc_topology *topology)
       }
       hwloc_internal_distances_add(topology, curlgrp, glob_lgrps, distances,
                                    HWLOC_DISTANCES_KIND_FROM_OS|HWLOC_DISTANCES_KIND_MEANS_LATENCY,
-                                   HWLOC_DISTANCES_FLAG_GROUP);
+                                   HWLOC_DISTANCES_ADD_FLAG_GROUP);
     } else
 #endif /* HAVE_DECL_LGRP_LATENCY_COOKIE */
       free(glob_lgrps);

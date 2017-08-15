@@ -134,6 +134,7 @@ struct hwloc_topology {
                        */
     unsigned long kind;
 
+    /* objects are currently stored in physical_index order */
     hwloc_obj_t *objs; /* array of objects */
     int objs_are_valid; /* set to 1 if the array objs is still valid, 0 if needs refresh */
 
