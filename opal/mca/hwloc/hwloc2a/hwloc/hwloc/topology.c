@@ -199,6 +199,35 @@ hwloc_setup_pu_level(struct hwloc_topology *topology,
     }
 }
 
+/* Traverse children of a parent */
+#define for_each_child(child, parent) for(child = parent->first_child; child; child = child->next_sibling)
+#define for_each_io_child(child, parent) for(child = parent->io_first_child; child; child = child->next_sibling)
+#define for_each_misc_child(child, parent) for(child = parent->misc_first_child; child; child = child->next_sibling)
+
+/* Traverse children of a parent in a safe way: reread the next pointer as
+ * appropriate to prevent crash on child deletion:  */
+#define for_each_child_safe(child, parent, pchild) \
+  for (pchild = &(parent)->first_child, child = *pchild; \
+       child; \
+       /* Check whether the current child was not dropped.  */ \
+       (*pchild == child ? pchild = &(child->next_sibling) : NULL), \
+       /* Get pointer to next child.  */ \
+        child = *pchild)
+#define for_each_io_child_safe(child, parent, pchild) \
+  for (pchild = &(parent)->io_first_child, child = *pchild; \
+       child; \
+       /* Check whether the current child was not dropped.  */ \
+       (*pchild == child ? pchild = &(child->next_sibling) : NULL), \
+       /* Get pointer to next child.  */ \
+        child = *pchild)
+#define for_each_misc_child_safe(child, parent, pchild) \
+  for (pchild = &(parent)->misc_first_child, child = *pchild; \
+       child; \
+       /* Check whether the current child was not dropped.  */ \
+       (*pchild == child ? pchild = &(child->next_sibling) : NULL), \
+       /* Get pointer to next child.  */ \
+        child = *pchild)
+
 #ifdef HWLOC_DEBUG
 /* Just for debugging.  */
 static void
@@ -257,11 +286,11 @@ hwloc_debug_print_objects(int indent __hwloc_attribute_unused, hwloc_obj_t obj)
 {
   hwloc_obj_t child;
   hwloc_debug_print_object(indent, obj);
-  for (child = obj->first_child; child; child = child->next_sibling)
+  for_each_child (child, obj)
     hwloc_debug_print_objects(indent + 1, child);
-  for (child = obj->io_first_child; child; child = child->next_sibling)
+  for_each_io_child (child, obj)
     hwloc_debug_print_objects(indent + 1, child);
-  for (child = obj->misc_first_child; child; child = child->next_sibling)
+  for_each_misc_child (child, obj)
     hwloc_debug_print_objects(indent + 1, child);
 }
 #else /* !HWLOC_DEBUG */
@@ -388,30 +417,6 @@ static int hwloc__tma_dup_infos(struct hwloc_tma *tma, hwloc_obj_t new, hwloc_ob
   new->infos = NULL;
   return -1;
 }
-
-/* Traverse children of a parent in a safe way: reread the next pointer as
- * appropriate to prevent crash on child deletion:  */
-#define for_each_child_safe(child, parent, pchild) \
-  for (pchild = &(parent)->first_child, child = *pchild; \
-       child; \
-       /* Check whether the current child was not dropped.  */ \
-       (*pchild == child ? pchild = &(child->next_sibling) : NULL), \
-       /* Get pointer to next child.  */ \
-        child = *pchild)
-#define for_each_io_child_safe(child, parent, pchild) \
-  for (pchild = &(parent)->io_first_child, child = *pchild; \
-       child; \
-       /* Check whether the current child was not dropped.  */ \
-       (*pchild == child ? pchild = &(child->next_sibling) : NULL), \
-       /* Get pointer to next child.  */ \
-        child = *pchild)
-#define for_each_misc_child_safe(child, parent, pchild) \
-  for (pchild = &(parent)->misc_first_child, child = *pchild; \
-       child; \
-       /* Check whether the current child was not dropped.  */ \
-       (*pchild == child ? pchild = &(child->next_sibling) : NULL), \
-       /* Get pointer to next child.  */ \
-        child = *pchild)
 
 static void
 hwloc__free_object_contents(hwloc_obj_t obj)
@@ -654,8 +659,13 @@ hwloc__duplicate_object(struct hwloc_topology *newtopology,
   unsigned level_width;
   size_t len;
   unsigned i;
-  hwloc_obj_t child;
+  hwloc_obj_t child, prev;
   int err = 0;
+
+  /* either we're duplicating to an already allocated new root, which has no newparent,
+   * or we're duplicating to a non-yet allocated new non-root, which will have a newparent.
+   */
+  assert(!newparent == !!newobj);
 
   if (!newobj) {
     newobj = hwloc_alloc_setup_object(newtopology, src->type, src->os_index);
@@ -737,17 +747,17 @@ hwloc__duplicate_object(struct hwloc_topology *newtopology,
   newobj->misc_arity = src->misc_arity;
 
   /* actually insert children now */
-  for(child = src->first_child; child; child = child->next_sibling) {
+  for_each_child(child, src) {
     err = hwloc__duplicate_object(newtopology, newobj, NULL, child);
     if (err < 0)
       goto out_with_children;
   }
-  for(child = src->io_first_child; child; child = child->next_sibling) {
+  for_each_io_child(child, src) {
     err = hwloc__duplicate_object(newtopology, newobj, NULL, child);
     if (err < 0)
       goto out_with_children;
   }
-  for(child = src->misc_first_child; child; child = child->next_sibling) {
+  for_each_misc_child(child, src) {
     err = hwloc__duplicate_object(newtopology, newobj, NULL, child);
     if (err < 0)
       goto out_with_children;
@@ -755,13 +765,35 @@ hwloc__duplicate_object(struct hwloc_topology *newtopology,
 
  out_with_children:
 
-  /* link some children if all of them where inserted */
-  if (!err && newobj->arity) {
-    newobj->children[0]->prev_sibling = NULL;
-    for(i=1; i<newobj->arity; i++)
-      newobj->children[i]->prev_sibling = newobj->children[i-1];
-    newobj->first_child = newobj->children[0];
-    newobj->last_child = newobj->children[newobj->arity-1];
+  /* link children if all of them where inserted */
+  if (!err) {
+    /* only next_sibling is set by insert_by_parent().
+     * sibling_rank was set above.
+     */
+    if (newobj->arity) {
+      newobj->children[0]->prev_sibling = NULL;
+      for(i=1; i<newobj->arity; i++)
+        newobj->children[i]->prev_sibling = newobj->children[i-1];
+      newobj->last_child = newobj->children[newobj->arity-1];
+    }
+    if (newobj->io_arity) {
+      child = newobj->io_first_child;
+      prev = NULL;
+      while (child) {
+        child->prev_sibling = prev;
+        prev = child;
+        child = child->next_sibling;
+      }
+    }
+    if (newobj->misc_arity) {
+      child = newobj->misc_first_child;
+      prev = NULL;
+      while (child) {
+        child->prev_sibling = prev;
+        prev = child;
+        child = child->next_sibling;
+      }
+    }
   }
 
   /* some children insertion may have failed, but some children may have been inserted below us already.
@@ -919,6 +951,7 @@ static const unsigned obj_type_order[] = {
     /* next entry is HWLOC_OBJ_OS_DEVICE */   16
 };
 
+#ifndef NDEBUG /* only used in debug check assert if !NDEBUG */
 static const hwloc_obj_type_t obj_order_type[] = {
   HWLOC_OBJ_SYSTEM,
   HWLOC_OBJ_MACHINE,
@@ -940,6 +973,7 @@ static const hwloc_obj_type_t obj_order_type[] = {
   HWLOC_OBJ_PU,
   HWLOC_OBJ_MISC, /* Misc is always a leaf */
 };
+#endif
 /***** Make sure you update obj_type_priority[] below as well. *****/
 
 /* priority to be used when merging identical parent/children object
@@ -1551,14 +1585,12 @@ hwloc_get_highest_obj_covering_complete_cpuset (hwloc_topology_t topology, hwloc
 
  recurse:
   /* find the right child */
-  child = current->first_child;
-  while (child) {
+  for_each_child(child, current) {
     if (hwloc_bitmap_isequal(set, child->complete_cpuset))
       /* child puset is exactly what we want, no need to look at children, we want the highest */
       return child;
     if (!hwloc_bitmap_iszero(child->complete_cpuset) && hwloc_bitmap_isincluded(set, child->complete_cpuset))
       break;
-    child = child->next_sibling;
   }
 
   if (child) {
@@ -1627,14 +1659,14 @@ static int hwloc_memory_page_type_compare(const void *_a, const void *_b)
 static void
 propagate_total_memory(hwloc_obj_t obj)
 {
-  hwloc_obj_t *temp, child;
+  hwloc_obj_t child;
   unsigned i;
 
   /* reset total before counting local and children memory */
   obj->memory.total_memory = 0;
 
   /* Propagate memory up. */
-  for_each_child_safe(child, obj, temp) {
+  for_each_child(child, obj) {
     propagate_total_memory(child);
     obj->memory.total_memory += child->memory.total_memory;
   }
@@ -1657,7 +1689,7 @@ propagate_total_memory(hwloc_obj_t obj)
 static void
 collect_proc_cpuset(hwloc_obj_t obj, hwloc_obj_t sys)
 {
-  hwloc_obj_t child, *temp;
+  hwloc_obj_t child;
 
   if (sys) {
     /* We are already given a pointer to a system object */
@@ -1672,7 +1704,7 @@ collect_proc_cpuset(hwloc_obj_t obj, hwloc_obj_t sys)
     }
   }
 
-  for_each_child_safe(child, obj, temp)
+  for_each_child(child, obj)
     collect_proc_cpuset(child, sys);
   /* No PU under I/O or Misc */
 }
@@ -1682,7 +1714,7 @@ collect_proc_cpuset(hwloc_obj_t obj, hwloc_obj_t sys)
 static void
 propagate_unused_cpuset(hwloc_obj_t obj, hwloc_obj_t sys)
 {
-  hwloc_obj_t child, *temp;
+  hwloc_obj_t child;
 
   if (obj->cpuset) {
     if (sys) {
@@ -1733,7 +1765,7 @@ propagate_unused_cpuset(hwloc_obj_t obj, hwloc_obj_t sys)
     }
   }
 
-  for_each_child_safe(child, obj, temp)
+  for_each_child(child, obj)
     propagate_unused_cpuset(child, sys);
   /* No PU under I/O or Misc */
 }
@@ -1762,11 +1794,9 @@ hwloc_obj_add_children_sets(hwloc_obj_t obj)
 {
   hwloc_obj_t child;
   assert(obj->cpuset != NULL);
-  child = obj->first_child;
-  while (child) {
+  for_each_child(child, obj) {
     assert(child->cpuset != NULL);
     hwloc_obj_add_other_obj_sets(obj, child);
-    child = child->next_sibling;
   }
   /* No need to look at Misc children, they contain no PU. */
   return 0;
@@ -1776,7 +1806,7 @@ hwloc_obj_add_children_sets(hwloc_obj_t obj)
 static void
 propagate_nodeset(hwloc_obj_t obj, hwloc_obj_t sys)
 {
-  hwloc_obj_t child, *temp;
+  hwloc_obj_t child;
   hwloc_bitmap_t parent_nodeset = NULL;
   int parent_weight = 0;
 
@@ -1797,7 +1827,7 @@ propagate_nodeset(hwloc_obj_t obj, hwloc_obj_t sys)
       obj->nodeset = hwloc_bitmap_alloc();
   }
 
-  for_each_child_safe(child, obj, temp) {
+  for_each_child(child, obj) {
     /* Propagate singleton nodesets down */
     if (parent_weight == 1) {
       if (!child->nodeset)
@@ -1824,9 +1854,9 @@ static void
 propagate_nodesets(hwloc_obj_t obj)
 {
   hwloc_bitmap_t mask = hwloc_bitmap_alloc();
-  hwloc_obj_t child, *temp;
+  hwloc_obj_t child;
 
-  for_each_child_safe(child, obj, temp) {
+  for_each_child(child, obj) {
     if (obj->nodeset) {
       /* Update complete nodesets down */
       if (child->complete_nodeset) {
@@ -1875,7 +1905,7 @@ propagate_nodesets(hwloc_obj_t obj)
 static void
 remove_unused_sets(hwloc_obj_t obj)
 {
-  hwloc_obj_t child, *temp;
+  hwloc_obj_t child;
 
   if (obj->cpuset) {
     hwloc_bitmap_and(obj->cpuset, obj->cpuset, obj->allowed_cpuset);
@@ -1893,7 +1923,7 @@ remove_unused_sets(hwloc_obj_t obj)
       obj->memory.page_types[i].count = 0;
   }
 
-  for_each_child_safe(child, obj, temp)
+  for_each_child(child, obj)
     remove_unused_sets(child);
   /* No cpuset under I/O or Misc */
 }
@@ -2160,7 +2190,7 @@ hwloc_propagate_symmetric_subtree(hwloc_topology_t topology, hwloc_obj_t root)
    * return if any child is not symmetric.
    */
   ok = 1;
-  for(child = root->first_child; child; child = child->next_sibling) {
+  for_each_child(child, root) {
     hwloc_propagate_symmetric_subtree(topology, child);
     if (!child->symmetric_subtree)
       ok = 0;
@@ -2302,7 +2332,7 @@ find_same_type(hwloc_obj_t root, hwloc_obj_t obj)
   if (hwloc_type_cmp(root, obj) == HWLOC_OBJ_EQUAL)
     return 1;
 
-  for (child = root->first_child; child; child = child->next_sibling)
+  for_each_child (child, root)
     if (find_same_type(child, obj))
       return 1;
 
@@ -2392,7 +2422,7 @@ hwloc_append_special_object(struct hwloc_special_level_s *level, hwloc_obj_t obj
 static void
 hwloc_list_io_misc_objects(hwloc_topology_t topology, hwloc_obj_t obj)
 {
-  hwloc_obj_t child, *temp;
+  hwloc_obj_t child;
 
   if (obj->type == HWLOC_OBJ_MISC) {
     obj->next_cousin = NULL;
@@ -2400,7 +2430,7 @@ hwloc_list_io_misc_objects(hwloc_topology_t topology, hwloc_obj_t obj)
     /* Insert the main Misc list */
     hwloc_append_special_object(&topology->slevels[HWLOC_SLEVEL_MISC], obj);
     /* Recurse, Misc only have Misc children */
-    for_each_misc_child_safe(child, obj, temp)
+    for_each_misc_child(child, obj)
       hwloc_list_io_misc_objects(topology, child);
 
   } else if (hwloc_obj_type_is_io(obj->type)) {
@@ -2422,18 +2452,18 @@ hwloc_list_io_misc_objects(hwloc_topology_t topology, hwloc_obj_t obj)
       hwloc_append_special_object(&topology->slevels[HWLOC_SLEVEL_OSDEV], obj);
     }
     /* Recurse, I/O only have I/O and Misc children */
-    for_each_io_child_safe(child, obj, temp)
+    for_each_io_child(child, obj)
       hwloc_list_io_misc_objects(topology, child);
-    for_each_misc_child_safe(child, obj, temp)
+    for_each_misc_child(child, obj)
       hwloc_list_io_misc_objects(topology, child);
 
   } else {
     /* Recurse */
-    for_each_child_safe(child, obj, temp)
+    for_each_child(child, obj)
       hwloc_list_io_misc_objects(topology, child);
-    for_each_io_child_safe(child, obj, temp)
+    for_each_io_child(child, obj)
       hwloc_list_io_misc_objects(topology, child);
-    for_each_misc_child_safe(child, obj, temp)
+    for_each_misc_child(child, obj)
       hwloc_list_io_misc_objects(topology, child);
   }
 }
@@ -3442,6 +3472,34 @@ void * hwloc_topology_get_userdata(struct hwloc_topology * topology)
  * Debug Checks *
  ****************/
 
+#ifndef NDEBUG /* assert only enabled if !NDEBUG */
+
+static void
+hwloc__check_child_siblings(hwloc_obj_t parent, hwloc_obj_t *array,
+                            unsigned arity, unsigned i,
+                            hwloc_obj_t child, hwloc_obj_t prev)
+{
+  assert(child->parent == parent);
+
+  assert(child->sibling_rank == i);
+  if (array)
+    assert(child == array[i]);
+
+  if (prev)
+    assert(prev->next_sibling == child);
+  assert(child->prev_sibling == prev);
+
+  if (!i)
+    assert(child->prev_sibling == NULL);
+  else
+    assert(child->prev_sibling != NULL);
+
+  if (i == arity-1)
+    assert(child->next_sibling == NULL);
+  else
+    assert(child->next_sibling != NULL);
+}
+
 static void
 hwloc__check_object(hwloc_topology_t topology, hwloc_obj_t obj);
 
@@ -3449,6 +3507,7 @@ hwloc__check_object(hwloc_topology_t topology, hwloc_obj_t obj);
 static void
 hwloc__check_children(hwloc_topology_t topology, hwloc_obj_t parent)
 {
+  hwloc_obj_t child, prev;
   unsigned j;
 
   if (!parent->arity) {
@@ -3464,22 +3523,18 @@ hwloc__check_children(hwloc_topology_t topology, hwloc_obj_t parent)
   assert(parent->last_child);
 
   /* sibling checks */
-  for(j=0; j<parent->arity; j++) {
-    hwloc_obj_t child = parent->children[j];
-    assert(child->parent == parent);
-    assert(child->sibling_rank == j);
-    if (j)
-      assert(child->prev_sibling == parent->children[j-1]);
-    else
-      assert(!child->prev_sibling);
-    if (j == parent->arity-1)
-      assert(!child->next_sibling);
-    else
-      assert(child->next_sibling == parent->children[j+1]);
+  for(prev = NULL, child = parent->first_child, j = 0;
+      child;
+      prev = child, child = child->next_sibling, j++) {
     assert(child->depth > parent->depth);
+    /* check siblings */
+    hwloc__check_child_siblings(parent, parent->children, parent->arity, j, child, prev);
     /* recurse */
     hwloc__check_object(topology, child);
   }
+  /* check arity */
+  assert(j == parent->arity);
+
   assert(parent->first_child == parent->children[0]);
   assert(parent->last_child == parent->children[parent->arity-1]);
 
@@ -3565,16 +3620,8 @@ hwloc__check_io_children(hwloc_topology_t topology, hwloc_obj_t parent)
       prev = child, child = child->next_sibling, j++) {
     /* all children must be I/O */
     assert(hwloc_obj_type_is_io(child->type));
-
     /* check siblings */
-    assert(child->parent == parent);
-    assert(child->sibling_rank == j);
-    if (prev)
-      assert(prev->next_sibling == child);
-    assert(child->prev_sibling == prev);
-    if (j == parent->io_arity-1)
-      assert(child->next_sibling == NULL);
-
+    hwloc__check_child_siblings(parent, NULL, parent->io_arity, j, child, prev);
     /* only I/O and Misc children, recurse */
     assert(!child->first_child);
     hwloc__check_object(topology, child);
@@ -3602,16 +3649,8 @@ hwloc__check_misc_children(hwloc_topology_t topology, hwloc_obj_t parent)
       prev = child, child = child->next_sibling, j++) {
     /* all children must be Misc */
     assert(child->type == HWLOC_OBJ_MISC);
-
     /* check siblings */
-    assert(child->parent == parent);
-    assert(child->sibling_rank == j);
-    if (prev)
-      assert(prev->next_sibling == child);
-    assert(child->prev_sibling == prev);
-    if (j == parent->misc_arity-1)
-      assert(child->next_sibling == NULL);
-
+    hwloc__check_child_siblings(parent, NULL, parent->misc_arity, j, child, prev);
     /* only Misc children, recurse */
     assert(!child->first_child);
     assert(!child->io_first_child);
@@ -3666,6 +3705,16 @@ hwloc__check_object(hwloc_topology_t topology, hwloc_obj_t obj)
   }
 
   /* check cache type/depth vs type */
+  if (hwloc_obj_type_is_cache(obj->type)) {
+    if (hwloc_obj_type_is_icache(obj->type))
+      assert(obj->attr->cache.type == HWLOC_OBJ_CACHE_INSTRUCTION);
+    else if (hwloc_obj_type_is_dcache(obj->type))
+      assert(obj->attr->cache.type == HWLOC_OBJ_CACHE_DATA
+             || obj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED);
+    else
+      assert(0);
+    assert(hwloc_cache_type_by_depth_type(obj->attr->cache.depth, obj->attr->cache.type) == obj->type);
+  }
 
   /* check children */
   hwloc__check_children(topology, obj);
@@ -3817,3 +3866,12 @@ hwloc_topology_check(struct hwloc_topology *topology)
    * Should only occur if XML is invalid.
    */
 }
+
+#else /* NDEBUG */
+
+void
+hwloc_topology_check(struct hwloc_topology *topology __hwloc_attribute_unused)
+{
+}
+
+#endif /* NDEBUG */

@@ -45,8 +45,8 @@ extern "C" {
 
 /** \brief Get the required shared memory length for storing a topology.
  *
- * This length must be used in hwloc_shmem_topology_write() and
- * hwloc_shmem_topology_adopt() later.
+ * This length (in bytes) must be used in hwloc_shmem_topology_write()
+ * and hwloc_shmem_topology_adopt() later.
  *
  * \note Flags \p flags are currently unused, must be 0.
  */
@@ -57,21 +57,27 @@ HWLOC_DECLSPEC int hwloc_shmem_topology_get_length(hwloc_topology_t topology,
 /** \brief Duplicate a topology to a shared memory file.
  *
  * Temporarily map a file in virtual memory and duplicate the
- * topology \p topology by allocating duplicates there.
+ * topology \p topology by allocating duplicates in there.
  *
  * The segment of the file pointed by descriptor \p fd,
- * starting at offset \p fileoffset, and of length \p length,
- * will be temporarily mapped at virtual address \p mmap_address.
+ * starting at offset \p fileoffset, and of length \p length (in bytes),
+ * will be temporarily mapped at virtual address \p mmap_address
+ * during the duplication.
  *
  * The mapping length \p length must have been previously obtained with
  * hwloc_shmem_topology_get_length()
  * and the topology must not have been modified in the meantime.
  *
- * \return -1 with errno set to EBUSY is the requested memory mapping isn't available.
- * \return -1 with errno set to EINVAL if fileoffset, mmap_address or length
- * aren't page-aligned.
- *
  * \note Flags \p flags are currently unused, must be 0.
+ *
+ * \note The object userdata pointer is duplicated but the pointed buffer
+ * is not. However the caller may also allocate it manually in shared memory
+ * to share it as well.
+ *
+ * \return -1 with errno set to EBUSY if the virtual memory mapping defined
+ * by \p mmap_address and \p length isn't available in the process.
+ * \return -1 with errno set to EINVAL if \p fileoffset, \p mmap_address
+ * or \p length aren't page-aligned.
  */
 HWLOC_DECLSPEC int hwloc_shmem_topology_write(hwloc_topology_t topology,
                                               int fd, hwloc_uint64_t fileoffset,
@@ -86,19 +92,28 @@ HWLOC_DECLSPEC int hwloc_shmem_topology_write(hwloc_topology_t topology,
  * The returned adopted topology in \p topologyp can be used just like any
  * topology. And it must be destroyed with hwloc_topology_destroy() as usual.
  *
+ * However the topology is read-only.
+ * For instance, it cannot be modified with hwloc_topology_restrict()
+ * and object userdata pointers cannot be changed.
+ *
  * The segment of the file pointed by descriptor \p fd,
- * starting at offset \p fileoffset, and of length \p length,
+ * starting at offset \p fileoffset, and of length \p length (in bytes),
  * will be mapped at virtual address \p mmap_address.
  *
  * The file pointed by descriptor \p fd, the offset \p fileoffset,
  * the requested mapping virtual address \p mmap_address and the length \p length
  * must be identical to what was given to hwloc_shmem_topology_write() earlier.
  *
- * \return -1 with errno set to EBUSY is the requested memory mapping isn't available.
- * \return -1 with errno set to EINVAL if fileoffset, mmap_address or length
- * aren't page-aligned.
- *
  * \note Flags \p flags are currently unused, must be 0.
+ *
+ * \note The object userdata pointer should not be used unless the process
+ * that created the shared topology also placed userdata-pointed buffers
+ * in shared memory.
+ *
+ * \return -1 with errno set to EBUSY if the virtual memory mapping defined
+ * by \p mmap_address and \p length isn't available in the process.
+ * \return -1 with errno set to EINVAL if \p fileoffset, \p mmap_address
+ * or \p length aren't page-aligned.
  */
 HWLOC_DECLSPEC int hwloc_shmem_topology_adopt(hwloc_topology_t *topologyp,
                                               int fd, hwloc_uint64_t fileoffset,

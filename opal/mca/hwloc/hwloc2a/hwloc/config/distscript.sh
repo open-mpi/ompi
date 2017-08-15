@@ -12,7 +12,6 @@
 #                         All rights reserved.
 # Copyright © 2010-2014   Inria.  All rights reserved.
 # Copyright © 2009-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow

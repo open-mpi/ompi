@@ -140,7 +140,7 @@ hwloc_look_pci(struct hwloc_backend *backend)
     device_class = pcidev->device_class >> 8;
 
     /* bridge or pci dev? */
-    type = hwloc_pci_check_bridge_type(device_class, config_space_cache);
+    type = hwloc_pcidisc_check_bridge_type(device_class, config_space_cache);
 
     /* filtered? */
     if (type == HWLOC_OBJ_PCI_DEVICE) {
@@ -222,13 +222,13 @@ hwloc_look_pci(struct hwloc_backend *backend)
     obj->attr->pcidev.revision = config_space_cache[PCI_REVISION_ID];
 
     obj->attr->pcidev.linkspeed = 0; /* unknown */
-    offset = hwloc_pci_find_cap(config_space_cache, PCI_CAP_ID_EXP);
+    offset = hwloc_pcidisc_find_cap(config_space_cache, PCI_CAP_ID_EXP);
 
     if (offset > 0 && offset + 20 /* size of PCI express block up to link status */ <= CONFIG_SPACE_CACHESIZE)
-      hwloc_pci_find_linkspeed(config_space_cache, offset, &obj->attr->pcidev.linkspeed);
+      hwloc_pcidisc_find_linkspeed(config_space_cache, offset, &obj->attr->pcidev.linkspeed);
 
     if (type == HWLOC_OBJ_BRIDGE) {
-      if (hwloc_pci_setup_bridge_attr(obj, config_space_cache) < 0)
+      if (hwloc_pcidisc_setup_bridge_attr(obj, config_space_cache) < 0)
         continue;
     }
 
@@ -260,14 +260,14 @@ hwloc_look_pci(struct hwloc_backend *backend)
                 vendorname && *vendorname ? vendorname : "??",
                 devicename && *devicename ? devicename : "??");
 
-    hwloc_pci_tree_insert_by_busid(&tree, obj);
+    hwloc_pcidisc_tree_insert_by_busid(&tree, obj);
   }
 
   /* finalize device scanning */
   pci_iterator_destroy(iter);
   pci_system_cleanup();
 
-  hwloc_pci_tree_attach_belowroot(topology, tree);
+  hwloc_pcidisc_tree_attach(topology, tree);
   return 0;
 }
 

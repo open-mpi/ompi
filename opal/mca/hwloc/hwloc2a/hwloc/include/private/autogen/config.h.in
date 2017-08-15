@@ -4,7 +4,6 @@
  *
  * Copyright © 2009, 2011, 2012 CNRS, inria., Université Bordeaux  All rights reserved.
  * Copyright © 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -230,6 +229,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mkstemp' function. */
+#undef HAVE_MKSTEMP
 
 /* Define to 1 if you have the <mpi.h> header file. */
 #undef HAVE_MPI_H

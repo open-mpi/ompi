@@ -4,7 +4,6 @@
  *                         All rights reserved.
  * Copyright © 2015-2016 Inria.  All rights reserved.
  *
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

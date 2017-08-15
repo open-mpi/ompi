@@ -5,7 +5,7 @@ includedir=${prefix}/include
 
 Name: netloc
 Description: Network locality detection and management library
-Version: master-201707200234-3db801d
+Version: shmem-20170815.1857.git2478ce8
 Cflags: -I${includedir}
 Libs: -L${libdir} -lnetloc -lhwloc
 Libs.private:

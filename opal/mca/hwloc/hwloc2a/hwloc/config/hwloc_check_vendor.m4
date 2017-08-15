@@ -12,7 +12,6 @@ dnl Copyright © 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright © 2011      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright © 2015 Inria.  All rights reserved.
-dnl Copyright (c) 2017      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow

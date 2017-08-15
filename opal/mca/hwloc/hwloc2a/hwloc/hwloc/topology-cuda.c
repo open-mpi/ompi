@@ -109,9 +109,9 @@ hwloc_cuda_discover(struct hwloc_backend *backend)
 
     parent = NULL;
     if (hwloc_cudart_get_device_pci_ids(NULL /* topology unused */, i, &domain, &bus, &dev) == 0) {
-      parent = hwloc_pci_belowroot_find_by_busid(topology, domain, bus, dev, 0);
+      parent = hwloc_pcidisc_find_by_busid(topology, domain, bus, dev, 0);
       if (!parent)
-        parent = hwloc_pci_find_busid_parent(topology, domain, bus, dev, 0);
+        parent = hwloc_pcidisc_find_busid_parent(topology, domain, bus, dev, 0);
     }
     if (!parent)
       parent = hwloc_get_root_obj(topology);

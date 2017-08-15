@@ -3,7 +3,6 @@ Copyright © 2009-2017 Inria.  All rights reserved.
 Copyright © 2009-2013 Université Bordeaux
 Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
 
-Copyright (c) 2017      Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -51,6 +50,8 @@ Version 2.0.0
     for instance for exporting XMLs that are compatible with hwloc 1.x.
   + The distance API has been completely reworked. It is now described
     in hwloc/distances.h.
+  + Add hwloc/shmem.h for sharing topologies between processes running on
+    the same machine (for reducing the memory footprint).
   + Add the experimental netloc subproject. It is enabled by default when
     supported and can be disabled with --disable-netloc.
     It currently brings command-line tools to gather and visualize the
