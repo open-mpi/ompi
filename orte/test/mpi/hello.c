@@ -16,11 +16,15 @@ int main(int argc, char* argv[])
     int rank, size, rc;
     hwloc_cpuset_t cpus;
     char *bindings = NULL;
+    pid_t pid;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    pid = getpid();
 
+    printf("[%lu] Rank %d: getting topology\n", (unsigned long)pid, rank);
+    fflush(stdout);
     if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
         cpus = hwloc_bitmap_alloc();
         rc = hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS);
