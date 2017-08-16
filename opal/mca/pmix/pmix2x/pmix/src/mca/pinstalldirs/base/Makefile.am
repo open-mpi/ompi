@@ -1,7 +1,6 @@
 #
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow

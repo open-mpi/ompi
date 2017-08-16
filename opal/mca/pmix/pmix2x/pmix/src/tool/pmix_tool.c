@@ -207,6 +207,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
 
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     pmix_client_globals.myserver = PMIX_NEW(pmix_peer_t);
+    pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_nspace_t);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
@@ -233,6 +234,14 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     }
     /* the server will be using the same */
     pmix_client_globals.myserver->nptr->compat.psec = pmix_globals.mypeer->nptr->compat.psec;
+
+    /* select the gds compat module */
+    pmix_client_globals.myserver->nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
+    if (NULL == pmix_client_globals.myserver->nptr->compat.gds) {
+        PMIX_INFO_DESTRUCT(&ginfo);
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
 
     /* now select a GDS module for our own internal use - the user may
      * have passed down a directive for this purpose. If they did, then

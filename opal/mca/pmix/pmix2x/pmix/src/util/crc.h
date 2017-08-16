@@ -12,7 +12,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

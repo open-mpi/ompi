@@ -2,7 +2,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

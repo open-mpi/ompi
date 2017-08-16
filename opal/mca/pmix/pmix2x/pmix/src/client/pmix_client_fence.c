@@ -198,7 +198,7 @@ static pmix_status_t unpack_return(pmix_buffer_t *data)
     }
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "client:unpack fence received status %d", ret);
-    return PMIX_SUCCESS;
+    return ret;
 }
 
 static pmix_status_t pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
