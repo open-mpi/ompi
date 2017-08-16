@@ -133,6 +133,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_SERVER_ENABLE_MONITORING       "pmix.srv.monitor"      // (bool) Enable PMIx internal monitoring by server
 #define PMIX_SERVER_NSPACE                  "pmix.srv.nspace"       // (char*) Name of the nspace to use for this server
 #define PMIX_SERVER_RANK                    "pmix.srv.rank"         // (pmix_rank_t) Rank of this server
+#define PMIX_TOOL_NSPACE                    "pmix.tool.nspace"      // (char*) Name of the nspace to use for this tool
+#define PMIX_TOOL_RANK                      "pmix.tool.rank"        // (uint32_t) Rank of this tool
 
 
 /* identification attributes */

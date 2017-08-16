@@ -85,6 +85,19 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
     uid = geteuid();
     gid = getegid();
 
+    /* pass our nspace/rank */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_SERVER_NSPACE);
+    kv->data.string = strdup(ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+    kv->type = OPAL_STRING;
+    opal_list_append(info, &kv->super);
+
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_SERVER_RANK);
+    kv->data.uint32 = ORTE_PROC_MY_NAME->vpid;
+    kv->type = OPAL_UINT32;
+    opal_list_append(info, &kv->super);
+
     /* jobid */
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_JOBID);

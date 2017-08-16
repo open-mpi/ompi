@@ -142,6 +142,29 @@ int orte_ess_base_tool_setup(void)
     orte_process_info.super.proc_arch = opal_local_arch;
     opal_proc_local_set(&orte_process_info.super);
 
+    /* setup the PMIx framework - ensure it skips all non-PMIx components,
+     * but do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
+        goto error;
+    }
+    /* initialize - the layer below has our name in opal_process_name_t
+     * and will pass it to PMIx to sync */
+    if (OPAL_SUCCESS != (ret = opal_pmix.tool_init(NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix.init";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
+
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
