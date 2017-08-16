@@ -146,6 +146,22 @@ void pmix_server_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_pmix_server_globals.wait_for_server);
+
+    /* whether or not to drop a session-level tool rendezvous point */
+    orte_pmix_server_globals.session_server = false;
+    (void) mca_base_var_register ("orte", "pmix", NULL, "session_server",
+                                  "Whether or not to drop a session-level tool rendezvous point",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_pmix_server_globals.session_server);
+
+    /* whether or not to drop a system-level tool rendezvous point */
+    orte_pmix_server_globals.system_server = false;
+    (void) mca_base_var_register ("orte", "pmix", NULL, "system_server",
+                                  "Whether or not to drop a system-level tool rendezvous point",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_pmix_server_globals.system_server);
 }
 
 static void eviction_cbfunc(struct opal_hotel_t *hotel,
@@ -262,6 +278,25 @@ int pmix_server_init(void)
     kv->type = OPAL_BOOL;
     kv->data.flag = true;
     opal_list_append(&info, &kv->super);
+    /* if requested, tell the server to drop a session-level
+     * PMIx connection point */
+    if (orte_pmix_server_globals.session_server) {
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_SERVER_TOOL_SUPPORT);
+        kv->type = OPAL_BOOL;
+        kv->data.flag = true;
+        opal_list_append(&info, &kv->super);
+    }
+
+    /* if requested, tell the server to drop a system-level
+     * PMIx connection point */
+    if (orte_pmix_server_globals.system_server) {
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_SERVER_SYSTEM_SUPPORT);
+        kv->type = OPAL_BOOL;
+        kv->data.flag = true;
+        opal_list_append(&info, &kv->super);
+    }
 
     /* setup the local server */
     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server, &info))) {
