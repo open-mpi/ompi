@@ -2275,7 +2275,7 @@ static pmix_status_t _dstore_fetch(const char *nspace, pmix_rank_t rank,
     pmix_status_t rc = PMIX_ERROR, lock_rc;
     ns_track_elem_t *elem;
     rank_meta_info *rinfo = NULL;
-    size_t kval_cnt;
+    size_t kval_cnt = 0;
     seg_desc_t *meta_seg, *data_seg;
     uint8_t *addr;
     pmix_buffer_t buffer;
@@ -2558,7 +2558,9 @@ done:
             if( NULL != info ) {
                 PMIX_INFO_FREE(info, ninfo);
             }
-            PMIX_VALUE_RELEASE(kval);
+            if (NULL != kval) {
+                PMIX_VALUE_RELEASE(kval);
+            }
         }
         return rc;
     }

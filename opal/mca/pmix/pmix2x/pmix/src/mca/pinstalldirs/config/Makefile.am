@@ -4,7 +4,7 @@
 # Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009      High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2016      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow

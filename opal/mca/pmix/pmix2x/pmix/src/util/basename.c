@@ -12,7 +12,7 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

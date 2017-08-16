@@ -4,7 +4,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

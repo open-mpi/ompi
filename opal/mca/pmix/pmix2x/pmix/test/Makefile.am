@@ -38,9 +38,7 @@ if WANT_PMI_BACKWARD
 noinst_PROGRAMS += pmi_client pmi2_client
 endif
 
-if !WANT_HIDDEN
 noinst_PROGRAMS += pmix_test pmix_client pmix_regex
-endif
 
 pmix_test_SOURCES = $(headers) \
         pmix_test.c test_common.c cli_stages.c server_callbacks.c utils.c

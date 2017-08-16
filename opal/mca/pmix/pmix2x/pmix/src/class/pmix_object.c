@@ -39,7 +39,7 @@
  * special, since be mark it as already initialized, with no parent
  * and no constructor or destructor.
  */
-pmix_class_t pmix_object_t_class = {
+PMIX_EXPORT pmix_class_t pmix_object_t_class = {
     "pmix_object_t",      /* name */
     NULL,                 /* parent class */
     NULL,                 /* constructor */

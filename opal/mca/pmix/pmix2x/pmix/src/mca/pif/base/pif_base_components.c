@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$

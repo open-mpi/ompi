@@ -120,21 +120,24 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_SERVER_REMOTE_CONNECTIONS      "pmix.srvr.remote"      // (bool) Allow connections from remote tools (do not use loopback device)
 #define PMIX_SERVER_SYSTEM_SUPPORT          "pmix.srvr.sys"         // (bool) The host RM wants to declare itself as being the local
                                                                     //        system server for PMIx connection requests
-#define PMIX_SERVER_PIDINFO                 "pmix.srvr.pidinfo"     // (pid_t) pid of the target server
-#define PMIX_SERVER_HOSTNAME                "pmix.srvr.host"        // (char*) node where target server is located
 #define PMIX_SERVER_TMPDIR                  "pmix.srvr.tmpdir"      // (char*) temp directory where PMIx server will place
                                                                     //        client rendezvous points and contact info
 #define PMIX_SYSTEM_TMPDIR                  "pmix.sys.tmpdir"       // (char*) temp directory for this system, where PMIx
                                                                     //        server will place tool rendezvous points and contact info
-#define PMIX_CONNECT_TO_SYSTEM              "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
-                                                                    //        a local system-level PMIx server
-#define PMIX_CONNECT_SYSTEM_FIRST           "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
-#define PMIX_REGISTER_NODATA                "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
 #define PMIX_SERVER_ENABLE_MONITORING       "pmix.srv.monitor"      // (bool) Enable PMIx internal monitoring by server
 #define PMIX_SERVER_NSPACE                  "pmix.srv.nspace"       // (char*) Name of the nspace to use for this server
 #define PMIX_SERVER_RANK                    "pmix.srv.rank"         // (pmix_rank_t) Rank of this server
-#define PMIX_TOOL_NSPACE                    "pmix.tool.nspace"      // (char*) Name of the nspace to use for this tool
-#define PMIX_TOOL_RANK                      "pmix.tool.rank"        // (uint32_t) Rank of this tool
+
+
+/* tool-related attributes */
+#define PMIX_SERVER_PIDINFO                 "pmix.srvr.pidinfo"     // (pid_t) pid of the target server for a tool
+#define PMIX_CONNECT_TO_SYSTEM              "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
+                                                                    //        a local system-level PMIx server
+#define PMIX_CONNECT_SYSTEM_FIRST           "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
+#define PMIX_SERVER_URI                     "pmix.srvr.uri"         // (char*) URI of server to be contacted
+#define PMIX_SERVER_HOSTNAME                "pmix.srvr.host"        // (char*) node where target server is located
+#define PMIX_CONNECT_MAX_RETRIES            "pmix.tool.mretries"    // (uint32_t) maximum number of times to try to connect to server
+#define PMIX_CONNECT_RETRY_DELAY            "pmix.tool.retry"       // (uint32_t) time in seconds between connection attempts
 
 
 /* identification attributes */
@@ -254,6 +257,7 @@ typedef uint32_t pmix_rank_t;
 
 /* attributes used by host server to pass data to the server convenience library - the
  * data will then be parsed and provided to the local clients */
+#define PMIX_REGISTER_NODATA                "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
 #define PMIX_PROC_DATA                      "pmix.pdata"            // (pmix_data_array_t) starts with rank, then contains more data
 #define PMIX_NODE_MAP                       "pmix.nmap"             // (char*) regex of nodes containing procs for this job
 #define PMIX_PROC_MAP                       "pmix.pmap"             // (char*) regex describing procs on each node within this job

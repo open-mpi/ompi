@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
