@@ -14,6 +14,7 @@
  *                         All rights reserved
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,7 +73,7 @@ OBJ_CLASS_INSTANCE(mca_rcache_base_registration_t, opal_free_list_item_t,
  * Global variables
  */
 opal_list_t mca_rcache_base_modules = {{0}};
-opal_free_list_t mca_rcache_base_vma_tree_items = {{0}};
+opal_free_list_t mca_rcache_base_vma_tree_items = {{{0}}};
 bool mca_rcache_base_vma_tree_items_inited = false;
 unsigned int mca_rcache_base_vma_tree_items_min = TREE_ITEMS_MIN;
 int mca_rcache_base_vma_tree_items_max = TREE_ITEMS_MAX;
