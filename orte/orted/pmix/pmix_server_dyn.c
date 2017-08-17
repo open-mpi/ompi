@@ -399,7 +399,11 @@ static void _cnlk(int status, opal_list_t *data, void *cbdata)
 
     /* restart the cnct processor */
     ORTE_PMIX_OPERATION(cd->procs, cd->info, _cnct, cd->cbfunc, cd->cbdata);
+    /* protect the re-referenced data */
+    cd->procs = NULL;
+    cd->info = NULL;
     OBJ_RELEASE(cd);
+    return;
 
   release:
     if (NULL != cd->cbfunc) {
@@ -415,6 +419,7 @@ static void _cnct(int sd, short args, void *cbdata)
     char **keys = NULL, *key;
     orte_job_t *jdata;
     int rc = ORTE_SUCCESS;
+    opal_value_t *kv;
 
     ORTE_ACQUIRE_OBJECT(cd);
 
@@ -444,6 +449,12 @@ static void _cnct(int sd, short args, void *cbdata)
             orte_util_convert_jobid_to_string(&key, nm->name.jobid);
             opal_argv_append_nosize(&keys, key);
             free(key);
+            /* we have to add the user's id to our list of info */
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_USERID);
+            kv->type = OPAL_UINT32;
+            kv->data.uint32 = geteuid();
+            opal_list_append(cd->info, &kv->super);
             if (ORTE_SUCCESS != (rc = pmix_server_lookup_fn(&nm->name, keys, cd->info, _cnlk, cd))) {
                 opal_argv_free(keys);
                 goto release;

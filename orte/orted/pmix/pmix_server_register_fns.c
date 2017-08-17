@@ -50,6 +50,8 @@
 #include "pmix_server_internal.h"
 #include "pmix_server.h"
 
+static void mycbfunc(int status, void *cbdata);
+
 /* stuff proc attributes for sending back to a proc */
 int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
 {
@@ -472,5 +474,67 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
                                           info, NULL, NULL);
     OPAL_LIST_RELEASE(info);
 
+    /* if the user has connected us to an external server, then we must
+     * assume there is going to be some cross-mpirun exchange, and so
+     * we protect against that situation by publishing the job info
+     * for this job - this allows any subsequent "connect" to retrieve
+     * the job info */
+    if (NULL != orte_data_server_uri) {
+        opal_buffer_t buf;
+
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &jdata, 1, ORTE_JOB))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            return rc;
+        }
+        info = OBJ_NEW(opal_list_t);
+        /* create a key-value with the key being the string jobid
+         * and the value being the byte object */
+        kv = OBJ_NEW(opal_value_t);
+        orte_util_convert_jobid_to_string(&kv->key, jdata->jobid);
+        kv->type = OPAL_BYTE_OBJECT;
+        opal_dss.unload(&buf, (void**)&kv->data.bo.bytes, &kv->data.bo.size);
+        OBJ_DESTRUCT(&buf);
+        opal_list_append(info, &kv->super);
+
+        /* set the range to be session */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_RANGE);
+        kv->type = OPAL_UINT;
+        kv->data.uint = OPAL_PMIX_RANGE_SESSION;
+        opal_list_append(info, &kv->super);
+
+        /* set the persistence to be app */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_PERSISTENCE);
+        kv->type = OPAL_INT;
+        kv->data.integer = OPAL_PMIX_PERSIST_APP;
+        opal_list_append(info, &kv->super);
+
+        /* add our effective userid to the directives */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_USERID);
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = geteuid();
+        opal_list_append(info, &kv->super);
+
+        /* now publish it */
+        if (ORTE_SUCCESS != (rc = pmix_server_publish_fn(ORTE_PROC_MY_NAME,
+                                                         info, mycbfunc, info))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+
     return rc;
+}
+
+static void mycbfunc(int status, void *cbdata)
+{
+    opal_list_t *info = (opal_list_t*)cbdata;
+
+    if (ORTE_SUCCESS != status) {
+        ORTE_ERROR_LOG(status);
+    }
+    OPAL_LIST_RELEASE(info);
 }
