@@ -16,7 +16,8 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
- * Copyright (c) 2017 Ian Bradley Morgan and Anthony Skjellum
+ * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All 
+ *                         rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions 
