@@ -394,6 +394,10 @@ int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
             req->timeout = iptr->data.integer;
             continue;
         }
+        opal_output_verbose(2, orte_pmix_server_globals.output,
+                            "%s lookup directive %s for proc %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), iptr->key,
+                            ORTE_NAME_PRINT(proc));
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &iptr, 1, OPAL_VALUE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(req);
