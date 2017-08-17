@@ -117,8 +117,9 @@ sub check_lib_for_bad_exports {
 #   [error]   _Cmpi_fortran_status_ignore
 #   [error]   _Cmpi_fortran_statuses_ignore
 # which we shouldn't identify as bad:
-    @symbols = grep(!/^MPI$/, @symbols);
-    @symbols = grep(!/^_Cmpi_$/, @symbols);
+    @symbols = grep(!/^MPI$/i, @symbols);
+    @symbols = grep(!/^_Cmpi_/, @symbols);
+    @symbols = grep(!/^mpi._$/i, @symbols);
 
     @symbols = grep(!/^_fini$/, @symbols);
     @symbols = grep(!/^_init$/, @symbols);
