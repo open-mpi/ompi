@@ -100,3 +100,68 @@ hopefully be able to continue).
   Peer hostname:       %s (%s)
   Source IP of socket: %s
   Known IPs of peer:   %s
+#
+[socket flag fail]
+WARNING: Open MPI failed to set flags on a TCP socket.  This should
+not happen.  It is likely that your MPI job will now fail.
+
+  Local host: %s
+  PID:        %d
+  Flag:       %s
+  Error:      %s (%d)
+#
+[server did not get guid]
+WARNING: Open MPI accepted a TCP connection from what appears to be a
+another Open MPI process but the peer process did not complete the
+initial handshake properly.  This should not happen.
+
+This attempted connection will be ignored; your MPI job may or may not
+continue properly.
+
+  Local host: %s
+  PID:        %d
+#
+[server accept cannot find guid]
+WARNING: Open MPI accepted a TCP connection from what appears to be a
+another Open MPI process but cannot find a corresponding process
+entry for that peer.
+
+This attempted connection will be ignored; your MPI job may or may not
+continue properly.
+
+  Local host: %s
+  PID:        %d
+#
+[server getpeername failed]
+WARNING: Open MPI failed to look up the peer IP address information of
+a TCP connection that it just accepted.  This should not happen.
+
+This attempted connection will be ignored; your MPI job may or may not
+continue properly.
+
+  Local host: %s
+  PID:        %d
+  Error:      %s (%d)
+#
+[server cannot find endpoint]
+WARNING: Open MPI accepted a TCP connection from what appears to be a
+valid peer Open MPI process but cannot find a corresponding endpoint
+entry for that peer.  This should not happen.
+
+This attempted connection will be ignored; your MPI job may or may not
+continue properly.
+
+  Local host: %s
+  PID:        %d
+#
+[client connect fail]
+WARNING: Open MPI failed to TCP connect to a peer MPI process via
+TCP.  This should not happen.
+
+Your Open MPI job may now fail.
+
+  Local host: %s
+  PID:        %d
+  Message:    %s
+  Error:      %s (%d)
+#

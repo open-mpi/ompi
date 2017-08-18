@@ -31,11 +31,13 @@
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/opal_socket_errno.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_frag.h"
 #include "btl_tcp_proc.h"
 #include "btl_tcp_endpoint.h"
+
 
 mca_btl_tcp_module_t mca_btl_tcp_module = {
     .super = {
@@ -530,4 +532,69 @@ void mca_btl_tcp_dump(struct mca_btl_base_module_t* base_btl,
         OPAL_THREAD_UNLOCK(&btl->tcp_endpoints_mutex);
     }
 #endif /* OPAL_ENABLE_DEBUG && WANT_PEER_DUMP */
+}
+
+
+/*
+ * A blocking recv for both blocking and non-blocking socket. 
+ * Used to receive the small amount of connection information 
+ * that identifies the endpoints
+ * 
+ * when the socket is blocking (the caller introduces timeout) 
+ * which happens during initial handshake otherwise socket is 
+ * non-blocking most of the time.
+ */
+
+int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
+{
+    unsigned char* ptr = (unsigned char*)data;
+    size_t cnt = 0;
+    while (cnt < size) {
+        int retval = recv(sd, ((char *)ptr) + cnt, size - cnt, 0);
+        /* remote closed connection */
+        if (0 == retval) {
+            BTL_ERROR(("remote peer unexpectedly closed connection while I was waiting for blocking message"));
+            return -1;
+        }
+
+        /* socket is non-blocking so handle errors */
+        if (retval < 0) {
+            if (opal_socket_errno != EINTR &&
+                opal_socket_errno != EAGAIN &&
+                opal_socket_errno != EWOULDBLOCK) {
+                BTL_ERROR(("recv(%d) failed: %s (%d)", sd, strerror(opal_socket_errno), opal_socket_errno));
+                return -1;
+            }
+            continue;
+        }
+        cnt += retval;
+    }
+    return cnt;
+}
+
+
+/*
+ * A blocking send on a non-blocking socket. Used to send the small
+ * amount of connection information that identifies the endpoints
+ * endpoint.
+ */
+
+int mca_btl_tcp_send_blocking(int sd, const void* data, size_t size)
+{
+    unsigned char* ptr = (unsigned char*)data;
+    size_t cnt = 0;
+    while(cnt < size) {
+        int retval = send(sd, ((const char *)ptr) + cnt, size - cnt, 0);
+        if (retval < 0) {
+            if (opal_socket_errno != EINTR &&
+                opal_socket_errno != EAGAIN &&
+                opal_socket_errno != EWOULDBLOCK) {
+                BTL_ERROR(("send() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
+                return -1;
+            }
+            continue;
+        }
+        cnt += retval;
+    }
+    return cnt;
 }

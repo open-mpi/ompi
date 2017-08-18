@@ -26,7 +26,7 @@
 BEGIN_C_DECLS
 
 #define MCA_BTL_TCP_ENDPOINT_CACHE 1
-
+#define MCA_BTL_TCP_MAGIC_STRING_LENGTH 16
 /**
  * State of TCP endpoint connection.
  */
@@ -74,6 +74,14 @@ struct mca_btl_base_endpoint_t {
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_tcp_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_endpoint_t);
+
+/* Magic socket handshake string */
+extern const char mca_btl_tcp_magic_id_string[MCA_BTL_TCP_MAGIC_STRING_LENGTH];
+
+typedef struct { 
+    opal_process_name_t guid;
+    char magic_id[MCA_BTL_TCP_MAGIC_STRING_LENGTH];
+} mca_btl_tcp_endpoint_hs_msg_t;
 
 void mca_btl_tcp_set_socket_options(int sd);
 void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t*);

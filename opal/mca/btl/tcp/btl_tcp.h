@@ -351,5 +351,23 @@ mca_btl_tcp_dump(struct mca_btl_base_module_t* btl,
   */
 int mca_btl_tcp_ft_event(int state);
 
+/*
+ * A blocking send on a non-blocking socket. Used to send the small
+ * amount of connection information that identifies the endpoints
+ * endpoint.
+ */
+int mca_btl_tcp_send_blocking(int sd, const void* data, size_t size);
+
+/*
+ * A blocking recv for both blocking and non-blocking socket.
+ * Used to receive the small amount of connection information
+ * that identifies the endpoints
+ *
+ * when the socket is blocking (the caller introduces timeout)
+ * which happens during initial handshake otherwise socket is
+ * non-blocking most of the time.
+ */
+int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size);
+
 END_C_DECLS
 #endif

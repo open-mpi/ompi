@@ -54,6 +54,9 @@
 #endif
 #include <ctype.h>
 #include <limits.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/mca/event/event.h"
 #include "opal/util/ethtool.h"
@@ -729,7 +732,9 @@ static int mca_btl_tcp_component_create_instances(void)
         char* if_name = *argv;
         int if_index = opal_ifnametokindex(if_name);
         if(if_index < 0) {
-            BTL_ERROR(("invalid interface \"%s\"", if_name));
+            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, "include", opal_process_info.nodename,
+                           if_name, "Unknown interface name");
             ret = OPAL_ERR_NOT_FOUND;
             goto cleanup;
         }
@@ -856,13 +861,18 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         freeaddrinfo (res);
 
 #ifdef IPV6_V6ONLY
-        /* in case of AF_INET6, disable v4-mapped addresses */
+        /* If this OS supports the "IPV6_V6ONLY" constant, then set it
+           on this socket.  It specifies that *only* V6 connections
+           should be accepted on this socket (vs. allowing incoming
+           both V4 and V6 connections -- which is actually defined
+           behavior for V6<-->V4 interop stuff).  See
+           https://github.com/open-mpi/ompi/commit/95d7e08a6617530d57b6700c57738b351bfccbf8 for some
+           more details. */
         if (AF_INET6 == af_family) {
             int flg = 1;
             if (setsockopt (sd, IPPROTO_IPV6, IPV6_V6ONLY,
                             (char *) &flg, sizeof (flg)) < 0) {
-                opal_output(0,
-                    "mca_btl_tcp_create_listen: unable to disable v4-mapped addresses\n");
+                BTL_ERROR((0, "mca_btl_tcp_create_listen: unable to set IPV6_V6ONLY\n"));
             }
         }
 #endif /* IPV6_V6ONLY */
@@ -904,6 +914,10 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 #else
             ((struct sockaddr_in*) &inaddr)->sin_port = htons(port + index);
 #endif  /* OPAL_ENABLE_IPV6 */
+            opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                "btl:tcp: Attempting to bind to %s port %d",
+                                (AF_INET == af_family) ? "AF_INET" : "AF_INET6",
+                                port + index);
             if(bind(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
                 if( (EADDRINUSE == opal_socket_errno) || (EADDRNOTAVAIL == opal_socket_errno) ) {
                     continue;
@@ -913,6 +927,10 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
                 CLOSE_THE_SOCKET(sd);
                 return OPAL_ERROR;
             }
+            opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                "btl:tcp: Successfully bound to %s port %d",
+                                (AF_INET == af_family) ? "AF_INET" : "AF_INET6",
+                                port + index);
             goto socket_binded;
         }
 #if OPAL_ENABLE_IPV6
@@ -943,11 +961,19 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     if (AF_INET6 == af_family) {
         mca_btl_tcp_component.tcp6_listen_port = ((struct sockaddr_in6*) &inaddr)->sin6_port;
         mca_btl_tcp_component.tcp6_listen_sd = sd;
+        opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                            "btl:tcp: my listening v6 socket port is %d",
+                            ntohs(mca_btl_tcp_component.tcp6_listen_port));
     } else
 #endif
     {
+        char str[16];
         mca_btl_tcp_component.tcp_listen_port = ((struct sockaddr_in*) &inaddr)->sin_port;
         mca_btl_tcp_component.tcp_listen_sd = sd;
+        inet_ntop(AF_INET, &(((struct sockaddr_in*)&inaddr)->sin_addr), str, sizeof(str));
+        opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                            "btl:tcp: my listening v4 socket is %s:%u",
+                            str, ntohs(mca_btl_tcp_component.tcp_listen_port));
     }
 
     /* setup listen backlog to maximum allowed by kernel */
@@ -960,15 +986,20 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
-                   strerror(opal_socket_errno), opal_socket_errno));
+        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                       true, opal_process_info.nodename,
+                       getpid(), "fcntl(sd, F_GETFL, 0)",
+                       strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
         return OPAL_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
-                       strerror(opal_socket_errno), opal_socket_errno));
+            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           "fcntl(sd, F_SETFL, flags & O_NONBLOCK)",
+                           strerror(opal_socket_errno), opal_socket_errno);
             CLOSE_THE_SOCKET(sd);
             return OPAL_ERROR;
         }
@@ -1081,6 +1112,7 @@ static int mca_btl_tcp_component_exchange(void)
      size_t current_addr = 0;
 
      if(mca_btl_tcp_component.tcp_num_btls != 0) {
+         char ifn[32];
          mca_btl_tcp_addr_t *addrs = (mca_btl_tcp_addr_t *)malloc(size);
          memset(addrs, 0, size);
 
@@ -1098,6 +1130,9 @@ static int mca_btl_tcp_component_exchange(void)
                      continue;
                  }
 
+                 opal_ifindextoname(index, ifn, sizeof(ifn));
+                 opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                     "btl:tcp: examining interface %s", ifn);
                  if (OPAL_SUCCESS !=
                      opal_ifindextoaddr(index, (struct sockaddr*) &my_ss,
                                         sizeof (my_ss))) {
@@ -1121,6 +1156,8 @@ static int mca_btl_tcp_component_exchange(void)
                      addrs[current_addr].addr_ifkindex =
                          opal_ifindextokindex (index);
                      current_addr++;
+                     opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                         "btl:tcp: using ipv4 interface %s", ifn);
                  } else
 #endif
                  if ((AF_INET == my_ss.ss_family) &&
@@ -1136,6 +1173,8 @@ static int mca_btl_tcp_component_exchange(void)
                      addrs[current_addr].addr_ifkindex =
                          opal_ifindextokindex (index);
                      current_addr++;
+                     opal_output_verbose(30, opal_btl_base_framework.framework_output,
+                                         "btl:tcp: using ipv6 interface %s", ifn);
                  }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
@@ -1299,45 +1338,159 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     struct sockaddr_storage addr;
     opal_socklen_t addr_len = sizeof(addr);
     mca_btl_tcp_proc_t* btl_proc;
-    int retval;
+    bool sockopt = true;
+    size_t retval, len = strlen(mca_btl_tcp_magic_id_string);
+    mca_btl_tcp_endpoint_hs_msg_t hs_msg;
+    struct timeval save, tv;
+    socklen_t rcvtimeo_save_len = sizeof(save);
+    char str[128];
+
+    /* Note, Socket will be in blocking mode during intial handshake
+     * hence setting SO_RCVTIMEO to say 2 seconds here to avoid chance 
+     * of spin forever if it tries to connect to old version
+     * as older version will send just process id which won't be long enough
+     * to cross sizeof(str) length + process id struct
+     * or when the remote side isn't OMPI where it's not going to send
+     * any data*/
+
+    /* get the current timeout value so we can reset to it */
+    if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &rcvtimeo_save_len)) {
+        if (ENOPROTOOPT == errno) {
+            sockopt = false;
+        } else {
+	    opal_output_verbose(20, opal_btl_base_framework.framework_output,
+				"Cannot get current recv timeout value of the socket"
+		                "Local_host:%s PID:%d",
+				opal_process_info.nodename, getpid());
+	    return;
+        }
+    } else {
+        tv.tv_sec = 2;
+        tv.tv_usec = 0;
+        if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+				"Cannot set new recv timeout value of the socket"
+				"Local_host:%s PID:%d",
+				opal_process_info.nodename, getpid());
+           return;
+       }
+    }
 
     OBJ_RELEASE(event);
+    retval = mca_btl_tcp_recv_blocking(sd, (void *)&hs_msg, sizeof(hs_msg));
+    guid = hs_msg.guid;  
 
-    /* recv the process identifier */
-    retval = recv(sd, (char *)&guid, sizeof(guid), 0);
-    if(retval != sizeof(guid)) {
+    /* An unknown process attempted to connect to Open MPI via TCP.
+     * Open MPI uses a "magic" string to trivially verify that the connecting
+     * process is a fellow Open MPI process.  An MPI process accepted a TCP
+     * connection but did not receive the correct magic string.  This might
+     * indicate an Open MPI version mismatch between different MPI processes
+     * in the same job, or it may indicate that some other agent is
+     * mistakenly attempting to connect to Open MPI's TCP listening sockets.
+
+     * This attempted connection will be ignored; your MPI job may or may not
+     * continue properly.
+     */
+     if (sizeof(hs_msg) != retval) {
+         opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "server did not receive entire connect ACK "
+                            "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
+                            opal_process_info.nodename,
+                            getpid(), "server",
+                            (retval > 0) ? hs_msg.magic_id : "<nothing>", 
+                            "handshake message length");
+
+         /* The other side probably isn't OMPI, so just hang up */
+         CLOSE_THE_SOCKET(sd);
+         return;
+    }
+    if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "server did not receive right magic string. "
+                            "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
+                            opal_process_info.nodename,
+                            getpid(), "server", hs_msg.magic_id,
+                            "string value");
+        /* The other side probably isn't OMPI, so just hang up */
         CLOSE_THE_SOCKET(sd);
         return;
     }
+    
+    if (sockopt) {
+       /* reset RECVTIMEO option to its original state */
+       if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sizeof(save))) {
+           opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                               "Cannot reset recv timeout value"
+                               "Local_host:%s PID:%d",
+                               opal_process_info.nodename, getpid());
+          return;
+       }
+    } 
+    
     OPAL_PROCESS_NAME_NTOH(guid);
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
-                   strerror(opal_socket_errno), opal_socket_errno));
+        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                       true, opal_process_info.nodename,
+                       getpid(), "fcntl(sd, F_GETFL, 0)",
+                       strerror(opal_socket_errno), opal_socket_errno);
+        CLOSE_THE_SOCKET(sd);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
-                       strerror(opal_socket_errno), opal_socket_errno));
+            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           "fcntl(sd, F_SETFL, flags & O_NONBLOCK)",
+                           strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
         }
     }
 
     /* lookup the corresponding process */
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if(NULL == btl_proc) {
+        opal_show_help("help-mpi-btl-tcp.txt",
+                       "server accept cannot find guid",
+                       true, opal_process_info.nodename,
+                       getpid());
         CLOSE_THE_SOCKET(sd);
         return;
     }
 
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
-        BTL_ERROR(("getpeername() failed: %s (%d)",
-                   strerror(opal_socket_errno), opal_socket_errno));
+        opal_show_help("help-mpi-btl-tcp.txt",
+                       "server getpeername failed",
+                       true, opal_process_info.nodename,
+                       getpid(),
+                       strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
         return;
     }
 
     /* are there any existing peer instances willing to accept this connection */
     (void)mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd);
+
+    switch (addr.ss_family) {
+        case AF_INET:
+            inet_ntop(AF_INET, &(((struct sockaddr_in*) &addr)->sin_addr), str, sizeof(str));
+            break;
+
+    #if OPAL_ENABLE_IPV6
+        case AF_INET6:
+            inet_ntop(AF_INET6, &(((struct sockaddr_in6*) &addr)->sin6_addr), str, sizeof(str));
+            break;
+    #endif
+
+        default:
+            BTL_ERROR(("Got an accept() from an unknown address family -- this shouldn't happen"));
+            CLOSE_THE_SOCKET(sd);
+            return;
+
+    }
+    opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                        "btl:tcp: now connected to %s, process %s", str,
+                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name));
 }
