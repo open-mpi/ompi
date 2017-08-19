@@ -322,6 +322,17 @@ opal/mca/pmix/pmix2x/pmix/include/pmix_rename.h
 opal/mca/pmix/pmix2x/pmix/include/pmix_version.h
 opal/mca/pmix/pmix2x/pmix/src/util/keyval/keyval_lex.c
 opal/mca/pmix/pmix2x/pmix/src/util/show_help_lex.c
+opal/mca/pmix/pmix2x/pmix/examples/alloc
+opal/mca/pmix/pmix2x/pmix/examples/client
+opal/mca/pmix/pmix2x/pmix/examples/debugger
+opal/mca/pmix/pmix2x/pmix/examples/debuggerd
+opal/mca/pmix/pmix2x/pmix/examples/dmodex
+opal/mca/pmix/pmix2x/pmix/examples/dynamic
+opal/mca/pmix/pmix2x/pmix/examples/fault
+opal/mca/pmix/pmix2x/pmix/examples/jctrl
+opal/mca/pmix/pmix2x/pmix/examples/pub
+opal/mca/pmix/pmix2x/pmix/examples/server
+opal/mca/pmix/pmix2x/pmix/examples/tool
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1

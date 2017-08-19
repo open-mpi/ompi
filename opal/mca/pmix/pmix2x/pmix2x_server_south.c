@@ -550,9 +550,9 @@ int pmix2x_server_notify_event(int status,
 
 
     rc = pmix2x_convert_opalrc(status);
-    /* the range is irrelevant here as the server is passing
+    /* the range must be nonlocal so the server will pass
      * the event down to its local clients */
-    rc = PMIx_Notify_event(rc, &op->p, PMIX_RANGE_LOCAL,
+    rc = PMIx_Notify_event(rc, &op->p, PMIX_RANGE_SESSION,
                            pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
