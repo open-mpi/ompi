@@ -547,8 +547,8 @@ static void _send_notification(int status,
     }
 
     if (OPAL_ERR_PROC_ABORTED == status) {
-        /* we will pass four opal_value_t's */
-        rc = 4;
+        /* we will pass three opal_value_t's */
+        rc = 3;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
@@ -569,8 +569,8 @@ static void _send_notification(int status,
         }
         OBJ_DESTRUCT(&kv);
     } else {
-        /* we are going to pass three opal_value_t's */
-        rc = 3;
+        /* we are going to pass two opal_value_t's */
+        rc = 2;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
@@ -599,20 +599,6 @@ static void _send_notification(int status,
     kv.type = OPAL_NAME;
     kv.data.name.jobid = target->jobid;
     kv.data.name.vpid = target->vpid;
-    kvptr = &kv;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        OBJ_RELEASE(buf);
-        return;
-    }
-    OBJ_DESTRUCT(&kv);
-
-    /* mark this as intended for non-default event handlers */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_PMIX_EVENT_NON_DEFAULT);
-    kv.type = OPAL_BOOL;
-    kv.data.flag = true;
     kvptr = &kv;
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
         ORTE_ERROR_LOG(rc);

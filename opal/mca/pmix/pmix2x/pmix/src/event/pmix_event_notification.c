@@ -800,8 +800,10 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_server: _notify_client_event notifying clients of event %s",
-                        PMIx_Error_string(cd->status));
+                        "pmix_server: _notify_client_event notifying clients of event %s range %s type %s",
+                        PMIx_Error_string(cd->status),
+                        PMIx_Data_range_string(cd->range),
+                        cd->nondefault ? "NONDEFAULT" : "OPEN");
 
     /* we cannot know if everyone who wants this notice has had a chance
      * to register for it - the notice may be coming too early. So cache
