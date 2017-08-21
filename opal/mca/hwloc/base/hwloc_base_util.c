@@ -310,6 +310,22 @@ int opal_hwloc_base_get_topology(void)
             free(shmemfile);
             if (0 != hwloc_shmem_topology_adopt(&opal_hwloc_topology, fd,
                                                 0, (void*)addr, size, 0)) {
+                if (4 < opal_output_get_verbosity(opal_hwloc_base_framework.framework_output)) {
+                    FILE *file = fopen("/proc/self/maps", "r");
+                    if (file) {
+                        char line[256];
+                        opal_output(0, opal_hwloc_base_framework.framework_output,
+                                    "Dumping /proc/self/maps");
+                        while (fgets(line, sizeof(line), file) != NULL) {
+                            char *end = strchr(line, '\n');
+                            if (end)
+                                *end = '\0';
+                            opal_output(0, opal_hwloc_base_framework.framework_output,
+                                        "%s", line);
+                        }
+                        fclose(file);
+                    }
+                }
                 OPAL_ERROR_LOG(OPAL_ERR_FILE_READ_FAILURE);
                 return OPAL_ERR_FILE_READ_FAILURE;
             }
