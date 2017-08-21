@@ -18,7 +18,7 @@
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -166,6 +166,9 @@ int ompi_comm_init(void)
     if ( 0 == rc ) {
         if ( strstr ( str, "BYNODE") ) {
             OMPI_COMM_SET_MAPBY_NODE(&ompi_mpi_comm_world.comm);
+        }
+        if (NULL != str) {
+            free(str);
         }
     }
     /* Setup MPI_COMM_SELF */
