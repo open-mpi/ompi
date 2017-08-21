@@ -326,13 +326,13 @@ int opal_hwloc_base_get_topology(void)
                         fclose(file);
                     }
                 }
-                OPAL_ERROR_LOG(OPAL_ERR_FILE_READ_FAILURE);
-                return OPAL_ERR_FILE_READ_FAILURE;
+                /* failed to adopt from shmem, fallback to other ways to get the topology */
+            } else {
+                opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
+                                    "hwloc:base: topology in shared memory");
+                topo_in_shmem = true;
+                return OPAL_SUCCESS;
             }
-            opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
-                                 "hwloc:base: topology in shared memory");
-            topo_in_shmem = true;
-            return OPAL_SUCCESS;
         }
 #endif
         /* if that isn't available, then try to retrieve
