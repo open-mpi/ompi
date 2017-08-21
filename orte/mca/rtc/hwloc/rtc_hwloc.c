@@ -111,6 +111,22 @@ static int init(void)
     if (ORTE_SUCCESS != (rc = find_hole(mca_rtc_hwloc_component.kind,
                                         &shmemaddr, shmemsize))) {
         /* we couldn't find a hole, so don't use the shmem support */
+        if (4 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
+            FILE *file = fopen("/proc/self/maps", "r");
+            if (file) {
+                char line[256];
+                opal_output(0, orte_rtc_base_framework.framework_output,
+                            "%s Dumping /proc/self/maps", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                while (fgets(line, sizeof(line), file) != NULL) {
+                    char *end = strchr(line, '\n');
+                    if (end)
+                       *end = '\0';
+                    opal_output(0, orte_rtc_base_framework.framework_output,
+                                "%s", line);
+                }
+                fclose(file);
+            }
+        }
         return ORTE_SUCCESS;
     }
     /* create the shmem file in our session dir so it
