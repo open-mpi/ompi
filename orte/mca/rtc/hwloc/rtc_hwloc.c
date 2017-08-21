@@ -580,7 +580,10 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
                     return use_hole(0, begin, addrp, size);
 
                 case VM_HOLE_AFTER_HEAP:
-                    if (prevmkind == VM_MAP_HEAP) {
+                    if (prevmkind == VM_MAP_HEAP && mkind != VM_MAP_HEAP) {
+                        /* only use HEAP when there's no other HEAP after it
+                         * (there can be several of them consecutively).
+                         */
                         fclose(file);
                         return use_hole(prevend, begin-prevend, addrp, size);
                     }
