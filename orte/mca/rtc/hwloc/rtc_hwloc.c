@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2017      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
