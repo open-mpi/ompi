@@ -594,15 +594,18 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
                     break;
 
                 case VM_HOLE_IN_LIBS:
+                    /* see if we are between heap and stack */
                     if (prevmkind == VM_MAP_HEAP) {
                         in_libs = 1;
                     }
                     if (mkind == VM_MAP_STACK) {
                         in_libs = 0;
                     }
-                    if (in_libs) {
+                    if (!in_libs) {
+                        /* we're not in libs, ignore this entry */
                         break;
                     }
+                    /* we're in libs, consider this entry for searching the biggest hole below */
                     /* fallthrough */
 
                 case VM_HOLE_BIGGEST:
