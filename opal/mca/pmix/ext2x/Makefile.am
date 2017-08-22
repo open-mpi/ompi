@@ -3,6 +3,7 @@
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,7 +37,8 @@ mca_pmix_ext2x_la_SOURCES = $(sources)
 mca_pmix_ext2x_la_CFLAGS = $(opal_pmix_ext2x_CFLAGS)
 mca_pmix_ext2x_la_CPPFLAGS =$(opal_pmix_ext2x_CPPFLAGS)
 mca_pmix_ext2x_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext2x_LDFLAGS)
-mca_pmix_ext2x_la_LIBADD = $(opal_pmix_ext2x_LIBS)
+mca_pmix_ext2x_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+	$(opal_pmix_ext2x_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pmix_ext2x_la_SOURCES =$(sources)

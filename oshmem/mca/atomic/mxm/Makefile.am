@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,7 +34,8 @@ endif
 mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_atomic_mxm_la_SOURCES = $(mxm_sources)
-mca_atomic_mxm_la_LIBADD = $(atomic_mxm_LIBS)
+mca_atomic_mxm_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
+	$(atomic_mxm_LIBS)
 mca_atomic_mxm_la_LDFLAGS = -module -avoid-version $(atomic_mxm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

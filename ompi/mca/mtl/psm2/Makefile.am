@@ -14,6 +14,7 @@
 # Copyright (c) 2017      Los Alamos National Security, LLC.
 #                         All rights reserved.
 #   
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -56,7 +57,8 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_psm2_la_SOURCES = $(mtl_psm2_sources)
-mca_mtl_psm2_la_LIBADD = $(mtl_psm2_LIBS)
+mca_mtl_psm2_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(mtl_psm2_LIBS)
 mca_mtl_psm2_la_LDFLAGS = -module -avoid-version $(mtl_psm2_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

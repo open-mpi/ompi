@@ -12,6 +12,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
 # Copyright (c) 2014      Bull SAS.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -47,7 +48,7 @@ local_sources = \
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_portals4_la_SOURCES = $(local_sources)
-mca_btl_portals4_la_LIBADD = \
+mca_btl_portals4_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
     $(btl_portals4_LIBS)
 mca_btl_portals4_la_LDFLAGS = -module -avoid-version $(btl_portals4_LDFLAGS)
 

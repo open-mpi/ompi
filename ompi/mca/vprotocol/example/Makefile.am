@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
 #                         All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,7 +37,7 @@ local_sources = \
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_vprotocol_example_la_SOURCES = $(local_sources)
-mca_vprotocol_example_la_LIBADD =
+mca_vprotocol_example_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 mca_vprotocol_example_la_CFLAGS =
 mca_vprotocol_example_la_LDFLAGS = -module -avoid-version
 

@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,6 +38,7 @@ mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_singleton_la_SOURCES = $(sources)
 mca_ess_singleton_la_LDFLAGS = -module -avoid-version
+mca_ess_singleton_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ess_singleton_la_SOURCES =$(sources)

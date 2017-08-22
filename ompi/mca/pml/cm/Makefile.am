@@ -4,6 +4,7 @@
 # Copyright (c) 2009      High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -42,7 +43,8 @@ local_sources = \
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_cm_la_SOURCES = $(local_sources)
-mca_pml_cm_la_LIBADD = $(pml_cm_LIBS)
+mca_pml_cm_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(pml_cm_LIBS)
 mca_pml_cm_la_LDFLAGS = -module -avoid-version $(pml_cm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
