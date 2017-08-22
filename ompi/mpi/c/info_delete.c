@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,5 +79,14 @@ int MPI_Info_delete(MPI_Info info, const char *key) {
     OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_info_delete (info, key);
+
+    // Note that ompi_info_delete() (i.e., opal_info_delete()) will
+    // return OPAL_ERR_NOT_FOUND if there was no corresponding key to
+    // delete.  Per MPI-3.1, we need to convert that to
+    // MPI_ERR_INFO_NOKEY.
+    if (OPAL_ERR_NOT_FOUND == err) {
+        err = MPI_ERR_INFO_NOKEY;
+    }
+
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }
