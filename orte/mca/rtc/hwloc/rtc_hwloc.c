@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2017      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -111,6 +112,22 @@ static int init(void)
     if (ORTE_SUCCESS != (rc = find_hole(mca_rtc_hwloc_component.kind,
                                         &shmemaddr, shmemsize))) {
         /* we couldn't find a hole, so don't use the shmem support */
+        if (4 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
+            FILE *file = fopen("/proc/self/maps", "r");
+            if (file) {
+                char line[256];
+                opal_output(0, orte_rtc_base_framework.framework_output,
+                            "%s Dumping /proc/self/maps", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                while (fgets(line, sizeof(line), file) != NULL) {
+                    char *end = strchr(line, '\n');
+                    if (end)
+                       *end = '\0';
+                    opal_output(0, orte_rtc_base_framework.framework_output,
+                                "%s", line);
+                }
+                fclose(file);
+            }
+        }
         return ORTE_SUCCESS;
     }
     /* create the shmem file in our session dir so it
@@ -580,7 +597,10 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
                     return use_hole(0, begin, addrp, size);
 
                 case VM_HOLE_AFTER_HEAP:
-                    if (prevmkind == VM_MAP_HEAP) {
+                    if (prevmkind == VM_MAP_HEAP && mkind != VM_MAP_HEAP) {
+                        /* only use HEAP when there's no other HEAP after it
+                         * (there can be several of them consecutively).
+                         */
                         fclose(file);
                         return use_hole(prevend, begin-prevend, addrp, size);
                     }
@@ -594,15 +614,18 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
                     break;
 
                 case VM_HOLE_IN_LIBS:
+                    /* see if we are between heap and stack */
                     if (prevmkind == VM_MAP_HEAP) {
                         in_libs = 1;
                     }
                     if (mkind == VM_MAP_STACK) {
                         in_libs = 0;
                     }
-                    if (in_libs) {
+                    if (!in_libs) {
+                        /* we're not in libs, ignore this entry */
                         break;
                     }
+                    /* we're in libs, consider this entry for searching the biggest hole below */
                     /* fallthrough */
 
                 case VM_HOLE_BIGGEST:
