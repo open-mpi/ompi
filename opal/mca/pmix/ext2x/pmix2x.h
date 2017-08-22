@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_PMIX_PMIX2X_H
-#define MCA_PMIX_PMIX2X_H
+#ifndef MCA_PMIX_EXT2X_H
+#define MCA_PMIX_EXT2X_H
 
 #include "opal_config.h"
 
@@ -37,6 +37,12 @@
 
 BEGIN_C_DECLS
 
+#ifdef OPAL_C_HAVE_VISIBILITY
+#define PMIX_HAVE_VISIBILITY 1
+#else
+#undef PMIX_HAVE_VISIBILITY
+#endif
+
 typedef struct {
   opal_pmix_base_component_t super;
   opal_list_t jobids;
@@ -46,6 +52,7 @@ typedef struct {
   int cache_size;
   opal_list_t cache;
   opal_list_t dmdx;
+  bool silence_warning;
 } mca_pmix_ext2x_component_t;
 
 OPAL_DECLSPEC extern mca_pmix_ext2x_component_t mca_pmix_ext2x_component;
@@ -249,6 +256,10 @@ OPAL_MODULE_DECLSPEC int ext2x_disconnectnb(opal_list_t *procs,
 OPAL_MODULE_DECLSPEC int ext2x_resolve_peers(const char *nodename, opal_jobid_t jobid,
                                              opal_list_t *procs);
 OPAL_MODULE_DECLSPEC int ext2x_resolve_nodes(opal_jobid_t jobid, char **nodelist);
+
+/****  TOOL FUNCTIONS  ****/
+OPAL_MODULE_DECLSPEC int ext2x_tool_init(opal_list_t *info);
+OPAL_MODULE_DECLSPEC int ext2x_tool_fini(void);
 
 /****  COMMON FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int ext2x_store_local(const opal_process_name_t *proc,

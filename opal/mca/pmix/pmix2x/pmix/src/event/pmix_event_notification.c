@@ -126,7 +126,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         msg = PMIX_NEW(pmix_buffer_t);
 
         /* pack the command */
-        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, &cmd, 1, PMIX_CMD);
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, &cmd, 1, PMIX_COMMAND);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
@@ -800,10 +800,8 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_server: _notify_client_event notifying clients of event %s range %s type %s",
-                        PMIx_Error_string(cd->status),
-                        PMIx_Data_range_string(cd->range),
-                        cd->nondefault ? "NONDEFAULT" : "OPEN");
+                        "pmix_server: _notify_client_event notifying clients of event %s",
+                        PMIx_Error_string(cd->status));
 
     /* we cannot know if everyone who wants this notice has had a chance
      * to register for it - the notice may be coming too early. So cache
@@ -858,7 +856,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                         continue;
                     }
                     /* pack the command */
-                    PMIX_BFROPS_PACK(rc, pr->peer, bfr, &cmd, 1, PMIX_CMD);
+                    PMIX_BFROPS_PACK(rc, pr->peer, bfr, &cmd, 1, PMIX_COMMAND);
                     if (PMIX_SUCCESS != rc) {
                         PMIX_ERROR_LOG(rc);
                         PMIX_RELEASE(bfr);

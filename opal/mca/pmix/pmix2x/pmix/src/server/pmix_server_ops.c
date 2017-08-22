@@ -1497,7 +1497,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
                 return PMIX_ERR_NOMEM;
             }
             /* pack the info data stored in the event */
-            PMIX_BFROPS_PACK(rc, peer, relay, &cmd, 1, PMIX_CMD);
+            PMIX_BFROPS_PACK(rc, peer, relay, &cmd, 1, PMIX_COMMAND);
             if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
                 break;

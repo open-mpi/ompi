@@ -1040,7 +1040,7 @@ pmix_status_t pmix_bfrops_base_print_cmd(char **output, char *prefix,
         prefx = prefix;
     }
 
-    if (0 > asprintf(output, "%sData type: PMIX_CMD\tValue: %s",
+    if (0 > asprintf(output, "%sData type: PMIX_COMMAND\tValue: %s",
                      prefx, pmix_command_string(*src))) {
         return PMIX_ERR_NOMEM;
     }

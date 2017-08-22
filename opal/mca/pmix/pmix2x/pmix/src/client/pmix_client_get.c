@@ -215,7 +215,7 @@ static pmix_buffer_t* _pack_get(char *nspace, pmix_rank_t rank,
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the get cmd */
     PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                     msg, &cmd, 1, PMIX_CMD);
+                     msg, &cmd, 1, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);

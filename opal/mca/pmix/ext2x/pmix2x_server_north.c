@@ -921,12 +921,15 @@ static void info_cbfunc(int status,
     pcaddy->status = ext2x_convert_opalrc(status);
 
     /* convert the list to a pmix_info_t array */
-    if (NULL != info && 0 < (pcaddy->ninfo = opal_list_get_size(info))) {
-        PMIX_INFO_CREATE(pcaddy->info, pcaddy->ninfo);
-        n = 0;
-        OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-            (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-            ext2x_value_load(&pcaddy->info[n].value, kv);
+    if (NULL != info) {
+        pcaddy->ninfo = opal_list_get_size(info);
+        if (0 < pcaddy->ninfo) {
+            PMIX_INFO_CREATE(pcaddy->info, pcaddy->ninfo);
+            n = 0;
+            OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+                (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+                ext2x_value_load(&pcaddy->info[n].value, kv);
+            }
         }
     }
     /* we are done with the incoming data */
@@ -977,7 +980,7 @@ static pmix_status_t server_query(pmix_proc_t *proct,
 
     /* convert the queries */
     for (n=0; n < nqueries; n++) {
-            q = OBJ_NEW(opal_pmix_query_t);
+        q = OBJ_NEW(opal_pmix_query_t);
         /* we "borrow" the info field of the caddy as we and the
          * server function both agree on what will be there */
         opal_list_append(&opalcaddy->info, &q->super);
@@ -1024,7 +1027,9 @@ static void toolcbfunc(int status,
         job = OBJ_NEW(opal_ext2x_jobid_trkr_t);
         (void)strncpy(job->nspace, p.nspace, PMIX_MAX_NSLEN);
         job->jobid = proc.jobid;
+        OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
         opal_list_append(&mca_pmix_ext2x_component.jobids, &job->super);
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     }
 
     /* pass it down */

@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -29,11 +29,14 @@
 #include "opal/hash_string.h"
 #include "opal/threads/threads.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
 #include "opal/mca/pmix/base/base.h"
 #include "pmix2x.h"
 #include "pmix.h"
+#include "pmix_tool.h"
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
@@ -97,7 +100,9 @@ int ext2x_client_init(opal_list_t *ilist)
         PMIX_INFO_FREE(pinfo, ninfo);
     }
     if (PMIX_SUCCESS != rc) {
-        return ext2x_convert_rc(rc);
+        dbg = ext2x_convert_rc(rc);
+        OPAL_ERROR_LOG(dbg);
+        return dbg;
     }
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
@@ -162,7 +167,7 @@ int ext2x_client_finalize(void)
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     --opal_pmix_base.initialized;
 
-    if (0 < opal_pmix_base.initialized) {
+    if (0 == opal_pmix_base.initialized) {
         /* deregister all event handlers */
         OPAL_LIST_FOREACH_SAFE(event, ev2, &mca_pmix_ext2x_component.events, opal_ext2x_event_t) {
             OPAL_PMIX_DESTRUCT_LOCK(&event->lock);
@@ -174,11 +179,124 @@ int ext2x_client_finalize(void)
         }
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-
     rc = PMIx_Finalize(NULL, 0);
 
     return ext2x_convert_rc(rc);
 }
+
+int ext2x_tool_init(opal_list_t *info)
+{
+    pmix_info_t *pinfo;
+    size_t ninfo, n;
+    opal_ext2x_jobid_trkr_t *job;
+    opal_value_t *val;
+    pmix_status_t rc;
+    int ret;
+    opal_process_name_t pname;
+    opal_ext2x_event_t *event;
+
+    opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                        "PMIx_tool init");
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+
+    /* convert the incoming list to info structs */
+    if (NULL != info && 0 < (ninfo = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(pinfo, ninfo);
+        n=0;
+        OPAL_LIST_FOREACH(val, info, opal_value_t) {
+            (void)strncpy(pinfo[n].key, val->key, PMIX_MAX_KEYLEN);
+            ext2x_value_load(&pinfo[n].value, val);
+            ++n;
+        }
+    } else {
+        pinfo = NULL;
+        ninfo = 0;
+    }
+
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+    rc = PMIx_tool_init(&my_proc, pinfo, ninfo);
+    if (NULL != pinfo) {
+        PMIX_INFO_FREE(pinfo, ninfo);
+    }
+    if (PMIX_SUCCESS != rc) {
+        ret = ext2x_convert_rc(rc);
+        OPAL_ERROR_LOG(ret);
+        return ret;
+    }
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+
+    ++opal_pmix_base.initialized;
+    if (1 < opal_pmix_base.initialized) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+        return OPAL_SUCCESS;
+    }
+
+    /* store our jobid and rank */
+    if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
+        /* if we were launched by the OMPI RTE, then
+         * the jobid is in a special format - so get it */
+        mca_pmix_ext2x_component.native_launch = true;
+        opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
+    } else {
+        /* we were launched by someone else, so make the
+         * jobid just be the hash of the nspace */
+        OPAL_HASH_JOBID(my_proc.nspace, pname.jobid);
+    }
+    /* insert this into our list of jobids - it will be the
+     * first, and so we'll check it first */
+    job = OBJ_NEW(opal_ext2x_jobid_trkr_t);
+    (void)strncpy(job->nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+    job->jobid = pname.jobid;
+    opal_list_append(&mca_pmix_ext2x_component.jobids, &job->super);
+
+    pname.vpid = ext2x_convert_rank(my_proc.rank);
+    opal_proc_set_name(&pname);
+
+    /* release the thread in case the event handler fires when
+     * registered */
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+
+    /* register the default event handler */
+    event = OBJ_NEW(opal_ext2x_event_t);
+    opal_list_append(&mca_pmix_ext2x_component.events, &event->super);
+    PMIX_INFO_CREATE(pinfo, 1);
+    PMIX_INFO_LOAD(&pinfo[0], PMIX_EVENT_HDLR_NAME, "OPAL-PMIX-2X-DEFAULT", PMIX_STRING);
+    PMIx_Register_event_handler(NULL, 0, NULL, 0, ext2x_event_hdlr, errreg_cbfunc, event);
+    OPAL_PMIX_WAIT_THREAD(&event->lock);
+    PMIX_INFO_FREE(pinfo, 1);
+
+    return OPAL_SUCCESS;
+}
+
+int ext2x_tool_fini(void)
+{
+    pmix_status_t rc;
+    opal_ext2x_event_t *event, *ev2;
+
+    opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                        "PMIx_tool finalize");
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    --opal_pmix_base.initialized;
+
+    if (0 == opal_pmix_base.initialized) {
+        /* deregister all event handlers */
+        OPAL_LIST_FOREACH_SAFE(event, ev2, &mca_pmix_ext2x_component.events, opal_ext2x_event_t) {
+            OPAL_PMIX_DESTRUCT_LOCK(&event->lock);
+            OPAL_PMIX_CONSTRUCT_LOCK(&event->lock);
+            PMIx_Deregister_event_handler(event->index, dereg_cbfunc, (void*)event);
+            OPAL_PMIX_WAIT_THREAD(&event->lock);
+            opal_list_remove_item(&mca_pmix_ext2x_component.events, &event->super);
+            OBJ_RELEASE(event);
+        }
+    }
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+    rc = PMIx_tool_finalize();
+
+    return ext2x_convert_rc(rc);
+}
+
 
 int ext2x_initialized(void)
 {
@@ -244,6 +362,7 @@ int ext2x_store_local(const opal_process_name_t *proc, opal_value_t *val)
     pmix_status_t rc;
     pmix_proc_t p;
     char *nsptr;
+    opal_ext2x_jobid_trkr_t *job;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
@@ -255,7 +374,13 @@ int ext2x_store_local(const opal_process_name_t *proc, opal_value_t *val)
 
     if (NULL != proc) {
         if (NULL == (nsptr = ext2x_convert_jobid(proc->jobid))) {
-            return OPAL_ERR_NOT_FOUND;
+            job = OBJ_NEW(opal_ext2x_jobid_trkr_t);
+            (void)opal_snprintf_jobid(job->nspace, PMIX_MAX_NSLEN, proc->jobid);
+            job->jobid = proc->jobid;
+            OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+            opal_list_append(&mca_pmix_ext2x_component.jobids, &job->super);
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+            nsptr = job->nspace;
         }
         (void)strncpy(p.nspace, nsptr, PMIX_MAX_NSLEN);
         p.rank = ext2x_convert_opalrank(proc->vpid);
@@ -306,7 +431,7 @@ int ext2x_fence(opal_list_t *procs, int collect_data)
     pmix_status_t rc;
     opal_namelist_t *ptr;
     char *nsptr;
-    size_t cnt, n;
+    size_t cnt = 0, n;
     pmix_proc_t *parray = NULL;
     pmix_info_t info, *iptr;
 
@@ -450,6 +575,7 @@ int ext2x_get(const opal_process_name_t *proc, const char *key,
     size_t sz = 0, n;
     opal_value_t *ival;
     pmix_value_t *pval = NULL;
+    int ret;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "%s ext2x:client get on proc %s key %s",
@@ -508,8 +634,11 @@ int ext2x_get(const opal_process_name_t *proc, const char *key,
     rc = PMIx_Get(&p, key, pinfo, sz, &pval);
     if (PMIX_SUCCESS == rc) {
         ival = OBJ_NEW(opal_value_t);
-        ext2x_value_unload(ival, pval);
-        *val = ival;
+        if (OPAL_SUCCESS != (ret = ext2x_value_unload(ival, pval))) {
+            rc = ext2x_convert_opalrc(ret);
+        } else {
+            *val = ival;
+        }
         PMIX_VALUE_FREE(pval, 1);
     }
     PMIX_INFO_FREE(pinfo, sz);
@@ -713,9 +842,10 @@ int ext2x_lookup(opal_list_t *data, opal_list_t *info)
     pmix_pdata_t *pdata;
     pmix_info_t *pinfo = NULL;
     pmix_status_t rc;
-    size_t cnt, n, sz;
+    size_t cnt, n, sz = 0;
     opal_value_t *iptr;
     opal_ext2x_jobid_trkr_t *jptr, *job;
+    int ret;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "ext2x:client lookup");
@@ -777,7 +907,9 @@ int ext2x_lookup(opal_list_t *data, opal_list_t *info)
                 opal_list_append(&mca_pmix_ext2x_component.jobids, &job->super);
             }
             d->proc.vpid = ext2x_convert_rank(pdata[n].proc.rank);
-            ext2x_value_unload(&d->value, &pdata[n].value);
+            if (OPAL_SUCCESS != (ret = ext2x_value_unload(&d->value, &pdata[n].value))) {
+                OPAL_ERROR_LOG(ret);
+            }
         }
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     }
@@ -971,7 +1103,7 @@ int ext2x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
     pmix_status_t rc;
     pmix_info_t *info = NULL;
     pmix_app_t *papps;
-    size_t ninfo, napps, n, m;
+    size_t ninfo = 0, napps, n, m;
     opal_value_t *ival;
     opal_pmix_app_t *app;
     char nspace[PMIX_MAX_NSLEN+1];
@@ -1047,7 +1179,7 @@ static void spcbfunc(pmix_status_t status,
 {
     ext2x_opcaddy_t *op = (ext2x_opcaddy_t*)cbdata;
     opal_ext2x_jobid_trkr_t *job;
-    opal_jobid_t jobid;
+    opal_jobid_t jobid = OPAL_JOBID_INVALID;
     int rc;
 
     OPAL_ACQUIRE_OBJECT(op);
