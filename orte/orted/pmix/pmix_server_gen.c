@@ -35,6 +35,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pstat/pstat.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -635,6 +636,47 @@ static void _query(int sd, short args, void *cbdata)
                 } else {
                     opal_list_append(results, &kv->super);
                 }
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_HWLOC_XML_V1)) {
+                if (NULL != opal_hwloc_topology) {
+                    char *xmlbuffer=NULL;
+                    int len;
+                    kv = OBJ_NEW(opal_value_t);
+                    kv->key = strdup(OPAL_PMIX_HWLOC_XML_V1);
+                    #if HWLOC_API_VERSION < 0x20000
+                        /* get this from the v1.x API */
+                        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
+                            OBJ_RELEASE(kv);
+                            continue;
+                        }
+                    #else
+                        /* get it from the v2 API */
+                        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len,
+                                                                 HWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1)) {
+                            OBJ_RELEASE(kv);
+                            continue;
+                        }
+                    #endif
+                    kv->data.string = xmlbuffer;
+                    kv->type = OPAL_STRING;
+                    opal_list_append(results, &kv->super);
+                }
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_HWLOC_XML_V2)) {
+                /* we cannot provide it if we are using v1.x */
+                #if HWLOC_API_VERSION >= 0x20000
+                    if (NULL != opal_hwloc_topology) {
+                        char *xmlbuffer=NULL;
+                        int len;
+                        kv = OBJ_NEW(opal_value_t);
+                        kv->key = strdup(OPAL_PMIX_HWLOC_XML_V2);
+                        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len, 0)) {
+                            OBJ_RELEASE(kv);
+                            continue;
+                        }
+                        kv->data.string = xmlbuffer;
+                        kv->type = OPAL_STRING;
+                        opal_list_append(results, &kv->super);
+                    }
+                #endif
             }
         }
     }

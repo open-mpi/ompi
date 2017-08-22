@@ -163,6 +163,47 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
 
 /**
  * Provide a simplified macro for retrieving modex data
+ * from another process when we want the PMIx module
+ * to request it from the server if not found, but do not
+ * want the server to go find it if the server doesn't
+ * already have it:
+ *
+ * r - the integer return status from the modex op (int)
+ * s - string key (char*)
+ * p - pointer to the opal_process_name_t of the proc that posted
+ *     the data (opal_process_name_t*)
+ * d - pointer to a location wherein the data object
+ *     is to be returned
+ * t - the expected data type
+ */
+#define OPAL_MODEX_RECV_VALUE_IMMEDIATE(r, s, p, d, t)                                   \
+    do {                                                                                 \
+        opal_value_t *_kv, *_info;                                                       \
+        opal_list_t _ilist;                                                              \
+        opal_output_verbose(1, opal_pmix_verbose_output,                                \
+                            "%s[%s:%d] MODEX RECV VALUE IMMEDIATE FOR PROC %s KEY %s",   \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                          \
+                            __FILE__, __LINE__,                                          \
+                            OPAL_NAME_PRINT(*(p)), (s));                                \
+        OBJ_CONSTRUCT(&(_ilist), opal_list_t);                                           \
+        _info = OBJ_NEW(opal_value_t);                                                   \
+        _info->key = strdup(OPAL_PMIX_IMMEDIATE);                                        \
+        _info->type = OPAL_BOOL;                                                         \
+        _info->data.flag = true;                                                         \
+        opal_list_append(&(_ilist), &(_info)->super);                                    \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_ilist), &(_kv)))) {        \
+            if (NULL == _kv) {                                                           \
+                (r) = OPAL_ERR_NOT_FOUND;                                                \
+            } else {                                                                     \
+                (r) = opal_value_unload(_kv, (void**)(d), (t));                          \
+                OBJ_RELEASE(_kv);                                                        \
+            }                                                                            \
+        }                                                                                \
+        OPAL_LIST_DESTRUCT(&(_ilist));                                                   \
+    } while(0);
+
+/**
+ * Provide a simplified macro for retrieving modex data
  * from another process:
  *
  * r - the integer return status from the modex op (int)

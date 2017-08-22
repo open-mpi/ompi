@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -151,7 +151,7 @@ int ompi_comm_init(void)
        because MPI_COMM_WORLD has some predefined attributes. */
     ompi_attr_hash_init(&ompi_mpi_comm_world.comm.c_keyhash);
 
-    /* Check for the binding policy used. We are only interested in 
+    /* Check for the binding policy used. We are only interested in
        whether mapby-node has been set right now (could be extended later)
        and only on MPI_COMM_WORLD, since for all other sub-communicators
        it is virtually impossible to identify their layout across nodes
@@ -161,9 +161,9 @@ int ompi_comm_init(void)
     opal_process_name_t wildcard = {ORTE_PROC_MY_NAME->jobid, OPAL_VPID_WILDCARD};
     char *str=NULL;
     int rc;
-    
+
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_MAPBY, &wildcard, &str, OPAL_STRING);
-    if ( 0 == rc ) {
+    if ( 0 == rc && NULL != str) {
         if ( strstr ( str, "BYNODE") ) {
             OMPI_COMM_SET_MAPBY_NODE(&ompi_mpi_comm_world.comm);
         }

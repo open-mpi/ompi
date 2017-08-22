@@ -245,6 +245,7 @@ static void qcon(pmix_query_caddy_t *p)
     p->info = NULL;
     p->ninfo = 0;
     p->cbfunc = NULL;
+    p->valcbfunc = NULL;
     p->cbdata = NULL;
     p->relcbfunc = NULL;
 }

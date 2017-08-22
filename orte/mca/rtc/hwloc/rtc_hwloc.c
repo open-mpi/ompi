@@ -116,14 +116,14 @@ static int init(void)
             FILE *file = fopen("/proc/self/maps", "r");
             if (file) {
                 char line[256];
-                opal_output(0, orte_rtc_base_framework.framework_output,
-                            "%s Dumping /proc/self/maps", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                opal_output(0, "%s Dumping /proc/self/maps",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 while (fgets(line, sizeof(line), file) != NULL) {
                     char *end = strchr(line, '\n');
-                    if (end)
+                    if (end) {
                        *end = '\0';
-                    opal_output(0, orte_rtc_base_framework.framework_output,
-                                "%s", line);
+                    }
+                    opal_output(0, "%s", line);
                 }
                 fclose(file);
             }
