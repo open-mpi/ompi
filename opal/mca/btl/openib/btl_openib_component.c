@@ -2350,8 +2350,8 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL == hwloc_distances) {
         #if HWLOC_API_VERSION < 0x20000
             hwloc_distances =
-                hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
-                                                        HWLOC_OBJ_NODE);
+                (struct hwloc_distances_s*)hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
+                                                                                   HWLOC_OBJ_NODE);
             /* If we got no info, just return 0 */
             if (NULL == hwloc_distances || NULL == hwloc_distances->latency) {
                 goto out;
@@ -2559,7 +2559,7 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         hwloc_bitmap_free(my_cpuset);
     }
 
-#if HWLOC_API_VERSION < 0x20000
+#if HWLOC_API_VERSION >= 0x20000
     if (NULL != hwloc_distances) {
         hwloc_distances_release(opal_hwloc_topology, hwloc_distances);
     }
