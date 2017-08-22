@@ -319,6 +319,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* do a final bozo check */
     if (NULL == nspace || PMIX_RANK_WILDCARD == rank) {
+        if (NULL != nspace) {
+            free(nspace);
+        }
         CLOSE_THE_SOCKET(sd);
         return PMIX_ERR_UNREACH;
     }
