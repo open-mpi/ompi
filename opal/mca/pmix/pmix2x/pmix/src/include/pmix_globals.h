@@ -69,7 +69,6 @@ PMIX_CLASS_DECLARATION(pmix_namelist_t);
 /* define a command type for communicating to the
  * pmix server */
 typedef uint32_t pmix_cmd_t;
-#define PMIX_CMD PMIX_UINT32
 
 /* define some commands */
 #define PMIX_REQ_CMD             0

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -9,6 +9,8 @@
 #
 # $HEADER$
 #
+
+dist_opaldata_DATA = help-pmix-ext2x.txt
 
 sources = \
         pmix2x.h \

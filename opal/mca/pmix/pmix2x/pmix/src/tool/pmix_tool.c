@@ -100,7 +100,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
 
     cnt=1;
     PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
-                       buf, &cmd, &cnt, PMIX_CMD);
+                       buf, &cmd, &cnt, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         goto error;
@@ -652,7 +652,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
     PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                     msg, &cmd, 1, PMIX_CMD);
+                     msg, &cmd, 1, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);

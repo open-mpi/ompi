@@ -111,7 +111,7 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
 
     cnt=1;
     PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
-                       buf, &cmd, &cnt, PMIX_CMD);
+                       buf, &cmd, &cnt, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(chain);
@@ -537,7 +537,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
      * blocking operations and error out if we try them. */
      req = PMIX_NEW(pmix_buffer_t);
      PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                      req, &cmd, 1, PMIX_CMD);
+                      req, &cmd, 1, PMIX_COMMAND);
      if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(req);
@@ -688,7 +688,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         msg = PMIX_NEW(pmix_buffer_t);
         /* pack the cmd */
         PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                         msg, &cmd, 1, PMIX_CMD);
+                         msg, &cmd, 1, PMIX_COMMAND);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(msg);
@@ -781,7 +781,7 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
     bfr = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
     PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                     bfr, &cmd, 1, PMIX_CMD);
+                     bfr, &cmd, 1, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(bfr);
@@ -955,7 +955,7 @@ static void _commitfn(int sd, short args, void *cbdata)
     msgout = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
     PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
-                     msgout, &cmd, 1, PMIX_CMD);
+                     msgout, &cmd, 1, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msgout);

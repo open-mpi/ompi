@@ -2097,7 +2097,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
 
     /* retrieve the cmd */
     cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &cmd, &cnt, PMIX_CMD);
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &cmd, &cnt, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return rc;
