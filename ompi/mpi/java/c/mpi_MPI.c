@@ -16,7 +16,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,7 +87,6 @@
 ompi_java_globals_t ompi_java = {0};
 int ompi_mpi_java_eager = 65536;
 opal_free_list_t ompi_java_buffers = {{{0}}};
-static void *libmpi = NULL;
 
 static void bufferConstructor(ompi_java_buffer_t *item)
 {
@@ -108,27 +107,6 @@ OBJ_CLASS_INSTANCE(ompi_java_buffer_t,
  * Class:    mpi_MPI
  * Method:   loadGlobalLibraries
  *
- * Java implementations typically default to loading dynamic
- * libraries strictly to a local namespace. This breaks the
- * Open MPI model where components reference back up to the
- * base libraries (e.g., libmpi) as it requires that the
- * symbols in those base libraries be globally available.
- *
- * One option, of course, is to build with --disable-dlopen.
- * However, this would preclude the ability to pickup 3rd-party
- * binary plug-ins at time of execution. This is a valuable
- * capability that would be a negative factor towards use of
- * the Java bindings.
- *
- * The other option is to explicitly dlopen libmpi ourselves
- * and instruct dlopen to add all those symbols to the global
- * namespace. This must be done prior to calling any MPI
- * function (e.g., MPI_Init) or else Java will have already
- * loaded the library to the local namespace. So create a
- * special JNI entry point that just loads the required libmpi
- * to the global namespace and call it first (see MPI.java),
- * thus making all symbols available to subsequent dlopen calls
- * when opening OMPI components.
  */
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -136,41 +114,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
     // the library (see comment in the function for more detail).
     opal_init_psm();
 
-    libmpi = dlopen("lib" OMPI_LIBMPI_NAME "." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
-
-#if defined(HAVE_DL_INFO) && defined(HAVE_LIBGEN_H)
-    /*
-     * OS X El Capitan does not propagate DYLD_LIBRARY_PATH to children any more
-     * so if previous dlopen failed, try to open libmpi in the same directory
-     * than the current libmpi_java
-     */
-    if(NULL == libmpi) {
-        Dl_info info;
-        if(0 != dladdr((void *)JNI_OnLoad, &info)) {
-            char libmpipath[OPAL_PATH_MAX];
-            char *libmpijavapath = strdup(info.dli_fname);
-            if (NULL != libmpijavapath) {
-                snprintf(libmpipath, OPAL_PATH_MAX-1, "%s/lib" OMPI_LIBMPI_NAME "." OPAL_DYN_LIB_SUFFIX, dirname(libmpijavapath));
-                free(libmpijavapath);
-                libmpi = dlopen(libmpipath, RTLD_NOW | RTLD_GLOBAL);
-            }
-        }
-    }
-#endif
-
-    if(NULL == libmpi)
-    {
-        fprintf(stderr, "Java bindings failed to load lib" OMPI_LIBMPI_NAME ": %s\n",dlerror());
-        exit(1);
-    }
-
     return JNI_VERSION_1_6;
-}
-
-void JNI_OnUnload(JavaVM *vm, void *reserved)
-{
-    if(libmpi != NULL)
-        dlclose(libmpi);
 }
 
 static void initFreeList(void)
