@@ -552,9 +552,12 @@ int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
     while (cnt < size) {
         int retval = recv(sd, ((char *)ptr) + cnt, size - cnt, 0);
         /* remote closed connection */
-        if (0 == retval) {
+        if (0 == retval && 0 == cnt) {
+            /* nothing was read at all, this might be fine, so simply returns */
+            return 0;
+        } else if (0 == retval) {
             BTL_ERROR(("remote peer unexpectedly closed connection while I was waiting for blocking message"));
-            return -1;
+            return cnt;
         }
 
         /* socket is non-blocking so handle errors */
