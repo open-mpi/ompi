@@ -39,7 +39,7 @@
 #include "coll_basic.h"
 #include "ompi/op/op.h"
 
-#define COMMUTATIVE_LONG_MSG 8 * 1024 * 1024
+#define COMMUTATIVE_LONG_MSG (8 * 1024 * 1024)
 
 /*
  *	reduce_scatter
@@ -60,7 +60,7 @@
  * usage for the recusive halving is msg_size + 2 * comm_size greater
  * for the recursive halving, so I've limited where the recursive
  * halving is used to be nice to the app memory wise.  There are much
- * better algorithms for large messages with cummutative operations,
+ * better algorithms for large messages with commutative operations,
  * so this should be investigated further.
  */
 int

@@ -352,6 +352,7 @@ opal_datatype_span( const opal_datatype_t* pData, int64_t count,
     ptrdiff_t extent = (pData->ub - pData->lb);
     ptrdiff_t true_extent = (pData->true_ub - pData->true_lb);
     if (OPAL_UNLIKELY(0 == pData->size) || (0 == count)) {
+        *gap = 0;
         return 0;
     }
     *gap = pData->true_lb;

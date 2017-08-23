@@ -315,6 +315,7 @@ int opal_hwloc_base_get_topology(void)
                     if (file) {
                         char line[256];
                         opal_output(0, "Dumping /proc/self/maps");
+
                         while (fgets(line, sizeof(line), file) != NULL) {
                             char *end = strchr(line, '\n');
                             if (end) {

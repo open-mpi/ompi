@@ -57,7 +57,6 @@ static inline void mca_common_monitoring_coll_check_name(mca_monitoring_coll_dat
 
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
-    int world_rank;
     if( NULL == data->comm_name && 0 < strlen(data->p_comm->c_name) ) {
         data->comm_name = strdup(data->p_comm->c_name);
     } else {
@@ -70,7 +69,7 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
     }
     /* Only list procs if the hashtable is already initialized, ie if the previous call worked */
     if( (-1 != data->world_rank) && (NULL == data->procs || 0 == strlen(data->procs)) ) {
-        int i, pos = 0, size, world_size = -1, max_length;
+        int i, pos = 0, size, world_size = -1, max_length, world_rank;
         char*tmp_procs;
         size = ompi_comm_size(data->p_comm);
         world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
@@ -84,8 +83,8 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
             tmp_procs[0] = '\0';
             /* Build procs list */
             for(i = 0; i < size; ++i) {
-                mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank);
-                pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
+                if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank) )
+                    pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
             }
             tmp_procs[pos - 1] = '\0'; /* Remove final coma */
             data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust to size required */
