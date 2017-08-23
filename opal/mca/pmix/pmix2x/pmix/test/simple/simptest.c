@@ -863,6 +863,7 @@ static pmix_status_t query_fn(pmix_proc_t *proct,
     /* keep this simple */
     PMIX_INFO_CREATE(info, nqueries);
     for (n=0; n < nqueries; n++) {
+        pmix_output(0, "\tKey: %s", queries[n].keys[0]);
         (void)strncpy(info[n].key, queries[n].keys[0], PMIX_MAX_KEYLEN);
         info[n].value.type = PMIX_STRING;
         if (0 > asprintf(&info[n].value.data.string, "%d", (int)n)) {

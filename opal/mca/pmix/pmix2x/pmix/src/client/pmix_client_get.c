@@ -418,7 +418,19 @@ static void infocb(pmix_status_t status,
                 if (NULL == kv) {
                     rc = PMIX_ERR_NOMEM;
                 } else {
-                    rc = pmix_value_xfer(kv, &info[0].value);
+                    /* if this is a compressed string, then uncompress it */
+                    if (PMIX_COMPRESSED_STRING == info[0].value.type) {
+                        kv->type = PMIX_STRING;
+                        pmix_util_uncompress_string(&kv->data.string, (uint8_t*)info[0].value.data.bo.bytes, info[0].value.data.bo.size);
+                        if (NULL == kv->data.string) {
+                            PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                            rc = PMIX_ERR_NOMEM;
+                            PMIX_VALUE_FREE(kv, 1);
+                            kv = NULL;
+                        }
+                    } else {
+                        rc = pmix_value_xfer(kv, &info[0].value);
+                    }
                 }
             }
         } else {
@@ -431,7 +443,9 @@ static void infocb(pmix_status_t status,
         cd->valcbfunc(rc, kv, cd->cbdata);
     }
     PMIX_RELEASE(cd);
-    PMIX_VALUE_FREE(kv, 1);
+    if (NULL != kv) {
+        PMIX_VALUE_FREE(kv, 1);
+    }
     if (NULL != release_fn) {
         release_fn(release_cbdata);
     }
@@ -534,7 +548,10 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                     PMIX_QUERY_CREATE(cd->queries, 1);
                     cd->nqueries = 1;
                     pmix_argv_append_nosize(&cd->queries[0].keys, cb->key);
-                    PMIx_Query_info_nb(cd->queries, 1, infocb, cd);
+                    if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(cd->queries, 1, infocb, cd))) {
+                        PMIX_RELEASE(cd);
+                        goto respond;
+                    }
                     PMIX_RELEASE(cb);
                     return;
                 }
