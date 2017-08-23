@@ -314,14 +314,14 @@ int opal_hwloc_base_get_topology(void)
                     FILE *file = fopen("/proc/self/maps", "r");
                     if (file) {
                         char line[256];
-                        opal_output(0, opal_hwloc_base_framework.framework_output,
+                        opal_output(opal_hwloc_base_framework.framework_output,
                                     "Dumping /proc/self/maps");
                         while (fgets(line, sizeof(line), file) != NULL) {
                             char *end = strchr(line, '\n');
                             if (end)
                                 *end = '\0';
-                            opal_output(0, opal_hwloc_base_framework.framework_output,
-                                        "%s", line);
+                            opal_output(opal_hwloc_base_framework.framework_output,
+                                        line);
                         }
                         fclose(file);
                     }
