@@ -872,7 +872,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
             int flg = 1;
             if (setsockopt (sd, IPPROTO_IPV6, IPV6_V6ONLY,
                             (char *) &flg, sizeof (flg)) < 0) {
-                BTL_ERROR((0, "mca_btl_tcp_create_listen: unable to set IPV6_V6ONLY\n"));
+                BTL_ERROR(("mca_btl_tcp_create_listen: unable to set IPV6_V6ONLY\n"));
             }
         }
 #endif /* IPV6_V6ONLY */
@@ -1358,27 +1358,27 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
         if (ENOPROTOOPT == errno) {
             sockopt = false;
         } else {
-	    opal_output_verbose(20, opal_btl_base_framework.framework_output,
-				"Cannot get current recv timeout value of the socket"
-		                "Local_host:%s PID:%d",
-				opal_process_info.nodename, getpid());
-	    return;
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                "Cannot get current recv timeout value of the socket"
+                                "Local_host:%s PID:%d",
+                                opal_process_info.nodename, getpid());
+            return;
         }
     } else {
         tv.tv_sec = 2;
         tv.tv_usec = 0;
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
             opal_output_verbose(20, opal_btl_base_framework.framework_output,
-				"Cannot set new recv timeout value of the socket"
-				"Local_host:%s PID:%d",
-				opal_process_info.nodename, getpid());
+                                "Cannot set new recv timeout value of the socket"
+                                "Local_host:%s PID:%d",
+                                opal_process_info.nodename, getpid());
            return;
        }
     }
 
     OBJ_RELEASE(event);
     retval = mca_btl_tcp_recv_blocking(sd, (void *)&hs_msg, sizeof(hs_msg));
-    guid = hs_msg.guid;  
+    guid = hs_msg.guid;
 
     /* An unknown process attempted to connect to Open MPI via TCP.
      * Open MPI uses a "magic" string to trivially verify that the connecting
@@ -1393,11 +1393,11 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
      */
      if (sizeof(hs_msg) != retval) {
          opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                            "server did not receive entire connect ACK "
-                            "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
+                            "process did not receive full connect ACK "
+                            "Local_host:%s PID:%d String_received:%s Test_fail:%s",
                             opal_process_info.nodename,
-                            getpid(), "server",
-                            (retval > 0) ? hs_msg.magic_id : "<nothing>", 
+                            getpid(),
+                            (retval > 0) ? hs_msg.magic_id : "<nothing>",
                             "handshake message length");
 
          /* The other side probably isn't OMPI, so just hang up */
@@ -1406,16 +1406,16 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     }
     if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
         opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                            "server did not receive right magic string. "
-                            "Local_host:%s PID:%d Role:%s String_received:%s Test_fail:%s",
+                            "process did not receive right magic string. "
+                            "Local_host:%s PID:%d String_received:%s Test_fail:%s",
                             opal_process_info.nodename,
-                            getpid(), "server", hs_msg.magic_id,
+                            getpid(), hs_msg.magic_id,
                             "string value");
         /* The other side probably isn't OMPI, so just hang up */
         CLOSE_THE_SOCKET(sd);
         return;
     }
-    
+
     if (sockopt) {
        /* reset RECVTIMEO option to its original state */
        if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sizeof(save))) {
@@ -1425,8 +1425,8 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
                                opal_process_info.nodename, getpid());
           return;
        }
-    } 
-    
+    }
+
     OPAL_PROCESS_NAME_NTOH(guid);
 
     /* now set socket up to be non-blocking */
