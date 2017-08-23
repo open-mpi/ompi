@@ -219,6 +219,7 @@ typedef struct {
     pmix_info_t *info;
     size_t ninfo;
     pmix_info_cbfunc_t cbfunc;
+    pmix_value_cbfunc_t valcbfunc;
     pmix_release_cbfunc_t relcbfunc;
     void *cbdata;
 } pmix_query_caddy_t;

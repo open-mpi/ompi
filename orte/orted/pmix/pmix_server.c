@@ -242,24 +242,7 @@ int pmix_server_init(void)
     /* ensure the PMIx server uses the proper rendezvous directory */
     opal_setenv("PMIX_SERVER_TMPDIR", orte_process_info.proc_session_dir, true, &environ);
 
-    /* pass the server the local topology - we do this so the procs won't read the
-     * topology themselves as this could overwhelm the local
-     * system on large-scale SMPs */
     OBJ_CONSTRUCT(&info, opal_list_t);
-    if (NULL != opal_hwloc_topology) {
-        char *xmlbuffer=NULL;
-        int len;
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
-        if (0 != opal_hwloc_base_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
-            OBJ_RELEASE(kv);
-            OBJ_DESTRUCT(&info);
-            return ORTE_ERROR;
-        }
-        kv->data.string = xmlbuffer;
-        kv->type = OPAL_STRING;
-        opal_list_append(&info, &kv->super);
-    }
     /* tell the server our temp directory */
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_SERVER_TMPDIR);

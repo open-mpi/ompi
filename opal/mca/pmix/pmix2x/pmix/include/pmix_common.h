@@ -234,6 +234,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_HWLOC_SHMEM_ADDR               "pmix.hwlocaddr"        // (size_t) address of HWLOC shared memory segment
 #define PMIX_HWLOC_SHMEM_SIZE               "pmix.hwlocsize"        // (size_t) size of HWLOC shared memory segment
 #define PMIX_HWLOC_SHMEM_FILE               "pmix.hwlocfile"        // (char*) path to HWLOC shared memory file
+#define PMIX_HWLOC_XML_V1                   "pmix.hwlocxml1"        // (char*) XML representation of local topology using HWLOC v1.x format
+#define PMIX_HWLOC_XML_V2                   "pmix.hwlocxml2"        // (char*) XML representation of local topology using HWLOC v2.x format
 
 /* request-related info */
 #define PMIX_COLLECT_DATA                   "pmix.collect"          // (bool) collect data and return it at the end of the operation
@@ -346,6 +348,7 @@ typedef uint32_t pmix_rank_t;
                                                                     //         is being requested
 #define PMIX_TIME_REMAINING                 "pmix.time.remaining"   // (char*) query number of seconds (uint32_t) remaining in allocation
                                                                     //         for the specified nspace
+
 
 /* log attributes */
 #define PMIX_LOG_STDERR                     "pmix.log.stderr"       // (char*) log string to stderr

@@ -314,14 +314,14 @@ int opal_hwloc_base_get_topology(void)
                     FILE *file = fopen("/proc/self/maps", "r");
                     if (file) {
                         char line[256];
-                        opal_output(opal_hwloc_base_framework.framework_output,
-                                    "Dumping /proc/self/maps");
+                        opal_output(0, "Dumping /proc/self/maps");
+
                         while (fgets(line, sizeof(line), file) != NULL) {
                             char *end = strchr(line, '\n');
-                            if (end)
+                            if (end) {
                                 *end = '\0';
-                            opal_output(opal_hwloc_base_framework.framework_output,
-                                        line);
+                            }
+                            opal_output(0, "%s", line);
                         }
                         fclose(file);
                     }
@@ -338,9 +338,15 @@ int opal_hwloc_base_get_topology(void)
         /* if that isn't available, then try to retrieve
          * the xml representation from the PMIx data store */
         opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
-                            "hwloc:base getting topology XML string");
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_LOCAL_TOPO,
-                                       &wildcard_rank, &val, OPAL_STRING);
+                            "hwloc:base[%s:%d] getting topology XML string",
+                            __FILE__, __LINE__);
+#if HWLOC_API_VERSION >= 0x20000
+        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, OPAL_PMIX_HWLOC_XML_V2,
+                                        &wildcard_rank, &val, OPAL_STRING);
+#else
+        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, OPAL_PMIX_HWLOC_XML_V1,
+                                        &wildcard_rank, &val, OPAL_STRING);
+#endif
     } else {
         opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
                             "hwloc:base PMIx not available");
