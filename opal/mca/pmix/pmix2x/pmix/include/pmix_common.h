@@ -349,7 +349,6 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_TIME_REMAINING                 "pmix.time.remaining"   // (char*) query number of seconds (uint32_t) remaining in allocation
                                                                     //         for the specified nspace
 
-
 /* log attributes */
 #define PMIX_LOG_STDERR                     "pmix.log.stderr"       // (char*) log string to stderr
 #define PMIX_LOG_STDOUT                     "pmix.log.stdout"       // (char*) log string to stdout
