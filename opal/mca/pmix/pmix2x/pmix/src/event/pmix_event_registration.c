@@ -298,7 +298,7 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
     /* if we are a client, and we haven't already registered a handler of this
      * type with our server, or if we have directives, then we need to notify
      * the server */
-    if (!PMIX_PROC_IS_SERVER &&
+    if (!PMIX_PROC_IS_SERVER && pmix_globals.connected &&
        (need_register || 0 < pmix_list_get_size(xfer))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: _add_hdlr sending to server");
@@ -821,9 +821,9 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
     /* need to acquire the object from its originating thread */
     PMIX_ACQUIRE_OBJECT(cd);
 
-    /* if I am not the server, then I need to notify the server
-     * to remove my registration */
-    if (!PMIX_PROC_IS_SERVER) {
+    /* if I am not the server, and I am connected, then I need
+     * to notify the server to remove my registration */
+    if (!PMIX_PROC_IS_SERVER && pmix_globals.connected) {
         msg = PMIX_NEW(pmix_buffer_t);
         PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
                          msg, &cmd, 1, PMIX_COMMAND);

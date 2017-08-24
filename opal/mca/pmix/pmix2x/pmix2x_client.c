@@ -197,7 +197,7 @@ int pmix2x_tool_init(opal_list_t *info)
     opal_value_t *val;
     pmix_status_t rc;
     int ret;
-    opal_process_name_t pname;
+    opal_process_name_t pname = {OPAL_JOBID_INVALID, OPAL_VPID_INVALID};
     opal_pmix2x_event_t *event;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
@@ -213,6 +213,14 @@ int pmix2x_tool_init(opal_list_t *info)
             (void)strncpy(pinfo[n].key, val->key, PMIX_MAX_KEYLEN);
             pmix2x_value_load(&pinfo[n].value, val);
             ++n;
+            /* check to see if our name is being given from above */
+            if (0 == strcmp(val->key, OPAL_PMIX_TOOL_NSPACE)) {
+                opal_convert_string_to_jobid(&pname.jobid, val->data.string);
+                (void)strncpy(my_proc.nspace, val->data.string, PMIX_MAX_NSLEN);
+            } else if (0 == strcmp(val->key, OPAL_PMIX_TOOL_RANK)) {
+                pname.vpid = val->data.name.vpid;
+                my_proc.rank = pname.vpid;
+            }
         }
     } else {
         pinfo = NULL;
@@ -237,16 +245,19 @@ int pmix2x_tool_init(opal_list_t *info)
         return OPAL_SUCCESS;
     }
 
-    /* store our jobid and rank */
-    if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
-        /* if we were launched by the OMPI RTE, then
-         * the jobid is in a special format - so get it */
-        mca_pmix_pmix2x_component.native_launch = true;
-        opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
-    } else {
-        /* we were launched by someone else, so make the
-         * jobid just be the hash of the nspace */
-        OPAL_HASH_JOBID(my_proc.nspace, pname.jobid);
+    if (OPAL_JOBID_INVALID == pname.jobid) {
+        /* store our jobid and rank */
+        if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
+            /* if we were launched by the OMPI RTE, then
+             * the jobid is in a special format - so get it */
+            mca_pmix_pmix2x_component.native_launch = true;
+            opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
+        } else {
+            /* we were launched by someone else, so make the
+             * jobid just be the hash of the nspace */
+            OPAL_HASH_JOBID(my_proc.nspace, pname.jobid);
+        }
+        pname.vpid = pmix2x_convert_rank(my_proc.rank);
     }
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
@@ -255,7 +266,6 @@ int pmix2x_tool_init(opal_list_t *info)
     job->jobid = pname.jobid;
     opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
 
-    pname.vpid = pmix2x_convert_rank(my_proc.rank);
     opal_proc_set_name(&pname);
 
     /* release the thread in case the event handler fires when

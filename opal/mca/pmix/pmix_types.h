@@ -52,20 +52,29 @@ BEGIN_C_DECLS
                                                                         //        accept tool connection requests
 #define OPAL_PMIX_SERVER_SYSTEM_SUPPORT         "pmix.srvr.sys"         // (bool) The host RM wants to declare itself as being the local
                                                                         //        system server for PMIx connection requests
-#define OPAL_PMIX_SERVER_PIDINFO                "pmix.srvr.pidinfo"     // (pid_t) pid of the target server
 #define OPAL_PMIX_SERVER_TMPDIR                 "pmix.srvr.tmpdir"      // (char*) temp directory where PMIx server will place
                                                                         //        client rendezvous points
 #define OPAL_PMIX_SYSTEM_TMPDIR                 "pmix.sys.tmpdir"       // (char*) temp directory where PMIx server will place
                                                                         //        tool rendezvous points
-#define OPAL_PMIX_CONNECT_TO_SYSTEM             "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
-                                                                        //        a local system-level PMIx server
-#define OPAL_PMIX_CONNECT_SYSTEM_FIRST          "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
 #define OPAL_PMIX_REGISTER_NODATA               "pmix.reg.nodata"       // (bool) Registration is for nspace only, do not copy job data
 #define OPAL_PMIX_SERVER_ENABLE_MONITORING      "pmix.srv.monitor"      // (bool) Enable PMIx internal monitoring by server
 #define OPAL_PMIX_SERVER_NSPACE                 "pmix.srv.nspace"       // (char*) Name of the nspace to use for this server
 #define OPAL_PMIX_SERVER_RANK                   "pmix.srv.rank"         // (uint32_t) Rank of this server
+
+/* tool-related attributes */
 #define OPAL_PMIX_TOOL_NSPACE                   "pmix.tool.nspace"      // (char*) Name of the nspace to use for this tool
 #define OPAL_PMIX_TOOL_RANK                     "pmix.tool.rank"        // (uint32_t) Rank of this tool
+#define OPAL_PMIX_SERVER_PIDINFO                "pmix.srvr.pidinfo"     // (pid_t) pid of the target server for a tool
+#define OPAL_PMIX_CONNECT_TO_SYSTEM             "pmix.cnct.sys"         // (bool) The requestor requires that a connection be made only to
+                                                                        //        a local system-level PMIx server
+#define OPAL_PMIX_CONNECT_SYSTEM_FIRST          "pmix.cnct.sys.first"   // (bool) Preferentially look for a system-level PMIx server first
+#define OPAL_PMIX_SERVER_URI                    "pmix.srvr.uri"         // (char*) URI of server to be contacted
+#define OPAL_PMIX_SERVER_HOSTNAME               "pmix.srvr.host"        // (char*) node where target server is located
+#define OPAL_PMIX_CONNECT_MAX_RETRIES           "pmix.tool.mretries"    // (uint32_t) maximum number of times to try to connect to server
+#define OPAL_PMIX_CONNECT_RETRY_DELAY           "pmix.tool.retry"       // (uint32_t) time in seconds between connection attempts
+#define OPAL_PMIX_TOOL_DO_NOT_CONNECT           "pmix.tool.nocon"       // (bool) the tool wants to use internal PMIx support, but does
+                                                                        //        not want to connect to a PMIx server
+
 
 /* identification attributes */
 #define OPAL_PMIX_USERID                        "pmix.euid"             // (uint32_t) effective user id

@@ -548,7 +548,7 @@ int orte_submit_init(int argc, char *argv[],
         OBJ_CONSTRUCT(&val, opal_value_t);
         val.key = OPAL_PMIX_PROC_URI;
         val.type = OPAL_STRING;
-        val.data.string = orte_process_info.my_daemon_uri;
+        val.data.string = orte_process_info.my_hnp_uri;
         if (OPAL_SUCCESS != opal_pmix.store_local(ORTE_PROC_MY_HNP, &val)) {
             val.key = NULL;
             val.data.string = NULL;

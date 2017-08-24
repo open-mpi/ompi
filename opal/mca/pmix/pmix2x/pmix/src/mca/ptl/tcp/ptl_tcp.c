@@ -188,10 +188,18 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(info[n].key, PMIX_CONNECT_TO_SYSTEM)) {
-                system_level_only = true;
+                if (PMIX_UNDEF == info[n].value.type) {
+                    system_level_only = true;
+                } else {
+                    system_level_only = info[n].value.data.flag;
+                }
             } else if (0 == strcmp(info[n].key, PMIX_CONNECT_SYSTEM_FIRST)) {
                 /* try the system-level */
-                system_level = true;
+                if (PMIX_UNDEF == info[n].value.type) {
+                    system_level = true;
+                } else {
+                    system_level = info[n].value.data.flag;
+                }
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_PIDINFO)) {
                 mca_ptl_tcp_component.tool_pid = info[n].value.data.pid;
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_URI)) {
