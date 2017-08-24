@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -58,24 +58,24 @@
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline void opal_atomic_mb(void)
+static inline void opal_atomic_mb()
 {
     MB();
 }
 
 
-static inline void opal_atomic_rmb(void)
+static inline void opal_atomic_rmb()
 {
     MB();
 }
 
 
-static inline void opal_atomic_wmb(void)
+static inline void opal_atomic_wmb()
 {
     MB();
 }
 
-static inline void opal_atomic_isync(void)
+static inline void opal_atomic_isync()
 {
 }
 
