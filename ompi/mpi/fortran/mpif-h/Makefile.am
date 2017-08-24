@@ -501,3 +501,23 @@ if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif
+
+here_src = $(top_srcdir)/ompi/mpi/fortran/mpif-h
+
+if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
+lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += use_fptrs.c constructed_code_done.h
+# This causes constructed_code_done.h to be created before the regular
+# makefile rules happen for the rest of the source.
+BUILT_SOURCES = constructed_code_done.h
+
+use_fptrs.lo: use_fptrs.c constructed_code_done.h
+
+constructed_code_done.h: normalize_mpih.pl mkcode.pl $(top_srcdir)/ompi/include/mpi.h.in
+	rm -f flist && \
+	perl $(here_src)/normalize_mpih.pl $(top_srcdir)/ompi/include/mpi.h.in > flist && \
+	perl $(here_src)/mkcode.pl
+
+clean-local:
+	rm -f constructed_code_*.h
+
+endif

@@ -75,6 +75,8 @@ bool ompi_async_mpi_finalize = false;
 uint32_t ompi_add_procs_cutoff = OMPI_ADD_PROCS_CUTOFF_DEFAULT;
 bool ompi_mpi_dynamics_enabled = true;
 
+char *ompi_fortcall = "PMPI";
+
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
 static bool show_enviro_mca_params = false;
@@ -314,6 +316,13 @@ int ompi_mpi_register_params(void)
         (void) mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "abort_print_stack",
                                       MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
+
+    (void) mca_base_var_register("ompi", "mpi", NULL, "fortcall",
+                                 "Whether Fortran wrappers should call MPI or PMPI (default). The former allows language wrapping for the profiling interface. Possible values are the strings MPI or PMPI.",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_fortcall);
 
     return OMPI_SUCCESS;
 }

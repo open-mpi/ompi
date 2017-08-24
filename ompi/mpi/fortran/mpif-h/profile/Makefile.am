@@ -464,3 +464,16 @@ tags:
 TAGS:
 GTAGS:
 ID:
+
+# This causes constructed_code_done.h to be created before the regular
+# makefile rules happen for the rest of the source.
+BUILT_SOURCES = constructed_code_done.h
+
+here_src = $(top_srcdir)/ompi/mpi/fortran/mpif-h
+constructed_code_done.h: $(here_src)/normalize_mpih.pl $(here_src)/mkcode.pl $(top_srcdir)/ompi/include/mpi.h.in
+	rm -f flist && \
+	perl $(here_src)/normalize_mpih.pl $(top_srcdir)/ompi/include/mpi.h.in > flist && \
+	perl $(here_src)/mkcode.pl
+
+clean-local:
+	rm -f constructed_code_*.h

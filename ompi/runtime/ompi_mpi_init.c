@@ -62,6 +62,7 @@
 #include "opal/mca/pmix/base/base.h"
 #include "opal/util/timings.h"
 #include "opal/util/opal_environ.h"
+#include "opal/mca/dl/base/base.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
@@ -285,6 +286,8 @@ opal_list_t ompi_registered_datareps = {{0}};
 bool ompi_enable_timing = false;
 extern bool ompi_mpi_yield_when_idle;
 extern int ompi_mpi_event_tick_rate;
+
+void initialize_mpi_fptrs(void);
 
 /**
  * Static functions used to configure the interactions between the OPAL and
@@ -975,6 +978,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         opal_progress_set_event_poll_rate(ompi_mpi_event_tick_rate);
     }
 
+    /* initialize function pointers for all the C MPI_Foo() routines */
+    /* that will be called by fortran mpi_foo() */
+    initialize_mpi_fptrs();
+
     /* At this point, we are fully configured and in MPI mode.  Any
        communication calls here will work exactly like they would in
        the user's code.  Setup the connections between procs and warm
@@ -1031,4 +1038,28 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_hook_base_mpi_init_bottom(argc, argv, requested, provided);
 
     return MPI_SUCCESS;
+}
+
+// All the work for fptr initialization is done in a function
+// ompi_fptr_init(int mca_system_is_ready) but that's over in
+// libmpi_mpifh.so (ompi/mpi/fortran/mpif-h/use_fptrs.c).
+// We don't want a direct dependency on that, and would rather
+// access it through a dlsym.
+void
+initialize_mpi_fptrs(void)
+{
+    void (*fp)(int);
+
+    opal_dl_handle_t *myhandle = NULL;
+    opal_dl_open(NULL, 0, 0, &myhandle, NULL);
+    if (myhandle) {
+        char *err_msg = NULL;
+        fp = (void*) NULL;
+        if (0==opal_dl_lookup(myhandle, "ompi_fptr_init",
+            &fp, &err_msg) && fp)
+        {
+            fp(1); // ompi_fptr_init(1) from use_fptrs.c
+        }
+        opal_dl_close(myhandle);
+    }
 }

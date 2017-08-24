@@ -81,6 +81,7 @@ void ompi_init_f( MPI_Fint *ierr )
     int argc = 0;
     char **argv = NULL;
 
+    ompi_fptr_init(0);
     c_ierr = PMPI_Init( &argc, &argv );
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

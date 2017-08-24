@@ -82,4 +82,6 @@
 
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
+#include "ompi/mpi/fortran/mpif-h/use_fptrs.h"
+
 #endif /* OMPI_F77_BINDINGS_H */

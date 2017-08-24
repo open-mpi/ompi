@@ -73,6 +73,7 @@ void ompi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr 
     char** argv = NULL;
     OMPI_SINGLE_NAME_DECL(provided);
 
+    ompi_fptr_init(0);
     c_ierr = PMPI_Init_thread(&argc, &argv,
                              OMPI_FINT_2_INT(*required),
                              OMPI_SINGLE_NAME_CONVERT(provided));

@@ -72,6 +72,7 @@ void ompi_get_version_f(MPI_Fint *version, MPI_Fint *subversion, MPI_Fint *ierr)
     OMPI_SINGLE_NAME_DECL(version);
     OMPI_SINGLE_NAME_DECL(subversion);
 
+    ompi_fptr_init(0);
     c_ierr = PMPI_Get_version(OMPI_SINGLE_NAME_CONVERT(version),
                              OMPI_SINGLE_NAME_CONVERT(subversion));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
