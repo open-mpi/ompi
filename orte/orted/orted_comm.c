@@ -577,6 +577,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         if (NULL == (jdata = orte_get_job_data_object(job))) {
             /* we can safely ignore this request as the job
              * was already cleaned up */
+            opal_output(0, "NULL JOB");
             goto CLEANUP;
         }
 
@@ -584,6 +585,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
          * can ignore this request as we would have already
          * dealt with it */
         if (0 < jdata->num_local_procs) {
+            opal_output(0, "NO PROCS");
             goto CLEANUP;
         }
 
@@ -620,6 +622,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             OBJ_RELEASE(map);
             jdata->map = NULL;
         }
+        opal_output(0, "CLEANUP COMPLETE");
         break;
 
 

@@ -87,53 +87,77 @@ int orte_ess_base_tool_setup(void)
     /* set the event base */
     opal_pmix_base_set_evbase(orte_event_base);
 
+    /* we have to define our name here */
+    if (NULL != orte_ess_base_jobid &&
+        NULL != orte_ess_base_vpid) {
+        opal_output_verbose(2, orte_ess_base_framework.framework_output,
+                            "ess:tool:obtaining name from environment");
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
+            return(ret);
+        }
+        ORTE_PROC_MY_NAME->jobid = jobid;
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, orte_ess_base_vpid))) {
+            return(ret);
+        }
+        ORTE_PROC_MY_NAME->vpid = vpid;
+    } else {
+        /* If we are a tool with no name, then define it here */
+        uint16_t jobfam;
+        uint32_t hash32;
+        uint32_t bias;
+
+        opal_output_verbose(2, orte_ess_base_framework.framework_output,
+                            "ess:tool:computing name");
+        /* hash the nodename */
+        OPAL_HASH_STR(orte_process_info.nodename, hash32);
+        bias = (uint32_t)orte_process_info.pid;
+        /* fold in the bias */
+        hash32 = hash32 ^ bias;
+
+        /* now compress to 16-bits */
+        jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
+
+        /* set the name */
+        ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
+        ORTE_PROC_MY_NAME->vpid = 0;
+    }
+    /* my name is set, xfer it to the OPAL layer */
+    orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
+
     /* initialize - PMIx may set our name here if we attach to
      * a PMIx server */
     if (NULL != opal_pmix.tool_init) {
-        if (OPAL_SUCCESS != (ret = opal_pmix.tool_init(NULL))) {
+        opal_list_t info;
+        opal_value_t *kv;
+        OBJ_CONSTRUCT(&info, opal_list_t);
+        /* pass our name so the PMIx layer can use it */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_TOOL_NSPACE);
+        orte_util_convert_jobid_to_string(&kv->data.string, ORTE_PROC_MY_NAME->jobid);
+        kv->type = OPAL_STRING;
+        opal_list_append(&info, &kv->super);
+        /* ditto for our rank */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_TOOL_RANK);
+        kv->data.name.vpid = ORTE_PROC_MY_NAME->vpid;
+        kv->type = OPAL_VPID;
+        opal_list_append(&info, &kv->super);
+        /* ORTE tools don't need to connect to a PMIx server as
+         * they will connect via the OOB */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_TOOL_DO_NOT_CONNECT);
+        kv->data.flag = true;
+        kv->type = OPAL_BOOL;
+        opal_list_append(&info, &kv->super);
+        if (OPAL_SUCCESS != (ret = opal_pmix.tool_init(&info))) {
             ORTE_ERROR_LOG(ret);
             error = "opal_pmix.init";
+            OPAL_LIST_DESTRUCT(&info);
             goto error;
         }
+        OPAL_LIST_DESTRUCT(&info);
         ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
         ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
-    } else {
-        /* we have to define our name here */
-        if (NULL != orte_ess_base_jobid &&
-            NULL != orte_ess_base_vpid) {
-            opal_output_verbose(2, orte_ess_base_framework.framework_output,
-                                "ess:tool:obtaining name from environment");
-            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
-                return(ret);
-            }
-            ORTE_PROC_MY_NAME->jobid = jobid;
-            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, orte_ess_base_vpid))) {
-                return(ret);
-            }
-            ORTE_PROC_MY_NAME->vpid = vpid;
-        } else {
-            /* If we are a tool with no name, then define it here */
-            uint16_t jobfam;
-            uint32_t hash32;
-            uint32_t bias;
-
-            opal_output_verbose(2, orte_ess_base_framework.framework_output,
-                                "ess:tool:computing name");
-            /* hash the nodename */
-            OPAL_HASH_STR(orte_process_info.nodename, hash32);
-            bias = (uint32_t)orte_process_info.pid;
-            /* fold in the bias */
-            hash32 = hash32 ^ bias;
-
-            /* now compress to 16-bits */
-            jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
-
-            /* set the name */
-            ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
-            ORTE_PROC_MY_NAME->vpid = 0;
-        }
-        /* my name is set, xfer it to the OPAL layer */
-        orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
     }
     orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
     orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;

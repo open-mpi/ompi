@@ -2071,9 +2071,7 @@ static pmix_status_t dstore_init(pmix_info_t info[], size_t ninfo)
     /* for clients */
     else {
         if (NULL == (dstor_tmpdir = getenv(PMIX_DSTORE_ESH_BASE_PATH))){
-            rc = PMIX_ERR_BAD_PARAM;
-            PMIX_ERROR_LOG(rc);
-            goto err_exit;
+            return PMIX_ERR_NOT_AVAILABLE; // simply disqualify ourselves
         }
         if (NULL == (_base_path = strdup(dstor_tmpdir))) {
             rc = PMIX_ERR_OUT_OF_RESOURCE;
