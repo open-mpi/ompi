@@ -979,6 +979,28 @@ sub patch_autotools_output {
 
         # We have to change the search pattern and substitution on each
         # iteration to take into account the tag changing
+        my $search_string = '# icc used to be incompatible with GCC.\n\s+' .
+                            '# ICC 10 doesn\047t accept -KPIC any more.\n.*\n\s+' .
+	                    "lt_prog_compiler_wl${tag}=";
+        my $replace_string = "# Flang compiler
+      *flang)
+	lt_prog_compiler_wl${tag}='-Wl,'
+	lt_prog_compiler_pic${tag}='-fPIC -DPIC'
+	lt_prog_compiler_static${tag}='-static'
+        ;;
+      # icc used to be incompatible with GCC.
+      # ICC 10 doesn't accept -KPIC any more.
+      icc* | ifort*)
+	lt_prog_compiler_wl${tag}=";
+
+        push(@verbose_out, $indent_str . "Patching configure for flang Fortran ($tag)\n");
+        $c =~ s/$search_string/$replace_string/;
+    }
+
+    foreach my $tag (("", "_FC")) {
+
+        # We have to change the search pattern and substitution on each
+        # iteration to take into account the tag changing
         my $search_string = '\052Sun\134 F\052.*\n.*\n\s+' .
             "lt_prog_compiler_pic${tag}" . '.*\n.*\n.*\n.*\n';
         my $replace_string = "
