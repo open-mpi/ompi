@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,7 +52,8 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_psm_la_SOURCES = $(mtl_psm_sources)
-mca_mtl_psm_la_LIBADD = $(mtl_psm_LIBS)
+mca_mtl_psm_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(mtl_psm_LIBS)
 mca_mtl_psm_la_LDFLAGS = -module -avoid-version $(mtl_psm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

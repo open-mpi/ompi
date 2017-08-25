@@ -13,6 +13,7 @@
 # Copyright (c) 2012-2015 Los Alamos National Security, LLC.
 #                         All rights reserved
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,7 +36,8 @@ mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_alps_la_SOURCES = $(sources)
 mca_oob_alps_la_LDFLAGS = -module -avoid-version
-mca_oob_alps_la_LIBADD = $(ooob_alps_LIBS) \
+mca_oob_alps_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
+	$(ooob_alps_LIBS) \
     $(ORTE_TOP_BUILDDIR)/orte/mca/common/alps/lib@ORTE_LIB_PREFIX@mca_common_alps.la
 
 

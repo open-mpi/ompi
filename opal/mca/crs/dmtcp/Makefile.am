@@ -2,6 +2,7 @@
 # Copyright (c)      2010 The Trustees of Indiana University.
 #                         All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,7 +34,8 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_dmtcp_la_SOURCES  = $(sources)
 mca_crs_dmtcp_la_LDFLAGS  = -module -avoid-version $(crs_dmtcp_LDFLAGS)
-mca_crs_dmtcp_la_LIBADD = $(crs_dmtcp_LIBS)
+mca_crs_dmtcp_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+	$(crs_dmtcp_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_crs_dmtcp_la_SOURCES = $(sources)

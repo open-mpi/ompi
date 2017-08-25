@@ -2,6 +2,7 @@
 #
 #
 # Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,7 +38,8 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_fca_la_SOURCES = $(coll_fca_sources)
-mca_coll_fca_la_LIBADD = $(coll_fca_LIBS)
+mca_coll_fca_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(coll_fca_LIBS)
 mca_coll_fca_la_LDFLAGS = -module -avoid-version $(coll_fca_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

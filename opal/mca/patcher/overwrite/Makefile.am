@@ -14,6 +14,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,6 +40,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_patcher_overwrite_la_SOURCES = $(overwrite_SOURCES)
 nodist_mca_patcher_overwrite_la_SOURCES = $(overwrite_nodist_SOURCES)
 mca_patcher_overwrite_la_LDFLAGS = -module -avoid-version
+mca_patcher_overwrite_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_patcher_overwrite_la_SOURCES = $(overwrite_SOURCES)
