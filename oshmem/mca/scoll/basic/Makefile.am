@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2013-2016 Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,6 +36,7 @@ mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_scoll_basic_la_SOURCES = $(sources)
 mca_scoll_basic_la_LDFLAGS = -module -avoid-version
+mca_scoll_basic_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_scoll_basic_la_SOURCES =$(sources)

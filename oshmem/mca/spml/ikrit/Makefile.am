@@ -2,6 +2,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 #
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,7 +32,8 @@ endif
 mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_spml_ikrit_la_SOURCES = $(ikrit_sources)
-mca_spml_ikrit_la_LIBADD = $(spml_ikrit_LIBS)
+mca_spml_ikrit_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
+	$(spml_ikrit_LIBS)
 mca_spml_ikrit_la_LDFLAGS = -module -avoid-version $(spml_ikrit_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

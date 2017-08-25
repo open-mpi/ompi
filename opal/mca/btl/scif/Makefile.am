@@ -39,7 +39,8 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_scif_la_SOURCES = $(scif_SOURCES)
 nodist_mca_btl_scif_la_SOURCES = $(scif_nodist_SOURCES)
-mca_btl_scif_la_LIBADD = $(btl_scif_LIBS)
+mca_btl_scif_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+	$(btl_scif_LIBS)
 mca_btl_scif_la_LDFLAGS = -module -avoid-version $(btl_scif_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

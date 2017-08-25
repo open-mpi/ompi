@@ -1,5 +1,6 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,7 +33,8 @@ mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sshmem_ucx_la_SOURCES = $(sources)
 mca_sshmem_ucx_la_LDFLAGS = -module -avoid-version $(sshmem_ucx_LDFLAGS)
-mca_sshmem_ucx_la_LIBADD = $(sshmem_ucx_LIBS)
+mca_sshmem_ucx_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
+	$(sshmem_ucx_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sshmem_ucx_la_SOURCES =$(sources)
