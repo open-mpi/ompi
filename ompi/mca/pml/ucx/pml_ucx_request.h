@@ -26,15 +26,15 @@ enum {
 /*
  * UCX tag structure:
  *
- * 01234567 01234567 01234567 01234567 01234567 01234567 01234567 01234567
- *                           |                          |
- *      message tag (24)     |     source rank (24)     |  context id (16)
- *                           |                          |
+ * 01234567 01234567 01234567 01234567 01234567 0123 4567 01234567 01234567
+ *                           |                      |
+ *      message tag (24)     |   source rank (20)   |     context id (20)
+ *                           |                      |
  */
 #define PML_UCX_TAG_BITS                       24
-#define PML_UCX_RANK_BITS                      24
-#define PML_UCX_CONTEXT_BITS                   16
-#define PML_UCX_ANY_SOURCE_MASK                0x800000000000fffful
+#define PML_UCX_RANK_BITS                      20
+#define PML_UCX_CONTEXT_BITS                   20
+#define PML_UCX_ANY_SOURCE_MASK                0x80000000000ffffful
 #define PML_UCX_SPECIFIC_SOURCE_MASK           0x800000fffffffffful
 #define PML_UCX_TAG_MASK                       0x7fffff0000000000ul
 
