@@ -68,8 +68,8 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
         mca_pml_ucx_mrecv,
         mca_pml_ucx_dump,
         NULL, /* FT */
-        1ul << (PML_UCX_TAG_BITS - 1),
         1ul << (PML_UCX_CONTEXT_BITS),
+        1ul << (PML_UCX_TAG_BITS - 1),
     },
     NULL,   /* ucp_context */
     NULL    /* ucp_worker */
