@@ -194,17 +194,14 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
     if (NULL != cd->pmixcbfunc) {
         op = OBJ_NEW(ext2x_opcaddy_t);
 
-        if (NULL != results) {
-        /* convert the list of results to an array of info */
-            op->ninfo = opal_list_get_size(results);
-            if (0 < op->ninfo) {
-                PMIX_INFO_CREATE(op->info, op->ninfo);
-                n=0;
-                OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
-                    (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-                    ext2x_value_load(&op->info[n].value, kv);
-                    ++n;
-                }
+        if (NULL != results && 0 < (op->ninfo = opal_list_get_size(results))) {
+            /* convert the list of results to an array of info */
+            PMIX_INFO_CREATE(op->info, op->ninfo);
+            n=0;
+            OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
+                (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+                ext2x_value_load(&op->info[n].value, kv);
+                ++n;
             }
         }
         /* convert the status */
@@ -815,14 +812,17 @@ void ext2x_value_load(pmix_value_t *v,
             v->data.darray = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
             v->data.darray->type = PMIX_INFO;
             v->data.darray->size = opal_list_get_size(list);
-            PMIX_INFO_CREATE(info, v->data.darray->size);
-            v->data.darray->array = info;
-            n=0;
-            OPAL_LIST_FOREACH(val, list, opal_value_t) {
-                (void)strncpy(info[n].key, val->key, PMIX_MAX_KEYLEN);
-                ext2x_value_load(&info[n].value, val);
-                ++n;
-            }
+            if (0 < v->data.darray->size) {
+                PMIX_INFO_CREATE(info, v->data.darray->size);
+                v->data.darray->array = info;
+                n=0;
+                OPAL_LIST_FOREACH(val, list, opal_value_t) {
+                    (void)strncpy(info[n].key, val->key, PMIX_MAX_KEYLEN);
+                    ext2x_value_load(&info[n].value, val);
+                    ++n;
+                }
+            } else {
+                v->data.darray->array = NULL;
             break;
         default:
             /* silence warnings */
@@ -1066,16 +1066,13 @@ static void register_handler(opal_list_t *event_codes,
     }
 
     /* convert the list of info to an array of pmix_info_t */
-    if (NULL != info) {
-        op->ninfo = opal_list_get_size(info);
-        if (0 < op->ninfo) {
-            PMIX_INFO_CREATE(op->info, op->ninfo);
-            n=0;
-            OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-                (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-                ext2x_value_load(&op->info[n].value, kv);
-                ++n;
-            }
+    if (NULL != info && 0 < (op->ninfo = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(op->info, op->ninfo);
+        n=0;
+        OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+            (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+            ext2x_value_load(&op->info[n].value, kv);
+            ++n;
         }
     }
 
@@ -1180,16 +1177,13 @@ static int notify_event(int status,
     prange = ext2x_convert_opalrange(range);
 
     /* convert the list of info */
-    if (NULL != info) {
-        op->ninfo = opal_list_get_size(info);
-        if (0 < op->ninfo) {
-            PMIX_INFO_CREATE(op->info, op->ninfo);
-            n=0;
-            OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-                (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-                ext2x_value_load(&op->info[n].value, kv);
-                ++n;
-            }
+    if (NULL != info && 0 < (op->ninfo = opal_list_get_size(info))) {
+        PMIX_INFO_CREATE(op->info, op->ninfo);
+        n=0;
+        OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+            (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+            ext2x_value_load(&op->info[n].value, kv);
+            ++n;
         }
     }
 

@@ -112,18 +112,15 @@ int ext2x_server_init(opal_pmix_server_module_t *module,
     ++opal_pmix_base.initialized;
 
     /* convert the list to an array of pmix_info_t */
+    sz = 2 + ((NULL==info)?0:opal_list_get_size(info));
+    PMIX_INFO_CREATE(pinfo, sz);
+    n = 0;
     if (NULL != info) {
-        sz = opal_list_get_size(info) + 2;
-        PMIX_INFO_CREATE(pinfo, sz);
-        n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
             (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
             ext2x_value_load(&pinfo[n].value, kv);
             ++n;
         }
-    } else {
-        sz = 2;
-        PMIX_INFO_CREATE(pinfo, 2);
     }
 
     /* insert ourselves into our list of jobids - it will be the
@@ -263,8 +260,7 @@ int ext2x_server_register_nspace(opal_jobid_t jobid,
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     /* convert the list to an array of pmix_info_t */
-    if (NULL != info) {
-        sz = opal_list_get_size(info);
+    if (NULL != info && 0 < (sz = opal_list_get_size(info))) {
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
@@ -275,16 +271,18 @@ int ext2x_server_register_nspace(opal_jobid_t jobid,
                  * that list to another array */
                 pmapinfo = (opal_list_t*)kv->data.ptr;
                 szmap = opal_list_get_size(pmapinfo);
-                PMIX_INFO_CREATE(pmap, szmap);
-                pinfo[n].value.data.darray = (pmix_data_array_t*)calloc(1, sizeof(pmix_data_array_t));
-                pinfo[n].value.data.darray->type = PMIX_INFO;
-                pinfo[n].value.data.darray->array = (struct pmix_info_t*)pmap;
-                pinfo[n].value.data.darray->size = szmap;
-                m = 0;
-                OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {
-                    (void)strncpy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);
-                    ext2x_value_load(&pmap[m].value, k2);
-                    ++m;
+                if (0 < szmap) {
+                    PMIX_INFO_CREATE(pmap, szmap);
+                    pinfo[n].value.data.darray = (pmix_data_array_t*)calloc(1, sizeof(pmix_data_array_t));
+                    pinfo[n].value.data.darray->type = PMIX_INFO;
+                    pinfo[n].value.data.darray->array = (struct pmix_info_t*)pmap;
+                    pinfo[n].value.data.darray->size = szmap;
+                    m = 0;
+                    OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {
+                        (void)strncpy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);
+                        ext2x_value_load(&pmap[m].value, k2);
+                        ++m;
+                    }
                 }
                 OPAL_LIST_RELEASE(pmapinfo);
             } else {
@@ -515,8 +513,7 @@ int ext2x_server_notify_event(int status,
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     /* convert the list to an array of pmix_info_t */
-    if (NULL != info) {
-        sz = opal_list_get_size(info);
+    if (NULL != info && 0 < (sz = opal_list_get_size(info))) {
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
