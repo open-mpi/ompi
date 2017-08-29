@@ -22,7 +22,7 @@
 #
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class threads datatype util dss symbol_name
+SUBDIRS = support asm class threads datatype util dss
 if PROJECT_OMPI
 SUBDIRS += monitoring
 endif
