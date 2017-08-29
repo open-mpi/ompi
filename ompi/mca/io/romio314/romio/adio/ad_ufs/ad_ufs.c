@@ -21,7 +21,7 @@ struct ADIOI_Fns_struct ADIO_UFS_operations = {
     ADIOI_GEN_Fcntl, /* Fcntl */
     ADIOI_GEN_SetInfo, /* SetInfo */
     ADIOI_GEN_ReadStrided, /* ReadStrided */
-    ADIOI_GEN_WriteStrided, /* WriteStrided */
+    ADIOI_GEN_WriteStrided_naive, /* WriteStrided_naive */
     ADIOI_GEN_Close, /* Close */
 #ifdef ROMIO_HAVE_WORKING_AIO
     ADIOI_GEN_IreadContig, /* IreadContig */

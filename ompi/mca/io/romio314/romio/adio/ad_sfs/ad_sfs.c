@@ -20,7 +20,7 @@ struct ADIOI_Fns_struct ADIO_SFS_operations = {
     ADIOI_SFS_Fcntl, /* Fcntl */
     ADIOI_GEN_SetInfo, /* SetInfo */
     ADIOI_GEN_ReadStrided, /* ReadStrided */
-    ADIOI_GEN_WriteStrided, /* WriteStrided */
+    ADIOI_GEN_WriteStrided_naive, /* WriteStrided_naive */
     ADIOI_GEN_Close, /* Close */
     ADIOI_FAKE_IreadContig, /* IreadContig */
     ADIOI_FAKE_IwriteContig, /* IwriteContig */

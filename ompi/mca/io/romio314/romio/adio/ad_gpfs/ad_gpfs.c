@@ -31,7 +31,7 @@ struct ADIOI_Fns_struct ADIO_GPFS_operations = {
     ADIOI_GEN_SetInfo, /* SetInfo for any platform besides BlueGene or PE */
 #endif
     ADIOI_GEN_ReadStrided, /* ReadStrided */
-    ADIOI_GEN_WriteStrided, /* WriteStrided */
+    ADIOI_GEN_WriteStrided_naive, /* WriteStrided_naive */
     ADIOI_GPFS_Close, /* Close */
 #ifdef ROMIO_HAVE_WORKING_AIO
 #warning Consider BG support for NFS before enabling this.
