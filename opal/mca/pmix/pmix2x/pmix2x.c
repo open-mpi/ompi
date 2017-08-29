@@ -196,14 +196,12 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
 
         if (NULL != results && 0 < (op->ninfo = opal_list_get_size(results))) {
             /* convert the list of results to an array of info */
-            if (0 < op->ninfo) {
-                PMIX_INFO_CREATE(op->info, op->ninfo);
-                n=0;
-                OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
-                    (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-                    pmix2x_value_load(&op->info[n].value, kv);
-                    ++n;
-                }
+            PMIX_INFO_CREATE(op->info, op->ninfo);
+            n=0;
+            OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
+                (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+                pmix2x_value_load(&op->info[n].value, kv);
+                ++n;
             }
         }
         /* convert the status */
@@ -1387,113 +1385,6 @@ opal_pmix_alloc_directive_t pmix2x_convert_allocdir(pmix_alloc_directive_t dir)
         default:
             return OPAL_PMIX_ALLOC_UNDEF;
     }
-}
-
-typedef struct {
-    opal_list_item_t super;
-    char *opalname;
-    char *opalvalue;
-    char *pmixname;
-    char *pmixvalue;
-    bool mismatched;
-} opal_pmix_evar_t;
-static void econ(opal_pmix_evar_t *p)
-{
-    p->opalname = NULL;
-    p->opalvalue = NULL;
-    p->pmixname = NULL;
-    p->pmixvalue = NULL;
-    p->mismatched = false;
-}
-static OBJ_CLASS_INSTANCE(opal_pmix_evar_t,
-                          opal_list_item_t,
-                          econ, NULL);
-struct known_value {
-    char *opalname;
-    char *pmixname;
-};
-
-static struct known_value known_values[] = {
-    {"OPAL_PREFIX", "PMIX_INSTALL_PREFIX"},
-    {"OPAL_EXEC_PREFIX", "PMIX_EXEC_PREFIX"},
-    {"OPAL_BINDIR", "PMIX_BINDIR"},
-    {"OPAL_SBINDIR", "PMIX_SBINDIR"},
-    {"OPAL_LIBEXECDIR", "PMIX_LIBEXECDIR"},
-    {"OPAL_DATAROOTDIR", "PMIX_DATAROOTDIR"},
-    {"OPAL_DATADIR", "PMIX_DATADIR"},
-    {"OPAL_SYSCONFDIR", "PMIX_SYSCONFDIR"},
-    {"OPAL_SHAREDSTATEDIR", "PMIX_SHAREDSTATEDIR"},
-    {"OPAL_LOCALSTATEDIR", "PMIX_LOCALSTATEDIR"},
-    {"OPAL_LIBDIR", "PMIX_LIBDIR"},
-    {"OPAL_INCLUDEDIR", "PMIX_INCLUDEDIR"},
-    {"OPAL_INFODIR", "PMIX_INFODIR"},
-    {"OPAL_MANDIR", "PMIX_MANDIR"},
-    {"OPAL_PKGDATADIR", "PMIX_PKGDATADIR"},
-    {"OPAL_PKGLIBDIR", "PMIX_PKGLIBDIR"},
-    {"OPAL_PKGINCLUDEDIR", "PMIX_PKGINCLUDEDIR"}
-};
-
-
-int opal_pmix_pmix2x_check_evars(void)
-{
-    opal_list_t values;
-    int nvals, i;
-    opal_pmix_evar_t *evar;
-    bool mismatched = false;
-    char *tmp=NULL, *tmp2;
-
-    OBJ_CONSTRUCT(&values, opal_list_t);
-    nvals = sizeof(known_values) / sizeof(struct known_value);
-    for (i=0; i < nvals; i++) {
-        evar = OBJ_NEW(opal_pmix_evar_t);
-        evar->opalname = known_values[i].opalname;
-        evar->opalvalue = getenv(evar->opalname);
-        evar->pmixname = known_values[i].pmixname;
-        evar->pmixvalue = getenv(evar->pmixname);
-        /* if the OPAL value is not set and the PMIx value is,
-         * then that is a problem. Likewise, if both are set
-         * and are different, then that is also a problem. Note that
-         * it is okay for the OPAL value to be set and the PMIx
-         * value to not be set */
-        if ((NULL == evar->opalvalue && NULL != evar->pmixvalue) ||
-            (NULL != evar->opalvalue && NULL != evar->pmixvalue &&
-             0 != strcmp(evar->opalvalue, evar->pmixvalue))) {
-            evar->mismatched = true;
-            mismatched = true;
-        }
-        opal_list_append(&values, &evar->super);
-    }
-    if (!mismatched) {
-        /* transfer any OPAL values that were set - we already verified
-         * that the equivalent PMIx value, if present, matches, so
-         * don't overwrite it */
-        OPAL_LIST_FOREACH(evar, &values, opal_pmix_evar_t) {
-            if (NULL != evar->opalvalue && NULL == evar->pmixvalue) {
-                opal_setenv(evar->pmixname, evar->opalvalue, true, &environ);
-            }
-        }
-        OPAL_LIST_DESTRUCT(&values);
-        return OPAL_SUCCESS;
-    }
-    /* we have at least one mismatch somewhere, so print out the table */
-    OPAL_LIST_FOREACH(evar, &values, opal_pmix_evar_t) {
-        if (evar->mismatched) {
-            if (NULL == tmp) {
-                asprintf(&tmp, "  %s:  %s\n  %s:  %s",
-                         evar->opalname, (NULL == evar->opalvalue) ? "NULL" : evar->opalvalue,
-                         evar->pmixname, (NULL == evar->pmixvalue) ? "NULL" : evar->pmixvalue);
-            } else {
-                asprintf(&tmp2, "%s\n\n  %s:  %s\n  %s:  %s", tmp,
-                         evar->opalname, (NULL == evar->opalvalue) ? "NULL" : evar->opalvalue,
-                         evar->pmixname, (NULL == evar->pmixvalue) ? "NULL" : evar->pmixvalue);
-                free(tmp);
-                tmp = tmp2;
-            }
-        }
-    }
-    opal_show_help("help-pmix-pmix2x.txt", "evars", true, tmp);
-    free(tmp);
-    return OPAL_ERR_SILENT;
 }
 
 /****  INSTANTIATE INTERNAL CLASSES  ****/

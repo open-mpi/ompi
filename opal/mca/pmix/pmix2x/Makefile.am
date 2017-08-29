@@ -22,6 +22,7 @@ sources = \
         pmix2x_component.c \
         pmix2x.c \
         pmix2x_client.c \
+        pmix2x_local.c \
         pmix2x_server_south.c \
         pmix2x_server_north.c
 
