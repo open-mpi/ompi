@@ -19,6 +19,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +42,7 @@
 #include <sys/mman.h>
 #endif  /* HAVE_SYS_MMAN_H */
 
-#if OPAL_BTL_SM_HAVE_CMA && defined(OPAL_CMA_NEED_SYSCALL_DEFS)
+#if OPAL_BTL_SM_HAVE_CMA && OPAL_CMA_NEED_SYSCALL_DEFS
 #include "opal/sys/cma.h"
 #endif /* OPAL_CMA_NEED_SYSCALL_DEFS */
 
