@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -284,7 +287,7 @@ int orte_rml_ofi_recv_handler(struct fi_cq_data_entry *wc, uint8_t ofi_prov_id)
                         nextpkt = totdata+datalen;
                         opal_output_verbose(10, orte_rml_base_framework.framework_output,
                                      "%s totdata = %p,nextpkt = %p ",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), totdata, nextpkt);
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (void *)totdata, (void *)nextpkt);
                         memcpy(nextpkt,new_pkt->data,new_pkt->pkt_size);
                         opal_output_verbose(10, orte_rml_base_framework.framework_output,
                                      "%s memcpy completed for leftover data recd, datalen = %d, new->pkt->pkt_size = %lu",
