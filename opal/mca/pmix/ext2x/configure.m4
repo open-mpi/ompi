@@ -48,7 +48,10 @@ AC_DEFUN([MCA_opal_pmix_ext2x_CONFIG],[
                  [$1
                   # need to set the wrapper flags for static builds
                   pmix_ext2x_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
-                  pmix_ext2x_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
+                  pmix_ext2x_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS
+                  # expose the headers for the base/common files
+                  OPAL_PMIX2_COMMON_CPPFLAGS=$opal_external_pmix_CPPFLAGS
+                  AC_SUBST([OPAL_PMIX2_COMMON_CPPFLAGS])],
                  [$2])],
           [$2])
 

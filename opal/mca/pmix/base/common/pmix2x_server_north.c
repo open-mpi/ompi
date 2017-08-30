@@ -36,10 +36,11 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/base/base.h"
-#include "pmix2x.h"
-
-#include "pmix.h"
-#include "pmix_server.h"
+#include <include/pmix.h>
+#include <include/pmix_server.h>
+#include <include/pmix_common.h>
+#include <include/pmix_tool.h>
+#include "opal/mca/pmix/base/common/pmix2x_common.h"
 
 /****    N.O.R.T.H.B.O.U.N.D   I.N.T.E.R.F.A.C.E.S     ****/
 
@@ -289,7 +290,7 @@ static void opmdx_response(int status, const char *data, size_t sz, void *cbdata
          * dmodx requests that we cached and notify them that the
          * data has arrived */
         OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
-        while (NULL != (dmdx = (opal_pmix2x_dmx_trkr_t*)opal_list_remove_first(&mca_pmix_pmix2x_component.dmdx))) {
+        while (NULL != (dmdx = (opal_pmix2x_dmx_trkr_t*)opal_list_remove_first(&opal_pmix2x_common.dmdx))) {
             dmdx->cbfunc(PMIX_SUCCESS, NULL, 0, dmdx->cbdata, NULL, NULL);
             OBJ_RELEASE(dmdx);
         }
@@ -395,7 +396,7 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
         dmdx = OBJ_NEW(opal_pmix2x_dmx_trkr_t);
         dmdx->cbfunc = cbfunc;
         dmdx->cbdata = cbdata;
-        opal_list_append(&mca_pmix_pmix2x_component.dmdx, &dmdx->super);
+        opal_list_append(&opal_pmix2x_common.dmdx, &dmdx->super);
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
         return PMIX_SUCCESS;
     }
@@ -1028,7 +1029,7 @@ static void toolcbfunc(int status,
         (void)strncpy(job->nspace, p.nspace, PMIX_MAX_NSLEN);
         job->jobid = proc.jobid;
         OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
-        opal_list_append(&mca_pmix_pmix2x_component.jobids, &job->super);
+        opal_list_append(&opal_pmix2x_common.jobids, &job->super);
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     }
 

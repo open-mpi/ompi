@@ -23,15 +23,15 @@
 #include "opal/mca/pmix/base/common/pmix2x_common.h"
 
 /*
- * Public string showing the pmix pmix2x component version number
+ * Public string showing the pmix ext2x component version number
  */
-const char *opal_pmix_pmix2x_component_version_string =
-    "OPAL pmix2x MCA component version " OPAL_VERSION;
+const char *opal_pmix_ext2x_component_version_string =
+    "OPAL ext2x MCA component version " OPAL_VERSION;
 
 /*
  * Local function
  */
-static int pmix2x_component_query(mca_base_module_t **module, int *priority);
+static int ext2x_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
@@ -39,7 +39,7 @@ static int pmix2x_component_query(mca_base_module_t **module, int *priority);
  * and pointers to our public functions in it
  */
 
-opal_pmix_base_component_t mca_pmix_pmix2x_component = {
+opal_pmix_base_component_t mca_pmix_ext2x_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
@@ -51,12 +51,12 @@ opal_pmix_base_component_t mca_pmix_pmix2x_component = {
 
             /* Component name and version */
 
-        .mca_component_name = "pmix2x",
+        .mca_component_name = "ext2x",
         MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                               OPAL_RELEASE_VERSION),
 
             /* Component open and close functions */
-        .mca_query_component = pmix2x_component_query,
+        .mca_query_component = ext2x_component_query,
     },
         /* Next the MCA v1.0.0 component meta data */
     .base_data = {
@@ -65,7 +65,7 @@ opal_pmix_base_component_t mca_pmix_pmix2x_component = {
     }
 };
 
-static int pmix2x_component_query(mca_base_module_t **module, int *priority)
+static int ext2x_component_query(mca_base_module_t **module, int *priority)
 {
     char *t, *id;
 

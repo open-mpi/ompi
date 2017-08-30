@@ -19,11 +19,7 @@ SUBDIRS = pmix
 
 sources = \
         pmix2x.h \
-        pmix2x_component.c \
-        pmix2x.c \
-        pmix2x_client.c \
-        pmix2x_server_south.c \
-        pmix2x_server_north.c
+        pmix2x_component.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

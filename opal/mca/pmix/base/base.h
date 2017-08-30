@@ -73,6 +73,7 @@ typedef struct {
     int timeout;
     int initialized;
     opal_pmix_lock_t lock;
+    bool silence_warning;
 } opal_pmix_base_t;
 
 extern opal_pmix_base_t opal_pmix_base;

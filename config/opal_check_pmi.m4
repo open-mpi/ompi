@@ -13,7 +13,7 @@
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -242,7 +242,10 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
     AC_MSG_CHECKING([if user requested external PMIx support($with_pmix)])
     AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([no])
-           opal_external_pmix_happy=no],
+           opal_external_pmix_happy=no
+           # need to set the AM conditional for the base common functions
+           AM_CONDITIONAL([OPAL_PMIX2_COMMON_REQD], [test "$opal_external_pmix_happy" = "no"])
+           AC_DEFINE_UNQUOTED([OPAL_PMIX2X_INTERNAL], "1", [Whether pmix2x is internal])],
 
           [AC_MSG_RESULT([yes])
            # check for external pmix lib */
@@ -316,6 +319,9 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                   AC_MSG_WARN([information of the external lib could not])
                   AC_MSG_WARN([be detected])
                   AC_MSG_ERROR([cannot continue])])
+
+           # need to set the AM conditional for the base common functions
+           AM_CONDITIONAL([OPAL_PMIX2_COMMON_REQD], [test "$opal_external_pmix_version" = "2x"])
 
            CPPFLAGS=$opal_external_pmix_save_CPPFLAGS
            LDFLAGS=$opal_external_pmix_save_LDFLAGS
