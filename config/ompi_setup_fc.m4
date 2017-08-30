@@ -14,7 +14,7 @@ dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
+dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -43,7 +43,7 @@ AC_DEFUN_ONCE([_OMPI_SETUP_FC_COMPILER],[
     # Fortran compilers (excluding the f77 compiler names) from AC's
     # default list of compilers and use it here.  This is the main
     # reason we have an OMPI-ized version of the PROG_FC macro.
-    AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90])
+    AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90 nagfor])
     FCFLAGS="$ompi_fcflags_save"
     OPAL_VAR_SCOPE_POP
 ])
@@ -114,12 +114,18 @@ AC_DEFUN([OMPI_SETUP_FC],[
     # "ignore TKR" comment pragmas that it doesn't understand, and
     # will warn about them.  From Tony Goetz at Absoft, we can use the
     # -Z790 flag to quell these warnings.
+    # The NAG compiler is too picky about naming conventions, so use the
+    # -mismatch flag to keep it happy
     AC_MSG_CHECKING([for $FC warnings flags])
     fc_version=`$FC --version 2>&1`
     case "$fc_version" in
     *Absoft*)
         AC_MSG_RESULT([-Z790])
         FCFLAGS="$FCFLAGS -Z790"
+        ;;
+    *NAG*)
+        AC_MSG_RESULT([-mismatch])
+        FCFLAGS="$FCFLAGS -mismatch"
         ;;
     *)
         AC_MSG_RESULT([none])
