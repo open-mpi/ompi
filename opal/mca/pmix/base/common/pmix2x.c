@@ -39,12 +39,14 @@
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
-#include "pmix2x.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/pmix_types.h"
 
-#include <pmix_common.h>
-#include <pmix.h>
+#include "opal/mca/pmix/base/common/pmix2x_common.h"
+#include <include/pmix.h>
+
+/* instantiate the local globals */
+opal_pmix2x_common_t opal_pmix2x_common;
 
 /****    C.O.M.M.O.N   I.N.T.E.R.F.A.C.E.S     ****/
 
@@ -70,8 +72,9 @@ static void pmix2x_query(opal_list_t *queries,
                          opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
 static void pmix2x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+static const char* pmix2x_get_version(void);
 
-const opal_pmix_base_module_t opal_pmix_pmix2x_module = {
+const opal_pmix_base_module_t opal_pmix_pmix2x_common_module = {
     /* client APIs */
     .init = pmix2x_client_init,
     .finalize = pmix2x_client_finalize,
@@ -115,7 +118,7 @@ const opal_pmix_base_module_t opal_pmix_pmix2x_module = {
     .tool_init = pmix2x_tool_init,
     .tool_finalize = pmix2x_tool_fini,
     /* utility APIs */
-    .get_version = PMIx_Get_version,
+    .get_version = pmix2x_get_version,
     .register_evhandler = register_handler,
     .deregister_evhandler = deregister_handler,
     .notify_event = notify_event,
@@ -143,7 +146,7 @@ static const char *pmix2x_get_nspace(opal_jobid_t jobid)
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &opal_pmix2x_common.jobids, opal_pmix2x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return jptr->nspace;
@@ -160,7 +163,7 @@ static void pmix2x_register_jobid(opal_jobid_t jobid, const char *nspace)
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
 
     /* if we don't already have it, add this to our jobid tracker */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &opal_pmix2x_common.jobids, opal_pmix2x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return;
@@ -169,7 +172,7 @@ static void pmix2x_register_jobid(opal_jobid_t jobid, const char *nspace)
     jptr = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
     (void)strncpy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
     jptr->jobid = jobid;
-    opal_list_append(&mca_pmix_pmix2x_component.jobids, &jptr->super);
+    opal_list_append(&opal_pmix2x_common.jobids, &jptr->super);
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 }
 
@@ -305,7 +308,7 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     }
 
     /* cycle thru the registrations */
-    OPAL_LIST_FOREACH(event, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
+    OPAL_LIST_FOREACH(event, &opal_pmix2x_common.events, opal_pmix2x_event_t) {
         if (evhdlr_registration_id == event->index) {
             /* found it - invoke the handler, pointing its
              * callback function to our callback function */
@@ -646,7 +649,7 @@ char* pmix2x_convert_jobid(opal_jobid_t jobid)
 
     /* look thru our list of jobids and find the
      * corresponding nspace */
-    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
+    OPAL_LIST_FOREACH(jptr, &opal_pmix2x_common.jobids, opal_pmix2x_jobid_trkr_t) {
         if (jptr->jobid == jobid) {
             return jptr->nspace;
         }
@@ -765,7 +768,7 @@ void pmix2x_value_load(pmix_value_t *v,
             PMIX_PROC_CREATE(v->data.proc, 1);
             /* see if this job is in our list of known nspaces */
             found = false;
-            OPAL_LIST_FOREACH(job, &mca_pmix_pmix2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
+            OPAL_LIST_FOREACH(job, &opal_pmix2x_common.jobids, opal_pmix2x_jobid_trkr_t) {
                 if (job->jobid == kv->data.name.jobid) {
                     (void)strncpy(v->data.proc->nspace, job->nspace, PMIX_MAX_NSLEN);
                     found = true;
@@ -934,7 +937,7 @@ int pmix2x_value_unload(opal_value_t *kv,
         kv->type = OPAL_NAME;
         /* see if this job is in our list of known nspaces */
         found = false;
-        OPAL_LIST_FOREACH(job, &mca_pmix_pmix2x_component.jobids, opal_pmix2x_jobid_trkr_t) {
+        OPAL_LIST_FOREACH(job, &opal_pmix2x_common.jobids, opal_pmix2x_jobid_trkr_t) {
             if (0 == strncmp(job->nspace, v->data.proc->nspace, PMIX_MAX_NSLEN)) {
                 kv->data.name.jobid = job->jobid;
                 found = true;
@@ -1031,6 +1034,11 @@ static void errreg_cbfunc (pmix_status_t status,
     OBJ_RELEASE(op);
 }
 
+static const char* pmix2x_get_version(void)
+{
+    return PMIx_Get_version();
+}
+
 static void register_handler(opal_list_t *event_codes,
                              opal_list_t *info,
                              opal_pmix_notification_fn_t evhandler,
@@ -1082,7 +1090,7 @@ static void register_handler(opal_list_t *event_codes,
     /* register the event */
     op->event = OBJ_NEW(opal_pmix2x_event_t);
     op->event->handler = evhandler;
-    opal_list_append(&mca_pmix_pmix2x_component.events, &op->event->super);
+    opal_list_append(&opal_pmix2x_common.events, &op->event->super);
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
     PMIx_Register_event_handler(op->pcodes, op->ncodes,
@@ -1108,9 +1116,9 @@ static void deregister_handler(size_t evhandler,
     }
 
     /* look for this event */
-    OPAL_LIST_FOREACH(event, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
+    OPAL_LIST_FOREACH(event, &opal_pmix2x_common.events, opal_pmix2x_event_t) {
         if (evhandler == event->index) {
-            opal_list_remove_item(&mca_pmix_pmix2x_component.events, &event->super);
+            opal_list_remove_item(&opal_pmix2x_common.events, &event->super);
             OBJ_RELEASE(event);
             break;
         }
@@ -1439,6 +1447,7 @@ static struct known_value known_values[] = {
 
 int opal_pmix_pmix2x_check_evars(void)
 {
+#ifdef OPAL_PMIX2X_INTERNAL
     opal_list_t values;
     int nvals, i;
     opal_pmix_evar_t *evar;
@@ -1497,6 +1506,9 @@ int opal_pmix_pmix2x_check_evars(void)
     opal_show_help("help-pmix-pmix2x.txt", "evars", true, tmp);
     free(tmp);
     return OPAL_ERR_SILENT;
+#else
+    return OPAL_SUCCESS;
+#endif
 }
 
 /****  INSTANTIATE INTERNAL CLASSES  ****/

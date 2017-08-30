@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_PMIX_PMIX2X_H
-#define MCA_PMIX_PMIX2X_H
+#ifndef MCA_PMIX_EXT2X_H
+#define MCA_PMIX_EXT2X_H
 
 #include "opal_config.h"
 
@@ -23,14 +23,8 @@
 
 BEGIN_C_DECLS
 
-#ifdef OPAL_C_HAVE_VISIBILITY
-#define PMIX_HAVE_VISIBILITY 1
-#else
-#undef PMIX_HAVE_VISIBILITY
-#endif
-
-OPAL_DECLSPEC opal_pmix_base_component_t mca_pmix_pmix2x_component;
+OPAL_DECLSPEC opal_pmix_base_component_t mca_pmix_ext2x_component;
 
 END_C_DECLS
 
-#endif /* MCA_PMIX_EXTERNAL_H */
+#endif /* MCA_PMIX_EXT2X_H */

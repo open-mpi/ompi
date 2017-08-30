@@ -61,6 +61,7 @@
 
 /* provide access to the rest of the client functions */
 #include <pmix.h>
+#include <pmix_common.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

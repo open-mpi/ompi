@@ -63,6 +63,15 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
                                  "Time (in seconds) to wait for a data exchange to complete",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base.timeout);
+
+    opal_pmix_base.silence_warning = false;
+    (void) mca_base_var_register ("opal", "pmix", "base", "silence_warning",
+                                  "Silence warning about PMIX_INSTALL_PREFIX",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_4,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &opal_pmix_base.silence_warning);
+
     return OPAL_SUCCESS;
 }
 
