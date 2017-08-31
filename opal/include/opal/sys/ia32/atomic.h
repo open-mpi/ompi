@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -111,12 +111,6 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-#if 0
-
-/* some versions of GCC won't let you use ebx period (even though they
-   should be able to save / restore for the life of the inline
-   assembly).  For the beta, just use the non-inline version */
-
 #ifndef ll_low /* GLIBC provides these somewhere, so protect */
 #define ll_low(x)       *(((unsigned int*)&(x))+0)
 #define ll_high(x)      *(((unsigned int*)&(x))+1)
@@ -150,7 +144,6 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
 		    : "cc", "memory", "ebx");
     return (int) ret;
 }
-#endif /* if 0 */
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
