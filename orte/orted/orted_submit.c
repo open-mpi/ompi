@@ -130,6 +130,7 @@ opal_event_t *orte_debugger_attach=NULL;
 /*
  * Local functions
  */
+static void simple_abort(void);
 static int create_app(int argc, char* argv[],
                       orte_job_t *jdata,
                       orte_app_context_t **app,
@@ -160,6 +161,9 @@ static void print_help(void);
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 
 /* local objects */
+
+static orte_timer_t orte_abort_timeout;
+
 typedef struct {
     opal_object_t super;
     orte_job_t *jdata;
@@ -3115,18 +3119,51 @@ static void stack_trace_recv(int status, orte_process_name_t* sender,
             OBJ_DESTRUCT(&stack_trace_timer);
         }
         /* abort the job */
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
-        /* set the global abnormal exit flag  */
-        orte_abnormal_term_ordered = true;
+        simple_abort();
     }
+}
+
+static void orte_timeout_shutdown(int sd, short args, void *cbdata) {
+
+  fprintf(stderr, "Timed out waiting to shutdown. Job will now terminate.\n");
+  ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
+  orte_abnormal_term_ordered = true;
+}
+
+static void simple_abort(void)
+{
+    int ret;
+
+    OBJ_CONSTRUCT(&orte_abort_timeout, orte_timer_t);
+    orte_abort_timeout.tv.tv_sec  = 30;
+    orte_abort_timeout.tv.tv_usec = 0;
+
+    opal_event_evtimer_set(orte_event_base, orte_abort_timeout.ev,
+                               orte_timeout_shutdown, NULL);
+    opal_event_set_priority(orte_abort_timeout.ev, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(orte_abort_timeout.ev, &orte_abort_timeout.tv);
+
+    /* tell the daemons to terminate */
+    if (ORTE_SUCCESS != (ret = orte_plm.terminate_orteds()) ) {
+        fprintf(stderr, "orte_plm.terminate_orteds() failed with %d", ret);
+        ORTE_FORCED_TERMINATE(1);
+    }
+    else {
+        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
+    }
+
+    /* set the global abnormal exit flag  */
+    orte_abnormal_term_ordered = true;
+
+    return;
 }
 
 static void stack_trace_timeout(int sd, short args, void *cbdata)
 {
+    fprintf(stderr, "Timed out waiting for stack traces. Job will now terminate. orte_stack_trace_wait_timeout = %d\n", orte_stack_trace_wait_timeout);
+
     /* abort the job */
-    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
-    /* set the global abnormal exit flag  */
-    orte_abnormal_term_ordered = true;
+    simple_abort();
 }
 
 void orte_timeout_wakeup(int sd, short args, void *cbdata)
@@ -3226,9 +3263,7 @@ void orte_timeout_wakeup(int sd, short args, void *cbdata)
     }
   giveup:
     /* abort the job */
-    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
-    /* set the global abnormal exit flag  */
-    orte_abnormal_term_ordered = true;
+    simple_abort();
 }
 
 static int nreports = 0;
@@ -3238,9 +3273,7 @@ static int nchecks = 0;
 static void profile_timeout(int sd, short args, void *cbdata)
 {
     /* abort the job */
-    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
-    /* set the global abnormal exit flag  */
-    orte_abnormal_term_ordered = true;
+    simple_abort();
 }
 
 
