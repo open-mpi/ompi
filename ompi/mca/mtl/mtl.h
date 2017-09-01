@@ -5,6 +5,7 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,6 +62,9 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  * MTL module flags
  */
 #define MCA_MTL_BASE_FLAG_REQUIRE_WORLD 0x00000001
+#if OPAL_CUDA_SUPPORT
+#define MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE 0x00000002
+#endif
 
 /**
  * Initialization routine for MTL component
