@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -6,6 +7,8 @@
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -305,7 +308,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "the .%d.prof suffix, where %d is replaced with the processus "
                                  "rank in MPI_COMM_WORLD.",
                                  OPAL_INFO_LVL_1, MCA_BASE_PVAR_CLASS_GENERIC,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT, 0,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT, MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_flush, mca_common_monitoring_set_flush,
                                  mca_common_monitoring_notify_flush, NULL);
 
@@ -313,7 +316,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "messages sent to each peer through the PML framework.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_pml_count, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -321,7 +324,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "sent to each peer in a communicator through the PML framework.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_pml_size, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -330,7 +333,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "messages sent through the OSC framework with each peer.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_osc_sent_count, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
     
@@ -338,7 +341,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "messages sent through the OSC framework with each peer.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_osc_sent_size, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -346,7 +349,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "messages received through the OSC framework with each peer.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_osc_recv_count, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -354,7 +357,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "messages received through the OSC framework with each peer.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_osc_recv_size, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -363,7 +366,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "messages exchanged through the COLL framework with each peer.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_coll_count, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -371,7 +374,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "messages exchanged through the COLL framework with each peer.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_get_coll_size, NULL,
                                  mca_common_monitoring_comm_size_notify, NULL);
 
@@ -379,7 +382,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "exchanged as one-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_o2a_count, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
     
@@ -387,7 +390,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "exchanged as one-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_o2a_size, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
 
@@ -395,7 +398,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "exchanged as all-to-one operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_a2o_count, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
     
@@ -403,7 +406,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "exchanged as all-to-one operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_a2o_size, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
 
@@ -411,7 +414,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "exchanged as all-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_COUNTER,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_a2a_count, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
     
@@ -419,7 +422,7 @@ void mca_common_monitoring_register(void*pml_monitoring_component)
                                  "exchanged as all-to-all operations in a communicator.",
                                  OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_AGGREGATE,
                                  MCA_MONITORING_VAR_TYPE, NULL, MPI_T_BIND_MPI_COMM,
-                                 MCA_BASE_PVAR_FLAG_READONLY,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_IWG,
                                  mca_common_monitoring_coll_get_a2a_size, NULL,
                                  mca_common_monitoring_coll_messages_notify, NULL);
 }
