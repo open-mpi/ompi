@@ -227,16 +227,16 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                             AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
                            [AC_MSG_RESULT([no])])
             AC_LANG_POP([C])])
-m4_ifdef([project_ompi],[
-    OPAL_LIBTOOL_CONFIG([wl],[wl_fc],[--tag=FC],[])
+    m4_ifdef([project_ompi],[
+        OPAL_LIBTOOL_CONFIG([wl],[wl_fc],[--tag=FC],[])
 
-    LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
-    AC_LANG_PUSH([Fortran])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
+        LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
+        AC_LANG_PUSH([Fortran])
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
 end program]])],
-                   [runpath_fc_args="${wl_fc}--enable-new-dtags"],
-                   [runpath_fc_args=""])
-    AC_LANG_POP([Fortran])])
+                       [runpath_fc_args="${wl_fc}--enable-new-dtags"],
+                       [runpath_fc_args=""])
+        AC_LANG_POP([Fortran])])
     LDFLAGS=$LDFLAGS_save
 
     OPAL_VAR_SCOPE_POP
