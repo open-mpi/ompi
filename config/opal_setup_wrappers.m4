@@ -142,7 +142,10 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
           [AC_MSG_ERROR([--enable-wrapper-runpath cannot be selected with --disable-wrapper-rpath])])
 ])
 
-AC_DEFUN([OPAL_EVAL_LIBTOOL],[
+# OPAL_LIBTOOL_CONFIG(libtool-variable, result-variable,
+#                     libtool-tag, extra-code)
+# Retrieve information from the generated libtool
+AC_DEFUN([OPAL_LIBTOOL_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([rpath_script rpath_outfile])
     # Output goes into globally-visible variable.  Run this in a
     # sub-process so that we don't pollute the current process
@@ -185,11 +188,11 @@ EOF
 AC_DEFUN([OPAL_SETUP_RPATH],[
     OPAL_VAR_SCOPE_PUSH([rpath_libdir_save])
     AC_MSG_CHECKING([if linker supports RPATH])
-    OPAL_EVAL_LIBTOOL([hardcode_libdir_flag_spec],[rpath_args],[],[libdir=LIBDIR])
+    OPAL_LIBTOOL_CONFIG([hardcode_libdir_flag_spec],[rpath_args],[],[libdir=LIBDIR])
 
     AS_IF([test -n "$rpath_args"],
           [WRAPPER_RPATH_SUPPORT=rpath
-           OPAL_EVAL_LIBTOOL([hardcode_libdir_flag_spec],[rpath_fc_args],[--tag=FC],[libdir=LIBDIR])
+           OPAL_LIBTOOL_CONFIG([hardcode_libdir_flag_spec],[rpath_fc_args],[--tag=FC],[libdir=LIBDIR])
            AC_MSG_RESULT([yes ($rpath_args + $rpath_fc_args)])],
           [WRAPPER_RPATH_SUPPORT=unnecessary
            AC_MSG_RESULT([yes (no extra flags needed)])])
@@ -225,7 +228,7 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                            [AC_MSG_RESULT([no])])
             AC_LANG_POP([C])])
 m4_ifdef([project_ompi],[
-    OPAL_EVAL_LIBTOOL([wl],[wl_fc],[--tag=FC],[])
+    OPAL_LIBTOOL_CONFIG([wl],[wl_fc],[--tag=FC],[])
 
     LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
     AC_LANG_PUSH([Fortran])
