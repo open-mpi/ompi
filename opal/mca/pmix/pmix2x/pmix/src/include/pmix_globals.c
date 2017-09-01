@@ -117,6 +117,7 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_rank_info_t,
 
 static void pcon(pmix_peer_t *p)
 {
+    p->proc_type = PMIX_PROC_UNDEF;
     p->finalized = false;
     p->info = NULL;
     p->proc_cnt = 0;

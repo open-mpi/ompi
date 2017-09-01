@@ -131,11 +131,11 @@ PMIX_EXPORT pmix_psec_module_t* pmix_psec_base_assign_module(const char *options
                 pmix_output_verbose(2, pmix_globals.debug_output,                                           \
                                     "validation of credential failed: %s",                                  \
                                     PMIx_Error_string(_r));                                                 \
+            } else {                                                                                        \
+                pmix_output_verbose(2, pmix_globals.debug_output,                                           \
+                                    "credential validated");                                                \
             }                                                                                               \
-            pmix_output_verbose(2, pmix_globals.debug_output,                                               \
-                                "credential validated");                                                    \
-            /* send them success */                                                                         \
-            _r = PMIX_SUCCESS;                                                                              \
+            /* send them the result */                                                                      \
             if (PMIX_SUCCESS != (_r = pmix_ptl_base_send_blocking((p)->sd, (char*)&(_r), sizeof(int)))) {   \
                 PMIX_ERROR_LOG(_r);                                                                         \
             }                                                                                               \

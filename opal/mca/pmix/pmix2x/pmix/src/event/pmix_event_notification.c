@@ -54,14 +54,14 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
     }
 
     /* if we aren't connected, don't attempt to send */
-    if (!PMIX_PROC_IS_SERVER && !pmix_globals.connected) {
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) && !pmix_globals.connected) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_UNREACH;
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
 
-    if (PMIX_PROC_IS_SERVER) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         rc = pmix_server_notify_client_of_event(status, source, range,
                                                 info, ninfo,
                                                 cbfunc, cbdata);
@@ -800,8 +800,10 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_server: _notify_client_event notifying clients of event %s",
-                        PMIx_Error_string(cd->status));
+                        "pmix_server: _notify_client_event notifying clients of event %s range %s type %s",
+                        PMIx_Error_string(cd->status),
+                        PMIx_Data_range_string(cd->range),
+                        cd->nondefault ? "NONDEFAULT" : "OPEN");
 
     /* we cannot know if everyone who wants this notice has had a chance
      * to register for it - the notice may be coming too early. So cache
@@ -1103,7 +1105,7 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg)
     pmix_list_remove_item(&pmix_globals.cached_events, &ch->super);
 
     /* process this event thru the regular channels */
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         pmix_server_notify_client_of_event(ch->status, &ch->source,
                                            ch->range, ch->info, ch->ninfo,
                                            ch->final_cbfunc, ch->final_cbdata);

@@ -861,11 +861,20 @@ pmix_status_t pmix_bfrops_base_copy_array(pmix_info_array_t **dest,
     pmix_info_t *d1, *s1;
 
     *dest = (pmix_info_array_t*)malloc(sizeof(pmix_info_array_t));
+    if (NULL == (*dest)) {
+        return PMIX_ERR_NOMEM;
+        }
     (*dest)->size = src->size;
-    (*dest)->array = (pmix_info_t*)malloc(src->size * sizeof(pmix_info_t));
-    d1 = (pmix_info_t*)(*dest)->array;
-    s1 = (pmix_info_t*)src->array;
-    memcpy(d1, s1, src->size * sizeof(pmix_info_t));
+    if (0 < src->size) {
+        (*dest)->array = (pmix_info_t*)malloc(src->size * sizeof(pmix_info_t));
+        if (NULL == (*dest)->array) {
+            free(*dest);
+            return PMIX_ERR_NOMEM;
+        }
+        d1 = (pmix_info_t*)(*dest)->array;
+        s1 = (pmix_info_t*)src->array;
+        memcpy(d1, s1, src->size * sizeof(pmix_info_t));
+    }
     return PMIX_SUCCESS;
 }
 /*******************/

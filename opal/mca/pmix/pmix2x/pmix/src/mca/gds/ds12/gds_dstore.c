@@ -367,7 +367,7 @@ static inline void _esh_session_map_clean(ns_map_t *m) {
 static inline int _flock_init(size_t idx) {
     pmix_status_t rc = PMIX_SUCCESS;
 
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         _ESH_SESSION_lock(idx) = open(_ESH_SESSION_lockfile(idx), O_CREAT | O_RDWR | O_EXCL, 0600);
 
         /* if previous launch was crashed, the lockfile might not be deleted and unlocked,
@@ -421,7 +421,7 @@ static inline int _rwlock_init(size_t idx) {
         rc = PMIX_ERR_OUT_OF_RESOURCE;
         return rc;
     }
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         if (PMIX_SUCCESS != (rc = pmix_pshmem.segment_create(_ESH_SESSION_pthread_seg(idx), _ESH_SESSION_lockfile(idx), size))) {
             return rc;
         }
@@ -512,7 +512,7 @@ static inline const char *_unique_id(void)
         /* see: pmix_server.c initialize_server_base()
          * to get format of uri
          */
-        if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
             static char buf[100];
             snprintf(buf, sizeof(buf) - 1, "pmix-%d", getpid());
             str = buf;
@@ -855,7 +855,7 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
     PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
         "%s:%d:%s _lockfile_name: %s", __FILE__, __LINE__, __func__, s->lockfile));
 
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         if (0 != mkdir(s->nspace_path, 0770)) {
             if (EEXIST != errno) {
                 pmix_output(0, "session init: can not create session directory \"%s\": %s",
@@ -913,13 +913,13 @@ static inline void _esh_session_release(session_t *s)
     close(s->lockfd);
 
     if (NULL != s->lockfile) {
-        if(PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        if(PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
             unlink(s->lockfile);
         }
         free(s->lockfile);
     }
     if (NULL != s->nspace_path) {
-        if(PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        if(PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
             _esh_dir_del(s->nspace_path);
         }
         free(s->nspace_path);
@@ -1137,7 +1137,7 @@ static int _update_ns_elem(ns_track_elem_t *ns_elem, ns_seg_info_t *info)
 
     /* synchronize number of meta segments for the target namespace. */
     for (i = ns_elem->num_meta_seg; i < info->num_meta_seg; i++) {
-        if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
             seg = _create_new_segment(NS_META_SEGMENT, &info->ns_map, i);
             if (NULL == seg) {
                 rc = PMIX_ERR_OUT_OF_RESOURCE;
@@ -1170,7 +1170,7 @@ static int _update_ns_elem(ns_track_elem_t *ns_elem, ns_seg_info_t *info)
     }
     /* synchronize number of data segments for the target namespace. */
     for (i = ns_elem->num_data_seg; i < info->num_data_seg; i++) {
-        if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
             seg = _create_new_segment(NS_DATA_SEGMENT, &info->ns_map, i);
             if (NULL == seg) {
                 rc = PMIX_ERR_OUT_OF_RESOURCE;
@@ -1990,7 +1990,7 @@ static pmix_status_t dstore_init(pmix_info_t info[], size_t ninfo)
     }
 
     /* find the temp dir */
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         _esh_session_map_search = _esh_session_map_search_server;
 
         /* scan incoming info for directives */
@@ -2119,7 +2119,7 @@ static void dstore_finalize(void)
     pmix_pshmem.finalize();
 
     if (NULL != _base_path){
-        if(PMIX_PROC_SERVER == pmix_globals.proc_type) {
+        if(PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
             if (lstat(_base_path, &st) >= 0){
                 if (PMIX_SUCCESS != (rc = _esh_dir_del(_base_path))) {
                     PMIX_ERROR_LOG(rc);
@@ -2242,7 +2242,7 @@ static pmix_status_t dstore_store(const pmix_proc_t *proc,
                         "[%s:%d] gds: dstore store for key '%s' scope %d",
                         proc->nspace, proc->rank, kv->key, scope);
 
-    if (PMIX_PROC_CLIENT == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_CLIENT(pmix_globals.mypeer)) {
         rc = PMIX_ERR_NOT_SUPPORTED;
         PMIX_ERROR_LOG(rc);
         return rc;
@@ -2408,7 +2408,8 @@ static pmix_status_t _dstore_fetch(const char *nspace, pmix_rank_t rank,
         if ((NULL == key) && (kval_cnt > 0)) {
             kval = (pmix_value_t*)malloc(sizeof(pmix_value_t));
             if (NULL == kval) {
-                return PMIX_ERR_NOMEM;
+                rc = PMIX_ERR_NOMEM;
+                goto done;
             }
             PMIX_VALUE_CONSTRUCT(kval);
 
@@ -2791,7 +2792,7 @@ static pmix_status_t dstore_assign_module(pmix_info_t *info, size_t ninfo,
     size_t n, m;
     char **options;
 
-    *priority = -1;
+    *priority = 20;
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_GDS_MODULE, PMIX_MAX_KEYLEN)) {
@@ -2963,7 +2964,7 @@ static inline int _collect_key_for_rank(pmix_peer_t *peer, pmix_rank_t rank, pmi
 
     if ((cur_rank + 1) <= size) {
         tmp = &(PMIX_VALUE_ARRAY_GET_ITEM(rank_kv_bufs, pmix_buffer_t, cur_rank));
-        PMIX_BFROPS_PACK(rc, peer, tmp, kv, 1, PMIX_KVAL);
+        PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, tmp, kv, 1, PMIX_KVAL);
         return rc;
     }
     if (PMIX_SUCCESS != (rc = pmix_value_array_set_size(rank_kv_bufs, cur_rank + 1))) {
@@ -2974,7 +2975,7 @@ static inline int _collect_key_for_rank(pmix_peer_t *peer, pmix_rank_t rank, pmi
         tmp = &(PMIX_VALUE_ARRAY_GET_ITEM(rank_kv_bufs, pmix_buffer_t, i));
         PMIX_CONSTRUCT(tmp, pmix_buffer_t);
     }
-    PMIX_BFROPS_PACK(rc, peer, tmp, kv, 1, PMIX_KVAL);
+    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, tmp, kv, 1, PMIX_KVAL);
 
     return rc;
 }

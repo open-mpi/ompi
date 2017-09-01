@@ -70,7 +70,8 @@ pmix_status_t pmix_bfrops_base_pack_buffer(pmix_pointer_array_t *regtypes,
     pmix_status_t rc;
     pmix_bfrop_type_info_t *info;
 
-    pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrops_base_pack_buffer( %p, %p, %lu, %d )\n",
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_pack_buffer( %p, %p, %lu, %d )\n",
                         (void*)buffer, src, (long unsigned int)num_vals, (int)type);
 
     /* Pack the declared data type */
@@ -130,7 +131,8 @@ static pmix_status_t pack_gentype(pmix_buffer_t *buffer, const void *src,
     int32_t i;
     bool *s = (bool*)src;
 
-    pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrops_base_pack_bool * %d\n", num_vals);
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_pack_bool * %d\n", num_vals);
 
     /* check to see if buffer needs extending */
     if (NULL == (dst = (uint8_t*)pmix_bfrop_buffer_extend(buffer, num_vals))) {
@@ -215,7 +217,8 @@ pmix_status_t pmix_bfrops_base_pack_byte(pmix_buffer_t *buffer, const void *src,
 {
     char *dst;
 
-    pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrops_base_pack_byte * %d\n", num_vals);
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_pack_byte * %d\n", num_vals);
 
     /* check to see if buffer needs extending */
     if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, num_vals))) {
@@ -242,7 +245,8 @@ pmix_status_t pmix_bfrops_base_pack_int16(pmix_buffer_t *buffer, const void *src
     uint16_t tmp, *srctmp = (uint16_t*) src;
     char *dst;
 
-    pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrops_base_pack_int16 * %d\n", num_vals);
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_pack_int16 * %d\n", num_vals);
 
     /* check to see if buffer needs extending */
     if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, num_vals*sizeof(tmp)))) {
@@ -270,7 +274,8 @@ pmix_status_t pmix_bfrops_base_pack_int32(pmix_buffer_t *buffer, const void *src
     uint32_t tmp, *srctmp = (uint32_t*) src;
     char *dst;
 
-    pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrops_base_pack_int32 * %d\n", num_vals);
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_pack_int32 * %d\n", num_vals);
 
     /* check to see if buffer needs extending */
     if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, num_vals*sizeof(tmp)))) {
@@ -298,7 +303,8 @@ pmix_status_t pmix_bfrops_base_pack_int64(pmix_buffer_t *buffer, const void *src
     char *dst;
     size_t bytes_packed = num_vals * sizeof(tmp);
 
-    pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrops_base_pack_int64 * %d\n", num_vals);
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrops_base_pack_int64 * %d\n", num_vals);
 
     /* check to see if buffer needs extending */
     if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, bytes_packed))) {

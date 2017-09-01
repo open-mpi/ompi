@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,18 +17,19 @@
  * $HEADER$
  */
 
-#ifndef PMIX_BFROPS_PMIX2_H
-#define PMIX_BFROPS_PMIX2_H
+#ifndef PMIX_BFROPS_V1_H
+#define PMIX_BFROPS_V1_H
 
 #include "src/mca/bfrops/bfrops.h"
 
 BEGIN_C_DECLS
 
 /* the component must be visible data for the linker to find it */
- PMIX_EXPORT extern pmix_bfrops_base_component_t mca_bfrops_pmix2_component;
+ PMIX_EXPORT extern pmix_bfrops_base_component_t mca_bfrops_v12_component;
 
-extern pmix_bfrops_module_t pmix_bfrops_pmix2_module;
+extern pmix_bfrops_module_t pmix_bfrops_pmix12_module;
+
 
 END_C_DECLS
 
-#endif /* PMIX_BFROPS_PMIX2_H */
+#endif /* PMIX_BFROPS_V1_H */

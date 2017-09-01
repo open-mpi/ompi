@@ -19,22 +19,22 @@
 # $HEADER$
 #
 
-headers = bfrop_pmix2.h
+headers = bfrop_pmix21.h
 sources = \
-        bfrop_pmix2_component.c \
-        bfrop_pmix2.c
+        bfrop_pmix21_component.c \
+        bfrop_pmix21.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_pmix_bfrops_pmix2_DSO
+if MCA_BUILD_pmix_bfrops_v21_DSO
 lib =
 lib_sources =
-component = mca_bfrops_pmix2.la
+component = mca_bfrops_v21.la
 component_sources = $(headers) $(sources)
 else
-lib = libmca_bfrops_pmix2.la
+lib = libmca_bfrops_v21.la
 lib_sources = $(headers) $(sources)
 component =
 component_sources =
@@ -42,9 +42,9 @@ endif
 
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
-mca_bfrops_pmix2_la_SOURCES = $(component_sources)
-mca_bfrops_pmix2_la_LDFLAGS = -module -avoid-version
+mca_bfrops_v21_la_SOURCES = $(component_sources)
+mca_bfrops_v21_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
-libmca_bfrops_pmix2_la_SOURCES = $(lib_sources)
-libmca_bfrops_pmix2_la_LDFLAGS = -module -avoid-version
+libmca_bfrops_v21_la_SOURCES = $(lib_sources)
+libmca_bfrops_v21_la_LDFLAGS = -module -avoid-version

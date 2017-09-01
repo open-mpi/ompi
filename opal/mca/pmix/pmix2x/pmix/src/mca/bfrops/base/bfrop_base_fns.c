@@ -1042,7 +1042,6 @@ pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t
      if (NULL == (dst = pmix_bfrop_buffer_extend(buffer, sizeof(tmp)))) {
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
-
     tmp = pmix_htons(type);
     memcpy(dst, &tmp, sizeof(tmp));
     buffer->pack_ptr += sizeof(tmp);

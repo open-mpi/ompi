@@ -17,35 +17,18 @@
  * $HEADER$
  */
 
-#ifndef PMIX_PTL_USOCK_H
-#define PMIX_PTL_USOCK_H
+#ifndef PMIX_BFROPS_PMIX2_H
+#define PMIX_BFROPS_PMIX2_H
 
-#include "src/mca/ptl/ptl.h"
+#include "src/mca/bfrops/bfrops.h"
 
 BEGIN_C_DECLS
 
-typedef struct {
-    pmix_ptl_base_component_t super;
-    char *tmpdir;
-    struct sockaddr_storage connection;
-    char *filename;
-} pmix_ptl_usock_component_t;
+/* the component must be visible data for the linker to find it */
+ PMIX_EXPORT extern pmix_bfrops_base_component_t mca_bfrops_v21_component;
 
-/* header for messages */
-typedef struct {
-    int pindex;
-    uint32_t tag;
-    size_t nbytes;
-} pmix_usock_hdr_t;
-
-extern pmix_ptl_usock_component_t mca_ptl_usock_component;
-
-extern pmix_ptl_module_t pmix_ptl_usock_module;
-
-void pmix_usock_send_handler(int sd, short args, void *cbdata);
-
-void pmix_usock_recv_handler(int sd, short args, void *cbdata);
+extern pmix_bfrops_module_t pmix_bfrops_pmix21_module;
 
 END_C_DECLS
 
-#endif /* PMIX_PTL_USOCK_H */
+#endif /* PMIX_BFROPS_PMIX2_H */

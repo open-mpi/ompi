@@ -59,6 +59,8 @@
 #include "src/util/fd.h"
 #include "src/util/show_help.h"
 #include "src/util/strnlen.h"
+#include "src/mca/bfrops/base/base.h"
+#include "src/mca/gds/base/base.h"
 #include "src/mca/psec/base/base.h"
 #include "src/server/pmix_server_ops.h"
 
@@ -181,7 +183,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                         "ptl:usock setup_listener");
 
     /* if we are not a server, then we shouldn't be doing this */
-    if (PMIX_PROC_SERVER != pmix_globals.proc_type) {
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -451,8 +453,8 @@ static void connection_handler(int sd, short args, void *cbdata)
         return;
     }
 
-    if (PMIX_SUCCESS != (rc = parse_connect_ack (msg, hdr.nbytes, &nspace,
-                                                 &rank, &version, &cred))) {
+    if (PMIX_SUCCESS != (rc = parse_connect_ack(msg, hdr.nbytes, &nspace,
+                                                &rank, &version, &cred))) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "error parsing connect-ack from client ON SOCKET %d", pnd->sd);
         free(msg);
@@ -511,6 +513,9 @@ static void connection_handler(int sd, short args, void *cbdata)
         rc = PMIX_ERR_NOMEM;
         goto error;
     }
+    /* mark it as being a v1 type */
+    psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V1;
+    /* add the nspace tracker */
     PMIX_RETAIN(nptr);
     psave->nptr = nptr;
     PMIX_RETAIN(info);
@@ -535,11 +540,38 @@ static void connection_handler(int sd, short args, void *cbdata)
         free(msg);
         info->proc_cnt--;
         PMIX_RELEASE(info);
-        PMIX_RELEASE(psave);
         pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
+        PMIX_RELEASE(psave);
         /* send an error reply to the client */
         goto error;
     }
+    /* we need the v1.2 bfrops module */
+    nptr->compat.bfrops = pmix_bfrops_base_assign_module("v12");
+    if (NULL == nptr->compat.bfrops) {
+        free(msg);
+        info->proc_cnt--;
+        PMIX_RELEASE(info);
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
+        PMIX_RELEASE(psave);
+       /* send an error reply to the client */
+        goto error;
+    }
+    /* we have no way of knowing their buffer type, so take our default */
+    nptr->compat.type = pmix_bfrops_globals.default_type;
+
+    /* take the highest priority gds module - in the absence of any info,
+     * we assume they can handle both dstore and hash */
+    nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
+    if (NULL == nptr->compat.gds) {
+        free(msg);
+        info->proc_cnt--;
+        PMIX_RELEASE(info);
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
+        PMIX_RELEASE(psave);
+        /* send an error reply to the client */
+        goto error;
+    }
+
     /* the choice of PTL module was obviously made by the connecting
      * tool as we received this request via that channel, so simply
      * record it here for future use */
@@ -560,25 +592,14 @@ static void connection_handler(int sd, short args, void *cbdata)
         free(msg);
         info->proc_cnt--;
         PMIX_RELEASE(info);
-        PMIX_RELEASE(psave);
-        pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
-        /* send an error reply to the client */
-        goto error;
-    }
-    free(msg);
-
-    /* send them success */
-    rc = PMIX_SUCCESS;
-    if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&rc, sizeof(int)))) {
-        PMIX_ERROR_LOG(rc);
-        info->proc_cnt--;
-        PMIX_RELEASE(info);
         pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
         PMIX_RELEASE(psave);
+        /* error reply was sent by the above macro */
         CLOSE_THE_SOCKET(pnd->sd);
         PMIX_RELEASE(pnd);
         return;
     }
+    free(msg);
 
     /* send the client's array index */
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&psave->index, sizeof(int)))) {
@@ -612,11 +633,11 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* start the events for this client */
     pmix_event_assign(&psave->recv_event, pmix_globals.evbase, pnd->sd,
-                      EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, psave);
+                      EV_READ|EV_PERSIST, pmix_usock_recv_handler, psave);
     pmix_event_add(&psave->recv_event, NULL);
     psave->recv_ev_active = true;
     pmix_event_assign(&psave->send_event, pmix_globals.evbase, pnd->sd,
-                      EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, psave);
+                      EV_WRITE|EV_PERSIST, pmix_usock_send_handler, psave);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server client %s:%u has connected on socket %d",
                         psave->info->pname.nspace, psave->info->pname.rank, psave->sd);

@@ -393,30 +393,40 @@ PMIX_EXPORT char* pmix_bfrops_base_get_available_modules(void);
 /* Select a bfrops module for a given version */
 PMIX_EXPORT pmix_bfrops_module_t* pmix_bfrops_base_assign_module(const char *version);
 
+/* provide a backdoor to access the framework debug output */
+PMIX_EXPORT extern int pmix_bfrops_base_output;
+
 /* MACROS FOR EXECUTING BFROPS FUNCTIONS */
 #define PMIX_BFROPS_ASSIGN_TYPE(p, b)               \
     (b)->type = (p)->nptr->compat.type
 
-#define PMIX_BFROPS_PACK(r, p, b, s, n, t)                      \
-    do {                                                        \
-        if (PMIX_BFROP_BUFFER_UNDEF == (b)->type) {             \
-            (b)->type = (p)->nptr->compat.type;                 \
-            (r) = (p)->nptr->compat.bfrops->pack(b, s, n, t);   \
-        } else if ((b)->type == (p)->nptr->compat.type) {       \
-            (r) = (p)->nptr->compat.bfrops->pack(b, s, n, t);   \
-        } else {                                                \
-            (r) = PMIX_ERR_PACK_MISMATCH;                       \
-        }                                                       \
+#define PMIX_BFROPS_PACK(r, p, b, s, n, t)                          \
+    do {                                                            \
+        pmix_output_verbose(2, pmix_bfrops_base_output,             \
+                            "[%s:%d] PACK version %s",              \
+                            __FILE__, __LINE__,                     \
+                            (p)->nptr->compat.bfrops->version);     \
+        if (PMIX_BFROP_BUFFER_UNDEF == (b)->type) {                 \
+            (b)->type = (p)->nptr->compat.type;                     \
+            (r) = (p)->nptr->compat.bfrops->pack(b, s, n, t);       \
+        } else if ((b)->type == (p)->nptr->compat.type) {           \
+            (r) = (p)->nptr->compat.bfrops->pack(b, s, n, t);       \
+        } else {                                                    \
+            (r) = PMIX_ERR_PACK_MISMATCH;                           \
+        }                                                           \
     } while(0)
 
-#define PMIX_BFROPS_UNPACK(r, p, b, d, m, t)                    \
-    do {                                                        \
-        if ((b)->type == (p)->nptr->compat.type) {              \
-            (r) = (p)->nptr->compat.bfrops->unpack(b, d, m, t); \
-        } else {                                                \
-            pmix_output(0, "MISMATCH %d %d", (b)->type, (p)->nptr->compat.type); \
-            (r) = PMIX_ERR_UNPACK_FAILURE;                      \
-        }                                                       \
+#define PMIX_BFROPS_UNPACK(r, p, b, d, m, t)                        \
+    do {                                                            \
+        pmix_output_verbose(2, pmix_bfrops_base_output,             \
+                            "[%s:%d] UNPACK version %s",            \
+                            __FILE__, __LINE__,                     \
+                            (p)->nptr->compat.bfrops->version);     \
+        if ((b)->type == (p)->nptr->compat.type) {                  \
+            (r) = (p)->nptr->compat.bfrops->unpack(b, d, m, t);     \
+        } else {                                                    \
+            (r) = PMIX_ERR_UNPACK_FAILURE;                          \
+        }                                                           \
     } while(0)
 
 #define PMIX_BFROPS_COPY(r, p, d, s, t)             \

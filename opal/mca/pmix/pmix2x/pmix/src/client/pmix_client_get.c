@@ -427,6 +427,8 @@ static void infocb(pmix_status_t status,
                             rc = PMIX_ERR_NOMEM;
                             PMIX_VALUE_FREE(kv, 1);
                             kv = NULL;
+                        } else {
+                            rc = PMIX_SUCCESS;
                         }
                     } else {
                         rc = pmix_value_xfer(kv, &info[0].value);
@@ -532,7 +534,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                  * ask server
                  */
                 goto request;
-            } else {
+            } else if (NULL != cb->key) {
                 /* if immediate was given, then we are being directed to
                  * check with the server even though the caller is looking for
                  * job-level info. In some cases, a server may elect not
@@ -556,6 +558,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                     return;
                 }
                 /* we should have had this info, so respond with the error */
+                goto respond;
+            } else {
                 goto respond;
             }
         }
@@ -603,8 +607,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     /* if we got here, then we don't have the data for this proc. If we
      * are a server, or we are a client and not connected, then there is
      * nothing more we can do */
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type ||
-        (PMIX_PROC_SERVER != pmix_globals.proc_type && !pmix_globals.connected)) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) ||
+        (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) && !pmix_globals.connected)) {
         rc = PMIX_ERR_NOT_FOUND;
         goto respond;
     }
