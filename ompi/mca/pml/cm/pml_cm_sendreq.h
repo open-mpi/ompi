@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,18 +126,20 @@ do {                                                                    \
                                             datatype,                   \
                                             sendmode,                   \
                                             buf,                        \
-                                            count)                      \
+                                            count,                      \
+					    flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
     (req_send)->req_base.req_comm = comm;                               \
     (req_send)->req_base.req_datatype = datatype;                       \
+    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
     opal_convertor_copy_and_prepare_for_send(                           \
                                              ompi_proc->super.proc_convertor, \
                                              &(datatype->super),        \
                                              count,                     \
                                              buf,                       \
-                                             0,                         \
+                                             flags,                         \
                                              &(req_send)->req_base.req_convertor ); \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
     (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
@@ -154,18 +157,20 @@ do {                                                                    \
                                             datatype,                   \
                                             sendmode,                   \
                                             buf,                        \
-                                            count)                      \
+                                            count,                      \
+					    flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
     (req_send)->req_base.req_comm = comm;                               \
     (req_send)->req_base.req_datatype = datatype;                       \
+    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
     opal_convertor_copy_and_prepare_for_send(                           \
         ompi_mpi_local_convertor,                                       \
         &(datatype->super),                                             \
         count,                                                          \
         buf,                                                            \
-        0,                                                              \
+        flags,                                                              \
         &(req_send)->req_base.req_convertor );                          \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
     (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
@@ -185,18 +190,20 @@ do {                                                                    \
                                             datatype,                   \
                                             sendmode,                   \
                                             buf,                        \
-                                            count)                      \
+                                            count,                      \
+					    flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
     (req_send)->req_base.req_comm = comm;                               \
     (req_send)->req_base.req_datatype = datatype;                       \
+    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
     opal_convertor_copy_and_prepare_for_send(                           \
                                              ompi_proc->super.proc_convertor, \
                                              &(datatype->super),        \
                                              count,                     \
                                              buf,                       \
-                                             0,                         \
+                                             flags,                         \
                                              &(req_send)->req_base.req_convertor ); \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
     (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
@@ -215,7 +222,8 @@ do {                                                                    \
                                             datatype,                   \
                                             sendmode,                   \
                                             buf,                        \
-                                            count)                      \
+                                            count,                      \
+					    flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
@@ -235,12 +243,13 @@ do {                                                                    \
         (req_send)->req_base.req_convertor.count      = count;          \
         (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
     } else {                                                            \
+        MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
         opal_convertor_copy_and_prepare_for_send(                       \
             ompi_mpi_local_convertor,                                   \
             &(datatype->super),                                         \
             count,                                                      \
             buf,                                                        \
-            0,                                                          \
+            flags,                                                          \
             &(req_send)->req_base.req_convertor );                      \
     }                                                                   \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
@@ -263,7 +272,8 @@ do {                                                                    \
                                           persistent,                   \
                                           blocking,                     \
                                           buf,                          \
-                                          count)                        \
+                                          count,                        \
+					  flags )                       \
     do {                                                                \
         OMPI_REQUEST_INIT(&(sendreq->req_send.req_base.req_ompi),       \
                           persistent);                                  \
@@ -278,7 +288,8 @@ do {                                                                    \
                                              datatype,                  \
                                              sendmode,                  \
                                              buf,                       \
-                                             count);                    \
+                                             count,                     \
+					     flags )                    \
         opal_convertor_get_packed_size(                                 \
                                        &sendreq->req_send.req_base.req_convertor, \
                                        &sendreq->req_count );           \
@@ -297,7 +308,8 @@ do {                                                                    \
                                            datatype,                    \
                                            sendmode,                    \
                                            buf,                         \
-                                           count)                       \
+                                           count,                       \
+					   flags )                      \
     do {                                                                \
         OMPI_REQUEST_INIT(&(sendreq->req_send.req_base.req_ompi),       \
                           false);                                       \
@@ -308,7 +320,8 @@ do {                                                                    \
                                              datatype,                  \
                                              sendmode,                  \
                                              buf,                       \
-                                             count);                    \
+                                             count,                     \
+                                             flags);                    \
         sendreq->req_send.req_base.req_pml_complete = false;            \
     } while(0)
 
