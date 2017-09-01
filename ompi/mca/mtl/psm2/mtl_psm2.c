@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -100,6 +100,9 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
     char *generated_key;
     char env_string[256];
     int rc;
+#if OPAL_CUDA_SUPPORT
+    char *cuda_env;
+#endif
 
     generated_key = getenv(OPAL_MCA_PREFIX"orte_precondition_transports");
     memset(uu, 0, sizeof(psm2_uuid_t));
@@ -172,6 +175,15 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
 
     /* register the psm2 progress function */
     opal_progress_register(ompi_mtl_psm2_progress);
+
+#if OPAL_CUDA_SUPPORT
+    ompi_mtl_psm2.super.mtl_flags |= MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE;
+
+    cuda_env = getenv("PSM2_CUDA");
+    if (!cuda_env || ( strcmp(cuda_env, "0") == 0) )
+        opal_output(0, "Warning: If running with device buffers, there is a"
+                    " chance the application might fail. Try setting PSM2_CUDA=1.\n");
+#endif
 
     return OMPI_SUCCESS;
 }
