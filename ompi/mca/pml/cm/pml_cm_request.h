@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,5 +53,21 @@ struct mca_pml_cm_request_t {
 };
 typedef struct mca_pml_cm_request_t mca_pml_cm_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_cm_request_t);
+
+/*
+ * Avoid CUDA convertor inits only for contiguous memory and if indicated by
+ * the MTL. For non-contiguous memory, do not skip CUDA convertor init phases.
+ */
+#if OPAL_CUDA_SUPPORT
+#define MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count)            \
+    {                                                                           \
+        if (opal_datatype_is_contiguous_memory_layout(&datatype->super, count)  \
+            && (ompi_mtl->mtl_flags & MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE)) {   \
+            flags |= CONVERTOR_SKIP_CUDA_INIT;                                  \
+        }                                                                       \
+    }
+#else
+#define MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count)
+#endif
 
 #endif
