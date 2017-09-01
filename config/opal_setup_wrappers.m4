@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
+dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
@@ -142,13 +142,12 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
           [AC_MSG_ERROR([--enable-wrapper-runpath cannot be selected with --disable-wrapper-rpath])])
 ])
 
-# Check to see whether the linker supports DT_RPATH.  We'll need to
-# use config.rpath to find the flags that it needs, if it does (see
-# comments in config.rpath for an explanation of where it came from).
-AC_DEFUN([OPAL_SETUP_RPATH],[
-    OPAL_VAR_SCOPE_PUSH([rpath_libdir_save rpath_script rpath_outfile])
-    AC_MSG_CHECKING([if linker supports RPATH])
-    # Output goes into globally-visible $rpath_args.  Run this in a
+# OPAL_LIBTOOL_CONFIG(libtool-variable, result-variable,
+#                     libtool-tag, extra-code)
+# Retrieve information from the generated libtool
+AC_DEFUN([OPAL_LIBTOOL_CONFIG],[
+    OPAL_VAR_SCOPE_PUSH([rpath_script rpath_outfile])
+    # Output goes into globally-visible variable.  Run this in a
     # sub-process so that we don't pollute the current process
     # environment.
     rpath_script=conftest.$$.sh
@@ -163,52 +162,37 @@ AC_DEFUN([OPAL_SETUP_RPATH],[
 # (because if script A sources script B, and B calls "exit", then both
 # B and A will exit).  Instead, we have to send the output to a file
 # and then source that.
-$OPAL_TOP_BUILDDIR/libtool --config > $rpath_outfile
+$OPAL_TOP_BUILDDIR/libtool $3 --config > $rpath_outfile
 
 chmod +x $rpath_outfile
 . ./$rpath_outfile
 rm -f $rpath_outfile
 
-# Evaluate \$hardcode_libdir_flag_spec, and substitute in LIBDIR for \$libdir
-libdir=LIBDIR
-flags="\`eval echo \$hardcode_libdir_flag_spec\`"
+# Evaluate \$$1, and substitute in LIBDIR for \$libdir
+$4
+flags="\`eval echo \$$1\`"
 echo \$flags
 
 # Done
 exit 0
 EOF
     chmod +x $rpath_script
-    rpath_args=`./$rpath_script`
+    $2=`./$rpath_script`
     rm -f $rpath_script
+    OPAL_VAR_SCOPE_POP
+])
+
+# Check to see whether the linker supports DT_RPATH.  We'll need to
+# use config.rpath to find the flags that it needs, if it does (see
+# comments in config.rpath for an explanation of where it came from).
+AC_DEFUN([OPAL_SETUP_RPATH],[
+    OPAL_VAR_SCOPE_PUSH([rpath_libdir_save])
+    AC_MSG_CHECKING([if linker supports RPATH])
+    OPAL_LIBTOOL_CONFIG([hardcode_libdir_flag_spec],[rpath_args],[],[libdir=LIBDIR])
 
     AS_IF([test -n "$rpath_args"],
           [WRAPPER_RPATH_SUPPORT=rpath
-           cat > $rpath_script <<EOF
-#!/bin/sh
-
-# Slurp in the libtool config into my environment
-
-# Apparently, "libtoool --config" calls "exit", so we can't source it
-# (because if script A sources script B, and B calls "exit", then both
-# B and A will exit).  Instead, we have to send the output to a file
-# and then source that.
-$OPAL_TOP_BUILDDIR/libtool --tag=FC --config > $rpath_outfile
-
-chmod +x $rpath_outfile
-. ./$rpath_outfile
-rm -f $rpath_outfile
-
-# Evaluate \$hardcode_libdir_flag_spec, and substitute in LIBDIR for \$libdir
-libdir=LIBDIR
-flags="\`eval echo \$hardcode_libdir_flag_spec\`"
-echo \$flags
-
-# Done
-exit 0
-EOF
-           chmod +x $rpath_script
-           rpath_fc_args=`./$rpath_script`
-           rm -f $rpath_script
+           OPAL_LIBTOOL_CONFIG([hardcode_libdir_flag_spec],[rpath_fc_args],[--tag=FC],[libdir=LIBDIR])
            AC_MSG_RESULT([yes ($rpath_args + $rpath_fc_args)])],
           [WRAPPER_RPATH_SUPPORT=unnecessary
            AC_MSG_RESULT([yes (no extra flags needed)])])
@@ -228,7 +212,7 @@ EOF
 # If DT_RUNPATH is supported, then we'll use *both* the RPATH and
 # RUNPATH flags in the LDFLAGS.
 AC_DEFUN([OPAL_SETUP_RUNPATH],[
-    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save rpath_script rpath_outfile wl_fc])
+    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save wl_fc])
 
     # Set the output in $runpath_args
     runpath_args=
@@ -243,45 +227,16 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                             AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
                            [AC_MSG_RESULT([no])])
             AC_LANG_POP([C])])
-m4_ifdef([project_ompi],[
-    # Output goes into globally-visible $rpath_args.  Run this in a
-    # sub-process so that we don't pollute the current process
-    # environment.
-    rpath_script=conftest.$$.sh
-    rpath_outfile=conftest.$$.out
-    rm -f $rpath_script $rpath_outfile
-    cat > $rpath_script <<EOF
-#!/bin/sh
+    m4_ifdef([project_ompi],[
+        OPAL_LIBTOOL_CONFIG([wl],[wl_fc],[--tag=FC],[])
 
-# Slurp in the libtool config into my environment
-
-# Apparently, "libtoool --config" calls "exit", so we can't source it
-# (because if script A sources script B, and B calls "exit", then both
-# B and A will exit).  Instead, we have to send the output to a file
-# and then source that.
-$OPAL_TOP_BUILDDIR/libtool --tag=FC --config > $rpath_outfile
-
-chmod +x $rpath_outfile
-. ./$rpath_outfile
-rm -f $rpath_outfile
-
-wl="\`eval echo \$wl\`"
-echo \$wl
-
-# Done
-exit 0
-EOF
-    chmod +x $rpath_script
-    wl_fc=`./$rpath_script`
-    rm -f $rpath_script
-
-    LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
-    AC_LANG_PUSH([Fortran])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
+        LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
+        AC_LANG_PUSH([Fortran])
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
 end program]])],
-                   [runpath_fc_args="${wl_fc}--enable-new-dtags"],
-                   [runpath_fc_args=""])
-    AC_LANG_POP([Fortran])])
+                       [runpath_fc_args="${wl_fc}--enable-new-dtags"],
+                       [runpath_fc_args=""])
+        AC_LANG_POP([Fortran])])
     LDFLAGS=$LDFLAGS_save
 
     OPAL_VAR_SCOPE_POP
