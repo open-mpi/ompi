@@ -6,6 +6,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,6 +80,7 @@ mca_pml_cm_irecv_init(void *addr,
                       struct ompi_request_t **request)
 {
     mca_pml_cm_hvy_recv_request_t *recvreq;
+    uint32_t flags = 0;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
 #endif
@@ -87,7 +89,7 @@ mca_pml_cm_irecv_init(void *addr,
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
 
     MCA_PML_CM_HVY_RECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src,
-                                     datatype, addr, count, true);
+                                     datatype, addr, count, flags, true);
 
     *request = (ompi_request_t*) recvreq;
 
@@ -104,6 +106,7 @@ mca_pml_cm_irecv(void *addr,
                  struct ompi_request_t **request)
 {
     int ret;
+    uint32_t flags = 0;
     mca_pml_cm_thin_recv_request_t *recvreq;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc = NULL;
@@ -118,7 +121,8 @@ mca_pml_cm_irecv(void *addr,
                                       src,
                                       datatype,
                                       addr,
-                                      count);
+                                      count,
+                                      flags);
 
     MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
 
@@ -145,6 +149,7 @@ mca_pml_cm_recv(void *addr,
                 ompi_status_public_t * status)
 {
     int ret;
+    uint32_t flags = 0;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t *ompi_proc;
 #endif
@@ -173,20 +178,24 @@ mca_pml_cm_recv(void *addr,
         ompi_proc = ompi_comm_peer_lookup( comm, src );
     }
 
+    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
+
     opal_convertor_copy_and_prepare_for_recv(
 	ompi_proc->super.proc_convertor,
 		&(datatype->super),
 		count,
 		addr,
-		0,
+		flags,
 		&convertor );
 #else
+    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
+
     opal_convertor_copy_and_prepare_for_recv(
 	ompi_mpi_local_convertor,
 		&(datatype->super),
 		count,
 		addr,
-		0,
+		flags,
 		&convertor );
 #endif
 
@@ -222,6 +231,7 @@ mca_pml_cm_isend_init(const void* buf,
                         ompi_request_t** request)
 {
     mca_pml_cm_hvy_send_request_t *sendreq;
+    uint32_t flags = 0;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
 #endif
@@ -230,7 +240,7 @@ mca_pml_cm_isend_init(const void* buf,
     if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
 
     MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst,
-                                     datatype, sendmode, true, false, buf, count);
+                                     datatype, sendmode, true, false, buf, count, flags);
 
     /* Work around a leak in start by marking this request as complete. The
      * problem occured because we do not have a way to differentiate an
@@ -254,6 +264,7 @@ mca_pml_cm_isend(const void* buf,
                    ompi_request_t** request)
 {
     int ret;
+    uint32_t flags = 0;
 
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED ) {
         mca_pml_cm_hvy_send_request_t* sendreq;
@@ -274,7 +285,8 @@ mca_pml_cm_isend(const void* buf,
                                          false,
                                          false,
                                          buf,
-                                         count);
+                                         count,
+                                         flags);
 
         MCA_PML_CM_HVY_SEND_REQUEST_START( sendreq, ret);
 
@@ -296,7 +308,8 @@ mca_pml_cm_isend(const void* buf,
                                           datatype,
                                           sendmode,
                                           buf,
-                                          count);
+                                          count,
+                                          flags);
 
         MCA_PML_CM_THIN_SEND_REQUEST_START(
                                            sendreq,
@@ -324,6 +337,7 @@ mca_pml_cm_send(const void *buf,
                 ompi_communicator_t* comm)
 {
     int ret = OMPI_ERROR;
+    uint32_t flags = 0;
     ompi_proc_t * ompi_proc;
 
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED) {
@@ -342,7 +356,8 @@ mca_pml_cm_send(const void *buf,
                                          false,
                                          false,
                                          buf,
-                                         count);
+                                         count,
+                                         flags);
         MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             MCA_PML_CM_HVY_SEND_REQUEST_RETURN(sendreq);
@@ -368,9 +383,12 @@ mca_pml_cm_send(const void *buf,
 #endif
 	{
 		ompi_proc = ompi_comm_peer_lookup(comm, dst);
+
+                MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
+
 		opal_convertor_copy_and_prepare_for_send(
 		ompi_proc->super.proc_convertor,
-			&datatype->super, count, buf, 0,
+			&datatype->super, count, buf, flags,
 			&convertor);
 	}
 
@@ -459,6 +477,7 @@ mca_pml_cm_imrecv(void *buf,
                   struct ompi_request_t **request)
 {
     int ret;
+    uint32_t flags = 0;
     mca_pml_cm_thin_recv_request_t *recvreq;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
@@ -474,7 +493,8 @@ mca_pml_cm_imrecv(void *buf,
                                       (*message)->peer,
                                       datatype,
                                       buf,
-                                      count);
+                                      count,
+                                      flags);
 
     MCA_PML_CM_THIN_RECV_REQUEST_MATCHED_START(recvreq, message, ret);
 
@@ -491,6 +511,7 @@ mca_pml_cm_mrecv(void *buf,
                  ompi_status_public_t* status)
 {
     int ret;
+    uint32_t flags = 0;
     mca_pml_cm_thin_recv_request_t *recvreq;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
@@ -506,7 +527,8 @@ mca_pml_cm_mrecv(void *buf,
                                       (*message)->peer,
                                       datatype,
                                       buf,
-                                      count);
+                                      count,
+                                      flags);
 
     MCA_PML_CM_THIN_RECV_REQUEST_MATCHED_START(recvreq,
                                                message, ret);
