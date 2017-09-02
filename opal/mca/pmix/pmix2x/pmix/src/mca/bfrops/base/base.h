@@ -158,6 +158,53 @@ PMIX_EXPORT extern pmix_bfrops_globals_t pmix_bfrops_globals;
 #error Unsupported pid_t size!
 #endif
 
+/* Unpack generic size macros */
+#define PMIX_BFROP_UNPACK_SIZE_MISMATCH(unpack_type, remote_type, ret)                     \
+    do {                                                                        \
+        switch(remote_type) {                                                   \
+            case PMIX_UINT8:                                                    \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint8_t, remote_type);  \
+                break;                                                          \
+            case PMIX_INT8:                                                     \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int8_t, remote_type);   \
+                break;                                                          \
+            case PMIX_UINT16:                                                   \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint16_t, remote_type); \
+                break;                                                          \
+            case PMIX_INT16:                                                    \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int16_t, remote_type);  \
+                break;                                                          \
+            case PMIX_UINT32:                                                   \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint32_t, remote_type); \
+                break;                                                          \
+            case PMIX_INT32:                                                    \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int32_t, remote_type);  \
+                break;                                                          \
+            case PMIX_UINT64:                                                   \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint64_t, remote_type); \
+                break;                                                          \
+            case PMIX_INT64:                                                    \
+                PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int64_t, remote_type);  \
+                break;                                                          \
+            default:                                                            \
+                ret = PMIX_ERR_NOT_FOUND;                                       \
+        }                                                                       \
+    } while (0)
+
+/* NOTE: do not need to deal with endianness here, as the unpacking of
+   the underling sender-side type will do that for us.  Repeat: the
+   data in tmpbuf[] is already in host byte order. */
+#define PMIX_BFROP_UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpbfroptype)      \
+    do {                                                                    \
+        int32_t i;                                                          \
+        tmptype *tmpbuf = (tmptype*)malloc(sizeof(tmptype) * (*num_vals));  \
+        ret = unpack_gentype(buffer, tmpbuf, num_vals, tmpbfroptype);       \
+        for (i = 0 ; i < *num_vals ; ++i) {                                 \
+            ((unpack_type*) dest)[i] = (unpack_type)(tmpbuf[i]);            \
+        }                                                                   \
+        free(tmpbuf);                                                       \
+    } while (0)
+
 
 /**
  * Internal struct used for holding registered bfrop functions
@@ -598,8 +645,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_alloc_directive(char **output, 
 PMIX_EXPORT char* pmix_bfrop_buffer_extend(pmix_buffer_t *bptr, size_t bytes_to_add);
 
 PMIX_EXPORT bool pmix_bfrop_too_small(pmix_buffer_t *buffer, size_t bytes_reqd);
-
-PMIX_EXPORT pmix_bfrop_type_info_t* pmix_bfrop_find_type(pmix_data_type_t type);
 
 PMIX_EXPORT pmix_status_t pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type);
 

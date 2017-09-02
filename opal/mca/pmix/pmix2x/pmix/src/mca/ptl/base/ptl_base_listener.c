@@ -155,7 +155,7 @@ void pmix_ptl_base_stop_listening(void)
     int i;
     pmix_listener_t *lt;
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "listen_thread: shutdown");
 
     if (!pmix_ptl_globals.listen_thread_active) {
@@ -190,7 +190,7 @@ static void* listen_thread(void *obj)
     fd_set readfds;
     pmix_listener_t *lt;
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "listen_thread: active");
 
 
@@ -281,7 +281,7 @@ static void* listen_thread(void *obj)
                     continue;
                 }
 
-                pmix_output_verbose(8, pmix_globals.debug_output,
+                pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                     "listen_thread: new connection: (%d, %d)",
                                     pending_connection->sd, pmix_socket_errno);
                 /* post the object */

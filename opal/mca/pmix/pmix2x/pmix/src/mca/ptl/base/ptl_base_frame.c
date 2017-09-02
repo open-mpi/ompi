@@ -55,6 +55,7 @@
 
 /* Instantiate the global vars */
 pmix_ptl_globals_t pmix_ptl_globals = {{{0}}};
+int pmix_ptl_base_output = -1;
 
 static int pmix_ptl_register(pmix_mca_base_register_flag_t flags)
 {
@@ -89,6 +90,8 @@ static pmix_status_t pmix_ptl_close(void)
 
 static pmix_status_t pmix_ptl_open(pmix_mca_base_open_flag_t flags)
 {
+    pmix_status_t rc;
+
     /* initialize globals */
     pmix_ptl_globals.initialized = true;
     PMIX_CONSTRUCT(&pmix_ptl_globals.actives, pmix_list_t);
@@ -96,9 +99,12 @@ static pmix_status_t pmix_ptl_open(pmix_mca_base_open_flag_t flags)
     PMIX_CONSTRUCT(&pmix_ptl_globals.unexpected_msgs, pmix_list_t);
     pmix_ptl_globals.listen_thread_active = false;
     PMIX_CONSTRUCT(&pmix_ptl_globals.listeners, pmix_list_t);
+    pmix_ptl_globals.current_tag = PMIX_PTL_TAG_DYNAMIC;
 
     /* Open up all available components */
-    return pmix_mca_base_framework_components_open(&pmix_ptl_base_framework, flags);
+    rc = pmix_mca_base_framework_components_open(&pmix_ptl_base_framework, flags);
+    pmix_ptl_base_output = pmix_ptl_base_framework.framework_output;
+    return rc;
 }
 
 PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, ptl, "PMIx Transfer Layer",
@@ -126,9 +132,9 @@ static void sdes(pmix_ptl_send_t *p)
         PMIX_RELEASE(p->data);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_ptl_send_t,
-                    pmix_list_item_t,
-                    scon, sdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_send_t,
+                                pmix_list_item_t,
+                                scon, sdes);
 
 static void rcon(pmix_ptl_recv_t *p)
 {
@@ -147,9 +153,9 @@ static void rdes(pmix_ptl_recv_t *p)
         PMIX_RELEASE(p->peer);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_ptl_recv_t,
-                    pmix_list_item_t,
-                    rcon, rdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_recv_t,
+                                pmix_list_item_t,
+                                rcon, rdes);
 
 static void prcon(pmix_ptl_posted_recv_t *p)
 {
@@ -157,9 +163,9 @@ static void prcon(pmix_ptl_posted_recv_t *p)
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
-PMIX_CLASS_INSTANCE(pmix_ptl_posted_recv_t,
-                    pmix_list_item_t,
-                    prcon, NULL);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_posted_recv_t,
+                                pmix_list_item_t,
+                                prcon, NULL);
 
 
 static void srcon(pmix_ptl_sr_t *p)
@@ -189,6 +195,7 @@ static void pccon(pmix_pending_connection_t *p)
     p->gds = NULL;
     p->ptl = NULL;
     p->cred = NULL;
+    p->proc_type = PMIX_PROC_UNDEF;
 }
 static void pcdes(pmix_pending_connection_t *p)
 {

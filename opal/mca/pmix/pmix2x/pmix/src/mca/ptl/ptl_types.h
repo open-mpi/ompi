@@ -61,6 +61,25 @@ BEGIN_C_DECLS
 struct pmix_peer_t;
 struct pmix_ptl_module_t;
 
+/* define a process type */
+typedef uint16_t pmix_proc_type_t;
+#define PMIX_PROC_UNDEF     0x0000
+#define PMIX_PROC_CLIENT    0x0001
+#define PMIX_PROC_SERVER    0x0002
+#define PMIX_PROC_TOOL      0x0004
+#define PMIX_PROC_V1        0x0008
+#define PMIX_PROC_V20       0x0010
+#define PMIX_PROC_V21       0x0020
+
+/* defins some convenience macros for testing proc type */
+#define PMIX_PROC_IS_CLIENT(p)      (PMIX_PROC_CLIENT & (p)->proc_type)
+#define PMIX_PROC_IS_SERVER(p)      (PMIX_PROC_SERVER & (p)->proc_type)
+#define PMIX_PROC_IS_TOOL(p)        (PMIX_PROC_TOOL & (p)->proc_type)
+#define PMIX_PROC_IS_V1(p)          (PMIX_PROC_V1 & (p)->proc_type)
+#define PMIX_PROC_IS_V20(p)         (PMIX_PROC_V20 & (p)->proc_type)
+#define PMIX_PROC_IS_V21(p)         (PMIX_PROC_V21 & (p)->proc_type)
+
+
 /****    MESSAGING STRUCTURES    ****/
 typedef uint32_t pmix_ptl_tag_t;
 /* define a range of "reserved" tags - these
@@ -179,6 +198,7 @@ typedef struct {
     size_t len;
     uid_t uid;
     gid_t gid;
+    pmix_proc_type_t proc_type;
 } pmix_pending_connection_t;
 PMIX_CLASS_DECLARATION(pmix_pending_connection_t);
 
@@ -199,10 +219,12 @@ typedef struct pmix_listener_t {
 } pmix_listener_t;
 PMIX_CLASS_DECLARATION(pmix_listener_t);
 
+/* provide a backdoor to the framework output for debugging */
+PMIX_EXPORT extern int pmix_ptl_base_output;
 
 #define PMIX_ACTIVATE_POST_MSG(ms)                                      \
     do {                                                                \
-        pmix_output_verbose(5, pmix_globals.debug_output,               \
+        pmix_output_verbose(5, pmix_ptl_base_output,                    \
                             "[%s:%d] post msg",                         \
                             __FILE__, __LINE__);                        \
         pmix_event_assign(&((ms)->ev), pmix_globals.evbase, -1,         \
@@ -228,7 +250,8 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
 #define PMIX_SERVER_QUEUE_REPLY(p, t, b)                                                \
     do {                                                                                \
         pmix_ptl_send_t *snd;                                                           \
-        pmix_output_verbose(5, pmix_globals.debug_output,                               \
+        uint32_t nbytes;                                                                \
+        pmix_output_verbose(5, pmix_ptl_base_output,                                    \
                             "[%s:%d] queue callback called: reply to %s:%d on tag %d size %d",  \
                             __FILE__, __LINE__,                                         \
                             (p)->info->pname.nspace,                                    \
@@ -236,7 +259,8 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
         snd = PMIX_NEW(pmix_ptl_send_t);                                                \
         snd->hdr.pindex = htonl(pmix_globals.pindex);                                   \
         snd->hdr.tag = htonl(t);                                                        \
-        snd->hdr.nbytes = htonl((b)->bytes_used);                                       \
+        nbytes = (b)->bytes_used;                                                       \
+        snd->hdr.nbytes = htonl(nbytes);                                                \
         snd->data = (b);                                                                \
         /* always start with the header */                                              \
         snd->sdptr = (char*)&snd->hdr;                                                  \

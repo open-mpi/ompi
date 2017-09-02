@@ -38,6 +38,7 @@
 #include "src/mca/mca.h"
 #include "src/mca/base/pmix_mca_base_framework.h"
 
+#include "src/include/pmix_globals.h"
 #include "src/mca/ptl/ptl.h"
 
 
@@ -77,6 +78,7 @@ struct pmix_ptl_globals_t {
     int stop_thread[2];
     bool listen_thread_active;
     pmix_list_t listeners;
+    uint32_t current_tag;
 };
 typedef struct pmix_ptl_globals_t pmix_ptl_globals_t;
 
@@ -114,6 +116,7 @@ PMIX_EXPORT pmix_status_t pmix_ptl_base_connect(struct sockaddr_storage *addr,
 PMIX_EXPORT void pmix_ptl_base_connection_handler(int sd, short args, void *cbdata);
 PMIX_EXPORT pmix_status_t pmix_ptl_base_send_connect_ack(int sd);
 PMIX_EXPORT pmix_status_t pmix_ptl_base_recv_connect_ack(int sd);
+PMIX_EXPORT void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err);
 
 
 END_C_DECLS

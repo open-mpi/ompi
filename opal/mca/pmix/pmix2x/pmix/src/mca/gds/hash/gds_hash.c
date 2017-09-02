@@ -166,7 +166,7 @@ static pmix_status_t hash_assign_module(pmix_info_t *info, size_t ninfo,
     size_t n, m;
     char **options;
 
-    *priority = -1;
+    *priority = 10;
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_GDS_MODULE, PMIX_MAX_KEYLEN)) {
@@ -786,7 +786,7 @@ static pmix_status_t hash_register_job_info(struct pmix_peer_t *pr,
     pmix_status_t rc;
     pmix_hash_trkr_t *trk, *t2;
 
-    if (PMIX_PROC_SERVER != pmix_globals.proc_type) {
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         /* this function is only available on servers */
         PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
         return PMIX_ERR_NOT_SUPPORTED;
@@ -894,7 +894,7 @@ static pmix_status_t hash_store_job_info(const char *nspace,
                         "[%s:%u] pmix:gds:hash store job info for nspace %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank, nspace);
 
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         /* this function is NOT available on servers */
         PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
         return PMIX_ERR_NOT_SUPPORTED;
@@ -1604,9 +1604,11 @@ static pmix_status_t assemb_kvs_req(const pmix_proc_t *proc,
     pmix_server_caddy_t *cd = (pmix_server_caddy_t*)cbdata;
     pmix_kval_t *kv;
 
-    PMIX_BFROPS_PACK(rc, cd->peer, buf, proc, 1, PMIX_PROC);
-    if (PMIX_SUCCESS != rc) {
-        return rc;
+    if (!PMIX_PROC_IS_V1(cd->peer)) {
+        PMIX_BFROPS_PACK(rc, cd->peer, buf, proc, 1, PMIX_PROC);
+        if (PMIX_SUCCESS != rc) {
+            return rc;
+        }
     }
     PMIX_LIST_FOREACH(kv, kvs, pmix_kval_t) {
         PMIX_BFROPS_PACK(rc, cd->peer, buf, kv, 1, PMIX_KVAL);

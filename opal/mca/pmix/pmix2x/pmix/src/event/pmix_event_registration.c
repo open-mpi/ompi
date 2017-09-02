@@ -297,8 +297,10 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
 
     /* if we are a client, and we haven't already registered a handler of this
      * type with our server, or if we have directives, then we need to notify
-     * the server */
-    if (!PMIX_PROC_IS_SERVER && pmix_globals.connected &&
+     * the server - however, don't do this for a v1 server as the event
+     * notification system there doesn't work */
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) && pmix_globals.connected &&
+        !PMIX_PROC_IS_V1(pmix_client_globals.myserver) &&
        (need_register || 0 < pmix_list_get_size(xfer))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: _add_hdlr sending to server");
@@ -318,8 +320,7 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
 
     /* if we are a server and are registering for events, then we only contact
      * our host if we want environmental events */
-
-    if (PMIX_PROC_IS_SERVER && cd->enviro &&
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) && cd->enviro &&
         NULL != pmix_host_server.register_events) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: _add_hdlr registering with server");
@@ -823,7 +824,7 @@ static void dereg_event_hdlr(int sd, short args, void *cbdata)
 
     /* if I am not the server, and I am connected, then I need
      * to notify the server to remove my registration */
-    if (!PMIX_PROC_IS_SERVER && pmix_globals.connected) {
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) && pmix_globals.connected) {
         msg = PMIX_NEW(pmix_buffer_t);
         PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
                          msg, &cmd, 1, PMIX_COMMAND);

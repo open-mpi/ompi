@@ -348,7 +348,8 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
-    if (0 < pmix_globals.init_cntr || PMIX_PROC_IS_SERVER) {
+    if (0 < pmix_globals.init_cntr ||
+        (NULL != pmix_globals.mypeer && PMIX_PROC_IS_SERVER(pmix_globals.mypeer))) {
         /* since we have been called before, the nspace and
          * rank should be known. So return them here if
          * requested */
@@ -446,17 +447,17 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     pmix_globals.mypeer->info->pname.nspace = strdup(proc->nspace);
     pmix_globals.mypeer->info->pname.rank = proc->rank;
 
-    /* select our bfrops compat module - the selection will be based
+    /* select our psec compat module - the selection will be based
      * on the corresponding envars that should have been passed
      * to us at launch */
-    evar = getenv("PMIX_BFROPS_MODE");
-    pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module(evar);
-    if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
+    evar = getenv("PMIX_SECURITY_MODE");
+    pmix_globals.mypeer->nptr->compat.psec = pmix_psec_base_assign_module(evar);
+    if (NULL == pmix_globals.mypeer->nptr->compat.psec) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
     /* the server will be using the same */
-    pmix_client_globals.myserver->nptr->compat.bfrops = pmix_globals.mypeer->nptr->compat.bfrops;
+    pmix_client_globals.myserver->nptr->compat.psec = pmix_globals.mypeer->nptr->compat.psec;
 
     /* set the buffer type - the selection will be based
      * on the corresponding envars that should have been passed
@@ -473,26 +474,17 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     /* the server will be using the same */
     pmix_client_globals.myserver->nptr->compat.type = pmix_globals.mypeer->nptr->compat.type;
 
-
-    /* select our psec compat module - the selection will be based
-     * on the corresponding envars that should have been passed
-     * to us at launch */
-    evar = getenv("PMIX_SECURITY_MODE");
-    pmix_globals.mypeer->nptr->compat.psec = pmix_psec_base_assign_module(evar);
-    if (NULL == pmix_globals.mypeer->nptr->compat.psec) {
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return PMIX_ERR_INIT;
-    }
-    /* the server will be using the same */
-    pmix_client_globals.myserver->nptr->compat.psec = pmix_globals.mypeer->nptr->compat.psec;
-
     /* select the gds compat module we will use to interact with
      * our server- the selection will be based
      * on the corresponding envars that should have been passed
      * to us at launch */
     evar = getenv("PMIX_GDS_MODULE");
-    PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, evar, PMIX_STRING);
-    pmix_client_globals.myserver->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+    if (NULL != evar) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, evar, PMIX_STRING);
+        pmix_client_globals.myserver->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+    } else {
+        pmix_client_globals.myserver->nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
+    }
     if (NULL == pmix_client_globals.myserver->nptr->compat.gds) {
         PMIX_INFO_DESTRUCT(&ginfo);
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -1080,7 +1072,7 @@ static void _commitfn(int sd, short args, void *cbdata)
     }
 
     /* if we are a server, or we aren't connected, don't attempt to send */
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_SUCCESS;  // not an error
     }

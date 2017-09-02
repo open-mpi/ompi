@@ -48,6 +48,7 @@
 
 /* Instantiate the global vars */
 pmix_bfrops_globals_t pmix_bfrops_globals = {{{0}}};
+int pmix_bfrops_base_output = 0;
 
 static int pmix_bfrop_register(pmix_mca_base_register_flag_t flags)
 {
@@ -96,12 +97,16 @@ static pmix_status_t pmix_bfrop_close(void)
 
 static pmix_status_t pmix_bfrop_open(pmix_mca_base_open_flag_t flags)
 {
+    pmix_status_t rc;
+
     /* initialize globals */
     pmix_bfrops_globals.initialized = true;
     PMIX_CONSTRUCT(&pmix_bfrops_globals.actives, pmix_list_t);
 
     /* Open up all available components */
-    return pmix_mca_base_framework_components_open(&pmix_bfrops_base_framework, flags);
+    rc = pmix_mca_base_framework_components_open(&pmix_bfrops_base_framework, flags);
+    pmix_bfrops_base_output = pmix_bfrops_base_framework.framework_output;
+    return rc;
 }
 
 PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, bfrops, "PMIx Buffer Operations",

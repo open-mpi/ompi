@@ -34,25 +34,24 @@
 #include "src/util/error.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/mca/bfrops/base/base.h"
-#include "src/mca/bfrops/pmix2/bfrop_pmix2.h"
+#include "bfrop_v12.h"
 
-extern pmix_bfrops_module_t pmix_bfrops_pmix2_module;
+extern pmix_bfrops_module_t pmix_bfrops_pmix12_module;
 
 static pmix_status_t component_open(void);
 static pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority);
 static pmix_status_t component_close(void);
 static pmix_bfrops_module_t* assign_module(void);
-
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-pmix_bfrops_base_component_t mca_bfrops_pmix2_component = {
+pmix_bfrops_base_component_t mca_bfrops_v12_component = {
     .base = {
         PMIX_BFROPS_BASE_VERSION_1_0_0,
 
         /* Component name and version */
-        .pmix_mca_component_name = "pmix2",
+        .pmix_mca_component_name = "v12",
         PMIX_MCA_BASE_MAKE_VERSION(component, PMIX_MAJOR_VERSION, PMIX_MINOR_VERSION,
                                    PMIX_RELEASE_VERSION),
 
@@ -61,7 +60,7 @@ pmix_bfrops_base_component_t mca_bfrops_pmix2_component = {
         .pmix_mca_close_component = component_close,
         .pmix_mca_query_component = component_query,
     },
-    .priority = 20,
+    .priority = 5,
     .assign_module = assign_module
 };
 
@@ -69,8 +68,7 @@ pmix_bfrops_base_component_t mca_bfrops_pmix2_component = {
 pmix_status_t component_open(void)
 {
     /* setup the types array */
-    PMIX_CONSTRUCT(&mca_bfrops_pmix2_component.types, pmix_pointer_array_t);
-    pmix_pointer_array_init(&mca_bfrops_pmix2_component.types, 32, INT_MAX, 16);
+    PMIX_CONSTRUCT(&mca_bfrops_v12_component.types, pmix_pointer_array_t);
 
     return PMIX_SUCCESS;
 }
@@ -79,21 +77,19 @@ pmix_status_t component_open(void)
 pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority)
 {
 
-    *priority = mca_bfrops_pmix2_component.priority;
-    *module = (pmix_mca_base_module_t *)&pmix_bfrops_pmix2_module;
+    *priority = mca_bfrops_v12_component.priority;
+    *module = (pmix_mca_base_module_t *)&pmix_bfrops_pmix12_module;
     return PMIX_SUCCESS;
 }
 
 
 pmix_status_t component_close(void)
 {
-    PMIX_DESTRUCT(&mca_bfrops_pmix2_component.types);
+    PMIX_DESTRUCT(&mca_bfrops_v12_component.types);
     return PMIX_SUCCESS;
 }
 
 static pmix_bfrops_module_t* assign_module(void)
 {
-    pmix_output_verbose(10, pmix_bfrops_base_framework.framework_output,
-                        "bfrops:pmix2x assigning module");
-    return &pmix_bfrops_pmix2_module;
+    return &pmix_bfrops_pmix12_module;
 }

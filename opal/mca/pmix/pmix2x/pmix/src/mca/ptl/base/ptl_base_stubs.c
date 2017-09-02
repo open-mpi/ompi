@@ -42,7 +42,7 @@ pmix_status_t pmix_ptl_base_set_notification_cbfunc(pmix_ptl_cbfunc_t cbfunc)
     }
     req->tag = 0;
     req->cbfunc = cbfunc;
-    pmix_output_verbose(5, pmix_globals.debug_output,
+    pmix_output_verbose(5, pmix_ptl_base_framework.framework_output,
                         "posting notification recv on tag %d", req->tag);
     /* add it to the list of recvs - we cannot have unexpected messages
      * in this subsystem as the server never sends us something that
@@ -108,7 +108,7 @@ static void post_recv(int fd, short args, void *cbdata)
     pmix_ptl_recv_t *msg, *nmsg;
     pmix_buffer_t buf;
 
-    pmix_output_verbose(5, pmix_globals.debug_output,
+    pmix_output_verbose(5, pmix_ptl_base_framework.framework_output,
                         "posting recv on tag %d", req->tag);
 
     /* add it to the list of recvs */

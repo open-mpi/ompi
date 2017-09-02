@@ -139,20 +139,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     memset(&pmix_host_server, 0, sizeof(pmix_server_module_t));
     pmix_host_server = *module;
 
-    /* setup the wildcard recv for inbound messages from clients */
-    req = PMIX_NEW(pmix_ptl_posted_recv_t);
-    req->tag = UINT32_MAX;
-    req->cbfunc = server_message_handler;
-    /* add it to the end of the list of recvs */
-    pmix_list_append(&pmix_ptl_globals.posted_recvs, &req->super);
-
-    if (PMIX_SUCCESS != pmix_ptl_base_start_listening(info, ninfo)) {
-        pmix_show_help("help-pmix-server.txt", "listener-thread-start", true);
-        PMIx_server_finalize();
-        PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return PMIX_ERR_INIT;
-    }
-
     /* assign our internal bfrops module */
     pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module(NULL);
     if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
@@ -291,6 +277,21 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     rinfo->gid = pmix_globals.gid;
     PMIX_RETAIN(pmix_globals.mypeer->info);
     pmix_client_globals.myserver->info = pmix_globals.mypeer->info;
+
+    /* setup the wildcard recv for inbound messages from clients */
+    req = PMIX_NEW(pmix_ptl_posted_recv_t);
+    req->tag = UINT32_MAX;
+    req->cbfunc = server_message_handler;
+    /* add it to the end of the list of recvs */
+    pmix_list_append(&pmix_ptl_globals.posted_recvs, &req->super);
+
+    /* start listening for connections */
+    if (PMIX_SUCCESS != pmix_ptl_base_start_listening(info, ninfo)) {
+        pmix_show_help("help-pmix-server.txt", "listener-thread-start", true);
+        PMIx_server_finalize();
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
 
     ++pmix_globals.init_cntr;
     PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -911,6 +912,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
     char rankstr[128];
     pmix_listener_t *lt;
     pmix_status_t rc;
+    char **varnames;
+    int n;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
@@ -931,15 +934,17 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char *
     /* pass our rendezvous info */
     PMIX_LIST_FOREACH(lt, &pmix_ptl_globals.listeners, pmix_listener_t) {
         if (NULL != lt->uri && NULL != lt->varname) {
-            pmix_setenv(lt->varname, lt->uri, true, env);
+            varnames = pmix_argv_split(lt->varname, ':');
+            for (n=0; NULL != varnames[n]; n++) {
+                pmix_setenv(varnames[n], lt->uri, true, env);
+            }
+            pmix_argv_free(varnames);
         }
     }
     /* pass our active security modules */
     pmix_setenv("PMIX_SECURITY_MODE", security_mode, true, env);
     /* pass our available ptl modules */
     pmix_setenv("PMIX_PTL_MODULE", ptl_mode, true, env);
-    /* pass our available bfrop modes */
-    pmix_setenv("PMIX_BFROP_MODULE", bfrops_mode, true, env);
     /* pass the type of buffer we are using */
     if (PMIX_BFROP_BUFFER_FULLY_DESC == pmix_globals.mypeer->nptr->compat.type) {
         pmix_setenv("PMIX_BFROP_BUFFER_TYPE", "PMIX_BFROP_BUFFER_FULLY_DESC", true, env);
@@ -1764,7 +1769,7 @@ static void get_cbfunc(pmix_status_t status, const char *data, size_t ndata, voi
     pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "server:get_cbfunc called with %d elements", (int)ndata);
+                        "server:get_cbfunc called with %d bytes", (int)ndata);
 
     /* no need to thread-shift here as no global data is accessed */
 
@@ -1799,7 +1804,7 @@ static void get_cbfunc(pmix_status_t status, const char *data, size_t ndata, voi
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "server:get_cbfunc reply being sent to %s:%u",
                         cd->peer->info->pname.nspace, cd->peer->info->pname.rank);
-    pmix_output_hexdump(5, pmix_globals.debug_output,
+    pmix_output_hexdump(10, pmix_globals.debug_output,
                         reply->base_ptr, (reply->bytes_used < 256 ? reply->bytes_used : 256));
 
     PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
@@ -2132,16 +2137,18 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
 
     if (PMIX_COMMIT_CMD == cmd) {
         rc = pmix_server_commit(peer, buf);
-        reply = PMIX_NEW(pmix_buffer_t);
-        if (NULL == reply) {
-            PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
-            return PMIX_ERR_NOMEM;
+        if (!PMIX_PROC_IS_V1(peer)) {
+            reply = PMIX_NEW(pmix_buffer_t);
+            if (NULL == reply) {
+                PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                return PMIX_ERR_NOMEM;
+            }
+            PMIX_BFROPS_PACK(rc, peer, reply, &rc, 1, PMIX_STATUS);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
+            PMIX_SERVER_QUEUE_REPLY(peer, tag, reply);
         }
-        PMIX_BFROPS_PACK(rc, peer, reply, &rc, 1, PMIX_STATUS);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-        }
-        PMIX_SERVER_QUEUE_REPLY(peer, tag, reply);
         return PMIX_SUCCESS; // don't reply twice
     }
 
