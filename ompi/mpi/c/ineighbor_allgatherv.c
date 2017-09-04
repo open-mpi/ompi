@@ -14,7 +14,7 @@
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -70,11 +70,7 @@ int MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
         }
 
         /* check whether the actual send buffer is defined. */
-        if (MPI_IN_PLACE == sendbuf) {
-            memchecker_call(&opal_memchecker_base_isdefined,
-                            (char *)(recvbuf)+displs[rank]*ext,
-                            recvcounts[rank], recvtype);
-        } else {
+        if (MPI_IN_PLACE != sendbuf) {
             memchecker_datatype(sendtype);
             memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         }
