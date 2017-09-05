@@ -207,9 +207,6 @@ __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
     [AC_MSG_RESULT([no])
      $2])
 
-  AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
-		     [Whether 64-bit is supported by the __sync builtin atomics])
-
   # Check for 128-bit support
   OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
 ])
@@ -979,12 +976,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of __sync builtin atomics (default: enabled)])],
-         [], [enable_builtin_atomics="yes"])
+         [Enable use of __sync builtin atomics (default: disabled)])],
+         [], [enable_builtin_atomics="no"])
     AC_ARG_ENABLE([osx-builtin-atomics],
       [AC_HELP_STRING([--enable-osx-builtin-atomics],
-         [Enable use of OSX builtin atomics (default: enabled)])],
-         [], [enable_osx_builtin_atomics="yes"])
+         [Enable use of OSX builtin atomics (default: disabled)])],
+         [], [enable_osx_builtin_atomics="no"])
 
     opal_cv_asm_builtin="BUILTIN_NO"
     if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then

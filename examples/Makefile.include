@@ -14,6 +14,8 @@
 # Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,6 +41,7 @@ EXTRA_DIST += \
         examples/hello_usempi.f90 \
         examples/hello_usempif08.f90 \
         examples/hello_oshmem_c.c \
+        examples/hello_oshmem_cxx.cc \
         examples/hello_oshmemfh.f90 \
         examples/ring_c.c \
         examples/ring_cxx.cc \

@@ -156,6 +156,18 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_RENAME)
     AC_CONFIG_FILES(pmix_config_prefix[include/pmix_rename.h])
 
+    # Add any extra lib?
+    AC_ARG_WITH([pmix-extra-lib],
+                AC_HELP_STRING([--with-pmix-extra-lib=LIB],
+                               [Link the output PMIx library to this extra lib (used in embedded mode)]))
+    AC_MSG_CHECKING([for extra lib])
+    AS_IF([test ! -z "$with_pmix_extra_lib"],
+          [AC_MSG_RESULT([$with_pmix_extra_lib])
+           PMIX_EXTRA_LIB=$with_pmix_extra_lib],
+          [AC_MSG_RESULT([no])
+           PMIX_EXTRA_LIB=])
+    AC_SUBST(PMIX_EXTRA_LIB)
+
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
         PMIX_GCC_CFLAGS="-Wall -Wmissing-prototypes -Wundef"
@@ -745,7 +757,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         pmix_config_prefix[Makefile]
         pmix_config_prefix[config/Makefile]
         pmix_config_prefix[include/Makefile]
-        pmix_config_prefix[src/atomics/asm/Makefile]
         pmix_config_prefix[src/Makefile]
         pmix_config_prefix[src/util/keyval/Makefile]
         pmix_config_prefix[src/mca/base/Makefile]
@@ -925,7 +936,6 @@ AC_DEFINE_UNQUOTED([PMIX_WANT_PRETTY_PRINT_STACKTRACE],
                    [$WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
-#
 # Do we want the shared memory datastore usage?
 #
 
@@ -933,7 +943,7 @@ AC_MSG_CHECKING([if want shared memory datastore])
 AC_ARG_ENABLE([dstore],
               [AC_HELP_STRING([--disable-dstore],
                               [Using shared memory datastore (default: enabled)])])
-if test "$enable_dstore" == "no" ; then
+if test "$enable_dstore" = "no" ; then
     AC_MSG_RESULT([no])
     WANT_DSTORE=0
 else
@@ -945,6 +955,7 @@ AC_DEFINE_UNQUOTED([PMIX_ENABLE_DSTORE],
                  [if want shared memory dstore feature])
 
 #
+#
 # Use pthread-based locking
 #
 DSTORE_PTHREAD_LOCK="1"
@@ -952,7 +963,7 @@ AC_MSG_CHECKING([if want dstore pthread-based locking])
 AC_ARG_ENABLE([dstore-pthlck],
               [AC_HELP_STRING([--disable-dstore-pthlck],
                               [Disable pthread-based lockig in dstor (default: enabled)])])
-if test "$enable_dstore_pthlck" == "no" ; then
+if test "$enable_dstore_pthlck" = "no" ; then
     AC_MSG_RESULT([no])
     DSTORE_PTHREAD_LOCK="0"
 else

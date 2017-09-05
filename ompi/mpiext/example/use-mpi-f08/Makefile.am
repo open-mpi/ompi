@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -12,7 +14,7 @@
 
 # We must set these #defines and include paths so that the inner OMPI
 # MPI prototype header files do the Right Thing.
-AM_FCFLAGS = $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/base \
+AM_FCFLAGS = $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPIF08_MOD) \
              -I$(top_srcdir) $(FCFLAGS_f90)
 
 # Note that the mpi_f08-based bindings are optional -- they can only

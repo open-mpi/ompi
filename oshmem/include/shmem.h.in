@@ -298,7 +298,7 @@ OSHMEM_DECLSPEC  long long shmem_longlong_g(const long long* addr, int pe);
 OSHMEM_DECLSPEC  long double shmem_longdouble_g(const long double* addr, int pe);
 #if OSHMEM_HAVE_C11
 #define shmem_g(addr, pe)                                    \
-    _Generic(&*(dst),                                        \
+    _Generic(&*(addr),                                        \
             char*:        shmem_char_g,                      \
             short*:       shmem_short_g,                     \
             int*:         shmem_int_g,                       \

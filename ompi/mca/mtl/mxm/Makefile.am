@@ -1,5 +1,6 @@
 #
 # Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -40,7 +41,8 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_mxm_la_SOURCES = $(mtl_mxm_sources)
-mca_mtl_mxm_la_LIBADD = $(mtl_mxm_LIBS)
+mca_mtl_mxm_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(mtl_mxm_LIBS)
 mca_mtl_mxm_la_LDFLAGS = -module -avoid-version $(mtl_mxm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

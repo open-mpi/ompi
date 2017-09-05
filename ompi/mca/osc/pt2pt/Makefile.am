@@ -11,6 +11,7 @@
 # Copyright (c) 2014      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -52,6 +53,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_pt2pt_la_SOURCES = $(pt2pt_sources)
 mca_osc_pt2pt_la_LDFLAGS = -module -avoid-version
+mca_osc_pt2pt_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_osc_pt2pt_la_SOURCES = $(pt2pt_sources)

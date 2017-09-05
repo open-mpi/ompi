@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,7 +34,7 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
         ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
         ompi/mpi/fortran/use-mpi-f08/Makefile
-        ompi/mpi/fortran/use-mpi-f08-desc/Makefile
+        ompi/mpi/fortran/use-mpi-f08/mod/Makefile
         ompi/mpi/fortran/mpiext/Makefile
         ompi/mpi/tool/Makefile
         ompi/mpi/tool/profile/Makefile

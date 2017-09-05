@@ -14,12 +14,12 @@ Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
 Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
                         reserved.
-Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012-2017 Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -64,6 +64,15 @@ Removed legacy support:
 - "yoda" SPML component is removed from the Open SHMEM code base. It was utilizing
   Open MPI BTL components for supported networks. Please see README for the currently
   available options.
+- Remove IB XRC support from the OpenIB BTL due to lack of support.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1
+
+Known issues:
+
+- MPI_Connect/accept between applications started by different mpirun
+  commands will fail, even if ompi-server is running.
+
 
 2.1.1 -- April, 2017
 --------------------
@@ -1018,7 +1027,7 @@ Bug fixes / minor enhancements:
 - Fix typo in MPI_Scatter(3) man page.  Thanks to Akshay Venkatesh for
   noticing the mistake.
 - Add rudimentary protection from TCP port scanners.
-- Fix typo in Open MPI error handling.  Thanks to Åke Sandgren for
+- Fix typo in Open MPI error handling.  Thanks to Ã…ke Sandgren for
   pointing out the error.
 - Increased the performance of the CM PML (i.e., the Portals, PSM,
   PSM2, MXM, and OFI transports).
@@ -1394,7 +1403,7 @@ Bug fixes / minor enhancements:
 - Add version check during startup to ensure you are using the same
   version of Open MPI on all nodes in a job.
 - Significantly improved the performance of MPI_DIMS_CREATE for large
-  values.  Thanks to Andreas Schäfer for the contribution.
+  values.  Thanks to Andreas SchÃ¤fer for the contribution.
 - Removed ASYNCHRONOUS keyword from the "ignore TKR" mpi_f08 module.
 - Deprecated the following mpirun options:
   --bynode, --bycore, --byslot: replaced with --map-by node|core|slot.
@@ -1982,7 +1991,7 @@ Bug fixes / minor enhancements:
 - Removed the broken --cpu-set mpirun option.
 - Fix cleanup of MPI errorcodes.  Thanks to Alexey Bayduraev for the
   patch.
-- Fix default hostfile location.  Thanks to Götz Waschk for noticing
+- Fix default hostfile location.  Thanks to GÃ¶tz Waschk for noticing
   the issue.
 - Improve several error messages.
 
@@ -2094,7 +2103,7 @@ Bug fixes / minor enhancements:
 - Add support for dynamic service levels (SLs) in the openib BTL.
 - Fixed C++ bindings cosmetic/warnings issue with
   MPI::Comm::NULL_COPY_FN and MPI::Comm::NULL_DELETE_FN.  Thanks to
-  Júlio Hoffimann for identifying the issues.
+  JÃºlio Hoffimann for identifying the issues.
 - Also allow the word "slots" in rankfiles (i.e., not just "slot").
   (** also to appear in 1.4.4)
 - Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
@@ -2577,7 +2586,7 @@ Bug fixes / minor enhancements:
 - Fixed some problems with the collective "hierarch" implementation
   that could occur in some obscure conditions.
 - Various MPI_REQUEST_NULL, API parameter checking, and attribute
-  error handling fixes.  Thanks to Lisandro DalcÃ­n for reporting the
+  error handling fixes.  Thanks to Lisandro DalcÃƒÂ­n for reporting the
   issues.
 - Fix case where MPI_GATHER erroneously used datatypes on non-root
   nodes.  Thanks to Michael Hofmann for investigating the issue.

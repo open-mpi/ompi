@@ -19,6 +19,8 @@ Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
                         reserved.
+Copyright (c) 2017      Research Organization for Information Science
+                        and Technology (RIST). All rights reserved.
 
 $COPYRIGHT$
 
@@ -134,6 +136,9 @@ General notes
     with Oracle Solaris Studio 12.5
   - OpenBSD.  Requires configure options --enable-mca-no-build=patcher
     and --disable-slopen with this release.
+  - Problems have been reported when building Open MPI on FreeBSD 11.1
+    using the clang-4.0 system compiler. A workaround is to build
+    Open MPI using the GNU compiler.
 
 Platform Notes
 --------------
@@ -194,15 +199,17 @@ Compiler Notes
   for more details:
   https://github.com/open-mpi/ompi/issues/3612
 
-- Compiling Fortran programs using the mpi_f08 module on PowerPC with
-  the PGI (tested 17.5) or XL (tested v15.1.5) Fortran compilers and GNU
-  linker after 2.25.1 and before 2.28 will likely experience runtime failures.
+- MPI applications that use the mpi_f08 module on PowerPC platforms
+  (tested ppc64le) will likely experience runtime failures if:
+   - they are using a GNU linker (ld) version after v2.25.1 and before v2.28,
+     -and-
+   - they compiled with PGI (tested 17.5) or XL (tested v15.1.5) compilers.
   This was noticed on Ubuntu 16.04 which uses the 2.26.1 version of ld by
-  default. However, this issue impacts any OS running the impacted
-  version of ld. This GNU linker regression will be fixed in version 2.28.
+  default. However, this issue impacts any OS using a version of ld noted
+  above. This GNU linker regression will be fixed in version 2.28.
   Below is a link to the GNU bug on this issue:
     https://sourceware.org/bugzilla/show_bug.cgi?id=21306
-  The XL compiler will have a fix for this issue in their next release.
+  The XL compiler will include a fix for this issue in a future release.
 
 - On NetBSD-6 (at least AMD64 and i386), and possibly on OpenBSD,
   libtool misidentifies properties of f95/g95, leading to obscure
@@ -551,24 +558,6 @@ OpenSHMEM Functionality and Features
 
 MPI Collectives
 ---------------
-
-- The "hierarch" coll component (i.e., an implementation of MPI
-  collective operations) attempts to discover network layers of
-  latency in order to segregate individual "local" and "global"
-  operations as part of the overall collective operation.  In this
-  way, network traffic can be reduced -- or possibly even minimized
-  (similar to MagPIe).  The current "hierarch" component only
-  separates MPI processes into on- and off-node groups.
-
-  Hierarch has had sufficient correctness testing, but has not
-  received much performance tuning.  As such, hierarch is not
-  activated by default -- it must be enabled manually by setting its
-  priority level to 100:
-
-    mpirun --mca coll_hierarch_priority 100 ...
-
-  We would appreciate feedback from the user community about how well
-  hierarch works for your applications.
 
 - The "fca" coll component: the Mellanox Fabric Collective Accelerator
   (FCA) is a solution for offloading collective operations from the

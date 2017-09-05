@@ -21,12 +21,19 @@ example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
 
-Master (not on release branches yet)
-------------------------------------
+2.0.1 -- 24 Aug. 2017
+----------------------
+- Protect PMIX_INFO_FREE macro from NULL data arrays
+- Added attributes to support HWLOC shared memory regions
+- Fixed several syntax errors in configure code
+- Fixed several visibility errors
+- Correctly return status from PMIx_Fence operation
+- Restore tool connection support and implement search
+  operations to discover rendezvous files
 
 
-2.0.0
-------
+2.0.0 -- 22 Jun 2017
+----------------------
 **** NOTE: This release implements the complete PMIX v2.0 Standard
 **** and therefore includes a number of new APIs and features. These
 **** can be tracked by their RFC's in the RFC repository at:
@@ -81,6 +88,19 @@ Master (not on release branches yet)
 - Fix a number of race condition issues that arose at scale
 - Enable PMIx servers to generate notifications to the host RM
   and to themselves
+
+
+1.2.3 -- 24 Aug. 2017
+----------------------
+- Resolve visibility issues for public APIs (PR #451)
+- Atomics update - remove custom ASM atomics (PR #458)
+- Fix job-fence test (PR #423)
+- Replace stale PMIX_DECLSPEC with PMIX_EXPORT (PR #448)
+- Memory barrier fixes for thread shifting (PR #387)
+- Fix race condition in dmodex (PR #346)
+- Allow disable backward compatability for PMI-1/2 (PR #350)
+- Fix segv in PMIx_server_deregister_nspace (PR #343)
+- Fix possible hang in PMIx_Abort (PR #339)
 
 
 1.2.2 -- 21 March 2017

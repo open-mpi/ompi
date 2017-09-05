@@ -24,7 +24,6 @@
 ACLOCAL_AMFLAGS = -I ./config
 
 SUBDIRS = \
-	atomics/asm \
 	util/keyval \
     mca/base \
     $(MCA_pmix_FRAMEWORKS_SUBDIRS) \
@@ -33,7 +32,6 @@ SUBDIRS = \
     $(MCA_pmix_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 DIST_SUBDIRS = \
-	atomics/asm \
 	util/keyval \
     mca/base \
     $(MCA_pmix_FRAMEWORKS_SUBDIRS) \
@@ -47,7 +45,8 @@ dist_pmixdata_DATA =
 
 libpmix_la_LIBADD = \
 	mca/base/libpmix_mca_base.la \
-	$(MCA_pmix_FRAMEWORK_LIBS)
+	$(MCA_pmix_FRAMEWORK_LIBS) \
+	$(PMIX_EXTRA_LIB)
 libpmix_la_DEPENDENCIES = $(libpmix_la_LIBADD)
 
 if PMIX_EMBEDDED_MODE

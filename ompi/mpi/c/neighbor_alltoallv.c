@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -32,7 +32,6 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
-#include "ompi/communicator/comm_helpers.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 
@@ -52,7 +51,7 @@ int MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const in
                            MPI_Datatype recvtype, MPI_Comm comm)
 {
     int i, err;
-    int indegree, outdegree, weighted;
+    int indegree, outdegree;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -68,7 +67,7 @@ int MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const in
         memchecker_datatype(recvtype);
         ompi_datatype_type_extent(sendtype, &send_ext);
 
-        err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
+        err = mca_topo_base_neighbor_count (comm, &indegree, &outdegree);
         if (MPI_SUCCESS == err) {
             if (MPI_IN_PLACE != sendbuf) {
                 for ( i = 0; i < outdegree; i++ ) {
@@ -105,7 +104,7 @@ int MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const in
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
-        err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
+        err = mca_topo_base_neighbor_count (comm, &indegree, &outdegree);
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         for (i = 0; i < outdegree; ++i) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);

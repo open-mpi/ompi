@@ -1,5 +1,7 @@
 #
-# Copyright (C) Mellanox Technologies Ltd. 2001-2015.  ALL RIGHTS RESERVED.
+# Copyright (C) 2001-2017 Mellanox Technologies, Inc.
+#                         All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,11 +37,12 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_ucx_la_SOURCES = $(local_sources)
-mca_pml_ucx_la_LIBADD = $(pml_ucx_LIBS)
-mca_pml_ucx_la_LDFLAGS = -module -avoid-version
+mca_pml_ucx_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(pml_ucx_LIBS)
+mca_pml_ucx_la_LDFLAGS = -module -avoid-version $(pml_ucx_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_ucx_la_SOURCES = $(local_sources)
 libmca_pml_ucx_la_LIBADD = $(pml_ucx_LIBS)
-libmca_pml_ucx_la_LDFLAGS = -module -avoid-version
+libmca_pml_ucx_la_LDFLAGS = -module -avoid-version $(pml_ucx_LDFLAGS)
 

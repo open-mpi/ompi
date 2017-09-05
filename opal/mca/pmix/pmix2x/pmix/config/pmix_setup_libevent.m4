@@ -3,6 +3,8 @@
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,8 +41,11 @@ AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
     AC_MSG_CHECKING([for libevent])
     AC_MSG_RESULT([assumed available (embedded mode)])
 
-    PMIX_EVENT_HEADER="$with_libevent_header"
-    PMIX_EVENT2_THREAD_HEADER="$with_libevent_header"
+    AS_IF([test -z "$with_libevent_header" || test "$with_libevent_header" = "yes"],
+          [PMIX_EVENT_HEADER="<event.h>"
+           PMIX_EVENT2_THREAD_HEADER="<event2/thread.h>"],
+          [PMIX_EVENT_HEADER="$with_libevent_header"
+           PMIX_EVENT2_THREAD_HEADER="$with_libevent_header"])
 
  ])
 

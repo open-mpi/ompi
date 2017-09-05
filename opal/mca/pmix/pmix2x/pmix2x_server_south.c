@@ -107,6 +107,11 @@ int pmix2x_server_init(opal_pmix_server_module_t *module,
             asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
             putenv(dbgvalue);
         }
+        /* check the evars for a mismatch */
+        if (OPAL_SUCCESS != (dbg = opal_pmix_pmix2x_check_evars())) {
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+            return dbg;
+        }
     }
     ++opal_pmix_base.initialized;
 
@@ -541,9 +546,9 @@ int pmix2x_server_notify_event(int status,
 
 
     rc = pmix2x_convert_opalrc(status);
-    /* the range is irrelevant here as the server is passing
+    /* the range must be nonlocal so the server will pass
      * the event down to its local clients */
-    rc = PMIx_Notify_event(rc, &op->p, PMIX_RANGE_LOCAL,
+    rc = PMIx_Notify_event(rc, &op->p, PMIX_RANGE_SESSION,
                            pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);

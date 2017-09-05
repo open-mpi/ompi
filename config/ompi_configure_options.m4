@@ -10,14 +10,14 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
+dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
@@ -230,30 +230,6 @@ AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
     [Whether we want to check MPI parameters always, never, or decide at run-time])
 AC_DEFINE_UNQUOTED(OMPI_PARAM_CHECK, $ompi_param_check,
     [Whether we want to check MPI parameters never or possible (an integer constant)])
-
-#
-# Do we want the prototype "use mpi_f08" implementation that uses
-# Fortran descriptors?
-#
-
-AC_MSG_CHECKING([which 'use mpi_f08' implementation to use])
-AC_ARG_ENABLE(mpi-f08-subarray-prototype,
-    AC_HELP_STRING([--enable-mpi-f08-subarray-prototype],
-                   [Use the PROTOTYPE and SEVERLY FUNCTIONALITY-LIMITED Fortran 08 'use mpi_f08' implementation that supports subarrrays (via Fortran descriptors).  This option will disable the normal 'use mpi_f08' implementation and *only* build the prototype implementation.]))
-OMPI_BUILD_FORTRAN_F08_SUBARRAYS=0
-AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -lt $OMPI_FORTRAN_USEMPIF08_BINDINGS],
-      [AC_MSG_RESULT([none (use mpi_f08 disabled)])],
-      [AS_IF([test "$enable_mpi_f08_subarray_prototype" = "yes"],
-             [OMPI_BUILD_FORTRAN_F08_SUBARRAYS=1
-              AC_MSG_RESULT([extra crispy (subarray prototype)])
-              AC_MSG_WARN([Sorry, the subarray prototype is no longer available])
-              AC_MSG_WARN([Contact your favorite OMPI developer and ask for it to be re-enabled])
-              AC_MSG_ERROR([Cannot continue])],
-             [AC_MSG_RESULT([regular (no subarray support)])])
-      ])
-AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
-                   [$OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
-                   [Whether we built the 'use mpi_f08' prototype subarray-based implementation or not (i.e., whether to build the use-mpi-f08-desc prototype or the regular use-mpi-f08 implementation)])
 
 AC_ARG_ENABLE([mpi-io],
     [AC_HELP_STRING([--disable-mpi-io],
