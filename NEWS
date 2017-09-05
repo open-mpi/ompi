@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012-2017 Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -76,6 +76,10 @@ Removed legacy support:
 - Remove support for XL compilers older than v13.1
 
 Known issues (to be addressed in v3.0.1):
+
+- MPI_Connect/accept between applications started by different mpirun
+  commands will fail, even if ompi-server is running.
+
 
 2.1.1 -- April, 2017
 --------------------
