@@ -1,5 +1,7 @@
 #
-# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +20,7 @@ if OMPI_BUILD_FORTRAN_USEMPI_OR_USEMPIF08_EXT
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/base \
+             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPIF08_MOD) \
              -I$(top_srcdir) $(FCFLAGS_f90)
 
 flibs =
@@ -61,7 +64,7 @@ libforce_usempif08_module_to_be_built_la_SOURCES = mpi-f08-ext-module.F90
 # manually here.  Bummer!
 #
 
-mpi_f08_ext.lo: $(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mpi-f08-types.lo
+mpi_f08_ext.lo: $(top_builddir)/ompi/mpi/fortran/use-mpi-f08-modules/mpi-f08-types.lo
 mpi_f08_ext.lo: mpi-f08-ext-module.F90
 endif
 

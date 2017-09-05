@@ -10,12 +10,12 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2016 Research Organization for Information Science
+dnl Copyright (c) 2014-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
@@ -34,7 +34,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_USEMPI_DIR=
     OMPI_FORTRAN_USEMPI_LIB=
 
-    OMPI_FORTRAN_USEMPIF08_DIR=
     OMPI_FORTRAN_USEMPIF08_LIB=
 
     OMPI_FORTRAN_MAX_ARRAY_RANK=0
@@ -51,7 +50,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
     OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=0
     OMPI_FORTRAN_HAVE_PRIVATE=0
-    OMPI_FORTRAN_SUBARRAYS_SUPPORTED=.FALSE.
 
     # These macros control symbol names for Fortran/C interoperability
     #
@@ -532,33 +530,20 @@ end type test_mpi_handle],
                 OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=1])
 
                # Which mpi_f08 implementation are we using?
-               # a) partial, proof-of-concept that supports array
-               #    subsections (Intel compiler only)
-               # b) compiler supports BIND(C) and optional arguments
+               # a) compiler supports BIND(C) and optional arguments
                #    ("good" compilers)
-               # c) compiler that does not support the items listed
+               # b) compiler that does not support the items listed
                #    in b) ("bad" compilers)
 
                AC_MSG_CHECKING([which mpi_f08 implementation to build])
-               AS_IF([test $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 1],
-                     [ # Case a) partial/prototype implementation
-                      OMPI_FORTRAN_USEMPIF08_DIR=mpi/fortran/use-mpi-f08-desc
-                      OMPI_FORTRAN_SUBARRAYS_SUPPORTED=.TRUE.
-                      OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=0
-                      AC_MSG_RESULT([array subsections (partial/experimental)])
+               AS_IF([test $OMPI_FORTRAN_HAVE_OPTIONAL_ARGS -eq 1],
+                     [ # Case a) "good compiler"
+                         OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=0
+                         AC_MSG_RESULT(["good" compiler, no array subsections])
                      ],
-                     [ # Both cases b) and c)
-                      OMPI_FORTRAN_USEMPIF08_DIR=mpi/fortran/use-mpi-f08
-                      OMPI_FORTRAN_SUBARRAYS_SUPPORTED=.FALSE.
-                      AS_IF([test $OMPI_FORTRAN_HAVE_OPTIONAL_ARGS -eq 1],
-                            [ # Case b) "good compiler"
-                             OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=0
-                             AC_MSG_RESULT(["good" compiler, no array subsections])
-                            ],
-                            [ # Case c) "bad compiler"
-                             OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1
-                             AC_MSG_RESULT(["bad" compiler, no array subsections])
-                            ])
+                     [ # Case b) "bad compiler"
+                         OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1
+                         AC_MSG_RESULT(["bad" compiler, no array subsections])
                      ])
           ])
 
@@ -699,8 +684,6 @@ end type test_mpi_handle],
     # use mpi_f08 final setup
     # -------------------
 
-    # This goes into ompi/Makefile.am
-    AC_SUBST(OMPI_FORTRAN_USEMPIF08_DIR)
     # This goes into mpifort-wrapper-data.txt
     AC_SUBST(OMPI_FORTRAN_USEMPIF08_LIB)
 
@@ -713,12 +696,6 @@ end type test_mpi_handle],
     AC_SUBST(OMPI_MPI_BIND_PREFIX)
     AC_SUBST(OMPI_F08_SUFFIX)
     AC_SUBST(OMPI_F_SUFFIX)
-
-    # This goes into ompi/mpi/fortran/configure-fortran-output.h
-    AC_SUBST(OMPI_FORTRAN_SUBARRAYS_SUPPORTED)
-    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_SUBARRAYS_SUPPORTED,
-                       [$OMPI_FORTRAN_SUBARRAYS_SUPPORTED],
-                       [Value to load to the MPI_SUBARRAYS_SUPPORTED compile-time constant])
 
     # This is used to generate weak symbols (or not) in
     # ompi/mpi/fortran/mpif-h/<foo>_f.c, and
