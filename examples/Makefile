@@ -13,6 +13,8 @@
 # Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,6 +32,7 @@ CCC = mpic++
 FC = mpifort
 JAVAC = mpijavac
 SHMEMCC = shmemcc
+SHMEMCXX = shmemc++
 SHMEMFC = shmemfort
 
 # Using -g is not necessary, but it is helpful for example programs,
@@ -51,6 +54,7 @@ EXAMPLES = \
 	 hello_usempi \
 	 hello_usempif08 \
 	 hello_oshmem \
+	 hello_oshmemcxx \
 	 hello_oshmemfh \
 	 Hello.class \
 	 ring_c \
@@ -105,6 +109,7 @@ mpi:
 oshmem:
 	@ if oshmem_info --parsable | grep oshmem:bindings:c:yes >/dev/null; then \
 	    $(MAKE) hello_oshmem; \
+	    $(MAKE) hello_oshmemcxx; \
 	    $(MAKE) ring_oshmem; \
 	    $(MAKE) oshmem_shmalloc; \
 	    $(MAKE) oshmem_circular_shift; \
@@ -146,6 +151,8 @@ Ring.class: Ring.java
 
 hello_oshmem: hello_oshmem_c.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
+hello_oshmemcxx: hello_oshmem_cxx.cc
+	$(SHMEMCXX) $(CXXFLAGS) $? -o $@
 hello_oshmemfh: hello_oshmemfh.f90
 	$(SHMEMFC) $(FCFLAGS) $? -o $@
 

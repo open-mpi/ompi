@@ -2,7 +2,9 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,6 +25,7 @@ AC_DEFUN([OSHMEM_CONFIG_FILES],[
     oshmem/tools/oshmem_info/Makefile
     oshmem/tools/wrappers/Makefile
     oshmem/tools/wrappers/shmemcc-wrapper-data.txt
+    oshmem/tools/wrappers/shmemc++-wrapper-data.txt
     oshmem/tools/wrappers/shmemfort-wrapper-data.txt
     ])
 ])
