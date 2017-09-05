@@ -112,11 +112,11 @@ size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, siz
 
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 {
-    ssize_t cnt = -1;
+    ssize_t cnt;
     size_t i, num_vecs;
 
     /* non-blocking write, but continue if interrupted */
-    while(cnt < 0) {
+    do {
         cnt = writev(sd, frag->iov_ptr, frag->iov_cnt);
         if(cnt < 0) {
             switch(opal_socket_errno) {
@@ -140,11 +140,11 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
                 return false;
             }
         }
-    }
+    } while(cnt < 0);
 
     /* if the write didn't complete - update the iovec state */
     num_vecs = frag->iov_cnt;
-    for(i=0; i<num_vecs; i++) {
+    for( i = 0; i < num_vecs; i++) {
         if(cnt >= (ssize_t)frag->iov_ptr->iov_len) {
             cnt -= frag->iov_ptr->iov_len;
             frag->iov_ptr++;
@@ -166,8 +166,8 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 {
     mca_btl_base_endpoint_t* btl_endpoint = frag->endpoint;
-    int i, num_vecs, dont_copy_data = 0;
     ssize_t cnt;
+    int32_t i, num_vecs, dont_copy_data = 0;
 
  repeat:
     num_vecs = frag->iov_cnt;
@@ -208,8 +208,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
 
     /* non-blocking read, but continue if interrupted */
-    cnt = -1;
-    while( cnt < 0 ) {
+    do {
         cnt = readv(sd, frag->iov_ptr, num_vecs);
         if( 0 < cnt ) goto advance_iov_position;
         if( cnt == 0 ) {
@@ -247,7 +246,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             mca_btl_tcp_endpoint_close(btl_endpoint);
             return false;
         }
-    }
+    } while( cnt < 0 );
 
  advance_iov_position:
     /* if the read didn't complete - update the iovec state */

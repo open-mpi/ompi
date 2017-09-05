@@ -318,7 +318,12 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_tcp_module.super.btl_rndv_eager_limit = 64*1024;
     mca_btl_tcp_module.super.btl_max_send_size = 128*1024;
     mca_btl_tcp_module.super.btl_rdma_pipeline_send_length = 128*1024;
-    mca_btl_tcp_module.super.btl_rdma_pipeline_frag_size = INT_MAX;
+    /* Some OSes have hard coded limits on how many bytes can be manipulated
+     * by each writev operation.  Force a reasonable limit, to prevent overflowing
+     * a signed 32-bit integer (limit comes from BSD and OS X). We remove 1k to
+     * make some room for our internal headers.
+     */
+    mca_btl_tcp_module.super.btl_rdma_pipeline_frag_size = ((1UL<<31) - 1024);
     mca_btl_tcp_module.super.btl_min_rdma_pipeline_size = 0;
     mca_btl_tcp_module.super.btl_flags = MCA_BTL_FLAGS_PUT |
                                        MCA_BTL_FLAGS_SEND_INPLACE |
@@ -335,7 +340,11 @@ static int mca_btl_tcp_component_register(void)
 
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
                                 &mca_btl_tcp_module.super);
-
+    if (mca_btl_tcp_module.super.btl_rdma_pipeline_frag_size > ((1UL<<31) - 1024) ) {
+        /* Assume a hard limit. A test in configure would be a better solution, but until then
+         * kicking-in the pipeline RDMA for extremely large data is good enough. */
+        mca_btl_tcp_module.super.btl_rdma_pipeline_frag_size = ((1UL<<31) - 1024);
+    }
     mca_btl_tcp_param_register_int ("disable_family", NULL, 0, OPAL_INFO_LVL_2,  &mca_btl_tcp_component.tcp_disable_family);
 
     return mca_btl_tcp_component_verify();

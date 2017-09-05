@@ -53,8 +53,8 @@ struct mca_btl_tcp_frag_t {
     mca_btl_tcp_hdr_t hdr;
     struct iovec iov[MCA_BTL_TCP_FRAG_IOVEC_NUMBER + 1];
     struct iovec *iov_ptr;
-    size_t iov_cnt;
-    size_t iov_idx;
+    uint32_t iov_cnt;
+    uint32_t iov_idx;
     size_t size;
     uint16_t next_step;
     int rc;

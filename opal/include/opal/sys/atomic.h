@@ -447,7 +447,7 @@ int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta);
  */
 #if defined(DOXYGEN) || OPAL_ENABLE_DEBUG
 static inline size_t
-opal_atomic_add_size_t(volatile size_t *addr, int delta)
+opal_atomic_add_size_t(volatile size_t *addr, size_t delta)
 {
 #if SIZEOF_SIZE_T == 4
     return (size_t) opal_atomic_add_32((int32_t*) addr, delta);
@@ -458,7 +458,7 @@ opal_atomic_add_size_t(volatile size_t *addr, int delta)
 #endif
 }
 static inline size_t
-opal_atomic_sub_size_t(volatile size_t *addr, int delta)
+opal_atomic_sub_size_t(volatile size_t *addr, size_t delta)
 {
 #if SIZEOF_SIZE_T == 4
     return (size_t) opal_atomic_sub_32((int32_t*) addr, delta);
