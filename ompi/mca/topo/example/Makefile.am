@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -45,6 +46,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_topo_example_la_SOURCES = $(component_sources)
 mca_topo_example_la_LDFLAGS = -module -avoid-version
+mca_topo_example_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_topo_example_la_SOURCES = $(lib_sources)

@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -49,7 +50,8 @@ libs = romio/libromio_dist.la
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_io_romio314_la_SOURCES = $(component_sources)
-mca_io_romio314_la_LIBADD = $(libs)
+mca_io_romio314_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(libs)
 mca_io_romio314_la_DEPENDENCIES = $(libs)
 mca_io_romio314_la_LDFLAGS = -module -avoid-version
 

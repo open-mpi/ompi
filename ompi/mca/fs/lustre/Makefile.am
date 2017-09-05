@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -47,7 +48,8 @@ AM_CPPFLAGS = $(fs_lustre_CPPFLAGS)
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fs_lustre_la_SOURCES = $(fs_lustre_sources)
-mca_fs_lustre_la_LIBADD = $(fs_lustre_LIBS)
+mca_fs_lustre_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(fs_lustre_LIBS)
 mca_fs_lustre_la_LDFLAGS = -module -avoid-version $(fs_lustre_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

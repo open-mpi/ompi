@@ -2,6 +2,7 @@
 # Copyright (c) 2013-2015 Intel, Inc. All rights reserved
 #
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,7 +44,8 @@ mca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
 mca_mtl_ofi_la_LDFLAGS = \
         $(ompi_mtl_ofi_LDFLAGS) \
         -module -avoid-version
-mca_mtl_ofi_la_LIBADD = $(ompi_mtl_ofi_LIBS) \
+mca_mtl_ofi_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(ompi_mtl_ofi_LIBS) \
         $(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib@OPAL_LIB_PREFIX@mca_common_libfabric.la
 
 noinst_LTLIBRARIES = $(component_noinst)

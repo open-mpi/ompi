@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,6 +32,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_v_la_SOURCES = $(local_sources)
 mca_pml_v_la_LDFLAGS = -module -avoid-version
+mca_pml_v_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_v_la_SOURCES = $(local_sources)

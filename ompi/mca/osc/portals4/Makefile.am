@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,7 +36,8 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_portals4_la_SOURCES = $(portals4_sources)
-mca_osc_portals4_la_LIBADD =  $(osc_portals4_LIBS)
+mca_osc_portals4_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(osc_portals4_LIBS)
 mca_osc_portals4_la_LDFLAGS = -module -avoid-version $(osc_portals4_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

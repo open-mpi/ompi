@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -45,7 +46,8 @@ AM_CPPFLAGS = $(fbtl_pvfs2_CPPFLAGS)
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fbtl_pvfs2_la_SOURCES = $(fbtl_pvfs2_sources)
-mca_fbtl_pvfs2_la_LIBADD = $(fbtl_pvfs2_LIBS)
+mca_fbtl_pvfs2_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(fbtl_pvfs2_LIBS)
 mca_fbtl_pvfs2_la_LDFLAGS = -module -avoid-version $(fbtl_pvfs2_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

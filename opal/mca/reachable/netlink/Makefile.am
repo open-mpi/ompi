@@ -2,6 +2,7 @@
 # Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,7 +39,8 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_reachable_netlink_la_SOURCES = $(sources)
 mca_reachable_netlink_la_LDFLAGS = -module -avoid-version
-mca_reachable_netlink_la_LIBADD = $(opal_reachable_netlink_LIBS)
+mca_reachable_netlink_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+	$(opal_reachable_netlink_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_reachable_netlink_la_SOURCES =$(sources)

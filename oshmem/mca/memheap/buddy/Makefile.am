@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,6 +30,7 @@ mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_memheap_buddy_la_SOURCES = $(buddy_sources)
 mca_memheap_buddy_la_LDFLAGS = -module -avoid-version
+mca_memheap_buddy_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la
 
 #noinst_LTLIBRARIES = $(lib)
 noinst_LTLIBRARIES = $(component_noinst)
