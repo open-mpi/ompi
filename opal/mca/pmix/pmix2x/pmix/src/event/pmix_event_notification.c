@@ -109,7 +109,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_status_t rc;
-    pmix_buffer_t *msg;
+    pmix_buffer_t *msg = NULL;
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
     pmix_cb_t *cb;
     pmix_event_chain_t *chain;
@@ -231,7 +231,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         PMIX_RELEASE(rbout);
     }
 
-    if (PMIX_RANGE_PROC_LOCAL != range) {
+    if (PMIX_RANGE_PROC_LOCAL != range && NULL != msg) {
         /* create a callback object as we need to pass it to the
          * recv routine so we know which callback to use when
          * the server acks/nacks the register events request. The
@@ -263,7 +263,9 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
   cleanup:
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "client: notifying server - unable to send");
-    PMIX_RELEASE(msg);
+    if (NULL != msg) {
+        PMIX_RELEASE(msg);
+    }
     /* we were unable to send anything, so we just return the error */
     return rc;
 }

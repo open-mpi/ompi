@@ -482,15 +482,14 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     if (NULL != evar) {
         PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, evar, PMIX_STRING);
         pmix_client_globals.myserver->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
     } else {
         pmix_client_globals.myserver->nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
     }
     if (NULL == pmix_client_globals.myserver->nptr->compat.gds) {
-        PMIX_INFO_DESTRUCT(&ginfo);
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_INIT;
     }
-    PMIX_INFO_DESTRUCT(&ginfo);
     /* now select a GDS module for our own internal use - the user may
      * have passed down a directive for this purpose. If they did, then
      * use it. Otherwise, we want the "hash" module */

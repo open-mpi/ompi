@@ -46,6 +46,9 @@ BEGIN_C_DECLS
 struct pmix_peer_t;
 struct pmix_nspace_t;
 
+/* backdoor to base verbosity */
+PMIX_EXPORT extern int pmix_gds_base_output;
+
 /**
  * Initialize the module. Returns an error if the module cannot
  * run, success if it can.
@@ -78,13 +81,16 @@ typedef pmix_status_t (*pmix_gds_base_module_assemb_kvs_req_fn_t)(const pmix_pro
                                                             void *cbdata);
 
 /* define a macro for server keys answer based on peer */
-#define PMIX_GDS_ASSEMB_KVS_REQ(s, p, r, k, b, c)                           \
-    do {                                                                    \
-        pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;                 \
-        (s) = PMIX_SUCCESS;                                                 \
-        if (NULL != _g->assemb_kvs_req) {                                   \
-            (s) = _g->assemb_kvs_req(r, k, b, (void*)c);                    \
-        }                                                                   \
+#define PMIX_GDS_ASSEMB_KVS_REQ(s, p, r, k, b, c)                       \
+    do {                                                                \
+        pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;             \
+        (s) = PMIX_SUCCESS;                                             \
+        if (NULL != _g->assemb_kvs_req) {                               \
+            pmix_output_verbose(1, pmix_gds_base_output,                \
+                                "[%s:%d] GDS ASSEMBLE REQ WITH %s",     \
+                                __FILE__, __LINE__, _g->name);          \
+            (s) = _g->assemb_kvs_req(r, k, b, (void*)c);                \
+        }                                                               \
     } while(0)
 
 
@@ -97,6 +103,9 @@ typedef pmix_status_t (*pmix_gds_base_module_accept_kvs_resp_fn_t)(pmix_buffer_t
         pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;                 \
         (s) = PMIX_SUCCESS;                                                 \
         if (NULL != _g->accept_kvs_resp) {                                  \
+            pmix_output_verbose(1, pmix_gds_base_output,                    \
+                                "[%s:%d] GDS ACCEPT RESP WITH %s",          \
+                                __FILE__, __LINE__, _g->name);              \
             (s) = _g->accept_kvs_resp(b);                                   \
         }                                                                   \
     } while (0)
@@ -115,6 +124,9 @@ typedef pmix_status_t (*pmix_gds_base_module_cache_job_info_fn_t)(struct pmix_ns
 #define PMIX_GDS_CACHE_JOB_INFO(s, p, n, i, ni)                             \
     do {                                                                    \
         pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;                 \
+        pmix_output_verbose(1, pmix_gds_base_output,                        \
+                            "[%s:%d] GDS CACHE JOB INFO WITH %s",           \
+                            __FILE__, __LINE__, _g->name);                  \
        (s) = _g->cache_job_info((struct pmix_nspace_t*)(n), (i), (ni));     \
     } while(0)
 
@@ -153,6 +165,9 @@ typedef pmix_status_t (*pmix_gds_base_module_register_job_info_fn_t)(struct pmix
 #define PMIX_GDS_REGISTER_JOB_INFO(s, p, b)                         \
     do {                                                            \
         pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;         \
+        pmix_output_verbose(1, pmix_gds_base_output,                \
+                            "[%s:%d] GDS REG JOB INFO WITH %s",     \
+                            __FILE__, __LINE__, _g->name);          \
         (s) = _g->register_job_info((struct pmix_peer_t*)(p), b);   \
     } while(0)
 
@@ -166,10 +181,13 @@ typedef pmix_status_t (*pmix_gds_base_module_store_job_info_fn_t)(const char *ns
                                                                   pmix_buffer_t *buf);
 
 /* define a convenience macro for storing job info based on peer */
-#define PMIX_GDS_STORE_JOB_INFO(s, p, n, b)                \
-    do {                                                    \
-        pmix_gds_base_module_t *_g = (p)->nptr->compat.gds; \
-        (s) = _g->store_job_info(n, b);                     \
+#define PMIX_GDS_STORE_JOB_INFO(s, p, n, b)                         \
+    do {                                                            \
+        pmix_gds_base_module_t *_g = (p)->nptr->compat.gds;         \
+        pmix_output_verbose(1, pmix_gds_base_output,                \
+                            "[%s:%d] GDS STORE JOB INFO WITH %s",   \
+                            __FILE__, __LINE__, _g->name);          \
+        (s) = _g->store_job_info(n, b);                             \
     } while(0)
 
 
@@ -196,9 +214,12 @@ typedef pmix_status_t (*pmix_gds_base_module_store_fn_t)(const pmix_proc_t *proc
                                                          pmix_kval_t *kv);
 
 /* define a convenience macro for storing key-val pairs based on peer */
-#define PMIX_GDS_STORE_KV(s, p, pc, sc, k)                 \
+#define PMIX_GDS_STORE_KV(s, p, pc, sc, k)                  \
     do {                                                    \
         pmix_gds_base_module_t *_g = (p)->nptr->compat.gds; \
+        pmix_output_verbose(1, pmix_gds_base_output,        \
+                            "[%s:%d] GDS STORE KV WITH %s", \
+                            __FILE__, __LINE__, _g->name);  \
         (s) = _g->store(pc, sc, k);                         \
     } while(0)
 
@@ -237,7 +258,12 @@ typedef pmix_status_t (*pmix_gds_base_module_store_modex_fn_t)(struct pmix_nspac
  * b - pointer to pmix_byte_object_t containing the data
  */
 #define PMIX_GDS_STORE_MODEX(r, n, l, b)  \
-    (r) = (n)->compat.gds->store_modex((struct pmix_nspace_t*)n, l, b)
+    do {                                                                    \
+        pmix_output_verbose(1, pmix_gds_base_output,                        \
+                            "[%s:%d] GDS STORE MODEX WITH %s",              \
+                            __FILE__, __LINE__, (n)->compat.gds->name);     \
+        (r) = (n)->compat.gds->store_modex((struct pmix_nspace_t*)n, l, b); \
+    } while (0)
 
 /**
 * fetch value corresponding to provided key from within the defined
@@ -292,6 +318,9 @@ typedef pmix_status_t (*pmix_gds_base_module_fetch_fn_t)(const pmix_proc_t *proc
 #define PMIX_GDS_FETCH_KV(s, p, c)      \
     do {                                                    \
         pmix_gds_base_module_t *_g = (p)->nptr->compat.gds; \
+        pmix_output_verbose(1, pmix_gds_base_output,        \
+                            "[%s:%d] GDS FETCH KV WITH %s", \
+                            __FILE__, __LINE__, _g->name);  \
         (s) = _g->fetch((c)->proc, (c)->scope, (c)->copy,   \
                         (c)->key, (c)->info, (c)->ninfo,    \
                         &(c)->kvs);                         \

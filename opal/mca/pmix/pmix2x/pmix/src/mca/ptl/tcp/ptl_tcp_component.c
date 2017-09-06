@@ -553,14 +553,14 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     } else if (AF_INET6 == mca_ptl_tcp_component.connection.ss_family) {
         prefix = "tcp6://";
         myport = ntohs(((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_port);
-    inet_ntop(AF_INET6, &((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_addr,
-              myconnhost, PMIX_MAXHOSTNAMELEN);
+        inet_ntop(AF_INET6, &((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_addr,
+                  myconnhost, PMIX_MAXHOSTNAMELEN);
     } else {
         goto sockerror;
     }
 
-    asprintf(&lt->uri, "%s.%d;%s%s:%d", pmix_globals.myid.nspace, pmix_globals.myid.rank, prefix, myconnhost, myport);
-    if (NULL == lt->uri) {
+    rc = asprintf(&lt->uri, "%s.%d;%s%s:%d", pmix_globals.myid.nspace, pmix_globals.myid.rank, prefix, myconnhost, myport);
+    if (0 > rc || NULL == lt->uri) {
         CLOSE_THE_SOCKET(lt->socket);
         goto sockerror;
     }
@@ -753,7 +753,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cbdata;
     pmix_ptl_hdr_t hdr;
     pmix_peer_t *peer;
-    pmix_rank_t rank;
+    pmix_rank_t rank=0;
     pmix_status_t rc;
     char *msg, *mg, *version;
     char *sec, *bfrops, *gds;
@@ -949,7 +949,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         proc_type = PMIX_PROC_V20;
         bfrops = "v20";
         bftype = pmix_bfrops_globals.default_type;  // we can't know any better
-        gds = "hash";
+        gds = NULL;
     } else {
         proc_type = PMIX_PROC_V21;
         /* extract the name of the bfrops module they used */
@@ -1136,9 +1136,14 @@ static void connection_handler(int sd, short args, void *cbdata)
     peer->nptr->compat.type = bftype;
 
     /* set the gds module to match this peer */
-    PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, gds, PMIX_STRING);
+    if (NULL != gds) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, gds, PMIX_STRING);
+        peer->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+    } else {
+        peer->nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
+    }
     free(msg);  // can now release the data buffer
-    peer->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
     if (NULL == peer->nptr->compat.gds) {
         info->proc_cnt--;
         pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);

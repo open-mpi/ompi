@@ -218,10 +218,14 @@ void parse_cmd(int argc, char **argv, test_params *params)
              *      <pmix-root-dir>/test/.libs/pmix_client
              * we need to do a step back in directory tree.
              */
-            asprintf(&params->binary, "%s/../pmix_client", argv[0]);
+            if (0 > asprintf(&params->binary, "%s/../pmix_client", argv[0])) {
+                exit(1);
+            }
             *basename = '/';
         } else {
-            asprintf(&params->binary, "pmix_client");
+            if (0 > asprintf(&params->binary, "pmix_client")) {
+                exit(1);
+            }
         }
     }
 
