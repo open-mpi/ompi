@@ -16,6 +16,8 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +39,9 @@
 #endif
 #ifdef HAVE_SYS_VFS_H
 #include <sys/vfs.h>
+#endif
+#ifdef HAVE_MNTENT_H
+#include <mntent.h>
 #endif
 
 #include "support.h"
@@ -134,15 +139,25 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
 {
 #define MAX_DIR 256
 #define SIZE 1024
-    char * cmd = "mount | cut -f3,5 -d' ' > opal_path_nfs.out";
-    int rc;
     int i;
     FILE * file;
     char ** dirs_tmp;
     bool * nfs_tmp;
-    char buffer[SIZE];
     struct statfs mystatfs;
+#ifdef HAVE_MNTENT_H
+    struct mntent * ent;
+#else
+    char * cmd = "mount | cut -f3,5 -d' ' > opal_path_nfs.out";
+    char buffer[SIZE];
+    int rc;
+#endif
 
+    dirs_tmp = (char**) calloc (MAX_DIR, sizeof(char*));
+    nfs_tmp = (bool*) malloc (MAX_DIR * sizeof(bool));
+
+#ifdef HAVE_MNTENT_H
+    file = setmntent("/proc/mounts", "r");
+#else
     rc = system (cmd);
 
     if (-1 == rc) {
@@ -150,16 +165,24 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         **dirs = NULL;
         *nfs = NULL;
     }
-    dirs_tmp = (char**) calloc (MAX_DIR, sizeof(char**));
-    nfs_tmp = (bool*) malloc (MAX_DIR * sizeof(bool));
-
-    file = fopen("opal_path_nfs.out", "r");
-    i = 0;
     rc = 4711;
-    while (NULL != fgets (buffer, SIZE, file)) {
+    file = fopen("opal_path_nfs.out", "r");
+#endif
+    i = 0;
+    while (NULL != 
+#ifdef HAVE_MNTENT_H
+                   (ent = getmntent(file))
+#else
+                   fgets (buffer, SIZE, file)
+#endif
+          ) {
         int mount_known;
-        char fs[MAXNAMLEN];
 
+#ifdef HAVE_MNTENT_H
+        char *fs = ent->mnt_type;
+        dirs_tmp[i] = strdup(ent->mnt_dir);
+#else
+        char fs[MAXNAMLEN];
         if (!dirs_tmp[i]) {
             dirs_tmp[i] = malloc (MAXNAMLEN);
         }
@@ -167,6 +190,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         if (2 != (rc = sscanf (buffer, "%s %s\n", dirs_tmp[i], fs))) {
             goto out;
         }
+#endif
 
         /*
          * rpc_pipefs is a FS mounted on /var/lib/nfs/rpc_pipefs for NFS4
@@ -226,7 +250,9 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
             i++;
 
     }
+#ifndef HAVE_MNTENT_H
 out:
+#endif
     *num_dirs = i;
     *dirs = dirs_tmp;
     *nfs = nfs_tmp;
