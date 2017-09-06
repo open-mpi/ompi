@@ -61,10 +61,6 @@ Master (not on release branches yet)
   suggestion.
 - CUDA-aware support can now handle GPUs within a node that do not
   support CUDA IPC.  Earlier versions would get error and abort.
-- Do not build the MPI C++ bindings by default.  They must be enabled
-  via --enable-mpi-cxx.
-- Removed embedded VampirTrace.  It is in maintenance mode since 2013.
-  Please consider Score-P (score-p.org) as an external replacement.
 - Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
   MPI processes on the same node where mpirun is executing using a separate
   orte daemon, rather than the mpirun process.   This may be useful to set to
