@@ -132,7 +132,7 @@ void test(char* file, bool expect)
 
 void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
 {
-#define MAX_DIR 256
+#define MAX_DIR 512
 #define SIZE 1024
     char * cmd = "mount | cut -f3,5 -d' ' > opal_path_nfs.out";
     int rc;
@@ -156,7 +156,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
     file = fopen("opal_path_nfs.out", "r");
     i = 0;
     rc = 4711;
-    while (NULL != fgets (buffer, SIZE, file)) {
+    while (i < MAX_DIR && NULL != fgets (buffer, SIZE, file)) {
         int mount_known;
         char fs[MAXNAMLEN];
 
