@@ -50,6 +50,36 @@
  */
 orte_ras_base_t orte_ras_base = {0};
 
+static int ras_register(mca_base_register_flag_t flags)
+{
+#if SLURM_CRAY_ENV
+    /*
+     * If we are in a Cray-SLURM environment, then we cannot
+     * launch procs local to the HNP. The problem
+     * is the MPI processes launched on the head node (where the
+     * ORTE_PROC_IS_HNP evalues to true) get launched by a daemon
+     * (mpirun) which is not a child of a slurmd daemon.  This
+     * means that any RDMA credentials obtained via the odls/alps
+     * local launcher are incorrect. Test for this condition. If
+     * found, then take steps to ensure we launch a daemon on
+     * the same node as mpirun and that it gets used to fork
+     * local procs instead of mpirun so they get the proper
+     * credential */
+
+    orte_ras_base.launch_orted_on_hn = true;
+#else
+    orte_ras_base.launch_orted_on_hn = false;
+#endif
+
+    mca_base_var_register("orte", "ras", "base", "launch_orted_on_hn",
+                          "Launch an orte daemon on the head node",
+                           MCA_BASE_VAR_TYPE_BOOL,
+                           NULL, 0, 0,
+                           OPAL_INFO_LVL_9,
+                           MCA_BASE_VAR_SCOPE_READONLY, &orte_ras_base.launch_orted_on_hn);
+    return ORTE_SUCCESS;
+}
+
 static int orte_ras_base_close(void)
 {
     /* Close selected component */
@@ -76,5 +106,5 @@ static int orte_ras_base_open(mca_base_open_flag_t flags)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, ras, "ORTE Resource Allocation Subsystem",
-                           NULL, orte_ras_base_open, orte_ras_base_close,
+                           ras_register, orte_ras_base_open, orte_ras_base_close,
                            mca_ras_base_static_components, 0);
