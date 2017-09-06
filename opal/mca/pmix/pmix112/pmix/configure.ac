@@ -155,16 +155,6 @@ PMIX_BASIC_SETUP
 AS_IF([test "$pmix_debug" = "1"],
       [CFLAGS="$CFLAGS -g"])
 
-############################################################################
-# Setup the core
-############################################################################
-
-# Setup the pmix core
-PMIX_SETUP_CORE([])
-
-# Run the AM_CONDITIONALs
-PMIX_DO_AM_CONDITIONALS
-
 ####################################################################
 # Setup C compiler
 ####################################################################
@@ -179,6 +169,17 @@ AS_IF([test -z "$CC_FOR_BUILD"],[
 ])
 
 PMIX_SETUP_CC
+
+############################################################################
+# Setup the core
+############################################################################
+
+# Setup the pmix core
+PMIX_SETUP_CORE([])
+
+# Run the AM_CONDITIONALs
+PMIX_DO_AM_CONDITIONALS
+
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
