@@ -351,8 +351,8 @@ void orte_data_server(int status, orte_process_name_t* sender,
                     OPAL_OUTPUT_VERBOSE((1, orte_data_server_output,
                                         "%s NOT STORING DATA FROM %s AT INDEX %d",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        ORTE_NAME_PRINT(&data->owner), data->index);
-                    opal_pointer_array_set_item(&orte_data_server_store, data->index, NULL));
+                                        ORTE_NAME_PRINT(&data->owner), data->index));
+                    opal_pointer_array_set_item(&orte_data_server_store, data->index, NULL);
                     OBJ_RELEASE(data);
                     goto release;
                 }
