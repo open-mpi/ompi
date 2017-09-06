@@ -47,6 +47,7 @@
 
 /* Instantiate the global vars */
 pmix_gds_globals_t pmix_gds_globals = {{{0}}};
+int pmix_gds_base_output = -1;
 
 static pmix_status_t pmix_gds_close(void)
 {
@@ -74,13 +75,17 @@ static pmix_status_t pmix_gds_close(void)
 
 static pmix_status_t pmix_gds_open(pmix_mca_base_open_flag_t flags)
 {
+    pmix_status_t rc;
+
     /* initialize globals */
     pmix_gds_globals.initialized = true;
     pmix_gds_globals.all_mods = NULL;
     PMIX_CONSTRUCT(&pmix_gds_globals.actives, pmix_list_t);
 
     /* Open up all available components */
-    return pmix_mca_base_framework_components_open(&pmix_gds_base_framework, flags);
+    rc = pmix_mca_base_framework_components_open(&pmix_gds_base_framework, flags);
+    pmix_gds_base_output = pmix_gds_base_framework.framework_output;
+    return rc;
 }
 
 PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, gds, "PMIx Generalized Data Store",

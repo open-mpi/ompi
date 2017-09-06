@@ -128,6 +128,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     /* must use the v12 bfrops module */
     pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module("v12");
     if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
+        pmix_argv_free(uri);
         return PMIX_ERR_INIT;
     }
     /* the server will be using the same */
@@ -515,11 +516,6 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                 msg->hdr.tag = ntohl(msg->hdr.tag);
                 nbytes = msg->hdr.nbytes;
                 msg->hdr.nbytes = ntohl(nbytes);
-            } else {
-                msg->hdr.pindex = msg->hdr.pindex;
-                msg->hdr.tag = msg->hdr.tag;
-                nbytes = msg->hdr.nbytes;
-                msg->hdr.nbytes = nbytes;
             }
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "usock:send_handler SENDING HEADER WITH MSG IDX %d TAG %d SIZE %lu",

@@ -428,7 +428,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     void *cbobject = NULL;
     pmix_data_range_t range = PMIX_RANGE_UNDEF;
     pmix_proc_t *parray = NULL;
-    size_t nprocs;
+    size_t nprocs = 0;
 
     /* need to acquire the object from its originating thread */
     PMIX_ACQUIRE_OBJECT(cd);
@@ -527,7 +527,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         evhdlr->index = index;
         ++pmix_globals.events.nhdlrs;
         evhdlr->rng.range = range;
-        if (NULL != parray) {
+        if (NULL != parray && 0 < nprocs) {
             evhdlr->rng.nprocs = nprocs;
             PMIX_PROC_CREATE(evhdlr->rng.procs, nprocs);
             if (NULL == evhdlr->rng.procs) {
@@ -601,7 +601,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
     evhdlr->precedence = location;
     evhdlr->locator = locator;
     evhdlr->rng.range = range;
-    if (NULL != parray) {
+    if (NULL != parray && 0 < nprocs) {
         evhdlr->rng.nprocs = nprocs;
         PMIX_PROC_CREATE(evhdlr->rng.procs, nprocs);
         if (NULL == evhdlr->rng.procs) {

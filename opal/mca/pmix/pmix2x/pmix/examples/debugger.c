@@ -334,7 +334,9 @@ int main(int argc, char **argv)
             /* setup the executable */
             app[0].cmd = strdup("client");
             PMIX_ARGV_APPEND(rc, app[0].argv, "./client");
-            getcwd(cwd, 1024);  // point us to our current directory
+            if (NULL == getcwd(cwd, 1024)) {  // point us to our current directory
+                goto done;
+            }
             app[0].cwd = strdup(cwd);
             app[0].maxprocs = 2;
             /* provide job-level directives so the apps do what the user requested */

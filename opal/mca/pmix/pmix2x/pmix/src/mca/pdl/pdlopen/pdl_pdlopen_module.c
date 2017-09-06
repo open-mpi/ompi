@@ -52,6 +52,8 @@ static void do_pdlopen(const char *fname, int flags,
 static int pdlopen_open(const char *fname, bool use_ext, bool private_namespace,
                        pmix_pdl_handle_t **handle, char **err_msg)
 {
+    int rc;
+
     assert(handle);
 
     *handle = NULL;
@@ -76,7 +78,10 @@ static int pdlopen_open(const char *fname, bool use_ext, bool private_namespace,
              ext = mca_pdl_pdlopen_component.filename_suffixes[++i]) {
             char *name;
 
-            asprintf(&name, "%s%s", fname, ext);
+            rc = asprintf(&name, "%s%s", fname, ext);
+            if (0 > rc) {
+                return PMIX_ERR_NOMEM;
+            }
             if (NULL == name) {
                 return PMIX_ERR_IN_ERRNO;
             }
@@ -184,7 +189,10 @@ static int pdlopen_foreachfile(const char *search_path,
 
             /* Make the absolute path name */
             char *abs_name = NULL;
-            asprintf(&abs_name, "%s/%s", dirs[i], de->d_name);
+            ret = asprintf(&abs_name, "%s/%s", dirs[i], de->d_name);
+            if (0 > ret) {
+                return PMIX_ERR_NOMEM;
+            }
             if (NULL == abs_name) {
                 ret = PMIX_ERR_IN_ERRNO;
                 goto error;

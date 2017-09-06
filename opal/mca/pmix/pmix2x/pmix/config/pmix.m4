@@ -34,7 +34,14 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
     AC_REQUIRE([AC_CANONICAL_TARGET])
-    AC_REQUIRE([AC_PROG_CC])
+
+    # AM_PROG_CC_C_O AC_REQUIREs AC_PROG_CC, so we have to be a little
+    # careful about ordering here, and AC_REQUIRE these things so that
+    # they get stamped out in the right order.
+    AC_REQUIRE([_PMIX_START_SETUP_CC])
+    AC_REQUIRE([_PMIX_PROG_CC])
+    AC_REQUIRE([AM_PROG_CC_C_O])
+
 
     # If no prefix was defined, set a good value
     m4_ifval([$1],

@@ -645,7 +645,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
                 PMIX_DESTRUCT(&cb);
                 return rc;
             }
-            if (PMIX_PROC_IS_V1(peer)) {
+            if (PMIX_PROC_IS_V1(cd->peer)) {
                 /* if the client is using v1, then it expects the
                  * data returned to it in a different order than v2
                  * - so we have to do a little gyration */

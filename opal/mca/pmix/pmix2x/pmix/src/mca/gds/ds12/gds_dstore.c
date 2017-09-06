@@ -1945,7 +1945,7 @@ static pmix_status_t dstore_init(pmix_info_t info[], size_t ninfo)
     pmix_status_t rc;
     size_t n;
     char *dstor_tmpdir = NULL;
-    size_t tbl_idx;
+    size_t tbl_idx=0;
     ns_map_data_t *ns_map = NULL;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
@@ -2679,7 +2679,7 @@ static pmix_status_t dstore_add_nspace(const char *nspace,
                                 size_t ninfo)
 {
     pmix_status_t rc;
-    size_t tbl_idx;
+    size_t tbl_idx=0;
     uid_t jobuid = _jobuid;
     char setjobuid = _setjobuid;
     size_t n;
