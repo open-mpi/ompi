@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oak Ridge National Laboratory.
  *                         All rights reserved.
- * Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -132,7 +132,6 @@ void test(char* file, bool expect)
 
 void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
 {
-#define MAX_DIR 256
 #define SIZE 1024
     char * cmd = "mount | cut -f3,5 -d' ' > opal_path_nfs.out";
     int rc;
@@ -150,13 +149,31 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         **dirs = NULL;
         *nfs = NULL;
     }
-    dirs_tmp = (char**) calloc (MAX_DIR, sizeof(char**));
-    nfs_tmp = (bool*) malloc (MAX_DIR * sizeof(bool));
 
+    /* First, count how many mount points there are.  Previous
+       versions of this test tried to have a (large) constant-sized
+       array for the mount points, but periodically it would break
+       because we would run this test on a system with a larger number
+       of mount points than the array.  So just count and make sure to
+       have an array large enough. */
     file = fopen("opal_path_nfs.out", "r");
+    int count = 0;
+    while (NULL != fgets (buffer, SIZE, file)) {
+        ++count;
+    }
+    printf("Found %d mounts\n", count);
+
+    // Add one more so we can have a NULL entry at the end
+    ++count;
+
+    dirs_tmp = (char**) calloc (count, sizeof(char*));
+    nfs_tmp = (bool*) calloc (count, sizeof(bool));
+
     i = 0;
     rc = 4711;
-    while (NULL != fgets (buffer, SIZE, file)) {
+    rewind(file);
+    // i should never be more than count, but be safe anyway.
+    while (i < count && NULL != fgets (buffer, SIZE, file)) {
         int mount_known;
         char fs[MAXNAMLEN];
 
