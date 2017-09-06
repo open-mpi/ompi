@@ -28,8 +28,9 @@ $HEADER$
 
 ===========================================================================
 
-This file contains the main features added, changed behavior, and legacy report
-removed for each version of Open MPI since version 1.0.
+This file contains notable changes between releases for each release since
+Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
+it is possible for items to appear more than once in the list.
 
 3.0.0 -- July, 2017
 -------------------
@@ -40,20 +41,22 @@ Major new features:
   data transfers.  UCX SPML only.
 - Use UCX multi-threaded API in the UCX PML.  Requires UCX 1.0 or later.
 - Added support for Flux PMI
-- Update embedded PMIx to version 2.0.0
-- Update embedded hwloc to version 1.11.3
+- Update embedded PMIx to version 2.1.0
+- Update embedded hwloc to version 1.11.7
 
 Changes in behavior compared to prior versions:
 
 - Per Open MPI's versioning scheme (see the README), increasing the
   major version number to 3 indicates that this version is not
-  ABI-compatible with prior versions of Open MPI.  You will need to
-  recompile MPI and OpenSHMEM applications to work with this version
-  of Open MPI.
+  ABI-compatible with prior versions of Open MPI. In addition, there may
+  be differences in MCA parameter names and defaults from previous releases.
+  Command line options for mpirun and other commands may also differ from
+  previous versions. You will need to recompile MPI and OpenSHMEM applications
+  to work with this version of Open MPI.
 - With this release, Open MPI supports MPI_THREAD_MULTIPLE by default.
-- New configure option for specifying location of libnl.
-- New configure option for specifying location of zlib.
-- New configure option to request Flux PMI support.
+- New configure options have been added to specify the locations of libnl
+  and zlib.
+- A new configure option has been added to request Flux PMI support.
 - The help menu for mpirun and related commands is now context based.
   "mpirun --help compatibility" generates the help menu in the same format
   as previous releases.
@@ -61,9 +64,8 @@ Changes in behavior compared to prior versions:
 Removed legacy support:
 - AIX is no longer supported.
 - Loadlever is no longer supported.
-- "yoda" SPML component is removed from the Open SHMEM code base. It was utilizing
-  Open MPI BTL components for supported networks. Please see README for the currently
-  available options.
+- OpenSHMEM currently supports the UCX and MXM transports via the ucx and ikrit
+  SPMLs respectively.
 - Remove IB XRC support from the OpenIB BTL due to lack of support.
 - Remove support for big endian PowerPC.
 - Remove support for XL compilers older than v13.1
