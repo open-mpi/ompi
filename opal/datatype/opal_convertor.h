@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,6 +53,7 @@ BEGIN_C_DECLS
 #define CONVERTOR_STATE_ALLOC      0x04000000
 #define CONVERTOR_COMPLETED        0x08000000
 #define CONVERTOR_CUDA_UNIFIED     0x10000000
+#define CONVERTOR_SKIP_CUDA_INIT   0x40000000
 
 union dt_elem_desc;
 typedef struct opal_convertor_t opal_convertor_t;
