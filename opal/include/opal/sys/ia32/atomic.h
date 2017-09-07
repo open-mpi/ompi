@@ -46,11 +46,6 @@
 #define OPAL_HAVE_ATOMIC_ADD_32 1
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 
-#define OPAL_HAVE_ATOMIC_CMPSET_64 1
-
-#undef OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
-#define OPAL_HAVE_INLINE_ATOMIC_CMPSET_64 0
-
 /**********************************************************************
  *
  * Memory Barriers
@@ -108,47 +103,6 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
 
 #define opal_atomic_cmpset_acq_32 opal_atomic_cmpset_32
 #define opal_atomic_cmpset_rel_32 opal_atomic_cmpset_32
-
-#if OPAL_GCC_INLINE_ASSEMBLY
-
-#ifndef ll_low /* GLIBC provides these somewhere, so protect */
-#define ll_low(x)       *(((unsigned int*)&(x))+0)
-#define ll_high(x)      *(((unsigned int*)&(x))+1)
-#endif
-
-/* On Linux the EBX register is used by the shared libraries
- * to keep the global offset. In same time this register is
- * required by the cmpxchg8b instruction (as an input parameter).
- * This conflict force us to save the EBX before the cmpxchg8b
- * and to restore it afterward.
- */
-static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
-                                        int64_t oldval,
-                                        int64_t newval)
-{
-   /*
-    * Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into
-    * m64. Else, clear ZF and load m64 into EDX:EAX.
-    */
-    unsigned char ret;
-
-    __asm__ __volatile__(
-		    "push %%ebx            \n\t"
-                    "movl %4, %%ebx        \n\t"
-		    SMPLOCK "cmpxchg8b (%1)  \n\t"
-		    "sete %0               \n\t"
-		    "pop %%ebx             \n\t"
-		    : "=qm"(ret)
-		    : "D"(addr), "a"(ll_low(oldval)), "d"(ll_high(oldval)),
-		      "r"(ll_low(newval)), "c"(ll_high(newval))
-		    : "cc", "memory", "ebx");
-    return (int) ret;
-}
-
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
-#define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
-#define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
