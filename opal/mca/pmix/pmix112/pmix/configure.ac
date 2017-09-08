@@ -19,7 +19,7 @@
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -170,7 +170,6 @@ PMIX_DO_AM_CONDITIONALS
 ####################################################################
 
 CFLAGS_save="$CFLAGS"
-AC_PROG_CC
 CFLAGS="$CFLAGS_save"
 
 AC_ARG_VAR(CC_FOR_BUILD,[build system C compiler])
