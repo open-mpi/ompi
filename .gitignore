@@ -129,6 +129,7 @@ examples/ring_oshmem
 examples/hello_oshmem
 examples/ring_oshmemfh
 examples/hello_oshmemfh
+examples/hello_oshmemcxx
 examples/oshmem_circular_shift
 examples/oshmem_max_reduction
 examples/oshmem_shmalloc
@@ -579,6 +580,13 @@ oshmem/tools/wrappers/shmemfort.1
 oshmem/tools/wrappers/shmemrun.1
 oshmem/tools/wrappers/shmemcc-wrapper-data.txt
 oshmem/tools/wrappers/shmemfort-wrapper-data.txt
+oshmem/tools/wrappers/oshCC.1
+oshmem/tools/wrappers/oshc++.1
+oshmem/tools/wrappers/oshcxx.1
+oshmem/tools/wrappers/shmemCC.1
+oshmem/tools/wrappers/shmemc++-wrapper-data.txt
+oshmem/tools/wrappers/shmemc++.1
+oshmem/tools/wrappers/shmemcxx.1
 
 test/asm/atomic_math_noinline
 test/asm/atomic_barrier
