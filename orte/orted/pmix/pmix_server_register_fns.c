@@ -18,6 +18,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -395,6 +396,13 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
                 }
             }
 
+            /* global/univ rank */
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_GLOBAL_RANK);
+            kv->type = OPAL_VPID;
+            kv->data.name.vpid = pptr->name.vpid + jdata->offset;
+            opal_list_append(pmap, &kv->super);
+
             if (1 < jdata->num_apps) {
                 /* appnum */
                 kv = OBJ_NEW(opal_value_t);
@@ -409,13 +417,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata, bool force)
                 kv->key = strdup(OPAL_PMIX_APPLDR);
                 kv->type = OPAL_VPID;
                 kv->data.name.vpid = app->first_rank;
-                opal_list_append(pmap, &kv->super);
-
-                /* global/univ rank */
-                kv = OBJ_NEW(opal_value_t);
-                kv->key = strdup(OPAL_PMIX_GLOBAL_RANK);
-                kv->type = OPAL_VPID;
-                kv->data.name.vpid = pptr->name.vpid + jdata->offset;
                 opal_list_append(pmap, &kv->super);
 
                 /* app rank */
