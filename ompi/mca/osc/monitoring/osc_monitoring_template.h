@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +61,7 @@
     static inline void*                                                 \
     ompi_osc_monitoring_## template ##_set_template (ompi_osc_base_module_t*module) \
     {                                                                   \
-        if( 1 == opal_atomic_add_64(&(OMPI_OSC_MONITORING_MODULE_INIT(template)), 1) ) { \
+        if( 1 == opal_atomic_add_32(&(OMPI_OSC_MONITORING_MODULE_INIT(template)), 1) ) { \
 	    /* Saves the original module functions in			\
 	     * ompi_osc_monitoring_module_## template ##_template	\
 	     */								\

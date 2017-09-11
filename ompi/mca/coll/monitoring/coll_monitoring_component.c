@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,7 +120,7 @@ static int
 mca_coll_monitoring_module_enable(mca_coll_base_module_t*module, struct ompi_communicator_t*comm)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    if( 1 == opal_atomic_add_64(&monitoring_module->is_initialized, 1) ) {
+    if( 1 == opal_atomic_add_32(&monitoring_module->is_initialized, 1) ) {
         MONITORING_SAVE_FULL_PREV_COLL_API(monitoring_module, comm);
         monitoring_module->data = mca_common_monitoring_coll_new(comm);
         OPAL_MONITORING_PRINT_INFO("coll_module_enabled");    
@@ -130,7 +132,7 @@ static int
 mca_coll_monitoring_module_disable(mca_coll_base_module_t*module, struct ompi_communicator_t*comm)
 {
     mca_coll_monitoring_module_t*monitoring_module = (mca_coll_monitoring_module_t*) module;
-    if( 0 == opal_atomic_sub_64(&monitoring_module->is_initialized, 1) ) {
+    if( 0 == opal_atomic_sub_32(&monitoring_module->is_initialized, 1) ) {
         MONITORING_RELEASE_FULL_PREV_COLL_API(monitoring_module, comm);
         mca_common_monitoring_coll_release(monitoring_module->data);
         monitoring_module->data = NULL;
