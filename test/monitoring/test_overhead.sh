@@ -147,6 +147,8 @@ order by nbprocs, datasize;
 EOF
 done
 cat >> $dbscript <<EOF
+-- reset output to stdout
+.output stdout
 -- create view for all overheads
 create temporary view medians as
 select NULL as ovh

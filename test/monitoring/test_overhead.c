@@ -10,7 +10,7 @@
  */
 
 /*
-  Measurement for thze pml_monitoring component overhead
+  Measurement for the pml_monitoring component overhead
 
   Designed by Clement Foyer <clement.foyer@inria.fr>
   Contact the authors for questions.
@@ -85,7 +85,7 @@ static inline void op_send(double*res, void*sbuf, int size, int tagno, void*rbuf
     MPI_Irecv(rbuf, size, MPI_BYTE, from, tagno, MPI_COMM_WORLD, &request);
             
     /* Token ring to synchronize */
-    /* We send to the sender to make him know we are ready to
+    /* We message the sender to make him know we are ready to
        receive (even for non-eager mode sending) */
     if( 0 == rank_world ) {
         MPI_Send(NULL, 0, MPI_BYTE, from, 100, MPI_COMM_WORLD);
@@ -235,16 +235,16 @@ int main(int argc, char* argv[])
             sprintf(name, "MPI_Alltoall");
             break;
         case 3:
+            op = op_send_pingpong;
+            sprintf(name, "MPI_Send_pp");
+            break;
+        case 4:
             op = op_put;
             sprintf(name, "MPI_Put");
             break;
-        case 4:
+        case 5:
             op = op_get;
             sprintf(name, "MPI_Get");
-            break;
-        case 5:
-            op = op_send_pingpong;
-            sprintf(name, "MPI_Send_pp");
             break;
         }
 
