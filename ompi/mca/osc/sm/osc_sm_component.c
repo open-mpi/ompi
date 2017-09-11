@@ -214,9 +214,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         if (NULL == module->global_state) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         module->node_states = malloc(sizeof(ompi_osc_sm_node_state_t));
         if (NULL == module->node_states) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        module->posts = calloc (1, sizeof(module->posts[0]) + sizeof (uint64_t));
+        module->posts = calloc (1, sizeof(module->posts[0]) + sizeof (module->posts[0][0]));
         if (NULL == module->posts) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        module->posts[0] = (uint64_t *) (module->posts + 1);
+        module->posts[0] = (osc_sm_post_type_t *) (module->posts + 1);
     } else {
         unsigned long total, *rbuf;
         int i, flag;
@@ -258,7 +258,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 	/* user opal/shmem directly to create a shared memory segment */
 	state_size = sizeof(ompi_osc_sm_global_state_t) + sizeof(ompi_osc_sm_node_state_t) * comm_size;
         state_size += OPAL_ALIGN_PAD_AMOUNT(state_size, 64);
-        posts_size = comm_size * post_size * sizeof (uint64_t);
+        posts_size = comm_size * post_size * sizeof (module->posts[0][0]);
         posts_size += OPAL_ALIGN_PAD_AMOUNT(posts_size, 64);
         if (0 == ompi_comm_rank (module->comm)) {
             char *data_file;
@@ -295,7 +295,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         if (NULL == module->posts) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
         /* set module->posts[0] first to ensure 64-bit alignment */
-        module->posts[0] = (uint64_t *) (module->segment_base);
+        module->posts[0] = (osc_sm_post_type_t *) (module->segment_base);
         module->global_state = (ompi_osc_sm_global_state_t *) (module->posts[0] + comm_size * post_size);
         module->node_states = (ompi_osc_sm_node_state_t *) (module->global_state + 1);
 
