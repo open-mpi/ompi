@@ -18,6 +18,20 @@
 
 #include "opal/mca/shmem/base/base.h"
 
+#if OPAL_HAVE_ATOMIC_MATH_64
+
+typedef uint64_t osc_sm_post_type_t;
+#define OSC_SM_POST_BITS 6
+#define OSC_SM_POST_MASK 0x3f
+
+#else
+
+typedef uint32_t osc_sm_post_type_t;
+#define OSC_SM_POST_BITS 5
+#define OSC_SM_POST_MASK 0x1f
+
+#endif
+
 /* data shared across all peers */
 struct ompi_osc_sm_global_state_t {
     int use_barrier_for_fence;
@@ -81,7 +95,8 @@ struct ompi_osc_sm_module_t {
     ompi_osc_sm_global_state_t *global_state;
     ompi_osc_sm_node_state_t *my_node_state;
     ompi_osc_sm_node_state_t *node_states;
-    uint64_t **posts;
+
+    osc_sm_post_type_t ** volatile posts;
 
     opal_mutex_t lock;
 };
