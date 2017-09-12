@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -58,6 +58,7 @@
 #include "opal/util/net.h"
 #include "opal/util/fd.h"
 #include "opal/util/error.h"
+#include "opal/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
 
@@ -701,6 +702,35 @@ static bool retry(mca_oob_tcp_peer_t* peer, int sd, bool fatal)
     }
 }
 
+static const char *get_peer_name(int fd)
+{
+    char *str;
+    const char *ret;
+    struct sockaddr sa;
+    struct sockaddr_in *si;
+    socklen_t slt = (socklen_t) sizeof(sa);
+
+    opal_output(0, "Peer name: %d", fd);
+    int rc = getpeername(fd, &sa, &slt);
+    if (0 != rc) {
+        ret = strdup("Unknown");
+        return ret;
+    }
+
+    str = malloc(INET_ADDRSTRLEN);
+    if (NULL == str) {
+        return NULL;
+    }
+
+    si = (struct sockaddr_in*) &sa;
+    ret = inet_ntop(AF_INET, &(si->sin_addr), str, INET_ADDRSTRLEN);
+    if (NULL == ret) {
+        free(str);
+    }
+
+    return ret;
+}
+
 int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
                                       int sd, mca_oob_tcp_hdr_t *dhdr)
 {
@@ -890,11 +920,15 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* pr,
     version = (char*)((char*)msg + offset);
     offset += strlen(version) + 1;
     if (0 != strcmp(version, orte_version_string)) {
-        opal_output(0, "%s tcp_peer_recv_connect_ack: "
-                    "received different version from %s: %s instead of %s\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer->name)),
-                    version, orte_version_string);
+        opal_show_help_final("help-oob-tcp.txt", "version mismatch",
+                             true,
+                             opal_process_info.nodename,
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_version_string,
+                             get_peer_name(peer->sd),
+                             ORTE_NAME_PRINT(&(peer->name)),
+                             version);
+
         peer->state = MCA_OOB_TCP_FAILED;
         mca_oob_tcp_peer_close(peer);
         free(msg);
