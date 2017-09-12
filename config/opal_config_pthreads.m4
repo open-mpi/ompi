@@ -198,7 +198,8 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_PLAIN_CXX], [
 #
 # C++ compiler
 #
-if test "$opal_pthread_cxx_success" = "0"; then
+if test "$opal_pthread_cxx_success" = "0" && \
+   test "$WANT_MPI_CXX_SUPPORT" -eq; then
   AC_MSG_CHECKING([if C++ compiler and POSIX threads work as is])
 
   AC_LANG_PUSH(C++)
@@ -251,9 +252,10 @@ AC_PROVIDE_IFELSE([AC_PROG_CC],
                   [OPAL_INTL_POSIX_THREADS_PLAIN_C],
                   [opal_pthread_c_success=1])
 
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [OPAL_INTL_POSIX_THREADS_PLAIN_CXX],
-                  [opal_pthread_cxx_success=1])
+AS_IF([test "$WANT_MPI_CXX_SUPPORT" = 1],
+      [AC_PROVIDE_IFELSE([AC_PROG_CXX],
+                         [OPAL_INTL_POSIX_THREADS_PLAIN_CXX],
+                         [opal_pthread_cxx_success=1])])
 
 AC_PROVIDE_IFELSE([AC_PROG_FC],
                   [OPAL_INTL_POSIX_THREADS_PLAIN_FC],
@@ -379,9 +381,10 @@ AC_PROVIDE_IFELSE([AC_PROG_CC],
                   [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_C],
                   [opal_pthread_c_success=1])
 
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX],
-                  [opal_pthread_cxx_success=1])
+AS_IF([test "$WANT_MPI_CXX_SUPPORT" = 1],
+      [AC_PROVIDE_IFELSE([AC_PROG_CXX],
+                         [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX],
+                         [opal_pthread_cxx_success=1])])
 
 AC_PROVIDE_IFELSE([AC_PROG_FC],
                   [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC],
@@ -568,9 +571,10 @@ AC_PROVIDE_IFELSE([AC_PROG_CC],
                   [OPAL_INTL_POSIX_THREADS_LIBS_C],
                   [opal_pthread_c_success=1])
 
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [OPAL_INTL_POSIX_THREADS_LIBS_CXX],
-                  [opal_pthread_cxx_success=1])
+AS_IF([test "$WANT_MPI_CXX_SUPPORT" = 1],
+      [AC_PROVIDE_IFELSE([AC_PROG_CXX],
+                         [OPAL_INTL_POSIX_THREADS_LIBS_CXX],
+                         [opal_pthread_cxx_success=1])])
 
 AC_PROVIDE_IFELSE([AC_PROG_FC],
                   [OPAL_INTL_POSIX_THREADS_LIBS_FC],
@@ -659,6 +663,10 @@ LIBS="$orig_LIBS"
 if test "$OMPI_TRY_FORTRAN_BINDINGS" = "$OMPI_FORTRAN_NO_BINDINGS" || \
    test $ompi_fortran_happy -ne 1; then
   opal_pthread_fortran_success=1
+fi
+
+if test "$WANT_MPI_CXX_SUPPORT" -ne 1; then
+  opal_pthread_cxx_success=1
 fi
 
 if test "$opal_pthread_c_success" = "1" && \
