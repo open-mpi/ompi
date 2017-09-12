@@ -191,7 +191,7 @@ static int pdlopen_foreachfile(const char *search_path,
             char *abs_name = NULL;
             ret = asprintf(&abs_name, "%s/%s", dirs[i], de->d_name);
             if (0 > ret) {
-                return PMIX_ERR_NOMEM;
+                goto error;
             }
             if (NULL == abs_name) {
                 ret = PMIX_ERR_IN_ERRNO;

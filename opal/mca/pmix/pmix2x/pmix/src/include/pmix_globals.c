@@ -42,7 +42,7 @@
 #include "src/class/pmix_list.h"
 #include "src/threads/threads.h"
 
-pmix_lock_t pmix_global_lock = {
+PMIX_EXPORT pmix_lock_t pmix_global_lock = {
     .mutex = PMIX_MUTEX_STATIC_INIT,
     .cond = PMIX_CONDITION_STATIC_INIT,
     .active = false

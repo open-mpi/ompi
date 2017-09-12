@@ -65,8 +65,8 @@
 #endif
 const char pmix_version_string[] = PMIX_IDENT_STRING;
 
-int pmix_initialized = 0;
-bool pmix_init_called = false;
+PMIX_EXPORT int pmix_initialized = 0;
+PMIX_EXPORT bool pmix_init_called = false;
 /* we have to export the pmix_globals object so
  * all plugins can access it. However, it is included
  * in the pmix_rename.h file for external protection */

@@ -124,7 +124,9 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     if (PMIX_RANGE_PROC_LOCAL != range) {
         /* create the msg object */
         msg = PMIX_NEW(pmix_buffer_t);
-
+        if (NULL == msg) {
+            return PMIX_ERR_NOMEM;
+        }
         /* pack the command */
         PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, &cmd, 1, PMIX_COMMAND);
         if (PMIX_SUCCESS != rc) {
@@ -263,9 +265,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
   cleanup:
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "client: notifying server - unable to send");
-    if (NULL != msg) {
-        PMIX_RELEASE(msg);
-    }
+    PMIX_RELEASE(msg);
     /* we were unable to send anything, so we just return the error */
     return rc;
 }

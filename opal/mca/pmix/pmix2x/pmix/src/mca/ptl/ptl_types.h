@@ -280,12 +280,12 @@ PMIX_EXPORT extern int pmix_ptl_base_output;
         }                                                                               \
     } while (0)
 
-#define CLOSE_THE_SOCKET(socket)                \
+#define CLOSE_THE_SOCKET(s)                     \
     do {                                        \
-        if (0 <= socket) {                      \
-            shutdown(socket, 2);                \
-            close(socket);                      \
-            socket = -1;                        \
+        if (0 <= (s)) {                         \
+            shutdown((s), 2);                   \
+            close((s));                         \
+            (s) = -1;                           \
         }                                       \
     } while (0)
 

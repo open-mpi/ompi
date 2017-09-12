@@ -218,18 +218,17 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
                         "pmix:client recv callback activated with %d bytes",
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
 
-    /* a zero-byte buffer indicates that this recv is being
-     * completed due to a lost connection */
-    if (PMIX_BUFFER_IS_EMPTY(buf)) {
-        ret = PMIX_ERR_UNREACH;
-        goto report;
-    }
-
     /* init */
     memset(nspace, 0, PMIX_MAX_NSLEN+1);
 
     if (NULL == buf) {
         ret = PMIX_ERR_BAD_PARAM;
+        goto report;
+    }
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        ret = PMIX_ERR_UNREACH;
         goto report;
     }
 

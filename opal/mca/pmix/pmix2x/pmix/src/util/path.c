@@ -402,9 +402,12 @@ char* pmix_find_absolute_path( char* app_name )
     if( NULL != abs_app_name ) {
         char* resolved_path = (char*)malloc(PMIX_PATH_MAX);
         if (NULL == realpath( abs_app_name, resolved_path )) {
+            free(resolved_path);
             return NULL;
         }
-        if( abs_app_name != app_name ) free(abs_app_name);
+        if( abs_app_name != app_name ) {
+            free(abs_app_name);
+        }
         return resolved_path;
     }
     return NULL;
