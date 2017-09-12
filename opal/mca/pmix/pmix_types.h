@@ -83,6 +83,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_MODEL_LIBRARY_NAME            "pmix.mdl.name"         // (char*) programming model implementation ID (e.g., "OpenMPI" or "MPICH")
 #define OPAL_PMIX_MODEL_LIBRARY_VERSION         "pmix.mld.vrs"          // (char*) programming model version string (e.g., "2.1.1")
 #define OPAL_PMIX_THREADING_MODEL               "pmix.threads"          // (char*) threading model used (e.g., "pthreads")
+#define OPAL_PMIX_REQUESTOR_IS_TOOL             "pmix.req.tool"         // (bool) requesting process is a tool
+#define OPAL_PMIX_REQUESTOR_IS_CLIENT           "pmix.req.client"       // (bool) requesting process is a client process
 
 /* attributes for the rendezvous socket  */
 #define OPAL_PMIX_USOCK_DISABLE                 "pmix.usock.disable"    // (bool) disable legacy usock support
@@ -248,7 +250,9 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_FWD_STDERR                    "pmix.fwd.stderr"       // (bool) forward stderr from spawned procs to me
 #define OPAL_PMIX_DEBUGGER_DAEMONS              "pmix.debugger"         // (bool) spawned app consists of debugger daemons
 #define OPAL_PMIX_COSPAWN_APP                   "pmix.cospawn"          // (bool) designated app is to be spawned as a disconnected
-                                                                        //     job - i.e., not part of the "comm_world" of the job
+                                                                        //        job - i.e., not part of the "comm_world" of the job
+#define OPAL_PMIX_SET_SESSION_CWD               "pmix.ssncwd"           // (bool) set the application's current working directory to
+                                                                        //        the session working directory assigned by the RM
 
 /* query attributes */
 #define OPAL_PMIX_QUERY_NAMESPACES              "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
@@ -336,6 +340,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_JOB_CTRL_PROVISION            "pmix.jctrl.pvn"        // (char*) regex identifying nodes that are to be provisioned
 #define OPAL_PMIX_JOB_CTRL_PROVISION_IMAGE      "pmix.jctrl.pvnimg"     // (char*) name of the image that is to be provisioned
 #define OPAL_PMIX_JOB_CTRL_PREEMPTIBLE          "pmix.jctrl.preempt"    // (bool) job can be pre-empted
+#define OPAL_PMIX_JOB_CTRL_TERMINATE            "pmix.jctrl.term"       // (bool) politely terminate the specified procs
+
 
 /* monitoring attributes */
 #define OPAL_PMIX_MONITOR_HEARTBEAT             "pmix.monitor.mbeat"    // (void) register to have the server monitor the requestor for heartbeats

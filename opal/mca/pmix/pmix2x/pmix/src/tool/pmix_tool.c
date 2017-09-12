@@ -89,9 +89,16 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
     int32_t cnt;
     pmix_cmd_t cmd;
     pmix_event_chain_t *chain;
+    size_t ninfo;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:tool_notify_recv - processing event");
+
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        return;
+    }
 
       /* start the local notification chain */
     chain = PMIX_NEW(pmix_event_chain_t);
@@ -126,14 +133,16 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
     /* unpack the info that might have been provided */
     cnt=1;
     PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
-                       buf, &chain->ninfo, &cnt, PMIX_SIZE);
+                       buf, &ninfo, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         goto error;
     }
-    if (0 < chain->ninfo) {
-        PMIX_INFO_CREATE(chain->info, chain->ninfo);
-        cnt = chain->ninfo;
+    /* we always leave space for a callback object */
+    chain->ninfo = ninfo + 1;
+    PMIX_INFO_CREATE(chain->info, chain->ninfo);
+    if (0 < ninfo) {
+        cnt = ninfo;
         PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
                            buf, chain->info, &cnt, PMIX_INFO);
         if (PMIX_SUCCESS != rc) {
@@ -141,6 +150,9 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
             goto error;
         }
     }
+    /* now put the callback object tag in the last element */
+    PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "[%s:%d] pmix:tool_notify_recv - processing event %d, calling errhandler",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank, chain->status);

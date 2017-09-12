@@ -86,7 +86,16 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
            opal_pmix_pmix2x_LDFLAGS=
            opal_pmix_pmix2x_LIBS="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix2x_basedir/pmix/src/libpmix.la"
            opal_pmix_pmix2x_CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$opal_pmix_pmix2x_basedir/pmix/include -I$OPAL_TOP_BUILDDIR/$opal_pmix_pmix2x_basedir/pmix -I$OPAL_TOP_SRCDIR/$opal_pmix_pmix2x_basedir/pmix/include -I$OPAL_TOP_SRCDIR/$opal_pmix_pmix2x_basedir/pmix"
-           opal_pmix_pmix2x_DEPENDENCIES="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix2x_basedir/pmix/src/libpmix.la"])
+           opal_pmix_pmix2x_DEPENDENCIES="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix2x_basedir/pmix/src/libpmix.la"
+           # and the flags for prun
+           OPAL_PMIX_CPPFLAGS="-I$opal_pmix_pmix2x_CPPFLAGS"
+           AC_SUBST(OPAL_PMIX_CPPFLAGS)
+           OPAL_PMIX_LDADD=$opal_pmix_pmix2x_LIBS
+           AC_SUBST(OPAL_PMIX_LDADD)
+           OPAL_PMIX_LIBS=
+           AC_SUBST(OPAL_PMIX_LIBS)
+           OPAL_PMIX_LDFLAGS=
+           AC_SUBST(OPAL_PMIX_LDFLAGS)])
 
    AC_SUBST([opal_pmix_pmix2x_LIBS])
    AC_SUBST([opal_pmix_pmix2x_CPPFLAGS])

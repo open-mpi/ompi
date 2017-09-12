@@ -352,6 +352,13 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
         goto report;
     }
 
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        ret = PMIX_ERR_UNREACH;
+        goto report;
+    }
+
     /* unpack the returned status */
     cnt = 1;
     PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,

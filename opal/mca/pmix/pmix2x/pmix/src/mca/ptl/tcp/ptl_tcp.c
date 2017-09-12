@@ -518,6 +518,7 @@ static pmix_status_t try_connect(int *sd)
     struct sockaddr_in6 *in6;
     size_t len;
     pmix_status_t rc;
+    bool retried = false;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:tcp try connect to %s",
@@ -591,6 +592,7 @@ static pmix_status_t try_connect(int *sd)
     }
     free(p);
 
+  retry:
     /* establish the connection */
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_connect(&mca_ptl_tcp_component.connection, len, sd))) {
         PMIX_ERROR_LOG(rc);
@@ -606,8 +608,15 @@ static pmix_status_t try_connect(int *sd)
 
     /* do whatever handshake is required */
     if (PMIX_SUCCESS != (rc = recv_connect_ack(*sd))) {
-        PMIX_ERROR_LOG(rc);
         CLOSE_THE_SOCKET(*sd);
+        if (PMIX_ERR_TEMP_UNAVAILABLE == rc) {
+            /* give it two tries */
+            if (!retried) {
+                retried = true;
+                goto retry;
+            }
+        }
+        PMIX_ERROR_LOG(rc);
         return rc;
     }
 
@@ -808,7 +817,12 @@ static pmix_status_t recv_connect_ack(int sd)
     /* receive the status reply */
     rc = pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(uint32_t));
     if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
+        if (sockopt) {
+            /* return the socket to normal */
+            if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
+                return PMIX_ERR_UNREACH;
+            }
+        }
         return rc;
     }
     reply = ntohl(u32);
@@ -829,7 +843,6 @@ static pmix_status_t recv_connect_ack(int sd)
         /* receive our index into the server's client array */
         rc = pmix_ptl_base_recv_blocking(sd, (char*)&u32, sizeof(uint32_t));
         if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
             return rc;
         }
         pmix_globals.pindex = ntohl(u32);
@@ -842,7 +855,6 @@ static pmix_status_t recv_connect_ack(int sd)
         /* recv our nspace */
         rc = pmix_ptl_base_recv_blocking(sd, (char*)&pmix_globals.myid.nspace, PMIX_MAX_NSLEN+1);
         if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
             return rc;
         }
         /* our rank is always zero */

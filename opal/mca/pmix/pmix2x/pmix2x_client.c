@@ -1560,3 +1560,94 @@ int pmix2x_resolve_nodes(opal_jobid_t jobid, char **nodelist)
 
     return pmix2x_convert_rc(ret);
 }
+
+static void relcbfunc(void *cbdata)
+{
+    pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
+    OBJ_RELEASE(op);
+}
+
+static void infocbfunc(pmix_status_t status,
+                       pmix_info_t *info, size_t ninfo,
+                       void *cbdata,
+                       pmix_release_cbfunc_t release_fn,
+                       void *release_cbdata)
+{
+    pmix2x_opcaddy_t *op = (pmix2x_opcaddy_t*)cbdata;
+    int rc;
+
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+    rc = pmix2x_convert_rc(status);
+    if (NULL != op->qcbfunc) {
+        op->qcbfunc(rc, NULL, op->cbdata, relcbfunc, op);
+    } else {
+        OBJ_RELEASE(op);
+    }
+}
+
+int pmix2x_allocate(opal_pmix_alloc_directive_t directive,
+                    opal_list_t *info,
+                    opal_pmix_info_cbfunc_t cbfunc, void *cbdata)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+int pmix2x_job_control(opal_list_t *targets,
+                       opal_list_t *directives,
+                       opal_pmix_info_cbfunc_t cbfunc, void *cbdata)
+{
+    pmix2x_opcaddy_t *op;
+    size_t n;
+    opal_namelist_t *ptr;
+    opal_value_t *iptr;
+    pmix_status_t rc;
+    char *nsptr;
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    if (0 >= opal_pmix_base.initialized) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+        return OPAL_ERR_NOT_INITIALIZED;
+    }
+
+    /* create the caddy */
+    op = OBJ_NEW(pmix2x_opcaddy_t);
+    op->qcbfunc = cbfunc;
+    op->cbdata = cbdata;
+    if (NULL != targets) {
+        op->nprocs = opal_list_get_size(targets);
+
+        /* convert the list of procs to an array
+         * of pmix_proc_t */
+        PMIX_PROC_CREATE(op->procs, op->nprocs);
+        n=0;
+        OPAL_LIST_FOREACH(ptr, targets, opal_namelist_t) {
+            if (NULL == (nsptr = pmix2x_convert_jobid(ptr->name.jobid))) {
+                OBJ_RELEASE(op);
+                OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+                return OPAL_ERR_NOT_FOUND;
+            }
+            (void)strncpy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
+            op->procs[n].rank = pmix2x_convert_opalrank(ptr->name.vpid);
+            ++n;
+        }
+    }
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+
+    if (NULL != directives && 0 < (op->ninfo = opal_list_get_size(directives))) {
+        PMIX_INFO_CREATE(op->info, op->ninfo);
+        n=0;
+        OPAL_LIST_FOREACH(iptr, directives, opal_value_t) {
+            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            pmix2x_value_load(&op->info[n].value, iptr);
+            ++n;
+        }
+    }
+
+    rc = PMIx_Job_control_nb(op->procs,op->nprocs, op->info, op->ninfo, infocbfunc, op);
+    if (PMIX_SUCCESS != rc) {
+        OBJ_RELEASE(op);
+    }
+    return pmix2x_convert_rc(rc);
+}

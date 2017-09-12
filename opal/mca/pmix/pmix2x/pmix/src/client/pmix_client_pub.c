@@ -526,6 +526,12 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
         rc = PMIX_ERR_BAD_PARAM;
         goto report;
     }
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        rc = PMIX_ERR_UNREACH;
+        goto report;
+    }
 
     /* unpack the returned status */
     cnt = 1;
@@ -574,6 +580,12 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr,
     }
     if (NULL == buf) {
         rc = PMIX_ERR_BAD_PARAM;
+        goto report;
+    }
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        rc = PMIX_ERR_UNREACH;
         goto report;
     }
 

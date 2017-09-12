@@ -50,7 +50,6 @@ static int finalize(void);
 static void init_complete(int fd, short args, void *cbdata);
 static void vm_ready(int fd, short args, void *cbata);
 static void check_complete(int fd, short args, void *cbdata);
-static void cleanup_job(int fd, short args, void *cbdata);
 
 /******************
  * DVM module - used when mpirun is persistent
@@ -90,7 +89,6 @@ static orte_job_state_t launch_states[] = {
     ORTE_JOB_STATE_REGISTERED,
     /* termination states */
     ORTE_JOB_STATE_TERMINATED,
-    ORTE_JOB_STATE_NOTIFY_COMPLETED,
     ORTE_JOB_STATE_ALL_JOBS_COMPLETE
 };
 static orte_state_cbfunc_t launch_callbacks[] = {
@@ -109,7 +107,6 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_post_launch,
     orte_plm_base_registered,
     check_complete,
-    cleanup_job,
     orte_quit
 };
 
@@ -504,24 +501,11 @@ static void check_complete(int fd, short args, void *cbdata)
         OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                              "%s state:dvm:check_job_completed state is terminated - activating notify",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_NOTIFY_COMPLETED);
-        /* mark the job as notified */
-        jdata->state = ORTE_JOB_STATE_NOTIFIED;
+        opal_pmix.notify_event(OPAL_ERR_JOB_TERMINATED, NULL,
+                               OPAL_PMIX_RANGE_GLOBAL, NULL,
+                               NULL, NULL);
+        opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
     }
-
-    OBJ_RELEASE(caddy);
-}
-
-static void cleanup_job(int sd, short args, void *cbdata)
-{
-    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata;
-
-    ORTE_ACQUIRE_OBJECT(caddy);
-    jdata = caddy->jdata;
-
-    /* remove this object from the job array */
-    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
 
     OBJ_RELEASE(caddy);
 }

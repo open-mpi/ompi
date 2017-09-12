@@ -153,6 +153,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_MODEL_LIBRARY_NAME             "pmix.mdl.name"         // (char*) programming model implementation ID (e.g., "OpenMPI" or "MPICH")
 #define PMIX_MODEL_LIBRARY_VERSION          "pmix.mld.vrs"          // (char*) programming model version string (e.g., "2.1.1")
 #define PMIX_THREADING_MODEL                "pmix.threads"          // (char*) threading model used (e.g., "pthreads")
+#define PMIX_REQUESTOR_IS_TOOL              "pmix.req.tool"         // (bool) requesting process is a tool
+#define PMIX_REQUESTOR_IS_CLIENT            "pmix.req.client"       // (bool) requesting process is a client process
 
 
 /* attributes for the USOCK rendezvous socket  */
@@ -329,7 +331,9 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_FWD_STDERR                     "pmix.fwd.stderr"       // (bool) forward stderr from spawned procs to me
 #define PMIX_DEBUGGER_DAEMONS               "pmix.debugger"         // (bool) spawned app consists of debugger daemons
 #define PMIX_COSPAWN_APP                    "pmix.cospawn"          // (bool) designated app is to be spawned as a disconnected
-                                                                    //     job - i.e., not part of the "comm_world" of the job
+                                                                    //        job - i.e., not part of the "comm_world" of the job
+#define PMIX_SET_SESSION_CWD                "pmix.ssncwd"           // (bool) set the application's current working directory to
+                                                                    //        the session working directory assigned by the RM
 
 /* query attributes */
 #define PMIX_QUERY_NAMESPACES               "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces

@@ -101,6 +101,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     pmix_status_t rc;
     int sd;
     pmix_socklen_t len;
+    bool retried = false;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "[%s:%d] connect to server",
@@ -164,6 +165,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     }
     pmix_argv_free(uri);
 
+  retry:
     /* establish the connection */
     len = sizeof(struct sockaddr_un);
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_connect(&mca_ptl_usock_component.connection, len, &sd))) {
@@ -181,6 +183,13 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     /* do whatever handshake is required */
     if (PMIX_SUCCESS != (rc = recv_connect_ack(sd))) {
         CLOSE_THE_SOCKET(sd);
+        if (PMIX_ERR_TEMP_UNAVAILABLE == rc) {
+            /* give it two tries */
+            if (!retried) {
+                retried = true;
+                goto retry;
+            }
+        }
         return rc;
     }
 
@@ -360,7 +369,12 @@ static pmix_status_t recv_connect_ack(int sd)
     /* receive the status reply */
     rc = pmix_ptl_base_recv_blocking(sd, (char*)&reply, sizeof(int));
     if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
+        if (sockopt) {
+            /* return the socket to normal */
+            if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
+                return PMIX_ERR_UNREACH;
+            }
+        }
         return rc;
     }
 
@@ -380,7 +394,6 @@ static pmix_status_t recv_connect_ack(int sd)
     /* receive our index into the server's client array */
     rc = pmix_ptl_base_recv_blocking(sd, (char*)&pmix_globals.pindex, sizeof(int));
     if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
         return rc;
     }
     if (sockopt) {

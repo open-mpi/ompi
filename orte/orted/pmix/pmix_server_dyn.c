@@ -237,6 +237,9 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
         } else if (0 == strcmp(info->key, OPAL_PMIX_NON_PMI)) {
             orte_set_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB,
                                ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+        } else if (0 == strcmp(info->key, OPAL_PMIX_REQUESTOR_IS_TOOL)) {
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_DVM_JOB,
+                               ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
         } else if (0 == strcmp(info->key, OPAL_PMIX_STDIN_TGT)) {
             if (0 == strcmp(info->data.string, "all")) {
                 jdata->stdin_target = ORTE_VPID_WILDCARD;
@@ -341,7 +344,7 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
         }
     }
 
-    /* indicate that we are to notify the requestor when we hear back */
+    /* indicate the requestor so bookmarks can be correctly set */
     orte_set_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, ORTE_ATTR_GLOBAL,
                        requestor, OPAL_NAME);
 
