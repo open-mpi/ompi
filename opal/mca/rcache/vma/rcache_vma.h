@@ -32,6 +32,7 @@
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_rb_tree.h"
+#include "opal/class/opal_lifo.h"
 #include "opal/mca/rcache/rcache.h"
 
 BEGIN_C_DECLS
@@ -40,7 +41,7 @@ struct mca_rcache_vma_module_t {
     mca_rcache_base_module_t base;
     opal_rb_tree_t rb_tree;
     opal_list_t vma_list;
-    opal_list_t vma_gc_list;
+    opal_lifo_t vma_gc_lifo;
     size_t reg_cur_cache_size;
 };
 typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t;
@@ -80,6 +81,12 @@ void mca_rcache_vma_finalize(struct mca_rcache_base_module_t*);
 void mca_rcache_vma_dump_range(struct mca_rcache_base_module_t *rcache,
                                unsigned char* addr, size_t size, char *msg);
 
+
+extern opal_free_list_t mca_rcache_vma_tree_items;
+extern bool mca_rcache_vma_tree_items_inited;
+extern unsigned int mca_rcache_vma_tree_items_min;
+extern int mca_rcache_vma_tree_items_max;
+extern unsigned int mca_rcache_vma_tree_items_inc;
 
 /**
  * Iterate over registrations in the specified range.
