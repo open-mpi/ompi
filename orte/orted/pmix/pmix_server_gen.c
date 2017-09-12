@@ -622,7 +622,6 @@ static void _query(int sd, short args, void *cbdata)
 
                     }
                 } else {
-                    opal_output(0, "NONLOCAL");
                     /* if they want it for remote procs, see who is hosting them
                      * and ask directly for the info - if rank=wildcard, then
                      * we need to xcast the request and collect the results */
@@ -894,6 +893,9 @@ int pmix_server_job_ctrl_fn(const opal_process_name_t *requestor,
     orte_proc_t *proc;
     opal_pointer_array_t parray, *ptrarray;
     opal_namelist_t *nm;
+    opal_buffer_t *cmd;
+    orte_daemon_cmd_flag_t cmmnd = ORTE_DAEMON_HALT_VM_CMD;
+    orte_grpcomm_signature_t *sig;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s job control request from %s",
@@ -905,10 +907,9 @@ int pmix_server_job_ctrl_fn(const opal_process_name_t *requestor,
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             continue;
         }
-
         if (0 == strcmp(val->key, OPAL_PMIX_JOB_CTRL_KILL)) {
             /* convert the list of targets to a pointer array */
-            if (NULL == targets) {
+            if (0 == opal_list_get_size(targets)) {
                 ptrarray = NULL;
             } else {
                 OBJ_CONSTRUCT(&parray, opal_pointer_array_t);
@@ -936,6 +937,27 @@ int pmix_server_job_ctrl_fn(const opal_process_name_t *requestor,
                 OBJ_DESTRUCT(&parray);
             }
             continue;
+        } else if (0 == strcmp(val->key, OPAL_PMIX_JOB_CTRL_TERMINATE)) {
+            if (0 == opal_list_get_size(targets)) {
+                /* terminate the daemons and all running jobs */
+                cmd = OBJ_NEW(opal_buffer_t);
+                /* pack the command */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &cmmnd, 1, ORTE_DAEMON_CMD))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(cmd);
+                    return rc;
+                }
+                /* goes to all daemons */
+                sig = OBJ_NEW(orte_grpcomm_signature_t);
+                sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+                sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+                sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+                if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, cmd))) {
+                    ORTE_ERROR_LOG(rc);
+                }
+                OBJ_RELEASE(cmd);
+                OBJ_RELEASE(sig);
+            }
         }
     }
 

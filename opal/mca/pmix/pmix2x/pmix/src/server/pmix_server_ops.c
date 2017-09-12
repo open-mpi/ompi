@@ -1012,6 +1012,7 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     int32_t cnt;
     pmix_status_t rc;
     pmix_proc_t proc;
+    size_t ninfo;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd SPAWN");
@@ -1031,25 +1032,35 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
 
     /* unpack the number of job-level directives */
     cnt=1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &cd->ninfo, &cnt, PMIX_SIZE);
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &ninfo, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(cd);
         return rc;
     }
+    /* always add one directive that indicates whether the requestor
+     * is a tool or client */
+    cd->ninfo = ninfo + 1;
+    PMIX_INFO_CREATE(cd->info, cd->ninfo);
+    if (NULL == cd->info) {
+        rc = PMIX_ERR_NOMEM;
+        goto cleanup;
+    }
+
     /* unpack the array of directives */
-    if (0 < cd->ninfo) {
-        PMIX_INFO_CREATE(cd->info, cd->ninfo);
-        if (NULL == cd->info) {
-            rc = PMIX_ERR_NOMEM;
-            goto cleanup;
-        }
-        cnt = cd->ninfo;
+    if (0 < ninfo) {
+        cnt = ninfo;
         PMIX_BFROPS_UNPACK(rc, peer, buf, cd->info, &cnt, PMIX_INFO);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
+    }
+    /* add the directive to the end */
+    if (PMIX_PROC_IS_TOOL(peer)) {
+        PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_TOOL, NULL, PMIX_BOOL);
+    } else {
+        PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_CLIENT, NULL, PMIX_BOOL);
     }
 
     /* unpack the number of apps */

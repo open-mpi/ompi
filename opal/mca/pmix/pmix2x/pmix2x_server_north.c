@@ -1240,6 +1240,7 @@ static pmix_status_t server_job_control(const pmix_proc_t *proct,
     for (n=0; n < ndirs; n++) {
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
+        oinfo->key = strdup(directives[n].key);
         if (OPAL_SUCCESS != (rc = pmix2x_value_unload(oinfo, &directives[n].value))) {
             OBJ_RELEASE(opalcaddy);
             return pmix2x_convert_opalrc(rc);
