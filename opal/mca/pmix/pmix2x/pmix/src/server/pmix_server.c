@@ -486,9 +486,7 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
 
     /* let our local storage clean up */
     PMIX_GDS_DEL_NSPACE(rc, cd->proc.nspace);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-    }
+
     /* release any job-level messaging resources */
     pmix_pnet.local_app_finalized(cd->proc.nspace);
 

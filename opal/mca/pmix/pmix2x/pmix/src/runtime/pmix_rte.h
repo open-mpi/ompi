@@ -59,21 +59,21 @@ extern const char pmix_version_string[];
  * @retval PMIX_ERROR Upon failure.
  *
  */
-pmix_status_t pmix_rte_init(pmix_proc_type_t type,
-                            pmix_info_t info[], size_t ninfo,
-                            pmix_ptl_cbfunc_t cbfunc);
+PMIX_EXPORT pmix_status_t pmix_rte_init(pmix_proc_type_t type,
+                                        pmix_info_t info[], size_t ninfo,
+                                        pmix_ptl_cbfunc_t cbfunc);
 
 /**
  * Finalize the PMIX layer, including the MCA system.
  *
  */
-void pmix_rte_finalize(void);
+PMIX_EXPORT void pmix_rte_finalize(void);
 
 /**
  * Internal function.  Do not call.
  */
-pmix_status_t pmix_register_params(void);
-pmix_status_t pmix_deregister_params(void);
+PMIX_EXPORT pmix_status_t pmix_register_params(void);
+PMIX_EXPORT pmix_status_t pmix_deregister_params(void);
 
 END_C_DECLS
 

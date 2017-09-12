@@ -281,16 +281,17 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
         PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
         return;
     }
+
+    /* cache the proc id */
+    (void)strncpy(proc.nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
+    proc.rank = cb->pname.rank;
+
     /* a zero-byte buffer indicates that this recv is being
      * completed due to a lost connection */
     if (PMIX_BUFFER_IS_EMPTY(buf)) {
         ret = PMIX_ERR_UNREACH;
         goto done;
     }
-
-    /* cache the proc id */
-    (void)strncpy(proc.nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
-    proc.rank = cb->pname.rank;
 
     /* unpack the status */
     cnt = 1;
