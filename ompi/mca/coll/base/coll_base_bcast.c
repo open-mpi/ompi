@@ -36,13 +36,13 @@
 
 int
 ompi_coll_base_bcast_intra_generic( void* buffer,
-                                     int original_count,
-                                     struct ompi_datatype_t* datatype,
-                                     int root,
-                                     struct ompi_communicator_t* comm,
-                                     mca_coll_base_module_t *module,
-                                     uint32_t count_by_segment,
-                                     ompi_coll_tree_t* tree )
+                                    int count,
+                                    struct ompi_datatype_t* datatype,
+                                    int root,
+                                    struct ompi_communicator_t* comm,
+                                    mca_coll_base_module_t *module,
+                                    size_t segment_size,
+                                    ompi_coll_tree_t* tree )
 {
     int err = 0, line, i, rank, segindex, req_index;
     int num_segments; /* Number of segments */
@@ -235,7 +235,7 @@ ompi_coll_base_bcast_intra_generic2( void* buffer,
                                      size_t segment_size,
                                      ompi_coll_tree_t* tree )
 {
-    int err = 0, line, i = 0, rank, req_index;
+    int err = 0, line, i = 0, rank;
     opal_convertor_t send_convertors[2], recv_convertors[2];
     size_t offset = 0;
     size_t next_offset;
@@ -502,23 +502,15 @@ ompi_coll_base_bcast_intra_bintree ( void* buffer,
                                       mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
-    int segcount = count;
-    size_t typelng;
     mca_coll_base_comm_t *data = module->base_data;
 
     COLL_BASE_UPDATE_BINTREE( comm, module, root );
 
-    /**
-     * Determine number of elements sent per operation.
-     */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
-
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_binary rank %d ss %5d typelng %lu segcount %d",
-                 ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_binary rank %d ss %5d",
+                 ompi_comm_rank(comm), segsize));
 
     return ompi_coll_base_bcast_intra_generic( buffer, count, datatype, root, comm, module,
-                                                segcount, data->cached_bintree );
+                                               segsize, data->cached_bintree );
 }
 
 int
@@ -537,8 +529,8 @@ ompi_coll_base_bcast_intra_pipeline( void* buffer,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_pipeline rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
-    return ompi_coll_base_bcast_intra_generic2( buffer, count, datatype, root, comm, module,
-                                                segsize, data->cached_pipeline );
+    return ompi_coll_base_bcast_intra_generic( buffer, count, datatype, root, comm, module,
+                                               segsize, data->cached_pipeline );
 }
 
 int
@@ -550,23 +542,15 @@ ompi_coll_base_bcast_intra_chain( void* buffer,
                                    mca_coll_base_module_t *module,
                                    uint32_t segsize, int32_t chains )
 {
-    int segcount = count;
-    size_t typelng;
     mca_coll_base_comm_t *data = module->base_data;
 
     COLL_BASE_UPDATE_CHAIN( comm, module, root, chains );
 
-    /**
-     * Determine number of elements sent per operation.
-     */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
-
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_chain rank %d fo %d ss %5d typelng %lu segcount %d",
-                 ompi_comm_rank(comm), chains, segsize, (unsigned long)typelng, segcount));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_chain rank %d fo %d ss %5d",
+                 ompi_comm_rank(comm), chains, segsize));
 
     return ompi_coll_base_bcast_intra_generic( buffer, count, datatype, root, comm, module,
-                                                segcount, data->cached_chain );
+                                               segsize, data->cached_chain );
 }
 
 int
@@ -578,23 +562,15 @@ ompi_coll_base_bcast_intra_binomial( void* buffer,
                                       mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
-    int segcount = count;
-    size_t typelng;
     mca_coll_base_comm_t *data = module->base_data;
 
     COLL_BASE_UPDATE_BMTREE( comm, module, root );
 
-    /**
-     * Determine number of elements sent per operation.
-     */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
-
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_binomial rank %d ss %5d typelng %lu segcount %d",
-                 ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_binomial rank %d ss %5d",
+                 ompi_comm_rank(comm), segsize));
 
     return ompi_coll_base_bcast_intra_generic( buffer, count, datatype, root, comm, module,
-                                                segcount, data->cached_bmtree );
+                                               segsize, data->cached_bmtree );
 }
 
 int

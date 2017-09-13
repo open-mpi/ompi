@@ -694,7 +694,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 
 
-        offset = 0;
+        offset = recvreq->req_recv.req_base.req_offset;
 
         OPAL_THREAD_LOCK(&recvreq->lock);
         opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor, &offset);
@@ -731,14 +731,12 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         memcpy (frag->remote_handle, hdr + 1, btl->btl_registration_handle_size);
 
         /* update the read location */
-        frag->remote_address = hdr->hdr_src_ptr + offset;
+        frag->remote_address = hdr->hdr_src_ptr + offset - recvreq->req_recv.req_base.req_offset;
 
         /* updating the write location */
         OPAL_THREAD_LOCK(&recvreq->lock);
-        offset += recvreq->req_recv.req_base.req_offset;
         opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor, &offset);
         opal_convertor_get_current_pointer (&recvreq->req_recv.req_base.req_convertor, &frag->local_address);
-        offset -= recvreq->req_recv.req_base.req_offset;
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 
         frag->rdma_bml = rdma_bml;
@@ -847,7 +845,8 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
                                               mca_btl_base_segment_t* segments,
                                               size_t num_segments )
 {
-    size_t bytes_received, data_offset = 0;
+    // size_t bytes_received, data_offset = 0;
+    size_t bytes_received, data_offset = recvreq->req_recv.req_base.req_offset;
     size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_OB1_RECV_REQUEST_UNPACK */
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
@@ -1295,7 +1294,7 @@ void mca_pml_ob1_recv_req_start_with_convertor(mca_pml_ob1_recv_request_t *req, 
     req->req_pending = false;
     req->req_ack_sent = false;
 
-    MCA_PML_BASE_RECV_START(&req->req_recv.req_base);
+    MCA_PML_BASE_RECV_START(&req->req_recv);
 
     OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     /**

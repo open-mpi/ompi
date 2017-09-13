@@ -213,8 +213,7 @@ int ompi_coll_base_barrier_intra_tree(BARRIER_ARGS);
 int ompi_coll_base_barrier_intra_basic_linear(BARRIER_ARGS);
 
 /* Bcast */
-int ompi_coll_base_bcast_intra_generic(BCAST_ARGS, uint32_t count_by_segment, ompi_coll_tree_t* tree);
-int ompi_coll_base_bcast_intra_generic2(BCAST_ARGS, size_t segment_size, ompi_coll_tree_t* tree);
+int ompi_coll_base_bcast_intra_generic(BCAST_ARGS, size_t segment_size, ompi_coll_tree_t* tree);
 int ompi_coll_base_bcast_intra_basic_linear(BCAST_ARGS);
 int ompi_coll_base_bcast_intra_chain(BCAST_ARGS, uint32_t segsize, int32_t chains);
 int ompi_coll_base_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);

@@ -24,16 +24,16 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak OMPI_Isplit_recv = POMPI_Isplit_recv
+#pragma weak OMPI_Split_recv = POMPI_Split_recv
 #endif
-#define OMPI_Isplit_recv POMPI_Isplit_recv
+#define OMPI_Split_recv POMPI_Split_recv
 #endif
 
-static const char FUNC_NAME[] = "OMPI_Isplit_recv";
+static const char FUNC_NAME[] = "OMPI_Split_recv";
 
 
-int OMPI_Isplit_recv(void *buf, int count, MPI_Datatype type, int source,
-                     int tag, MPI_Comm comm, MPI_Request *request)
+int OMPI_Split_recv(void *buf, int count, MPI_Datatype type, int source,
+                     int tag, MPI_Comm comm, MPI_Status *statuses)
 {
     int rc = MPI_SUCCESS;
     opal_convertor_t convertor;
@@ -42,6 +42,7 @@ int OMPI_Isplit_recv(void *buf, int count, MPI_Datatype type, int source,
 
     MEMCHECKER(
         memchecker_datatype(type);
+        memchecker_call(&opal_memchecker_base_isaddressable, buf, count, type);
         memchecker_comm(comm);
     );
 
@@ -54,21 +55,18 @@ int OMPI_Isplit_recv(void *buf, int count, MPI_Datatype type, int source,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > mca_pml.pml_max_tag)) {
             rc = MPI_ERR_TAG;
-        } else if ((MPI_ANY_SOURCE != source) &&
+        } else if ((source != MPI_ANY_SOURCE) &&
                    (MPI_PROC_NULL != source) &&
                    ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
-        } else if (NULL == request) {
-            rc = MPI_ERR_REQUEST;
         }
+
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    if (source == MPI_PROC_NULL) {
-        *request = &ompi_request_empty;
+    if (MPI_PROC_NULL == source) {
         return MPI_SUCCESS;
     }
-
     assert(count > 0);
 
     if (count > 0) {
@@ -88,16 +86,14 @@ int OMPI_Isplit_recv(void *buf, int count, MPI_Datatype type, int source,
     }
     size = size / 2;
     offset = 0;
-#if 0
     opal_convertor_set_position(&convertor, &offset);
     OPAL_CR_ENTER_LIBRARY();
-    rc = MCA_PML_CALL(icrecv(&convertor, &size, source, tag, comm, request));
+    rc = MCA_PML_CALL(crecv(&convertor, &size, source, tag, comm, (MPI_STATUSES_IGNORE==statuses)?MPI_STATUS_IGNORE:statuses));
     if (OMPI_SUCCESS != rc) {
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
-#endif
     offset += size;
     opal_convertor_set_position(&convertor, &offset);
-    rc = MCA_PML_CALL(icrecv(&convertor, &size, source, tag, comm, request+1));
+    rc = MCA_PML_CALL(crecv(&convertor, &size, source, tag, comm, (MPI_STATUSES_IGNORE==statuses)?MPI_STATUS_IGNORE:statuses+1));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

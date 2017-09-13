@@ -49,6 +49,7 @@ ompidir = $(ompiincludedir)/ompi/mpiext/split/c
 nodist_libpmpiext_split_c_la_SOURCES = \
         pmpiext_isplit_recv.c \
         pmpiext_isplit_send.c \
+        pmpiext_split_recv.c \
         pmpiext_split_send.c
 
 #

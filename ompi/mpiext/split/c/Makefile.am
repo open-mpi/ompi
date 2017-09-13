@@ -48,6 +48,7 @@ libmpiext_split_c_la_SOURCES += \
         $(ompi_HEADERS) \
         mpiext_isplit_recv.c \
         mpiext_isplit_send.c \
+        mpiext_split_recv.c \
         mpiext_split_send.c
 endif
 

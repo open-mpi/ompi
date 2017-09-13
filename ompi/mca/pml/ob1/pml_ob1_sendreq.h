@@ -159,7 +159,12 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
     }
 
 #define MCA_PML_OB1_SEND_REQUEST_RESET(sendreq)                         \
-    MCA_PML_BASE_SEND_REQUEST_RESET(&(sendreq)->req_send)
+    if ((sendreq)->req_send.req_bytes_packed > 0) {                     \
+        size_t _position = sendreq->req_send.req_base.req_offset;       \
+        opal_convertor_set_position(&(sendreq)->req_send.req_base.req_convertor, \
+                                    &_position);                        \
+        assert( sendreq->req_send.req_base.req_offset == _position );   \
+    }
 
 static inline void mca_pml_ob1_free_rdma_resources (mca_pml_ob1_send_request_t* sendreq)
 {
@@ -486,7 +491,7 @@ mca_pml_ob1_send_request_start_seq_size (mca_pml_ob1_send_request_t* sendreq, mc
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = seqn;
 
-    MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );
+    MCA_PML_BASE_SEND_START( &sendreq->req_send );
 
     for(size_t i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         mca_bml_base_btl_t* bml_btl;
