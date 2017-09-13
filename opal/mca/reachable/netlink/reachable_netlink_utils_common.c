@@ -45,6 +45,9 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <time.h>
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 
 #include "libnl_utils.h"
 
@@ -221,7 +224,11 @@ static int opal_reachable_netlink_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
     }
 
     rtm = nlmsg_data(nlm_hdr);
-    if (rtm->rtm_family != AF_INET) {
+    if (rtm->rtm_family != AF_INET
+#if OPAL_ENABLE_IPV6
+	&& rtm->rtm_family != AF_INET6
+#endif
+	) {
 #if OPAL_ENABLE_DEBUG
         opal_output(0, "RTM message contains invalid AF family: %u\n",
                     rtm->rtm_family);
@@ -332,3 +339,84 @@ int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
     opal_reachable_netlink_sk_free(unlsk);
     return err;
 }
+
+
+#if OPAL_ENABLE_IPV6
+int opal_reachable_netlink_rt_lookup6(struct in6_addr *src_addr,
+				      struct in6_addr *dst_addr,
+				      int outgoing_interface,
+				      int *has_gateway)
+{
+
+    struct opal_reachable_netlink_sk *unlsk; /* netlink socket */
+    struct nl_msg *nlm; /* netlink message */
+    struct rtmsg rmsg; /* route message */
+    struct opal_reachable_netlink_rt_cb_arg arg; /* callback argument */
+    int err;
+
+    /* allocate netlink socket */
+    unlsk = NULL;
+    err = opal_reachable_netlink_sk_alloc(&unlsk, NETLINK_ROUTE);
+    if (err)
+	return err;
+
+    /* allocate route message */
+    memset(&rmsg, 0, sizeof(rmsg));
+    rmsg.rtm_family = AF_INET6;
+    rmsg.rtm_dst_len = sizeof(*dst_addr) * CHAR_BIT;
+    rmsg.rtm_src_len = sizeof(*src_addr) * CHAR_BIT;
+
+    /* allocate netlink message of type RTM_GETROUTE */
+    nlm = nlmsg_alloc_simple(RTM_GETROUTE, 0);
+    if (!nlm) {
+	opal_output(0, "Failed to alloc nl message, %s\n",
+		    NL_GETERROR(err));
+	err = ENOMEM;
+	goto out;
+    }
+
+    /* append route message and addresses to netlink message.   */
+    nlmsg_append(nlm, &rmsg, sizeof(rmsg), NLMSG_ALIGNTO);
+    nla_put(nlm, RTA_DST, sizeof(dst_addr->s6_addr), &(dst_addr->s6_addr));
+    nla_put(nlm, RTA_SRC, sizeof(src_addr->s6_addr), &(src_addr->s6_addr));
+
+    /* query kernel */
+    err = opal_reachable_netlink_send_query(unlsk, nlm, NETLINK_ROUTE, NLM_F_REQUEST);
+    nlmsg_free(nlm);
+    if (err < 0) {
+	opal_output(0, "Failed to send RTM_GETROUTE query message, error %s\n",
+		    NL_GETERROR(err));
+	err = EINVAL;
+	goto out;
+    }
+
+    /* Setup callback function */
+    memset(&arg, 0, sizeof(arg));
+    arg.oif = outgoing_interface;
+    arg.unlsk = unlsk;
+    err = nl_socket_modify_cb(unlsk->nlh, NL_CB_MSG_IN, NL_CB_CUSTOM,
+			      opal_reachable_netlink_rt_raw_parse_cb, &arg);
+    if (err != 0) {
+	opal_output(0, "Failed to setup callback function, error %s\n",
+		    NL_GETERROR(err));
+	err = EINVAL;
+	goto out;
+    }
+
+    /* receive results */
+    NL_RECVMSGS(unlsk->nlh, arg, EHOSTUNREACH, err, out);
+
+    /* check whether a route was found */
+    if (arg.found) {
+        *has_gateway = arg.has_gateway;
+	err = 0;
+    } else {
+        *has_gateway = 0;
+	err = EHOSTUNREACH;
+    }
+
+ out:
+    opal_reachable_netlink_sk_free(unlsk);
+    return err;
+}
+#endif /* #if OPAL_ENABLE_IPV6 */
