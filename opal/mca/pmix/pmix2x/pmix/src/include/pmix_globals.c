@@ -57,8 +57,6 @@ static void nscon(pmix_nspace_t *p)
     p->nspace = NULL;
     p->nlocalprocs = 0;
     p->all_registered = false;
-    p->jobinfo = NULL;
-    p->njobinfo = 0;
     p->jobbkt = NULL;
     p->ndelivered = 0;
     PMIX_CONSTRUCT(&p->ranks, pmix_list_t);
@@ -68,9 +66,6 @@ static void nsdes(pmix_nspace_t *p)
 {
     if (NULL != p->nspace) {
         free(p->nspace);
-    }
-    if (NULL != p->jobinfo) {
-        PMIX_INFO_FREE(p->jobinfo, p->njobinfo);
     }
     if (NULL != p->jobbkt) {
         PMIX_RELEASE(p->jobbkt);
