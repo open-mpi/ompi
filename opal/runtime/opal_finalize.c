@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +46,7 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
+#include "opal/mca/reachable/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/event/base/base.h"
@@ -134,6 +137,8 @@ opal_finalize(void)
 #if OPAL_ENABLE_FT_CR    == 1
     (void) mca_base_framework_close(&opal_compress_base_framework);
 #endif
+
+    (void) mca_base_framework_close(&opal_reachable_base_framework);
 
     (void) mca_base_framework_close(&opal_event_base_framework);
 
