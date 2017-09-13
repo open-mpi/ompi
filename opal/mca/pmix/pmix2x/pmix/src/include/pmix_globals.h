@@ -125,8 +125,6 @@ typedef struct {
     char *nspace;
     size_t nlocalprocs;
     bool all_registered;         // all local ranks have been defined
-    pmix_info_t *jobinfo;        // copy of the job-level info to be delivered to each proc
-    size_t njobinfo;
     pmix_buffer_t *jobbkt;       // packed version of jobinfo
     size_t ndelivered;           // count of #local clients that have received the jobinfo
     pmix_list_t ranks;           // list of pmix_rank_info_t for connection support of my clients

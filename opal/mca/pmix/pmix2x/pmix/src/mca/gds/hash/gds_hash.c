@@ -391,19 +391,6 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
         return PMIX_SUCCESS;
     }
 
-    /* this is duplicative, but for now, we copy the data to the nspace
-     * jobinfo array as well as cache it internally so we can look it
-     * up if required. We will later figure out a way to reconstruct
-     * the jobinfo array when required */
-    PMIX_INFO_CREATE(nptr->jobinfo, ninfo);
-    nptr->njobinfo = ninfo;
-    for (n=0; n < ninfo; n++) {
-        (void)strncpy(nptr->jobinfo[n].key, info[n].key, PMIX_MAX_KEYLEN);
-        PMIX_BFROPS_VALUE_XFER(rc, pmix_globals.mypeer,
-                               &nptr->jobinfo[n].value,
-                               &info[n].value);
-    }
-
     /* cache the job info on the internal hash table for this nspace */
     ht = &trk->internal;
     for (n=0; n < ninfo; n++) {
@@ -558,219 +545,95 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
     return rc;
 }
 
-/* we need to pass three things to the client:
- *
- * (a) the list of nodes involved in this nspace
- *
- * (b) the hostname for each proc in this nspace
- *
- * (c) the list of procs on each node for reverse lookup
- */
-static pmix_status_t pmix_pack_proc_map(struct pmix_peer_t *pr,
-                                        pmix_buffer_t *buf,
-                                        char **nodes, char **procs)
-{
-    pmix_peer_t *peer = (pmix_peer_t*)pr;
-    pmix_kval_t kv;
-    pmix_value_t val;
-    pmix_status_t rc;
-    pmix_buffer_t buf2;
-    size_t i, nnodes;
-
-    /* bozo check - need procs for each node */
-    if (pmix_argv_count(nodes) != pmix_argv_count(procs)) {
-        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-        return PMIX_ERR_BAD_PARAM;
-    }
-
-    PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
-    PMIX_CONSTRUCT(&kv, pmix_kval_t);
-    kv.value = &val;
-
-    /* pass the number of nodes involved in this namespace */
-    nnodes = pmix_argv_count(nodes);
-    PMIX_BFROPS_PACK(rc, peer, &buf2, &nnodes, 1, PMIX_SIZE);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    for (i=0; i < nnodes; i++) {
-        /* pass the complete list of procs on this node */
-        kv.key = nodes[i];
-        val.type = PMIX_STRING;
-        val.data.string = procs[i];
-        PMIX_BFROPS_PACK(rc, peer, &buf2, &kv, 1, PMIX_KVAL);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            kv.key = NULL;
-            val.data.string = NULL;
-            goto cleanup;
-        }
-    }
-    kv.key = NULL;
-    val.data.string = NULL; // we didn't strdup it, so don't release it
-
-    /* pass the completed blob */
-    kv.key = PMIX_MAP_BLOB;
-    val.type = PMIX_BYTE_OBJECT;
-    PMIX_UNLOAD_BUFFER(&buf2, val.data.bo.bytes, val.data.bo.size);
-    PMIX_BFROPS_PACK(rc, peer, buf, &kv, 1, PMIX_KVAL);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-    }
-    kv.key = NULL;
-    if (NULL != val.data.bo.bytes) {
-        free(val.data.bo.bytes);
-    }
-    kv.value = NULL;
-
- cleanup:
-    PMIX_DESTRUCT(&buf2);
-    PMIX_DESTRUCT(&kv);
-    return rc;
-}
-
 static pmix_status_t register_info(pmix_peer_t *peer,
                                    pmix_nspace_t *ns,
                                    pmix_buffer_t *reply)
 {
-    pmix_rank_t rank;
-    char **procs = NULL, **nodes = NULL;
-    size_t n, j, size;
+    pmix_hash_trkr_t *trk, *t;
+    pmix_hash_table_t *ht;
+    pmix_value_t *val, blob;
     pmix_status_t rc = PMIX_SUCCESS;
-    pmix_info_t *iptr;
-    pmix_buffer_t buf2;
-    pmix_kval_t kv, *kvptr;
-    pmix_value_t val;
+    pmix_rank_info_t *rinfo;
+    pmix_info_t *info;
+    size_t ninfo, n;
+    pmix_kval_t kv;
+    pmix_buffer_t buf;
+    pmix_rank_t rank;
 
-    pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
-                        "[%s:%d] gds:hash:register_info",
-                        pmix_globals.myid.nspace, pmix_globals.myid.rank);
-
-    /* pack the provided info */
-    for (n=0; n < ns->njobinfo; n++) {
-
-        pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
-                            "pmix:gds:hash packing job info %s",
-                            ns->jobinfo[n].key);
-
-        if (0 == strcmp(ns->jobinfo[n].key, PMIX_NODE_MAP)) {
-            /* parse the regex to get the argv array of node names */
-            if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(ns->jobinfo[n].value.data.string, &nodes))) {
-                PMIX_ERROR_LOG(rc);
-                continue;
-            }
-            /* if we have already found the proc map, then pass
-             * the detailed map */
-            if (NULL != procs) {
-                rc = pmix_pack_proc_map(peer, reply, nodes, procs);
-                pmix_argv_free(nodes);
-                nodes = NULL;
-                pmix_argv_free(procs);
-                procs = NULL;
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        } else if (0 == strcmp(ns->jobinfo[n].key, PMIX_PROC_MAP)) {
-            /* parse the regex to get the argv array containing proc ranks on each node */
-            if (PMIX_SUCCESS != (rc = pmix_preg.parse_procs(ns->jobinfo[n].value.data.string, &procs))) {
-                PMIX_ERROR_LOG(rc);
-                continue;
-            }
-            /* if we have already recv'd the node map, then record
-             * the detailed map */
-            if (NULL != nodes) {
-                rc = pmix_pack_proc_map(peer, reply, nodes, procs);
-                pmix_argv_free(nodes);
-                nodes = NULL;
-                pmix_argv_free(procs);
-                procs = NULL;
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        } else if (0 == strcmp(ns->jobinfo[n].key, PMIX_PROC_DATA)) {
-            /* an array of data pertaining to a specific proc */
-            if (PMIX_DATA_ARRAY != ns->jobinfo[n].value.type) {
-                PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-                goto release;
-            }
-            size = ns->jobinfo[n].value.data.darray->size;
-            iptr = (pmix_info_t*)ns->jobinfo[n].value.data.darray->array;
-            PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
-            /* first element of the array must be the rank */
-            if (0 != strcmp(iptr[0].key, PMIX_RANK) ||
-                PMIX_PROC_RANK != iptr[0].value.type) {
-                PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
-                PMIX_DESTRUCT(&buf2);
-                goto release;
-            }
-            /* pack it separately */
-            rank = iptr[0].value.data.rank;
-            PMIX_BFROPS_PACK(rc, peer, &buf2, &rank, 1, PMIX_PROC_RANK);
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_DESTRUCT(&buf2);
-                goto release;
-            }
-            /* cycle thru the values for this rank and pack them */
-            for (j=1; j < size; j++) {
-                kv.key = iptr[j].key;
-                kv.value = &iptr[j].value;
-                PMIX_BFROPS_PACK(rc, peer, &buf2, &kv, 1, PMIX_KVAL);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_DESTRUCT(&buf2);
-                    goto release;
-                }
-            }
-            /* now add the blob */
-            kv.key = PMIX_PROC_BLOB;
-            kv.value = &val;
-            val.type = PMIX_BYTE_OBJECT;
-            PMIX_UNLOAD_BUFFER(&buf2, val.data.bo.bytes, val.data.bo.size);
-            PMIX_BFROPS_PACK(rc, peer, reply, &kv, 1, PMIX_KVAL);
-            PMIX_VALUE_DESTRUCT(&val);  // release the data
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-                PMIX_DESTRUCT(&buf2);
-                goto release;
-            }
-            PMIX_DESTRUCT(&buf2);
-        } else {
-            /* just a value relating to the entire job */
-            kv.key = ns->jobinfo[n].key;
-            kv.value = &ns->jobinfo[n].value;
-            PMIX_BFROPS_PACK(rc, peer, reply, &kv, 1, PMIX_KVAL);
-            if (PMIX_SUCCESS != rc) {
-                PMIX_ERROR_LOG(rc);
-                goto release;
-            }
-        }
-    }
-
-    /* now add any global data that was provided */
-    PMIX_LIST_FOREACH(kvptr, &pmix_server_globals.gdata, pmix_kval_t) {
-        PMIX_BFROPS_PACK(rc, peer, reply, kvptr, 1, PMIX_KVAL);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
+    trk = NULL;
+    PMIX_LIST_FOREACH(t, &myhashes, pmix_hash_trkr_t) {
+        if (0 == strcmp(ns->nspace, t->ns)) {
+            trk = t;
             break;
         }
     }
-
-  release:
-    /* cleanup */
-    if (NULL != nodes) {
-        pmix_argv_free(nodes);
+    if (NULL == trk) {
+        return PMIX_ERR_INVALID_NAMESPACE;
     }
-    if (NULL != procs) {
-        pmix_argv_free(procs);
+    /* the job data is stored on the internal hash table */
+    ht = &trk->internal;
+
+    /* fetch all values from the hash table tied to rank=wildcard */
+    val = NULL;
+    rc = pmix_hash_fetch(ht, PMIX_RANK_WILDCARD, NULL, &val);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        if (NULL != val) {
+            PMIX_VALUE_RELEASE(val);
+        }
+        return rc;
     }
 
+    if (NULL == val->data.darray ||
+        PMIX_INFO != val->data.darray->type ||
+        0 == val->data.darray->size) {
+        return PMIX_ERR_NOT_FOUND;
+    }
+    info = (pmix_info_t*)val->data.darray->array;
+    ninfo = val->data.darray->size;
+    for (n=0; n < ninfo; n++) {
+        kv.key = info[n].key;
+        kv.value = &info[n].value;
+        PMIX_BFROPS_PACK(rc, peer, reply, &kv, 1, PMIX_KVAL);
+    }
+    if (NULL != val) {
+        PMIX_VALUE_RELEASE(val);
+    }
+
+    PMIX_LIST_FOREACH(rinfo, &ns->ranks, pmix_rank_info_t) {
+        val = NULL;
+        rc = pmix_hash_fetch(ht, rinfo->pname.rank, NULL, &val);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            if (NULL != val) {
+                PMIX_VALUE_RELEASE(val);
+            }
+            return rc;
+        }
+
+        PMIX_CONSTRUCT(&buf, pmix_buffer_t);
+        rank = rinfo->pname.rank;
+        PMIX_BFROPS_PACK(rc, peer, &buf, &rank, 1, PMIX_PROC_RANK);
+
+        info = (pmix_info_t*)val->data.darray->array;
+        ninfo = val->data.darray->size;
+        for (n=0; n < ninfo; n++) {
+            kv.key = info[n].key;
+            kv.value = &info[n].value;
+            PMIX_BFROPS_PACK(rc, peer, &buf, &kv, 1, PMIX_KVAL);
+        }
+        kv.key = PMIX_PROC_BLOB;
+        kv.value = &blob;
+        blob.type = PMIX_BYTE_OBJECT;
+        PMIX_UNLOAD_BUFFER(&buf, blob.data.bo.bytes, blob.data.bo.size);
+        PMIX_BFROPS_PACK(rc, peer, reply, &kv, 1, PMIX_KVAL);
+        PMIX_VALUE_DESTRUCT(&blob);
+        PMIX_DESTRUCT(&buf);
+
+        if (NULL != val) {
+            PMIX_VALUE_RELEASE(val);
+        }
+    }
     return rc;
 }
 
@@ -796,14 +659,6 @@ static pmix_status_t hash_register_job_info(struct pmix_peer_t *pr,
                         "[%s:%d] gds:hash:register_job_info for peer [%s:%d]",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         peer->info->pname.nspace, peer->info->pname.rank);
-
-
-    /* NOTE: we do not need to worry here about PMIX_REGISTER_NODATA
-     * as there will be no jobinfo stored on this nspace object
-     * if that directive has been given */
-    if (NULL == ns->jobinfo) {
-        return PMIX_SUCCESS;
-    }
 
     /* first see if we already have processed this data
      * for another peer in this nspace so we don't waste
