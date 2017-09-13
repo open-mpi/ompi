@@ -14,4 +14,5 @@ headers += \
 
 libmca_reachable_la_SOURCES += \
 	base/reachable_base_frame.c \
-	base/reachable_base_select.c
+	base/reachable_base_select.c \
+	base/reachable_base_alloc.c

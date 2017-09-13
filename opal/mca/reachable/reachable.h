@@ -3,6 +3,8 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,12 +17,37 @@
 
 #include "opal_config.h"
 #include "opal/types.h"
+#include "opal/class/opal_object.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/if/if.h"
 
+
 BEGIN_C_DECLS
 
+/**
+ * Reachability matrix between endpoints of a given pair of hosts
+ *
+ * The output of the reachable() call is a opal_reachable_t, which
+ * gives an matrix of the connectivity between local and remote
+ * ethernet endpoints.  Any given value in weights is the connectivity
+ * between the local endpoint index (first index) and the remote
+ * endpoint index (second index), and is a value between 0 and INT_MAX
+ * representing a relative connectivity.
+ */
+struct opal_reachable_t {
+    opal_object_t super;
+    /** number of local interfaces passed to reachable() */
+    int num_local;
+    /** number of remote interfaces passed to reachable() */
+    int num_remote;
+    /** matric of connectivity weights */
+    int **weights;
+    /** \internal */
+    void *memory;
+};
+typedef struct opal_reachable_t opal_reachable_t;
+OBJ_CLASS_DECLARATION(opal_reachable_t);
 
 /* Init */
 typedef int (*opal_reachable_base_module_init_fn_t)(void);
@@ -28,20 +55,19 @@ typedef int (*opal_reachable_base_module_init_fn_t)(void);
 /* Finalize */
 typedef int (*opal_reachable_base_module_fini_fn_t)(void);
 
-/* Given a list of local interfaces and a list of remote
- * interfaces, return the interface that is the "best"
- * for connecting to the remote process.
+/* Build reachability matrix between local and remote ethernet
+ * interfaces
  *
- * local_if: list of local opal_if_t interfaces
- * remote_if: list of opal_if_t interfaces for the remote
- *            process
+ * Given a list of local interfaces and remote interfaces from a
+ * single peer, build a reachability matrix between the two peers.
+ * This function does not select the best pairing of local and remote
+ * interfaces, but only a (comparable) reachability between any pair
+ * of local/remote interfaces.
  *
- * return value: pointer to opal_if_t on local_if that is
- *               the "best" option for connecting. NULL
- *               indicates that the remote process cannot
- *               be reached on any interface
+ * @returns a reachable object containing the reachability matrix on
+ * success, NULL on failure.
  */
-typedef opal_if_t*
+typedef opal_reachable_t*
 (*opal_reachable_base_module_reachable_fn_t)(opal_list_t *local_if,
                                              opal_list_t *remote_if);
 
@@ -65,7 +91,7 @@ typedef struct {
 /*
  * Macro for use in components that are of type reachable
  */
-#define OPAL_REACHABLE_BASE_VERSION_2_0_0 \
+#define OPAL_REACHABLE_BASE_VERSION_2_0_0             \
     OPAL_MCA_BASE_VERSION_2_1_0("reachable", 2, 0, 0)
 
 /* Global structure for accessing reachability functions */
