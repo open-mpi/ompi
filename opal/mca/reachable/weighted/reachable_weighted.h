@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +21,7 @@
 #include <sys/un.h>
 #endif
 
+#include "opal/mca/reachable/reachable.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/proc.h"

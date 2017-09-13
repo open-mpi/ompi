@@ -34,8 +34,8 @@ static int netlink_fini(void)
     return OPAL_SUCCESS;
 }
 
-static opal_if_t* netlink_reachable(opal_list_t *local_if,
-                                     opal_list_t *remote_if)
+static opal_reachable_t* netlink_reachable(opal_list_t *local_if,
+                                           opal_list_t *remote_if)
 {
     /* JMS Fill me in */
     return NULL;

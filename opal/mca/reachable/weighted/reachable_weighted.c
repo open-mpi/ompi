@@ -5,6 +5,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,29 +22,40 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_MATH_H
+#include <math.h>
+#endif
 
 #include "opal/mca/if/if.h"
 
 #include "opal/mca/reachable/base/base.h"
 #include "reachable_weighted.h"
+#include "opal/util/net.h"
 
 static int weighted_init(void);
 static int weighted_fini(void);
-static opal_if_t* weighted_reachable(opal_list_t *local_if,
-                                     opal_list_t *remote_if);
+static opal_reachable_t* weighted_reachable(opal_list_t *local_if,
+                                            opal_list_t *remote_if);
+
+static int get_weights(opal_if_t *local_if, opal_if_t *remote_if);
+static int calculate_weight(int bandwidth_local, int bandwidth_remote,
+                            int connection_quality);
 
 /*
- * describes the quality of a possible connection between a local and
- * a remote network interface
+ * Describes the quality of a possible connection between a local and
+ * a remote network interface.  Highest connection quality is assigned
+ * to connections between interfaces on same network.  This is because
+ * same network implies a single hop to destination.  Public addresses
+ * are preferred over private addresses.  This is all guessing,
+ * because we don't know actual network topology.
  */
 enum connection_quality {
-    CQ_NO_CONNECTION,
-    CQ_PRIVATE_DIFFERENT_NETWORK,
-    CQ_PRIVATE_SAME_NETWORK,
-    CQ_PUBLIC_DIFFERENT_NETWORK,
-    CQ_PUBLIC_SAME_NETWORK
+    CQ_NO_CONNECTION = 0,
+    CQ_PRIVATE_DIFFERENT_NETWORK = 50,
+    CQ_PRIVATE_SAME_NETWORK = 80,
+    CQ_PUBLIC_DIFFERENT_NETWORK = 90,
+    CQ_PUBLIC_SAME_NETWORK = 100
 };
-
 
 const opal_reachable_base_module_t opal_reachable_weighted_module = {
     weighted_init,
@@ -52,6 +65,7 @@ const opal_reachable_base_module_t opal_reachable_weighted_module = {
 
 // local variables
 static int init_cntr = 0;
+
 
 static int weighted_init(void)
 {
@@ -67,207 +81,183 @@ static int weighted_fini(void)
     return OPAL_SUCCESS;
 }
 
-static opal_if_t* weighted_reachable(opal_list_t *local_if,
-                                     opal_list_t *remote_if)
+
+static opal_reachable_t* weighted_reachable(opal_list_t *local_if,
+                                            opal_list_t *remote_if)
 {
-    size_t perm_size, num_local_interfaces, num_peer_interfaces;
-    enum connection_quality **weights;
+    opal_reachable_t *reachable_results = NULL;
+    int i, j;
+    opal_if_t *local_iter, *remote_iter;
 
-    /*
-     * assign weights to each possible pair of interfaces
-     */
-    num_local_interfaces = opal_list_get_size(local_if);
-    num_peer_interfaces = opal_list_get_size(remote_if);
-
-    perm_size = num_local_interfaces;
-    if (num_peer_interfaces > perm_size) {
-        perm_size = num_peer_interfaces;
+    reachable_results = opal_reachable_allocate(opal_list_get_size(local_if),
+                                                opal_list_get_size(remote_if));
+    if (NULL == reachable_results) {
+        return NULL;
     }
 
-    weights = (enum connection_quality**)malloc(perm_size * sizeof(enum connection_quality*));
-
-    best_addr = (mca_btl_tcp_addr_t ***) malloc(perm_size
-                                                * sizeof(mca_btl_tcp_addr_t **));
-    for(i = 0; i < perm_size; ++i) {
-        weights[i] = (enum connection_quality*) malloc(perm_size * sizeof(enum connection_quality));
-        memset(weights[i], 0, perm_size * sizeof(enum connection_quality));
-
-        best_addr[i] = (mca_btl_tcp_addr_t **) malloc(perm_size * sizeof(mca_btl_tcp_addr_t *));
-        memset(best_addr[i], 0, perm_size * sizeof(mca_btl_tcp_addr_t *));
+    i = 0;
+    OPAL_LIST_FOREACH(local_iter, local_if, opal_if_t) {
+        j = 0;
+        OPAL_LIST_FOREACH(remote_iter, remote_if, opal_if_t) {
+            reachable_results->weights[i][j] = get_weights(local_iter, remote_iter);
+            j++;
+        }
+        i++;
     }
 
-    for(i=0; i<num_local_interfaces; ++i) {
-        for(j=0; j<num_peer_interfaces; ++j) {
+    return reachable_results;
+}
 
-            /*  initially, assume no connection is possible */
-            weights[i][j] = CQ_NO_CONNECTION;
 
-            /* check state of ipv4 address pair */
-            if (NULL != local_interfaces[i]->ipv4_address &&
-                NULL != peer_interfaces[j]->ipv4_address) {
+static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
+{
+    char str_local[128], str_remote[128], *conn_type;
+    struct sockaddr *local_sockaddr, *remote_sockaddr;
+    int weight;
 
-                /*  check for loopback */
-                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address)
-                     && !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address))
-                    || (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address)
-                        && !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address))
-                    || (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address)
-                        && !opal_ifislocal(proc_hostname))) {
+    local_sockaddr = (struct sockaddr *)&local_if->if_addr;
+    remote_sockaddr = (struct sockaddr *)&remote_if->if_addr;
 
-                    /* No connection is possible on these interfaces */
+    /* opal_net_get_hostname returns a static buffer.  Great for
+       single address printfs, need to copy in this case */
+    strncpy(str_local, opal_net_get_hostname(local_sockaddr), sizeof(str_local));
+    strncpy(str_remote, opal_net_get_hostname(remote_sockaddr), sizeof(str_remote));
 
-                    /*  check for RFC1918 */
-                } else if(opal_net_addr_isipv4public((struct sockaddr*) local_interfaces[i]->ipv4_address)
-                          && opal_net_addr_isipv4public((struct sockaddr*)
-                                                        peer_interfaces[j]->ipv4_address)) {
-                    if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
-                                            (struct sockaddr*) peer_interfaces[j]->ipv4_address,
-                                            local_interfaces[i]->ipv4_netmask)) {
-                        weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
-                    } else {
-                        weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
-                    }
-                    best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
-                    continue;
-                } else {
-                    if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
-                                            (struct sockaddr*) peer_interfaces[j]->ipv4_address,
-                                            local_interfaces[i]->ipv4_netmask)) {
-                        weights[i][j] = CQ_PRIVATE_SAME_NETWORK;
-                    } else {
-                        weights[i][j] = CQ_PRIVATE_DIFFERENT_NETWORK;
-                    }
-                    best_addr[i][j] = peer_interfaces[j]->ipv4_endpoint_addr;
-                }
+    /*  initially, assume no connection is possible */
+    weight = calculate_weight(0, 0, CQ_NO_CONNECTION);
+
+    if (AF_INET == local_sockaddr->sa_family &&
+        AF_INET == remote_sockaddr->sa_family) {
+
+        if (opal_net_addr_isipv4public(local_sockaddr) &&
+            opal_net_addr_isipv4public(remote_sockaddr)) {
+            if (opal_net_samenetwork(local_sockaddr,
+                                     remote_sockaddr,
+                                     local_if->if_mask)) {
+                conn_type = "IPv4 PUBLIC SAME NETWORK";
+                weight = calculate_weight(local_if->if_bandwidth,
+                                          remote_if->if_bandwidth,
+                                          CQ_PUBLIC_SAME_NETWORK);
+            } else {
+                conn_type = "IPv4 PUBLIC DIFFERENT NETWORK";
+                weight = calculate_weight(local_if->if_bandwidth,
+                                          remote_if->if_bandwidth,
+                                          CQ_PUBLIC_DIFFERENT_NETWORK);
             }
+        } else if (!opal_net_addr_isipv4public(local_sockaddr) &&
+                   !opal_net_addr_isipv4public(remote_sockaddr)) {
+            if (opal_net_samenetwork(local_sockaddr,
+                                     remote_sockaddr,
+                                     local_if->if_mask)) {
+                conn_type = "IPv4 PRIVATE SAME NETWORK";
+                weight = calculate_weight(local_if->if_bandwidth,
+                                          remote_if->if_bandwidth,
+                                          CQ_PRIVATE_SAME_NETWORK);
+            } else {
+                conn_type = "IPv4 PRIVATE DIFFERENT NETWORK";
+                weight = calculate_weight(local_if->if_bandwidth,
+                                          remote_if->if_bandwidth,
+                                          CQ_PRIVATE_DIFFERENT_NETWORK);
+            }
+        } else {
+            /* one private, one public address.  likely not a match. */
+            conn_type = "IPv4 NO CONNECTION";
+            weight = calculate_weight(local_if->if_bandwidth,
+                                      remote_if->if_bandwidth,
+                                      CQ_NO_CONNECTION);
+        }
 
-            /* check state of ipv6 address pair - ipv6 is always public,
-             * since link-local addresses are skipped in opal_ifinit()
+#if OPAL_ENABLE_IPV6
+    } else if (AF_INET6 == local_sockaddr->sa_family &&
+               AF_INET6 == remote_sockaddr->sa_family) {
+        if (opal_net_addr_isipv6linklocal(local_sockaddr) &&
+            opal_net_addr_isipv6linklocal(remote_sockaddr)) {
+            /* we can't actually tell if link local addresses are on
+             * the same network or not with the weighted component.
+             * Assume they are on the same network, so that they'll be
+             * most likely to be paired together, breaking the fewest
+             * number of connections.
+             *
+             * There used to be a comment in this code (and one in the
+             * BTL TCP code as well) that the opal_if code doesn't
+             * pass link-local addresses through.  However, this is
+             * demonstratably not true on Linux, where link-local
+             * interfaces are created.  Since it's easy to handle
+             * either case, do so.
              */
-            if(NULL != local_interfaces[i]->ipv6_address &&
-               NULL != peer_interfaces[j]->ipv6_address) {
-
-                /*  check for loopback */
-                if ((opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address)
-                     && !opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address))
-                    || (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address)
-                        && !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address))
-                    || (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address)
-                        && !opal_ifislocal(proc_hostname))) {
-
-                    /* No connection is possible on these interfaces */
-
-                } else if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv6_address,
-                                               (struct sockaddr*) peer_interfaces[j]->ipv6_address,
-                                               local_interfaces[i]->ipv6_netmask)) {
-                    weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
-                } else {
-                    weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
-                }
-                best_addr[i][j] = peer_interfaces[j]->ipv6_endpoint_addr;
+            conn_type = "IPv6 LINK-LOCAL SAME NETWORK";
+            weight = calculate_weight(local_if->if_bandwidth,
+                                      remote_if->if_bandwidth,
+                                      CQ_PRIVATE_SAME_NETWORK);
+        } else if (!opal_net_addr_isipv6linklocal(local_sockaddr) &&
+                   !opal_net_addr_isipv6linklocal(remote_sockaddr)) {
+            if (opal_net_samenetwork(local_sockaddr,
+                                     remote_sockaddr,
+                                     local_if->if_mask)) {
+                conn_type = "IPv6 PUBLIC SAME NETWORK";
+                weight = calculate_weight(local_if->if_bandwidth,
+                                          remote_if->if_bandwidth,
+                                          CQ_PUBLIC_SAME_NETWORK);
+            } else {
+                conn_type = "IPv6 PUBLIC DIFFERENT NETWORK";
+                weight = calculate_weight(local_if->if_bandwidth,
+                                          remote_if->if_bandwidth,
+                                          CQ_PUBLIC_DIFFERENT_NETWORK);
             }
-
-        } /* for each peer interface */
-    } /* for each local interface */
-
-    /*
-     * determine the size of the set to permute (max number of
-     * interfaces
-     */
-
-    best_assignment = (unsigned int *) malloc (perm_size * sizeof(int));
-
-    a = (int *) malloc(perm_size * sizeof(int));
-    if (NULL == a) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* Can only find the best set of connections when the number of
-     * interfaces is not too big.  When it gets larger, we fall back
-     * to a simpler and faster (and not as optimal) algorithm.
-     * See ticket https://svn.open-mpi.org/trac/ompi/ticket/2031
-     * for more details about this issue.  */
-    if (perm_size <= MAX_PERMUTATION_INTERFACES) {
-        memset(a, 0, perm_size * sizeof(int));
-        max_assignment_cardinality = -1;
-        max_assignment_weight = -1;
-        visit(0, -1, perm_size, a);
-
-        rc = OPAL_ERR_UNREACH;
-        for(i = 0; i < perm_size; ++i) {
-            if(best_assignment[i] > num_peer_interfaces
-               || weights[i][best_assignment[i]] == CQ_NO_CONNECTION
-               || peer_interfaces[best_assignment[i]]->inuse
-               || NULL == peer_interfaces[best_assignment[i]]) {
-                continue;
-            }
-            peer_interfaces[best_assignment[i]]->inuse++;
-            btl_endpoint->endpoint_addr = best_addr[i][best_assignment[i]];
-            btl_endpoint->endpoint_addr->addr_inuse++;
-            rc = OPAL_SUCCESS;
-            break;
+        } else {
+            /* one link-local, one public address.  likely not a match. */
+            conn_type = "IPv6 NO CONNECTION";
+            weight = calculate_weight(local_if->if_bandwidth,
+                                      remote_if->if_bandwidth,
+                                      CQ_NO_CONNECTION);
         }
+#endif /* #if OPAL_ENABLE_IPV6 */
+
     } else {
-        enum mca_btl_tcp_connection_quality max;
-        int i_max = 0, j_max = 0;
-        /* Find the best connection that is not in use.  Save away
-         * the indices of the best location. */
-        max = CQ_NO_CONNECTION;
-        for(i=0; i<num_local_interfaces; ++i) {
-            for(j=0; j<num_peer_interfaces; ++j) {
-                if (!peer_interfaces[j]->inuse) {
-                    if (weights[i][j] > max) {
-                        max = weights[i][j];
-                        i_max = i;
-                        j_max = j;
-                    }
-                }
-            }
-        }
-        /* Now see if there is a some type of connection available. */
-        rc = OPAL_ERR_UNREACH;
-        if (CQ_NO_CONNECTION != max) {
-            peer_interfaces[j_max]->inuse++;
-            btl_endpoint->endpoint_addr = best_addr[i_max][j_max];
-            btl_endpoint->endpoint_addr->addr_inuse++;
-            rc = OPAL_SUCCESS;
-        }
+        /* we don't have an address family match, so assume no
+           connection */
+        conn_type = "Address type mismatch";
+        weight = calculate_weight(0, 0, CQ_NO_CONNECTION);
     }
 
-    for(i = 0; i < perm_size; ++i) {
-        free(weights[i]);
-        free(best_addr[i]);
-    }
+    opal_output_verbose(20, opal_reachable_base_framework.framework_output,
+                        "reachable:weighted: path from %s to %s: %s",
+                        str_local, str_remote, conn_type);
 
-    for(i = 0; i < num_peer_interfaces; ++i) {
-        if(NULL != peer_interfaces[i]->ipv4_address) {
-            free(peer_interfaces[i]->ipv4_address);
-        }
-        if(NULL != peer_interfaces[i]->ipv6_address) {
-            free(peer_interfaces[i]->ipv6_address);
-        }
-        free(peer_interfaces[i]);
-    }
-    free(peer_interfaces);
-    peer_interfaces = NULL;
-    max_peer_interfaces = 0;
+    return weight;
+}
 
-    for(i = 0; i < num_local_interfaces; ++i) {
-        if(NULL != local_interfaces[i]->ipv4_address) {
-            free(local_interfaces[i]->ipv4_address);
-        }
-        if(NULL != local_interfaces[i]->ipv6_address) {
-            free(local_interfaces[i]->ipv6_address);
-        }
-        free(local_interfaces[i]);
-    }
-    free(local_interfaces);
-    local_interfaces = NULL;
-    max_local_interfaces = 0;
 
-    free(weights);
-    free(best_addr);
-    free(best_assignment);
-    free(a);
-    return false;
+/*
+ * Weights determined by bandwidth between
+ * interfaces (limited by lower bandwidth
+ * interface).  A penalty is added to minimize
+ * the discrepancy in bandwidth.  This helps
+ * prevent pairing of fast and slow interfaces
+ *
+ * Formula: connection_quality * (min(a,b) + 1/(1 + |a-b|))
+ *
+ * Examples: a     b     f(a,b)
+ *           0     0     1
+ *           0     1     0.5
+ *           1     1     2
+ *           1     2     1.5
+ *           1     3     1.33
+ *           1     10    1.1
+ *           10    10    11
+ *           10    14    10.2
+ *           11    14    11.25
+ *           11    15    11.2
+ *
+ * NOTE: connection_quality of 1 is assumed for examples.
+ * In reality, since we're using integers, we need
+ * connection_quality to be large enough
+ * to capture decimals
+ */
+static int calculate_weight(int bandwidth_local, int bandwidth_remote,
+                            int connection_quality)
+{
+    int weight = connection_quality * (MIN(bandwidth_local, bandwidth_remote) +
+                                       1.0 / (1.0 + (double)abs(bandwidth_local - bandwidth_remote)));
+    return weight;
 }
