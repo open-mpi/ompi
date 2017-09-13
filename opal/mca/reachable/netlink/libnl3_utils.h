@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014, Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  *
  * Portions of this software copied from libfabric
  * (https://github.com/ofiwg/libfabric)
@@ -69,12 +71,12 @@ typedef struct nl_sock NL_HANDLE;
 		} \
 	} while (0)
 
-struct usnic_rt_cb_arg {
+struct opal_reachable_netlink_rt_cb_arg {
 	uint32_t		nh_addr;
 	int			oif;
 	int			found;
 	int			replied;
-	struct usnic_nl_sk	*unlsk;
+	struct opal_reachable_netlink_sk	*unlsk;
 };
 
 #endif /* LIBNL3_UTILS_H */
