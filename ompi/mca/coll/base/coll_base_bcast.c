@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -226,6 +226,242 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
 }
 
 int
+ompi_coll_base_bcast_intra_generic2( void* buffer,
+                                     int count,
+                                     struct ompi_datatype_t* datatype,
+                                     int root,
+                                     struct ompi_communicator_t* comm,
+                                     mca_coll_base_module_t *module,
+                                     size_t segment_size,
+                                     ompi_coll_tree_t* tree )
+{
+    int err = 0, line, i, rank, segindex, req_index;
+    opal_convertor_t send_convertors[2], recv_convertors[2];
+    char *tmpbuf;
+    size_t offset = 0;
+    size_t next_offset;
+    size_t size;
+    size_t remaining;
+    size_t total_size;
+    int scindex = 0;
+    ompi_request_t *recv_reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
+    ompi_request_t **send_reqs = NULL;
+    ompi_datatype_size(datatype, &remaining);
+    remaining *= count;
+
+#if OPAL_ENABLE_DEBUG
+    assert( ompi_comm_size(comm) > 1 );
+#endif
+    rank = ompi_comm_rank(comm);
+
+#if 1
+    /* FIXME OBJ_RETAIN(datatype) ? */
+    OBJ_CONSTRUCT(&send_convertors[0], opal_convertor_t);
+    OBJ_CONSTRUCT(&send_convertors[1], opal_convertor_t);
+    OBJ_CONSTRUCT(&recv_convertors[0], opal_convertor_t);
+    OBJ_CONSTRUCT(&recv_convertors[1], opal_convertor_t);
+    send_convertors[0].stack_pos = -1;
+    send_convertors[1].stack_pos = -1;
+    recv_convertors[0].stack_pos = -1;
+    recv_convertors[1].stack_pos = -1;
+    if( tree->tree_nextsize != 0 ) {
+        send_reqs = coll_base_comm_get_reqs(module->base_data, tree->tree_nextsize);
+        if( NULL == send_reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto error_hndl; }
+    }
+
+    /* Root code */
+    if( rank == root ) {
+        ompi_proc_t* proc = ompi_comm_peer_lookup(comm,tree->tree_next[i]);
+        /* We will create a convertor specialized for the        */
+        /* remote architecture and prepared with the type.       */
+        opal_convertor_copy_and_prepare_for_send(
+                           proc->super.proc_convertor,
+                           &(type->super),
+                           count,
+                           buf,
+                           0,
+                           &send_convertors[0] );
+        opal_convertor_copy_and_prepare_for_send(
+                           proc->super.proc_convertor,
+                           &(type->super),
+                           count,
+                           buf,
+                           0,
+                           &send_convertors[1] );
+        opal_convertor_set_position(&convertor, &offset);
+        while (remaining) {
+            next_offset = offset + (segment_size<remaining?segment_size:remaining);
+            opal_convertor_set_position(&send_convertors[sc_index ^ 1], &next_offset);
+            if (offset == next_offset) {
+                /*
+                 * that can only happen if the segment is too small and would be truncated to zero
+                 * in this case, send everything
+                 */
+                next_offset = offset + remaining;
+            }
+            size = next_offset - offset;
+            err = MCA_PML_CALL(icsend(&send_convertors[sc_index],
+                                     tree->tree_next[i],
+                                     MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm,
+                                      &send_reqs[i]));
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+            offset = next_offset;
+            remaining -= size;
+            i++; sc_index ^= 1;
+        }
+        /*
+           For each segment:
+           - send segment to all children.
+           The last segment may have less elements than other segments.
+        */
+        sendcount = count_by_segment;
+        for( segindex = 0; segindex < num_segments; segindex++ ) {
+            if( segindex == (num_segments - 1) ) {
+                sendcount = original_count - segindex * count_by_segment;
+            }
+            for( i = 0; i < tree->tree_nextsize; i++ ) {
+                err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
+                                         tree->tree_next[i],
+                                         MCA_COLL_BASE_TAG_BCAST,
+                                         MCA_PML_BASE_SEND_STANDARD, comm,
+                                         &send_reqs[i]));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+            }
+
+            /* complete the sends before starting the next sends */
+            err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
+                                         MPI_STATUSES_IGNORE );
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+
+            /* update tmp buffer */
+            tmpbuf += realsegsize;
+
+        }
+    }
+
+    /* Intermediate nodes code */
+    else if( tree->tree_nextsize > 0 ) {
+        /*
+           Create the pipeline.
+           1) Post the first receive
+           2) For segments 1 .. num_segments
+           - post new receive
+           - wait on the previous receive to complete
+           - send this data to children
+           3) Wait on the last segment
+           4) Compute number of elements in last segment.
+           5) Send the last segment to children
+        */
+        req_index = 0;
+        err = MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
+                                 tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+                                 comm, &recv_reqs[req_index]));
+        if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+
+        for( segindex = 1; segindex < num_segments; segindex++ ) {
+
+            req_index = req_index ^ 0x1;
+
+            /* post new irecv */
+            err = MCA_PML_CALL(irecv( tmpbuf + realsegsize, count_by_segment,
+                                      datatype, tree->tree_prev,
+                                      MCA_COLL_BASE_TAG_BCAST,
+                                      comm, &recv_reqs[req_index]));
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+
+            /* wait for and forward the previous segment to children */
+            err = ompi_request_wait( &recv_reqs[req_index ^ 0x1],
+                                     MPI_STATUS_IGNORE );
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+
+            for( i = 0; i < tree->tree_nextsize; i++ ) {
+                err = MCA_PML_CALL(isend(tmpbuf, count_by_segment, datatype,
+                                         tree->tree_next[i],
+                                         MCA_COLL_BASE_TAG_BCAST,
+                                         MCA_PML_BASE_SEND_STANDARD, comm,
+                                         &send_reqs[i]));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+            }
+
+            /* complete the sends before starting the next iteration */
+            err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
+                                         MPI_STATUSES_IGNORE );
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+
+            /* Update the receive buffer */
+            tmpbuf += realsegsize;
+
+        }
+
+        /* Process the last segment */
+        err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUS_IGNORE );
+        if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+        sendcount = original_count - (ptrdiff_t)(num_segments - 1) * count_by_segment;
+        for( i = 0; i < tree->tree_nextsize; i++ ) {
+            err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
+                                     tree->tree_next[i],
+                                     MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm,
+                                     &send_reqs[i]));
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+        }
+
+        err = ompi_request_wait_all( tree->tree_nextsize, send_reqs,
+                                     MPI_STATUSES_IGNORE );
+        if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+    }
+
+    /* Leaf nodes */
+    else {
+        /*
+           Receive all segments from parent in a loop:
+           1) post irecv for the first segment
+           2) for segments 1 .. num_segments
+           - post irecv for the next segment
+           - wait on the previous segment to arrive
+           3) wait for the last segment
+        */
+        req_index = 0;
+        err = MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
+                                 tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+                                 comm, &recv_reqs[req_index]));
+        if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+
+        for( segindex = 1; segindex < num_segments; segindex++ ) {
+            req_index = req_index ^ 0x1;
+            tmpbuf += realsegsize;
+            /* post receive for the next segment */
+            err = MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
+                                     tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+                                     comm, &recv_reqs[req_index]));
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+            /* wait on the previous segment */
+            err = ompi_request_wait( &recv_reqs[req_index ^ 0x1],
+                                     MPI_STATUS_IGNORE );
+            if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+        }
+
+        err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUS_IGNORE );
+        if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+    }
+
+    return (MPI_SUCCESS);
+
+ error_hndl:
+    OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
+                  __FILE__, line, err, rank) );
+    (void)line;  // silence compiler warnings
+    ompi_coll_base_free_reqs( recv_reqs, 2);
+    if( NULL != send_reqs ) {
+        ompi_coll_base_free_reqs(send_reqs, tree->tree_nextsize);
+    }
+#endif
+
+    return err;
+}
+
+int
 ompi_coll_base_bcast_intra_bintree ( void* buffer,
                                       int count,
                                       struct ompi_datatype_t* datatype,
@@ -262,23 +498,15 @@ ompi_coll_base_bcast_intra_pipeline( void* buffer,
                                       mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
-    int segcount = count;
-    size_t typelng;
     mca_coll_base_comm_t *data = module->base_data;
 
     COLL_BASE_UPDATE_PIPELINE( comm, module, root );
 
-    /**
-     * Determine number of elements sent per operation.
-     */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_pipeline rank %d ss %5d",
+                 ompi_comm_rank(comm), segsize));
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:bcast_intra_pipeline rank %d ss %5d typelng %lu segcount %d",
-                 ompi_comm_rank(comm), segsize, (unsigned long)typelng, segcount));
-
-    return ompi_coll_base_bcast_intra_generic( buffer, count, datatype, root, comm, module,
-                                                segcount, data->cached_pipeline );
+    return ompi_coll_base_bcast_intra_generic2( buffer, count, datatype, root, comm, module,
+                                                segsize, data->cached_pipeline );
 }
 
 int

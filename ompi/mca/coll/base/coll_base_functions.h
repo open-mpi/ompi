@@ -14,7 +14,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
@@ -214,6 +214,7 @@ int ompi_coll_base_barrier_intra_basic_linear(BARRIER_ARGS);
 
 /* Bcast */
 int ompi_coll_base_bcast_intra_generic(BCAST_ARGS, uint32_t count_by_segment, ompi_coll_tree_t* tree);
+int ompi_coll_base_bcast_intra_generic2(BCAST_ARGS, size_t segment_size, ompi_coll_tree_t* tree);
 int ompi_coll_base_bcast_intra_basic_linear(BCAST_ARGS);
 int ompi_coll_base_bcast_intra_chain(BCAST_ARGS, uint32_t segsize, int32_t chains);
 int ompi_coll_base_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
