@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -36,7 +36,8 @@ check_PROGRAMS = \
 	opal_value_array \
 	opal_pointer_array \
 	opal_lifo \
-	opal_fifo
+	opal_fifo \
+	opal_atomic_lock
 
 TESTS = $(check_PROGRAMS)
 
@@ -100,6 +101,12 @@ opal_fifo_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 	$(top_builddir)/test/support/libsupport.a
 opal_fifo_DEPENDENCIES = $(opal_fifo_LDADD)
+
+opal_atomic_lock_SOURCES = opal_atomic_lock.c
+opal_atomic_lock_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+	$(top_builddir)/test/support/libsupport.a
+opal_atomic_lock_DEPENDENCIES = $(opal_atomic_lock_LDADD)
 
 clean-local:
 	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt opal_proc_table_test_out.txt
