@@ -18,6 +18,8 @@
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +51,7 @@
 #include "opal/mca/patcher/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/reachable/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/if/base/base.h"
@@ -593,6 +596,16 @@ opal_init(int* pargc, char*** pargv)
 
     if (OPAL_SUCCESS != (ret = opal_shmem_base_select())) {
         error = "opal_shmem_base_select";
+        goto return_error;
+    }
+
+    /* Load reachable framework */
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_reachable_base_framework, 0))){
+        error = "opal_reachable_base_framework";
+        goto return_error;
+    }
+    if (OPAL_SUCCESS != (ret = opal_reachable_base_select())) {
+        error = "opal_reachable_base_select";
         goto return_error;
     }
 
