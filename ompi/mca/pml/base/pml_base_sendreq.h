@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -87,6 +87,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
       (request)->req_send_mode = mode;                                    \
       (request)->req_base.req_addr = (void *)addr;                        \
       (request)->req_base.req_count = count;                              \
+      (request)->req_base.req_offset= 0;                                  \
       (request)->req_base.req_datatype = datatype;                        \
       (request)->req_base.req_peer = (int32_t)peer;                       \
       (request)->req_base.req_tag = (int32_t)tag;                         \

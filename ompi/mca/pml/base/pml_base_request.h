@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -72,6 +72,7 @@ struct mca_pml_base_request_t {
 
     void *req_addr;                       /**< pointer to application buffer */
     size_t req_count;                     /**< count of user datatype elements */
+    size_t req_offset;                    /**< offset the request starts at */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
     int32_t req_tag;                      /**< user defined tag */
     struct ompi_proc_t* req_proc;         /**< peer process */

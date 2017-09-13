@@ -14,6 +14,8 @@
  * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -457,6 +459,34 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
     sendreq->req_send.req_base.req_sequence = seqn;
 
     MCA_PML_BASE_SEND_START( &sendreq->req_send );
+
+    for(size_t i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
+        mca_bml_base_btl_t* bml_btl;
+        int rc;
+
+        /* select a btl */
+        bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+        rc = mca_pml_ob1_send_request_start_btl(sendreq, bml_btl);
+        if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != rc) )
+            return rc;
+    }
+    add_request_to_send_pending(sendreq, MCA_PML_OB1_SEND_PENDING_START, true);
+
+    return OMPI_SUCCESS;
+}
+
+static inline int
+mca_pml_ob1_send_request_start_seq_size (mca_pml_ob1_send_request_t* sendreq, mca_bml_base_endpoint_t* endpoint, int32_t seqn, size_t *size)
+{
+    sendreq->req_endpoint = endpoint;
+    sendreq->req_state = 0;
+    sendreq->req_lock = 0;
+    sendreq->req_pipeline_depth = 0;
+    sendreq->req_bytes_delivered = 0;
+    sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
+    sendreq->req_send.req_base.req_sequence = seqn;
+
+    MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );
 
     for(size_t i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         mca_bml_base_btl_t* bml_btl;

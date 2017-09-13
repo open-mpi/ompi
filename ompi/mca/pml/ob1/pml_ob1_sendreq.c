@@ -977,9 +977,10 @@ cannot_pack:
         }
 
         /* pack into a descriptor */
-        offset = (size_t)range->range_send_offset;
+        offset = (size_t)range->range_send_offset + sendreq->req_send.req_base.req_offset;
         opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
                                     &offset);
+        offset -= sendreq->req_send.req_base.req_offset;
         range->range_send_offset = (uint64_t)offset;
 
         data_remaining = size;

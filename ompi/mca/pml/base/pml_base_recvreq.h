@@ -13,6 +13,8 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +76,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     (request)->req_bytes_packed = 0;                                     \
     (request)->req_base.req_addr = addr;                                 \
     (request)->req_base.req_count = count;                               \
+    (request)->req_base.req_offset = 0;                                  \
     (request)->req_base.req_peer = src;                                  \
     (request)->req_base.req_tag = tag;                                   \
     (request)->req_base.req_comm = comm;                                 \

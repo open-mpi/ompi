@@ -18,6 +18,8 @@
  *                         reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,9 +66,13 @@ mca_pml_ob1_t mca_pml_ob1 = {
         mca_pml_ob1_irecv_init,
         mca_pml_ob1_irecv,
         mca_pml_ob1_recv,
+        mca_pml_ob1_icrecv,
+        mca_pml_ob1_crecv,
         mca_pml_ob1_isend_init,
         mca_pml_ob1_isend,
         mca_pml_ob1_send,
+        mca_pml_ob1_icsend,
+        mca_pml_ob1_csend,
         mca_pml_ob1_iprobe,
         mca_pml_ob1_probe,
         mca_pml_ob1_start,

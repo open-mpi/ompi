@@ -496,7 +496,7 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
 
     bytes_received = mca_pml_ob1_compute_segment_length_base (segments, num_segments,
                                                               sizeof(mca_pml_ob1_frag_hdr_t));
-    data_offset     = hdr->hdr_frag.hdr_frag_offset;
+    data_offset     = hdr->hdr_frag.hdr_frag_offset + recvreq->req_recv.req_base.req_offset;
 
     /*
      *  Make user buffer accessible(defined) before unpacking.
@@ -1209,6 +1209,131 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         if(OPAL_LIKELY(req->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
                        req->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE))
             append_recv_req_to_queue(queue, req);
+        req->req_match_received = false;
+        OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
+    } else {
+        if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
+            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_MATCH_UNEX,
+                                    &(req->req_recv.req_base), PERUSE_RECV);
+
+            hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
+            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
+                                   req->req_recv.req_base.req_comm,
+                                   hdr->hdr_match.hdr_src,
+                                   hdr->hdr_match.hdr_tag,
+                                   PERUSE_RECV);
+
+            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
+                                    &(req->req_recv.req_base), PERUSE_RECV);
+
+            opal_list_remove_item(&proc->unexpected_frags,
+                                  (opal_list_item_t*)frag);
+            OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
+
+            switch(hdr->hdr_common.hdr_type) {
+            case MCA_PML_OB1_HDR_TYPE_MATCH:
+                mca_pml_ob1_recv_request_progress_match(req, frag->btl, frag->segments,
+                                                        frag->num_segments);
+                break;
+            case MCA_PML_OB1_HDR_TYPE_RNDV:
+                mca_pml_ob1_recv_request_progress_rndv(req, frag->btl, frag->segments,
+                                                       frag->num_segments);
+                break;
+            case MCA_PML_OB1_HDR_TYPE_RGET:
+                mca_pml_ob1_recv_request_progress_rget(req, frag->btl, frag->segments,
+                                                       frag->num_segments);
+                break;
+            default:
+                assert(0);
+            }
+
+            MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+
+        } else if (OPAL_UNLIKELY(IS_MPROB_REQ(req))) {
+            /* Remove the fragment from the match list, as it's now
+               matched.  Stash it somewhere in the request (which,
+               yes, is a complete hack), where it will be plucked out
+               during the end of mprobe.  The request will then be
+               "recreated" as a receive request, and the frag will be
+               restarted with this request during mrecv */
+            opal_list_remove_item(&proc->unexpected_frags,
+                                  (opal_list_item_t*)frag);
+            OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
+
+            req->req_recv.req_base.req_addr = frag;
+            mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
+                                                   frag->segments, frag->num_segments);
+
+        } else {
+            OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
+            mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
+                                                   frag->segments, frag->num_segments);
+        }
+    }
+}
+
+void mca_pml_ob1_recv_req_start_with_convertor(mca_pml_ob1_recv_request_t *req, opal_convertor_t *convertor, size_t size)
+{
+    ompi_communicator_t *comm = req->req_recv.req_base.req_comm;
+    mca_pml_ob1_comm_t *ob1_comm = comm->c_pml_comm;
+    mca_pml_ob1_comm_proc_t* proc;
+    mca_pml_ob1_recv_frag_t* frag;
+    opal_list_t *queue;
+    mca_pml_ob1_hdr_t* hdr;
+
+    /* init/re-init the request */
+    req->req_lock = 0;
+    req->req_pipeline_depth = 0;
+    req->req_bytes_received = 0;
+    req->req_bytes_expected = 0;
+    /* What about req_rdma_cnt ? */
+    req->req_rdma_idx = 0;
+    req->req_pending = false;
+    req->req_ack_sent = false;
+
+    MCA_PML_BASE_RECV_START(&req->req_recv.req_base);
+
+    OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
+    /**
+     * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
+     * the cost of the request lock.
+     */
+    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
+                            &(req->req_recv.req_base), PERUSE_RECV);
+
+    /* assign sequence number */
+    req->req_recv.req_base.req_sequence = ob1_comm->recv_sequence++;
+
+    /* attempt to match posted recv */
+    if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
+        frag = recv_req_match_wild(req, &proc);
+        queue = &ob1_comm->wild_receives;
+#if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+        /* As we are in a homogeneous environment we know that all remote
+         * architectures are exactly the same as the local one. Therefore,
+         * we can safely construct the convertor based on the proc
+         * information of rank 0.
+         */
+        if( NULL == frag ) {
+            req->req_recv.req_base.req_proc = ompi_proc_local_proc;
+            prepare_recv_req_convertor(req, convertor, size);
+        }
+#endif  /* !OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
+    } else {
+        proc = mca_pml_ob1_peer_lookup (comm, req->req_recv.req_base.req_peer);
+        req->req_recv.req_base.req_proc = proc->ompi_proc;
+        frag = recv_req_match_specific_proc(req, proc);
+        queue = &proc->specific_receives;
+        /* wild cardrecv will be prepared on match */
+        prepare_recv_req_convertor(req, convertor, size);
+    }
+
+    if(OPAL_UNLIKELY(NULL == frag)) {
+        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
+                                &(req->req_recv.req_base), PERUSE_RECV);
+        /* We didn't find any matches.  Record this irecv so we can match
+           it when the message comes in. */
+        append_recv_req_to_queue(queue, req);
         req->req_match_received = false;
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
     } else {

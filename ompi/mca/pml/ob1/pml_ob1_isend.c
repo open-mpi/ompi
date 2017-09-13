@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -256,6 +256,140 @@ int mca_pml_ob1_send(const void *buf,
                                   datatype,
                                   dst, tag,
                                   comm, sendmode, false);
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &sendreq->req_send.req_base,
+                             PERUSE_SEND);
+
+    MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
+    if (OPAL_LIKELY(rc == OMPI_SUCCESS)) {
+        ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
+
+        rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
+    }
+
+    if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_sendreq)) {
+        MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
+    } else {
+        mca_pml_ob1_send_request_fini (sendreq);
+        mca_pml_ob1_sendreq = sendreq;
+    }
+
+    return rc;
+}
+
+int mca_pml_ob1_icsend(opal_convertor_t* convertor,
+                       size_t *size,
+                       int dst,
+                       int tag,
+                       mca_pml_base_send_mode_t sendmode,
+                       ompi_communicator_t * comm,
+                       ompi_request_t ** request)
+{
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
+    mca_pml_ob1_send_request_t *sendreq = NULL;
+    ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
+    int16_t seqn;
+    int rc;
+
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
+
+    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
+
+#if 0
+    if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
+        rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
+                                      endpoint, comm);
+        if (OPAL_LIKELY(0 <= rc)) {
+            /* NTH: it is legal to return ompi_request_empty since the only valid
+             * field in a send completion status is whether or not the send was
+             * cancelled (which it can't be at this point anyway). */
+            *request = &ompi_request_empty;
+            return OMPI_SUCCESS;
+        }
+    }
+#endif
+
+    MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+    if (NULL == sendreq)
+        return OMPI_ERR_OUT_OF_RESOURCE;
+
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
+                                  convertor->pBaseBuf,
+                                  0,
+                                  (ompi_datatype_t *)convertor->pDesc,
+                                  dst, tag,
+                                  comm, sendmode, false);
+    sendreq->req_send.req_base.req_offset = convertor->bConverted;
+    sendreq->req_send.req_base.req_count = convertor->count;
+    opal_convertor_clone(convertor, &sendreq->req_send.req_base.req_convertor, 1);
+    sendreq->req_send.req_bytes_packed = *size;
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &(sendreq)->req_send.req_base,
+                             PERUSE_SEND);
+
+    MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
+    *request = (ompi_request_t *) sendreq;
+    return rc;
+}
+
+int mca_pml_ob1_csend(struct opal_convertor_t* convertor,
+                      size_t *size,
+                      int dst,
+                      int tag,
+                      mca_pml_base_send_mode_t sendmode,
+                      struct ompi_communicator_t* comm)
+                      
+{
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
+    ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
+    mca_pml_ob1_send_request_t *sendreq = NULL;
+    int16_t seqn;
+    int rc;
+
+#if 0
+    assert(buf == convertor->pBaseBuf);
+    assert(count == convertor->count);
+    assert(&(datatype->super) == convertor->pDesc);
+#endif
+
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
+
+    assert (MCA_PML_BASE_SEND_BUFFERED != sendmode);
+
+    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
+
+    if (OPAL_LIKELY(!ompi_mpi_thread_multiple)) {
+        sendreq = mca_pml_ob1_sendreq;
+        mca_pml_ob1_sendreq = NULL;
+    }
+
+    if( OPAL_UNLIKELY(NULL == sendreq) ) {
+        MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+        if (NULL == sendreq)
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    sendreq->req_send.req_base.req_proc = dst_proc;
+    sendreq->rdma_frag = NULL;
+
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
+                                  convertor->pBaseBuf,
+                                  0,
+                                  (ompi_datatype_t *)convertor->pDesc,
+                                  dst, tag,
+                                  comm, sendmode, false);
+    sendreq->req_send.req_base.req_offset = convertor->bConverted;
+    sendreq->req_send.req_base.req_count = convertor->count;
+    opal_convertor_clone(convertor, &sendreq->req_send.req_base.req_convertor, 1);
+    sendreq->req_send.req_bytes_packed = *size;
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &sendreq->req_send.req_base,
