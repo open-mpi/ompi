@@ -256,6 +256,12 @@ OPAL_MODULE_DECLSPEC int pmix2x_disconnectnb(opal_list_t *procs,
 OPAL_MODULE_DECLSPEC int pmix2x_resolve_peers(const char *nodename, opal_jobid_t jobid,
                                              opal_list_t *procs);
 OPAL_MODULE_DECLSPEC int pmix2x_resolve_nodes(opal_jobid_t jobid, char **nodelist);
+OPAL_MODULE_DECLSPEC int pmix2x_allocate(opal_pmix_alloc_directive_t directive,
+                                         opal_list_t *info,
+                                         opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+OPAL_MODULE_DECLSPEC int pmix2x_job_control(opal_list_t *targets,
+                                            opal_list_t *directives,
+                                            opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /****  TOOL FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int pmix2x_tool_init(opal_list_t *info);

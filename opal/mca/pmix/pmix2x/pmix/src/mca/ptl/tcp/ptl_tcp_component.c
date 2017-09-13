@@ -1240,6 +1240,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cd->cbdata;
     pmix_nspace_t *nptr;
     pmix_rank_info_t *info;
+    pmix_peer_t *peer;
     int rc;
     uint32_t u32;
     pmix_info_t ginfo;
@@ -1294,10 +1295,24 @@ static void process_cbfunc(int sd, short args, void *cbdata)
 
     /* add this nspace to our pool */
     nptr = PMIX_NEW(pmix_nspace_t);
+    if (NULL == nptr) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        PMIX_RELEASE(cd);
+        return;
+    }
     nptr->nspace = strdup(cd->proc.nspace);
     pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
     /* add this tool rank to the nspace */
     info = PMIX_NEW(pmix_rank_info_t);
+    if (NULL == info) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        PMIX_RELEASE(cd);
+        return;
+    }
     info->pname.nspace = strdup(cd->proc.nspace);
     info->pname.rank = 0;
     /* need to include the uid/gid for validation */
@@ -1306,7 +1321,14 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     pmix_list_append(&nptr->ranks, &info->super);
 
     /* setup a peer object for this tool */
-    pmix_peer_t *peer = PMIX_NEW(pmix_peer_t);
+    peer = PMIX_NEW(pmix_peer_t);
+    if (NULL == peer) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        PMIX_RELEASE(cd);
+        return;
+    }
     /* mark the peer proc type */
     peer->proc_type = PMIX_PROC_TOOL | pnd->proc_type;
     /* add in the nspace pointer */
@@ -1382,11 +1404,11 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     }
 
     /* start the events for this tool */
-    pmix_event_assign(&peer->recv_event, pmix_globals.evbase, pnd->sd,
+    pmix_event_assign(&peer->recv_event, pmix_globals.evbase, peer->sd,
                       EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, peer);
     pmix_event_add(&peer->recv_event, NULL);
     peer->recv_ev_active = true;
-    pmix_event_assign(&peer->send_event, pmix_globals.evbase, pnd->sd,
+    pmix_event_assign(&peer->send_event, pmix_globals.evbase, peer->sd,
                       EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server tool %s:%d has connected on socket %d",
@@ -1410,6 +1432,10 @@ static void cnct_cbfunc(pmix_status_t status,
 
     /* need to thread-shift this into our context */
     cd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == cd) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        return;
+    }
     cd->status = status;
     (void)strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
     cd->cbdata = cbdata;
