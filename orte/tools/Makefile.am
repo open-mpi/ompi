@@ -35,8 +35,7 @@ SUBDIRS += \
         tools/orte-top \
         tools/orte-info \
         tools/orte-migrate \
-        tools/orte-server \
-        tools/orte-dvm
+        tools/orte-server
 
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \
@@ -56,6 +55,7 @@ DIST_SUBDIRS += \
 if OPAL_WANT_PRUN
 if WANT_INSTALL_HEADERS
 SUBDIRS += \
-	tools/prun
+	tools/prun \
+        tools/orte-dvm
 endif
 endif
