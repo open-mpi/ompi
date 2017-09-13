@@ -593,24 +593,26 @@ static void send_msg(int fd, short args, void *cbdata)
             }
             peer_match_found = true;
         } else {
-           /* case 2. look for any matching fabric (other than ethernet) provider  */
+            /* case 2. look for any matching fabric (other than ethernet) provider  */
             opal_output_verbose(1, orte_rml_base_framework.framework_output,
                         "%s rml:ofi::send_msg()  Case 2 - looking for any match for fabric provider",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-           for(int cur_prov_id=0; cur_prov_id < orte_rml_ofi.ofi_prov_open_num && !peer_match_found ; cur_prov_id++) {
-               if( 0 != strcmp( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name, "sockets" ) ) {
-                  peer_prov_id = check_provider_in_peer( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name,
+            for(int cur_prov_id=0; cur_prov_id < orte_rml_ofi.ofi_prov_open_num && !peer_match_found ; cur_prov_id++) {
+                if( 0 != strcmp( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name, "sockets" ) ) {
+                    peer_prov_id = check_provider_in_peer( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name,
                                      tot_peer_prov, peer_ofi_addr, cur_prov_id );
-                if (OPAL_ERROR != peer_prov_id) {
-                         peer_match_found = true;
-                         ofi_prov_id = cur_prov_id;
+                    if (OPAL_ERROR != peer_prov_id) {
+                        peer_match_found = true;
+                        ofi_prov_id = cur_prov_id;
+                    }
                 }
-              }
            }
            /* if we haven't found a common provider for local node and peer to send message yet, check for ethernet */
-            opal_output_verbose(1, orte_rml_base_framework.framework_output,
-                        "%s rml:ofi::send_msg()  Case 2 - looking for a match for ethernet provider",
+           if(!peer_match_found) {
+               opal_output_verbose(1, orte_rml_base_framework.framework_output,
+                        "%s rml:ofi::send_msg()  Case 2 - common fabric to peer not found,looking for ethernet provider",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+           }
            for(int cur_prov_id=0; cur_prov_id < orte_rml_ofi.ofi_prov_open_num && !peer_match_found ; cur_prov_id++) {
                if( 0 == strcmp( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name, "sockets" ) ) {
                   peer_prov_id = check_provider_in_peer( orte_rml_ofi.ofi_prov[cur_prov_id].fabric_info->fabric_attr->prov_name,
