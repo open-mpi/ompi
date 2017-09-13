@@ -100,7 +100,6 @@ static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static struct {
     bool help;
     bool version;
-    char *report_uri;
     char *prefix;
     bool run_as_root;
     bool set_sid;
@@ -115,10 +114,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, 'V', NULL, "version", 0,
       &myglobals.version, OPAL_CMD_LINE_TYPE_BOOL,
       "Print version and exit" },
-
-    { NULL, '\0', "report-uri", "report-uri", 1,
-      &myglobals.report_uri, OPAL_CMD_LINE_TYPE_STRING,
-      "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
 
     { NULL, '\0', "prefix", "prefix", 1,
       &myglobals.prefix, OPAL_CMD_LINE_TYPE_STRING,
@@ -183,7 +178,6 @@ int main(int argc, char *argv[])
     char *param, *value;
     orte_job_t *jdata=NULL;
     orte_app_context_t *app;
-    char *uri, *ptr;
 
     /* Setup and parse the command line */
     memset(&myglobals, 0, sizeof(myglobals));
@@ -285,6 +279,11 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
+    /* we should act as system-level PMIx server */
+    opal_setenv("OMPI_MCA_pmix_system_server", "1", true, &environ);
+    /* and as session-level PMIx server */
+    opal_setenv("OMPI_MCA_pmix_session_server", "1", true, &environ);
+
     /* Setup MCA params */
     orte_register_params();
 
@@ -324,43 +323,7 @@ int main(int argc, char *argv[])
      */
     opal_finalize();
 
-    /* check for request to report uri */
-    orte_oob_base_get_addr(&uri);
-    if (NULL != myglobals.report_uri) {
-        FILE *fp;
-        if (0 == strcmp(myglobals.report_uri, "-")) {
-            /* if '-', then output to stdout */
-            printf("VMURI: %s\n", uri);
-        } else if (0 == strcmp(myglobals.report_uri, "+")) {
-            /* if '+', output to stderr */
-            fprintf(stderr, "VMURI: %s\n", uri);
-        } else if (0 == strncasecmp(myglobals.report_uri, "file:", strlen("file:"))) {
-            ptr = strchr(myglobals.report_uri, ':');
-            ++ptr;
-            fp = fopen(ptr, "w");
-            if (NULL == fp) {
-                orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               orte_basename, "pid", ptr);
-                exit(0);
-            }
-            fprintf(fp, "%s\n", uri);
-            fclose(fp);
-        } else {
-            fp = fopen(myglobals.report_uri, "w");
-            if (NULL == fp) {
-                orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               orte_basename, "pid", myglobals.report_uri);
-                exit(0);
-            }
-            fprintf(fp, "%s\n", uri);
-            fclose(fp);
-        }
-        free(uri);
-    } else {
-        printf("VMURI: %s\n", uri);
-    }
-
-    /* get the daemon job object - was created by ess/hnp component */
+     /* get the daemon job object - was created by ess/hnp component */
     if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
         orte_show_help("help-orterun.txt", "bad-job-object", true,
                        orte_basename);
@@ -525,6 +488,8 @@ static void notify_requestor(int sd, short args, void *cbdata)
     opal_buffer_t *reply;
     orte_daemon_cmd_flag_t command;
     orte_grpcomm_signature_t *sig;
+
+opal_output(0, "NOTIFY JOB COMPLETE");
 
     /* notify the requestor */
     reply = OBJ_NEW(opal_buffer_t);

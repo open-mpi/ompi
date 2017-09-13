@@ -13,7 +13,7 @@
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -240,9 +240,11 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AC_MSG_ERROR([Cannot continue])])
 
     AC_MSG_CHECKING([if user requested external PMIx support($with_pmix)])
+    opal_prun_happy=no
     AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([no])
-           opal_external_pmix_happy=no],
+           opal_external_pmix_happy=no
+           opal_prun_happy=yes],
 
           [AC_MSG_RESULT([yes])
            # check for external pmix lib */
@@ -295,7 +297,8 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                                                       ], [])],
                                     [AC_MSG_RESULT([found])
                                      opal_external_pmix_version=2x
-                                     opal_external_pmix_version_found=1],
+                                     opal_external_pmix_version_found=1
+                                     opal_prun_happy=yes],
                                     [AC_MSG_RESULT([not found])])])
 
            AS_IF([test "$opal_external_pmix_version_found" = "0"],
@@ -326,5 +329,6 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            opal_external_pmix_LIBS=-lpmix
            opal_external_pmix_happy=yes])
 
+    AM_CONDITIONAL([OPAL_WANT_PRUN], [test "$opal_prun_happy" = "yes"])
     OPAL_VAR_SCOPE_POP
 ])

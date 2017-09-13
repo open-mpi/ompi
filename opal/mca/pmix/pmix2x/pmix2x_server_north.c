@@ -670,6 +670,9 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
         if (NULL != apps[n].env) {
             app->env = opal_argv_copy(apps[n].env);
         }
+        if (NULL != apps[n].cwd) {
+            app->cwd = strdup(apps[n].cwd);
+        }
         app->maxprocs = apps[n].maxprocs;
         for (k=0; k < apps[n].ninfo; k++) {
             oinfo = OBJ_NEW(opal_value_t);
