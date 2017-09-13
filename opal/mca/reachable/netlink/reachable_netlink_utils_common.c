@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2014, Cisco Systems, Inc. All rights reserved.
- *
+ * Copyright (c) 2014 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * Portions of this software copied from libfabric
  * (https://github.com/ofiwg/libfabric)
  *
@@ -63,8 +64,8 @@ static struct nla_policy route_policy[RTA_MAX+1] = {
 	[RTA_MULTIPATH]	= { .type = NLA_NESTED },
 };
 
-static int usnic_is_nlreply_expected(struct usnic_nl_sk *unlsk,
-                                     struct nlmsghdr *nlm_hdr)
+static int opal_reachable_netlink_is_nlreply_expected(struct opal_reachable_netlink_sk *unlsk,
+						      struct nlmsghdr *nlm_hdr)
 {
 #if OPAL_ENABLE_DEBUG
     if (nlm_hdr->nlmsg_pid != nl_socket_get_local_port(unlsk->nlh)
@@ -80,7 +81,7 @@ static int usnic_is_nlreply_expected(struct usnic_nl_sk *unlsk,
     return 1;
 }
 
-static int usnic_is_nlreply_err(struct nlmsghdr *nlm_hdr)
+static int opal_reachable_netlink_is_nlreply_err(struct nlmsghdr *nlm_hdr)
 {
     if (nlm_hdr->nlmsg_type == NLMSG_ERROR) {
         struct nlmsgerr *e = (struct nlmsgerr *)nlmsg_data(nlm_hdr);
@@ -96,9 +97,9 @@ static int usnic_is_nlreply_err(struct nlmsghdr *nlm_hdr)
     return 0;
 }
 
-static int usnic_nl_send_query(struct usnic_nl_sk *unlsk,
-                               struct nl_msg *msg,
-                               int protocol, int flag)
+static int opal_reachable_netlink_send_query(struct opal_reachable_netlink_sk *unlsk,
+					     struct nl_msg *msg,
+					     int protocol, int flag)
 {
     struct nlmsghdr *nlhdr;
 
@@ -111,7 +112,7 @@ static int usnic_nl_send_query(struct usnic_nl_sk *unlsk,
     return nl_send(unlsk->nlh, msg);
 }
 
-static int usnic_nl_set_rcvsk_timer(NL_HANDLE *nlh)
+static int opal_reachable_netlink_set_rcvsk_timer(NL_HANDLE *nlh)
 {
     int err = 0;
     struct timeval timeout;
@@ -129,15 +130,15 @@ static int usnic_nl_set_rcvsk_timer(NL_HANDLE *nlh)
     return err;
 }
 
-static int usnic_nl_sk_alloc(struct usnic_nl_sk **p_sk, int protocol)
+static int opal_reachable_netlink_sk_alloc(struct opal_reachable_netlink_sk **p_sk, int protocol)
 {
-    struct usnic_nl_sk *unlsk;
+    struct opal_reachable_netlink_sk *unlsk;
     NL_HANDLE *nlh;
     int err;
 
     unlsk = calloc(1, sizeof(*unlsk));
     if (!unlsk) {
-        opal_output(0, "Failed to allocate usnic_nl_sk struct\n");
+        opal_output(0, "Failed to allocate opal_reachable_netlink_sk struct\n");
         return ENOMEM;
     }
 
@@ -157,7 +158,7 @@ static int usnic_nl_sk_alloc(struct usnic_nl_sk **p_sk, int protocol)
     }
 
     NL_DISABLE_SEQ_CHECK(nlh);
-    err = usnic_nl_set_rcvsk_timer(nlh);
+    err = opal_reachable_netlink_set_rcvsk_timer(nlh);
     if (err < 0)
         goto err_close_nlh;
 
@@ -175,17 +176,17 @@ static int usnic_nl_sk_alloc(struct usnic_nl_sk **p_sk, int protocol)
     return err;
 }
 
-static void usnic_nl_sk_free(struct usnic_nl_sk *unlsk)
+static void opal_reachable_netlink_sk_free(struct opal_reachable_netlink_sk *unlsk)
 {
     nl_close(unlsk->nlh);
     NL_HANDLE_FREE(unlsk->nlh);
     free(unlsk);
 }
 
-static int usnic_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
+static int opal_reachable_netlink_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
 {
-    struct usnic_rt_cb_arg *lookup_arg = (struct usnic_rt_cb_arg *)arg;
-    struct usnic_nl_sk *unlsk = lookup_arg->unlsk;
+    struct opal_reachable_netlink_rt_cb_arg *lookup_arg = (struct opal_reachable_netlink_rt_cb_arg *)arg;
+    struct opal_reachable_netlink_sk *unlsk = lookup_arg->unlsk;
     struct nlmsghdr *nlm_hdr = nlmsg_hdr(msg);
     struct rtmsg *rtm;
     struct nlattr *tb[RTA_MAX + 1];
@@ -194,14 +195,14 @@ static int usnic_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
 
     INC_CB_MSGCNT(lookup_arg);
 
-    if (!usnic_is_nlreply_expected(unlsk, nlm_hdr)) {
+    if (!opal_reachable_netlink_is_nlreply_expected(unlsk, nlm_hdr)) {
 #if OPAL_ENABLE_DEBUG
         nl_msg_dump(msg, stderr);
 #endif
         return NL_SKIP;
     }
 
-    if (usnic_is_nlreply_err(nlm_hdr)) {
+    if (opal_reachable_netlink_is_nlreply_err(nlm_hdr)) {
 #if OPAL_ENABLE_DEBUG
         nl_msg_dump(msg, stderr);
 #endif
@@ -250,31 +251,35 @@ static int usnic_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
 
     if (found && tb[RTA_GATEWAY])
         lookup_arg->nh_addr = nla_get_u32(tb[RTA_GATEWAY]);
-
     lookup_arg->found = found;
     return NL_STOP;
 }
 
-int opal_reachable_netlink_nl_rt_lookup(uint32_t src_addr,
-                                        uint32_t dst_addr, int oif,
-                                        uint32_t *nh_addr)
+int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
+				     uint32_t dst_addr,
+				     int outgoing_interface,
+				     uint32_t *nh_addr)
 {
-    struct usnic_nl_sk	*unlsk;
-    struct nl_msg		*nlm;
-    struct rtmsg		rmsg;
-    struct usnic_rt_cb_arg	arg;
-    int			err;
 
+    struct opal_reachable_netlink_sk *unlsk; /* netlink socket */
+    struct nl_msg *nlm; /* netlink message */
+    struct rtmsg rmsg; /* route message */
+    struct opal_reachable_netlink_rt_cb_arg arg; /* callback argument */
+    int err;
+
+    /* allocate netlink socket */
     unlsk = NULL;
-    err = usnic_nl_sk_alloc(&unlsk, NETLINK_ROUTE);
+    err = opal_reachable_netlink_sk_alloc(&unlsk, NETLINK_ROUTE);
     if (err)
         return err;
 
+    /* allocate route message */
     memset(&rmsg, 0, sizeof(rmsg));
     rmsg.rtm_family = AF_INET;
     rmsg.rtm_dst_len = sizeof(dst_addr) * CHAR_BIT;
     rmsg.rtm_src_len = sizeof(src_addr) * CHAR_BIT;
 
+    /* allocate netlink message of type RTM_GETROUTE */
     nlm = nlmsg_alloc_simple(RTM_GETROUTE, 0);
     if (!nlm) {
         opal_output(0, "Failed to alloc nl message, %s\n",
@@ -282,11 +287,14 @@ int opal_reachable_netlink_nl_rt_lookup(uint32_t src_addr,
         err = ENOMEM;
         goto out;
     }
+
+    /* append route message and addresses to netlink message.   */
     nlmsg_append(nlm, &rmsg, sizeof(rmsg), NLMSG_ALIGNTO);
     nla_put_u32(nlm, RTA_DST, dst_addr);
     nla_put_u32(nlm, RTA_SRC, src_addr);
 
-    err = usnic_nl_send_query(unlsk, nlm, NETLINK_ROUTE, NLM_F_REQUEST);
+    /* query kernel */
+    err = opal_reachable_netlink_send_query(unlsk, nlm, NETLINK_ROUTE, NLM_F_REQUEST);
     nlmsg_free(nlm);
     if (err < 0) {
         opal_output(0, "Failed to send RTM_GETROUTE query message, error %s\n",
@@ -295,11 +303,12 @@ int opal_reachable_netlink_nl_rt_lookup(uint32_t src_addr,
         goto out;
     }
 
+    /* Setup callback function */
     memset(&arg, 0, sizeof(arg));
-    arg.oif		= oif;
-    arg.unlsk	= unlsk;
+    arg.oif = outgoing_interface;
+    arg.unlsk = unlsk;
     err = nl_socket_modify_cb(unlsk->nlh, NL_CB_MSG_IN, NL_CB_CUSTOM,
-                              usnic_rt_raw_parse_cb, &arg);
+                              opal_reachable_netlink_rt_raw_parse_cb, &arg);
     if (err != 0) {
         opal_output(0, "Failed to setup callback function, error %s\n",
                     NL_GETERROR(err));
@@ -307,8 +316,10 @@ int opal_reachable_netlink_nl_rt_lookup(uint32_t src_addr,
         goto out;
     }
 
+    /* recieve results */
     NL_RECVMSGS(unlsk->nlh, arg, EHOSTUNREACH, err, out);
 
+    /* check whether a route was found */
     if (arg.found) {
         *nh_addr = arg.nh_addr;
         err = 0;
@@ -317,6 +328,6 @@ int opal_reachable_netlink_nl_rt_lookup(uint32_t src_addr,
     }
 
  out:
-    usnic_nl_sk_free(unlsk);
+    opal_reachable_netlink_sk_free(unlsk);
     return err;
 }

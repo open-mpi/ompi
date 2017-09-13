@@ -2,6 +2,8 @@
  * Copyright (c) 2014-2015 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  *
  * Portions of this software copied from libfabric
  * (https://github.com/ofiwg/libfabric)
@@ -52,13 +54,13 @@
 #include "libnl1_utils.h"
 #endif
 
-struct usnic_nl_sk {
+struct opal_reachable_netlink_sk {
     NL_HANDLE	*nlh;
     uint32_t	seq;
 };
 
-int opal_reachable_netlink_nl_rt_lookup(uint32_t src_addr,
-                                        uint32_t dst_addr, int oif,
-                                        uint32_t *nh_addr);
+int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
+				     uint32_t dst_addr, int oif,
+				     uint32_t *nh_addr);
 
 #endif /* LIBNL_UTILS_H */
