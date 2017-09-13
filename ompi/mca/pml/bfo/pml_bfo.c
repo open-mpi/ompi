@@ -16,6 +16,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,9 +66,13 @@ mca_pml_bfo_t mca_pml_bfo = {
         mca_pml_bfo_irecv_init,
         mca_pml_bfo_irecv,
         mca_pml_bfo_recv,
+        NULL, /* icrecv */
+        NULL, /* crecv */
         mca_pml_bfo_isend_init,
         mca_pml_bfo_isend,
         mca_pml_bfo_send,
+        NULL, /* icsend */
+        NULL, /* csend */
         mca_pml_bfo_iprobe,
         mca_pml_bfo_probe,
         mca_pml_bfo_start,

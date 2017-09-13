@@ -362,3 +362,110 @@ mca_pml_ob1_mrecv( void *buf,
     return rc;
 }
 
+
+int mca_pml_ob1_icrecv(opal_convertor_t *convertor,
+                       size_t *size,
+                       int src,
+                       int tag,
+                       struct ompi_communicator_t *comm,
+                       struct ompi_request_t **request)
+{
+    mca_pml_ob1_recv_request_t *recvreq;
+    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
+    if (NULL == recvreq)
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+    OBJ_RETAIN(convertor->pDesc);
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
+                                  convertor->pBaseBuf,
+                                  convertor->count, (ompi_datatype_t *)convertor->pDesc, src, tag, comm, false);
+    recvreq->req_recv.req_base.req_offset = convertor->bConverted;
+    // recvreq->req_recv.req_bytes_expected = *size;
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &((recvreq)->req_recv.req_base),
+                             PERUSE_RECV);
+
+    // MCA_PML_OB1_RECV_REQUEST_START(recvreq);
+    mca_pml_ob1_recv_req_start_with_convertor(recvreq, convertor, *size);
+    *request = (ompi_request_t *) recvreq;
+    return OMPI_SUCCESS;
+}
+
+
+int mca_pml_ob1_crecv(opal_convertor_t *convertor,
+                     size_t *size,
+                     int src,
+                     int tag,
+                     struct ompi_communicator_t *comm,
+                     ompi_status_public_t * status)
+{
+    mca_pml_ob1_recv_request_t *recvreq = NULL;
+    int rc;
+
+    if (OPAL_LIKELY(!ompi_mpi_thread_multiple)) {
+        recvreq = mca_pml_ob1_recvreq;
+        mca_pml_ob1_recvreq = NULL;
+    }
+
+    if( OPAL_UNLIKELY(NULL == recvreq) ) {
+        MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
+        if (NULL == recvreq)
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+#if 0
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
+                                  src, tag, comm, false);
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &(recvreq->req_recv.req_base),
+                             PERUSE_RECV);
+
+    MCA_PML_OB1_RECV_REQUEST_START(recvreq);
+    ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
+
+    if (NULL != status) {  /* return status */
+        *status = recvreq->req_recv.req_base.req_ompi.req_status;
+    }
+
+    rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+
+    if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_recvreq)) {
+        MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
+    } else {
+        mca_pml_ob1_recv_request_fini (recvreq);
+        mca_pml_ob1_recvreq = recvreq;
+    }
+#else
+    OBJ_RETAIN(convertor->pDesc);
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
+                                  convertor->pBaseBuf,
+                                  convertor->count, (ompi_datatype_t *)convertor->pDesc, src, tag, comm, false);
+    recvreq->req_recv.req_base.req_offset = convertor->bConverted;
+    // recvreq->req_recv.req_bytes_expected = *size;
+
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                             &((recvreq)->req_recv.req_base),
+                             PERUSE_RECV);
+
+    // MCA_PML_OB1_RECV_REQUEST_START(recvreq);
+    mca_pml_ob1_recv_req_start_with_convertor(recvreq, convertor, *size);
+    ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
+
+    if (NULL != status) {  /* return status */
+        *status = recvreq->req_recv.req_base.req_ompi.req_status;
+    }
+
+    rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+
+    if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_recvreq)) {
+        MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
+    } else {
+        mca_pml_ob1_recv_request_fini (recvreq);
+        mca_pml_ob1_recvreq = recvreq;
+    }
+#endif
+
+    return rc;
+}

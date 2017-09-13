@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -219,6 +219,7 @@ recv_request_pml_complete_check(mca_pml_ob1_recv_request_t *recvreq)
 }
 
 extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
+extern void mca_pml_ob1_recv_req_start_with_convertor(mca_pml_ob1_recv_request_t *req, opal_convertor_t *convertor, size_t size);
 #define MCA_PML_OB1_RECV_REQUEST_START(r) mca_pml_ob1_recv_req_start(r)
 
 static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
@@ -233,6 +234,14 @@ static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
                 &req->req_recv.req_base.req_convertor);
         opal_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
                                          &req->req_bytes_expected);
+    }
+}
+
+static inline void prepare_recv_req_convertor(mca_pml_ob1_recv_request_t *req, opal_convertor_t *convertor, size_t size)
+{
+    if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
+        opal_convertor_clone(convertor, &req->req_recv.req_base.req_convertor, 1);
+        req->req_bytes_expected = size;
     }
 }
 

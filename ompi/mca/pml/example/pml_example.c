@@ -6,6 +6,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,9 +32,13 @@ mca_pml_example_t mca_pml_example = {
         mca_pml_example_irecv_init,
         mca_pml_example_irecv,
         mca_pml_example_recv,
+        NULL, /* icrecv */
+        NULL, /* crecv */
         mca_pml_example_isend_init,
         mca_pml_example_isend,
         mca_pml_example_send,
+        NULL, /* icsend */
+        NULL, /* csend */
         mca_pml_example_iprobe,
         mca_pml_example_probe,
         mca_pml_example_start,

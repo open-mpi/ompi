@@ -11,6 +11,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,9 +42,13 @@ ompi_pml_cm_t ompi_pml_cm = {
         mca_pml_cm_irecv_init,
         mca_pml_cm_irecv,
         mca_pml_cm_recv,
+        NULL, /* icrecv */
+        NULL, /* crecv */
         mca_pml_cm_isend_init,
         mca_pml_cm_isend,
         mca_pml_cm_send,
+        NULL, /* icsend */
+        NULL, /* csend */
         mca_pml_cm_iprobe,
         mca_pml_cm_probe,
         mca_pml_cm_start,

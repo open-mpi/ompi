@@ -3,6 +3,8 @@
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,9 +58,13 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
         mca_pml_ucx_irecv_init,
         mca_pml_ucx_irecv,
         mca_pml_ucx_recv,
+        NULL, /* icrecv */
+        NULL, /* crecv */
         mca_pml_ucx_isend_init,
         mca_pml_ucx_isend,
         mca_pml_ucx_send,
+        NULL, /* icsend */
+        NULL, /* csend */
         mca_pml_ucx_iprobe,
         mca_pml_ucx_probe,
         mca_pml_ucx_start,

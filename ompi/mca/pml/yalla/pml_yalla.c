@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -36,9 +36,13 @@ mca_pml_yalla_module_t ompi_pml_yalla = {
         mca_pml_yalla_irecv_init,
         mca_pml_yalla_irecv,
         mca_pml_yalla_recv,
+        NULL, /* icrecv */
+        NULL, /* crecv */
         mca_pml_yalla_isend_init,
         mca_pml_yalla_isend,
         mca_pml_yalla_send,
+        NULL, /* icsend */
+        NULL, /* csend */
         mca_pml_yalla_iprobe,
         mca_pml_yalla_probe,
         mca_pml_yalla_start,

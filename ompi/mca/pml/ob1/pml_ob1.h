@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -165,6 +165,21 @@ extern int mca_pml_ob1_send( const void *buf,
                              mca_pml_base_send_mode_t mode,
                              struct ompi_communicator_t* comm );
 
+extern int mca_pml_ob1_icsend( struct opal_convertor_t* convertor,
+                              size_t *size,
+                              int dst,
+                              int tag,
+                              mca_pml_base_send_mode_t mode,
+                              struct ompi_communicator_t* comm,
+                              struct ompi_request_t **request );
+
+extern int mca_pml_ob1_csend( struct opal_convertor_t* convertor,
+                              size_t *size,
+                              int dst,
+                              int tag,
+                              mca_pml_base_send_mode_t mode,
+                              struct ompi_communicator_t* comm );
+
 extern int mca_pml_ob1_irecv_init( void *buf,
                                    size_t count,
                                    ompi_datatype_t *datatype,
@@ -200,6 +215,20 @@ extern int mca_pml_ob1_mrecv( void *buf,
                               ompi_datatype_t *datatype,
                               struct ompi_message_t **message,
                               ompi_status_public_t* status );
+
+extern int mca_pml_ob1_icrecv( opal_convertor_t* convertor,
+                              size_t *size,
+                              int src,
+                              int tag,
+                              struct ompi_communicator_t* comm,
+                              struct ompi_request_t **request );
+
+extern int mca_pml_ob1_crecv( opal_convertor_t* convertor,
+                             size_t *size,
+                             int src,
+                             int tag,
+                             struct ompi_communicator_t* comm,
+                             ompi_status_public_t* status );
 
 extern int mca_pml_ob1_dump( struct ompi_communicator_t* comm,
                              int verbose );

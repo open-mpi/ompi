@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -128,17 +130,17 @@ typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_probe_fn_t)
        ompi_status_public_t* status, ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_isend_init_fn_t)
-     ( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+     ( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
        mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm,
        struct ompi_request_t **request, ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_isend_fn_t)
-     ( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+     ( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
        mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm,
        struct ompi_request_t **request, ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_send_fn_t)
-     ( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+     ( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
        mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm,
        ompi_crcp_base_pml_state_t* );
 

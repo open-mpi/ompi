@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,13 +110,13 @@ BEGIN_C_DECLS
                             struct ompi_message_t **message,
                             ompi_status_public_t* status );
 
-    int mca_pml_crcpw_isend_init( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+    int mca_pml_crcpw_isend_init( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                                   mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request );
 
-    int mca_pml_crcpw_isend( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+    int mca_pml_crcpw_isend( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                              mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request );
 
-    int mca_pml_crcpw_send(  void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+    int mca_pml_crcpw_send(  const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                              mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm );
 
     int mca_pml_crcpw_irecv_init( void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,

@@ -977,9 +977,10 @@ cannot_pack:
         }
 
         /* pack into a descriptor */
-        offset = (size_t)range->range_send_offset;
+        offset = (size_t)range->range_send_offset + sendreq->req_send.req_base.req_offset;
         opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
                                     &offset);
+        offset -= sendreq->req_send.req_base.req_offset;
         range->range_send_offset = (uint64_t)offset;
 
         data_remaining = size;
@@ -1234,7 +1235,8 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
     /* Get the address of the current offset. Note: at this time ob1 CAN NOT handle
      * non-contiguous RDMA. If that changes this code will be wrong. */
     opal_convertor_get_offset_pointer (&sendreq->req_send.req_base.req_convertor,
-                                       hdr->hdr_rdma_offset, &frag->local_address);
+                                       hdr->hdr_rdma_offset+sendreq->req_send.req_base.req_offset,
+                                       &frag->local_address);
 
     mca_pml_ob1_send_request_put_frag(frag);
 }

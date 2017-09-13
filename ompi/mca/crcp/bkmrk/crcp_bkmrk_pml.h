@@ -8,6 +8,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,21 +71,21 @@ BEGIN_C_DECLS
       ompi_crcp_base_pml_state_t* pml_state );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend_init
-    ( void *buf, size_t count, ompi_datatype_t *datatype,
+    ( const void *buf, size_t count, ompi_datatype_t *datatype,
       int dst, int tag, mca_pml_base_send_mode_t mode,
       struct ompi_communicator_t* comm,
       struct ompi_request_t **request,
       ompi_crcp_base_pml_state_t* pml_state );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend
-    ( void *buf, size_t count, ompi_datatype_t *datatype,
+    ( const void *buf, size_t count, ompi_datatype_t *datatype,
       int dst, int tag, mca_pml_base_send_mode_t mode,
       struct ompi_communicator_t* comm,
       struct ompi_request_t **request,
       ompi_crcp_base_pml_state_t* pml_state );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_send
-    (  void *buf, size_t count, ompi_datatype_t *datatype,
+    (  const void *buf, size_t count, ompi_datatype_t *datatype,
        int dst, int tag, mca_pml_base_send_mode_t mode,
        struct ompi_communicator_t* comm,
        ompi_crcp_base_pml_state_t* pml_state );

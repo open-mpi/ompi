@@ -13,6 +13,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +48,7 @@ mca_pml_crcpw_module_t mca_pml_crcpw_module = {
         mca_pml_crcpw_isend_init,
         mca_pml_crcpw_isend,
         mca_pml_crcpw_send,
+        NULL, /* csend */
         mca_pml_crcpw_iprobe,
         mca_pml_crcpw_probe,
         mca_pml_crcpw_start,
@@ -368,7 +371,7 @@ int mca_pml_crcpw_probe( int dst, int tag, struct ompi_communicator_t* comm, omp
     return OMPI_SUCCESS;
 }
 
-int mca_pml_crcpw_isend_init( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+int mca_pml_crcpw_isend_init( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                               mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request )
 {
     int ret;
@@ -407,7 +410,7 @@ int mca_pml_crcpw_isend_init( void *buf, size_t count, ompi_datatype_t *datatype
     return OMPI_SUCCESS;
 }
 
-int mca_pml_crcpw_isend( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+int mca_pml_crcpw_isend( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                          mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request )
 {
     int ret;
@@ -449,7 +452,7 @@ int mca_pml_crcpw_isend( void *buf, size_t count, ompi_datatype_t *datatype, int
     return OMPI_SUCCESS;
 }
 
-int mca_pml_crcpw_send(  void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+int mca_pml_crcpw_send( const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                          mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm )
 {
     int ret;

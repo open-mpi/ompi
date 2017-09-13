@@ -9,6 +9,8 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1497,7 +1499,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_procs(
 
 /**************** Send *****************/
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend_init(
-                                  void *buf, size_t count,
+                                  const void *buf, size_t count,
                                   ompi_datatype_t *datatype,
                                   int dst, int tag,
                                   mca_pml_base_send_mode_t mode,
@@ -1558,7 +1560,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend_init(
          * Update Message
          */
         HOKE_CONTENT_REF_ALLOC(new_content);
-        new_content->buffer  =  buf;
+        new_content->buffer  =  (void *)buf;
         new_content->request = *request;
         new_content->done    =  false;
         new_content->active  =  false;
@@ -1710,7 +1712,7 @@ static int ompi_crcp_bkmrk_request_complete_isend_init(struct ompi_request_t *re
 
 
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend(
-                                  void *buf, size_t count,
+                                  const void *buf, size_t count,
                                   ompi_datatype_t *datatype,
                                   int dst, int tag,
                                   mca_pml_base_send_mode_t mode,
@@ -1869,7 +1871,7 @@ static int ompi_crcp_bkmrk_request_complete_isend(struct ompi_request_t *request
 
 
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_send(
-                                  void *buf, size_t count,
+                                  const void *buf, size_t count,
                                   ompi_datatype_t *datatype,
                                   int dst, int tag,
                                   mca_pml_base_send_mode_t mode,

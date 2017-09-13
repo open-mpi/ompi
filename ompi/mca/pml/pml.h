@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -70,6 +70,7 @@
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 #include "ompi/mca/pml/pml_constants.h"
 #include "ompi/request/request.h"
+#include "opal/datatype/opal_convertor.h"
 
 BEGIN_C_DECLS
 
@@ -277,6 +278,45 @@ typedef int (*mca_pml_base_module_mrecv_fn_t)(
 );
 
 /**
+ *  Post a convertor based receive request.
+ *
+ *  @param convertor (INOUT)Convertor.
+ *  @param size (INOUT)     Max size to be sent.
+ *  @param src (IN)         Source rank w/in communicator.
+ *  @param tag (IN)         User defined tag.
+ *  @param comm (IN)        Communicator.
+ *  @param request (OUT)    Request handle.
+ *  @return                 OMPI_SUCCESS or failure status.
+ */
+typedef int (*mca_pml_base_module_icrecv_fn_t)(
+    opal_convertor_t *convertor,
+    size_t *size,
+    int src,
+    int tag,
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
+);
+
+/**
+ *  Post a convertor based receive and wait for completion.
+ *
+ *  @param convertor (INOUT)Convertor.
+ *  @param size (INOUT)     Max size to be sent.
+ *  @param src (IN)         Source rank w/in communicator
+ *  @param tag (IN)         User defined tag
+ *  @param comm (IN)        Communicator
+ *  @param status (OUT)     Completion status
+ *  @return                 OMPI_SUCCESS or failure status.
+ */
+typedef int (*mca_pml_base_module_crecv_fn_t)(
+    opal_convertor_t *convertor,
+    size_t *size,
+    int src,
+    int tag,
+    struct ompi_communicator_t* comm,
+    ompi_status_public_t* status
+);
+/**
  *  Initialize a persistent send request.
  *
  *  @param buf (IN)         User buffer.
@@ -342,6 +382,49 @@ typedef int (*mca_pml_base_module_send_fn_t)(
     const void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t mode,
+    struct ompi_communicator_t* comm
+);
+
+/**
+ *  Post a convertor based send request.
+ *
+ *  @param convertor (INOUT)Convertor.
+ *  @param size (INOUT)     Max size to be sent.
+ *  @param dst (IN)         Peer rank w/in communicator.
+ *  @param tag (IN)         User defined tag.
+ *  @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
+ *  @param comm (IN)        Communicator.
+ *  @param request (OUT)    Request handle.
+ *  @return                 OMPI_SUCCESS or failure status.
+ */
+typedef int (*mca_pml_base_module_icsend_fn_t)(
+    opal_convertor_t *convertor,
+    size_t *size,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t mode,
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
+);
+
+
+/**
+ *  Post a convertor based send request and wait for completion.
+ *
+ *  @param convertor (INOUT)Convertor.
+ *  @param size (INOUT)     Max size to be sent.
+ *  @param dst (IN)         Peer rank w/in communicator.
+ *  @param tag (IN)         User defined tag.
+ *  @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
+ *  @param comm (IN)        Communicator.
+ *  @return                 OMPI_SUCCESS or failure status.
+ */
+typedef int (*mca_pml_base_module_csend_fn_t)(
+    opal_convertor_t *convertor,
+    size_t *size,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -502,9 +585,13 @@ struct mca_pml_base_module_1_0_1_t {
     mca_pml_base_module_irecv_init_fn_t   pml_irecv_init;
     mca_pml_base_module_irecv_fn_t        pml_irecv;
     mca_pml_base_module_recv_fn_t         pml_recv;
+    mca_pml_base_module_icrecv_fn_t       pml_icrecv;
+    mca_pml_base_module_crecv_fn_t        pml_crecv;
     mca_pml_base_module_isend_init_fn_t   pml_isend_init;
     mca_pml_base_module_isend_fn_t        pml_isend;
     mca_pml_base_module_send_fn_t         pml_send;
+    mca_pml_base_module_icsend_fn_t       pml_icsend;
+    mca_pml_base_module_csend_fn_t        pml_csend;
     mca_pml_base_module_iprobe_fn_t       pml_iprobe;
     mca_pml_base_module_probe_fn_t        pml_probe;
     mca_pml_base_module_start_fn_t        pml_start;
