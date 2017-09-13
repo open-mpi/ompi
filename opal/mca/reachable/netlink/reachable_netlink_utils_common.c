@@ -89,11 +89,11 @@ static int opal_reachable_netlink_is_nlreply_err(struct nlmsghdr *nlm_hdr)
     if (nlm_hdr->nlmsg_type == NLMSG_ERROR) {
         struct nlmsgerr *e = (struct nlmsgerr *)nlmsg_data(nlm_hdr);
         if (nlm_hdr->nlmsg_len >= (__u32)NLMSG_SIZE(sizeof(*e)))
-            opal_output(0,
-                        "Received a netlink error message");
+            opal_output_verbose(20, 0,
+                                "Received a netlink error message");
         else
-            opal_output(0,
-                        "Received a truncated netlink error message\n");
+            opal_output_verbose(20, 0,
+                                "Received a truncated netlink error message\n");
         return 1;
     }
 
@@ -251,9 +251,12 @@ static int opal_reachable_netlink_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
         if (nla_get_u32(tb[RTA_OIF]) == (uint32_t)lookup_arg->oif)
             found = 1;
         else
-            opal_output(0, "Retrieved route has a different outgoing interface %d (expected %d)\n",
-                        nla_get_u32(tb[RTA_OIF]),
-                        lookup_arg->oif);
+            /* usually, this means that there is a route to the remote
+               host, but that it's not through the given interface.  For
+               our purposes, that means it's not reachable. */
+            opal_output_verbose(20, 0, "Retrieved route has a different outgoing interface %d (expected %d)\n",
+				nla_get_u32(tb[RTA_OIF]),
+				lookup_arg->oif);
     }
 
     if (found && tb[RTA_GATEWAY]) {
