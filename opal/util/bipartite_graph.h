@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,23 +17,21 @@
  * that complicates other pieces of the implementation (specifically, adding
  * and removing edges). */
 
-#ifndef BTL_USNIC_GRAPH_H
-#define BTL_USNIC_GRAPH_H
+#ifndef OPAL_BP_GRAPH_H
+#define OPAL_BP_GRAPH_H
 
-#include "opal_config.h"
+struct opal_bp_graph_vertex_t;
+struct opal_bp_graph_edge_t;
+struct opal_bp_graph_t;
 
-struct opal_btl_usnic_vertex_t;
-struct opal_btl_usnic_edge_t;
-struct opal_btl_usnic_graph_t;
-
-typedef struct opal_btl_usnic_vertex_t opal_btl_usnic_vertex_t;
-typedef struct opal_btl_usnic_edge_t opal_btl_usnic_edge_t;
-typedef struct opal_btl_usnic_graph_t opal_btl_usnic_graph_t;
+typedef struct opal_bp_graph_vertex_t opal_bp_graph_vertex_t;
+typedef struct opal_bp_graph_edge_t opal_bp_graph_edge_t;
+typedef struct opal_bp_graph_t opal_bp_graph_t;
 
 /**
  * callback function pointer type for cleaning up user data associated with a
  * vertex or edge */
-typedef void (*opal_btl_usnic_cleanup_fn_t)(void *user_data);
+typedef void (*opal_bp_graph_cleanup_fn_t)(void *user_data);
 
 /**
  * create a new empty graph
@@ -44,9 +44,9 @@ typedef void (*opal_btl_usnic_cleanup_fn_t)(void *user_data);
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_btl_usnic_gr_create(opal_btl_usnic_cleanup_fn_t v_data_cleanup_fn,
-                             opal_btl_usnic_cleanup_fn_t e_data_cleanup_fn,
-                             opal_btl_usnic_graph_t **g_out);
+int opal_bp_graph_create(opal_bp_graph_cleanup_fn_t v_data_cleanup_fn,
+			 opal_bp_graph_cleanup_fn_t e_data_cleanup_fn,
+			 opal_bp_graph_t **g_out);
 
 /**
  * free the given graph
@@ -56,7 +56,7 @@ int opal_btl_usnic_gr_create(opal_btl_usnic_cleanup_fn_t v_data_cleanup_fn,
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_btl_usnic_gr_free(opal_btl_usnic_graph_t *g);
+int opal_bp_graph_free(opal_bp_graph_t *g);
 
 /**
  * clone (deep copy) the given graph
@@ -70,9 +70,9 @@ int opal_btl_usnic_gr_free(opal_btl_usnic_graph_t *g);
  * @param[in] g_clone_out     the resulting cloned graph
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_btl_usnic_gr_clone(const opal_btl_usnic_graph_t *g,
-                            bool copy_user_data,
-                            opal_btl_usnic_graph_t **g_clone_out);
+int opal_bp_graph_clone(const opal_bp_graph_t *g,
+			bool copy_user_data,
+			opal_bp_graph_t **g_clone_out);
 
 /**
  * return the number of edges for which this vertex is a destination
@@ -81,8 +81,8 @@ int opal_btl_usnic_gr_clone(const opal_btl_usnic_graph_t *g,
  * @param[in] vertex  the vertex id to query
  * @returns the number of edges for which this vertex is a destination
  */
-int opal_btl_usnic_gr_indegree(const opal_btl_usnic_graph_t *g,
-                               int vertex);
+int opal_bp_graph_indegree(const opal_bp_graph_t *g,
+			   int vertex);
 
 /**
  * return the number of edges for which this vertex is a source
@@ -91,8 +91,8 @@ int opal_btl_usnic_gr_indegree(const opal_btl_usnic_graph_t *g,
  * @param[in] vertex  the vertex id to query
  * @returns the number of edges for which this vertex is a source
  */
-int opal_btl_usnic_gr_outdegree(const opal_btl_usnic_graph_t *g,
-                                int vertex);
+int opal_bp_graph_outdegree(const opal_bp_graph_t *g,
+			    int vertex);
 
 /**
  * add an edge to the given graph
@@ -106,12 +106,12 @@ int opal_btl_usnic_gr_outdegree(const opal_btl_usnic_graph_t *g,
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_btl_usnic_gr_add_edge(opal_btl_usnic_graph_t *g,
-                               int from,
-                               int to,
-                               int64_t cost,
-                               int capacity,
-                               void *e_data);
+int opal_bp_graph_add_edge(opal_bp_graph_t *g,
+			   int from,
+			   int to,
+			   int64_t cost,
+			   int capacity,
+			   void *e_data);
 
 /**
  * add a vertex to the given graph
@@ -122,16 +122,16 @@ int opal_btl_usnic_gr_add_edge(opal_btl_usnic_graph_t *g,
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_btl_usnic_gr_add_vertex(opal_btl_usnic_graph_t *g,
-                                 void *v_data,
-                                 int *index_out);
+int opal_bp_graph_add_vertex(opal_bp_graph_t *g,
+			     void *v_data,
+			     int *index_out);
 
 /**
  * compute the order of a graph (number of vertices)
  *
  * @param[in] g the graph to query
  */
-int opal_btl_usnic_gr_order(const opal_btl_usnic_graph_t *g);
+int opal_bp_graph_order(const opal_bp_graph_t *g);
 
 /**
  * This function solves the "assignment problem":
@@ -157,7 +157,8 @@ int opal_btl_usnic_gr_order(const opal_btl_usnic_graph_t *g);
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_btl_usnic_solve_bipartite_assignment(const opal_btl_usnic_graph_t *g,
-                                              int *num_match_edges_out,
-                                              int **match_edges_out);
-#endif /* BTL_USNIC_GRAPH_H */
+int opal_bp_graph_solve_bipartite_assignment(const opal_bp_graph_t *g,
+					     int *num_match_edges_out,
+					     int **match_edges_out);
+
+#endif /* OPAL_BP_GRAPH_H */

@@ -27,6 +27,7 @@
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
+#include "opal/util/bipartite_graph.h"
 
 #include "btl_usnic_compat.h"
 #include "btl_usnic.h"
@@ -34,7 +35,6 @@
 #include "btl_usnic_endpoint.h"
 #include "btl_usnic_module.h"
 #include "btl_usnic_util.h"
-#include "btl_usnic_graph.h"
 
 /* larger weight values are more desirable (i.e., worth, not cost) */
 enum {
@@ -427,13 +427,13 @@ static void edge_pairs_to_match_table(
 static int create_proc_module_graph(
     opal_btl_usnic_proc_t *proc,
     bool proc_is_left,
-    opal_btl_usnic_graph_t **g_out)
+    opal_bp_graph_t **g_out)
 {
     int err;
     int i, j;
     int u, v;
     int num_modules;
-    opal_btl_usnic_graph_t *g = NULL;
+    opal_bp_graph_t *g = NULL;
 
     if (NULL == g_out) {
         return OPAL_ERR_BAD_PARAM;
@@ -444,7 +444,7 @@ static int create_proc_module_graph(
 
     /* Construct a bipartite graph with remote interfaces on the one side and
      * local interfaces (modules) on the other. */
-    err = opal_btl_usnic_gr_create(NULL, NULL, &g);
+    err = opal_bp_graph_create(NULL, NULL, &g);
     if (OPAL_SUCCESS != err) {
         OPAL_ERROR_LOG(err);
         goto out;
@@ -453,9 +453,9 @@ static int create_proc_module_graph(
     /* create vertices for each interface (local and remote) */
     for (i = 0; i < num_modules; ++i) {
         int idx = -1;
-        err = opal_btl_usnic_gr_add_vertex(g,
-                                           mca_btl_usnic_component.usnic_active_modules[i],
-                                           &idx);
+        err = opal_bp_graph_add_vertex(g,
+				       mca_btl_usnic_component.usnic_active_modules[i],
+				       &idx);
         if (OPAL_SUCCESS != err) {
             OPAL_ERROR_LOG(err);
             goto out_free_graph;
@@ -464,7 +464,7 @@ static int create_proc_module_graph(
     }
     for (i = 0; i < (int)proc->proc_modex_count; ++i) {
         int idx = -1;
-        err = opal_btl_usnic_gr_add_vertex(g, &proc->proc_modex[i], &idx);
+        err = opal_bp_graph_add_vertex(g, &proc->proc_modex[i], &idx);
         if (OPAL_SUCCESS != err) {
             OPAL_ERROR_LOG(err);
             goto out_free_graph;
@@ -509,9 +509,9 @@ static int create_proc_module_graph(
             opal_output_verbose(20, USNIC_OUT,
                                 "btl:usnic:%s: adding edge (%d,%d) with cost=%" PRIi64 " for edge module[%d] <--> endpoint[%d]",
                                 __func__, u, v, cost, i, j);
-            err = opal_btl_usnic_gr_add_edge(g, u, v, cost,
-                                             /*capacity=*/1,
-                                             /*e_data=*/NULL);
+            err = opal_bp_graph_add_edge(g, u, v, cost,
+					 /*capacity=*/1,
+					 /*e_data=*/NULL);
             if (OPAL_SUCCESS != err) {
                 OPAL_ERROR_LOG(err);
                 goto out_free_graph;
@@ -523,7 +523,7 @@ static int create_proc_module_graph(
     return OPAL_SUCCESS;
 
 out_free_graph:
-    opal_btl_usnic_gr_free(g);
+    opal_bp_graph_free(g);
 out:
     return err;
 }
@@ -547,7 +547,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
     int err = OPAL_SUCCESS;
     size_t i;
     uint32_t num_modules;
-    opal_btl_usnic_graph_t *g = NULL;
+    opal_bp_graph_t *g = NULL;
     bool proc_is_left;
 
     if (NULL == index_out) {
@@ -599,7 +599,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
 
         int nme = 0;
         int *me = NULL;
-        err = opal_btl_usnic_solve_bipartite_assignment(g, &nme, &me);
+        err = opal_bp_graph_solve_bipartite_assignment(g, &nme, &me);
         if (OPAL_SUCCESS != err) {
             OPAL_ERROR_LOG(err);
             goto out_free_graph;
@@ -608,7 +608,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
         edge_pairs_to_match_table(proc, proc_is_left, nme, me);
         free(me);
 
-        err = opal_btl_usnic_gr_free(g);
+        err = opal_bp_graph_free(g);
         if (OPAL_SUCCESS != err) {
             OPAL_ERROR_LOG(err);
             return err;
@@ -655,7 +655,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
     return (*index_out == -1 ? OPAL_ERR_NOT_FOUND : OPAL_SUCCESS);
 
 out_free_graph:
-    opal_btl_usnic_gr_free(g);
+    opal_bp_graph_free(g);
 out_free_table:
     free(proc->proc_ep_match_table);
     proc->proc_ep_match_table = NULL;

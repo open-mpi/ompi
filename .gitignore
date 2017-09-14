@@ -681,3 +681,4 @@ test/util/opal_sos
 test/util/opal_path_nfs
 test/util/opal_path_nfs.out
 test/util/opal_bit_ops
+test/util/bipartite_graph
