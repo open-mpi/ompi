@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -134,13 +134,24 @@ exit:
 int orte_setup_top_session_dir(void)
 {
     int rc = ORTE_SUCCESS;
+    char *env;
     /* get the effective uid */
     uid_t uid = geteuid();
 
+
     /* construct the top_session_dir if we need */
     if (NULL == orte_process_info.top_session_dir) {
+        env = getenv(OPAL_MCA_PREFIX"orte_top_session_dir");
+        if (NULL != env) {
+            orte_process_info.tmpdir_base = strdup(env);
+            orte_process_info.top_session_dir = strdup(env);
+            return ORTE_SUCCESS;
+        }
+
+        assert(!ORTE_PROC_IS_APP || (NULL == getenv(OPAL_MCA_PREFIX"orte_launch")));
+
         if (ORTE_SUCCESS != (rc = _setup_tmpdir_base())) {
-            return rc;
+            goto exit;
         }
         if( NULL == orte_process_info.nodename ||
                 NULL == orte_process_info.tmpdir_base ){
@@ -155,6 +166,24 @@ int orte_setup_top_session_dir(void)
             orte_process_info.top_session_dir = NULL;
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto exit;
+        }
+        if (!ORTE_PROC_IS_APP) {
+            char *dir = orte_process_info.top_session_dir;
+            if (ORTE_SUCCESS != (rc = orte_create_dir(dir))) {
+                goto exit;
+            }
+            if (0 > asprintf(&orte_process_info.top_session_dir, "%s/XXXXXX", dir)) {
+                free(dir);
+                orte_process_info.top_session_dir = NULL;
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto exit;
+            }
+            free(dir);
+
+            if (NULL == mkdtemp(orte_process_info.top_session_dir)) {
+                rc = ORTE_ERROR;
+                goto exit;
+            }
         }
     }
 exit:
