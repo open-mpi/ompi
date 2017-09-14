@@ -602,6 +602,11 @@ int orte_daemon(int argc, char *argv[])
         opal_argv_append_nosize(&singenv, env_str);
         free(env_str);
 
+        /* append the top session dir to the envars needed by the singleton */
+        asprintf(&env_str, OPAL_MCA_PREFIX"orte_top_session_dir=%s", orte_process_info.top_session_dir);
+        opal_argv_append_nosize(&singenv, env_str);
+        free(env_str);
+
         nptr = opal_argv_join(singenv, '*');
         opal_argv_free(singenv);
 
