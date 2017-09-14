@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +53,7 @@ const opal_installdirs_base_component_t mca_installdirs_config_component = {
         OPAL_MANDIR,
         OPAL_PKGDATADIR,
         OPAL_PKGLIBDIR,
-        OPAL_PKGINCLUDEDIR
+        OPAL_PKGINCLUDEDIR,
+        OPAL_FORTRANDIR
     }
 };

@@ -9,6 +9,8 @@
 # $HEADER$
 #
 
+libdir = @libdir@@OMPI_FORTRAN_DIR@
+
 #
 # Only do the stuff in this file if we're going to build one/both of
 # the mpi/mpi_f08 ext modules.

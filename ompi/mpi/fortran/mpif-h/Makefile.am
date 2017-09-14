@@ -14,7 +14,7 @@
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -25,6 +25,8 @@
 #
 
 include $(top_srcdir)/Makefile.ompi-rules
+
+libdir = @libdir@@OMPI_FORTRAN_DIR@
 
 SUBDIRS = profile
 

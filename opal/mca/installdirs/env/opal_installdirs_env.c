@@ -2,6 +2,8 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,6 +80,7 @@ installdirs_env_open(void)
     SET_FIELD(opaldatadir, "OPAL_PKGDATADIR");
     SET_FIELD(opallibdir, "OPAL_PKGLIBDIR");
     SET_FIELD(opalincludedir, "OPAL_PKGINCLUDEDIR");
+    SET_FIELD(opalfortrandir, "OPAL_FORTRANDIR");
 
     return OPAL_SUCCESS;
 }

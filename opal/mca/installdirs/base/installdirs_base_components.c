@@ -3,7 +3,7 @@
  *                         reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -81,6 +81,8 @@ opal_installdirs_base_open(mca_base_open_flag_t flags)
                          opallibdir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          opalincludedir);
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
+                         opalfortrandir);
     }
 
     /* expand out all the fields */

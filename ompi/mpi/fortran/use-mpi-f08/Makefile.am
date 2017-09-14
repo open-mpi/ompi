@@ -20,6 +20,8 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+libdir = @libdir@@OMPI_FORTRAN_DIR@
+
 # This Makefile is only relevant if we're building the "use mpi_f08"
 # MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS

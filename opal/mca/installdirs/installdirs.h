@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,6 +60,7 @@ struct opal_install_dirs_t {
     char* opaldatadir;
     char* opallibdir;
     char* opalincludedir;
+    char* opalfortrandir;
 };
 typedef struct opal_install_dirs_t opal_install_dirs_t;
 
