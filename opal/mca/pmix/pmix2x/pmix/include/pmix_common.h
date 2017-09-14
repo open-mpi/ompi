@@ -244,6 +244,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_HWLOC_XML_V1                   "pmix.hwlocxml1"        // (char*) XML representation of local topology using HWLOC v1.x format
 #define PMIX_HWLOC_XML_V2                   "pmix.hwlocxml2"        // (char*) XML representation of local topology using HWLOC v2.x format
 
+
 /* request-related info */
 #define PMIX_COLLECT_DATA                   "pmix.collect"          // (bool) collect data and return it at the end of the operation
 #define PMIX_TIMEOUT                        "pmix.timeout"          // (int) time in sec before specified operation should time out (0 => infinite)
@@ -263,6 +264,9 @@ typedef uint32_t pmix_rank_t;
                                                                     //        not request data from the server if not found
 #define PMIX_EMBED_BARRIER                  "pmix.embed.barrier"    // (bool) execute a blocking fence operation before executing the
                                                                     //        specified operation
+#define PMIX_JOB_TERM_STATUS                "pmix.job.term.status"  // (pmix_status_t) status returned upon job termination
+#define PMIX_PROC_STATE_STATUS              "pmix.proc.state"       // (pmix_proc_state_t) process state
+
 
 /* attributes used by host server to pass data to the server convenience library - the
  * data will then be parsed and provided to the local clients */
@@ -274,9 +278,11 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_APP_MAP_TYPE                   "pmix.apmap.type"       // (char*) type of mapping used to layout the application (e.g., cyclic)
 #define PMIX_APP_MAP_REGEX                  "pmix.apmap.regex"      // (char*) regex describing the result of the mapping
 
+
 /* attributes used internally to communicate data from the server to the client */
 #define PMIX_PROC_BLOB                      "pmix.pblob"            // (pmix_byte_object_t) packed blob of process data
 #define PMIX_MAP_BLOB                       "pmix.mblob"            // (pmix_byte_object_t) packed blob of process location
+
 
 /* event handler registration and notification info keys */
 #define PMIX_EVENT_HDLR_NAME                "pmix.evname"           // (char*) string name identifying this handler
@@ -297,6 +303,9 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_EVENT_RETURN_OBJECT            "pmix.evobject"         // (void*) object to be returned whenever the registered cbfunc is invoked
                                                                     //     NOTE: the object will _only_ be returned to the process that
                                                                     //           registered it
+#define PMIX_EVENT_DO_NOT_CACHE             "pmix.evnocache"        // (bool) instruct the PMIx server not to cache the event
+#define PMIX_EVENT_SILENT_TERMINATION       "pmix.evsilentterm"     // (bool) do not generate an event when this job normally terminates
+
 
 /* fault tolerance-related events */
 #define PMIX_EVENT_TERMINATE_SESSION        "pmix.evterm.sess"      // (bool) RM intends to terminate session

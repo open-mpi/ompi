@@ -288,6 +288,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE_JOB_INFO_CACHE";
         case ORTE_JOB_FULLY_DESCRIBED:
             return "ORTE_JOB_FULLY_DESCRIBED";
+        case ORTE_JOB_SILENT_TERMINATION:
+            return "ORTE_JOB_SILENT_TERMINATION";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";

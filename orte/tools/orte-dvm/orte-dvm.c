@@ -57,6 +57,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
@@ -466,17 +467,10 @@ int main(int argc, char *argv[])
     exit(orte_exit_status);
 }
 
-static void send_callback(int status, orte_process_name_t *peer,
-                          opal_buffer_t* buffer, orte_rml_tag_t tag,
-                          void* cbdata)
-
+static void notify_complete(int status, void *cbdata)
 {
-    orte_job_t *jdata = (orte_job_t*)cbdata;
-
-    OBJ_RELEASE(buffer);
-    /* cleanup the job object */
-    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
-    OBJ_RELEASE(jdata);
+    opal_list_t *info = (opal_list_t*)cbdata;
+    OPAL_LIST_RELEASE(info);
 }
 
 static void notify_requestor(int sd, short args, void *cbdata)
@@ -484,15 +478,13 @@ static void notify_requestor(int sd, short args, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_job_t *jdata = caddy->jdata;
     orte_proc_t *pptr;
-    int ret, id, *idptr;
+    int ret;
     opal_buffer_t *reply;
     orte_daemon_cmd_flag_t command;
     orte_grpcomm_signature_t *sig;
-
-opal_output(0, "NOTIFY JOB COMPLETE");
-
-    /* notify the requestor */
-    reply = OBJ_NEW(opal_buffer_t);
+    bool notify = true;
+    opal_list_t *info;
+    opal_value_t *val;
 
     /* see if there was any problem */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ABORTED_PROC, (void**)&pptr, OPAL_PTR) && NULL != pptr) {
@@ -503,30 +495,36 @@ opal_output(0, "NOTIFY JOB COMPLETE");
     } else {
         ret = 0;
     }
-    /* return the completion status */
-    opal_dss.pack(reply, &ret, 1, OPAL_INT);
 
-    /* pack the jobid to be returned */
-    opal_dss.pack(reply, &jdata->jobid, 1, ORTE_JOBID);
-
-    /* return the tracker ID */
-    idptr = &id;
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&idptr, OPAL_INT)) {
-        /* pack the sender's index to the tracking object */
-        opal_dss.pack(reply, idptr, 1, OPAL_INT);
+    if (0 == ret && orte_get_attribute(&jdata->attributes, ORTE_JOB_SILENT_TERMINATION, NULL, OPAL_BOOL)) {
+        notify = false;
     }
 
-    /* if there was a problem, we need to send the requestor more info about what happened */
-    if (0 < ret) {
-        opal_dss.pack(reply, &jdata->state, 1, ORTE_JOB_STATE_T);
-        opal_dss.pack(reply, &pptr, 1, ORTE_PROC);
-        opal_dss.pack(reply, &pptr->node, 1, ORTE_NODE);
+    if (notify) {
+        info = OBJ_NEW(opal_list_t);
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_EVENT_DO_NOT_CACHE);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(info, &val->super);
+        /* provide the status */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_JOB_TERM_STATUS);
+        val->type = OPAL_INT;
+        val->data.integer = ret;
+        opal_list_append(info, &val->super);
+        /* if there was a problem, we need to send the requestor more info about what happened */
+        if (0 < ret) {
+            val = OBJ_NEW(opal_value_t);
+            val->key = strdup(OPAL_PMIX_PROCID);
+            val->type = OPAL_NAME;
+            val->data.name = pptr->name;
+            opal_list_append(info, &val->super);
+        }
+        opal_pmix.notify_event(OPAL_ERR_JOB_TERMINATED, NULL,
+                               OPAL_PMIX_RANGE_GLOBAL, info,
+                               notify_complete, info);
     }
-
-    orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                            &jdata->originator, reply,
-                            ORTE_RML_TAG_NOTIFY_COMPLETE,
-                            send_callback, jdata);
 
     /* now ensure that _all_ daemons know that this job has terminated so even
      * those that did not participate in it will know to cleanup the resources
@@ -545,9 +543,4 @@ opal_output(0, "NOTIFY JOB COMPLETE");
     orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, reply);
     OBJ_RELEASE(reply);
     OBJ_RELEASE(sig);
-
-    /* we cannot cleanup the job object as we might
-     * hit an error during transmission, so clean it
-     * up in the send callback */
-    OBJ_RELEASE(caddy);
 }

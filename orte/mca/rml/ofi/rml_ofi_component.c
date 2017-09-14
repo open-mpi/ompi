@@ -1000,7 +1000,7 @@ int get_ofi_prov_id(opal_list_t *attributes)
                    opal_output_verbose(20,orte_rml_base_framework.framework_output,
                        "%s - get_ofi_prov_id() -> comparing sockets != %s to choose first available fabric provider",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        providers[i], cur_fi->fabric_attr->prov_name);
+                        cur_fi->fabric_attr->prov_name);
                    if (0 != strcmp("sockets", cur_fi->fabric_attr->prov_name)) {
                        ofi_prov_id = prov_num;
                        opal_output_verbose(20,orte_rml_base_framework.framework_output,
