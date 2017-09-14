@@ -25,6 +25,8 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+libdir = @libdir@@OMPI_FORTRAN_DIR@
+
 # THIS MAKEFILE IS OLD AND ONLY TO SUPPORT FORTRAN COMPILERS THAT DO
 # NOT SUPPORT "IGNORE TKR" FUNCTIONALITY (i.e., gfortran before v4.9).
 # All other Fortran compilers support ignore TKR and don't compile

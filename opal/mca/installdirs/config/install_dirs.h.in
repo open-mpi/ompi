@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,5 +126,7 @@
 /* The top-level directory for installing the man pages (if any) for
    this package. */
 #define OPAL_MANDIR "@mandir@"
+
+#define OPAL_FORTRANDIR "@OMPI_FORTRAN_DIR@"
 
 #endif

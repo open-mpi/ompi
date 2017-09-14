@@ -4,6 +4,8 @@
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystem, Inc.  All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -144,6 +146,7 @@ opal_install_dirs_expand_internal(const char* input, bool is_setup)
             EXPAND_STRING2(opaldatadir, pkgdatadir);
             EXPAND_STRING2(opallibdir, pkglibdir);
             EXPAND_STRING2(opalincludedir, pkgincludedir);
+            EXPAND_STRING(opalfortrandir);
         } while (changed);
     }
 

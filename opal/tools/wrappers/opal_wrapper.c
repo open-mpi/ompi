@@ -360,6 +360,11 @@ data_callback(const char *key, const char *value)
             opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
             free(line);
         }
+    } else if (0 == strcmp(key, "fortrandir")) {
+        char *env = getenv("OPAL_FORTRANDIR");
+        if (NULL == env) {
+            opal_install_dirs.opalfortrandir = strdup((NULL==value)?"":value);
+        }
     }
 }
 

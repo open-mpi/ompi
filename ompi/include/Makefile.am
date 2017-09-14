@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014-2015 Research Organization for Information Science
+# Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -26,15 +26,18 @@ include $(top_srcdir)/Makefile.ompi-rules
 # not ${includedir}/
 headers = ompi_config.h
 nodist_headers =
+fincludedir = $(includedir)@OMPI_FORTRAN_DIR@
 
 # Install these in $(includedir)
 include_HEADERS =
+# Install those in $(finclude)
+finclude_HEADERS =
 
 # Always install these in $(pkgincludedir)
 pkginclude_HEADERS =
 
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
-include_HEADERS += \
+finclude_HEADERS += \
         mpif-constants.h \
         mpif-externals.h \
         mpif-handles.h \
@@ -50,14 +53,16 @@ endif
 nodist_include_HEADERS = \
         mpi.h \
         mpi-ext.h \
+        mpi_portable_platform.h
+
+nodist_finclude_HEADERS = \
         mpif.h \
         mpif-ext.h \
         mpif-sizeof.h \
-        mpif-c-constants-decl.h \
-        mpi_portable_platform.h
+        mpif-c-constants-decl.h
 
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
-nodist_include_HEADERS += \
+nodist_finclude_HEADERS += \
         mpif-config.h
 endif
 

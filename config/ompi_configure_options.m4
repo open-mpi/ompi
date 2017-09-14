@@ -106,6 +106,15 @@ AC_ARG_ENABLE(mpi-fortran,
     AC_HELP_STRING([--enable-mpi-fortran],
                    [specify which Fortran MPI bindings to build: yes, none (or no), best-effort, mpifh (build only mpif.h support), usempi (build mpif.h and the mpi module), or usempif08 (or all, build mpifh, the mpi module, and the mpi_f08 module) (default: "yes" if Fortran compiler found)]))
 
+AC_ARG_WITH(mpi-fortran-dir,
+    AC_HELP_STRING([--with-mpi-fortran-dir=VALUE],
+                   [install Fortran headers, modules and libs in includeVALEUE and libVALUE instead of include and lib]))
+
+AS_IF([test $with_mpi_fortran_dir = yes || test $with_fortran_dir = no],
+      [OMPI_FORTRAN_DIR=],
+      [OMPI_FORTRAN_DIR=$with_mpi_fortran_dir])
+AC_SUBST([OMPI_FORTRAN_DIR])
+
 # These are the 4 monotonically-rising values indicating levels of
 # Fortran bindings support.
 OMPI_FORTRAN_NO_BINDINGS=0
