@@ -149,8 +149,6 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
 #  define opal_btl_usnic_ack_segment_t ompi_btl_usnic_ack_segment_t
 #  define opal_btl_usnic_ack_segment_t_class ompi_btl_usnic_ack_segment_t_class
 
-#  define opal_btl_usnic_graph_t ompi_btl_usnic_graph_t
-
 #  define opal_btl_usnic_run_tests ompi_btl_usnic_run_tests
 
 #  define USNIC_SEND_LOCAL        des_src

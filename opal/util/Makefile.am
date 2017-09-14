@@ -42,6 +42,8 @@ headers = \
         arch.h \
         argv.h \
         basename.h \
+	bipartite_graph.h \
+	bipartite_graph_internal.h \
         bit_ops.h \
         cmd_line.h \
         crc.h \
@@ -81,6 +83,7 @@ libopalutil_la_SOURCES = \
         arch.c \
         argv.c \
         basename.c \
+	bipartite_graph.c \
         cmd_line.c \
         crc.c \
         daemon_init.c \

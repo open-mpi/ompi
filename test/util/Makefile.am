@@ -34,7 +34,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 
 check_PROGRAMS = \
-	opal_bit_ops opal_path_nfs
+	opal_bit_ops \
+	opal_path_nfs \
+	bipartite_graph
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -73,7 +75,6 @@ opal_bit_ops_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_bit_ops_DEPENDENCIES = $(opal_path_nfs_LDADD)
-
 
 opal_path_nfs_SOURCES = opal_path_nfs.c
 opal_path_nfs_LDADD = \
@@ -117,6 +118,12 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 #        $(top_builddir)/orte/libopen-rte.la \
 #        $(top_builddir)/test/support/libsupport.a
 #orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
+
+bipartite_graph_SOURCES = bipartite_graph.c
+bipartite_graph_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/test/support/libsupport.a
+bipartite_graph_DEPENDENCIES = $(bipartite_graph_LDADD)
 
 clean-local:
 	rm -f test_session_dir_out test-file opal_path_nfs.out
