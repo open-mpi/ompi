@@ -807,16 +807,33 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                         PMIx_Data_range_string(cd->range),
                         cd->nondefault ? "NONDEFAULT" : "OPEN");
 
-    /* we cannot know if everyone who wants this notice has had a chance
-     * to register for it - the notice may be coming too early. So cache
-     * the message until all local procs have received it, or it ages to
-     * the point where it gets pushed out by more recent events */
-    PMIX_RETAIN(cd);
-    rbout = pmix_ring_buffer_push(&pmix_globals.notifications, cd);
+    /* check for caching instructions */
+    holdcd = true;
+    if (0 < cd->ninfo) {
+        /* check for caching instructions */
+        for (n=0; n < cd->ninfo; n++) {
+            if (0 == strncmp(cd->info[n].key, PMIX_EVENT_DO_NOT_CACHE, PMIX_MAX_KEYLEN)) {
+                if (PMIX_UNDEF == cd->info[n].value.type ||
+                    cd->info[n].value.data.flag) {
+                    holdcd = false;
+                    break;
+                }
+            }
+        }
+    }
 
-   /* if an older event was bumped, release it */
-    if (NULL != rbout) {
-        PMIX_RELEASE(rbout);
+    if (holdcd) {
+        /* we cannot know if everyone who wants this notice has had a chance
+         * to register for it - the notice may be coming too early. So cache
+         * the message until all local procs have received it, or it ages to
+         * the point where it gets pushed out by more recent events */
+        PMIX_RETAIN(cd);
+        rbout = pmix_ring_buffer_push(&pmix_globals.notifications, cd);
+
+        /* if an older event was bumped, release it */
+        if (NULL != rbout) {
+            PMIX_RELEASE(rbout);
+        }
     }
 
     holdcd = false;
@@ -984,8 +1001,15 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
         cd->source.rank = source->rank;
     }
     cd->range = range;
-    cd->info = info;
-    cd->ninfo = ninfo;
+    /* have to copy the info to preserve it for future when cached */
+    if (0 < ninfo) {
+        cd->ninfo = ninfo;
+        PMIX_INFO_CREATE(cd->info, cd->ninfo);
+        /* need to copy the info */
+        for (n=0; n < cd->ninfo; n++) {
+            PMIX_INFO_XFER(&cd->info[n], &info[n]);
+        }
+    }
 
     /* check for directives */
     if (NULL != info) {

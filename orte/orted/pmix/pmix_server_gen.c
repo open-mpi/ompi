@@ -725,6 +725,8 @@ static void _toolconn(int sd, short args, void *cbdata)
     orte_node_t *node;
     orte_process_name_t tool;
     int rc;
+    opal_value_t *val;
+    bool flag;
 
     ORTE_ACQUIRE_OBJECT(cd);
 
@@ -787,6 +789,22 @@ static void _toolconn(int sd, short args, void *cbdata)
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
+
+        /* check for directives */
+        if (NULL != cd->info) {
+            OPAL_LIST_FOREACH(val, cd->info, opal_value_t) {
+                if (0 == strcmp(val->key, OPAL_PMIX_EVENT_SILENT_TERMINATION)) {
+                    if (OPAL_UNDEF == val->type || val->data.flag) {
+                        flag = true;
+                        orte_set_attribute(&jdata->attributes, ORTE_JOB_SILENT_TERMINATION,
+                                           ORTE_ATTR_GLOBAL, &flag, OPAL_BOOL);
+                    }
+                }
+            }
+        }
+        flag = true;
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_SILENT_TERMINATION,
+                           ORTE_ATTR_GLOBAL, &flag, OPAL_BOOL);
 
         /* pass back the assigned jobid */
         tool.jobid = jdata->jobid;

@@ -144,6 +144,8 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_TRANSPORT_KEY          (ORTE_JOB_START_KEY + 51)    // string - transport keys assigned to this job
 #define ORTE_JOB_INFO_CACHE             (ORTE_JOB_START_KEY + 52)    // opal_list_t - list of opal_value_t to be included in job_info
 #define ORTE_JOB_FULLY_DESCRIBED        (ORTE_JOB_START_KEY + 53)    // bool - job is fully described in launch msg
+#define ORTE_JOB_SILENT_TERMINATION     (ORTE_JOB_START_KEY + 54)    // bool - do not generate an event notification when job
+                                                                     //        normally terminates
 
 #define ORTE_JOB_MAX_KEY   300
 

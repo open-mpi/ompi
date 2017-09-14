@@ -506,6 +506,15 @@ static void evhandler(size_t evhdlr_registration_id,
                       pmix_event_notification_cbfunc_fn_t cbfunc,
                       void *cbdata)
 {
+    size_t n;
+
+    if (NULL != info) {
+        for (n=0; n < ninfo; n++) {
+            if (0 == strncmp(info[n].key, PMIX_JOB_TERM_STATUS, PMIX_MAX_KEYLEN)) {
+                opal_output(0, "JOB COMPLETED WITH STATUS %s", PMIx_Error_string(info[n].value.data.status));
+            }
+        }
+    }
     if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
     }

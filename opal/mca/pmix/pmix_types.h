@@ -192,6 +192,9 @@ BEGIN_C_DECLS
                                                                         //        not request data from the server if not found
 #define OPAL_PMIX_EMBED_BARRIER                 "pmix.embed.barrier"    // (bool) execute a blocking fence operation before executing the
                                                                         //        specified operation
+#define OPAL_PMIX_JOB_TERM_STATUS               "pmix.job.term.status"  // (int) status returned upon job termination
+#define OPAL_PMIX_PROC_STATE_STATUS             "pmix.proc.state"       // (int) process state
+
 
 
 /* attribute used by host server to pass data to the server convenience library - the
@@ -218,6 +221,9 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_EVENT_RETURN_OBJECT           "pmix.evobject"         // (void*) object to be returned whenever the registered cbfunc is invoked
                                                                         //     NOTE: the object will _only_ be returned to the process that
                                                                         //           registered it
+#define OPAL_PMIX_EVENT_DO_NOT_CACHE            "pmix.evnocache"        // (bool) instruct the PMIx server not to cache the event
+#define OPAL_PMIX_EVENT_SILENT_TERMINATION      "pmix.evsilentterm"     // (bool) do not generate an event when this job normally terminates
+
 
 /* fault tolerance-related events */
 #define OPAL_PMIX_EVENT_TERMINATE_SESSION       "pmix.evterm.sess"      // (bool) RM intends to terminate session
