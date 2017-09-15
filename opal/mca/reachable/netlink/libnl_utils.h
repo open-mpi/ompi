@@ -46,13 +46,7 @@
 #ifndef LIBNL_UTILS_H
 #define LIBNL_UTILS_H
 
-#if !defined (OPAL_HAVE_LIBNL3)
-#error You must define OPAL_HAVE_LIBNL3 to 0 or 1 before including libnl_utils.h
-#elif OPAL_HAVE_LIBNL3
 #include "libnl3_utils.h"
-#else
-#include "libnl1_utils.h"
-#endif
 
 struct opal_reachable_netlink_sk {
     NL_HANDLE	*nlh;
