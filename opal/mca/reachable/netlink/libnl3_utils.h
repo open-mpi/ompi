@@ -72,9 +72,9 @@ typedef struct nl_sock NL_HANDLE;
 	} while (0)
 
 struct opal_reachable_netlink_rt_cb_arg {
-	uint32_t		nh_addr;
 	int			oif;
 	int			found;
+	int			has_gateway;
 	int			replied;
 	struct opal_reachable_netlink_sk	*unlsk;
 };
