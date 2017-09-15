@@ -249,8 +249,9 @@ static int opal_reachable_netlink_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
                         lookup_arg->oif);
     }
 
-    if (found && tb[RTA_GATEWAY])
-        lookup_arg->nh_addr = nla_get_u32(tb[RTA_GATEWAY]);
+    if (found && tb[RTA_GATEWAY]) {
+        lookup_arg->has_gateway = 1;
+    }
     lookup_arg->found = found;
     return NL_STOP;
 }
@@ -258,9 +259,8 @@ static int opal_reachable_netlink_rt_raw_parse_cb(struct nl_msg *msg, void *arg)
 int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
 				     uint32_t dst_addr,
 				     int outgoing_interface,
-				     uint32_t *nh_addr)
+                                     int *has_gateway)
 {
-
     struct opal_reachable_netlink_sk *unlsk; /* netlink socket */
     struct nl_msg *nlm; /* netlink message */
     struct rtmsg rmsg; /* route message */
@@ -321,9 +321,10 @@ int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
 
     /* check whether a route was found */
     if (arg.found) {
-        *nh_addr = arg.nh_addr;
+        *has_gateway = arg.has_gateway;
         err = 0;
     } else {
+        *has_gateway = 0;
         err = EHOSTUNREACH;
     }
 

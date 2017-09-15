@@ -53,8 +53,14 @@ struct opal_reachable_netlink_sk {
     uint32_t	seq;
 };
 
+/* returns 0 if host is reachable, EHOSTUNREACH if the host
+ * is not reachable, non-zero in other errors.
+ *
+ * If the route to the destination is through a gateway, *has_gateway
+ * is set to 1.  Otherwise, it is set to 0.
+ */
 int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
 				     uint32_t dst_addr, int oif,
-				     uint32_t *nh_addr);
+				     int *has_gateway);
 
 #endif /* LIBNL_UTILS_H */
