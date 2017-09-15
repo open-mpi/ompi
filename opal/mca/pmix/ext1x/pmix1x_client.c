@@ -474,8 +474,14 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&pinfo[n].value, ival);
+            if (0 == strcmp(ival->key, OPAL_PMIX_IMMEDIATE)) {
+                (void)strncpy(pinfo[n].key, OPAL_PMIX_OPTIONAL, PMIX_MAX_KEYLEN);
+                pmix1_value_load(&pinfo[n].value, ival);
+            } else {
+                (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
+                pmix1_value_load(&pinfo[n].value, ival);
+            }
+            ++n;
         }
     } else {
         pinfo = NULL;
@@ -562,8 +568,14 @@ int pmix1_getnb(const opal_process_name_t *proc, const char *key,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, ival->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&op->info[n].value, ival);
+            if (0 == strcmp(ival->key, OPAL_PMIX_IMMEDIATE)) {
+                (void)strncpy(op->info[n].key, OPAL_PMIX_OPTIONAL, PMIX_MAX_KEYLEN);
+                pmix1_value_load(&op->info[n].value, ival);
+            } else {
+                (void)strncpy(op->info[n].key, ival->key, PMIX_MAX_KEYLEN);
+                pmix1_value_load(&op->info[n].value, ival);
+            }
+            ++n;
         }
     }
 
