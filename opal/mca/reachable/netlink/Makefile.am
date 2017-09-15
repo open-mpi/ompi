@@ -14,7 +14,6 @@ sources = \
         reachable_netlink.h \
         reachable_netlink_component.c \
         reachable_netlink_module.c \
-        libnl1_utils.h \
         libnl3_utils.h \
         libnl_utils.h \
         reachable_netlink_utils_common.c
