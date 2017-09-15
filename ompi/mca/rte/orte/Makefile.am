@@ -47,9 +47,7 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f ompi-top$(EXEEXT); $(LN_S) orte-top$(EXEEXT) ompi-top$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-server$(EXEEXT); $(LN_S) orte-server$(EXEEXT) ompi-server$(EXEEXT))
 if OPAL_WANT_PRUN
-if WANT_INSTALL_HEADERS
 	(cd $(DESTDIR)$(bindir); rm -f ompi-dvm$(EXEEXT); $(LN_S) orte-dvm$(EXEEXT) ompi-dvm$(EXEEXT))
-endif
 endif
 
 uninstall-local:
@@ -60,9 +58,7 @@ uninstall-local:
 		$(DESTDIR)$(bindir)/ompi-top$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-server$(EXEEXT)
 if OPAL_WANT_PRUN
-if WANT_INSTALL_HEADERS
-	m -f $(DESTDIR)$(bindir)/ompi-dvm$(EXEEXT)
-endif
+	rm -f $(DESTDIR)$(bindir)/ompi-dvm$(EXEEXT)
 endif
 
 endif # OPAL_INSTALL_BINARIES
@@ -119,10 +115,8 @@ ompi-server.1: $(top_builddir)/orte/tools/orte-server/orte-server.1
 	cp -f $(top_builddir)/orte/tools/orte-server/orte-server.1 ompi-server.1
 
 if OPAL_WANT_PRUN
-if WANT_INSTALL_HEADERS
 ompi-dvm.1: $(top_builddir)/orte/tools/orte-dvm/orte-dvm.1
 	cp -f $(top_builddir)/orte/tools/orte-dvm/orte-dvm.1 ompi-dvm.1
-endif
 endif
 
 clean-local:

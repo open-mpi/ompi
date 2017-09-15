@@ -387,6 +387,7 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
     orte_vpid_t *vptr;
     int i, rc;
     char *serial_number;
+    orte_process_name_t requestor, *rptr;
 
     ORTE_ACQUIRE_OBJECT(caddy);
 
@@ -425,7 +426,12 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
      * indicating that request */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FWDIO_TO_TOOL, NULL, OPAL_BOOL)) {
         /* send a message to our IOF containing the requested pull */
-        ORTE_IOF_PROXY_PULL(jdata, &jdata->originator);
+        rptr = &requestor;
+        if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&rptr, OPAL_NAME)) {
+            ORTE_IOF_PROXY_PULL(jdata, rptr);
+        } else {
+            ORTE_IOF_PROXY_PULL(jdata, &jdata->originator);
+        }
         /* the tool will PUSH its stdin, so nothing we need to do here
          * about stdin */
     }

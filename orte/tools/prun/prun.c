@@ -69,22 +69,23 @@
 #include "opal/util/show_help.h"
 #include "opal/util/fd.h"
 #include "opal/sys/atomic.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/runtime/opal_cr.h"
-#endif
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_info_support.h"
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/state/state.h"
+
 /* ensure I can behave like a daemon */
 #include "prun.h"
-#include <include/pmix.h>
-#include <include/pmix_tool.h>
 
 /**
  * Global struct for caching orte command line options.
@@ -143,7 +144,7 @@ typedef struct orte_cmd_options_t orte_cmd_options_t;
 static orte_cmd_options_t orte_cmd_options = {0};
 static opal_cmd_line_t *orte_cmd_line = NULL;
 static opal_list_t job_info;
-static opal_pmix_lock_t globallock;
+static volatile bool active = false;
 
 static int create_app(int argc, char* argv[],
                       opal_list_t *jdata,
@@ -476,10 +477,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 };
 
 
-static void infocb(pmix_status_t status,
-                   pmix_info_t *info, size_t ninfo,
+static void infocb(int status,
+                   opal_list_t *info,
                    void *cbdata,
-                   pmix_release_cbfunc_t release_fn,
+                   opal_pmix_release_cbfunc_t release_fn,
                    void *release_cbdata)
 {
     opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
@@ -491,35 +492,42 @@ static void infocb(pmix_status_t status,
     OPAL_PMIX_WAKEUP_THREAD(lock);
 }
 
-static void regcbfunc(pmix_status_t status, size_t ref, void *cbdata)
+static void regcbfunc(int status, size_t ref, void *cbdata)
 {
     opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
     OPAL_ACQUIRE_OBJECT(lock);
     OPAL_PMIX_WAKEUP_THREAD(lock);
 }
 
-static void evhandler(size_t evhdlr_registration_id,
-                      pmix_status_t status,
-                      const pmix_proc_t *source,
-                      pmix_info_t info[], size_t ninfo,
-                      pmix_info_t *results, size_t nresults,
-                      pmix_event_notification_cbfunc_fn_t cbfunc,
+static void release(int sd, short args, void *cbdata)
+{
+    active = false;
+}
+
+static bool fired = false;
+static void evhandler(int status,
+                      const opal_process_name_t *source,
+                      opal_list_t *info, opal_list_t *results,
+                      opal_pmix_notification_complete_fn_t cbfunc,
                       void *cbdata)
 {
-    size_t n;
+    opal_value_t *val;
 
     if (NULL != info) {
-        for (n=0; n < ninfo; n++) {
-            if (0 == strncmp(info[n].key, PMIX_JOB_TERM_STATUS, PMIX_MAX_KEYLEN)) {
-                opal_output(0, "JOB COMPLETED WITH STATUS %s", PMIx_Error_string(info[n].value.data.status));
+        OPAL_LIST_FOREACH(val, info, opal_value_t) {
+            if (0 == strcmp(val->key, OPAL_PMIX_JOB_TERM_STATUS)) {
+                opal_output(0, "JOB COMPLETED WITH STATUS %d",
+                            val->data.integer);
             }
         }
     }
     if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
+        cbfunc(OPAL_SUCCESS, NULL, NULL, NULL, cbdata);
     }
-    OPAL_ACQUIRE_OBJECT(&globallock);
-    OPAL_PMIX_WAKEUP_THREAD(&globallock);
+    if (!fired) {
+        fired = true;
+        ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_TERMINATED);
+    }
 }
 
 
@@ -530,14 +538,9 @@ int prun(int argc, char *argv[])
     opal_pmix_lock_t lock;
     opal_list_t apps;
     opal_value_t *val;
-    opal_pmix_app_t *app;
-    pmix_status_t code;
-    char nspace[PMIX_MAX_NSLEN+1];
-    pmix_info_t info;
-    pmix_proc_t myproc;
-    size_t asz, jsz;
-    pmix_app_t *papps = NULL;
-    pmix_info_t *pinfo = NULL;
+    opal_list_t info;
+    opal_jobid_t jobid;
+    struct timespec tp = {0, 100000};
 
     /* init the globals */
     memset(&orte_cmd_options, 0, sizeof(orte_cmd_options));
@@ -644,106 +647,85 @@ int prun(int argc, char *argv[])
         return rc;
     }
 
-    /* use the system connection first, if available */
-    PMIX_INFO_LOAD(&info, OPAL_PMIX_CONNECT_SYSTEM_FIRST, NULL, PMIX_BOOL);
-    /* init as a tool */
-    if (OPAL_SUCCESS != PMIx_tool_init(&myproc, &info, 1)) {
-        fprintf(stderr, "Unable to init as tool\n");
-        exit(1);
+    /* tell the ess/tool component that we want to connect to a system-level
+     * PMIx server */
+    opal_setenv("OMPI_MCA_ess_tool_system_server_only", "1", true, &environ);
+
+    /* now initialize ORTE */
+    if (OPAL_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
     }
-    PMIX_INFO_DESTRUCT(&info);
 
     /* if the user just wants us to terminate a DVM, then do so */
     if (orte_cmd_options.terminate_dvm) {
-        PMIX_INFO_LOAD(&info, OPAL_PMIX_JOB_CTRL_TERMINATE, NULL, PMIX_BOOL);
+        OBJ_CONSTRUCT(&info, opal_list_t);
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_JOB_CTRL_TERMINATE);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&info, &val->super);
+
         fprintf(stderr, "TERMINATING DVM...");
         OPAL_PMIX_CONSTRUCT_LOCK(&lock);
-        rc = PMIx_Job_control_nb(NULL, 0, &info, 1, infocb, (void*)&lock);
+        rc = opal_pmix.job_control(NULL, &info, infocb, (void*)&lock);
         OPAL_PMIX_WAIT_THREAD(&lock);
         OPAL_PMIX_DESTRUCT_LOCK(&lock);
-        PMIX_INFO_DESTRUCT(&info);
+        OPAL_LIST_DESTRUCT(&info);
         fprintf(stderr, "DONE\n");
         goto DONE;
     }
 
+    orte_state.add_proc_state(ORTE_PROC_STATE_TERMINATED, release, ORTE_SYS_PRI);
+
     /* get here if they want to run an application, so let's parse
      * the cmd line to get it */
 
-    if (OPAL_SUCCESS != parse_locals(&apps, argc, argv)) {
-        opal_output(0, "[%s:%d] SOMETHING WRONG", __FILE__, __LINE__);
+    if (OPAL_SUCCESS != (rc = parse_locals(&apps, argc, argv))) {
+        OPAL_ERROR_LOG(rc);
         OPAL_LIST_DESTRUCT(&apps);
         goto DONE;
     }
 
     /* bozo check */
-    if (0 == (asz = opal_list_get_size(&apps))) {
-        opal_output(0, "[%s:%d] SOMETHING WRONG", __FILE__, __LINE__);
+    if (0 == opal_list_get_size(&apps)) {
+        opal_output(0, "No application specified!");
         goto DONE;
     }
+
+    /* init flag */
+    active = true;
 
     /* register for job terminations so we get notified when
      * our job completes */
     OPAL_PMIX_CONSTRUCT_LOCK(&lock);
-    code = PMIX_ERR_JOB_TERMINATED;
-    PMIx_Register_event_handler(&code, 1, NULL, 0, evhandler, regcbfunc, &lock);
+    OBJ_CONSTRUCT(&info, opal_list_t);
+    val = OBJ_NEW(opal_value_t);
+    val->key = strdup("foo");
+    val->type = OPAL_INT;
+    val->data.integer = OPAL_ERR_JOB_TERMINATED;
+    opal_list_append(&info, &val->super);
+    opal_pmix.register_evhandler(&info, NULL, evhandler, regcbfunc, &lock);
     OPAL_PMIX_WAIT_THREAD(&lock);
     OPAL_PMIX_DESTRUCT_LOCK(&lock);
+    OPAL_LIST_DESTRUCT(&info);
 
-    /* convert the job info and apps to PMIx arrays */
-    if (0 < (jsz = opal_list_get_size(&job_info))) {
-        PMIX_INFO_CREATE(pinfo, jsz);
-        i=0;
-        OPAL_LIST_FOREACH(val, &job_info, opal_value_t) {
-            (void)strncpy(pinfo[i].key, val->key, PMIX_MAX_KEYLEN);
-            /* we only have bool and string types here */
-            if (OPAL_BOOL == val->type) {
-                pinfo[i].value.type = PMIX_BOOL;
-                pinfo[i].value.data.flag = val->data.flag;
-            } else if (OPAL_STRING == val->type) {
-                pinfo[i].value.type = PMIX_STRING;
-                pinfo[i].value.data.string = strdup(val->data.string);
-            } else {
-                opal_output(0, "UNSUPPORTED TYPE %d", val->type);
-            }
-            ++i;
-        }
-    }
-    OPAL_LIST_DESTRUCT(&job_info);
-
-    PMIX_APP_CREATE(papps, asz);
-    i=0;
-    OPAL_LIST_FOREACH(app, &apps, opal_pmix_app_t) {
-        papps[i].cmd = strdup(app->cmd);
-        papps[i].argv = opal_argv_copy(app->argv);
-        papps[i].env = opal_argv_copy(app->env);
-        if (NULL != app->cwd) {
-            papps[i].cwd = strdup(app->cwd);
-        }
-        papps[i].maxprocs = app->maxprocs;
-        ++i;
-    }
-    OPAL_LIST_DESTRUCT(&apps);
-
-    OPAL_PMIX_CONSTRUCT_LOCK(&globallock);
-    if (PMIX_SUCCESS != PMIx_Spawn(pinfo, jsz, papps, asz, nspace)) {
-        opal_output(0, "[%s:%d] SOMETHING WRONG", __FILE__, __LINE__);
-        OPAL_PMIX_DESTRUCT_LOCK(&globallock);
+    if (OPAL_SUCCESS != (rc = opal_pmix.spawn(&job_info, &apps, &jobid))) {
+        opal_output(0, "Job failed to spawn: %s", opal_strerror(rc));
         goto DONE;
     }
-    opal_output(0, "JOB %s EXECUTING", nspace);
-    OPAL_PMIX_WAIT_THREAD(&globallock);
-    OPAL_PMIX_DESTRUCT_LOCK(&globallock);
-    if (NULL != pinfo) {
-        PMIX_INFO_FREE(pinfo, jsz);
-    }
-    if (NULL != papps) {
-        PMIX_APP_FREE(papps, asz);
+    OPAL_LIST_DESTRUCT(&job_info);
+    OPAL_LIST_DESTRUCT(&apps);
+
+    opal_output(0, "JOB %s EXECUTING", OPAL_JOBID_PRINT(jobid));
+
+    while (active) {
+        nanosleep(&tp, NULL);
     }
 
- DONE:
+  DONE:
     /* cleanup and leave */
-    PMIx_tool_finalize();
-    opal_finalize();
+    orte_finalize();
     return 0;
 }
 

@@ -502,6 +502,14 @@ static void notify_requestor(int sd, short args, void *cbdata)
 
     if (notify) {
         info = OBJ_NEW(opal_list_t);
+        /* ensure this only goes to the job terminated event handler */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_EVENT_NON_DEFAULT);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(info, &val->super);
+        /* tell the server not to cache the event as subsequent jobs
+         * do not need to know about it */
         val = OBJ_NEW(opal_value_t);
         val->key = strdup(OPAL_PMIX_EVENT_DO_NOT_CACHE);
         val->type = OPAL_BOOL;
@@ -510,15 +518,20 @@ static void notify_requestor(int sd, short args, void *cbdata)
         /* provide the status */
         val = OBJ_NEW(opal_value_t);
         val->key = strdup(OPAL_PMIX_JOB_TERM_STATUS);
-        val->type = OPAL_INT;
-        val->data.integer = ret;
+        val->type = OPAL_STATUS;
+        val->data.status = ret;
         opal_list_append(info, &val->super);
         /* if there was a problem, we need to send the requestor more info about what happened */
         if (0 < ret) {
             val = OBJ_NEW(opal_value_t);
             val->key = strdup(OPAL_PMIX_PROCID);
             val->type = OPAL_NAME;
-            val->data.name = pptr->name;
+            val->data.name.jobid = jdata->jobid;
+            if (NULL != pptr) {
+                val->data.name.vpid = pptr->name.vpid;
+            } else {
+                val->data.name.vpid = ORTE_VPID_WILDCARD;
+            }
             opal_list_append(info, &val->super);
         }
         opal_pmix.notify_event(OPAL_ERR_JOB_TERMINATED, NULL,

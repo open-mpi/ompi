@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -837,7 +837,7 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
             }
             break;
         default:
-            opal_output(0, "PACK-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)ptr[i]->type);
+            opal_output(0, "PACK-OPAL-VALUE: UNSUPPORTED TYPE %d FOR KEY %s", (int)ptr[i]->type, ptr[i]->key);
             return OPAL_ERROR;
         }
     }
@@ -981,4 +981,3 @@ int opal_dss_pack_status(opal_buffer_t *buffer, const void *src,
 
     return ret;
 }
-

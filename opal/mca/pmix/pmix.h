@@ -852,6 +852,21 @@ typedef void (*opal_pmix_base_module_query_fn_t)(opal_list_t *queries,
 typedef void (*opal_pmix_base_log_fn_t)(opal_list_t *info,
                                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+/* allocation */
+typedef int (*opal_pmix_base_alloc_fn_t)(opal_pmix_alloc_directive_t directive,
+                                         opal_list_t *info,
+                                         opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* job control */
+typedef int (*opal_pmix_base_job_control_fn_t)(opal_list_t *targets,
+                                               opal_list_t *directives,
+                                               opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* monitoring */
+typedef int (*opal_pmix_base_process_monitor_fn_t)(opal_list_t *monitor,
+                                                   opal_list_t *directives,
+                                                   opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+
 /*
  * the standard public API data structure
  */
@@ -883,6 +898,9 @@ typedef struct {
     opal_pmix_base_module_resolve_nodes_fn_t                resolve_nodes;
     opal_pmix_base_module_query_fn_t                        query;
     opal_pmix_base_log_fn_t                                 log;
+    opal_pmix_base_alloc_fn_t                               allocate;
+    opal_pmix_base_job_control_fn_t                         job_control;
+    opal_pmix_base_process_monitor_fn_t                     monitor;
     /* server APIs */
     opal_pmix_base_module_server_init_fn_t                  server_init;
     opal_pmix_base_module_server_finalize_fn_t              server_finalize;

@@ -48,16 +48,7 @@ AC_DEFUN([MCA_opal_pmix_ext2x_CONFIG],[
                  [$1
                   # need to set the wrapper flags for static builds
                   pmix_ext2x_WRAPPER_EXTRA_LDFLAGS=$opal_external_pmix_LDFLAGS
-                  pmix_ext2x_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS
-                  # and the flags for prun
-                  OPAL_PMIX_CPPFLAGS="-I$opal_external_pmix_CPPFLAGS"
-                  AC_SUBST(OPAL_PMIX_CPPFLAGS)
-                  OPAL_PMIX_LDFLAGS=$opal_external_pmix_LDFLAGS
-                  AC_SUBST(OPAL_PMIX_LDFLAGS)
-                  OPAL_PMIX_LDADD=
-                  AC_SUBST(OPAL_PMIX_LDADD)
-                  OPAL_PMIX_LIBS=-lpmix
-                  AC_SUBST(OPAL_PMIX_LIBS)],
+                  pmix_ext2x_WRAPPER_EXTRA_LIBS=$opal_external_pmix_LIBS],
                  [$2])],
           [$2])
 

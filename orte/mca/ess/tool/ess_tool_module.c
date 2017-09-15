@@ -63,6 +63,7 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
+    uint8_t flags;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -79,8 +80,18 @@ static int rte_init(void)
         progress_thread_running = true;
     }
 
+    /* setup the tool connection flags */
+    flags = 0;
+    if (mca_ess_tool_component.do_not_connect) {
+        flags = 0x01;
+    } else if (mca_ess_tool_component.system_server_first) {
+        flags = 0x02;
+    } else if (mca_ess_tool_component.system_server_only) {
+        flags = 0x04;
+    }
+
     /* do the standard tool init */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
+    if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup(flags))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_tool_setup";
         goto error;
