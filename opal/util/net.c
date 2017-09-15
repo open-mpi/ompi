@@ -358,6 +358,30 @@ opal_net_addr_isipv4public(const struct sockaddr *addr)
     return false;
 }
 
+bool
+opal_net_addr_isipv6linklocal(const struct sockaddr *addr)
+{
+    struct sockaddr_in6 if_addr;
+
+    switch (addr->sa_family) {
+#if OPAL_ENABLE_IPV6
+        case AF_INET6:
+            if_addr.sin6_family = AF_INET6;
+            if (1 != inet_pton(AF_INET6, "fe80::0000", &if_addr.sin6_addr)) {
+                return false;
+            }
+            return opal_net_samenetwork(addr, (struct sockaddr*)&if_addr, 64);
+#endif
+        case AF_INET:
+            return false;
+        default:
+            opal_output (0,
+                         "unhandled sa_family %d passed to opal_net_addr_isipv6linklocal\n",
+                         addr->sa_family);
+    }
+
+    return false;
+}
 
 char*
 opal_net_get_hostname(const struct sockaddr *addr)

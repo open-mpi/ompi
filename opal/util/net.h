@@ -112,6 +112,14 @@ OPAL_DECLSPEC bool opal_net_samenetwork(const struct sockaddr *addr1,
  */
 OPAL_DECLSPEC bool opal_net_addr_isipv4public(const struct sockaddr *addr);
 
+/**
+ * Is the given address a link-local IPv6 address?  Returns false for IPv4
+ * address.
+ *
+ * @param addr      address as struct sockaddr
+ * @return          true, if \c addr is IPv6 link-local, false otherwise
+ */
+OPAL_DECLSPEC bool opal_net_addr_isipv6linklocal(const struct sockaddr *addr);
 
 /**
  * Get string version of address
