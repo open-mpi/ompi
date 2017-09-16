@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -1086,13 +1086,21 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                 return ret;
             }
             break;
+        case OPAL_PTR:
+            /* just ignore these values */
+            break;
         case OPAL_NAME:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.name, &m, OPAL_NAME))) {
                 return ret;
             }
             break;
+        case OPAL_STATUS:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.status, &m, OPAL_INT))) {
+                return ret;
+            }
+            break;
         default:
-            opal_output(0, "PACK-OPAL-VALUE: UNSUPPORTED TYPE");
+            opal_output(0, "UNPACK-OPAL-VALUE: UNSUPPORTED TYPE %d FOR KEY %s", (int)ptr[i]->type, ptr[i]->key);
             return OPAL_ERROR;
         }
     }

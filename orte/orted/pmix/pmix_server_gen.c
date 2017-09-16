@@ -676,6 +676,13 @@ static void _query(int sd, short args, void *cbdata)
                         opal_list_append(results, &kv->super);
                     }
                 #endif
+            } else if (0 == strcmp(q->keys[n], OPAL_PMIX_SERVER_URI)) {
+                /* they want our URI */
+                kv = OBJ_NEW(opal_value_t);
+                kv->key = strdup(OPAL_PMIX_SERVER_URI);
+                kv->type = OPAL_STRING;
+                kv->data.string = strdup(orte_process_info.my_hnp_uri);
+                opal_list_append(results, &kv->super);
             }
         }
     }

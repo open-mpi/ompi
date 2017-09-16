@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,6 +76,30 @@ static int tool_component_register(void)
                                             OPAL_INFO_LVL_2,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_ess_tool_component.async);
+
+    mca_ess_tool_component.do_not_connect = false;
+    (void) mca_base_component_var_register (c, "do_not_connect",
+                                            "Do not connect to a PMIx server",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_2,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ess_tool_component.do_not_connect);
+
+    mca_ess_tool_component.system_server_first = false;
+    (void) mca_base_component_var_register (c, "system_server_first",
+                                            "Look for a system PMIx server first",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_2,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ess_tool_component.system_server_first);
+
+    mca_ess_tool_component.system_server_only = false;
+    (void) mca_base_component_var_register (c, "system_server_only",
+                                            "Only connect to a system server (and not an mpirun)",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_2,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ess_tool_component.system_server_only);
     return ORTE_SUCCESS;
 }
 
@@ -111,4 +135,3 @@ orte_ess_tool_component_close(void)
 {
     return ORTE_SUCCESS;
 }
-

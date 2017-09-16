@@ -38,20 +38,18 @@
 #include "opal/mca/pmix/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/arch.h"
 #include "opal/util/proc.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/state/base/base.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/base/base.h"
-#include "orte/mca/sstore/base/base.h"
-#endif
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
@@ -63,13 +61,51 @@
 #include "orte/mca/ess/base/base.h"
 
 
-int orte_ess_base_tool_setup(void)
+static void infocb(int status,
+                   opal_list_t *info,
+                   void *cbdata,
+                   opal_pmix_release_cbfunc_t release_fn,
+                   void *release_cbdata)
+{
+    opal_value_t *kv;
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+
+    if (OPAL_SUCCESS != status) {
+        ORTE_ERROR_LOG(status);
+    } else {
+        kv = (opal_value_t*)opal_list_get_first(info);
+        if (NULL == kv) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+        } else {
+            if (0 == strcmp(kv->key, OPAL_PMIX_SERVER_URI)) {
+                orte_process_info.my_hnp_uri = strdup(kv->data.string);
+            } else {
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            }
+        }
+    }
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+    OPAL_PMIX_WAKEUP_THREAD(lock);
+}
+
+int orte_ess_base_tool_setup(uint8_t flags)
 {
     int ret;
     char *error = NULL;
     opal_list_t transports;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
+    opal_list_t info;
+    opal_value_t *kv, val;
+    opal_pmix_query_t *q;
+    opal_pmix_lock_t lock;
+    opal_buffer_t *buf;
+
+    /* we need an external progress thread to ensure that things run
+     * async with the PMIx code */
+    orte_event_base = opal_progress_thread_init("tool");
 
     /* setup the PMIx framework - ensure it skips all non-PMIx components,
      * but do not override anything we were given */
@@ -84,7 +120,13 @@ int orte_ess_base_tool_setup(void)
         error = "opal_pmix_base_select";
         goto error;
     }
-    /* set the event base */
+    if (NULL == opal_pmix.tool_init) {
+        /* we no longer support non-pmix tools */
+        error = "opal_pmix.tool_init";
+        ret = ORTE_ERR_NOT_SUPPORTED;
+        goto error;
+    }
+    /* set the event base for the pmix component code */
     opal_pmix_base_set_evbase(orte_event_base);
 
     /* we have to define our name here */
@@ -126,43 +168,67 @@ int orte_ess_base_tool_setup(void)
 
     /* initialize - PMIx may set our name here if we attach to
      * a PMIx server */
-    if (NULL != opal_pmix.tool_init) {
-        opal_list_t info;
-        opal_value_t *kv;
-        OBJ_CONSTRUCT(&info, opal_list_t);
-        /* pass our name so the PMIx layer can use it */
+    OBJ_CONSTRUCT(&info, opal_list_t);
+    /* pass our name so the PMIx layer can use it */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_TOOL_NSPACE);
+    orte_util_convert_jobid_to_string(&kv->data.string, ORTE_PROC_MY_NAME->jobid);
+    kv->type = OPAL_STRING;
+    opal_list_append(&info, &kv->super);
+    /* ditto for our rank */
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(OPAL_PMIX_TOOL_RANK);
+    kv->data.name.vpid = ORTE_PROC_MY_NAME->vpid;
+    kv->type = OPAL_VPID;
+    opal_list_append(&info, &kv->super);
+    if (0 != flags) {
+        /* instruct the PMIx layer on if/how to connect */
         kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_TOOL_NSPACE);
-        orte_util_convert_jobid_to_string(&kv->data.string, ORTE_PROC_MY_NAME->jobid);
-        kv->type = OPAL_STRING;
-        opal_list_append(&info, &kv->super);
-        /* ditto for our rank */
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_TOOL_RANK);
-        kv->data.name.vpid = ORTE_PROC_MY_NAME->vpid;
-        kv->type = OPAL_VPID;
-        opal_list_append(&info, &kv->super);
-        /* ORTE tools don't need to connect to a PMIx server as
-         * they will connect via the OOB */
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_TOOL_DO_NOT_CONNECT);
+        if (0x01 == flags) {
+            kv->key = strdup(OPAL_PMIX_TOOL_DO_NOT_CONNECT);
+        } else if (0x02 == flags) {
+            kv->key = strdup(OPAL_PMIX_CONNECT_SYSTEM_FIRST);
+        } else if (0x04 == flags) {
+            kv->key = strdup(OPAL_PMIX_CONNECT_TO_SYSTEM);
+        } else {
+            opal_output(0, "UNKNOWN CONNECTION FLAG %0x", flags);
+            error = "unknown connection flags";
+            ret = ORTE_ERR_BAD_PARAM;
+            OPAL_LIST_DESTRUCT(&info);
+            OBJ_RELEASE(kv);
+            goto error;
+        }
         kv->data.flag = true;
         kv->type = OPAL_BOOL;
         opal_list_append(&info, &kv->super);
-        if (OPAL_SUCCESS != (ret = opal_pmix.tool_init(&info))) {
-            ORTE_ERROR_LOG(ret);
-            error = "opal_pmix.init";
-            OPAL_LIST_DESTRUCT(&info);
-            goto error;
-        }
-        OPAL_LIST_DESTRUCT(&info);
-        ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
-        ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
     }
+    if (OPAL_SUCCESS != (ret = opal_pmix.tool_init(&info))) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix.init";
+        OPAL_LIST_DESTRUCT(&info);
+        goto error;
+    }
+    OPAL_LIST_DESTRUCT(&info);
+    ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
+    ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
+
     orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
     orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
     orte_process_info.super.proc_arch = opal_local_arch;
     opal_proc_local_set(&orte_process_info.super);
+
+    if (NULL != opal_pmix.query) {
+        /* query the server for its URI so we can get any IO forwarded to us */
+        OBJ_CONSTRUCT(&info, opal_list_t);
+        q = OBJ_NEW(opal_pmix_query_t);
+        opal_argv_append_nosize(&q->keys, OPAL_PMIX_SERVER_URI);
+        opal_list_append(&info, &q->super);
+        OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+        opal_pmix.query(&info, infocb, &lock);
+        OPAL_PMIX_WAIT_THREAD(&lock);
+        OPAL_PMIX_DESTRUCT_LOCK(&lock);
+        OPAL_LIST_DESTRUCT(&info);
+    }
 
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
@@ -227,12 +293,6 @@ int orte_ess_base_tool_setup(void)
     orte_mgmt_conduit = orte_rml.open_conduit(&transports);
     OPAL_LIST_DESTRUCT(&transports);
 
-    /* since I am a tool, then all I really want to do is communicate.
-     * So setup communications and be done - finding the HNP
-     * to which I want to communicate and setting up a route for
-     * that link is my responsibility
-     */
-
     /* we -may- need to know the name of the head
      * of our session directory tree, particularly the
      * tmp base where any other session directories on
@@ -248,7 +308,52 @@ int orte_ess_base_tool_setup(void)
 
     /* setup I/O forwarding system - must come after we init routes */
     if (NULL != orte_process_info.my_hnp_uri) {
-        /* only do this if we were given an HNP */
+        /* extract the name */
+        if (ORTE_SUCCESS != orte_rml_base_parse_uris(orte_process_info.my_hnp_uri, ORTE_PROC_MY_HNP, NULL)) {
+            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);
+            exit(1);
+        }
+        /* Set the contact info in the RML - this won't actually establish
+         * the connection, but just tells the RML how to reach the HNP
+         * if/when we attempt to send to it
+         */
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = OPAL_PMIX_PROC_URI;
+        val.type = OPAL_STRING;
+        val.data.string = orte_process_info.my_hnp_uri;
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_HNP, &val))) {
+            ORTE_ERROR_LOG(ret);
+            val.key = NULL;
+            val.data.string = NULL;
+            OBJ_DESTRUCT(&val);
+            error = "store HNP URI";
+            goto error;
+        }
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
+        /* set the route to be direct */
+        if (ORTE_SUCCESS != orte_routed.update_route(NULL, ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP)) {
+            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, orte_process_info.my_hnp_uri);
+            orte_finalize();
+            exit(1);
+        }
+
+        /* connect to the HNP so we can recv forwarded output */
+        buf = OBJ_NEW(opal_buffer_t);
+        ret = orte_rml.send_buffer_nb(orte_mgmt_conduit, ORTE_PROC_MY_HNP,
+                                      buf, ORTE_RML_TAG_WARMUP_CONNECTION,
+                                      orte_rml_send_callback, NULL);
+        if (ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            error = "warmup connection";
+            goto error;
+        }
+
+        /* set the target hnp as our lifeline so we will terminate if it exits */
+        orte_routed.set_lifeline(NULL, ORTE_PROC_MY_HNP);
+
+        /* setup the IOF */
         if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_iof_base_open";
@@ -259,46 +364,8 @@ int orte_ess_base_tool_setup(void)
             error = "orte_iof_base_select";
             goto error;
         }
-        /* if we were given an HNP, then also setup the PLM in case this
-         * tool wants to request that we spawn something for it */
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_plm_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_plm_base_open";
-            goto error;
-        }
-        /* we don't select the plm framework as we only want the
-         * base proxy functions */
-    }
 
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Setup the SnapC
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_snapc_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_open";
-        goto error;
     }
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sstore_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_open";
-        goto error;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, ORTE_PROC_IS_APP))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_select";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sstore_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_select";
-        goto error;
-    }
-
-    /* Tools do not need all the OPAL CR stuff */
-    opal_cr_set_enabled(false);
-#endif
 
     return ORTE_SUCCESS;
 
@@ -313,11 +380,6 @@ int orte_ess_base_tool_setup(void)
 int orte_ess_base_tool_finalize(void)
 {
     orte_wait_finalize();
-
-#if OPAL_ENABLE_FT_CR == 1
-    mca_base_framework_close(&orte_snapc_base_framework);
-    mca_base_framework_close(&orte_sstore_base_framework);
-#endif
 
     orte_rml.close_conduit(orte_mgmt_conduit);
 

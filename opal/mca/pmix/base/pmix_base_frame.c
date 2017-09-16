@@ -84,6 +84,8 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
     rc = mca_base_framework_components_open(&opal_pmix_base_framework, flags);
     /* ensure the function pointers are NULL */
     memset(&opal_pmix, 0, sizeof(opal_pmix));
+    /* default to the OPAL event base */
+    opal_pmix_base.evbase = opal_sync_event_base;
     /* pass across the verbosity */
     opal_pmix_verbose_output = opal_pmix_base_framework.framework_output;
     return rc;

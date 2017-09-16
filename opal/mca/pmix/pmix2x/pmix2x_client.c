@@ -226,6 +226,9 @@ int pmix2x_tool_init(opal_list_t *info)
         pinfo = NULL;
         ninfo = 0;
     }
+    /* we are going to get our name from the server, or we were given it by the tool,
+     * so mark as native launch so we don't convert back/forth */
+    mca_pmix_pmix2x_component.native_launch = true;
 
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     rc = PMIx_tool_init(&my_proc, pinfo, ninfo);
@@ -245,20 +248,10 @@ int pmix2x_tool_init(opal_list_t *info)
         return OPAL_SUCCESS;
     }
 
-    if (OPAL_JOBID_INVALID == pname.jobid) {
-        /* store our jobid and rank */
-        if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
-            /* if we were launched by the OMPI RTE, then
-             * the jobid is in a special format - so get it */
-            mca_pmix_pmix2x_component.native_launch = true;
-            opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
-        } else {
-            /* we were launched by someone else, so make the
-             * jobid just be the hash of the nspace */
-            OPAL_HASH_JOBID(my_proc.nspace, pname.jobid);
-        }
-        pname.vpid = pmix2x_convert_rank(my_proc.rank);
-    }
+    /* store our jobid and rank */
+    opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
+    pname.vpid = pmix2x_convert_rank(my_proc.rank);
+
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
     job = OBJ_NEW(opal_pmix2x_jobid_trkr_t);
@@ -1153,6 +1146,9 @@ int pmix2x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         }
         if (NULL != app->env) {
             papps[n].env = opal_argv_copy(app->env);
+        }
+        if (NULL != app->cwd) {
+            papps[n].cwd = strdup(app->cwd);
         }
         papps[n].maxprocs = app->maxprocs;
         if (0 < (papps[n].ninfo = opal_list_get_size(&app->info))) {

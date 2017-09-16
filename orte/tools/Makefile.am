@@ -53,9 +53,7 @@ DIST_SUBDIRS += \
         tools/prun
 
 if OPAL_WANT_PRUN
-if WANT_INSTALL_HEADERS
 SUBDIRS += \
 	tools/prun \
         tools/orte-dvm
-endif
 endif

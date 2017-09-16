@@ -91,7 +91,7 @@ static int rte_init(void)
 
     if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
+        if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup(0))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_tool_setup";
             goto error;
