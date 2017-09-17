@@ -914,7 +914,7 @@ int opal_bp_graph_solve_bipartite_assignment(const opal_bp_graph_t *g,
         goto out;
     }
 
-    *match_edges_out = malloc(*num_match_edges_out * sizeof(*match_edges_out));
+    *match_edges_out = malloc(*num_match_edges_out * 2 * sizeof(int));
     if (NULL == *match_edges_out) {
         *num_match_edges_out = 0;
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
