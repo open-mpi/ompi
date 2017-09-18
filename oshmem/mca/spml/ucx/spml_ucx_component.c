@@ -128,7 +128,7 @@ static int mca_spml_ucx_component_open(void)
     memset(&params, 0, sizeof(params));
     params.field_mask = UCP_PARAM_FIELD_FEATURES|UCP_PARAM_FIELD_ESTIMATED_NUM_EPS;
     params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
-    params.estimated_num_eps = oshmem_num_procs();
+    params.estimated_num_eps = ompi_proc_world_size();
 
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
     ucp_config_release(ucp_config);
