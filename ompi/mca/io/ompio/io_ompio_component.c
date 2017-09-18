@@ -212,7 +212,7 @@ static int register_component(void)
                                            "Option for grouping of processes in the aggregator selection "
                                            "1: Data volume based grouping 2: maximizing group size uniformity 3: maximimze "
                                            "data contiguity 4: hybrid optimization  5: simple (default) "
-                                           "6: skip refinement step",
+                                           "6: skip refinement step 7: simple+: grouping based on default file view",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
