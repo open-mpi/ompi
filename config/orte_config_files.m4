@@ -25,12 +25,9 @@ AC_DEFUN([ORTE_CONFIG_FILES],[
         orte/tools/wrappers/Makefile
         orte/tools/wrappers/ortecc-wrapper-data.txt
         orte/tools/wrappers/orte.pc
-        orte/tools/orte-checkpoint/Makefile
-        orte/tools/orte-restart/Makefile
         orte/tools/orte-ps/Makefile
         orte/tools/orte-clean/Makefile
         orte/tools/orte-top/Makefile
-        orte/tools/orte-migrate/Makefile
         orte/tools/orte-info/Makefile
         orte/tools/orte-server/Makefile
         orte/tools/orte-dvm/Makefile

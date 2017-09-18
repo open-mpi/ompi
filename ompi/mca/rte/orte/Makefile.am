@@ -84,24 +84,6 @@ $(top_builddir)/orte/tools/orte-clean/orte-clean.1:
 ompi-clean.1: $(top_builddir)/orte/tools/orte-clean/orte-clean.1
 	cp -f $(top_builddir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
 
-$(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1:
-	(cd $(top_builddir)/orte/tools/orte-checkpoint && $(MAKE) $(AM_MAKEFLAGS) orte-checkpoint.1)
-
-ompi-checkpoint.1: $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1
-	cp -f $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1 ompi-checkpoint.1
-
-$(top_builddir)/orte/tools/orte-restart/orte-restart.1:
-	(cd $(top_builddir)/orte/tools/orte-restart && $(MAKE) $(AM_MAKEFLAGS) orte-restart.1)
-
-ompi-restart.1: $(top_builddir)/orte/tools/orte-restart/orte-restart.1
-	cp -f $(top_builddir)/orte/tools/orte-restart/orte-restart.1 ompi-restart.1
-
-$(top_builddir)/orte/tools/orte-migrate/orte-migrate.1:
-	(cd $(top_builddir)/orte/tools/orte-migrate && $(MAKE) $(AM_MAKEFLAGS) orte-migrate.1)
-
-ompi-migrate.1: $(top_builddir)/orte/tools/orte-migrate/orte-migrate.1
-	cp -f $(top_builddir)/orte/tools/orte-migrate/orte-migrate.1 ompi-migrate.1
-
 $(top_builddir)/orte/tools/orte-top/orte-top.1:
 	(cd $(top_builddir)/orte/tools/orte-top && $(MAKE) $(AM_MAKEFLAGS) orte-top.1)
 
