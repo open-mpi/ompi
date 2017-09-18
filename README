@@ -1436,7 +1436,7 @@ NOTE: The version numbering conventions were changed with the release
       release schedule to indicate feature development vs. stable
       releases.  See the README in releases prior to v1.10.0 for more
       information (e.g.,
-      https://github.com/open-mpi/ompi-release/blob/v1.8/README#L1392-L1475).
+      https://github.com/open-mpi/ompi/blob/v1.8/README#L1392-L1475).
 
 Backwards Compatibility
 -----------------------
