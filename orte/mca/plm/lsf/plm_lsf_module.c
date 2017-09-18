@@ -15,6 +15,7 @@
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -342,9 +343,14 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * orterun can do the rest of its stuff. Instead, we'll catch any
      * failures and deal with them elsewhere
      */
-    if (lsb_launch(nodelist_argv, argv, LSF_DJOB_REPLACE_ENV | LSF_DJOB_NOWAIT, env) < 0) {
+    if ( (rc = lsb_launch(nodelist_argv, argv, LSF_DJOB_REPLACE_ENV | LSF_DJOB_NOWAIT, env)) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
-        opal_output(0, "lsb_launch failed: %d", rc);
+        char *flattened_nodelist = NULL;
+        flattened_nodelist = opal_argv_join(nodelist_argv, '\n');
+        orte_show_help("help-plm-lsf.txt", "lsb_launch-failed",
+                       true, rc, lsberrno, lsb_sysmsg(),
+                       opal_argv_count(nodelist_argv), flattened_nodelist);
+        free(flattened_nodelist);
         rc = ORTE_ERR_FAILED_TO_START;
         orte_wait_enable();  /* re-enable our SIGCHLD handler */
         goto cleanup;
