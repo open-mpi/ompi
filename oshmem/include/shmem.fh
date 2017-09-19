@@ -19,10 +19,11 @@
       integer SHMEM_MINOR_VERSION
       parameter ( SHMEM_MINOR_VERSION = 3 )
 
-      CHARACTER(LEN = 256), PARAMETER :: SHMEM_VENDOR_STRING = "http://www.open-mpi.org/"
-
       integer SHMEM_MAX_NAME_LEN
       parameter ( SHMEM_MAX_NAME_LEN = 256-1 )
+
+      character(LEN = SHMEM_MAX_NAME_LEN) SHMEM_VENDOR_STRING
+      parameter ( SHMEM_VENDOR_STRING = "http://www.open-mpi.org/" )
 
       integer SHMEM_BARRIER_SYNC_SIZE
       parameter ( SHMEM_BARRIER_SYNC_SIZE = 4 )
