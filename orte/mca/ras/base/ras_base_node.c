@@ -115,7 +115,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             /* flag that hnp has been allocated */
             orte_hnp_is_allocated = true;
             /* update the total slots in the job */
-            orte_ras_base.total_slots_alloc = node->slots;
+            orte_ras_base.total_slots_alloc += node->slots;
             /* copy the allocation data to that node's info */
             hnp_node->slots = node->slots;
             hnp_node->slots_max = node->slots_max;
