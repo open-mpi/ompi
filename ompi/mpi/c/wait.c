@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -73,14 +73,18 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
          * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
          */
         MEMCHECKER(
-            opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+            if (MPI_STATUS_IGNORE != status) {
+                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+            }
         );
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
     MEMCHECKER(
-        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+        if (MPI_STATUS_IGNORE != status) {
+            opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+        }
     );
     OPAL_CR_EXIT_LIBRARY();
     return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
