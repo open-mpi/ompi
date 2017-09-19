@@ -41,6 +41,7 @@ int main(int argc, char **argv)
     uint32_t nprocs;
     pmix_info_t *info;
     pmix_pdata_t *pdata;
+    pmix_data_range_t range = PMIX_RANGE_LOCAL;
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
@@ -69,14 +70,15 @@ int main(int argc, char **argv)
 
     /* publish something */
     if (0 == myproc.rank) {
-        PMIX_INFO_CREATE(info, 2);
+        PMIX_INFO_CREATE(info, 3);
         (void)strncpy(info[0].key, "FOOBAR", PMIX_MAX_KEYLEN);
         info[0].value.type = PMIX_UINT8;
         info[0].value.data.uint8 = 1;
         (void)strncpy(info[1].key, "PANDA", PMIX_MAX_KEYLEN);
         info[1].value.type = PMIX_SIZE;
         info[1].value.data.size = 123456;
-        if (PMIX_SUCCESS != (rc = PMIx_Publish(info, 2))) {
+        PMIX_INFO_LOAD(&info[2], PMIX_RANGE, &range, PMIX_DATA_RANGE);
+        if (PMIX_SUCCESS != (rc = PMIx_Publish(info, 3))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Publish failed: %d\n", myproc.nspace, myproc.rank, rc);
             goto done;
         }
