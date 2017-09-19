@@ -32,6 +32,7 @@
 #endif
 
 #include "opal/runtime/opal_progress_threads.h"
+#include "opal/mca/pmix/pmix_types.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/plm/base/base.h"
@@ -63,7 +64,8 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
-    uint8_t flags;
+    opal_list_t flags;
+    opal_value_t *val;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -81,21 +83,57 @@ static int rte_init(void)
     }
 
     /* setup the tool connection flags */
-    flags = 0;
+    OBJ_CONSTRUCT(&flags, opal_list_t);
     if (mca_ess_tool_component.do_not_connect) {
-        flags = 0x01;
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_TOOL_DO_NOT_CONNECT);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&flags, &val->super);
     } else if (mca_ess_tool_component.system_server_first) {
-        flags = 0x02;
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_CONNECT_SYSTEM_FIRST);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&flags, &val->super);
     } else if (mca_ess_tool_component.system_server_only) {
-        flags = 0x04;
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_CONNECT_TO_SYSTEM);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&flags, &val->super);
+    }
+    if (0 < mca_ess_tool_component.wait_to_connect) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_CONNECT_RETRY_DELAY);
+        val->type = OPAL_UINT32;
+        val->data.uint32 = mca_ess_tool_component.wait_to_connect;
+        opal_list_append(&flags, &val->super);
+    }
+    if (0 < mca_ess_tool_component.num_retries) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_CONNECT_MAX_RETRIES);
+        val->type = OPAL_UINT32;
+        val->data.uint32 = mca_ess_tool_component.num_retries;
+        opal_list_append(&flags, &val->super);
+    }
+    if (0 < mca_ess_tool_component.pid) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_SERVER_PIDINFO);
+        val->type = OPAL_PID;
+        val->data.pid = mca_ess_tool_component.pid;
+        opal_list_append(&flags, &val->super);
     }
 
+
     /* do the standard tool init */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup(flags))) {
+    if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup(&flags))) {
         ORTE_ERROR_LOG(ret);
+        OPAL_LIST_DESTRUCT(&flags);
         error = "orte_ess_base_tool_setup";
         goto error;
     }
+    OPAL_LIST_DESTRUCT(&flags);
 
     return ORTE_SUCCESS;
 

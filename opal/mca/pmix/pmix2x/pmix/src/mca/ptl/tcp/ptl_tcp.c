@@ -125,6 +125,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     char myhost[PMIX_MAXHOSTNAMELEN];
     bool system_level = false;
     bool system_level_only = false;
+    pid_t pid = 0;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp: connecting to server");
@@ -224,12 +225,17 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                     system_level = info[n].value.data.flag;
                 }
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_PIDINFO)) {
-                mca_ptl_tcp_component.tool_pid = info[n].value.data.pid;
+                pid = info[n].value.data.pid;
+                pmix_output(0, "GOT PID %d", (int)pid);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_URI)) {
                 if (NULL == mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);
                 }
                 mca_ptl_tcp_component.super.uri = strdup(info[n].value.data.string);
+            } else if (0 == strcmp(info[n].key, PMIX_CONNECT_RETRY_DELAY)) {
+                mca_ptl_tcp_component.wait_to_connect = info[n].value.data.uint32;
+            } else if (0 == strcmp(info[n].key, PMIX_CONNECT_MAX_RETRIES)) {
+                mca_ptl_tcp_component.max_retries = info[n].value.data.uint32;
             }
         }
     }
@@ -263,6 +269,29 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         goto complete;
     }
 
+    /* if they gave us a pid, then look for it */
+    if (0 != pid) {
+        if (0 > asprintf(&filename, "pmix.%s.tool.%d", myhost, pid)) {
+            return PMIX_ERR_NOMEM;
+        }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "ptl:tcp:tool searching for given session server %s",
+                            filename);
+        nspace = NULL;
+        rc = df_search(mca_ptl_tcp_component.system_tmpdir,
+                       filename, &sd, &nspace, &rank);
+        free(filename);
+        if (PMIX_SUCCESS == rc) {
+            goto complete;
+        }
+        if (NULL != nspace) {
+            free(nspace);
+        }
+        /* since they gave us a specific pid and we couldn't
+         * connect to it, return an error */
+        return PMIX_ERR_UNREACH;
+    }
+
 
     /* if they asked for system-level, we start there */
     if (system_level || system_level_only) {
@@ -294,31 +323,6 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (system_level_only) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp: connecting to system failed");
-        return PMIX_ERR_UNREACH;
-    }
-
-    /* now try the session-level connection - if they gave us a pid, then
-     * look for it */
-    if (0 != mca_ptl_tcp_component.tool_pid) {
-        if (0 > asprintf(&filename, "pmix.%s.tool.%d",
-                         myhost, mca_ptl_tcp_component.tool_pid)) {
-            return PMIX_ERR_NOMEM;
-        }
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "ptl:tcp:tool searching for given session server %s",
-                            filename);
-        nspace = NULL;
-        rc = df_search(mca_ptl_tcp_component.system_tmpdir,
-                       filename, &sd, &nspace, &rank);
-        free(filename);
-        if (PMIX_SUCCESS == rc) {
-            goto complete;
-        }
-        if (NULL != nspace) {
-            free(nspace);
-        }
-        /* since they gave us a specific pid and we couldn't
-         * connect to it, return an error */
         return PMIX_ERR_UNREACH;
     }
 
@@ -441,6 +445,11 @@ static pmix_status_t send_oneway(struct pmix_peer_t *peer,
     return PMIX_SUCCESS;
 }
 
+static void timeout(int sd, short args, void *cbdata)
+{
+    pmix_lock_t *lock = (pmix_lock_t*)cbdata;
+    PMIX_WAKEUP_THREAD(lock);
+}
 
 /****    SUPPORTING FUNCTIONS    ****/
 static pmix_status_t parse_uri_file(char *filename,
@@ -450,14 +459,48 @@ static pmix_status_t parse_uri_file(char *filename,
 {
     FILE *fp;
     char *srvr, *p, *p2;
+    pmix_lock_t lock;
+    pmix_event_t ev;
+    struct timeval tv;
+    int retries;
 
     fp = fopen(filename, "r");
     if (NULL == fp) {
         /* if we cannot open the file, then the server must not
          * be configured to support tool connections, or this
-         * user isn't authorized to access it */
+         * user isn't authorized to access it - or it may just
+         * not exist yet! Check for existence */
+        if (0 != access(filename, R_OK)) {
+            if (ENOENT == errno) {
+                /* the file does not exist, so give it
+                 * a little time to see if the server
+                 * is still starting up */
+                retries = 0;
+                do {
+                    ++retries;
+                    pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                        "WAITING FOR CONNECTION FILE");
+                    PMIX_CONSTRUCT_LOCK(&lock);
+                    tv.tv_sec = mca_ptl_tcp_component.wait_to_connect;
+                    tv.tv_usec = 0;
+                    pmix_event_evtimer_set(pmix_globals.evbase, &ev,
+                                           timeout, &lock);
+                    pmix_event_evtimer_add(&ev, &tv);
+                    PMIX_WAIT_THREAD(&lock);
+                    PMIX_DESTRUCT_LOCK(&lock);
+                    fp = fopen(filename, "r");
+                    if (NULL != fp) {
+                        /* we found it! */
+                        goto process;
+                    }
+                } while (retries < mca_ptl_tcp_component.max_retries);
+                /* otherwise, mark it as unreachable */
+            }
+        }
         return PMIX_ERR_UNREACH;
     }
+
+  process:
     /* get the URI */
     srvr = pmix_getline(fp);
     if (NULL == srvr) {
@@ -916,8 +959,9 @@ static pmix_status_t df_search(char *dirname, char *prefix,
     char *suri, *nsp, *newdir;
     pmix_rank_t rk;
     pmix_status_t rc;
+    struct stat buf;
     DIR *cur_dirp;
-    struct dirent * dir_entry;
+    struct dirent *dir_entry;
 
     if (NULL == (cur_dirp = opendir(dirname))) {
         return PMIX_ERR_NOT_FOUND;
@@ -933,9 +977,12 @@ static pmix_status_t df_search(char *dirname, char *prefix,
             0 == strcmp(dir_entry->d_name, "..")) {
             continue;
         }
+        newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
+        if (-1 == stat(newdir, &buf)) {
+            continue;
+        }
         /* if it is a directory, down search */
-        if (DT_DIR == dir_entry->d_type) {
-            newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
+        if (S_ISDIR(buf.st_mode)) {
             rc = df_search(newdir, prefix, sd, nspace, rank);
             free(newdir);
             if (PMIX_SUCCESS == rc) {
@@ -944,22 +991,14 @@ static pmix_status_t df_search(char *dirname, char *prefix,
             }
             continue;
         }
-        /* if it isn't a regular file, ignore it */
-        if (DT_REG != dir_entry->d_type) {
-            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "pmix:tcp: ignoring %s", dir_entry->d_name);
-            continue;
-        }
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "pmix:tcp: checking %s vs %s", dir_entry->d_name, prefix);
         /* see if it starts with our prefix */
         if (0 == strncmp(dir_entry->d_name, prefix, strlen(prefix))) {
             /* try to read this file */
-            newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "pmix:tcp: reading file %s", newdir);
             rc = parse_uri_file(newdir, &suri, &nsp, &rk);
-            free(newdir);
             if (PMIX_SUCCESS == rc) {
                 if (NULL != mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);
@@ -972,11 +1011,13 @@ static pmix_status_t df_search(char *dirname, char *prefix,
                     (*nspace) = nsp;
                     *rank = rk;
                     closedir(cur_dirp);
+                    free(newdir);
                     return PMIX_SUCCESS;
                 }
                 free(nsp);
             }
         }
+        free(newdir);
     }
     closedir(cur_dirp);
     return PMIX_ERR_NOT_FOUND;

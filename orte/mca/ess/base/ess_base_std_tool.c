@@ -90,7 +90,7 @@ static void infocb(int status,
     OPAL_PMIX_WAKEUP_THREAD(lock);
 }
 
-int orte_ess_base_tool_setup(uint8_t flags)
+int orte_ess_base_tool_setup(opal_list_t *flags)
 {
     int ret;
     char *error = NULL;
@@ -98,7 +98,7 @@ int orte_ess_base_tool_setup(uint8_t flags)
     orte_jobid_t jobid;
     orte_vpid_t vpid;
     opal_list_t info;
-    opal_value_t *kv, val;
+    opal_value_t *kv, *knext, val;
     opal_pmix_query_t *q;
     opal_pmix_lock_t lock;
     opal_buffer_t *buf;
@@ -181,26 +181,12 @@ int orte_ess_base_tool_setup(uint8_t flags)
     kv->data.name.vpid = ORTE_PROC_MY_NAME->vpid;
     kv->type = OPAL_VPID;
     opal_list_append(&info, &kv->super);
-    if (0 != flags) {
-        /* instruct the PMIx layer on if/how to connect */
-        kv = OBJ_NEW(opal_value_t);
-        if (0x01 == flags) {
-            kv->key = strdup(OPAL_PMIX_TOOL_DO_NOT_CONNECT);
-        } else if (0x02 == flags) {
-            kv->key = strdup(OPAL_PMIX_CONNECT_SYSTEM_FIRST);
-        } else if (0x04 == flags) {
-            kv->key = strdup(OPAL_PMIX_CONNECT_TO_SYSTEM);
-        } else {
-            opal_output(0, "UNKNOWN CONNECTION FLAG %0x", flags);
-            error = "unknown connection flags";
-            ret = ORTE_ERR_BAD_PARAM;
-            OPAL_LIST_DESTRUCT(&info);
-            OBJ_RELEASE(kv);
-            goto error;
+    if (NULL != flags) {
+        /* pass along any directives */
+        OPAL_LIST_FOREACH_SAFE(kv, knext, flags, opal_value_t) {
+            opal_list_remove_item(flags, &kv->super);
+            opal_list_append(&info, &kv->super);
         }
-        kv->data.flag = true;
-        kv->type = OPAL_BOOL;
-        opal_list_append(&info, &kv->super);
     }
     if (OPAL_SUCCESS != (ret = opal_pmix.tool_init(&info))) {
         ORTE_ERROR_LOG(ret);

@@ -113,7 +113,8 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     .disable_ipv6_family = true,
     .session_filename = NULL,
     .system_filename = NULL,
-    .tool_pid = 0
+    .wait_to_connect = 4,
+    .max_retries = 2
 };
 
 static char **split_and_resolve(char **orig_str, char *name);
@@ -131,13 +132,6 @@ static int component_register(void)
                                                PMIX_INFO_LVL_2,
                                                PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
                                                &mca_ptl_tcp_component.super.uri);
-
-    (void)pmix_mca_base_component_var_register(component, "tool_pid",
-                                               "pid of a tool we are to connect to",
-                                               PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                               PMIX_INFO_LVL_2,
-                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &mca_ptl_tcp_component.tool_pid);
 
     (void)pmix_mca_base_component_var_register(component, "if_include",
                                                "Comma-delimited list of devices and/or CIDR notation of TCP networks (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with ptl_tcp_if_exclude.",
@@ -191,6 +185,20 @@ static int component_register(void)
                                           PMIX_INFO_LVL_4,
                                           PMIX_MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_ptl_tcp_component.disable_ipv6_family);
+
+    (void)pmix_mca_base_component_var_register(component, "connection_wait_time",
+                                          "Number of seconds to wait for the server connection file to appear",
+                                          PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          PMIX_INFO_LVL_4,
+                                          PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_ptl_tcp_component.wait_to_connect);
+
+    (void)pmix_mca_base_component_var_register(component, "max_retries",
+                                          "Number of times to look for the connection file before quitting",
+                                          PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          PMIX_INFO_LVL_4,
+                                          PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_ptl_tcp_component.max_retries);
 
     return PMIX_SUCCESS;
 }
