@@ -228,14 +228,7 @@ static void init_complete(int sd, short args, void *cbdata)
 
     /* nothing to do here but move along - if it is the
      * daemon job, then next step is allocate */
-    if (caddy->jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_ALLOCATE);
-    } else {
-        /* next step - position any required files */
-        if (ORTE_SUCCESS != orte_filem.preposition_files(caddy->jdata, files_ready, caddy->jdata)) {
-            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        }
-    }
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_ALLOCATE);
     OBJ_RELEASE(caddy);
 }
 
