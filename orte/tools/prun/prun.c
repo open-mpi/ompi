@@ -139,6 +139,9 @@ struct orte_cmd_options_t {
     int timeout;
     bool report_state_on_timeout;
     bool get_stack_traces;
+    int pid;
+    bool system_server_only;
+    bool system_server_first;
 };
 typedef struct orte_cmd_options_t orte_cmd_options_t;
 static orte_cmd_options_t orte_cmd_options = {0};
@@ -471,6 +474,22 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orte_cmd_options.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the DVM", OPAL_CMD_LINE_OTYPE_DVM },
 
+    /* look first for a system server */
+    { NULL, '\0', "system-server-first", "system-server-first", 0,
+      &orte_cmd_options.system_server_first, OPAL_CMD_LINE_TYPE_BOOL,
+      "First look for a system server and connect to it if found", OPAL_CMD_LINE_OTYPE_DVM },
+
+    /* connect only to a system server */
+    { NULL, '\0', "system-server-only", "system-server-only", 0,
+      &orte_cmd_options.system_server_only, OPAL_CMD_LINE_TYPE_BOOL,
+      "Connect only to a system-level server", OPAL_CMD_LINE_OTYPE_DVM },
+
+    /* provide a connection PID */
+    { NULL, '\0', "pid", "pid", 1,
+      &orte_cmd_options.pid, OPAL_CMD_LINE_TYPE_INT,
+      "PID of the session-level daemon to which we should connect",
+      OPAL_CMD_LINE_OTYPE_DVM },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -647,9 +666,38 @@ int prun(int argc, char *argv[])
         return rc;
     }
 
-    /* tell the ess/tool component that we want to connect to a system-level
+    /* Check for help request */
+    if (orte_cmd_options.help) {
+        char *str, *args = NULL;
+        args = opal_cmd_line_get_usage_msg(orte_cmd_line);
+        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                    "prun", "PSVR", OPAL_VERSION,
+                                    "prun", args,
+                                    PACKAGE_BUGREPORT);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+
+        /* If someone asks for help, that should be all we do */
+        exit(0);
+    }
+
+    /* tell the ess/tool component that we want to connect only to a system-level
      * PMIx server */
-    opal_setenv("OMPI_MCA_ess_tool_system_server_only", "1", true, &environ);
+    if (orte_cmd_options.system_server_only) {
+        opal_setenv(OPAL_MCA_PREFIX"ess_tool_system_server_only", "1", true, &environ);
+    }
+    if (orte_cmd_options.system_server_first) {
+        opal_setenv(OPAL_MCA_PREFIX"ess_tool_system_server_first", "1", true, &environ);
+    }
+    /* if they specified the DVM's pid, then pass it along */
+    if (0 != orte_cmd_options.pid) {
+        asprintf(&param, "%d", orte_cmd_options.pid);
+        opal_setenv(OPAL_MCA_PREFIX"ess_tool_server_pid", param, true, &environ);
+        free(param);
+    }
 
     /* now initialize ORTE */
     if (OPAL_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
@@ -665,7 +713,6 @@ int prun(int argc, char *argv[])
         val->type = OPAL_BOOL;
         val->data.flag = true;
         opal_list_append(&info, &val->super);
-
         fprintf(stderr, "TERMINATING DVM...");
         OPAL_PMIX_CONSTRUCT_LOCK(&lock);
         rc = opal_pmix.job_control(NULL, &info, infocb, (void*)&lock);

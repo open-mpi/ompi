@@ -35,6 +35,9 @@ typedef struct {
     bool system_server_first;
     bool system_server_only;
     bool do_not_connect;
+    int wait_to_connect;
+    int num_retries;
+    int pid;
 } orte_ess_tool_component_t;
 
 ORTE_MODULE_DECLSPEC extern orte_ess_tool_component_t mca_ess_tool_component;
