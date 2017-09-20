@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -36,6 +36,8 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
     int iov_count = 0;
     OMPI_MPI_OFFSET_TYPE iov_offset = 0;
     ssize_t bytes_read=0, ret_code=0;
+    struct flock lock;
+    off_t total_length;
 
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
@@ -53,6 +55,7 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	    iov[iov_count].iov_base = fh->f_io_array[i].memory_address;
 	    iov[iov_count].iov_len = fh->f_io_array[i].length;
 	    iov_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset;
+            total_length = iov[iov_count].iov_len;
 	    iov_count ++;
 	}
 
@@ -75,11 +78,12 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
                     iov[iov_count].iov_base =
                         fh->f_io_array[i+1].memory_address;
                     iov[iov_count].iov_len = fh->f_io_array[i+1].length;
+                    total_length += iov[iov_count].iov_len;
                     iov_count ++;
                     continue;
 	    }
 	}
-
+        mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, iov_offset, total_len, OMPIO_LOCK_SELECTIVE ); 
 #if defined(HAVE_PREADV)
 	ret_code = preadv (fh->fd, iov, iov_count, iov_offset);
 	if ( 0 < ret_code ) {
@@ -96,6 +100,7 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	    bytes_read+=ret_code;
 	}
 #endif
+        mca_fbtl_posix_unlock ( &lock, fh );
 	else if ( ret_code == -1 ) {
             opal_output(1, "readv:%s", strerror(errno));
             free(iov);
