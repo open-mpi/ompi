@@ -35,7 +35,7 @@
 */
 
 int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op, 
-                          OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags)
+                          OMPI_MPI_OFFSET_TYPE offset, off_t len, int flags)
 {
     off_t lmod, bmod;
 
@@ -46,7 +46,7 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
     if ( fh->f_atomicity ||
          fh->f_flags & OMPIO_LOCK_ALWAYS ) {
         /* Need to lock the entire region */
-        lock->l_start = (off_t) iov_offset;
+        lock->l_start = (off_t) offset;
         lock->l_len   = len;
     }  
     else {
@@ -67,7 +67,7 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
             return 0;
         }
         if ( OMPIO_LOCK_ENTIRE_REGION ) {
-            lock->l_start = (off_t) iov_offset;
+            lock->l_start = (off_t) offset;
             lock->l_len   = len;            
         }
         else {
@@ -80,7 +80,7 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
             */
             bmod = offset % fh->f_fs_block_size; 
             if ( !bmod  ) {
-                lock->l_start = (off_t) iov_offset;
+                lock->l_start = (off_t) offset;
                 lock->l_len   = fh->f_fs_block_size - bmod;
             }
             lmod = (offset+len-1)%fh->f_fs_block_size;

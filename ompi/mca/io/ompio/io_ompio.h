@@ -64,6 +64,10 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_CONTIGUOUS_FVIEW       0x00000010
 #define OMPIO_AGGREGATOR_IS_SET      0x00000020
 #define OMPIO_SHAREDFP_IS_SET        0x00000040
+#define OMPIO_LOCK_ALWAYS            0x00000080
+#define OMPIO_LOCK_NEVER             0x00000100
+#define OMPIO_LOCK_NOT_THIS_OP       0x00000200
+
 
 #define QUEUESIZE 2048
 #define MCA_IO_DEFAULT_FILE_VIEW_SIZE 4*1024*1024
@@ -120,6 +124,10 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_PROCS_PER_GROUP_TAG          0
 #define OMPIO_PROCS_IN_GROUP_TAG           1
 #define OMPIO_MERGE_THRESHOLD            0.5
+
+
+#define OMPIO_LOCK_ENTIRE_REGION  10
+#define OMPIO_LOCK_SELECTIVE      11
 
 /*---------------------------*/
 
@@ -216,6 +224,7 @@ struct mca_io_ompio_file_t {
     opal_info_t           *f_info;
     int32_t                f_flags;
     void                  *f_fs_ptr;
+    int                    f_fs_block_size;
     int                    f_atomicity;
     size_t                 f_stripe_size;
     int                    f_stripe_count;

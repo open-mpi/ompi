@@ -58,6 +58,11 @@ ssize_t mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *file,
 bool mca_fbtl_posix_progress     ( mca_ompio_request_t *req);
 void mca_fbtl_posix_request_free ( mca_ompio_request_t *req);
 
+int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op, 
+                          OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags);
+int mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh );
+
+
 struct mca_fbtl_posix_request_data_t {
     int            aio_req_count;       /* total number of aio reqs */
     int            aio_open_reqs;       /* number of unfinished reqs */
@@ -77,6 +82,7 @@ typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
 /* define constants for AIO requests */
 #define FBTL_POSIX_READ 1
 #define FBTL_POSIX_WRITE 2
+
 
 /*
  * ******************************************************************
