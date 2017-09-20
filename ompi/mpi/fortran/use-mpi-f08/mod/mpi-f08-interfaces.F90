@@ -7,7 +7,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
@@ -2616,8 +2616,6 @@ subroutine MPI_Error_string_f08(errorcode,string,resultlen,ierror)
 end subroutine MPI_Error_string_f08
 end interface  MPI_Error_string
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 interface  MPI_File_call_errhandler
 subroutine MPI_File_call_errhandler_f08(fh,errorcode,ierror)
    use :: mpi_f08_types, only : MPI_File
@@ -2658,9 +2656,6 @@ subroutine MPI_File_set_errhandler_f08(file,errhandler,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_set_errhandler_f08
 end interface  MPI_File_set_errhandler
-
-! endif for OMPI_PROVIDE_MPI_FILE_INTERFACE
-#endif
 
 interface  MPI_Finalize
 subroutine MPI_Finalize_f08(ierror)
@@ -3534,8 +3529,6 @@ subroutine MPI_Status_set_elements_x_f08(status,datatype,count,ierror)
 end subroutine MPI_Status_set_elements_x_f08
 end interface  MPI_Status_set_elements_x
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 interface  MPI_File_close
 subroutine MPI_File_close_f08(fh,ierror)
    use :: mpi_f08_types, only : MPI_File
@@ -4361,9 +4354,6 @@ subroutine MPI_File_write_shared_f08(fh,buf,count,datatype,status,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_write_shared_f08
 end interface  MPI_File_write_shared
-
-! endif for OMPI_PROVIDE_MPI_FILE_INTERFACE
-#endif
 
 interface  MPI_Register_datarep
 subroutine MPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_fn, &

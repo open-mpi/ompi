@@ -15,6 +15,8 @@
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 //                         reserved.
+// Copyright (c) 2017      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -42,7 +44,7 @@
 
 #include <stdarg.h>
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE && !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
+#if !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
 // We need to include the header files that define SEEK_* or use them
 // in ways that require them to be #defines so that if the user
 // includes them later, the double inclusion logic in the headers will
@@ -175,9 +177,7 @@ namespace MPI {
   class Status;
   class Info;
   class Win;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   class File;
-#endif
 
   typedef MPI_Aint Aint;
   typedef MPI_Fint Fint;
@@ -207,9 +207,7 @@ namespace MPI {
 #include "ompi/mpi/cxx/group.h"
 #include "ompi/mpi/cxx/comm.h"
 #include "ompi/mpi/cxx/win.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "ompi/mpi/cxx/file.h"
-#endif
 #include "ompi/mpi/cxx/errhandler.h"
 #include "ompi/mpi/cxx/intracomm.h"
 #include "ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
@@ -223,9 +221,7 @@ namespace MPI {
 #include "openmpi/ompi/mpi/cxx/group.h"
 #include "openmpi/ompi/mpi/cxx/comm.h"
 #include "openmpi/ompi/mpi/cxx/win.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "openmpi/ompi/mpi/cxx/file.h"
-#endif
 #include "openmpi/ompi/mpi/cxx/errhandler.h"
 #include "openmpi/ompi/mpi/cxx/intracomm.h"
 #include "openmpi/ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
@@ -268,9 +264,7 @@ namespace MPI {
 #include "ompi/mpi/cxx/status_inln.h"
 #include "ompi/mpi/cxx/info_inln.h"
 #include "ompi/mpi/cxx/win_inln.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "ompi/mpi/cxx/file_inln.h"
-#endif
 #else
 #include "openmpi/ompi/mpi/cxx/datatype_inln.h"
 #include "openmpi/ompi/mpi/cxx/functions_inln.h"
@@ -285,9 +279,7 @@ namespace MPI {
 #include "openmpi/ompi/mpi/cxx/status_inln.h"
 #include "openmpi/ompi/mpi/cxx/info_inln.h"
 #include "openmpi/ompi/mpi/cxx/win_inln.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #include "openmpi/ompi/mpi/cxx/file_inln.h"
-#endif
 #endif
 
 #endif // #if defined(c_plusplus) || defined(__cplusplus)

@@ -11,6 +11,8 @@
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2017      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -54,8 +56,8 @@
       include 'mpif-config.h'
       include 'mpif-constants.h'
       include 'mpif-handles.h'
-      @OMPI_MPIF_IO_CONSTANTS_INCLUDE@
-      @OMPI_MPIF_IO_HANDLES_INCLUDE@
+      include 'mpif-io-constants.h'
+      include 'mpif-io-handles.h'
       include 'mpif-externals.h'
       include 'mpif-sentinels.h'
       include 'mpif-sizeof.h'

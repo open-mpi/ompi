@@ -11,6 +11,8 @@
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2017      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -25,10 +27,8 @@ module mpi
   include "mpif-config.h"
   include "mpif-constants.h"
   include "mpif-handles.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   include "mpif-io-constants.h"
   include "mpif-io-handles.h"
-#endif
   include "mpif-sentinels.h"
 
 ! The MPI attribute callback functions
@@ -42,9 +42,7 @@ module mpi
 ! The ignore-TKR version of the MPI interfaces
 
   include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h"
-#endif
 
   include 'mpi-ignore-tkr-sizeof.h'
 

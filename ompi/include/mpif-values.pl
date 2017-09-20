@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016      Research Organization for Information Science
+# Copyright (c) 2016-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
@@ -511,7 +511,6 @@ foreach my $key (sort(keys(%{$handles}))) {
     $output .= "#define OMPI_$key $handles->{$key}\n";
 }
 
-$output .= "\n#if OMPI_PROVIDE_MPI_FILE_INTERFACE\n";
 foreach my $key (sort(keys(%{$io_constants}))) {
     $output .= "#define OMPI_$key $io_constants->{$key}\n";
 }
@@ -522,9 +521,8 @@ $output .= "\n";
 foreach my $key (sort(keys(%{$io_handles}))) {
     $output .= "#define OMPI_$key $io_handles->{$key}\n";
 }
-$output .= "#endif /* OMPI_PROVIDE_MPI_FILE_INTERFACE */
-
-#endif /* USE_MPI_F08_CONSTANTS_H */\n";
+$output .= "\n";
+$output .= "#endif /* USE_MPI_F08_CONSTANTS_H */\n";
 
 write_file("$topdir/ompi/mpi/fortran/use-mpi-f08/constants.h", $output);
 

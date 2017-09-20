@@ -13,6 +13,8 @@
 // Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
+// Copyright (c) 2017      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -152,9 +154,7 @@ const Datatype     DATATYPE_NULL = MPI_DATATYPE_NULL;
 Request      REQUEST_NULL = MPI_REQUEST_NULL;
 const Op           OP_NULL = MPI_OP_NULL;
 const Errhandler   ERRHANDLER_NULL;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 const File FILE_NULL = MPI_FILE_NULL;
-#endif
 
 // constants specifying empty or ignored input
 const char**       ARGV_NULL = (const char**) MPI_ARGV_NULL;

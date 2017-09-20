@@ -11,6 +11,8 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2017      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -25,9 +27,7 @@ class Status {
 #endif
   friend class MPI::Comm; //so I can access pmpi_status data member in comm.cc
   friend class MPI::Request; //and also from request.cc
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   friend class MPI::File;
-#endif
 
 public:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

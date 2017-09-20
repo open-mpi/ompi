@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2016      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -49,12 +49,10 @@ int ompi_cxx_errhandler_invoke_comm (MPI_Comm comm, int ret, const char *message
     return OMPI_ERRHANDLER_INVOKE (comm, ret, message);
 }
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 int ompi_cxx_errhandler_invoke_file (MPI_File file, int ret, const char *message)
 {
     return OMPI_ERRHANDLER_INVOKE (file, ret, message);
 }
-#endif
 
 int ompi_cxx_attr_create_keyval_comm (MPI_Comm_copy_attr_function *copy_fn,
                                       MPI_Comm_delete_attr_function* delete_fn, int *keyval, void *extra_state,
@@ -114,7 +112,6 @@ MPI_Errhandler ompi_cxx_errhandler_create_win (ompi_cxx_dummy_fn_t *fn)
     return errhandler;
 }
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 MPI_Errhandler ompi_cxx_errhandler_create_file (ompi_cxx_dummy_fn_t *fn)
 {
     ompi_errhandler_t *errhandler;
@@ -125,7 +122,6 @@ MPI_Errhandler ompi_cxx_errhandler_create_file (ompi_cxx_dummy_fn_t *fn)
         (ompi_errhandler_cxx_dispatch_fn_t *) ompi_mpi_cxx_file_errhandler_invoke;
     return errhandler;
 }
-#endif
 
 ompi_cxx_intercept_file_extra_state_t
 *ompi_cxx_new_intercept_state (void *read_fn_cxx, void *write_fn_cxx, void *extent_fn_cxx,
@@ -151,8 +147,6 @@ void ompi_cxx_errhandler_set_callbacks (struct ompi_errhandler_t *errhandler, MP
                                         ompi_file_errhandler_fn *eh_file_fn, MPI_Win_errhandler_function *eh_win_fn)
 {
     errhandler->eh_comm_fn = eh_comm_fn;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
     errhandler->eh_file_fn = eh_file_fn;
-#endif
     errhandler->eh_win_fn = eh_win_fn;
 }

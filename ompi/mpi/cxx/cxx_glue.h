@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -66,11 +66,9 @@ void ompi_mpi_cxx_comm_errhandler_invoke (MPI_Comm *mpi_comm, int *err,
                                           const char *message, void *comm_fn);
 void ompi_mpi_cxx_win_errhandler_invoke (MPI_Win *mpi_comm, int *err,
                                          const char *message, void *win_fn);
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 int ompi_cxx_errhandler_invoke_file (MPI_File file, int ret, const char *message);
 void ompi_mpi_cxx_file_errhandler_invoke (MPI_File *mpi_comm, int *err,
                                           const char *message, void *file_fn);
-#endif
 
 MPI_Errhandler ompi_cxx_errhandler_create_comm (ompi_cxx_dummy_fn_t *fn);
 MPI_Errhandler ompi_cxx_errhandler_create_win (ompi_cxx_dummy_fn_t *fn);

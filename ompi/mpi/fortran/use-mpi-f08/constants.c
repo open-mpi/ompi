@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -62,9 +62,7 @@ OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_mess
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_op_null         = {OMPI_MPI_OP_NULL};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_request_null    = {OMPI_MPI_REQUEST_NULL};
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_win_null        = {OMPI_MPI_WIN_NULL};
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 OMPI_DECLSPEC ompi_fortran_08_handle_t OMPI_F08_HANDLE_ALIGNED ompi_f08_mpi_file_null       = {OMPI_MPI_FILE_NULL};
-#endif
 
 /*
  * common block items from ompi/include/mpif-common.h

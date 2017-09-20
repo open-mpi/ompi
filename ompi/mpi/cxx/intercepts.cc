@@ -14,6 +14,8 @@
 // Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 //                         reserved.
+// Copyright (c) 2017      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -54,7 +56,6 @@ void ompi_mpi_cxx_comm_throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
     va_end(ap);
 }
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 extern "C"
 void ompi_mpi_cxx_file_throw_excptn_fctn(MPI_File *, int *errcode, ...)
 {
@@ -63,7 +64,6 @@ void ompi_mpi_cxx_file_throw_excptn_fctn(MPI_File *, int *errcode, ...)
     ompi_mpi_cxx_throw_exception(errcode);
     va_end(ap);
 }
-#endif
 
 extern "C"
 void ompi_mpi_cxx_win_throw_excptn_fctn(MPI_Win *, int *errcode, ...)
@@ -80,11 +80,7 @@ MPI::InitializeIntercepts()
 {
     ompi_cxx_errhandler_set_callbacks ((struct ompi_errhandler_t *) &ompi_mpi_errors_throw_exceptions,
                                        ompi_mpi_cxx_comm_throw_excptn_fctn,
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
                                        ompi_mpi_cxx_file_throw_excptn_fctn,
-#else
-                                       NULL,
-#endif
                                        ompi_mpi_cxx_win_throw_excptn_fctn);
 }
 
@@ -106,7 +102,6 @@ void ompi_mpi_cxx_comm_errhandler_invoke(MPI_Comm *c_comm, int *err,
     cxx_fn((MPI::Comm&) cxx_comm, err, message);
 }
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 // This function uses OMPI types, and is invoked with C linkage for
 // the express purpose of having a C++ entity call back the C++
 // function (so that types can be converted, etc.).
@@ -120,7 +115,6 @@ void ompi_mpi_cxx_file_errhandler_invoke(MPI_File *c_file, int *err,
 
     cxx_fn(cxx_file, err, message);
 }
-#endif
 
 // This function uses OMPI types, and is invoked with C linkage for
 // the express purpose of having a C++ entity call back the C++
