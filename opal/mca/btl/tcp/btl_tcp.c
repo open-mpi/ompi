@@ -137,11 +137,6 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         }
 
         peers[i] = tcp_endpoint;
-
-        /* we increase the count of MPI users of the event library
-           once per peer, so that we are used until we aren't
-           connected to a peer */
-        opal_progress_event_users_increment();
     }
 
     return OPAL_SUCCESS;
@@ -160,7 +155,6 @@ int mca_btl_tcp_del_procs(struct mca_btl_base_module_t* btl,
         mca_btl_tcp_endpoint_t* tcp_endpoint = endpoints[i];
         opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
         OBJ_RELEASE(tcp_endpoint);
-        opal_progress_event_users_decrement();
     }
     OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
     return OPAL_SUCCESS;
@@ -495,7 +489,6 @@ int mca_btl_tcp_finalize(struct mca_btl_base_module_t* btl)
          item = opal_list_remove_first(&tcp_btl->tcp_endpoints)) {
         mca_btl_tcp_endpoint_t *endpoint = (mca_btl_tcp_endpoint_t*)item;
         OBJ_RELEASE(endpoint);
-        opal_progress_event_users_decrement();
     }
     free(tcp_btl);
     return OPAL_SUCCESS;
