@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -38,6 +38,14 @@
  */
 
 void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache ) {
+    if (!mca_rcache_vma_tree_items_inited) {
+        opal_free_list_init (&mca_rcache_vma_tree_items, sizeof (mca_rcache_vma_t),
+                             8, OBJ_CLASS(mca_rcache_vma_t), 0, 8,
+                             mca_rcache_vma_tree_items_min, mca_rcache_vma_tree_items_max,
+                             mca_rcache_vma_tree_items_inc, NULL, 0, NULL, NULL, NULL);
+        mca_rcache_vma_tree_items_inited = true;
+    }
+
     rcache->base.rcache_find = mca_rcache_vma_find;
     rcache->base.rcache_find_all = mca_rcache_vma_find_all;
     rcache->base.rcache_insert = mca_rcache_vma_insert;
