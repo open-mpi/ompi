@@ -161,6 +161,65 @@ mpi_api_files = \
         exscan_f08.F90 \
         f_sync_reg_f08.F90 \
         fetch_and_op_f08.F90 \
+        file_call_errhandler_f08.F90 \
+        file_close_f08.F90 \
+        file_create_errhandler_f08.F90 \
+        file_delete_f08.F90 \
+        file_get_amode_f08.F90 \
+        file_get_atomicity_f08.F90 \
+        file_get_byte_offset_f08.F90 \
+        file_get_errhandler_f08.F90 \
+        file_get_group_f08.F90 \
+        file_get_info_f08.F90 \
+        file_get_position_f08.F90 \
+        file_get_position_shared_f08.F90 \
+        file_get_size_f08.F90 \
+        file_get_type_extent_f08.F90 \
+        file_get_view_f08.F90 \
+        file_iread_at_f08.F90 \
+        file_iread_f08.F90 \
+        file_iread_at_all_f08.F90 \
+        file_iread_all_f08.F90 \
+        file_iread_shared_f08.F90 \
+        file_iwrite_at_f08.F90 \
+        file_iwrite_f08.F90 \
+        file_iwrite_at_all_f08.F90 \
+        file_iwrite_all_f08.F90 \
+        file_iwrite_shared_f08.F90 \
+        file_open_f08.F90 \
+        file_preallocate_f08.F90 \
+        file_read_all_begin_f08.F90 \
+        file_read_all_end_f08.F90 \
+        file_read_all_f08.F90 \
+        file_read_at_all_begin_f08.F90 \
+        file_read_at_all_end_f08.F90 \
+        file_read_at_all_f08.F90 \
+        file_read_at_f08.F90 \
+        file_read_f08.F90 \
+        file_read_ordered_begin_f08.F90 \
+        file_read_ordered_end_f08.F90 \
+        file_read_ordered_f08.F90 \
+        file_read_shared_f08.F90 \
+        file_seek_f08.F90 \
+        file_seek_shared_f08.F90 \
+        file_set_atomicity_f08.F90 \
+        file_set_errhandler_f08.F90 \
+        file_set_info_f08.F90 \
+        file_set_size_f08.F90 \
+        file_set_view_f08.F90 \
+        file_sync_f08.F90 \
+        file_write_all_begin_f08.F90 \
+        file_write_all_end_f08.F90 \
+        file_write_all_f08.F90 \
+        file_write_at_all_begin_f08.F90 \
+        file_write_at_all_end_f08.F90 \
+        file_write_at_all_f08.F90 \
+        file_write_at_f08.F90 \
+        file_write_f08.F90 \
+        file_write_ordered_begin_f08.F90 \
+        file_write_ordered_end_f08.F90 \
+        file_write_ordered_f08.F90 \
+        file_write_shared_f08.F90 \
         finalized_f08.F90 \
         finalize_f08.F90 \
         free_mem_f08.F90 \
@@ -268,6 +327,7 @@ mpi_api_files = \
         reduce_local_f08.F90 \
         reduce_scatter_f08.F90 \
         reduce_scatter_block_f08.F90 \
+        register_datarep_f08.F90 \
         request_free_f08.F90 \
         request_get_status_f08.F90 \
         rget_f08.F90 \
@@ -373,70 +433,6 @@ mpi_api_files = \
         win_unlock_all_f08.F90 \
         win_wait_f08.F90
 
-if OMPI_PROVIDE_MPI_FILE_INTERFACE
-mpi_api_files += \
-        file_call_errhandler_f08.F90 \
-        file_close_f08.F90 \
-        file_create_errhandler_f08.F90 \
-        file_delete_f08.F90 \
-        file_get_amode_f08.F90 \
-        file_get_atomicity_f08.F90 \
-        file_get_byte_offset_f08.F90 \
-        file_get_errhandler_f08.F90 \
-        file_get_group_f08.F90 \
-        file_get_info_f08.F90 \
-        file_get_position_f08.F90 \
-        file_get_position_shared_f08.F90 \
-        file_get_size_f08.F90 \
-        file_get_type_extent_f08.F90 \
-        file_get_view_f08.F90 \
-        file_iread_at_f08.F90 \
-        file_iread_f08.F90 \
-        file_iread_at_all_f08.F90 \
-        file_iread_all_f08.F90 \
-        file_iread_shared_f08.F90 \
-        file_iwrite_at_f08.F90 \
-        file_iwrite_f08.F90 \
-        file_iwrite_at_all_f08.F90 \
-        file_iwrite_all_f08.F90 \
-        file_iwrite_shared_f08.F90 \
-        file_open_f08.F90 \
-        file_preallocate_f08.F90 \
-        file_read_all_begin_f08.F90 \
-        file_read_all_end_f08.F90 \
-        file_read_all_f08.F90 \
-        file_read_at_all_begin_f08.F90 \
-        file_read_at_all_end_f08.F90 \
-        file_read_at_all_f08.F90 \
-        file_read_at_f08.F90 \
-        file_read_f08.F90 \
-        file_read_ordered_begin_f08.F90 \
-        file_read_ordered_end_f08.F90 \
-        file_read_ordered_f08.F90 \
-        file_read_shared_f08.F90 \
-        file_seek_f08.F90 \
-        file_seek_shared_f08.F90 \
-        file_set_atomicity_f08.F90 \
-        file_set_errhandler_f08.F90 \
-        file_set_info_f08.F90 \
-        file_set_size_f08.F90 \
-        file_set_view_f08.F90 \
-        file_sync_f08.F90 \
-        file_write_all_begin_f08.F90 \
-        file_write_all_end_f08.F90 \
-        file_write_all_f08.F90 \
-        file_write_at_all_begin_f08.F90 \
-        file_write_at_all_end_f08.F90 \
-        file_write_at_all_f08.F90 \
-        file_write_at_f08.F90 \
-        file_write_f08.F90 \
-        file_write_ordered_begin_f08.F90 \
-        file_write_ordered_end_f08.F90 \
-        file_write_ordered_f08.F90 \
-        file_write_shared_f08.F90 \
-        register_datarep_f08.F90
-endif
-
 # JMS Somehow this variable substitution isn't quite working, and I
 # don't have time to figure it out.  So just wholesale copy the file
 # list.  :-(
@@ -520,6 +516,61 @@ pmpi_api_files = \
         profile/pexscan_f08.F90 \
         profile/pf_sync_reg_f08.F90 \
         profile/pfetch_and_op_f08.F90 \
+        profile/pfile_call_errhandler_f08.F90 \
+        profile/pfile_close_f08.F90 \
+        profile/pfile_create_errhandler_f08.F90 \
+        profile/pfile_delete_f08.F90 \
+        profile/pfile_get_amode_f08.F90 \
+        profile/pfile_get_atomicity_f08.F90 \
+        profile/pfile_get_byte_offset_f08.F90 \
+        profile/pfile_get_errhandler_f08.F90 \
+        profile/pfile_get_group_f08.F90 \
+        profile/pfile_get_info_f08.F90 \
+        profile/pfile_get_position_f08.F90 \
+        profile/pfile_get_position_shared_f08.F90 \
+        profile/pfile_get_size_f08.F90 \
+        profile/pfile_get_type_extent_f08.F90 \
+        profile/pfile_get_view_f08.F90 \
+        profile/pfile_iread_at_f08.F90 \
+        profile/pfile_iread_f08.F90 \
+        profile/pfile_iread_shared_f08.F90 \
+        profile/pfile_iwrite_at_f08.F90 \
+        profile/pfile_iwrite_f08.F90 \
+        profile/pfile_iwrite_shared_f08.F90 \
+        profile/pfile_open_f08.F90 \
+        profile/pfile_preallocate_f08.F90 \
+        profile/pfile_read_all_begin_f08.F90 \
+        profile/pfile_read_all_end_f08.F90 \
+        profile/pfile_read_all_f08.F90 \
+        profile/pfile_read_at_all_begin_f08.F90 \
+        profile/pfile_read_at_all_end_f08.F90 \
+        profile/pfile_read_at_all_f08.F90 \
+        profile/pfile_read_at_f08.F90 \
+        profile/pfile_read_f08.F90 \
+        profile/pfile_read_ordered_begin_f08.F90 \
+        profile/pfile_read_ordered_end_f08.F90 \
+        profile/pfile_read_ordered_f08.F90 \
+        profile/pfile_read_shared_f08.F90 \
+        profile/pfile_seek_f08.F90 \
+        profile/pfile_seek_shared_f08.F90 \
+        profile/pfile_set_atomicity_f08.F90 \
+        profile/pfile_set_errhandler_f08.F90 \
+        profile/pfile_set_info_f08.F90 \
+        profile/pfile_set_size_f08.F90 \
+        profile/pfile_set_view_f08.F90 \
+        profile/pfile_sync_f08.F90 \
+        profile/pfile_write_all_begin_f08.F90 \
+        profile/pfile_write_all_end_f08.F90 \
+        profile/pfile_write_all_f08.F90 \
+        profile/pfile_write_at_all_begin_f08.F90 \
+        profile/pfile_write_at_all_end_f08.F90 \
+        profile/pfile_write_at_all_f08.F90 \
+        profile/pfile_write_at_f08.F90 \
+        profile/pfile_write_f08.F90 \
+        profile/pfile_write_ordered_begin_f08.F90 \
+        profile/pfile_write_ordered_end_f08.F90 \
+        profile/pfile_write_ordered_f08.F90 \
+        profile/pfile_write_shared_f08.F90 \
         profile/pfinalized_f08.F90 \
         profile/pfinalize_f08.F90 \
         profile/pfree_mem_f08.F90 \
@@ -627,6 +678,7 @@ pmpi_api_files = \
         profile/preduce_local_f08.F90 \
         profile/preduce_scatter_f08.F90 \
         profile/preduce_scatter_block_f08.F90 \
+        profile/pregister_datarep_f08.F90 \
         profile/prequest_free_f08.F90 \
         profile/prequest_get_status_f08.F90 \
         profile/prget_f08.F90 \
@@ -731,66 +783,6 @@ pmpi_api_files = \
         profile/pwin_unlock_f08.F90 \
         profile/pwin_unlock_all_f08.F90 \
         profile/pwin_wait_f08.F90
-
-if OMPI_PROVIDE_MPI_FILE_INTERFACE
-pmpi_api_files += \
-        profile/pfile_call_errhandler_f08.F90 \
-        profile/pfile_close_f08.F90 \
-        profile/pfile_create_errhandler_f08.F90 \
-        profile/pfile_delete_f08.F90 \
-        profile/pfile_get_amode_f08.F90 \
-        profile/pfile_get_atomicity_f08.F90 \
-        profile/pfile_get_byte_offset_f08.F90 \
-        profile/pfile_get_errhandler_f08.F90 \
-        profile/pfile_get_group_f08.F90 \
-        profile/pfile_get_info_f08.F90 \
-        profile/pfile_get_position_f08.F90 \
-        profile/pfile_get_position_shared_f08.F90 \
-        profile/pfile_get_size_f08.F90 \
-        profile/pfile_get_type_extent_f08.F90 \
-        profile/pfile_get_view_f08.F90 \
-        profile/pfile_iread_at_f08.F90 \
-        profile/pfile_iread_f08.F90 \
-        profile/pfile_iread_shared_f08.F90 \
-        profile/pfile_iwrite_at_f08.F90 \
-        profile/pfile_iwrite_f08.F90 \
-        profile/pfile_iwrite_shared_f08.F90 \
-        profile/pfile_open_f08.F90 \
-        profile/pfile_preallocate_f08.F90 \
-        profile/pfile_read_all_begin_f08.F90 \
-        profile/pfile_read_all_end_f08.F90 \
-        profile/pfile_read_all_f08.F90 \
-        profile/pfile_read_at_all_begin_f08.F90 \
-        profile/pfile_read_at_all_end_f08.F90 \
-        profile/pfile_read_at_all_f08.F90 \
-        profile/pfile_read_at_f08.F90 \
-        profile/pfile_read_f08.F90 \
-        profile/pfile_read_ordered_begin_f08.F90 \
-        profile/pfile_read_ordered_end_f08.F90 \
-        profile/pfile_read_ordered_f08.F90 \
-        profile/pfile_read_shared_f08.F90 \
-        profile/pfile_seek_f08.F90 \
-        profile/pfile_seek_shared_f08.F90 \
-        profile/pfile_set_atomicity_f08.F90 \
-        profile/pfile_set_errhandler_f08.F90 \
-        profile/pfile_set_info_f08.F90 \
-        profile/pfile_set_size_f08.F90 \
-        profile/pfile_set_view_f08.F90 \
-        profile/pfile_sync_f08.F90 \
-        profile/pfile_write_all_begin_f08.F90 \
-        profile/pfile_write_all_end_f08.F90 \
-        profile/pfile_write_all_f08.F90 \
-        profile/pfile_write_at_all_begin_f08.F90 \
-        profile/pfile_write_at_all_end_f08.F90 \
-        profile/pfile_write_at_all_f08.F90 \
-        profile/pfile_write_at_f08.F90 \
-        profile/pfile_write_f08.F90 \
-        profile/pfile_write_ordered_begin_f08.F90 \
-        profile/pfile_write_ordered_end_f08.F90 \
-        profile/pfile_write_ordered_f08.F90 \
-        profile/pfile_write_shared_f08.F90 \
-        profile/pregister_datarep_f08.F90
-endif
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \

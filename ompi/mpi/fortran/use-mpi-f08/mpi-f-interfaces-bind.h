@@ -7,7 +7,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
@@ -1908,8 +1908,6 @@ subroutine ompi_error_string_f(errorcode,string,resultlen,ierror,str_len) &
    INTEGER, VALUE, INTENT(IN) :: str_len
 end subroutine ompi_error_string_f
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 subroutine ompi_file_call_errhandler_f(fh,errorcode,ierror) &
    BIND(C, name="ompi_file_call_errhandler_f")
    implicit none
@@ -1942,9 +1940,6 @@ subroutine ompi_file_set_errhandler_f(file,errhandler,ierror) &
    INTEGER, INTENT(IN) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_file_set_errhandler_f
-
-! OMPI_PROFILE_MPI_FILE_INTERFACE
-#endif
 
 subroutine ompi_finalize_f(ierror) &
    BIND(C, name="ompi_finalize_f")
@@ -2625,8 +2620,6 @@ subroutine ompi_status_set_elements_x_f(status,datatype,count,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_status_set_elements_x_f
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 subroutine ompi_file_close_f(fh,ierror) &
    BIND(C, name="ompi_file_close_f")
    implicit none
@@ -3199,9 +3192,6 @@ subroutine ompi_file_write_shared_f(fh,buf,count,datatype,status,ierror) &
    TYPE(MPI_Status), INTENT(OUT) :: status
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_file_write_shared_f
-
-! OMPI_PROVIDE_MPI_FILE_INTERFACE
-#endif
 
 subroutine ompi_register_datarep_f(datarep,read_conversion_fn, &
                                    write_conversion_fn,dtype_file_extent_fn, &

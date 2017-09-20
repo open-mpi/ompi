@@ -16,7 +16,7 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -134,6 +134,67 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pexscan.c \
 	pfetch_and_op.c \
         piexscan.c \
+        pfile_c2f.c \
+        pfile_call_errhandler.c \
+        pfile_close.c \
+        pfile_create_errhandler.c \
+        pfile_delete.c \
+        pfile_f2c.c \
+        pfile_get_amode.c \
+        pfile_get_atomicity.c \
+        pfile_get_byte_offset.c \
+        pfile_get_errhandler.c \
+        pfile_get_group.c \
+        pfile_get_info.c \
+        pfile_get_position.c \
+        pfile_get_position_shared.c \
+        pfile_get_size.c \
+        pfile_get_type_extent.c \
+        pfile_get_view.c \
+        pfile_iread_at.c \
+        pfile_iread.c \
+        pfile_iread_at_all.c \
+        pfile_iread_all.c \
+        pfile_iread_shared.c \
+        pfile_iwrite_at.c \
+        pfile_iwrite.c \
+        pfile_iwrite_at_all.c \
+        pfile_iwrite_all.c \
+        pfile_iwrite_shared.c \
+        pfile_open.c \
+        pfile_preallocate.c \
+        pfile_read_all_begin.c \
+        pfile_read_all.c \
+        pfile_read_all_end.c \
+        pfile_read_at_all_begin.c \
+        pfile_read_at_all.c \
+        pfile_read_at_all_end.c \
+        pfile_read_at.c \
+        pfile_read.c \
+        pfile_read_ordered_begin.c \
+        pfile_read_ordered.c \
+        pfile_read_ordered_end.c \
+        pfile_read_shared.c \
+        pfile_seek.c \
+        pfile_seek_shared.c \
+        pfile_set_atomicity.c \
+        pfile_set_errhandler.c \
+        pfile_set_info.c \
+        pfile_set_size.c \
+        pfile_set_view.c \
+        pfile_sync.c \
+        pfile_write_all_begin.c \
+        pfile_write_all.c \
+        pfile_write_all_end.c \
+        pfile_write_at_all_begin.c \
+        pfile_write_at_all.c \
+        pfile_write_at_all_end.c \
+        pfile_write_at.c \
+        pfile_write.c \
+        pfile_write_ordered_begin.c \
+        pfile_write_ordered.c \
+        pfile_write_ordered_end.c \
+        pfile_write_shared.c \
         pfinalize.c \
         pfinalized.c \
         pfree_mem.c \
@@ -231,6 +292,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         precv_init.c \
         precv.c \
         preduce.c \
+        pregister_datarep.c \
         pireduce.c \
         preduce_local.c \
         preduce_scatter.c \
@@ -363,72 +425,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwin_unlock.c \
 	pwin_unlock_all.c \
         pwin_wait.c
-
-if OMPI_PROVIDE_MPI_FILE_INTERFACE
-nodist_libmpi_c_pmpi_la_SOURCES += \
-        pfile_c2f.c \
-        pfile_call_errhandler.c \
-        pfile_close.c \
-        pfile_create_errhandler.c \
-        pfile_delete.c \
-        pfile_f2c.c \
-        pfile_get_amode.c \
-        pfile_get_atomicity.c \
-        pfile_get_byte_offset.c \
-        pfile_get_errhandler.c \
-        pfile_get_group.c \
-        pfile_get_info.c \
-        pfile_get_position.c \
-        pfile_get_position_shared.c \
-        pfile_get_size.c \
-        pfile_get_type_extent.c \
-        pfile_get_view.c \
-        pfile_iread_at.c \
-        pfile_iread.c \
-        pfile_iread_at_all.c \
-        pfile_iread_all.c \
-        pfile_iread_shared.c \
-        pfile_iwrite_at.c \
-        pfile_iwrite.c \
-        pfile_iwrite_at_all.c \
-        pfile_iwrite_all.c \
-        pfile_iwrite_shared.c \
-        pfile_open.c \
-        pfile_preallocate.c \
-        pfile_read_all_begin.c \
-        pfile_read_all.c \
-        pfile_read_all_end.c \
-        pfile_read_at_all_begin.c \
-        pfile_read_at_all.c \
-        pfile_read_at_all_end.c \
-        pfile_read_at.c \
-        pfile_read.c \
-        pfile_read_ordered_begin.c \
-        pfile_read_ordered.c \
-        pfile_read_ordered_end.c \
-        pfile_read_shared.c \
-        pfile_seek.c \
-        pfile_seek_shared.c \
-        pfile_set_atomicity.c \
-        pfile_set_errhandler.c \
-        pfile_set_info.c \
-        pfile_set_size.c \
-        pfile_set_view.c \
-        pfile_sync.c \
-        pfile_write_all_begin.c \
-        pfile_write_all.c \
-        pfile_write_all_end.c \
-        pfile_write_at_all_begin.c \
-        pfile_write_at_all.c \
-        pfile_write_at_all_end.c \
-        pfile_write_at.c \
-        pfile_write.c \
-        pfile_write_ordered_begin.c \
-        pfile_write_ordered.c \
-        pfile_write_ordered_end.c \
-        pfile_write_shared.c \
-        pregister_datarep.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory

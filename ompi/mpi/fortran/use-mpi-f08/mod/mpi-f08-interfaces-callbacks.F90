@@ -2,7 +2,7 @@
 ! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015-2016 Research Organization for Information Science
+! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 
@@ -151,8 +151,6 @@ SUBROUTINE MPI_Win_errhandler_function(win, error_code)
 END SUBROUTINE
 END INTERFACE
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_File_errhandler_function(file, error_code)
    USE mpi_f08_types
@@ -161,8 +159,6 @@ SUBROUTINE MPI_File_errhandler_function(file, error_code)
    INTEGER :: error_code
 END SUBROUTINE
 END INTERFACE
-
-#endif
 
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Grequest_query_function(extra_state,status,ierror)

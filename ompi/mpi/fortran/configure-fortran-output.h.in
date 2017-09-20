@@ -3,6 +3,8 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2017      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 !
 ! $COPYRIGHT$
 !
@@ -16,9 +18,6 @@
 
 #ifndef OMPI_FORTRAN_CONFIGURE_OUTPUT_H
 #define OMPI_FORTRAN_CONFIGURE_OUTPUT_H
-
-! Whether we're building the MPI IO interface or not
-#define OMPI_PROVIDE_MPI_FILE_INTERFACE @OMPI_PROVIDE_MPI_FILE_INTERFACE@
 
 ! Whether we're using wrapper F08 functions or not
 #define OMPI_FORTRAN_NEED_WRAPPER_ROUTINES @OMPI_FORTRAN_NEED_WRAPPER_ROUTINES@

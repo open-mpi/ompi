@@ -195,9 +195,6 @@
 /* Whether C compiler supports -fvisibility */
 #undef OPAL_C_HAVE_VISIBILITY
 
-/* Whether OMPI should provide MPI File interface */
-#undef OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 #ifndef OMPI_DECLSPEC
 #  if defined(WIN32) || defined(_WIN32)
 #    if defined(OMPI_IMPORTS)
@@ -293,7 +290,7 @@
  * To accomodate programs written for MPI implementations that use a
  * straight ROMIO import
  */
-#if !OMPI_BUILDING && OMPI_PROVIDE_MPI_FILE_INTERFACE
+#if !OMPI_BUILDING
 #define MPIO_Request MPI_Request
 #define MPIO_Test MPI_Test
 #define MPIO_Wait MPI_Wait
@@ -329,9 +326,7 @@ typedef OMPI_MPI_COUNT_TYPE MPI_Count;
 typedef struct ompi_communicator_t *MPI_Comm;
 typedef struct ompi_datatype_t *MPI_Datatype;
 typedef struct ompi_errhandler_t *MPI_Errhandler;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 typedef struct ompi_file_t *MPI_File;
-#endif
 typedef struct ompi_group_t *MPI_Group;
 typedef struct ompi_info_t *MPI_Info;
 typedef struct ompi_op_t *MPI_Op;
@@ -380,7 +375,6 @@ typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
 typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn
         __mpi_interface_deprecated__("MPI_Comm_errhandler_fn was deprecated in MPI-2.2; use MPI_Comm_errhandler_function instead");
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
     /* This is a little hackish, but errhandler.h needs space for a
        MPI_File_errhandler_fn.  While it could just be removed, this
        allows us to maintain a stable ABI within OMPI, at least for
@@ -389,10 +383,6 @@ typedef void (ompi_file_errhandler_fn)(MPI_File *, int *, ...);
 typedef ompi_file_errhandler_fn MPI_File_errhandler_fn
         __mpi_interface_deprecated__("MPI_File_errhandler_fn was deprecated in MPI-2.2; use MPI_File_errhandler_function instead");
 typedef ompi_file_errhandler_fn MPI_File_errhandler_function;
-#else
-struct ompi_file_t;
-typedef void (ompi_file_errhandler_fn)(struct ompi_file_t**, int *, ...);
-#endif
 typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
 typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
         __mpi_interface_deprecated__("MPI_Win_errhandler_fn was deprecated in MPI-2.2; use MPI_Win_errhandler_function instead");
@@ -453,7 +443,6 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_DISTRIBUTE_NONE      2                     /* not distributed */
 #define MPI_DISTRIBUTE_DFLT_DARG (-1)                  /* default distribution arg */
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 /*
  * Since these values are arbitrary to Open MPI, we might as well make
  * them the same as ROMIO for ease of mapping.  These values taken
@@ -477,8 +466,6 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 
 /* Max data representation length */
 #define MPI_MAX_DATAREP_STRING OPAL_MAX_DATAREP_STRING
-
-#endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
 
 /*
  * MPI-2 One-Sided Communications asserts
@@ -758,9 +745,7 @@ enum {
 #define MPI_ERRHANDLER_NULL OMPI_PREDEFINED_GLOBAL(MPI_Errhandler, ompi_mpi_errhandler_null)
 #define MPI_INFO_NULL OMPI_PREDEFINED_GLOBAL(MPI_Info, ompi_mpi_info_null)
 #define MPI_WIN_NULL OMPI_PREDEFINED_GLOBAL(MPI_Win, ompi_mpi_win_null)
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #define MPI_FILE_NULL OMPI_PREDEFINED_GLOBAL(MPI_File, ompi_mpi_file_null)
-#endif
 #define MPI_T_ENUM_NULL ((MPI_T_enum) NULL)
 
 /*
@@ -1359,7 +1344,6 @@ OMPI_DECLSPEC  int MPI_Fetch_and_op(const void *origin_addr, void *result_addr, 
                                     int target_rank, MPI_Aint target_disp, MPI_Op op, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
                               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 OMPI_DECLSPEC  MPI_Fint MPI_File_c2f(MPI_File file);
 OMPI_DECLSPEC  MPI_File MPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int MPI_File_call_errhandler(MPI_File fh, int errorcode);
@@ -1456,7 +1440,6 @@ OMPI_DECLSPEC  int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
 OMPI_DECLSPEC  int MPI_File_set_atomicity(MPI_File fh, int flag);
 OMPI_DECLSPEC  int MPI_File_get_atomicity(MPI_File fh, int *flag);
 OMPI_DECLSPEC  int MPI_File_sync(MPI_File fh);
-#endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
 OMPI_DECLSPEC  int MPI_Finalize(void);
 OMPI_DECLSPEC  int MPI_Finalized(int *flag);
 OMPI_DECLSPEC  int MPI_Free_mem(void *base);
@@ -2059,7 +2042,6 @@ OMPI_DECLSPEC  int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr,
                                      int target_rank, MPI_Aint target_disp, MPI_Op op, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
                                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 OMPI_DECLSPEC  MPI_Fint PMPI_File_c2f(MPI_File file);
 OMPI_DECLSPEC  MPI_File PMPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int PMPI_File_call_errhandler(MPI_File fh, int errorcode);
@@ -2156,7 +2138,6 @@ OMPI_DECLSPEC  int PMPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
 OMPI_DECLSPEC  int PMPI_File_set_atomicity(MPI_File fh, int flag);
 OMPI_DECLSPEC  int PMPI_File_get_atomicity(MPI_File fh, int *flag);
 OMPI_DECLSPEC  int PMPI_File_sync(MPI_File fh);
-#endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
 OMPI_DECLSPEC  int PMPI_Finalize(void);
 OMPI_DECLSPEC  int PMPI_Finalized(int *flag);
 OMPI_DECLSPEC  int PMPI_Free_mem(void *base);
@@ -2701,13 +2682,6 @@ OMPI_DECLSPEC  int MPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *valu
 #if defined(c_plusplus) || defined(__cplusplus)
 #include "openmpi/ompi/mpi/cxx/mpicxx.h"
 #endif
-#endif
-
-#if !OMPI_PROVIDE_MPI_FILE_INTERFACE && !OMPI_BUILDING
-/* ROMIO requires MPI implementations to set this to 1 if they provide
-   MPI_OFFSET.  We need to provide it because its used throughout the
-   DDT engine */
-#define HAVE_MPI_OFFSET 1
 #endif
 
 #endif /* OMPI_MPI_H */

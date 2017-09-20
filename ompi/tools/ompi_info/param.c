@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -126,7 +126,6 @@ void ompi_info_do_config(bool want_all)
     char *mpirun_prefix_by_default;
 #endif
     char *sparse_groups;
-    char *have_mpi_io;
     char *wtime_support;
     char *symbol_visibility;
     char *ft_support;
@@ -281,7 +280,6 @@ void ompi_info_do_config(bool want_all)
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
 #endif
     sparse_groups = OMPI_GROUP_SPARSE ? "yes" : "no";
-    have_mpi_io = OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no";
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     topology_support = "yes";
@@ -638,7 +636,6 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("mpirun default --prefix", "mpirun:prefix_by_default",
                   mpirun_prefix_by_default);
 #endif
-    opal_info_out("MPI I/O support", "options:mpi-io", have_mpi_io);
     opal_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     opal_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
     opal_info_out("Host topology support", "options:host-topology",
@@ -664,12 +661,7 @@ void ompi_info_do_config(bool want_all)
                   MPI_MAX_INFO_VAL);
     opal_info_out_int("MPI_MAX_PORT_NAME",      "options:mpi-max-port-name",
                   MPI_MAX_PORT_NAME);
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
     opal_info_out_int("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string",
                   MPI_MAX_DATAREP_STRING);
-#else
-    opal_info_out("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string",
-                  "IO interface not provided");
-#endif
 
 }

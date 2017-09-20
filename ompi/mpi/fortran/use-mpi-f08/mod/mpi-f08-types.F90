@@ -3,7 +3,7 @@
 ! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
@@ -19,9 +19,7 @@ module mpi_f08_types
 
    include "mpif-config.h"
    include "mpif-constants.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
    include "mpif-io-constants.h"
-#endif
 
    !
    ! derived types
@@ -39,11 +37,9 @@ module mpi_f08_types
       integer :: MPI_VAL
    end type MPI_Errhandler
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
    type, BIND(C) :: MPI_File
       integer :: MPI_VAL
    end type MPI_File
-#endif
 
    type, BIND(C) :: MPI_Group
       integer :: MPI_VAL
@@ -120,9 +116,7 @@ module mpi_f08_types
   type(MPI_Op),         bind(C, name="ompi_f08_mpi_op_null") OMPI_PROTECTED         :: MPI_OP_NULL;
   type(MPI_Request),    bind(C, name="ompi_f08_mpi_request_null") OMPI_PROTECTED    :: MPI_REQUEST_NULL;
   type(MPI_Win),        bind(C, name="ompi_f08_mpi_win_null") OMPI_PROTECTED        :: MPI_WIN_NULL;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   type(MPI_File),       bind(C, name="ompi_f08_mpi_file_null") OMPI_PROTECTED       :: MPI_FILE_NULL;
-#endif
 
   !
   ! Pre-defined datatype bindings
@@ -175,9 +169,7 @@ interface operator (.EQ.)
   module procedure ompi_comm_op_eq
   module procedure ompi_datatype_op_eq
   module procedure ompi_errhandler_op_eq
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   module procedure ompi_file_op_eq
-#endif
   module procedure ompi_group_op_eq
   module procedure ompi_info_op_eq
   module procedure ompi_message_op_eq
@@ -190,9 +182,7 @@ interface operator (.NE.)
   module procedure ompi_comm_op_ne
   module procedure ompi_datatype_op_ne
   module procedure ompi_errhandler_op_ne
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   module procedure ompi_file_op_ne
-#endif
   module procedure ompi_group_op_ne
   module procedure ompi_info_op_ne
   module procedure ompi_message_op_ne
@@ -220,12 +210,10 @@ contains
     ompi_errhandler_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
   end function ompi_errhandler_op_eq
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   logical function ompi_file_op_eq(a, b)
     type(MPI_File), intent(in) :: a, b
     ompi_file_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
   end function ompi_file_op_eq
-#endif
 
   logical function ompi_group_op_eq(a, b)
     type(MPI_Group), intent(in) :: a, b
@@ -274,12 +262,10 @@ contains
     ompi_errhandler_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
   end function ompi_errhandler_op_ne
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   logical function ompi_file_op_ne(a, b)
     type(MPI_File), intent(in) :: a, b
     ompi_file_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
   end function ompi_file_op_ne
-#endif
 
   logical function ompi_group_op_ne(a, b)
     type(MPI_Group), intent(in) :: a, b

@@ -15,7 +15,7 @@
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -122,6 +122,65 @@ linked_files = \
         perror_string_f.c \
         pexscan_f.c \
         pf_sync_reg_f.c \
+        pfile_call_errhandler_f.c \
+        pfile_close_f.c \
+        pfile_create_errhandler_f.c \
+        pfile_delete_f.c \
+        pfile_get_amode_f.c \
+        pfile_get_atomicity_f.c \
+        pfile_get_byte_offset_f.c \
+        pfile_get_errhandler_f.c \
+        pfile_get_group_f.c \
+        pfile_get_info_f.c \
+        pfile_get_position_f.c \
+        pfile_get_position_shared_f.c \
+        pfile_get_size_f.c \
+        pfile_get_type_extent_f.c \
+        pfile_get_view_f.c \
+        pfile_iread_at_f.c \
+        pfile_iread_f.c \
+        pfile_iread_at_all_f.c \
+        pfile_iread_all_f.c \
+        pfile_iread_shared_f.c \
+        pfile_iwrite_at_f.c \
+        pfile_iwrite_f.c \
+        pfile_iwrite_at_all_f.c \
+        pfile_iwrite_all_f.c \
+        pfile_iwrite_shared_f.c \
+        pfile_open_f.c \
+        pfile_preallocate_f.c \
+        pfile_read_all_begin_f.c \
+        pfile_read_all_end_f.c \
+        pfile_read_all_f.c \
+        pfile_read_at_all_begin_f.c \
+        pfile_read_at_all_end_f.c \
+        pfile_read_at_all_f.c \
+        pfile_read_at_f.c \
+        pfile_read_f.c \
+        pfile_read_ordered_begin_f.c \
+        pfile_read_ordered_end_f.c \
+        pfile_read_ordered_f.c \
+        pfile_read_shared_f.c \
+        pfile_seek_f.c \
+        pfile_seek_shared_f.c \
+        pfile_set_atomicity_f.c \
+        pfile_set_errhandler_f.c \
+        pfile_set_info_f.c \
+        pfile_set_size_f.c \
+        pfile_set_view_f.c \
+        pfile_sync_f.c \
+        pfile_write_all_begin_f.c \
+        pfile_write_all_end_f.c \
+        pfile_write_all_f.c \
+        pfile_write_at_all_begin_f.c \
+        pfile_write_at_all_end_f.c \
+        pfile_write_at_all_f.c \
+        pfile_write_at_f.c \
+        pfile_write_f.c \
+        pfile_write_ordered_begin_f.c \
+        pfile_write_ordered_end_f.c \
+        pfile_write_ordered_f.c \
+        pfile_write_shared_f.c \
         pfinalized_f.c \
         pfinalize_f.c \
         pfree_mem_f.c \
@@ -301,6 +360,7 @@ linked_files = \
 	pwtime_f.c \
         paccumulate_f.c \
         praccumulate_f.c \
+        pregister_datarep_f.c \
         pget_f.c \
         prget_f.c \
         pget_accumulate_f.c \
@@ -346,71 +406,6 @@ linked_files = \
         pwin_flush_all_f.c \
         pwin_flush_local_f.c \
         pwin_flush_local_all_f.c
-
-
-if OMPI_PROVIDE_MPI_FILE_INTERFACE
-linked_files += \
-        pfile_call_errhandler_f.c \
-        pfile_close_f.c \
-        pfile_create_errhandler_f.c \
-        pfile_delete_f.c \
-        pfile_get_amode_f.c \
-        pfile_get_atomicity_f.c \
-        pfile_get_byte_offset_f.c \
-        pfile_get_errhandler_f.c \
-        pfile_get_group_f.c \
-        pfile_get_info_f.c \
-        pfile_get_position_f.c \
-        pfile_get_position_shared_f.c \
-        pfile_get_size_f.c \
-        pfile_get_type_extent_f.c \
-        pfile_get_view_f.c \
-        pfile_iread_at_f.c \
-        pfile_iread_f.c \
-        pfile_iread_at_all_f.c \
-        pfile_iread_all_f.c \
-        pfile_iread_shared_f.c \
-        pfile_iwrite_at_f.c \
-        pfile_iwrite_f.c \
-        pfile_iwrite_at_all_f.c \
-        pfile_iwrite_all_f.c \
-        pfile_iwrite_shared_f.c \
-        pfile_open_f.c \
-        pfile_preallocate_f.c \
-        pfile_read_all_begin_f.c \
-        pfile_read_all_end_f.c \
-        pfile_read_all_f.c \
-        pfile_read_at_all_begin_f.c \
-        pfile_read_at_all_end_f.c \
-        pfile_read_at_all_f.c \
-        pfile_read_at_f.c \
-        pfile_read_f.c \
-        pfile_read_ordered_begin_f.c \
-        pfile_read_ordered_end_f.c \
-        pfile_read_ordered_f.c \
-        pfile_read_shared_f.c \
-        pfile_seek_f.c \
-        pfile_seek_shared_f.c \
-        pfile_set_atomicity_f.c \
-        pfile_set_errhandler_f.c \
-        pfile_set_info_f.c \
-        pfile_set_size_f.c \
-        pfile_set_view_f.c \
-        pfile_sync_f.c \
-        pfile_write_all_begin_f.c \
-        pfile_write_all_end_f.c \
-        pfile_write_all_f.c \
-        pfile_write_at_all_begin_f.c \
-        pfile_write_at_all_end_f.c \
-        pfile_write_at_all_f.c \
-        pfile_write_at_f.c \
-        pfile_write_f.c \
-        pfile_write_ordered_begin_f.c \
-        pfile_write_ordered_end_f.c \
-        pfile_write_ordered_f.c \
-        pfile_write_shared_f.c \
-        pregister_datarep_f.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory

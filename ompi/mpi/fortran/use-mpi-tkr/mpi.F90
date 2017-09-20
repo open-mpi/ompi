@@ -11,7 +11,7 @@
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2016      Research Organization for Information Science
+! Copyright (c) 2016-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
@@ -27,10 +27,8 @@ module mpi
   include "mpif-config.h"
   include "mpif-constants.h"
   include "mpif-handles.h"
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
   include "mpif-io-constants.h"
   include "mpif-io-handles.h"
-#endif
   include "mpif-sentinels.h"
 
 ! The MPI attribute callback functions

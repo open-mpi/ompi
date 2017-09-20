@@ -7,7 +7,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
@@ -1745,8 +1745,6 @@ subroutine pompi_error_string_f(errorcode,string,resultlen,ierror,str_len) &
    INTEGER, VALUE, INTENT(IN) :: str_len
 end subroutine pompi_error_string_f
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 subroutine pompi_file_call_errhandler_f(fh,errorcode,ierror) &
    BIND(C, name="pompi_file_call_errhandler_f")
    implicit none
@@ -1779,9 +1777,6 @@ subroutine pompi_file_set_errhandler_f(file,errhandler,ierror) &
    INTEGER, INTENT(IN) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_set_errhandler_f
-
-! OMPI_PROVIDE_MPI_FILE_INTERFACE
-#endif
 
 subroutine pompi_finalize_f(ierror) &
    BIND(C, name="pompi_finalize_f")
@@ -2408,8 +2403,6 @@ subroutine pompi_status_set_elements_f(status,datatype,count,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_status_set_elements_f
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-
 subroutine pompi_file_close_f(fh,ierror) &
    BIND(C, name="pompi_file_close_f")
    implicit none
@@ -2982,9 +2975,6 @@ subroutine pompi_file_write_shared_f(fh,buf,count,datatype,status,ierror) &
    TYPE(MPI_Status), INTENT(OUT) :: status
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_write_shared_f
-
-! OMPI_PROVIDE_MPI_FILE_INTERFACE
-#endif
 
 subroutine pompi_register_datarep_f(datarep,read_conversion_fn, &
                                    write_conversion_fn,dtype_file_extent_fn, &

@@ -231,14 +231,6 @@ AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
 AC_DEFINE_UNQUOTED(OMPI_PARAM_CHECK, $ompi_param_check,
     [Whether we want to check MPI parameters never or possible (an integer constant)])
 
-AC_ARG_ENABLE([mpi-io],
-    [AC_HELP_STRING([--disable-mpi-io],
-        [Disable built-in support for MPI-2 I/O, likely because
-         an externally-provided MPI I/O package will be used.
-         Default is to use the internal framework system that uses
-         the ompio component and a specially modified version of ROMIO
-         that fits inside the romio314 component])])
-
 AC_ARG_ENABLE([io-ompio],
     [AC_HELP_STRING([--disable-io-ompio],
         [Disable the ompio MPI-IO component])])

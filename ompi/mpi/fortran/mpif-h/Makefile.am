@@ -14,7 +14,7 @@
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -206,6 +206,65 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         error_string_f.c \
         exscan_f.c \
         f_sync_reg_f.c \
+        file_call_errhandler_f.c \
+        file_close_f.c \
+        file_create_errhandler_f.c \
+        file_delete_f.c \
+        file_get_amode_f.c \
+        file_get_atomicity_f.c \
+        file_get_byte_offset_f.c \
+        file_get_errhandler_f.c \
+        file_get_group_f.c \
+        file_get_info_f.c \
+        file_get_position_f.c \
+        file_get_position_shared_f.c \
+        file_get_size_f.c \
+        file_get_type_extent_f.c \
+        file_get_view_f.c \
+        file_iread_at_f.c \
+        file_iread_f.c \
+        file_iread_at_all_f.c \
+        file_iread_all_f.c \
+        file_iread_shared_f.c \
+        file_iwrite_at_f.c \
+        file_iwrite_f.c \
+        file_iwrite_at_all_f.c \
+        file_iwrite_all_f.c \
+        file_iwrite_shared_f.c \
+        file_open_f.c \
+        file_preallocate_f.c \
+        file_read_all_begin_f.c \
+        file_read_all_end_f.c \
+        file_read_all_f.c \
+        file_read_at_all_begin_f.c \
+        file_read_at_all_end_f.c \
+        file_read_at_all_f.c \
+        file_read_at_f.c \
+        file_read_f.c \
+        file_read_ordered_begin_f.c \
+        file_read_ordered_end_f.c \
+        file_read_ordered_f.c \
+        file_read_shared_f.c \
+        file_seek_f.c \
+        file_seek_shared_f.c \
+        file_set_atomicity_f.c \
+        file_set_errhandler_f.c \
+        file_set_info_f.c \
+        file_set_size_f.c \
+        file_set_view_f.c \
+        file_sync_f.c \
+        file_write_all_begin_f.c \
+        file_write_all_end_f.c \
+        file_write_all_f.c \
+        file_write_at_all_begin_f.c \
+        file_write_at_all_end_f.c \
+        file_write_at_all_f.c \
+        file_write_at_f.c \
+        file_write_f.c \
+        file_write_ordered_begin_f.c \
+        file_write_ordered_end_f.c \
+        file_write_ordered_f.c \
+        file_write_shared_f.c \
         finalized_f.c \
         finalize_f.c \
         free_mem_f.c \
@@ -311,6 +370,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         reduce_local_f.c \
         reduce_scatter_f.c \
         reduce_scatter_block_f.c \
+        register_datarep_f.c \
         request_free_f.c \
         request_get_status_f.c \
         rsend_f.c \
@@ -431,69 +491,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         win_flush_local_f.c \
         win_flush_local_all_f.c
 
-if OMPI_PROVIDE_MPI_FILE_INTERFACE
-lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
-        file_call_errhandler_f.c \
-        file_close_f.c \
-        file_create_errhandler_f.c \
-        file_delete_f.c \
-        file_get_amode_f.c \
-        file_get_atomicity_f.c \
-        file_get_byte_offset_f.c \
-        file_get_errhandler_f.c \
-        file_get_group_f.c \
-        file_get_info_f.c \
-        file_get_position_f.c \
-        file_get_position_shared_f.c \
-        file_get_size_f.c \
-        file_get_type_extent_f.c \
-        file_get_view_f.c \
-        file_iread_at_f.c \
-        file_iread_f.c \
-        file_iread_at_all_f.c \
-        file_iread_all_f.c \
-        file_iread_shared_f.c \
-        file_iwrite_at_f.c \
-        file_iwrite_f.c \
-        file_iwrite_at_all_f.c \
-        file_iwrite_all_f.c \
-        file_iwrite_shared_f.c \
-        file_open_f.c \
-        file_preallocate_f.c \
-        file_read_all_begin_f.c \
-        file_read_all_end_f.c \
-        file_read_all_f.c \
-        file_read_at_all_begin_f.c \
-        file_read_at_all_end_f.c \
-        file_read_at_all_f.c \
-        file_read_at_f.c \
-        file_read_f.c \
-        file_read_ordered_begin_f.c \
-        file_read_ordered_end_f.c \
-        file_read_ordered_f.c \
-        file_read_shared_f.c \
-        file_seek_f.c \
-        file_seek_shared_f.c \
-        file_set_atomicity_f.c \
-        file_set_errhandler_f.c \
-        file_set_info_f.c \
-        file_set_size_f.c \
-        file_set_view_f.c \
-        file_sync_f.c \
-        file_write_all_begin_f.c \
-        file_write_all_end_f.c \
-        file_write_all_f.c \
-        file_write_at_all_begin_f.c \
-        file_write_at_all_end_f.c \
-        file_write_at_all_f.c \
-        file_write_at_f.c \
-        file_write_f.c \
-        file_write_ordered_begin_f.c \
-        file_write_ordered_end_f.c \
-        file_write_ordered_f.c \
-        file_write_shared_f.c \
-        register_datarep_f.c
-endif
 endif
 
 #

@@ -12,6 +12,8 @@
 //                         All rights reserved.
 // Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
+// Copyright (c) 2017      Research Organization for Information Science
+//                         and Technology (RIST). All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -246,9 +248,7 @@ OMPI_DECLSPEC extern const Datatype     DATATYPE_NULL;
 OMPI_DECLSPEC extern Request            REQUEST_NULL;
 OMPI_DECLSPEC extern const Op           OP_NULL;
 OMPI_DECLSPEC extern const Errhandler   ERRHANDLER_NULL;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 OMPI_DECLSPEC extern const File         FILE_NULL;
-#endif
 
 // constants specifying empty or ignored input
 OMPI_DECLSPEC extern const char**       ARGV_NULL;
@@ -261,7 +261,6 @@ OMPI_DECLSPEC extern const Group  GROUP_EMPTY;
 static const int GRAPH = MPI_GRAPH;
 static const int CART = MPI_CART;
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 // MPI-2 IO
 static const int MODE_CREATE = MPI_MODE_CREATE;
 static const int MODE_RDONLY = MPI_MODE_RDONLY;
@@ -282,7 +281,6 @@ static const int SEEK_END = ::SEEK_END;
 #endif
 
 static const int MAX_DATAREP_STRING = MPI_MAX_DATAREP_STRING;
-#endif
 
 // one-sided constants
 static const int MODE_NOCHECK = MPI_MODE_NOCHECK;
