@@ -95,9 +95,11 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
     strncpy(str_local,
             opal_net_get_hostname((struct sockaddr *)&local_if->if_addr),
             sizeof(str_local));
+    str_local[sizeof(str_local) - 1] = '\0';
     strncpy(str_remote,
             opal_net_get_hostname((struct sockaddr *)&remote_if->if_addr),
             sizeof(str_remote));
+    str_remote[sizeof(str_remote) - 1] = '\0';
 
     /*  initially, assume no connection is possible */
     weight = calculate_weight(0, 0, CQ_NO_CONNECTION);
