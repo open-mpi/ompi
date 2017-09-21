@@ -118,6 +118,10 @@ AC_DEFUN([MCA_opal_hwloc_hwloc2a_CONFIG],[
     # ensure we are in "embedded" mode
     hwloc_mode=embedded
 
+    # GL and OpenCL OS devices aren't used in OMPI
+    enable_gl=no
+    enable_opencl=no
+
     # Per https://github.com/open-mpi/ompi/issues/4219, if
     # --without-cuda was specified, be sure to disable it in hwloc,
     # too.  Note that hwloc uses --disable-cuda, so just set
