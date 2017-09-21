@@ -111,6 +111,13 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1112_CONFIG],[
     enable_libxml2=no
     enable_xml=yes
 
+    # Per https://github.com/open-mpi/ompi/issues/4219, if
+    # --without-cuda was specified, be sure to disable it in hwloc,
+    # too.  Note that hwloc uses --disable-cuda, so just set
+    # enable_cuda=$with_cuda to get the same value that was passed in
+    # via the top-level --with-cuda CLI option.
+    enable_cuda=$with_cuda
+
     # hwloc checks for compiler visibility, and its needs to do
     # this without "picky" flags.
     opal_hwloc_hwloc1112_save_cflags=$CFLAGS
