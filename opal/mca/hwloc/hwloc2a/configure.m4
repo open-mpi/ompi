@@ -118,6 +118,17 @@ AC_DEFUN([MCA_opal_hwloc_hwloc2a_CONFIG],[
     # ensure we are in "embedded" mode
     hwloc_mode=embedded
 
+    # GL and OpenCL OS devices aren't used in OMPI
+    enable_gl=no
+    enable_opencl=no
+
+    # Per https://github.com/open-mpi/ompi/issues/4219, if
+    # --without-cuda was specified, be sure to disable it in hwloc,
+    # too.  Note that hwloc uses --disable-cuda, so just set
+    # enable_cuda=$with_cuda to get the same value that was passed in
+    # via the top-level --with-cuda CLI option.
+    enable_cuda=$with_cuda
+
     # Disable NVML support if CUDA support is not built
     AS_IF([test "$opal_check_cuda_happy" != "yes"],
           [enable_nvml=no])
