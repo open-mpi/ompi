@@ -502,11 +502,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Create a persistent distributed virtual machine (DVM)",
       OPAL_CMD_LINE_OTYPE_DVM },
 
-    /* tell the dvm to terminate */
-    { NULL, '\0', "terminate", "terminate", 0,
-      &orte_cmd_options.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
-      "Terminate the DVM", OPAL_CMD_LINE_OTYPE_DVM },
-
     /* fwd mpirun port */
     { "orte_fwd_mpirun_port", '\0', "fwd-mpirun-port", "fwd-mpirun-port", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,

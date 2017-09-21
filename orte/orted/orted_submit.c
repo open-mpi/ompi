@@ -820,7 +820,6 @@ int orte_submit_job(char *argv[], int *index,
         orte_set_attribute(&jdata->attributes, ORTE_JOB_MERGE_STDERR_STDOUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
 
-
     /* check what user wants us to do with stdin */
     if (NULL != orte_cmd_options.stdin_target) {
         if (0 == strcmp(orte_cmd_options.stdin_target, "all")) {
@@ -902,7 +901,7 @@ int orte_submit_job(char *argv[], int *index,
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
     }
     if (orte_cmd_options.no_oversubscribe) {
-        ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
     }
     if (orte_cmd_options.oversubscribe) {
         ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);

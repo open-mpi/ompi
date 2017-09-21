@@ -96,7 +96,7 @@ static int
 opal_err2str(int errnum, const char **errmsg)
 {
     const char *retval;
-opal_output(0, "OPAL ERR2STR %d", errnum);
+
     switch (errnum) {
     case OPAL_SUCCESS:
         retval = "Success";

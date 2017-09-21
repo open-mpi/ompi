@@ -471,7 +471,7 @@ static pmix_status_t parse_uri_file(char *filename,
          * user isn't authorized to access it - or it may just
          * not exist yet! Check for existence */
         if (0 != access(filename, R_OK)) {
-            if (ENOENT == errno) {
+            if (ENOENT == errno && 0 < mca_ptl_tcp_component.wait_to_connect) {
                 /* the file does not exist, so give it
                  * a little time to see if the server
                  * is still starting up */
@@ -979,6 +979,7 @@ static pmix_status_t df_search(char *dirname, char *prefix,
         }
         newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
         if (-1 == stat(newdir, &buf)) {
+            free(newdir);
             continue;
         }
         /* if it is a directory, down search */

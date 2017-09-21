@@ -343,10 +343,12 @@ void pmix2x_server_deregister_nspace(opal_jobid_t jobid,
         if (jptr->jobid == jobid) {
             /* found it - tell the server to deregister */
             OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             PMIx_server_deregister_nspace(jptr->nspace, lkcbfunc, (void*)&lock);
             OPAL_PMIX_WAIT_THREAD(&lock);
             OPAL_PMIX_DESTRUCT_LOCK(&lock);
             /* now get rid of it from our list */
+            OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
             opal_list_remove_item(&mca_pmix_pmix2x_component.jobids, &jptr->super);
             OBJ_RELEASE(jptr);
             break;
