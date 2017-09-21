@@ -259,6 +259,21 @@ BEGIN_C_DECLS
                                                                         //        job - i.e., not part of the "comm_world" of the job
 #define OPAL_PMIX_SET_SESSION_CWD               "pmix.ssncwd"           // (bool) set the application's current working directory to
                                                                         //        the session working directory assigned by the RM
+#define OPAL_PMIX_TAG_OUTPUT                    "pmix.tagout"           // (bool) tag application output with the ID of the source
+#define OPAL_PMIX_TIMESTAMP_OUTPUT              "pmix.tsout"            // (bool) timestamp output from applications
+#define OPAL_PMIX_MERGE_STDERR_STDOUT           "pmix.mergeerrout"      // (bool) merge stdout and stderr streams from application procs
+#define OPAL_PMIX_OUTPUT_TO_FILE                "pmix.outfile"          // (char*) output application output to given file
+#define OPAL_PMIX_INDEX_ARGV                    "pmix.indxargv"         // (bool) mark the argv with the rank of the proc
+#define OPAL_PMIX_CPUS_PER_PROC                 "pmix.cpuperproc"       // (uint32_t) #cpus to assign to each rank
+#define OPAL_PMIX_NO_PROCS_ON_HEAD              "pmix.nolocal"          // (bool) do not place procs on the head node
+#define OPAL_PMIX_NO_OVERSUBSCRIBE              "pmix.noover"           // (bool) do not oversubscribe the cpus
+#define OPAL_PMIX_REPORT_BINDINGS               "pmix.repbind"          // (bool) report bindings of the individual procs
+#define OPAL_PMIX_CPU_LIST                      "pmix.cpulist"          // (char*) list of cpus to use for this job
+#define OPAL_PMIX_JOB_RECOVERABLE               "pmix.recover"          // (bool) application supports recoverable operations
+#define OPAL_PMIX_JOB_CONTINUOUS                "pmix.continuous"       // (bool) application is continuous, all failed procs should
+                                                                        //        be immediately restarted
+#define OPAL_PMIX_MAX_RESTARTS                  "pmix.maxrestarts"      // (uint32_t) max number of times to restart a job
+
 
 /* query attributes */
 #define OPAL_PMIX_QUERY_NAMESPACES              "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
@@ -281,6 +296,7 @@ BEGIN_C_DECLS
                                                                         //         is being requested
 #define OPAL_PMIX_TIME_REMAINING                "pmix.time.remaining"   // (char*) query number of seconds (uint32_t) remaining in allocation
                                                                         //         for the specified nspace
+
 
 /* log attributes */
 #define OPAL_PMIX_LOG_STDERR                    "pmix.log.stderr"       // (char*) log string to stderr

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +32,16 @@
 #include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
+
+/* Provide a macro for determining the bool value of an opal_value_t */
+#define OPAL_CHECK_BOOL(v, p)           \
+    do {                                \
+        if (OPAL_UNDEF == (v)->type) {  \
+            (p) = true;                 \
+        } else {                        \
+            (p) = (v)->data.flag;       \
+        }                               \
+    } while(0)
 
 /* A non-API function for something that happens in a number
  * of places throughout the code base - loading a value into

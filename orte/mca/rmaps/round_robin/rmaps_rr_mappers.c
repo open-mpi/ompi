@@ -145,6 +145,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         /* add this node to the map - do it only once */
         if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
+            OBJ_RETAIN(node);
+            opal_pointer_array_add(jdata->map->nodes, node);
             ++(jdata->map->num_nodes);
         }
         if (add_one) {
@@ -284,6 +286,8 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             /* add this node to the map, but only do so once */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
+                OBJ_RETAIN(node);
+                opal_pointer_array_add(jdata->map->nodes, node);
                 ++(jdata->map->num_nodes);
             }
             if (oversubscribed) {
@@ -532,6 +536,8 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             /* add this node to the map, if reqd */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
+                OBJ_RETAIN(node);
+                opal_pointer_array_add(jdata->map->nodes, node);
                 ++(jdata->map->num_nodes);
             }
             nmapped = 0;
@@ -678,6 +684,8 @@ static int byobj_span(orte_job_t *jdata,
         /* add this node to the map, if reqd */
         if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
             ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
+            OBJ_RETAIN(node);
+            opal_pointer_array_add(jdata->map->nodes, node);
             ++(jdata->map->num_nodes);
         }
         /* get the number of objects of this type on this node */

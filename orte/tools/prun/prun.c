@@ -82,70 +82,20 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/schizo/base/base.h"
 #include "orte/mca/state/state.h"
+#include "orte/orted/orted_submit.h"
 
 /* ensure I can behave like a daemon */
 #include "prun.h"
 
-/**
- * Global struct for caching orte command line options.
- */
-struct orte_cmd_options_t {
-    char *help;
-    bool version;
-    bool verbose;
-    char *report_pid;
-    char *report_uri;
-    bool terminate;
-    bool debugger;
-    int num_procs;
-    char *appfile;
-    char *wdir;
-    bool set_cwd_to_session_dir;
-    char *path;
-    char *preload_files;
-    bool sleep;
-    char *stdin_target;
-    char *prefix;
-    char *path_to_mpirun;
-    bool disable_recovery;
-    bool preload_binaries;
-    bool index_argv;
-    bool run_as_root;
-    char *personality;
-    bool create_dvm;
+static struct {
     bool terminate_dvm;
-    bool nolocal;
-    bool no_oversubscribe;
-    bool oversubscribe;
-    int cpus_per_proc;
-    bool pernode;
-    int npernode;
-    bool use_hwthreads_as_cpus;
-    int npersocket;
-    char *mapping_policy;
-    char *ranking_policy;
-    char *binding_policy;
-    bool report_bindings;
-    char *cpu_list;
-    bool debug;
-    bool tag_output;
-    bool timestamp_output;
-    char *output_filename;
-    bool merge;
-    bool continuous;
-    char *hnp;
-    bool staged_exec;
-    int timeout;
-    bool report_state_on_timeout;
-    bool get_stack_traces;
-    int pid;
-    bool system_server_only;
     bool system_server_first;
-};
-typedef struct orte_cmd_options_t orte_cmd_options_t;
-static orte_cmd_options_t orte_cmd_options = {0};
-static opal_cmd_line_t *orte_cmd_line = NULL;
+    bool system_server_only;
+    int pid;
+} myoptions;
+
 static opal_list_t job_info;
 static volatile bool active = false;
 
@@ -158,335 +108,24 @@ static void set_classpath_jar_file(opal_pmix_app_t *app, int index, char *jarfil
 
 
 static opal_cmd_line_init_t cmd_line_init[] = {
-    /* Various "obvious" options */
-    { NULL, 'h', NULL, "help", 1,
-      &orte_cmd_options.help, OPAL_CMD_LINE_TYPE_STRING,
-      "This help message", OPAL_CMD_LINE_OTYPE_GENERAL },
-    { NULL, 'V', NULL, "version", 0,
-      &orte_cmd_options.version, OPAL_CMD_LINE_TYPE_BOOL,
-      "Print version and exit", OPAL_CMD_LINE_OTYPE_GENERAL },
-    { "orte_execute_quiet", 'q', NULL, "quiet", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Suppress helpful messages", OPAL_CMD_LINE_OTYPE_GENERAL },
-
-    /* exit status reporting */
-    { "orte_report_child_jobs_separately", '\0', "report-child-jobs-separately", "report-child-jobs-separately", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Return the exit status of the primary job only", OPAL_CMD_LINE_OTYPE_OUTPUT },
-
-    /* select XML output */
-    { "orte_xml_output", '\0', "xml", "xml", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Provide all output in XML format", OPAL_CMD_LINE_OTYPE_OUTPUT },
-    { "orte_xml_file", '\0', "xml-file", "xml-file", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide all output in XML format to the specified file", OPAL_CMD_LINE_OTYPE_OUTPUT },
-
-    /* tag output */
-    { "orte_tag_output", '\0', "tag-output", "tag-output", 0,
-      &orte_cmd_options.tag_output, OPAL_CMD_LINE_TYPE_BOOL,
-      "Tag all output with [job,rank]", OPAL_CMD_LINE_OTYPE_OUTPUT },
-    { "orte_timestamp_output", '\0', "timestamp-output", "timestamp-output", 0,
-      &orte_cmd_options.timestamp_output, OPAL_CMD_LINE_TYPE_BOOL,
-      "Timestamp all application process output", OPAL_CMD_LINE_OTYPE_OUTPUT },
-    { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
-      &orte_cmd_options.output_filename, OPAL_CMD_LINE_TYPE_STRING,
-      "Redirect output from application processes into filename/job/rank/std[out,err,diag]",
-      OPAL_CMD_LINE_OTYPE_OUTPUT },
-    { NULL, '\0', "merge-stderr-to-stdout", "merge-stderr-to-stdout", 0,
-      &orte_cmd_options.merge, OPAL_CMD_LINE_TYPE_BOOL,
-      "Merge stderr to stdout for each process", OPAL_CMD_LINE_OTYPE_OUTPUT },
-    { "orte_xterm", '\0', "xterm", "xterm", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Create a new xterm window and display output from the specified ranks there",
-      OPAL_CMD_LINE_OTYPE_OUTPUT },
-
-    /* select stdin option */
-    { NULL, '\0', "stdin", "stdin", 1,
-      &orte_cmd_options.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
-      "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)",
-      OPAL_CMD_LINE_OTYPE_INPUT },
-
-    /* request that argv[0] be indexed */
-    { NULL, '\0', "index-argv-by-rank", "index-argv-by-rank", 0,
-      &orte_cmd_options.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
-      "Uniquely index argv[0] for each process using its rank",
-      OPAL_CMD_LINE_OTYPE_INPUT },
-
-    /* Specify the launch agent to be used */
-    { "orte_launch_agent", '\0', "launch-agent", "launch-agent", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Command used to start processes on remote nodes (default: orted)",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-
-    /* Preload the binary on the remote machine */
-    { NULL, 's', NULL, "preload-binary", 0,
-      &orte_cmd_options.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
-      "Preload the binary on the remote machine before starting the remote process.",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-
-    /* Preload files on the remote machine */
-    { NULL, '\0', NULL, "preload-files", 1,
-      &orte_cmd_options.preload_files, OPAL_CMD_LINE_TYPE_STRING,
-      "Preload the comma separated list of files to the remote machines current working directory before starting the remote process.",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-
-    /* Use an appfile */
-    { NULL, '\0', NULL, "app", 1,
-      &orte_cmd_options.appfile, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide an appfile; ignore all other command line options",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-
-    /* Number of processes; -c, -n, --n, -np, and --np are all
-       synonyms */
-    { NULL, 'c', "np", "np", 1,
-      &orte_cmd_options.num_procs, OPAL_CMD_LINE_TYPE_INT,
-      "Number of processes to run", OPAL_CMD_LINE_OTYPE_GENERAL },
-    { NULL, '\0', "n", "n", 1,
-      &orte_cmd_options.num_procs, OPAL_CMD_LINE_TYPE_INT,
-      "Number of processes to run", OPAL_CMD_LINE_OTYPE_GENERAL },
-
-    /* Set a hostfile */
-    { NULL, '\0', "hostfile", "hostfile", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a hostfile", OPAL_CMD_LINE_OTYPE_LAUNCH },
-    { NULL, '\0', "machinefile", "machinefile", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a hostfile", OPAL_CMD_LINE_OTYPE_LAUNCH },
-    { "orte_default_hostfile", '\0', "default-hostfile", "default-hostfile", 1,
-        NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a default hostfile", OPAL_CMD_LINE_OTYPE_LAUNCH },
-    { "opal_if_do_not_resolve", '\0', "do-not-resolve", "do-not-resolve", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Do not attempt to resolve interfaces", OPAL_CMD_LINE_OTYPE_DEVEL },
-
-    { "orte_rankfile", '\0', "rf", "rankfile", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Provide a rankfile file", OPAL_CMD_LINE_OTYPE_MAPPING },
-
-    /* Export environment variables; potentially used multiple times,
-       so it does not make sense to set into a variable */
-    { NULL, 'x', NULL, NULL, 1,
-      NULL, OPAL_CMD_LINE_TYPE_NULL,
-      "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)", OPAL_CMD_LINE_OTYPE_LAUNCH },
-
-      /* Mapping controls */
-    { "rmaps_base_display_map", '\0', "display-map", "display-map", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Display the process map just before launch", OPAL_CMD_LINE_OTYPE_DEBUG },
-    { "rmaps_base_display_devel_map", '\0', "display-devel-map", "display-devel-map", 0,
-       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display a detailed process map (mostly intended for developers) just before launch",
-       OPAL_CMD_LINE_OTYPE_DEVEL },
-    { "rmaps_base_display_topo_with_map", '\0', "display-topo", "display-topo", 0,
-       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display the topology as part of the process map (mostly intended for developers) just before launch",
-       OPAL_CMD_LINE_OTYPE_DEVEL },
-    { "rmaps_base_display_diffable_map", '\0', "display-diffable-map", "display-diffable-map", 0,
-       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-       "Display a diffable process map (mostly intended for developers) just before launch",
-       OPAL_CMD_LINE_OTYPE_DEVEL },
-    { NULL, 'H', "host", "host", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "List of hosts to invoke processes on",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-    { "rmaps_base_no_schedule_local", '\0', "nolocal", "nolocal", 0,
-      &orte_cmd_options.nolocal, OPAL_CMD_LINE_TYPE_BOOL,
-      "Do not run any MPI applications on the local node",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-    { "rmaps_base_no_oversubscribe", '\0', "nooversubscribe", "nooversubscribe", 0,
-      &orte_cmd_options.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes are not to be oversubscribed, even if the system supports such operation",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-    { "rmaps_base_oversubscribe", '\0', "oversubscribe", "oversubscribe", 0,
-      &orte_cmd_options.oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes are allowed to be oversubscribed, even on a managed system, and overloading of processing elements",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-    { "rmaps_base_cpus_per_rank", '\0', "cpus-per-proc", "cpus-per-proc", 1,
-      &orte_cmd_options.cpus_per_proc, OPAL_CMD_LINE_TYPE_INT,
-      "Number of cpus to use for each process [default=1]",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-    { "rmaps_base_cpus_per_rank", '\0', "cpus-per-rank", "cpus-per-rank", 1,
-      &orte_cmd_options.cpus_per_proc, OPAL_CMD_LINE_TYPE_INT,
-      "Synonym for cpus-per-proc", OPAL_CMD_LINE_OTYPE_MAPPING },
-
-    /* backward compatiblity */
-    { "rmaps_base_bycore", '\0', "bycore", "bycore", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to map and rank processes round-robin by core",
-      OPAL_CMD_LINE_OTYPE_COMPAT },
-    { "rmaps_base_bynode", '\0', "bynode", "bynode", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to map and rank processes round-robin by node",
-      OPAL_CMD_LINE_OTYPE_COMPAT },
-    { "rmaps_base_byslot", '\0', "byslot", "byslot", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to map and rank processes round-robin by slot",
-      OPAL_CMD_LINE_OTYPE_COMPAT },
-
-    /* Nperxxx options that do not require topology and are always
-     * available - included for backwards compatibility
-     */
-    { "rmaps_ppr_pernode", '\0', "pernode", "pernode", 0,
-      &orte_cmd_options.pernode, OPAL_CMD_LINE_TYPE_BOOL,
-      "Launch one process per available node",
-      OPAL_CMD_LINE_OTYPE_COMPAT },
-    { "rmaps_ppr_n_pernode", '\0', "npernode", "npernode", 1,
-      &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
-      "Launch n processes per node on all allocated nodes",
-      OPAL_CMD_LINE_OTYPE_COMPAT },
-    { "rmaps_ppr_n_pernode", '\0', "N", NULL, 1,
-      &orte_cmd_options.npernode, OPAL_CMD_LINE_TYPE_INT,
-      "Launch n processes per node on all allocated nodes (synonym for 'map-by node')",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-
-    /* declare hardware threads as independent cpus */
-    { "hwloc_base_use_hwthreads_as_cpus", '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Use hardware threads as independent cpus", OPAL_CMD_LINE_OTYPE_MAPPING },
-
-    /* include npersocket for backwards compatibility */
-    { "rmaps_ppr_n_persocket", '\0', "npersocket", "npersocket", 1,
-      &orte_cmd_options.npersocket, OPAL_CMD_LINE_TYPE_INT,
-      "Launch n processes per socket on all allocated nodes",
-      OPAL_CMD_LINE_OTYPE_COMPAT },
-
-    /* Mapping options */
-    { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
-      &orte_cmd_options.mapping_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Mapping Policy [slot | hwthread | core | socket (default) | numa | board | node]",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-
-      /* Ranking options */
-    { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
-      &orte_cmd_options.ranking_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Ranking Policy [slot (default) | hwthread | core | socket | numa | board | node]",
-      OPAL_CMD_LINE_OTYPE_RANKING },
-
-      /* Binding options */
-    { "hwloc_base_binding_policy", '\0', NULL, "bind-to", 1,
-      &orte_cmd_options.binding_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported", OPAL_CMD_LINE_OTYPE_BINDING },
-
-    /* backward compatiblity */
-    { "hwloc_base_bind_to_core", '\0', "bind-to-core", "bind-to-core", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Bind processes to cores", OPAL_CMD_LINE_OTYPE_COMPAT },
-    { "hwloc_base_bind_to_socket", '\0', "bind-to-socket", "bind-to-socket", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Bind processes to sockets", OPAL_CMD_LINE_OTYPE_COMPAT },
-
-    { "hwloc_base_report_bindings", '\0', "report-bindings", "report-bindings", 0,
-      &orte_cmd_options.report_bindings, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to report process bindings to stderr",
-      OPAL_CMD_LINE_OTYPE_BINDING },
-
-    /* slot list option */
-    { "hwloc_base_cpu_list", '\0', "cpu-list", "cpu-list", 1,
-      &orte_cmd_options.cpu_list, OPAL_CMD_LINE_TYPE_STRING,
-      "List of processor IDs to bind processes to [default=NULL]",
-      OPAL_CMD_LINE_OTYPE_BINDING },
-
-    /* generalized pattern mapping option */
-    { "rmaps_ppr_pattern", '\0', NULL, "ppr", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Comma-separated list of number of processes on a given resource type [default: none]",
-      OPAL_CMD_LINE_OTYPE_MAPPING },
-
-    /* Allocation options */
-    { "orte_display_alloc", '\0', "display-allocation", "display-allocation", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Display the allocation being used by this job", OPAL_CMD_LINE_OTYPE_DEBUG },
-    { "orte_display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Display a detailed list (mostly intended for developers) of the allocation being used by this job",
-      OPAL_CMD_LINE_OTYPE_DEVEL },
-    { "hwloc_base_cpu_set", '\0', "cpu-set", "cpu-set", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
-      OPAL_CMD_LINE_OTYPE_DEBUG },
-
-    /* mpiexec-like arguments */
-    { NULL, '\0', "wdir", "wdir", 1,
-      &orte_cmd_options.wdir, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the working directory of the started processes",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-    { NULL, '\0', "wd", "wd", 1,
-      &orte_cmd_options.wdir, OPAL_CMD_LINE_TYPE_STRING,
-      "Synonym for --wdir", OPAL_CMD_LINE_OTYPE_LAUNCH },
-    { NULL, '\0', "set-cwd-to-session-dir", "set-cwd-to-session-dir", 0,
-      &orte_cmd_options.set_cwd_to_session_dir, OPAL_CMD_LINE_TYPE_BOOL,
-      "Set the working directory of the started processes to their session directory",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-    { NULL, '\0', "path", "path", 1,
-      &orte_cmd_options.path, OPAL_CMD_LINE_TYPE_STRING,
-      "PATH to be used to look for executables to start processes",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-
-    /* User-level debugger arguments */
-    { NULL, '\0', "tv", "tv", 0,
-      &orte_cmd_options.debugger, OPAL_CMD_LINE_TYPE_BOOL,
-      "Deprecated backwards compatibility flag; synonym for \"--debug\"",
-      OPAL_CMD_LINE_OTYPE_DEBUG },
-    { NULL, '\0', "debug", "debug", 0,
-      &orte_cmd_options.debugger, OPAL_CMD_LINE_TYPE_BOOL,
-      "Invoke the user-level debugger indicated by the orte_base_user_debugger MCA parameter",
-      OPAL_CMD_LINE_OTYPE_DEBUG },
-    { "orte_base_user_debugger", '\0', "debugger", "debugger", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Sequence of debuggers to search for when \"--debug\" is used",
-      OPAL_CMD_LINE_OTYPE_DEBUG },
-    { "orte_output_debugger_proctable", '\0', "output-proctable", "output-proctable", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Output the debugger proctable after launch",
-      OPAL_CMD_LINE_OTYPE_DEBUG },
-
-    { "orte_report_events", '\0', "report-events", "report-events", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Report events to a tool listening at the specified URI", OPAL_CMD_LINE_OTYPE_DEBUG },
-
-    { "orte_enable_recovery", '\0', "enable-recovery", "enable-recovery", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Enable recovery from process failure [Default = disabled]",
-      OPAL_CMD_LINE_OTYPE_UNSUPPORTED },
-
-    { "orte_max_restarts", '\0', "max-restarts", "max-restarts", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Max number of times to restart a failed process",
-      OPAL_CMD_LINE_OTYPE_UNSUPPORTED },
-
-    { NULL, '\0', "continuous", "continuous", 0,
-      &orte_cmd_options.continuous, OPAL_CMD_LINE_TYPE_BOOL,
-      "Job is to run until explicitly terminated", OPAL_CMD_LINE_OTYPE_DEBUG },
-
-    { NULL, '\0', "disable-recovery", "disable-recovery", 0,
-      &orte_cmd_options.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
-      "Disable recovery (resets all recovery options to off)",
-      OPAL_CMD_LINE_OTYPE_UNSUPPORTED },
-
-    { NULL, '\0', "personality", "personality", 1,
-      &orte_cmd_options.personality, OPAL_CMD_LINE_TYPE_STRING,
-      "Comma-separated list of programming model, languages, and containers being used (default=\"ompi\")",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-
     /* tell the dvm to terminate */
     { NULL, '\0', "terminate", "terminate", 0,
-      &orte_cmd_options.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
+      &myoptions.terminate_dvm, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the DVM", OPAL_CMD_LINE_OTYPE_DVM },
 
     /* look first for a system server */
     { NULL, '\0', "system-server-first", "system-server-first", 0,
-      &orte_cmd_options.system_server_first, OPAL_CMD_LINE_TYPE_BOOL,
+      &myoptions.system_server_first, OPAL_CMD_LINE_TYPE_BOOL,
       "First look for a system server and connect to it if found", OPAL_CMD_LINE_OTYPE_DVM },
 
     /* connect only to a system server */
     { NULL, '\0', "system-server-only", "system-server-only", 0,
-      &orte_cmd_options.system_server_only, OPAL_CMD_LINE_TYPE_BOOL,
+      &myoptions.system_server_only, OPAL_CMD_LINE_TYPE_BOOL,
       "Connect only to a system-level server", OPAL_CMD_LINE_OTYPE_DVM },
 
     /* provide a connection PID */
     { NULL, '\0', "pid", "pid", 1,
-      &orte_cmd_options.pid, OPAL_CMD_LINE_TYPE_INT,
+      &myoptions.pid, OPAL_CMD_LINE_TYPE_INT,
       "PID of the session-level daemon to which we should connect",
       OPAL_CMD_LINE_OTYPE_DVM },
 
@@ -556,6 +195,7 @@ int prun(int argc, char *argv[])
     char *param;
     opal_pmix_lock_t lock;
     opal_list_t apps;
+    opal_pmix_app_t *app;
     opal_value_t *val;
     opal_list_t info;
     opal_jobid_t jobid;
@@ -563,6 +203,7 @@ int prun(int argc, char *argv[])
 
     /* init the globals */
     memset(&orte_cmd_options, 0, sizeof(orte_cmd_options));
+    memset(&myoptions, 0, sizeof(myoptions));
     OBJ_CONSTRUCT(&job_info, opal_list_t);
     OBJ_CONSTRUCT(&apps, opal_list_t);
 
@@ -597,9 +238,27 @@ int prun(int argc, char *argv[])
         return rc;
     }
 
+    /* set our proc type for schizo selection */
+    orte_process_info.proc_type = ORTE_PROC_TOOL;
+
+    /* open the SCHIZO framework so we can setup the command line */
+    if (ORTE_SUCCESS != (rc = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_schizo_base_select())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* setup our cmd line */
     orte_cmd_line = OBJ_NEW(opal_cmd_line_t);
     if (OPAL_SUCCESS != (rc = opal_cmd_line_add(orte_cmd_line, cmd_line_init))) {
+        return rc;
+    }
+
+    /* setup the rest of the cmd line only once */
+    if (OPAL_SUCCESS != (rc = orte_schizo.define_cli(orte_cmd_line))) {
         return rc;
     }
 
@@ -684,17 +343,16 @@ int prun(int argc, char *argv[])
         exit(0);
     }
 
-    /* tell the ess/tool component that we want to connect only to a system-level
-     * PMIx server */
-    if (orte_cmd_options.system_server_only) {
+    /* tell the ess/tool component how we want to connect */
+    if (myoptions.system_server_only) {
         opal_setenv(OPAL_MCA_PREFIX"ess_tool_system_server_only", "1", true, &environ);
     }
-    if (orte_cmd_options.system_server_first) {
+    if (myoptions.system_server_first) {
         opal_setenv(OPAL_MCA_PREFIX"ess_tool_system_server_first", "1", true, &environ);
     }
     /* if they specified the DVM's pid, then pass it along */
-    if (0 != orte_cmd_options.pid) {
-        asprintf(&param, "%d", orte_cmd_options.pid);
+    if (0 != myoptions.pid) {
+        asprintf(&param, "%d", myoptions.pid);
         opal_setenv(OPAL_MCA_PREFIX"ess_tool_server_pid", param, true, &environ);
         free(param);
     }
@@ -706,7 +364,7 @@ int prun(int argc, char *argv[])
     }
 
     /* if the user just wants us to terminate a DVM, then do so */
-    if (orte_cmd_options.terminate_dvm) {
+    if (myoptions.terminate_dvm) {
         OBJ_CONSTRUCT(&info, opal_list_t);
         val = OBJ_NEW(opal_value_t);
         val->key = strdup(OPAL_PMIX_JOB_CTRL_TERMINATE);
@@ -756,6 +414,200 @@ int prun(int argc, char *argv[])
     OPAL_PMIX_WAIT_THREAD(&lock);
     OPAL_PMIX_DESTRUCT_LOCK(&lock);
     OPAL_LIST_DESTRUCT(&info);
+
+    /* we want to be notified upon job completion */
+    val = OBJ_NEW(opal_value_t);
+    val->key = strdup(OPAL_PMIX_NOTIFY_COMPLETION);
+    val->type = OPAL_BOOL;
+    val->data.flag = true;
+    opal_list_append(&job_info, &val->super);
+
+    /* see if they specified the personality */
+    if (NULL != orte_cmd_options.personality) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_PERSONALITY);
+        val->type = OPAL_STRING;
+        val->data.string = strdup(orte_cmd_options.personality);
+        opal_list_append(&job_info, &val->super);
+    }
+
+    /* check for stdout/err directives */
+    /* if we were asked to tag output, mark it so */
+    if (orte_cmd_options.tag_output) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_TAG_OUTPUT);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+    /* if we were asked to timestamp output, mark it so */
+    if (orte_cmd_options.timestamp_output) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_TIMESTAMP_OUTPUT);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+    /* if we were asked to output to files, pass it along */
+    if (NULL != orte_cmd_options.output_filename) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_OUTPUT_TO_FILE);
+        val->type = OPAL_STRING;
+        val->data.string = strdup(orte_cmd_options.output_filename);
+        opal_list_append(&job_info, &val->super);
+    }
+    /* if we were asked to merge stderr to stdout, mark it so */
+    if (orte_cmd_options.merge) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_MERGE_STDERR_STDOUT);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+
+    /* check what user wants us to do with stdin */
+    if (NULL != orte_cmd_options.stdin_target) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_STDIN_TGT);
+        val->type = OPAL_UINT32;
+        opal_list_append(&job_info, &val->super);
+        if (0 == strcmp(orte_cmd_options.stdin_target, "all")) {
+            val->data.uint32 = ORTE_VPID_WILDCARD;
+        } else if (0 == strcmp(orte_cmd_options.stdin_target, "none")) {
+            val->data.uint32 = ORTE_VPID_INVALID;
+        } else {
+            val->data.uint32 = strtoul(orte_cmd_options.stdin_target, NULL, 10);
+        }
+    }
+
+    /* if we want the argv's indexed, indicate that */
+    if (orte_cmd_options.index_argv) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_INDEX_ARGV);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+
+    if (NULL != orte_cmd_options.mapping_policy) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_MAPBY);
+        val->type = OPAL_STRING;
+        val->data.string = strdup(orte_cmd_options.mapping_policy);
+        opal_list_append(&job_info, &val->super);
+    } else if (orte_cmd_options.pernode) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_PPR);
+        val->type = OPAL_STRING;
+        val->data.string = strdup("1:node");
+        opal_list_append(&job_info, &val->super);
+    } else if (0 < orte_cmd_options.npernode) {
+        /* define the ppr */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_PPR);
+        val->type = OPAL_STRING;
+        (void)asprintf(&val->data.string, "%d:node", orte_cmd_options.npernode);
+        opal_list_append(&job_info, &val->super);
+    } else if (0 < orte_cmd_options.npersocket) {
+        /* define the ppr */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_PPR);
+        val->type = OPAL_STRING;
+        (void)asprintf(&val->data.string, "%d:socket", orte_cmd_options.npernode);
+        opal_list_append(&job_info, &val->super);
+    }
+
+    /* if the user specified cpus/rank, set it */
+    if (0 < orte_cmd_options.cpus_per_proc) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_CPUS_PER_PROC);
+        val->type = OPAL_UINT32;
+        val->data.uint32 = orte_cmd_options.cpus_per_proc;
+        opal_list_append(&job_info, &val->super);
+    }
+
+    /* if the user specified a ranking policy, then set it */
+    if (NULL != orte_cmd_options.ranking_policy) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_RANKBY);
+        val->type = OPAL_STRING;
+        val->data.string = strdup(orte_cmd_options.ranking_policy);
+        opal_list_append(&job_info, &val->super);
+    }
+
+    /* if the user specified a binding policy, then set it */
+    if (NULL != orte_cmd_options.binding_policy) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_BINDTO);
+        val->type = OPAL_STRING;
+        val->data.string = strdup(orte_cmd_options.binding_policy);
+        opal_list_append(&job_info, &val->super);
+    }
+
+    /* if they asked for nolocal, mark it so */
+    if (orte_cmd_options.nolocal) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_NO_PROCS_ON_HEAD);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+    if (orte_cmd_options.no_oversubscribe) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_NO_OVERSUBSCRIBE);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+    if (orte_cmd_options.oversubscribe) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_NO_OVERSUBSCRIBE);
+        val->type = OPAL_BOOL;
+        val->data.flag = false;
+        opal_list_append(&job_info, &val->super);
+    }
+    if (orte_cmd_options.report_bindings) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_REPORT_BINDINGS);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+    if (NULL != orte_cmd_options.cpu_list) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_CPU_LIST);
+        val->type = OPAL_STRING;
+        val->data.string = strdup(orte_cmd_options.cpu_list);
+        opal_list_append(&job_info, &val->super);
+    }
+
+    /* mark if recovery was enabled on the cmd line */
+    if (orte_enable_recovery) {
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_JOB_RECOVERABLE);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
+    /* record the max restarts */
+    if (0 < orte_max_restarts) {
+        OPAL_LIST_FOREACH(app, &apps, opal_pmix_app_t) {
+            val = OBJ_NEW(opal_value_t);
+            val->key = strdup(OPAL_PMIX_MAX_RESTARTS);
+            val->type = OPAL_UINT32;
+            val->data.uint32 = orte_max_restarts;
+            opal_list_append(&app->info, &val->super);
+        }
+    }
+    /* if continuous operation was specified */
+    if (orte_cmd_options.continuous) {
+        /* mark this job as continuously operating */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_JOB_CONTINUOUS);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&job_info, &val->super);
+    }
 
     if (OPAL_SUCCESS != (rc = opal_pmix.spawn(&job_info, &apps, &jobid))) {
         opal_output(0, "Job failed to spawn: %s", opal_strerror(rc));
@@ -947,7 +799,7 @@ static int create_app(int argc, char* argv[],
         val->key = strdup(OPAL_PMIX_SET_SESSION_CWD);
         val->type = OPAL_BOOL;
         val->data.flag = true;
-        opal_list_append(&job_info, &val->super);
+        opal_list_append(&app->info, &val->super);
     } else {
         if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
             opal_show_help("help-orterun.txt", "orterun:init-failure",
@@ -973,7 +825,7 @@ static int create_app(int argc, char* argv[],
             val->key = strdup(OPAL_PMIX_HOSTFILE);
             val->type = OPAL_STRING;
             val->data.string = value;
-            opal_list_append(&job_info, &val->super);
+            opal_list_append(&app->info, &val->super);
             found = true;
         }
     }
@@ -988,7 +840,7 @@ static int create_app(int argc, char* argv[],
             val->key = strdup(OPAL_PMIX_HOSTFILE);
             val->type = OPAL_STRING;
             val->data.string = value;
-            opal_list_append(&job_info, &val->super);
+            opal_list_append(&app->info, &val->super);
         }
     }
 
@@ -1004,7 +856,7 @@ static int create_app(int argc, char* argv[],
         val->key = strdup(OPAL_PMIX_HOST);
         val->type = OPAL_STRING;
         val->data.string = tval;
-        opal_list_append(&job_info, &val->super);
+        opal_list_append(&app->info, &val->super);
     }
 
     /* check for bozo error */
@@ -1028,12 +880,12 @@ static int create_app(int argc, char* argv[],
             val->key = strdup(OPAL_PMIX_SET_SESSION_CWD);
             val->type = OPAL_BOOL;
             val->data.flag = true;
-            opal_list_append(&job_info, &val->super);
+            opal_list_append(&app->info, &val->super);
             val = OBJ_NEW(opal_value_t);
             val->key = strdup(OPAL_PMIX_PRELOAD_BIN);
             val->type = OPAL_BOOL;
             val->data.flag = true;
-            opal_list_append(&job_info, &val->super);
+            opal_list_append(&app->info, &val->super);
         }
     }
     if (NULL != orte_cmd_options.preload_files) {
@@ -1041,7 +893,7 @@ static int create_app(int argc, char* argv[],
         val->key = strdup(OPAL_PMIX_PRELOAD_FILES);
         val->type = OPAL_BOOL;
         val->data.flag = true;
-        opal_list_append(&job_info, &val->super);
+        opal_list_append(&app->info, &val->super);
     }
 
     /* Do not try to find argv[0] here -- the starter is responsible

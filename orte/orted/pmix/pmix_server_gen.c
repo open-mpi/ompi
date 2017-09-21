@@ -785,10 +785,12 @@ static void _toolconn(int sd, short args, void *cbdata)
         OBJ_RETAIN(node);
         opal_pointer_array_add(jdata->map->nodes, node);
         jdata->map->num_nodes++;
-        /* and it obviously is on the node */
+        /* and it obviously is on the node - note that
+         * we do _not_ increment the #procs on the node
+         * as the tool doesn't count against the slot
+         * allocation */
         OBJ_RETAIN(proc);
         opal_pointer_array_add(node->procs, proc);
-        node->num_procs++;
         /* set the trivial */
         proc->local_rank = 0;
         proc->node_rank = 0;

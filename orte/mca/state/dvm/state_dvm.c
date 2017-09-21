@@ -450,7 +450,7 @@ static void check_complete(int fd, short args, void *cbdata)
      * we call the errmgr so that any attempt to restart the job will
      * avoid doing so in the exact same place as the current job
      */
-    if (NULL != jdata->map && jdata->state == ORTE_JOB_STATE_TERMINATED) {
+    if (NULL != jdata->map) {
         map = jdata->map;
         for (index = 0; index < map->nodes->size; index++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {

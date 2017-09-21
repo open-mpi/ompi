@@ -344,6 +344,21 @@ typedef uint32_t pmix_rank_t;
                                                                     //        job - i.e., not part of the "comm_world" of the job
 #define PMIX_SET_SESSION_CWD                "pmix.ssncwd"           // (bool) set the application's current working directory to
                                                                     //        the session working directory assigned by the RM
+#define PMIX_TAG_OUTPUT                     "pmix.tagout"           // (bool) tag application output with the ID of the source
+#define PMIX_TIMESTAMP_OUTPUT               "pmix.tsout"            // (bool) timestamp output from applications
+#define PMIX_MERGE_STDERR_STDOUT            "pmix.mergeerrout"      // (bool) merge stdout and stderr streams from application procs
+#define PMIX_OUTPUT_TO_FILE                 "pmix.outfile"          // (char*) output application output to given file
+#define PMIX_INDEX_ARGV                     "pmix.indxargv"         // (bool) mark the argv with the rank of the proc
+#define PMIX_CPUS_PER_PROC                  "pmix.cpuperproc"       // (uint32_t) #cpus to assign to each rank
+#define PMIX_NO_PROCS_ON_HEAD               "pmix.nolocal"          // (bool) do not place procs on the head node
+#define PMIX_NO_OVERSUBSCRIBE               "pmix.noover"           // (bool) do not oversubscribe the cpus
+#define PMIX_REPORT_BINDINGS                "pmix.repbind"          // (bool) report bindings of the individual procs
+#define PMIX_CPU_LIST                       "pmix.cpulist"          // (char*) list of cpus to use for this job
+#define PMIX_JOB_RECOVERABLE                "pmix.recover"          // (bool) application supports recoverable operations
+#define PMIX_JOB_CONTINUOUS                 "pmix.continuous"       // (bool) application is continuous, all failed procs should
+                                                                        //        be immediately restarted
+#define PMIX_MAX_RESTARTS                   "pmix.maxrestarts"      // (uint32_t) max number of times to restart a job
+
 
 /* query attributes */
 #define PMIX_QUERY_NAMESPACES               "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
