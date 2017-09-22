@@ -231,7 +231,7 @@ is_in_list(char **list, char *item)
     }
 
     while (NULL != list[i]) {
-        if (0 == strncmp(item, list[i], strlen(item))) {
+        if (0 == strncmp(item, list[i], strlen(list[i]))) {
             return 1;
         } else {
             i++;
