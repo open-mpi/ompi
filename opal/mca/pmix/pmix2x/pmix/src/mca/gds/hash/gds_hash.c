@@ -357,7 +357,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
     char **nodes=NULL, **procs=NULL;
     uint8_t *tmp;
     pmix_rank_t rank;
-    pmix_status_t rc;
+    pmix_status_t rc=PMIX_SUCCESS;
     size_t n, j, size, len;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
@@ -584,7 +584,7 @@ static pmix_status_t register_info(pmix_peer_t *peer,
         return rc;
     }
 
-    if (NULL == val->data.darray ||
+    if (NULL == val || NULL == val->data.darray ||
         PMIX_INFO != val->data.darray->type ||
         0 == val->data.darray->size) {
         return PMIX_ERR_NOT_FOUND;
@@ -610,7 +610,9 @@ static pmix_status_t register_info(pmix_peer_t *peer,
             }
             return rc;
         }
-
+        if (NULL == val) {
+            return PMIX_ERR_NOT_FOUND;
+        }
         PMIX_CONSTRUCT(&buf, pmix_buffer_t);
         rank = rinfo->pname.rank;
         PMIX_BFROPS_PACK(rc, peer, &buf, &rank, 1, PMIX_PROC_RANK);

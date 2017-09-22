@@ -597,7 +597,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         /* output my nspace and rank plus the URI */
         fprintf(fp, "%s\n", lt->uri);
         /* add a flag that indicates we accept v2.1 protocols */
-        fprintf(fp, "%s\n", PMIX_VERSION);
+        fprintf(fp, "v%s\n", PMIX_VERSION);
         fclose(fp);
         /* set the file mode */
         if (0 != chmod(mca_ptl_tcp_component.system_filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) {

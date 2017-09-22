@@ -1185,7 +1185,14 @@ static int notify_event(int status,
         n=0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
             (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-            pmix2x_value_load(&op->info[n].value, kv);
+            /* little dicey here as we need to convert a status, if
+             * provided, and it will be an int coming down to us */
+            if (0 == strcmp(kv->key, OPAL_PMIX_JOB_TERM_STATUS)) {
+                op->info[n].value.type = PMIX_STATUS;
+                op->info[n].value.data.status = pmix2x_convert_opalrc(kv->data.integer);
+            } else {
+                pmix2x_value_load(&op->info[n].value, kv);
+            }
             ++n;
         }
     }
