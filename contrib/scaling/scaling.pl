@@ -17,17 +17,17 @@ my $usempirun = 0;
 my $useaprun = 0;
 my $useaprun = 0;
 my $myapp;
-my $runall = 0;
+my $runall = 1;
 my $rawoutput = 0;
 my $myresults = "myresults";
 my $ppn = 1;
 my @csvrow;
 
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
-my @options = ("", "", "", "--fwd-mpirun-port -mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "--fwd-mpirun-port -mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
-my @starterlist = qw(mpirun orterun srun aprun);
+my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
+my @starterlist = qw(mpirun prun srun aprun);
 my @starteroptionlist = ("--novm",
-                         "--hnp file:dvm_uri",
+                         "",
                          "--distribution=cyclic -N",
                          "-N");
 
@@ -49,7 +49,6 @@ GetOptions(
     "aprun" => \$useaprun,
     "mpirun" => \$usempirun,
     "myapp=s" => \$myapp,
-    "all" => \$runall,
     "results=s" => \$myresults,
     "rawout" => \$rawoutput,
     "ppn=s" => \$ppn,
@@ -67,8 +66,7 @@ if ($HELP) {
 --srun               Use srun (if available) to execute the test
 --arpun              Use aprun (if available) to execute the test
 --myapp=s            In addition to the standard tests, run this specific application (including any args)
---all                Use all available start commands [default]
---results=file       File where results are to stored in comma-separated value format
+--results=file       File where results are to be stored in comma-separated value format
 --rawout             Provide raw timing output to the file
 --ppn=n              Run n procs/node
 ";
@@ -90,7 +88,13 @@ my $havedvm = 0;
 my @starters;
 my @starteroptions;
 
-# if they asked for all, then set all starters to requested
+# if they explicitly requested specific starters, then
+# only use those
+if ($useaprun || $usempirun || $usesrun || $usedvm) {
+    $runall = 0
+}
+
+# if they didn't specify something, then set all starters to requested
 if ($runall) {
     $useaprun = 1;
     $usempirun = 1;
@@ -112,7 +116,7 @@ foreach $starter (@starterlist) {
         }
     }
     if ($exists) {
-        if ($usedvm && $starter eq "orterun") {
+        if ($usedvm && $starter eq "prun") {
             push @starters, $starter;
             $opt = $starteroptionlist[$idx] . " --npernode " . $ppn;
             push @starteroptions, $opt;
@@ -261,21 +265,14 @@ sub runcmd()
 foreach $starter (@starters) {
     print "STARTER: $starter\n";
     # if we are going to use the dvm, then we
-    if ($starter eq "orterun") {
+    if ($starter eq "prun") {
         # need to start it
-        if (-e "dvm_uri") {
-            system("rm -f dvm_uri");
-        }
-        $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
+        $cmd = "orte-dvm 2>&1 &";
         if ($myresults) {
             print FILE "\n\n$cmd\n";
         }
         if (!$SHOWME) {
             system($cmd);
-            # wait for the rendezvous file to appear
-            while (! -e "dvm_uri") {
-                sleep(1);
-            }
             $havedvm = 1;
         }
     }
@@ -321,11 +318,8 @@ foreach $starter (@starters) {
     }
     if ($havedvm) {
         if (!$SHOWME) {
-            $cmd = "orterun --hnp file:dvm_uri --terminate";
+            $cmd = "prun --terminate";
             system($cmd);
-        }
-        if (-e "dvm_uri") {
-            system("rm -f dvm_uri");
         }
     }
     $index = $index + 1;

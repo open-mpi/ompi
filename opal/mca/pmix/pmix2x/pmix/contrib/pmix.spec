@@ -192,11 +192,11 @@
 
 Summary: An extended/exascale implementation of PMI
 Name: %{?_name:%{_name}}%{!?_name:pmix}
-Version: $VERSION
+Version: 2.1.0
 Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries
-Source: pmix-%{version}.tar.$EXTENSION
+Source0: https://github.com/pmix/pmix/releases/download/v%{version}/pmix-%{version}.tar.bz2
 Packager: %{?_packager:%{_packager}}%{!?_packager:%{_vendor}}
 Vendor: %{?_vendorinfo:%{_vendorinfo}}%{!?_vendorinfo:%{_vendor}}
 Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
@@ -469,9 +469,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{_prefix}
 %endif
 # If the sysconfdir is not under the prefix, then list it explicitly.
-#%if !%{sysconfdir_in_prefix}
-#%{_sysconfdir}/*
-#%endif
+%if !%{sysconfdir_in_prefix}
+%{_sysconfdir}/*
+%endif
 # If %{install_in_opt}, then we're instaling PMIx to
 # /opt/pmix<version>.  But be sure to also explicitly mention
 # /opt/pmix so that it can be removed by RPM when everything under
@@ -497,6 +497,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Thu Sep 21 2017 Ralph Castain <rhc@open-mpi.org>
+- Add PMIx etc directory
+
 * Tue Sep 12 2017 Ralph Castain <rhc@open-mpi.org>
 - Port to pmix
 

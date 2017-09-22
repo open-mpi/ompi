@@ -749,8 +749,8 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
 
     BTL_VERBOSE(("my modex = LID: %d, Port: %d, QPN: %d, GID: %08x %08x",
                  m->modex.mm_lid, m->modex.mm_port_num, m->modex.mm_qp_num,
-                 m->modex.mm_gid.global.interface_id,
-                 m->modex.mm_gid.global.subnet_prefix));
+                 (unsigned int)m->modex.mm_gid.global.interface_id,
+                 (unsigned int)m->modex.mm_gid.global.subnet_prefix));
 
     m->cpc.data.cbm_modex_message_len = sizeof(m->modex);
 
