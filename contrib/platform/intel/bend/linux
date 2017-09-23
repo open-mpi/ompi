@@ -18,6 +18,7 @@ enable_cxx_exceptions=no
 enable_mpi_java=no
 enable_io_romio=no
 enable_contrib_no_build=libnbc
+enable_install_libpmix=yes
 with_memory_manager=no
 with_tm=no
 with_psm=no

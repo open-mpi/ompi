@@ -37,6 +37,10 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
     opal_pmix_pmix2x_save_LDFLAGS=$LDFLAGS
     opal_pmix_pmix2x_save_LIBS=$LIBS
 
+    AC_ARG_ENABLE([install-libpmix],
+                  [AC_HELP_STRING([--enable-install-libpmix],
+                                  [Enable a native PMIx library and headers in the OMPI install location (default: disabled)])])
+
     AC_ARG_ENABLE([pmix-timing],
                   [AC_HELP_STRING([--enable-pmix-timing],
                                   [Enable PMIx timing measurements (default: disabled)])])
@@ -49,16 +53,17 @@ AC_DEFUN([MCA_opal_pmix_pmix2x_CONFIG],[
         opal_pmix_pmix2x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix2x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ $opal_pmix_pmix2x_timing_flag --without-tests-examples --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --enable-embedded-mode"
+    opal_pmix_pmix2x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ $opal_pmix_pmix2x_timing_flag --without-tests-examples --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix2x_args="--enable-debug $opal_pmix_pmix2x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
           [opal_pmix_pmix2x_args="--disable-debug $opal_pmix_pmix2x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
+    AS_IF([test "$enable_install_libpmix" = "yes" && test "$enable_dlopen" != "no"],
+          [opal_pmix_pmix2x_args="--with-pmix-extra-lib=$OPAL_TOP_BUILDDIR/opal/lib${OPAL_LIB_PREFIX}open-pal.la $opal_pmix_pmix2x_args"],
+          [opal_pmix_pmix2x_args="--enable-embedded-mode $opal_pmix_pmix2x_args"])
     AS_IF([test "$with_devel_headers" = "yes"],
-          [AS_IF([test "$enable_dlopen" != "no"],
-                 [opal_pmix_pmix2x_args="--with-pmix-extra-lib=$OPAL_TOP_BUILDDIR/opal/lib${OPAL_LIB_PREFIX}open-pal.la $opal_pmix_pmix2x_args"])
-           opal_pmix_pmix2x_args="--with-devel-headers  $opal_pmix_pmix2x_args"])
+          [opal_pmix_pmix2x_args="--with-devel-headers  $opal_pmix_pmix2x_args"])
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
 
     OPAL_CONFIG_SUBDIR([$opal_pmix_pmix2x_basedir/pmix],
