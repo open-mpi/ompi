@@ -267,7 +267,7 @@ foreach $starter (@starters) {
     # if we are going to use the dvm, then we
     if ($starter eq "prun") {
         # need to start it
-        $cmd = "orte-dvm 2>&1 &";
+        $cmd = "orte-dvm -mca pmix_system_server 1 2>&1 &";
         if ($myresults) {
             print FILE "\n\n$cmd\n";
         }
@@ -275,6 +275,8 @@ foreach $starter (@starters) {
             system($cmd);
             $havedvm = 1;
         }
+        # give it a couple of seconds to start
+        sleep 2;
     }
 
     if ($myresults) {
@@ -295,7 +297,11 @@ foreach $starter (@starters) {
             $n = 1;
             while ($n <= $num_nodes) {
                 push @csvrow,$n;
-                $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
+                if ($starter eq "prun" or $starter eq "mpirun") {
+                    $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option -n $n $test 2>&1";
+                } else {
+                    $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option -N $n $test 2>&1";
+                }
                 print $cmd . "\n";
                 if (!$SHOWME) {
                     runcmd();
