@@ -40,6 +40,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/arch.h"
+#include "opal/util/argv.h"
 #include "opal/util/proc.h"
 
 #include "orte/mca/oob/base/base.h"

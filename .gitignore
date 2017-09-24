@@ -310,6 +310,12 @@ opal/mca/hwloc/base/static-components.h.new.struct
 
 opal/mca/installdirs/config/install_dirs.h
 
+opal/mca/pmix/ext2x/ext2x.c
+opal/mca/pmix/ext2x/ext2x.h
+opal/mca/pmix/ext2x/ext2x_client.c
+opal/mca/pmix/ext2x/ext2x_component.c
+opal/mca/pmix/ext2x/ext2x_server_north.c
+opal/mca/pmix/ext2x/ext2x_server_south.c
 opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h
 opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h.in
 opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in
