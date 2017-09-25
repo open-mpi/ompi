@@ -218,7 +218,11 @@ AC_DEFUN([OPAL_CHECK_LIBNL_V3],[
     AS_IF([test $opal_libnlv3_happy -eq 1],
           [$2_LIBS="-lnl-3 -lnl-route-3"
            OPAL_HAVE_LIBNL3=1],
-          [$2_LIBS=""])
+          [# OPAL_CHECK_PACKAGE(...,nl_recvmsgs_report,...) might have set the variables below
+           # so reset them if libnl v3 cannot be used
+           $2_CPPFLAGS=""
+           $2_LDFLAGS=""
+           $2_LIBS=""])
 
    OPAL_VAR_SCOPE_POP
 ])
