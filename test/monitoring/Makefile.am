@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = profile2mat.pl aggregate_profile.pl
-
 # This test requires multiple processes to run. Don't run it as part
 # of 'make check'
 if PROJECT_OMPI
@@ -45,21 +43,6 @@ if PROJECT_OMPI
     example_reduce_count_LDADD = \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
-
-if MCA_BUILD_ompi_pml_monitoring_DSO
-    lib_LTLIBRARIES = ompi_monitoring_prof.la
-    ompi_monitoring_prof_la_SOURCES = monitoring_prof.c
-    ompi_monitoring_prof_la_LDFLAGS= \
-        -module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
-    ompi_monitoring_prof_la_LIBADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
-endif # MCA_BUILD_ompi_pml_monitoring_DSO
-
-if OPAL_INSTALL_BINARIES
-bin_SCRIPTS = profile2mat.pl aggregate_profile.pl
-endif # OPAL_INSTALL_BINARIES
-
 endif # PROJECT_OMPI
 
 distclean:

@@ -41,13 +41,20 @@ struct mca_monitoring_coll_data_t {
 /* Collectives operation monitoring */
 static opal_hash_table_t *comm_data = NULL;
 
+int mca_common_monitoring_coll_cache_name(ompi_communicator_t*comm)
+{
+    mca_monitoring_coll_data_t*data;
+    int ret = opal_hash_table_get_value_uint64(comm_data, *((uint64_t*)&comm), (void*)&data);
+    if( OPAL_SUCCESS == ret ) {
+        data->comm_name = strdup(comm->c_name);
+        data->p_comm = NULL;
+    }
+    return ret;
+}
+
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
-    if( data->is_released ) {
-        /* As long as the data struct is not released, we still have the communicator to
-           immediately fetch the communicator's name */
-        data->comm_name = strdup(data->p_comm->c_name);
-    }
+    int world_rank;
     if( -1 == data->world_rank ) {
         /* Get current process world_rank */
         mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm), data->p_comm,
@@ -160,9 +167,8 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
             "O2A\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n"
             "A2O\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n"
             "A2A\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n",
-            data->p_comm ? data->p_comm->c_name
-            : data->comm_name ? data->comm_name : "(no-name)",
-            data->procs,
+            data->comm_name ? data->comm_name : data->p_comm ?
+            data->p_comm->c_name : "(no-name)", data->procs,
             data->world_rank, data->o2a_size, data->o2a_count,
             data->world_rank, data->a2o_size, data->a2o_count,
             data->world_rank, data->a2a_size, data->a2a_count);
