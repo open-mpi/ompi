@@ -41,33 +41,20 @@ struct mca_monitoring_coll_data_t {
 /* Collectives operation monitoring */
 static opal_hash_table_t *comm_data = NULL;
 
-/* Check whether the communicator's name have been changed. Update the
- * data->comm_name field if so.
- */
-static inline void mca_common_monitoring_coll_check_name(mca_monitoring_coll_data_t*data)
-{
-    if( data->comm_name && data->p_comm && (data->p_comm->c_flags & OMPI_COMM_NAMEISSET)
-        && 0 <  strlen(data->p_comm->c_name)
-        && 0 != strncmp(data->p_comm->c_name, data->comm_name, OPAL_MAX_OBJECT_NAME - 1) )
-    {
-        free(data->comm_name);
-        data->comm_name = strdup(data->p_comm->c_name);
-    }
-}
-
 static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*data)
 {
-    if( NULL == data->comm_name && 0 < strlen(data->p_comm->c_name) ) {
+    if( data->is_released ) {
+        /* As long as the data struct is not released, we still have the communicator to
+           immediately fetch the communicator's name */
         data->comm_name = strdup(data->p_comm->c_name);
-    } else {
-        mca_common_monitoring_coll_check_name(data);
     }
     if( -1 == data->world_rank ) {
         /* Get current process world_rank */
         mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm), data->p_comm,
                                              &data->world_rank);
     }
-    /* Only list procs if the hashtable is already initialized, ie if the previous call worked */
+    /* Only list procs if the hashtable is already initialized,
+       i.e. if the previous call worked */
     if( (-1 != data->world_rank) && (NULL == data->procs || 0 == strlen(data->procs)) ) {
         int i, pos = 0, size, world_size = -1, max_length, world_rank;
         char*tmp_procs;
@@ -100,9 +87,7 @@ mca_monitoring_coll_data_t*mca_common_monitoring_coll_new( ompi_communicator_t*c
         return NULL;
     }
 
-    data->procs     = NULL;
-    data->comm_name = NULL;
-    data->p_comm    = comm;
+    data->p_comm      = comm;
     
     /* Allocate hashtable */
     if( NULL == comm_data ) {
@@ -137,8 +122,8 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
 #endif /* OPAL_ENABLE_DEBUG */
         
     /* not flushed yet */
-    mca_common_monitoring_coll_cache(data);
     data->is_released = 1;
+    mca_common_monitoring_coll_cache(data);
 }
 
 static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*data)
@@ -169,16 +154,15 @@ void mca_common_monitoring_coll_finalize( void )
 
 void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data)
 {
-    /* Check for any change in the communicator's name */
-    mca_common_monitoring_coll_check_name(data);
-
     /* Flush data */
     fprintf(pf,
             "D\t%s\tprocs: %s\n"
             "O2A\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n"
             "A2O\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n"
             "A2A\t%" PRId32 "\t%zu bytes\t%zu msgs sent\n",
-            data->comm_name ? data->comm_name : "(no-name)", data->procs,
+            data->p_comm ? data->p_comm->c_name
+            : data->comm_name ? data->comm_name : "(no-name)",
+            data->procs,
             data->world_rank, data->o2a_size, data->o2a_count,
             data->world_rank, data->a2o_size, data->a2o_count,
             data->world_rank, data->a2a_size, data->a2a_count);
