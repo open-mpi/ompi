@@ -1096,6 +1096,7 @@ static seg_desc_t *_attach_new_segment(segment_type type, const ns_map_data_t *n
                 _ESH_SESSION_path(ns_map->tbl_idx), ns_map->name, id);
             break;
         default:
+            free(new_seg);
             PMIX_ERROR_LOG(PMIX_ERROR);
             return NULL;
     }

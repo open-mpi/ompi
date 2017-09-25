@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/include -I$(top_builddir)/include/pmix
 
-noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex test_pmix simptool simpdie
+noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex test_pmix simptool simpdie simplegacy
 
 simptest_SOURCES = \
         simptest.c
@@ -75,4 +75,10 @@ simpdie_SOURCES = \
         simpdie.c
 simpdie_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpdie_LDADD = \
+    $(top_builddir)/src/libpmix.la
+
+simplegacy_SOURCES = \
+        simplegacy.c
+simplegacy_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+simplegacy_LDADD = \
     $(top_builddir)/src/libpmix.la
