@@ -51,9 +51,19 @@ libpmix_la_DEPENDENCIES = $(libpmix_la_LIBADD)
 
 if PMIX_EMBEDDED_MODE
 
+if WANT_INSTALL_HEADERS
+
+lib_LTLIBRARIES = libpmix.la
+libpmix_la_SOURCES = $(headers) $(sources)
+libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
+
+else
+
 noinst_LTLIBRARIES = libpmix.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS =
+
+endif
 
 else
 
