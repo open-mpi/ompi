@@ -488,14 +488,13 @@ static inline int _esh_dir_del(const char *path)
     dir = opendir(path);
     if (NULL == dir) {
         rc = PMIX_ERR_BAD_PARAM;
-        PMIX_ERROR_LOG(rc);
         return rc;
     }
 
     while (NULL != (d_ptr = readdir(dir))) {
         snprintf(name, PMIX_PATH_MAX, "%s/%s", path, d_ptr->d_name);
         if ( 0 > lstat(name, &st) ){
-            /* No fatal error here - just log this event 
+            /* No fatal error here - just log this event
              * we will hit the error later at rmdir. Keep trying ...
              */
             PMIX_ERROR_LOG(PMIX_ERR_NOT_FOUND);
@@ -506,7 +505,7 @@ static inline int _esh_dir_del(const char *path)
             if(strcmp(d_ptr->d_name, ".") && strcmp(d_ptr->d_name, "..")) {
                 rc = _esh_dir_del(name);
                 if( PMIX_SUCCESS != rc ){
-                    /* No fatal error here - just log this event 
+                    /* No fatal error here - just log this event
                      * we will hit the error later at rmdir. Keep trying ...
                      */
                     PMIX_ERROR_LOG(rc);
@@ -515,7 +514,7 @@ static inline int _esh_dir_del(const char *path)
         }
         else {
             if( 0 > unlink(name) ){
-                /* No fatal error here - just log this event 
+                /* No fatal error here - just log this event
                  * we will hit the error later at rmdir. Keep trying ...
                  */
                 PMIX_ERROR_LOG(PMIX_ERR_NO_PERMISSIONS);
@@ -773,7 +772,6 @@ static inline ns_map_data_t * _esh_session_map_search_client(const char *nspace)
 
 static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid, int setjobuid)
 {
-    struct stat st = {0};
     seg_desc_t *seg = NULL;
     session_t *s = &(PMIX_VALUE_ARRAY_GET_ITEM(_session_array, session_t, idx));
     pmix_status_t rc = PMIX_SUCCESS;
@@ -800,8 +798,10 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
         "%s:%d:%s _lockfile_name: %s", __FILE__, __LINE__, __func__, s->lockfile));
 
     if ( _is_server() ) {
-        if (stat(s->nspace_path, &st) == -1){
-            if (0 != mkdir(s->nspace_path, 0770)) {
+        if (0 != mkdir(s->nspace_path, 0770)) {
+            if (EEXIST != errno) {
+                pmix_output(0, "session init: can not create session directory \"%s\": %s",
+                    s->nspace_path, strerror(errno));
                 rc = PMIX_ERROR;
                 PMIX_ERROR_LOG(rc);
                 return rc;
@@ -878,7 +878,6 @@ int _esh_init(pmix_info_t info[], size_t ninfo)
     size_t n;
     char *dstor_tmpdir = NULL;
     size_t tbl_idx;
-    struct stat st = {0};
     ns_map_data_t *ns_map = NULL;
 
     PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,
@@ -971,10 +970,9 @@ int _esh_init(pmix_info_t info[], size_t ninfo)
             PMIX_ERROR_LOG(rc);
             goto err_exit;
         }
-
-        if (0 > stat(_base_path, &st)){
-            if (0 > mkdir(_base_path, 0770)) {
-                rc = PMIX_ERR_NO_PERMISSIONS;
+        if (0 != mkdir(_base_path, 0770)) {
+            if (EEXIST != errno) {
+                rc = PMIX_ERROR;
                 PMIX_ERROR_LOG(rc);
                 goto err_exit;
             }
@@ -1060,7 +1058,7 @@ int _esh_store(const char *nspace, int rank, pmix_kval_t *kv)
 {
     pmix_status_t rc = PMIX_SUCCESS, tmp_rc;
     ns_track_elem_t *elem;
-    pmix_buffer_t pbkt, xfer;
+    pmix_buffer_t xfer;
     ns_seg_info_t ns_info;
     ns_map_data_t *ns_map = NULL;
 
@@ -1305,7 +1303,7 @@ int _esh_fetch(const char *nspace, int rank, const char *key, pmix_value_t **kvs
              *     key_val_pair kv_array[n];
              *     EXTENSION slot;
              * }
-             * EXTENSION slot which has key = EXTENSION_SLOT and a size_t value for offset 
+             * EXTENSION slot which has key = EXTENSION_SLOT and a size_t value for offset
              * to next data address for this process.
              */
             if (0 == strncmp(ESH_KNAME_PTR(addr), ESH_REGION_INVALIDATED, ESH_KNAME_LEN(ESH_REGION_INVALIDATED))) {
@@ -1390,7 +1388,7 @@ done:
     }
 
     if( !all_ranks_found ){
-        /* Not all ranks was found - need to request 
+        /* Not all ranks was found - need to request
          * all of them and search again
          */
         rc = PMIX_ERR_PROC_ENTRY_NOT_FOUND;
@@ -1919,7 +1917,7 @@ static ns_seg_info_t *_get_ns_info_from_initial_segment(const ns_map_data_t *ns_
 
 static ns_track_elem_t *_get_track_elem_for_namespace(ns_map_data_t *ns_map)
 {
-    ns_track_elem_t *new_elem = NULL;    
+    ns_track_elem_t *new_elem = NULL;
     size_t size = pmix_value_array_get_size(_ns_track_array);
 
     PMIX_OUTPUT_VERBOSE((10, pmix_globals.debug_output,

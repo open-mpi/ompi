@@ -16,7 +16,7 @@ dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2015      Intel, Inc. All rights reserved
+dnl Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -29,16 +29,8 @@ dnl
 # Do everything required to setup the C compiler.  Safe to AC_REQUIRE
 # this macro.
 AC_DEFUN([PMIX_SETUP_CC],[
-    # AM_PROG_CC_C_O AC_REQUIREs AC_PROG_CC, so we have to be a little
-    # careful about ordering here, and AC_REQUIRE these things so that
-    # they get stamped out in the right order.
-
-    AC_REQUIRE([_PMIX_START_SETUP_CC])
-    AC_REQUIRE([_PMIX_PROG_CC])
-    AC_REQUIRE([AM_PROG_CC_C_O])
 
     # We require a C99 compiant compiler
-    AC_PROG_CC_C99
     # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
     if test "x$ac_cv_prog_cc_c99" = xno ; then
         AC_MSG_WARN([PMIx requires a C99 compiler])
@@ -310,6 +302,7 @@ AC_DEFUN([PMIX_SETUP_CC],[
 AC_DEFUN([_PMIX_START_SETUP_CC],[
     pmix_show_subtitle "C compiler and preprocessor"
 
+    AC_REQUIRE([AC_PROG_CC])
     # $%@#!@#% AIX!!  This has to be called before anything invokes the C
     # compiler.
     dnl AC_AIX
@@ -322,7 +315,7 @@ AC_DEFUN([_PMIX_PROG_CC],[
     #
     PMIX_VAR_SCOPE_PUSH([pmix_cflags_save dummy pmix_cc_arvgv0])
     pmix_cflags_save="$CFLAGS"
-    AC_PROG_CC
+    AC_PROG_CC_C99
     BASECC="`basename $CC`"
     CFLAGS="$pmix_cflags_save"
     AC_DEFINE_UNQUOTED(PMIX_CC, "$CC", [PMIx underlying C compiler])
