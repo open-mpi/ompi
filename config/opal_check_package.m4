@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
@@ -133,15 +133,21 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                           unset opal_Lib])])])])
 
     AS_IF([test "$opal_check_package_lib_happy" = "yes"],
+          [ # libnl v1 and libnl3 are known to *not* coexist
+            # harmoniously in the same process.  Check to see if this
+            # new package will introduce such a conflict.
+           OPAL_LIBNL_SANITY_CHECK([$2], [$3], [$$1_LIBS],
+                                   [opal_check_package_libnl_check_ok])
+           AS_IF([test $opal_check_package_libnl_check_ok -eq 0],
+                 [opal_check_package_lib_happy=no])
+           ])
+
+    AS_IF([test "$opal_check_package_lib_happy" = "yes"],
           [ # The result of AC SEARCH_LIBS is cached in $ac_cv_search_[function]
            AS_IF([test "$ac_cv_search_$3" != "no" &&
                   test "$ac_cv_search_$3" != "none required"],
                  [$1_LIBS="$ac_cv_search_$3 $4"],
                  [$1_LIBS="$4"])
-            # libnl v1 and libnl3 are known *not* to coexist
-            # for each library, figure out whether it depends on libnl or libnl3 or none
-            # so conflicts can be reported and/or prevented
-            OPAL_LIBNL_SANITY_CHECK([$2], [$3], [$$1_LIBS])
            $7],
           [$8])
 

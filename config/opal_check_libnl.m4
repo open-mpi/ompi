@@ -2,6 +2,7 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -18,7 +19,7 @@ dnl libnl-3.so.200 and friends, so if libnl3-devel packages are not
 dnl installed, but libnl-devel are, Open MPI should not try to use libnl.
 dnl
 dnl GROSS: libnl wants us to either use pkg-config (which we
-dnl can't assume is always present) or we need to look in a
+dnl cannot assume is always present) or we need to look in a
 dnl particular directory for the right libnl3 include files.  For
 dnl now, just hard code the special path into this logic.
 dnl
@@ -67,46 +68,128 @@ AC_DEFUN([OPAL_LIBNL_SANITY_INIT], [
     esac
 ])
 
-dnl OPAL_LIBNL_SANITY_CHECK(lib, function, LIBS)
+dnl OPAL_LIBNL_SANITY_FAIL_MSG(lib)
+dnl
+dnl Helper to pring a big warning message when we detect a libnl conflict.
+dnl
+dnl --------------------------------------------------------------------
+AC_DEFUN([OPAL_LIBNL_SANITY_FAIL_MSG], [
+    AC_MSG_WARN([This is a configuration that is *known* to cause run-time crashes.])
+    AC_MSG_WARN([This is an error in lib$1 (not Open MPI).])
+    AC_MSG_WARN([Open MPI will therefore skip using lib$1.])
+])
+
+dnl OPAL_LIBNL_SANITY_CHECK(lib, function, LIBS, libnl_check_ok)
+dnl
+dnl This macro is invoked from OPAL_CHECK_PACKAGE to make sure that
+dnl new libraries that are added to LIBS do not pull in conflicting
+dnl versions of libnl.  E.g., if we already have a library in LIBS
+dnl that pulls in libnl v3, if OPAL_CHECK_PACKAGE is later called that
+dnl pulls in a library that pulls in libnl v1, this macro will detect
+dnl the conflict and will abort configure.
+dnl
+dnl We abort rather than silently ignore this library simply because
+dnl we are now multiple levels deep in the M4 "call stack", and this
+dnl layer does not know the intent of the user.  Hence, all we can do
+dnl is abort with a hopefully helpful error message (that we aborted
+dnl because Open MPI would have been built in a configuration that is
+dnl known to crash).
+dnl
 dnl --------------------------------------------------------------------
 AC_DEFUN([OPAL_LIBNL_SANITY_CHECK], [
+    OPAL_VAR_SCOPE_PUSH([opal_libnl_sane])
+    opal_libnl_sane=1
     case $host in
         *linux*)
-            OPAL_VAR_SCOPE_PUSH([ldd_output libnl_version])
-            AC_LANG_PUSH(C)
-            cat > conftest_c.$ac_ext << EOF
+            OPAL_LIBNL_SANITY_CHECK_LINUX($1, $2, $3, opal_libnl_sane)
+            ;;
+    esac
+
+    $4=$opal_libnl_sane
+    OPAL_VAR_SCOPE_POP([opal_libnl_sane])
+])
+
+dnl
+dnl Simple helper for OPAL_LIBNL_SANITY_CHECK
+dnl $1: library name
+dnl $2: function
+dnl $3: LIBS
+dnl $4: output variable (1=ok, 0=not ok)
+dnl
+AC_DEFUN([OPAL_LIBNL_SANITY_CHECK_LINUX], [
+    OPAL_VAR_SCOPE_PUSH([this_requires_v1 libnl_sane this_requires_v3 ldd_output result_msg])
+
+    AC_LANG_PUSH(C)
+
+    AC_MSG_CHECKING([if lib$1 requires libnl v1 or v3])
+    cat > conftest_c.$ac_ext << EOF
 extern void $2 (void);
 int main(int argc, char *argv[[]]) {
     $2 ();
     return 0;
 }
 EOF
-            OPAL_LOG_COMMAND([$CC -o conftest $CFLAGS $CPPFLAGS conftest_c.$ac_ext $LDFLAGS -l$1 $LIBS $3],
-                             [ldd_output=`ldd conftest`
-                              libnl_version=0
-                              AS_IF([echo $ldd_output | grep -q libnl.so],
-                                    [AS_IF([test $opal_libnl_version -eq 3],
-                                           [AC_MSG_WARN([lib nl version conflict: $opal_libnlv3_libs requires libnl-3 whereas $1 requires libnl])],
-                                           [opal_libnlv1_libs="$opal_libnlv1_libs $1"
-                                            OPAL_UNIQ([opal_libnlv1_libs])
-                                            opal_libnl_version=1])
-                                     libnl_version=1])
-                              AS_IF([echo $ldd_output | grep -q libnl-3.so],
-                                    [AS_IF([test $libnl_version -eq 1],
-                                           [AC_MSG_WARN([lib $1 requires both libnl v1 and libnl v3 -- yoinks!])
-                                            AC_MSG_WARN([This is a configuration that is known to cause run-time crashes])
-                                            AC_MSG_ERROR([Cannot continue])])
-                                     AS_IF([test $opal_libnl_version -eq 1],
-                                           [AC_MSG_WARN([lib nl version conflict: $opal_libnlv1_libs requires libnl whereas $1 requires libnl-3])],
-                                           [opal_libnlv3_libs="$opal_libnlv3_libs $1"
-                                            OPAL_UNIQ([opal_libnlv3_libs])
-                                            opal_libnl_version=3])])
-                              rm -f conftest conftest_c.$ac_ext],
-                             [AC_MSG_WARN([Could not link a simple program with lib $1])])
-            AC_LANG_POP(C)
-            OPAL_VAR_SCOPE_POP([ldd_output libnl_version])
-            ;;
-        esac
+
+    this_requires_v1=0
+    this_requires_v3=0
+    result_msg=
+    OPAL_LOG_COMMAND([$CC -o conftest $CFLAGS $CPPFLAGS conftest_c.$ac_ext $LDFLAGS -l$1 $LIBS $3],
+        [ldd_output=`ldd conftest`
+         AS_IF([echo $ldd_output | grep -q libnl-3.so],
+               [this_requires_v3=1
+                result_msg="v3"])
+         AS_IF([echo $ldd_output | grep -q libnl.so],
+               [this_requires_v1=1
+                result_msg="v1 $result_msg"])
+         AC_MSG_RESULT([$result_msg])
+         ],
+        [AC_MSG_WARN([Could not link a simple program with lib $1])
+        ])
+
+    # Assume that our configuration is sane; this may get reset below
+    libnl_sane=1
+
+    # Note: in all the checks below, only add this library to the list
+    # of libraries (for v1 or v3 as relevant) if we do not fail.
+    # I.e., assume that a higher level will refuse to use this library
+    # if we return failure.
+
+    # Does this library require both v1 and v3?  If so, fail.
+    AS_IF([test $this_requires_v1 -eq 1 && test $this_requires_v3 -eq 1],
+          [AC_MSG_WARN([Unfortunately, lib$1 links to both libnl and libnl-3.])
+           OPAL_LIBNL_SANITY_FAIL_MSG($1)
+           libnl_sane=0])
+
+    # Does this library require v1, but some prior library required
+    # v3?  If so, fail.
+    AS_IF([test $libnl_sane -eq 1 && test $this_requires_v1 -eq 1],
+          [AS_IF([test $opal_libnl_version -eq 3],
+                 [AC_MSG_WARN([libnl version conflict: $opal_libnlv3_libs requires libnl-3 whereas $1 requires libnl])
+                  OPAL_LIBNL_SANITY_FAIL_MSG($1)
+                  libnl_sane=0],
+                 [opal_libnlv1_libs="$opal_libnlv1_libs $1"
+                  OPAL_UNIQ([opal_libnlv1_libs])
+                  opal_libnl_version=1])
+           ])
+
+    # Does this library require v3, but some prior library required
+    # v1?  If so, fail.
+    AS_IF([test $libnl_sane -eq 1 && test $this_requires_v3 -eq 1],
+          [AS_IF([test $opal_libnl_version -eq 1],
+                 [AC_MSG_WARN([libnl version conflict: $opal_libnlv1_libs requires libnl whereas lib$1 requires libnl-3])
+                  OPAL_LIBNL_SANITY_FAIL_MSG($1)
+                  libnl_sane=0],
+                 [opal_libnlv3_libs="$opal_libnlv3_libs $1"
+                  OPAL_UNIQ([opal_libnlv3_libs])
+                  opal_libnl_version=3])
+          ])
+
+    AC_LANG_POP(C)
+    rm -f conftest conftest_c.$ac_ext
+
+    $4=$libnl_sane
+
+    OPAL_VAR_SCOPE_POP([ldd_output libnl_sane this_requires_v1 this_requires_v3 result_msg])
 ])
 
 dnl
@@ -266,7 +349,7 @@ dnl
 dnl Summarize libnl and libnl3 usage,
 dnl and abort if conflict is found
 dnl
-dnl Print the list of libraries that use libnl, 
+dnl Print the list of libraries that use libnl,
 dnl the list of libraries that use libnl3,
 dnl and aborts if both libnl and libnl3 are used.
 dnl
