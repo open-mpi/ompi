@@ -111,7 +111,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OPTIMIZE_GROUPING               4
 #define SIMPLE                          5
 #define NO_REFINEMENT                   6
-
+#define SIMPLE_PLUS                     7
 
 #define OMPIO_UNIFORM_DIST_THRESHOLD     0.5
 #define OMPIO_CONTG_THRESHOLD        1048576

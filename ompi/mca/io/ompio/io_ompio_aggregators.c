@@ -497,8 +497,9 @@ int mca_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
     fh->f_flags |= OMPIO_AGGREGATOR_IS_SET;
 
     if (-1 == num_aggregators) {
-        if ( SIMPLE == mca_io_ompio_grouping_option ||
-            NO_REFINEMENT == mca_io_ompio_grouping_option ) {
+        if ( SIMPLE        == mca_io_ompio_grouping_option ||
+             NO_REFINEMENT == mca_io_ompio_grouping_option ||
+             SIMPLE_PLUS   == mca_io_ompio_grouping_option ) {
             fh->f_aggregator_index = 0;
             fh->f_final_num_aggrs  = fh->f_init_num_aggrs;
             fh->f_procs_per_group  = fh->f_init_procs_per_group;
