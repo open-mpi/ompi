@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -50,6 +50,7 @@ static void opal_proc_construct(opal_proc_t* proc)
     proc->proc_convertor = NULL;
     proc->proc_flags = 0;
     proc->proc_name = *OPAL_NAME_INVALID;
+    proc->proc_hostname  = NULL;
 }
 
 static void opal_proc_destruct(opal_proc_t* proc)
