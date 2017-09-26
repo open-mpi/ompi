@@ -613,7 +613,7 @@ int mca_spml_ucx_quiet(void)
 
     err = ucp_worker_flush(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
-         SPML_ERROR("fence failed: %s", ucs_status_string(err));
+         SPML_ERROR("quiet failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);
          return OSHMEM_ERROR;
     }
