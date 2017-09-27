@@ -251,6 +251,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         effective_depth = object->depth;
         num_objs_in_node = hwloc_get_nbobjs_by_depth(opal_hwloc_topology, effective_depth);
     }
+    if( 0 == num_objs_in_node ) {  /* deal with bozo cases: COVERITY 1418505 */
+        free(colors);
+        goto fallback; /* return with success */
+    }
     /* Check for oversubscribing */
     oversubscribing_objs = check_oversubscribing(rank, num_nodes,
                                                  num_objs_in_node, num_procs_in_node,
@@ -355,20 +359,20 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         for(i = 1;  i < num_procs_in_node; i++) {
             if (OMPI_SUCCESS != ( err = MCA_PML_CALL(irecv(&localrank_to_objnum[i], 1, MPI_INT,
                                                            lindex_to_grank[i], -111, comm_old, &reqs[i-1])))) {
-                free(reqs);
+                free(reqs); reqs = NULL;
                 goto release_and_return;
             }
         }
         if (OMPI_SUCCESS != ( err = ompi_request_wait_all(num_procs_in_node-1,
                                                           reqs, MPI_STATUSES_IGNORE))) {
-            free(reqs);
+            free(reqs); reqs = NULL;
             goto release_and_return;
         }
     } else {
         /* sending my core number to my local master on the node */
         if (OMPI_SUCCESS != (err = MCA_PML_CALL(send(&obj_rank, 1, MPI_INT, lindex_to_grank[0],
                                                      -111, MCA_PML_BASE_SEND_STANDARD, comm_old)))) {
-            free(reqs);
+            free(reqs); reqs = NULL;
             goto release_and_return;
         }
     }
@@ -703,14 +707,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         (*newcomm)->c_topo->reorder = reorder;
 
     } else { /* partially distributed reordering */
+        int *grank_to_lrank = NULL, *lrank_to_grank = NULL, *marked = NULL;
+        int node_position = 0, offset = 0, done = 0, pos = 0;
         ompi_communicator_t *localcomm = NULL;
-        int *grank_to_lrank, *lrank_to_grank;
-        int *marked = (int *)malloc((num_nodes-1)*sizeof(int));
-        int node_position = 0;
-        int offset = 0;
-        int done = 0;
-        int pos = 0;
-        
+
         if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, colors[rank], rank,
                                                    &localcomm, false))) {
             goto release_and_return;
@@ -874,10 +874,11 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
         /* compute the offset of newrank before the split */
         /* use the colors array, not the vpids */
+        marked = (int *)malloc((num_nodes-1)*sizeof(int));
         for(int idx = 0 ; idx < num_nodes - 1 ; idx++)
             marked[idx] = -1;
-        
-        while( (node_position != rank) && (colors[node_position] != colors[rank])){           
+
+        while( (node_position != rank) && (colors[node_position] != colors[rank])){ 
             for(int idx = 0; idx < num_nodes - 1 ; idx++)
                 if( marked[idx] == colors[node_position] )
                     done = 1;
@@ -888,10 +889,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 marked[pos++] = colors[node_position];
             }
             node_position++;
-        }    
+        }
         newrank += offset;
 
-        if (rank == lindex_to_grank[0]) 
+        if (rank == lindex_to_grank[0])
             free(k);
 
         /* this needs to be optimized but will do for now */
@@ -899,6 +900,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             ompi_comm_free(&localcomm);
             free(lrank_to_grank);
             free(grank_to_lrank);
+            free(marked); marked = NULL;
             goto release_and_return;
         }
         /* end of TODO */
