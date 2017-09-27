@@ -1515,6 +1515,15 @@ pmix_status_t pmix_bfrops_base_unpack_darray(pmix_buffer_t *buffer, void *dest,
                     return ret;
                 }
                 break;
+            case PMIX_VALUE:
+                ptr[i].array = (pmix_value_t*)malloc(m * sizeof(pmix_value_t));
+                if (NULL == ptr[i].array) {
+                    return PMIX_ERR_NOMEM;
+                }
+                if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_value(buffer, ptr[i].array, &m, ptr[i].type))) {
+                    return ret;
+                }
+                break;
             /**** DEPRECATED ****/
             case PMIX_INFO_ARRAY:
                 ptr[i].array = (pmix_info_array_t*)malloc(m * sizeof(pmix_info_array_t));
