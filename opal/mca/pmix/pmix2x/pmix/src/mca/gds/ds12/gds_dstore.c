@@ -222,6 +222,8 @@ static inline void _esh_ns_track_cleanup(void);
 static inline void _esh_sessions_cleanup(void);
 static inline void _esh_ns_map_cleanup(void);
 static inline int _esh_dir_del(const char *dirname);
+static inline void _client_compat_save(pmix_peer_t *peer);
+static inline pmix_peer_t * _client_peer(void);
 
 static inline int _my_client(const char *nspace, pmix_rank_t rank);
 
@@ -296,6 +298,7 @@ static size_t _data_segment_size = 0;
 static size_t _lock_segment_size = 0;
 static uid_t _jobuid;
 static char _setjobuid = 0;
+static pmix_peer_t *_clients_peer = NULL;
 
 static pmix_value_array_t *_session_array = NULL;
 static pmix_value_array_t *_ns_map_array = NULL;
@@ -498,28 +501,6 @@ static inline void _rwlock_release(session_t *s) {
     s->rwlock = NULL;
 }
 #endif
-
-static inline const char *_unique_id(void)
-{
-    static const char *str = NULL;
-    if (!str) {
-        /* see: pmix_server.c initialize_server_base()
-         * to get format of uri
-         */
-        if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
-            static char buf[100];
-            snprintf(buf, sizeof(buf) - 1, "pmix-%d", getpid());
-            str = buf;
-        } else {
-            str = getenv("PMIX_SERVER_URI");
-            if (str) {
-                str = strrchr(str, '/');
-            }
-            str = (str ? str + 1 : "$$$");
-        }
-    }
-    return str;
-}
 
 static inline int _esh_dir_del(const char *path)
 {
@@ -1642,7 +1623,7 @@ static int pmix_sm_store(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix_kval_t
     datadesc = ns_info->data_seg;
     /* pack value to the buffer */
     PMIX_CONSTRUCT(&buffer, pmix_buffer_t);
-    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buffer, kval->value, 1, PMIX_VALUE);
+    PMIX_BFROPS_PACK(rc, _client_peer(), &buffer, kval->value, 1, PMIX_VALUE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         goto exit;
@@ -2128,6 +2109,10 @@ static void dstore_finalize(void)
         free(_base_path);
         _base_path = NULL;
     }
+    if (NULL != _clients_peer) {
+        PMIX_RELEASE(_clients_peer->nptr);
+        PMIX_RELEASE(_clients_peer);
+    }
 }
 
 static pmix_status_t _dstore_store(const char *nspace,
@@ -2483,11 +2468,11 @@ static pmix_status_t _dstore_fetch(const char *nspace, pmix_rank_t rank,
                 uint8_t *data_ptr = ESH_DATA_PTR(addr);
                 size_t data_size = ESH_DATA_SIZE(addr, data_ptr);
                 PMIX_CONSTRUCT(&buffer, pmix_buffer_t);
-                PMIX_LOAD_BUFFER(pmix_globals.mypeer, &buffer, data_ptr, data_size);
+                PMIX_LOAD_BUFFER(_client_peer(), &buffer, data_ptr, data_size);
                 int cnt = 1;
                 /* unpack value for this key from the buffer. */
                 PMIX_VALUE_CONSTRUCT(&val);
-                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &buffer, &val, &cnt, PMIX_VALUE);
+                PMIX_BFROPS_UNPACK(rc, _client_peer(), &buffer, &val, &cnt, PMIX_VALUE);
                 if (PMIX_SUCCESS != rc) {
                     PMIX_ERROR_LOG(rc);
                     goto done;
@@ -2510,16 +2495,16 @@ static pmix_status_t _dstore_fetch(const char *nspace, pmix_rank_t rank,
                 uint8_t *data_ptr = ESH_DATA_PTR(addr);
                 size_t data_size = ESH_DATA_SIZE(addr, data_ptr);
                 PMIX_CONSTRUCT(&buffer, pmix_buffer_t);
-                PMIX_LOAD_BUFFER(pmix_globals.mypeer, &buffer, data_ptr, data_size);
+                PMIX_LOAD_BUFFER(_client_peer(), &buffer, data_ptr, data_size);
                 int cnt = 1;
                 /* unpack value for this key from the buffer. */
                 PMIX_VALUE_CONSTRUCT(&val);
-                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &buffer, &val, &cnt, PMIX_VALUE);
+                PMIX_BFROPS_UNPACK(rc, _client_peer(), &buffer, &val, &cnt, PMIX_VALUE);
                 if (PMIX_SUCCESS != rc) {
                     PMIX_ERROR_LOG(rc);
                     goto done;
                 }
-                PMIX_BFROPS_COPY(rc, pmix_globals.mypeer, (void**)kvs, &val, PMIX_VALUE);
+                PMIX_BFROPS_COPY(rc, _client_peer(), (void**)kvs, &val, PMIX_VALUE);
                 if (PMIX_SUCCESS != rc) {
                     PMIX_ERROR_LOG(rc);
                     goto done;
@@ -2948,42 +2933,72 @@ static pmix_status_t _store_job_info(pmix_proc_t *proc)
     pmix_cb_t cb;
     pmix_kval_t *kv;
     pmix_buffer_t buf;
-    pmix_kval_t *kv2 = NULL;
+    pmix_kval_t *kv2 = NULL, *kvp;
     pmix_status_t rc = PMIX_SUCCESS;
 
-    kv2 = PMIX_NEW(pmix_kval_t);
-    PMIX_VALUE_CREATE(kv2->value, 1);
-    kv2->value->type = PMIX_BYTE_OBJECT;
-
-    PMIX_CONSTRUCT(&buf, pmix_buffer_t);
     PMIX_CONSTRUCT(&cb, pmix_cb_t);
+    PMIX_CONSTRUCT(&buf, pmix_buffer_t);
+    kvp = PMIX_NEW(pmix_kval_t);
+    PMIX_VALUE_CREATE(kvp->value, 1);
+    kvp->value->type = PMIX_BYTE_OBJECT;
+
     cb.proc = proc;
     cb.scope = PMIX_INTERNAL;
     cb.copy = false;
 
     PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
     if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
+        if (rc == PMIX_ERR_PROC_ENTRY_NOT_FOUND) {
+            /* there is no error if no data for job info */
+            rc = PMIX_SUCCESS;
+        }
         goto exit;
     }
 
-    PMIX_CONSTRUCT(&buf, pmix_buffer_t);
     PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
-        PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, kv, 1, PMIX_KVAL);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            goto exit;
+      if (!PMIX_PROC_IS_V21(_client_peer()) && 0 != strncmp("pmix.", kv->key, 4) &&
+                kv->value->type == PMIX_DATA_ARRAY) {
+            pmix_info_t *info;
+            size_t size, i;
+            info = kv->value->data.darray->array;
+            size = kv->value->data.darray->size;
+
+            for (i = 0; i < size; i++) {
+                if (0 == strcmp(PMIX_LOCAL_PEERS, info[i].key)) {
+                    kv2 = PMIX_NEW(pmix_kval_t);
+                    kv2->key = strdup(kv->key);
+                    PMIX_VALUE_XFER(rc, kv2->value, &info[i].value);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(kv2);
+                        goto exit;
+                    }
+                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, kv2, 1, PMIX_KVAL);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(kv2);
+                        goto exit;
+                    }
+                    PMIX_RELEASE(kv2);
+                }
+            }
+        } else {
+            PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &buf, kv, 1, PMIX_KVAL);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                goto exit;
+            }
         }
     }
-    PMIX_UNLOAD_BUFFER(&buf, kv2->value->data.bo.bytes, kv2->value->data.bo.size);
 
-    if (PMIX_SUCCESS != (rc = _dstore_store(proc->nspace, proc->rank, kv2))) {
+    PMIX_UNLOAD_BUFFER(&buf, kvp->value->data.bo.bytes, kvp->value->data.bo.size);
+    if (PMIX_SUCCESS != (rc = _dstore_store(proc->nspace, proc->rank, kvp))) {
         PMIX_ERROR_LOG(rc);
         goto exit;
     }
 
 exit:
-    PMIX_RELEASE(kv2);
+    PMIX_RELEASE(kvp);
     PMIX_DESTRUCT(&cb);
     PMIX_DESTRUCT(&buf);
     return rc;
@@ -3005,6 +3020,7 @@ static pmix_status_t dstore_register_job_info(struct pmix_peer_t *pr,
                         peer->info->pname.nspace, peer->info->pname.rank);
 
     if (0 == ns->ndelivered) { // don't store twice
+        _client_compat_save(peer);
         (void)strncpy(proc.nspace, ns->nspace, PMIX_MAX_NSLEN);
         proc.rank = PMIX_RANK_WILDCARD;
         rc = _store_job_info(&proc);
@@ -3049,4 +3065,25 @@ static pmix_status_t dstore_store_job_info(const char *nspace,  pmix_buffer_t *b
         return rc;
     }
     return rc;
+}
+
+static void _client_compat_save(pmix_peer_t *peer)
+{
+    pmix_nspace_t *nptr = NULL;
+
+    if (NULL == _clients_peer) {
+        _clients_peer = PMIX_NEW(pmix_peer_t);
+        nptr = PMIX_NEW(pmix_nspace_t);
+        _clients_peer->nptr = nptr;
+    }
+    _clients_peer->nptr->compat = peer->nptr->compat;
+    _clients_peer->proc_type = peer->proc_type;
+}
+
+static inline pmix_peer_t * _client_peer(void)
+{
+    if (NULL == _clients_peer) {
+        return pmix_client_globals.myserver;
+    }
+    return _clients_peer;
 }

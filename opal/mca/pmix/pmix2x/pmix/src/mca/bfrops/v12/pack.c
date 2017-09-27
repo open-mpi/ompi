@@ -707,7 +707,7 @@ pmix_status_t pmix12_bfrop_pack_app(pmix_buffer_t *buffer, const void *src,
     pmix_app_t *app;
     int32_t i, j, nvals;
     pmix_status_t ret;
-    int argc;
+    int argc=0;
 
     app = (pmix_app_t *) src;
 

@@ -107,7 +107,9 @@ static int _mmap_segment_create(pmix_pshmem_seg_t *sm_seg, const char *file_name
         rc = PMIX_SUCCESS;
     }
 
-map_memory:
+#ifdef HAVE_POSIX_FALLOCATE
+  map_memory:
+#endif
     if (MAP_FAILED == (seg_addr = mmap(NULL, size,
                                        PROT_READ | PROT_WRITE, MAP_SHARED,
                                        sm_seg->seg_id, 0))) {

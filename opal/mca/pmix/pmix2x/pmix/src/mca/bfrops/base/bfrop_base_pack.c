@@ -990,6 +990,11 @@ pmix_status_t pmix_bfrops_base_pack_darray(pmix_buffer_t *buffer, const void *sr
                     return ret;
                 }
                 break;
+            case PMIX_VALUE:
+                if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_value(buffer, p[i].array, p[i].size, PMIX_QUERY))) {
+                    return ret;
+                }
+                break;
             case PMIX_ALLOC_DIRECTIVE:
                 if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_alloc_directive(buffer, p[i].array, p[i].size, PMIX_ALLOC_DIRECTIVE))) {
                     return ret;

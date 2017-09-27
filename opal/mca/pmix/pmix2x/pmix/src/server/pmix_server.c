@@ -87,8 +87,6 @@ static void server_message_handler(struct pmix_peer_t *pr,
                                    pmix_ptl_hdr_t *hdr,
                                    pmix_buffer_t *buf, void *cbdata);
 
-static inline int _my_client(const char *nspace, pmix_rank_t rank);
-
 PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
                                            pmix_info_t info[], size_t ninfo)
 {
@@ -1916,13 +1914,23 @@ static void _cnct(int sd, short args, void *cbdata)
                     }
                 }
                 PMIX_DESTRUCT(&cb);
-                PMIX_UNLOAD_BUFFER(&pbkt, bo.bytes, bo.size);
-                PMIX_BFROPS_PACK(rc, cd->peer, reply, &bo, 1, PMIX_BYTE_OBJECT);
-                if (PMIX_SUCCESS != rc) {
-                    PMIX_ERROR_LOG(rc);
-                    PMIX_RELEASE(reply);
-                    PMIX_DESTRUCT(&pbkt);
-                    goto cleanup;
+                if (PMIX_PROC_IS_V21(cd->peer)) {
+                    PMIX_UNLOAD_BUFFER(&pbkt, bo.bytes, bo.size);
+                    PMIX_BFROPS_PACK(rc, cd->peer, reply, &bo, 1, PMIX_BYTE_OBJECT);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(reply);
+                        PMIX_DESTRUCT(&pbkt);
+                        goto cleanup;
+                    }
+                } else {
+                    PMIX_BFROPS_PACK(rc, cd->peer, reply, &pbkt, 1, PMIX_BUFFER);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(reply);
+                        PMIX_DESTRUCT(&pbkt);
+                        goto cleanup;
+                    }
                 }
                 PMIX_DESTRUCT(&pbkt);
             }
@@ -2338,22 +2346,4 @@ static void server_message_handler(struct pmix_peer_t *pr,
         }
         PMIX_SERVER_QUEUE_REPLY(peer, hdr->tag, reply);
     }
-}
-
-static inline int _my_client(const char *nspace, pmix_rank_t rank)
-{
-    pmix_peer_t *peer;
-    int i;
-    int local = 0;
-
-    for (i = 0; i < pmix_server_globals.clients.size; i++) {
-        if (NULL != (peer = (pmix_peer_t *)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
-            if (0 == strcmp(peer->info->pname.nspace, nspace) && peer->info->pname.rank == rank) {
-                local = 1;
-                break;
-            }
-        }
-    }
-
-    return local;
 }

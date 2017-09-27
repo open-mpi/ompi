@@ -93,11 +93,6 @@ int main(int argc, char **argv)
         info[0].value.type = PMIX_STRING;
         info[0].value.data.string = strdup(params.gds_mode);
         ninfo = 1;
-        {
-            int delay = 0;
-            while(delay)
-                sleep(1);
-        }
     }
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, info, ninfo))) {
         TEST_ERROR(("Client ns %s rank %d: PMIx_Init failed: %d", params.nspace, params.rank, rc));
