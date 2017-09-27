@@ -448,6 +448,11 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
             orte_set_attribute(&jdata->attributes, ORTE_JOB_INDEX_ARGV,
                                ORTE_ATTR_GLOBAL, &flag, OPAL_BOOL);
 
+        /***   DEBUGGER DAEMONS   ***/
+        } else if (0 == strcmp(info->key, OPAL_PMIX_DEBUGGER_DAEMONS)) {
+            ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON);
+            ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_DEBUGGER);
+
         /***   DEFAULT - CACHE FOR INCLUSION WITH JOB INFO   ***/
         } else {
             /* cache for inclusion with job info at registration */
