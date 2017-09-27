@@ -590,9 +590,13 @@ orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
 
     OBJ_RETAIN(node);  /* maintain accounting on object */
     proc->node = node;
-    node->num_procs++;
-    if (node->slots_inuse < node->slots) {
-        ++node->slots_inuse;
+    /* if this is a debugger job, then it doesn't count against
+     * available slots - otherwise, it does */
+    if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+        node->num_procs++;
+        if (node->slots_inuse < node->slots) {
+            ++node->slots_inuse;
+        }
     }
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
         ORTE_ERROR_LOG(rc);

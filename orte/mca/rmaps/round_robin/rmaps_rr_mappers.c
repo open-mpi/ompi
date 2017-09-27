@@ -95,6 +95,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             /* add this node to the map - do it only once */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
+                OBJ_RETAIN(node);
+                opal_pointer_array_add(jdata->map->nodes, node);
                 ++(jdata->map->num_nodes);
             }
             if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
