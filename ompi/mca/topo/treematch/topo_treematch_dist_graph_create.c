@@ -131,20 +131,13 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     double *local_pattern = NULL;
     int *vpids, *colors = NULL;
     int *lindex_to_grank = NULL;
-    int *nodes_roots = NULL;
+    int *nodes_roots = NULL, *k = NULL;
     int *localrank_to_objnum  = NULL;
     int depth, effective_depth, obj_rank = -1;
-    int num_objs_in_node = 0;
-    int num_pus_in_node = 0;
-    int numlevels = 0;
-    int num_nodes = 0;
-    int num_procs_in_node = 0;
-    int rank, size;
-    int *k = NULL;
-    int newrank = -1;
-    int hwloc_err;
+    int num_objs_in_node = 0, num_pus_in_node = 0;
+    int numlevels = 0, num_nodes = 0, num_procs_in_node = 0;
+    int rank, size, newrank = -1, hwloc_err, i, j, idx;
     int oversubscribing_objs = 0, oversubscribed_pus = 0;
-    int i, j, idx;
     uint32_t val, *pval;
 
     /* We need to know if the processes are bound. We assume all
@@ -251,7 +244,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         effective_depth = object->depth;
         num_objs_in_node = hwloc_get_nbobjs_by_depth(opal_hwloc_topology, effective_depth);
     }
-    if( 0 == num_objs_in_node ) {  /* deal with bozo cases: COVERITY 1418505 */
+    if( (0 == num_objs_in_node) || (0 == num_pus_in_node) ) {  /* deal with bozo cases: COVERITY 1418505 */
         free(colors);
         goto fallback; /* return with success */
     }
@@ -623,10 +616,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 for(i = 0; i < tm_topology->nb_proc_units ; i++)
                     if (obj_mapping[i] != -1)
                         tm_topology->nb_constraints++;
-                tm_topology->constraints = (int *)calloc(tm_topology->nb_constraints,sizeof(int));		
+                tm_topology->constraints = (int *)calloc(tm_topology->nb_constraints,sizeof(int));
                 for(idx = 0, i = 0; i < tm_topology->nb_proc_units ; i++)
                     if (obj_mapping[i] != -1)
-                        tm_topology->constraints[idx++] = obj_mapping[i];		
+                        tm_topology->constraints[idx++] = obj_mapping[i];
 
                 tm_topology->oversub_fact = 1;
 
@@ -656,11 +649,11 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 }
 #endif
                 tm_optimize_topology(&tm_topology);
-                aff_mat = tm_build_affinity_mat(comm_pattern,size);		  
+                aff_mat = tm_build_affinity_mat(comm_pattern,size);
                 comm_tree = tm_build_tree_from_topology(tm_topology,aff_mat, NULL, NULL);
                 sol = tm_compute_mapping(tm_topology, comm_tree);
 
-                assert(sol->k_length == size);
+                assert((int)sol->k_length == size);
 
                 k = (int *)calloc(sol->k_length, sizeof(int));
                 for(idx = 0 ; idx < (int)sol->k_length ; idx++)
@@ -708,7 +701,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
     } else { /* partially distributed reordering */
         int *grank_to_lrank = NULL, *lrank_to_grank = NULL, *marked = NULL;
-        int node_position = 0, offset = 0, done = 0, pos = 0;
+        int node_position = 0, offset = 0, pos = 0;
         ompi_communicator_t *localcomm = NULL;
 
         if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, colors[rank], rank,
@@ -800,7 +793,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 tm_topology->nb_nodes[i] = nb_objs;
                 tm_topology->arity[i]    = tracker[i]->arity;
                 tm_topology->node_id[i]  = (int *)calloc(tm_topology->nb_nodes[i], sizeof(int));
-                tm_topology->node_rank[i] = (int * )calloc(tm_topology->nb_nodes[i], sizeof(int)); 
+                tm_topology->node_rank[i] = (int * )calloc(tm_topology->nb_nodes[i], sizeof(int));
                 for(j = 0; j < (int)tm_topology->nb_nodes[i] ; j++){
                     tm_topology->node_id[i][j] = j;
                     tm_topology->node_rank[i][j] = j;
@@ -811,7 +804,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             tm_topology->cost = (double*)calloc(tm_topology->nb_levels,sizeof(double));
 
             tm_topology->nb_proc_units = num_objs_in_node;
-            //tm_topology->nb_proc_units = num_procs_in_node; 
+            //tm_topology->nb_proc_units = num_procs_in_node;
             tm_topology->nb_constraints = 0;
             for(i = 0; i < num_procs_in_node ; i++)
                 if (localrank_to_objnum[i] != -1)
@@ -837,8 +830,8 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             aff_mat = tm_build_affinity_mat(comm_pattern,num_procs_in_node);
             comm_tree = tm_build_tree_from_topology(tm_topology,aff_mat, NULL, NULL);
             sol = tm_compute_mapping(tm_topology, comm_tree);
-            
-            assert(sol->k_length == num_procs_in_node);
+
+            assert((int)sol->k_length == num_procs_in_node);
 
             k = (int *)calloc(sol->k_length, sizeof(int));
             for(idx = 0 ; idx < (int)sol->k_length ; idx++)
@@ -875,22 +868,24 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         /* compute the offset of newrank before the split */
         /* use the colors array, not the vpids */
         marked = (int *)malloc((num_nodes-1)*sizeof(int));
-        for(int idx = 0 ; idx < num_nodes - 1 ; idx++)
+        for(idx = 0 ; idx < num_nodes - 1 ; idx++)
             marked[idx] = -1;
 
-        while( (node_position != rank) && (colors[node_position] != colors[rank])){ 
-            for(int idx = 0; idx < num_nodes - 1 ; idx++)
+        while( (node_position != rank) && (colors[node_position] != colors[rank])) {
+            /* Have we already counted the current color ? */
+            for(idx = 0; idx < pos; idx++)
                 if( marked[idx] == colors[node_position] )
-                    done = 1;
-            if(!done) {
-                for(int idx = 0 ; idx < size ; idx++)
-                    if(colors[idx] == colors[node_position])
-                        offset++;
-                marked[pos++] = colors[node_position];
-            }
+                    goto next_iter;  /* yes, let's skip the rest */
+            /* How many elements of this color are here ? none before the current position */
+            for(; idx < size; idx++)
+                if(colors[idx] == colors[node_position])
+                    offset++;
+            marked[pos++] = colors[node_position];
+          next_iter:
             node_position++;
         }
         newrank += offset;
+        free(marked);
 
         if (rank == lindex_to_grank[0])
             free(k);
@@ -900,7 +895,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             ompi_comm_free(&localcomm);
             free(lrank_to_grank);
             free(grank_to_lrank);
-            free(marked); marked = NULL;
             goto release_and_return;
         }
         /* end of TODO */
