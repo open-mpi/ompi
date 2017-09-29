@@ -239,7 +239,6 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
         two_phase_num_io_procs = fh->f_size;
     }
 
-
 #if DEBUG_ON
     printf("Number of aggregators : %ld\n", two_phase_num_io_procs);
 #endif
@@ -1074,6 +1073,18 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 		fh->f_io_array[0].length = size;
 		fh->f_io_array[0].memory_address = write_buf;
 		if (fh->f_num_of_io_entries){
+                    if ( fh->f_amode & MPI_MODE_WRONLY &&
+                         !mca_io_ompio_overwrite_amode ){
+                        if ( 0 == fh->f_rank ) {
+                            printf("\n File not opened in RDWR mode, can not continue."
+                                   "\n To resolve this problem, you can either \n"
+                                   "  a. open the file with MPI_MODE_RDWR instead of MPI_MODE_WRONLY\n"
+                                   "  b. ensure that the mca parameter mca_io_ompio_amode_overwrite is set to 1\n"
+                                   "  c. use an fcoll component that does not use data sieving (e.g. dynamic)\n");
+                        }
+                        ret = MPI_ERR_FILE;
+                        goto exit;
+                    }
 		    if ( 0 >  fh->f_fbtl->fbtl_preadv (fh)) {
 			opal_output(1, "READ FAILED\n");
                         ret = OMPI_ERROR;

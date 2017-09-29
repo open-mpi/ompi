@@ -41,6 +41,7 @@ int mca_io_ompio_coll_timing_info = 0;
 int mca_io_ompio_sharedfp_lazy_open = 0;
 int mca_io_ompio_max_aggregators_ratio=8;
 int mca_io_ompio_aggregators_cutoff_threshold=3;
+int mca_io_ompio_overwrite_amode = 1;
 
 int mca_io_ompio_grouping_option=5;
 
@@ -242,6 +243,16 @@ static int register_component(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_aggregators_cutoff_threshold);
 
+    mca_io_ompio_overwrite_amode = 1;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "overwrite_amode",
+                                           "Overwrite WRONLY amode to RDWR to enable data sieving "
+                                           "1: allow overwrite (default) "
+                                           "0: do not overwrite amode provided by application ",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_overwrite_amode);
 
     return OMPI_SUCCESS;
 }
