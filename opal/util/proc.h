@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
@@ -20,6 +20,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
+#include "opal/mca/pool/pool.h"
 #include "opal/types.h"
 #include "opal/dss/dss.h"
 
@@ -49,7 +50,7 @@
 #define OPAL_VPID_WILDCARD  (OPAL_VPID_MAX + 1)
 
 #define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)
-#define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
+#define OPAL_PROC_MY_HOSTNAME       opal_pool->get((char *)opal_proc_local_get()->proc_hostname)
 
 #define OPAL_NAME_WILDCARD      (&opal_name_wildcard)
 OPAL_DECLSPEC extern opal_process_name_t opal_name_wildcard;
@@ -94,7 +95,7 @@ typedef struct opal_proc_t {
     struct opal_convertor_t*        proc_convertor;
     /** A pointer to the name of this host - data is
      * actually stored outside of this framework.  */
-    char*                           proc_hostname;
+    void*                           proc_hostname;
 } opal_proc_t;
 OBJ_CLASS_DECLARATION(opal_proc_t);
 
@@ -152,6 +153,6 @@ OPAL_DECLSPEC extern struct opal_proc_t *(*opal_proc_for_name) (const opal_proce
  * our own. This is to be used by all BTLs so we don't retrieve hostnames
  * unless needed. The returned value MUST NOT be free'd as it is
  * owned by the proc_t */
-OPAL_DECLSPEC char* opal_get_proc_hostname(const opal_proc_t *proc);
+OPAL_DECLSPEC char* opal_get_proc_hostname(opal_proc_t *proc);
 
 #endif  /* OPAL_PROC_H */

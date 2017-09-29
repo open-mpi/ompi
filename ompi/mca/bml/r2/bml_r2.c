@@ -15,7 +15,7 @@
  * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -238,7 +238,7 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
                                 "mca: bml: Using %s btl for send to %s on node %s",
                                 btl->btl_component->btl_version.mca_component_name,
                                 OMPI_NAME_PRINT(&proc->super.proc_name),
-                                proc->super.proc_hostname);
+                                opal_pool->get(proc->super.proc_hostname));
 
             /* cache the endpoint on the proc */
             if (NULL == bml_btl || (bml_btl->btl->btl_exclusivity <= btl->btl_exclusivity)) {
@@ -257,7 +257,7 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
                                     "mca: bml: Not using %s btl for send to %s on node %s "
                                     "because %s btl has higher exclusivity (%d > %d)",
                                     btl->btl_component->btl_version.mca_component_name,
-                                    OMPI_NAME_PRINT(&proc->super.proc_name), proc->super.proc_hostname,
+                                    OMPI_NAME_PRINT(&proc->super.proc_name), opal_pool->get(proc->super.proc_hostname),
                                     bml_btl->btl->btl_component->btl_version.mca_component_name,
                                     bml_btl->btl->btl_exclusivity,
                                     btl->btl_exclusivity);
@@ -427,10 +427,10 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
             opal_show_help ("help-mca-bml-r2.txt", "unreachable proc", true,
                             OMPI_NAME_PRINT(&(ompi_proc_local_proc->super.proc_name)),
                             (NULL != ompi_proc_local_proc->super.proc_hostname ?
-                             ompi_proc_local_proc->super.proc_hostname : "unknown!"),
+                             opal_pool->get(ompi_proc_local_proc->super.proc_hostname) : "unknown!"),
                             OMPI_NAME_PRINT(&(proc->super.proc_name)),
                             (NULL != proc->super.proc_hostname ?
-                             proc->super.proc_hostname : "unknown!"),
+                             opal_pool->get(proc->super.proc_hostname) : "unknown!"),
                             btl_names);
         }
 
@@ -581,10 +581,10 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 opal_show_help("help-mca-bml-r2.txt", "unreachable proc", true,
                                OMPI_NAME_PRINT(&(ompi_proc_local_proc->super.proc_name)),
                                (NULL != ompi_proc_local_proc->super.proc_hostname ?
-                                ompi_proc_local_proc->super.proc_hostname : "unknown!"),
+                                opal_pool->get(ompi_proc_local_proc->super.proc_hostname) : "unknown!"),
                                OMPI_NAME_PRINT(&(proc->super.proc_name)),
                                (NULL != proc->super.proc_hostname ?
-                                proc->super.proc_hostname : "unknown!"),
+                                opal_pool->get(proc->super.proc_hostname) : "unknown!"),
                                btl_names);
             }
 

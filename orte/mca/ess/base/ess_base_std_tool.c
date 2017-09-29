@@ -15,6 +15,8 @@
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  *
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -199,7 +201,7 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
     ORTE_PROC_MY_NAME->jobid = OPAL_PROC_MY_NAME.jobid;
     ORTE_PROC_MY_NAME->vpid = OPAL_PROC_MY_NAME.vpid;
 
-    orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
+    orte_process_info.super.proc_hostname = opal_pool->put(strdup(orte_process_info.nodename));
     orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
     orte_process_info.super.proc_arch = opal_local_arch;
     opal_proc_local_set(&orte_process_info.super);

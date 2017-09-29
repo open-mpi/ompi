@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -105,7 +105,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
      * do so here */
     if (ORTE_PROC_NON_MPI) {
         orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
-        orte_process_info.super.proc_hostname = orte_process_info.nodename;
+        orte_process_info.super.proc_hostname = opal_pool->put(strdup(orte_process_info.nodename));
         orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
         orte_process_info.super.proc_arch = opal_local_arch;
         opal_proc_local_set(&orte_process_info.super);

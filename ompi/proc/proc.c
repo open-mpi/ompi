@@ -87,7 +87,7 @@ void ompi_proc_destruct(ompi_proc_t* proc)
      */
     OBJ_RELEASE( proc->super.proc_convertor );
     if (NULL != proc->super.proc_hostname) {
-        free(proc->super.proc_hostname);
+        opal_pool->free(proc->super.proc_hostname);
     }
     opal_mutex_lock (&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
@@ -136,6 +136,7 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
 int ompi_proc_complete_init_single (ompi_proc_t *proc)
 {
     int ret;
+    char *hostname = NULL;
 
     if ((OMPI_CAST_RTE_NAME(&proc->super.proc_name)->jobid == OMPI_PROC_MY_NAME->jobid) &&
         (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid  == OMPI_PROC_MY_NAME->vpid)) {
@@ -147,9 +148,9 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
      * was provided at startup - but make it optional so
      * we don't chase after it if some system doesn't
      * provide it */
-    proc->super.proc_hostname = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
-                                   (char**)&(proc->super.proc_hostname), OPAL_STRING);
+                                   &hostname, OPAL_STRING);
+    proc->super.proc_hostname = opal_pool->put(hostname);
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* get the remote architecture - this might force a modex except
@@ -264,7 +265,7 @@ int ompi_proc_init(void)
     /* set local process data */
     ompi_proc_local_proc = proc;
     proc->super.proc_flags = OPAL_PROC_ALL_LOCAL;
-    proc->super.proc_hostname = strdup(ompi_process_info.nodename);
+    proc->super.proc_hostname = opal_pool->put(strdup(ompi_process_info.nodename));
     proc->super.proc_arch = opal_local_arch;
     /* Register the local proc with OPAL */
     opal_proc_local_set(&proc->super);
@@ -609,7 +610,7 @@ int ompi_proc_refresh(void)
         if (i == OMPI_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
             proc->super.proc_flags = OPAL_PROC_ALL_LOCAL;
-            proc->super.proc_hostname = ompi_process_info.nodename;
+            proc->super.proc_hostname = opal_pool->put(strdup(ompi_process_info.nodename));
             proc->super.proc_arch = opal_local_arch;
             opal_proc_local_set(&proc->super);
         } else {
@@ -648,6 +649,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
      */
     for (int i = 0 ; i < proclistsize ; ++i) {
         ompi_proc_t *proc = proclist[i];
+        char *hostname;
 
         if (ompi_proc_is_sentinel (proc)) {
             proc = ompi_proc_for_name_nolock (ompi_proc_sentinel_to_name ((uintptr_t) proc));
@@ -677,7 +679,8 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
             return rc;
         }
         /* pass the name of the host this proc is on */
-        rc = opal_dss.pack(buf, &(proc->super.proc_hostname), 1, OPAL_STRING);
+        hostname = opal_pool->get(proc->super.proc_hostname);
+        rc = opal_dss.pack(buf, &hostname, 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
             opal_mutex_unlock (&ompi_proc_lock);
@@ -811,12 +814,12 @@ ompi_proc_unpack(opal_buffer_t* buf,
             }
 
             if (NULL != new_hostname) {
-                if (0 == strcmp(ompi_proc_local_proc->super.proc_hostname, new_hostname)) {
+                if (0 == strcmp(opal_pool->get(ompi_proc_local_proc->super.proc_hostname), new_hostname)) {
                     plist[i]->super.proc_flags |= (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
                 }
 
                 /* Save the hostname */
-                plist[i]->super.proc_hostname = new_hostname;
+                plist[i]->super.proc_hostname = opal_pool->put(new_hostname);
             }
         } else if (NULL != new_hostname) {
             free(new_hostname);

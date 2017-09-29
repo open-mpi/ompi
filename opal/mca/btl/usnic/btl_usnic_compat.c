@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +88,7 @@ const char *usnic_compat_proc_name_print(opal_process_name_t *pname)
  **************************/
 char* opal_get_proc_hostname(opal_proc_t *proc)
 {
-    return proc->proc_hostname;
+    return opal_pool->get(proc->proc_hostname);
 }
 
 /**************************

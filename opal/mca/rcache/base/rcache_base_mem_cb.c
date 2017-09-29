@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +69,7 @@ void mca_rcache_base_mem_cb (void* base, size_t size, void* cbdata, bool from_al
                     int len;
                     len = snprintf(msg, sizeof(msg), "[%s:%05d] Attempt to free memory that is still in "
                                    "use by an ongoing MPI communication (buffer %p, size %lu).  MPI job "
-                                   "will now abort.\n", opal_proc_local_get()->proc_hostname,
+                                   "will now abort.\n", opal_pool->get(opal_proc_local_get()->proc_hostname),
                                    getpid(), base, (unsigned long) size);
                     msg[sizeof(msg) - 1] = '\0';
                     write(2, msg, len);
@@ -75,7 +77,7 @@ void mca_rcache_base_mem_cb (void* base, size_t size, void* cbdata, bool from_al
                     opal_show_help("help-rcache-base.txt",
                                    "cannot deregister in-use memory", true,
                                    current->rcache_component->rcache_version.mca_component_name,
-                                   opal_proc_local_get()->proc_hostname,
+                                   opal_pool->get(opal_proc_local_get()->proc_hostname),
                                    base, (unsigned long) size);
                 }
 

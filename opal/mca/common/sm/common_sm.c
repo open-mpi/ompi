@@ -15,6 +15,8 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,7 +106,7 @@ attach_and_init(opal_shmem_ds_t *shmem_bufp,
         /* is addr past end of the shared memory segment? */
         if ((unsigned char *)seg + shmem_bufp->seg_size < addr) {
             opal_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
-                           opal_proc_local_get()->proc_hostname,
+                           opal_pool->get(opal_proc_local_get()->proc_hostname),
                            (unsigned long)shmem_bufp->seg_size,
                            (unsigned long)size_ctl_structure,
                            (unsigned long)data_seg_alignment);

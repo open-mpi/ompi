@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -882,7 +882,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
         opal_show_help("help-mpi-btl-tcp.txt", "dropped inbound connection",
                        true, opal_process_info.nodename,
                        getpid(),
-                       btl_proc->proc_opal->proc_hostname,
+                       opal_pool->get(btl_proc->proc_opal->proc_hostname),
                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
                        opal_net_get_hostname((struct sockaddr*)addr),
                        (NULL == addr_str) ? "NONE" : addr_str);

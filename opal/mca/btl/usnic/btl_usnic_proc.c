@@ -13,6 +13,8 @@
  *                         reserved.
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -646,7 +648,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
                        module->linux_device_name,
                        module->fabric_info->ep_attr->max_msg_size,
                        (NULL == proc->proc_opal->proc_hostname) ?
-                       "unknown" : proc->proc_opal->proc_hostname,
+                       "unknown" : opal_pool->get(proc->proc_opal->proc_hostname),
                        proc->proc_modex[*index_out].max_msg_size);
         *index_out = -1;
         return OPAL_ERR_UNREACH;

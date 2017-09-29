@@ -233,7 +233,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             opal_show_help("help-mpi-btl-tcp.txt", "peer hung up",
                            true, opal_process_info.nodename,
                            getpid(),
-                           btl_endpoint->endpoint_proc->proc_opal->proc_hostname);
+                           opal_pool->get(btl_endpoint->endpoint_proc->proc_opal->proc_hostname));
             btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
             mca_btl_tcp_endpoint_close(btl_endpoint);
             return false;

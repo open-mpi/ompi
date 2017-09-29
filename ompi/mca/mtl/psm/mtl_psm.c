@@ -14,7 +14,7 @@
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -338,7 +338,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 		for (j = 0; j < (int) nprocs; j++) {
 		  if (errs_out[j] == thiserr) {
                       opal_output(0, " %s", (NULL == procs[j]->super.proc_hostname) ?
-                                  "unknown" : procs[j]->super.proc_hostname);
+                                  "unknown" : opal_pool->get(procs[j]->super.proc_hostname));
 		  }
 		}
 		opal_output(0, "\n");

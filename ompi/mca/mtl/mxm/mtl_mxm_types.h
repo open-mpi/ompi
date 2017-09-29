@@ -3,6 +3,8 @@
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +75,7 @@ static inline mxm_conn_h ompi_mtl_mxm_conn_lookup(struct ompi_communicator_t* co
     }
 
     MXM_VERBOSE(80, "First communication with [%s:%s]: set endpoint connection.",
-                ompi_proc->super.proc_hostname, OPAL_NAME_PRINT(ompi_proc->super.proc_name));
+                opal_pool->get(ompi_proc->super.proc_hostname), OPAL_NAME_PRINT(ompi_proc->super.proc_name));
     ompi_mtl_add_single_proc(ompi_mtl, ompi_proc);
     endpoint = (mca_mtl_mxm_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
 

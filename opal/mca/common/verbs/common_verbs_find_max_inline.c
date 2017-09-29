@@ -16,6 +16,8 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +70,7 @@ int opal_common_verbs_find_max_inline(struct ibv_device *device,
 #endif
     if (NULL == cq) {
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, opal_proc_local_get()->proc_hostname,
+                       true, opal_pool->get(opal_proc_local_get()->proc_hostname),
                        __FILE__, __LINE__, "ibv_create_cq",
                        strerror(errno), errno,
                        ibv_get_device_name(device));

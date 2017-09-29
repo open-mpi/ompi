@@ -281,7 +281,7 @@ static int rte_init(void)
     }
     /* now that my name is set, xfer it to the OPAL layer */
     orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
-    orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
+    orte_process_info.super.proc_hostname = opal_pool->put(strdup(orte_process_info.nodename));
     orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
     orte_process_info.super.proc_arch = opal_local_arch;
     opal_proc_local_set(&orte_process_info.super);
@@ -868,7 +868,7 @@ static int rte_finalize(void)
     OBJ_RELEASE(orte_job_data);
 
     if (NULL != orte_process_info.super.proc_hostname) {
-        free(orte_process_info.super.proc_hostname);
+        opal_pool->free(orte_process_info.super.proc_hostname);
     }
     if (orte_do_not_launch) {
         exit(0);

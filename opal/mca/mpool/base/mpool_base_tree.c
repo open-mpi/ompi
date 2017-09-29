@@ -15,7 +15,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -186,13 +186,13 @@ void mca_mpool_base_tree_print(int show_up_to_mem_leaks)
         show_up_to_mem_leaks < 0) {
         opal_show_help("help-mpool-base.txt", "all mem leaks",
                        true, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                       opal_proc_local_get()->proc_hostname,
+                       opal_pool->get(opal_proc_local_get()->proc_hostname),
                        getpid(), leak_msg);
     } else {
         int i = num_leaks - show_up_to_mem_leaks;
         opal_show_help("help-mpool-base.txt", "some mem leaks",
                        true, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                       opal_proc_local_get()->proc_hostname,
+                       opal_pool->get(opal_proc_local_get()->proc_hostname),
                        getpid(), leak_msg, i,
                        (i > 1) ? "s were" : " was",
                        (i > 1) ? "are" : "is");

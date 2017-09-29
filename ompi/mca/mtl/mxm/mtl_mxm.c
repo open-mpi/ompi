@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -488,7 +488,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
             if (MXM_OK != conn_reqs[i].error) {
                 MXM_ERROR("MXM EP connect to %s error: %s\n",
                           (NULL == procs[i]->super.proc_hostname) ?
-                           "unknown" : procs[i]->proc_hostname,
+                           "unknown" : opal_pool->get(procs[i]->super.proc_hostname),
                           mxm_error_string(conn_reqs[i].error));
             }
         }
@@ -564,7 +564,7 @@ int ompi_mtl_add_single_proc(struct mca_mtl_base_module_t *mtl,
         if (MXM_OK != conn_req.error) {
             MXM_ERROR("MXM EP connect to %s error: %s\n",
                       (NULL == procs->super.proc_hostname) ?
-                       "unknown" : procs->proc_hostname,
+                       "unknown" : opal_pool->get(procs->super.proc_hostname),
                       mxm_error_string(conn_reqs.error));
         }
         return OMPI_ERROR;

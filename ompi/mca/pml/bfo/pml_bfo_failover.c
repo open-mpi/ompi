@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -411,7 +411,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
                             recvreq->remote_req_send.pval, (void *)recvreq,
                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
                             hdr->hdr_restart.hdr_jobid, hdr->hdr_restart.hdr_vpid,
-                            (NULL == ompi_proc->super.proc_hostname) ? "unknown" : ompi_proc->super.proc_hostname);
+                            (NULL == ompi_proc->super.proc_hostname) ? "unknown" : opal_pool->get(ompi_proc->super.proc_hostname));
         mca_pml_bfo_recv_request_rndvrestartnack(des, ompi_proc, false);
         return;
     }
@@ -1417,7 +1417,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
                             btl->btl_component->btl_version.mca_component_name,
                             OMPI_PROC_MY_NAME->vpid,
                             btlname, OMPI_CAST_RTE_NAME(&errproc->super.proc_name)->vpid,
-                            (NULL == errproc->super.proc_hostname) ? "unknown" : errproc->super.proc_hostname);
+                            (NULL == errproc->super.proc_hostname) ? "unknown" : opal_pool->get(errproc->super.proc_hostname));
 
         /* Need to search for any pending packets associated
          * with this endpoint and remove them.  We may also

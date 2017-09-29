@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -372,7 +374,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
         opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
                     OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name),
                     my_pml, OMPI_NAME_PRINT(&procs[0]->super.proc_name),
-                    (NULL == procs[0]->super.proc_hostname) ? "unknown" : procs[0]->super.proc_hostname,
+                    (NULL == procs[0]->super.proc_hostname) ? "unknown" : opal_pool->get(procs[0]->super.proc_hostname),
                     remote_pml);
         free(remote_pml); /* cleanup before returning */
         return OMPI_ERR_UNREACH;

@@ -15,6 +15,8 @@
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -210,7 +212,7 @@ void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t
                         btl->btl_component->btl_version.mca_component_name,
                         OMPI_PROC_MY_NAME->vpid,
                         ((ompi_process_name_t*)&errproc->super.proc_name)->vpid,
-                        errproc->super.proc_hostname);
+                        opal_pool->get(errproc->super.proc_hostname));
         }
     }
 }

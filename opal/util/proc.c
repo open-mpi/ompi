@@ -180,9 +180,10 @@ int (*opal_snprintf_jobid)(char* name_string, size_t size, opal_jobid_t jobid) =
 int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string) = opal_convert_string_to_jobid_should_never_be_called;
 struct opal_proc_t *(*opal_proc_for_name) (const opal_process_name_t name) = opal_proc_for_name_should_never_be_called;
 
-char* opal_get_proc_hostname(const opal_proc_t *proc)
+char* opal_get_proc_hostname(opal_proc_t *proc)
 {
     int ret;
+    char *hostname = NULL;
 
     /* if the proc is NULL, then we can't know */
     if (NULL == proc) {
@@ -197,16 +198,18 @@ char* opal_get_proc_hostname(const opal_proc_t *proc)
 
     /* see if we already have the data - if so, pass it back */
     if (NULL != proc->proc_hostname) {
-        return proc->proc_hostname;
+        return opal_pool->get(proc->proc_hostname);
     }
 
     /* if we don't already have it, then try to get it */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc->proc_name,
-                                   (char**)&(proc->proc_hostname), OPAL_STRING);
+                                   (char**)&hostname, OPAL_STRING);
     if (OPAL_SUCCESS != ret) {
         return "unknown";  // return something so the caller doesn't segfault
+    } else {
+        proc->proc_hostname = opal_pool->put(hostname);
     }
 
     /* user is not allowed to release the data */
-    return proc->proc_hostname;
+    return opal_pool->get(proc->proc_hostname);
 }
