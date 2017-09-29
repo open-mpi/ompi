@@ -52,6 +52,7 @@
 #include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/shmem/base/base.h"
+#include "opal/mca/pool/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/compress/base/base.h"
 #endif
@@ -159,6 +160,10 @@ opal_finalize(void)
 
     /* close the shmem framework */
     (void) mca_base_framework_close(&opal_shmem_base_framework);
+
+
+    /* close the pool framework */
+    (void) mca_base_framework_close(&opal_pool_base_framework);
 
     /* cleanup the main thread specific stuff */
     opal_tsd_keys_destruct();

@@ -55,6 +55,7 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/if/base/base.h"
+#include "opal/mca/pool/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
@@ -479,6 +480,13 @@ opal_init_util(int* pargc, char*** pargv)
     if (OPAL_SUCCESS != (ret = mca_base_open())) {
         error = "mca_base_open";
         goto return_error;
+    }
+
+    /* initialize the pool framework */
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pool_base_framework, 0))) {
+        fprintf(stderr, "opal_pool_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
     }
 
     /* initialize if framework */
