@@ -484,7 +484,7 @@ static void notify_requestor(int sd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_job_t *jdata = caddy->jdata;
-    orte_proc_t *pptr;
+    orte_proc_t *pptr=NULL;
     int ret;
     opal_buffer_t *reply;
     orte_daemon_cmd_flag_t command;
@@ -500,7 +500,7 @@ static void notify_requestor(int sd, short args, void *cbdata)
     } else if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CANCELLED, NULL, OPAL_BOOL)) {
         ret = ORTE_ERR_JOB_CANCELLED;
     } else {
-        ret = 0;
+        ret = ORTE_SUCCESS;
     }
 
     if (0 == ret && orte_get_attribute(&jdata->attributes, ORTE_JOB_SILENT_TERMINATION, NULL, OPAL_BOOL)) {
@@ -529,7 +529,7 @@ static void notify_requestor(int sd, short args, void *cbdata)
         val->data.status = ret;
         opal_list_append(info, &val->super);
         /* if there was a problem, we need to send the requestor more info about what happened */
-        if (0 < ret) {
+        if (ORTE_SUCCESS != ret) {
             val = OBJ_NEW(opal_value_t);
             val->key = strdup(OPAL_PMIX_PROCID);
             val->type = OPAL_NAME;
