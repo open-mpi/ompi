@@ -100,9 +100,6 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
     char *generated_key;
     char env_string[256];
     int rc;
-#if OPAL_CUDA_SUPPORT
-    char *cuda_env;
-#endif
 
     generated_key = getenv(OPAL_MCA_PREFIX"orte_precondition_transports");
     memset(uu, 0, sizeof(psm2_uuid_t));
@@ -178,11 +175,6 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
 
 #if OPAL_CUDA_SUPPORT
     ompi_mtl_psm2.super.mtl_flags |= MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE;
-
-    cuda_env = getenv("PSM2_CUDA");
-    if (!cuda_env || ( strcmp(cuda_env, "0") == 0) )
-        opal_output(0, "Warning: If running with device buffers, there is a"
-                    " chance the application might fail. Try setting PSM2_CUDA=1.\n");
 #endif
 
     return OMPI_SUCCESS;

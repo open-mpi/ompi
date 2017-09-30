@@ -45,3 +45,7 @@ Unknown path record query mechanism %s. Supported mechanisms are %s.
 #
 [message too big]
 Message size %llu bigger than supported by PSM2 API. Max = %llu
+#
+[no psm2 cuda env]
+Using CUDA enabled OpenMPI but PSM2_CUDA environment variable is %s.
+This is not a recommended combination. If the application uses %s.
