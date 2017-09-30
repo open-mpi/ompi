@@ -94,7 +94,7 @@ do {                                                                           \
                                            datatype,                    \
                                            addr,                        \
                                            count,                       \
-					   flags )                      \
+                                           flags )                      \
 do {                                                                    \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, false);            \
     (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
@@ -116,7 +116,7 @@ do {                                                                    \
                                   &(datatype->super),                   \
                                   count,                                \
                                   addr,                                 \
-                                  flags,                                    \
+                                  flags,                                \
                                   &(request)->req_base.req_convertor ); \
 } while(0)
 #else
@@ -127,7 +127,7 @@ do {                                                                    \
                                            datatype,                    \
                                            addr,                        \
                                            count,                       \
-					   flags )                      \
+                                           flags )                      \
 do {                                                                    \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, false);            \
     (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
@@ -144,7 +144,7 @@ do {                                                                    \
         &(datatype->super),                                             \
         count,                                                          \
         addr,                                                           \
-        flags,                                                              \
+        flags,                                                          \
         &(request)->req_base.req_convertor );                           \
 } while(0)
 #endif
@@ -158,7 +158,7 @@ do {                                                                    \
                                           datatype,                     \
                                           addr,                         \
                                           count,                        \
-					  flags,                        \
+                                          flags,                        \
                                           persistent)                   \
 do {                                                                    \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
@@ -197,7 +197,7 @@ do {                                                                    \
                                           datatype,                     \
                                           addr,                         \
                                           count,                        \
-					  flags,                        \
+                                          flags,                        \
                                           persistent)                   \
 do {                                                                    \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
@@ -219,7 +219,7 @@ do {                                                                    \
         &(datatype->super),                                             \
         count,                                                          \
         addr,                                                           \
-        flags,                                                              \
+        flags,                                                          \
         &(request)->req_base.req_convertor );                           \
  } while(0)
 #endif
