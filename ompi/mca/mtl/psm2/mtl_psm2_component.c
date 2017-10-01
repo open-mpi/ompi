@@ -199,6 +199,9 @@ static int
 ompi_mtl_psm2_component_register(void)
 {
     int num_local_procs, num_total_procs;
+#if OPAL_CUDA_SUPPORT
+    char *cuda_env;
+#endif
 
     ompi_mtl_psm2.connect_timeout = 180;
     (void) mca_base_component_var_register(&mca_mtl_psm2_component.super.mtl_version,
@@ -222,6 +225,30 @@ ompi_mtl_psm2_component_register(void)
     } else {
         param_priority = 40;
     }
+
+#if OPAL_CUDA_SUPPORT
+    /*
+     * If using CUDA enabled OpenMPI, the user likely intends to
+     * run with CUDA buffers. So, force-set the envvar here if user failed
+     * to set it.
+     */
+    cuda_env = getenv("PSM2_CUDA");
+    if (!cuda_env) {
+        opal_show_help("help-mtl-psm2.txt",
+                       "no psm2 cuda env", true,
+                       "not set",
+                       "Host buffers,\nthere will be a performance penalty"
+                       " due to OMPI force setting this variable now.\n"
+                       "Set environment variable to 0 if using Host buffers" );
+        setenv("PSM2_CUDA", "1", 0);
+    } else if (strcmp(cuda_env, "0") == 0) {
+        opal_show_help("help-mtl-psm2.txt",
+                       "no psm2 cuda env", true,
+                       "set to 0",
+                       "CUDA buffers,\nthe execution will SEGFAULT."
+                       " Set environment variable to 1 if using CUDA buffers");
+    }
+#endif
 
     (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version,
                                             "priority", "Priority of the PSM2 MTL component",
