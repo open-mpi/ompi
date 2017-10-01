@@ -470,7 +470,7 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
     rc = mca_bml_base_get (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
                            0, MCA_BTL_NO_ORDER, mca_pml_ob1_rget_completion, frag);
-    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS > rc) ) {
         return mca_pml_ob1_recv_request_get_frag_failed (frag, OMPI_ERR_OUT_OF_RESOURCE);
     }
 
