@@ -77,10 +77,10 @@ AC_DEFUN([MCA_ompi_io_romio314_CONFIG],[
                        [AS_IF([test ! -z $build], [io_romio314_flags="$io_romio314_flags --build=$build"])
                         AS_IF([test ! -z $host], [io_romio314_flags="$io_romio314_flags --host=$host"])
                         AS_IF([test ! -z $target], [io_romio314_flags="$io_romio314_flags --target=$target"])])
-                   io_romio314_flags_define="$io_romio314_flags FROM_OMPI=yes CC='$CC' CFLAGS='$CFLAGS -D__EXTENSIONS__' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio314_shared-shared --$io_romio314_static-static $io_romio314_flags $io_romio314_prefix_arg --disable-aio --disable-weak-symbols --enable-strict"
+                   io_romio314_flags_define="$io_romio314_flags FROM_OMPI=yes CC='$CC' CFLAGS='$CFLAGS -D__EXTENSIONS__' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio314_shared-shared --$io_romio314_static-static $io_romio314_flags $io_romio314_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90"
                    AC_DEFINE_UNQUOTED([MCA_io_romio314_COMPLETE_CONFIGURE_FLAGS], ["$io_romio314_flags_define"], [Complete set of command line arguments given to ROMIOs configure script])
 
-                   io_romio314_flags="$io_romio314_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS -D__EXTENSIONS__"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio314_shared-shared --$io_romio314_static-static $io_romio314_flags $io_romio314_prefix_arg --disable-aio --disable-weak-symbols --enable-strict"
+                   io_romio314_flags="$io_romio314_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS -D__EXTENSIONS__"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio314_shared-shared --$io_romio314_static-static $io_romio314_flags $io_romio314_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90"
 
                    opal_show_subtitle "Configuring ROMIO distribution"
                    OPAL_CONFIG_SUBDIR([ompi/mca/io/romio314/romio],
