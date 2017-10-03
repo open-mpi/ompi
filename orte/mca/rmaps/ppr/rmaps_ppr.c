@@ -711,8 +711,8 @@ static int assign_locations(orte_job_t *jdata)
                 /* map the specified number of procs to each such resource on this node,
                  * recording the locale of each proc so we know its cpuset
                  */
-                cnt = 0;
                 for (i=0; i < nobjs; i++) {
+                    cnt = 0;
                     obj = opal_hwloc_base_get_obj_by_type(node->topology->topo,
                                                           level, cache_level,
                                                           i, OPAL_HWLOC_AVAILABLE);
@@ -721,6 +721,10 @@ static int assign_locations(orte_job_t *jdata)
                             continue;
                         }
                         if (proc->name.jobid != jdata->jobid) {
+                            continue;
+                        }
+                        /* if we already assigned it, then skip */
+                        if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, NULL, OPAL_PTR)) {
                             continue;
                         }
                         nprocs_mapped++;
