@@ -45,6 +45,10 @@ lib@OMPI_LIBMPI_NAME@_cxx_la_SOURCES = \
 lib@OMPI_LIBMPI_NAME@_cxx_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 lib@OMPI_LIBMPI_NAME@_cxx_la_LDFLAGS = -version-info $(libmpi_cxx_so_version)
 
+if HAVE_LD_VERSION_SCRIPT
+libmpi_cxx_la_LDFLAGS += -Wl,--version-script=$(top_srcdir)/ompi/mpi/cxx/libmpi_cxx.map
+endif
+
 headers = \
 	mpicxx.h \
         constants.h \

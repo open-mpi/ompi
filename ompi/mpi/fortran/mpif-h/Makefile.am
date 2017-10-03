@@ -58,6 +58,11 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_LIBADD = \
 
 lib@OMPI_LIBMPI_NAME@_mpifh_la_LDFLAGS = -version-info $(libmpi_mpifh_so_version)
 
+if HAVE_LD_VERSION_SCRIPT
+libmpi_mpifh_la_LDFLAGS += -Wl,--version-script=$(top_srcdir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.map
+endif
+
+
 # Are we building the mpif.h bindings at all?
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 # If yes, then we need to build the installable library and the glue
