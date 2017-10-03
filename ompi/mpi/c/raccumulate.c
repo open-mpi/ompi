@@ -92,7 +92,7 @@ int MPI_Raccumulate(const void *origin_addr, int origin_count, MPI_Datatype orig
 
                     /* RACCUMULATE, unlike REDUCE, can use with derived
                        datatypes with predefinied operations, with some
-                       restrictions outlined in MPI-2:6.3.4.  The derived
+                       restrictions outlined in MPI-3:11.3.4.  The derived
                        datatype must be composed entierly from one predefined
                        datatype (so you can do all the construction you want,
                        but at the bottom, you can only use one datatype, say,
