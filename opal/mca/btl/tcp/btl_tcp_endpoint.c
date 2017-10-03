@@ -575,20 +575,6 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoint
 
 
 /*
- * A blocking recv on a non-blocking socket. Used to receive the small
- * amount of connection information that identifies the remote endpoint (guid).
- */
-static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpoint, void* data, size_t size)
-{
-    int ret = mca_btl_tcp_recv_blocking(btl_endpoint->endpoint_sd, data, size);
-    if (ret <= 0) {
-        mca_btl_tcp_endpoint_close(btl_endpoint);
-    }
-    return ret;
-}
-
-
-/*
  *  Receive the endpoints globally unique process identification from a newly
  *  connected socket and verify the expected response. If so, move the
  *  socket to a connected state.
@@ -604,9 +590,10 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
     opal_process_name_t guid;
 
     mca_btl_tcp_endpoint_hs_msg_t hs_msg;
-    retval = mca_btl_tcp_endpoint_recv_blocking(btl_endpoint, &hs_msg, sizeof(hs_msg));
+    retval = mca_btl_tcp_recv_blocking(btl_endpoint->endpoint_sd, &hs_msg, sizeof(hs_msg));
 
     if (sizeof(hs_msg) != retval) {
+        mca_btl_tcp_endpoint_close(btl_endpoint);
         if (0 == retval) {
             /* If we get zero bytes, the peer closed the socket. This
                can happen when the two peers started the connection

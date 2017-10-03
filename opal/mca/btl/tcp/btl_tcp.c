@@ -546,8 +546,9 @@ int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
         int retval = recv(sd, ((char *)ptr) + cnt, size - cnt, 0);
         /* remote closed connection */
         if (0 == retval) {
-            BTL_ERROR(("remote peer unexpectedly closed connection while I was waiting for blocking message"));
-            return -1;
+	    OPAL_OUTPUT_VERBOSE((100, opal_btl_base_framework.framework_output,
+				"remote peer unexpectedly closed connection while I was waiting for a blocking message"));
+	    break;
         }
 
         /* socket is non-blocking so handle errors */
@@ -556,7 +557,7 @@ int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
                 opal_socket_errno != EAGAIN &&
                 opal_socket_errno != EWOULDBLOCK) {
                 BTL_ERROR(("recv(%d) failed: %s (%d)", sd, strerror(opal_socket_errno), opal_socket_errno));
-                return -1;
+		break;
             }
             continue;
         }
@@ -568,8 +569,8 @@ int mca_btl_tcp_recv_blocking(int sd, void* data, size_t size)
 
 /*
  * A blocking send on a non-blocking socket. Used to send the small
- * amount of connection information that identifies the endpoints
- * endpoint.
+ * amount of connection information used during the initial handshake
+ * (magic string plus process guid)
  */
 
 int mca_btl_tcp_send_blocking(int sd, const void* data, size_t size)
