@@ -24,6 +24,7 @@
 #include <pmix_rename.h>
 
 #include "src/include/pmix_globals.h"
+#include "src/mca/gds/base/base.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -251,6 +252,13 @@ PMIX_EXPORT pmix_status_t PMIx_Disconnect_nb(const pmix_proc_t procs[], size_t n
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: disconnect called");
+
+    size_t cnt;
+    for (cnt = 0; cnt < nprocs; cnt++) {
+        if (0 != strcmp(pmix_globals.myid.nspace, procs[cnt].nspace)) {
+            PMIX_GDS_DEL_NSPACE(rc, procs[cnt].nspace);
+        }
+    }
 
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
