@@ -707,7 +707,7 @@ pmix_status_t pmix12_bfrop_pack_app(pmix_buffer_t *buffer, const void *src,
     pmix_app_t *app;
     int32_t i, j, nvals;
     pmix_status_t ret;
-    int argc=0;
+    int argc;
 
     app = (pmix_app_t *) src;
 
@@ -716,6 +716,7 @@ pmix_status_t pmix12_bfrop_pack_app(pmix_buffer_t *buffer, const void *src,
             return ret;
         }
         /* argv */
+        argc = pmix_argv_count(app[i].argv);
         if (PMIX_SUCCESS != (ret = pmix12_bfrop_pack_int(buffer, &argc, 1, PMIX_INT))) {
             return ret;
         }
