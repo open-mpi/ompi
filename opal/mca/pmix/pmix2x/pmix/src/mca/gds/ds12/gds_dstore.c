@@ -2754,7 +2754,9 @@ static pmix_status_t dstore_del_nspace(const char* nspace)
             PMIX_ERROR_LOG(rc);
             goto exit;
         }
-        PMIX_DESTRUCT(trk);
+        if (true == trk->in_use) {
+            PMIX_DESTRUCT(trk);
+        }
     }
 
     /* A lot of nspaces may be using same session info
