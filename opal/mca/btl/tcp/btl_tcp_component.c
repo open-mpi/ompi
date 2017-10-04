@@ -1355,12 +1355,10 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     char str[128];
 
     /* Note, Socket will be in blocking mode during intial handshake
-     * hence setting SO_RCVTIMEO to say 2 seconds here to avoid chance 
-     * of spin forever if it tries to connect to old version
-     * as older version will send just process id which won't be long enough
-     * to cross sizeof(str) length + process id struct
-     * or when the remote side isn't OMPI where it's not going to send
-     * any data*/
+     * hence setting SO_RCVTIMEO to say 2 seconds here to avoid waiting 
+     * forever when connecting to older versions (that reply to the
+     * handshake with only the guid) or when the remote side isn't OMPI
+     */
 
     /* get the current timeout value so we can reset to it */
     if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &rcvtimeo_save_len)) {
@@ -1387,7 +1385,6 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     OBJ_RELEASE(event);
     retval = mca_btl_tcp_recv_blocking(sd, (void *)&hs_msg, sizeof(hs_msg));
-    guid = hs_msg.guid;
 
     /* An unknown process attempted to connect to Open MPI via TCP.
      * Open MPI uses a "magic" string to trivially verify that the connecting
@@ -1413,6 +1410,8 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
          CLOSE_THE_SOCKET(sd);
          return;
     }
+
+    guid = hs_msg.guid;
     if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
         opal_output_verbose(20, opal_btl_base_framework.framework_output,
                             "process did not receive right magic string. "
