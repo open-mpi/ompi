@@ -122,35 +122,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc2a_CONFIG],[
     enable_gl=no
     enable_opencl=no
 
-    # Per https://github.com/open-mpi/ompi/issues/4219, if
-    # --without-cuda was specified, be sure to disable it in hwloc,
-    # too.  Note that hwloc uses --disable-cuda (i.e., a yes or no
-    # value), whereas we use --with-cuda here in Open MPI (i.e., a
-    # yes, no, or path value).  Need to translate appropriately.
-    #
-    # Set enable_cuda to yes if:
-    #
-    # 1. --with-cuda was specified (i.e., a human specifically asked
-    # for it)
-    # 2. --with-cuda=blah was specified (i.e., a human specifically
-    # asked for it)
-    # 3. --with-cuda was not specified, but Open MPI is building CUDA
-    # support
-    #
-    # Set enable_cuda to no in all other cases.  This logic could be
-    # compressed into a smaller set of if tests, but for readability /
-    # clarity, I left it expanded.
-    AC_MSG_CHECKING([for hwloc --enable-cuda value])
+    # Per https://github.com/open-mpi/ompi/pull/4257, ALWAYS
+    # disable cuda support
     enable_cuda=no
-    AS_IF([test "$with_cuda" = "yes"],
-          [enable_cuda=yes],
-          [AS_IF([test -n "$with_cuda" && test "$with_cuda" != "no"],
-                 [enable_cuda=yes],
-                 [AS_IF([test "$opal_check_cuda_happy" = "yes"],
-                        [enable_cuda=yes])
-                 ])
-          ])
-    AC_MSG_RESULT(["$enable_cuda"])
 
     # Open MPI currently does not use hwloc's NVML support
     enable_nvml=no
