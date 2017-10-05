@@ -164,7 +164,8 @@ typedef uint32_t pmix_rank_t;
                                                                     //        MCA param select the active transport
 
 /* attributes for TCP connections */
-#define PMIX_TCP_URI                        "pmix.tcp.uri"          // (char*) URI of server to connect to
+#define PMIX_TCP_REPORT_URI                 "pmix.tcp.repuri"       // (char*) output URI - '-' => stdout, '+' => stderr, or filename
+#define PMIX_TCP_URI                        "pmix.tcp.uri"          // (char*) URI of server to connect to, or file:<name of file containing it>
 #define PMIX_TCP_IF_INCLUDE                 "pmix.tcp.ifinclude"    // (char*) comma-delimited list of devices and/or CIDR notation
 #define PMIX_TCP_IF_EXCLUDE                 "pmix.tcp.ifexclude"    // (char*) comma-delimited list of devices and/or CIDR notation
 #define PMIX_TCP_IPV4_PORT                  "pmix.tcp.ipv4"         // (int) IPv4 port to be used
@@ -1170,6 +1171,14 @@ struct pmix_info_t {
             pmix_list_append((l), &_kv->super);                \
         }                                                      \
     } while(0)
+/* define a special macro for checking if a boolean
+ * info is true - when info structs are provided, a
+ * type of PMIX_UNDEF is taken to imply a boolean "true"
+ * as the presence of the key defaults to indicating
+ * "true" */
+#define PMIX_INFO_TRUE(m)   \
+    (PMIX_UNDEF == (m)->value.type || (PMIX_BOOL == (m)->value.type && (m)->value.data.flag)) ? true : false
+
 
 /****    PMIX LOOKUP RETURN STRUCT    ****/
 typedef struct pmix_pdata {

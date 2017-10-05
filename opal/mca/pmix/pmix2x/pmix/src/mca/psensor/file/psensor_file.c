@@ -199,11 +199,11 @@ static pmix_status_t start(pmix_peer_t *requestor, pmix_status_t error,
     /* check the directives to see if what they want monitored */
     for (n=0; n < ndirs; n++) {
         if (0 == strcmp(directives[n].key, PMIX_MONITOR_FILE_SIZE)) {
-            ft->file_size = directives[n].value.data.flag;
+            ft->file_size = PMIX_INFO_TRUE(&directives[n]);
         } else if (0 == strcmp(directives[n].key, PMIX_MONITOR_FILE_ACCESS)) {
-            ft->file_access = directives[n].value.data.flag;
+            ft->file_access = PMIX_INFO_TRUE(&directives[n]);
         } else if (0 == strcmp(directives[n].key, PMIX_MONITOR_FILE_MODIFY)) {
-            ft->file_mod = directives[n].value.data.flag;
+            ft->file_mod = PMIX_INFO_TRUE(&directives[n]);
         } else if (0 == strcmp(directives[n].key, PMIX_MONITOR_FILE_DROPS)) {
             ft->ndrops = directives[n].value.data.uint32;
         } else if (0 == strcmp(directives[n].key, PMIX_MONITOR_FILE_CHECK_TIME)) {

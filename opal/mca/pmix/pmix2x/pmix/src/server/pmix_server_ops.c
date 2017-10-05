@@ -1301,10 +1301,7 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     /* see if they asked for enviro events */
     for (n=0; n < ninfo; n++) {
         if (0 == strcmp(info[n].key, PMIX_EVENT_ENVIRO_LEVEL)) {
-            if (PMIX_UNDEF == info[n].value.type ||
-                (PMIX_BOOL == info[n].value.type && info[n].value.data.flag)) {
-                enviro_events = true;
-            }
+            enviro_events = PMIX_INFO_TRUE(&info[n]);
             break;
         }
     }
