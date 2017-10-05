@@ -212,21 +212,12 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(info[n].key, PMIX_CONNECT_TO_SYSTEM)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    system_level_only = true;
-                } else {
-                    system_level_only = info[n].value.data.flag;
-                }
+                system_level_only = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_CONNECT_SYSTEM_FIRST)) {
                 /* try the system-level */
-                if (PMIX_UNDEF == info[n].value.type) {
-                    system_level = true;
-                } else {
-                    system_level = info[n].value.data.flag;
-                }
+                system_level = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_PIDINFO)) {
                 pid = info[n].value.data.pid;
-                pmix_output(0, "GOT PID %d", (int)pid);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_URI)) {
                 if (NULL == mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);

@@ -664,15 +664,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         if (NULL != info && 0 < ninfo) {
             for (n=0; n < ninfo; n++) {
                 if (0 == strcmp(PMIX_EMBED_BARRIER, info[n].key)) {
-                    /* did they specify a value? */
-                    if (PMIX_BOOL == info[n].value.type) {
-                        if (info[n].value.data.flag) {
-                            /* they do want the barrier */
-                            PMIx_Fence(NULL, 0, NULL, 0);
-                        }
-                    } else {
-                        /* providing this attribute is considered
-                         * to be "true" by default */
+                    if (PMIX_INFO_TRUE(&info[n])) {
                         PMIx_Fence(NULL, 0, NULL, 0);
                     }
                     break;

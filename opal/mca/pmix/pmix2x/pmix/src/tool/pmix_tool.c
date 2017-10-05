@@ -267,11 +267,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                 PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, info[n].value.data.string, PMIX_STRING);
                 found = true;
             } else if (0 == strncmp(info[n].key, PMIX_TOOL_DO_NOT_CONNECT, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    do_not_connect = true;
-                } else {
-                    do_not_connect = info[n].value.data.flag;
-                }
+                do_not_connect = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strncmp(info[n].key, PMIX_TOOL_NSPACE, PMIX_MAX_KEYLEN)) {
                 (void)strncpy(pmix_globals.myid.nspace, info[n].value.data.string, PMIX_MAX_NSLEN);
                 nspace_given = true;

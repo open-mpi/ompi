@@ -176,11 +176,9 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     /* search for directives we can deal with here */
     for (n=0; n < ninfo; n++) {
         if (0 == strcmp(info[n].key, PMIX_IMMEDIATE)) {
-            if (PMIX_UNDEF == info[n].value.type || info[n].value.data.flag) {
-                /* just check our own data - don't wait
-                 * or request it from someone else */
-                localonly = true;
-            }
+            /* just check our own data - don't wait
+             * or request it from someone else */
+            localonly = PMIX_INFO_TRUE(&info[n]);
         }
     }
 

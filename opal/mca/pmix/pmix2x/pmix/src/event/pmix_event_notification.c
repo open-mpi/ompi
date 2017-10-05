@@ -813,11 +813,8 @@ static void _notify_client_event(int sd, short args, void *cbdata)
         /* check for caching instructions */
         for (n=0; n < cd->ninfo; n++) {
             if (0 == strncmp(cd->info[n].key, PMIX_EVENT_DO_NOT_CACHE, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
-                    holdcd = false;
-                    break;
-                }
+                holdcd = PMIX_INFO_TRUE(&cd->info[n]);
+                break;
             }
         }
     }

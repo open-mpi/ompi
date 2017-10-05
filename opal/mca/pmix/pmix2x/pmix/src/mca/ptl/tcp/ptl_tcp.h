@@ -49,6 +49,7 @@ typedef struct {
     char *system_filename;
     int wait_to_connect;
     int max_retries;
+    char *report_uri;
 } pmix_ptl_tcp_component_t;
 
 extern pmix_ptl_tcp_component_t mca_ptl_tcp_component;

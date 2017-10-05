@@ -354,6 +354,9 @@ typedef pmix_status_t (*pmix_gds_base_module_add_nspace_fn_t)(const char *nspace
         pmix_gds_base_active_module_t *_g;                  \
         pmix_status_t _s = PMIX_SUCCESS;                    \
         (s) = PMIX_SUCCESS;                                 \
+        pmix_output_verbose(1, pmix_gds_base_output,        \
+                            "[%s:%d] GDS ADD NSPACE %s",    \
+                            __FILE__, __LINE__, (n));       \
         PMIX_LIST_FOREACH(_g, &pmix_gds_globals.actives,    \
                           pmix_gds_base_active_module_t) {  \
             if (NULL != _g->module->add_nspace) {           \
@@ -381,6 +384,9 @@ typedef pmix_status_t (*pmix_gds_base_module_del_nspace_fn_t)(const char* nspace
         pmix_gds_base_active_module_t *_g;                  \
         pmix_status_t _s = PMIX_SUCCESS;                    \
         (s) = PMIX_SUCCESS;                                 \
+        pmix_output_verbose(1, pmix_gds_base_output,        \
+                            "[%s:%d] GDS DEL NSPACE %s",    \
+                            __FILE__, __LINE__, (n));       \
         PMIX_LIST_FOREACH(_g, &pmix_gds_globals.actives,    \
                           pmix_gds_base_active_module_t) {  \
             if (NULL != _g->module->del_nspace) {           \
