@@ -36,8 +36,16 @@ total 15 types
 static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX_PREDEFINED] = {
     &DTE_ZERO,                  /*OPAL_DATATYPE_LOOP           0 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_END_LOOP       1 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_LB             2 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_UB             3 */
+#if defined(DTE_LB)
+    &DTE_LB,                    /*OPAL_DATATYPE_LB             2 */
+#else
+    &DTE_ZERO,
+#endif
+#if defined(DTE_UB)
+    &DTE_UB,                    /*OPAL_DATATYPE_UB             3 */
+#else
+    &DTE_ZERO,
+#endif
     &DTE_BYTE,                  /*OPAL_DATATYPE_INT1           4 */
     &DTE_INT16,                 /*OPAL_DATATYPE_INT2           5 */
     &DTE_INT32,                 /*OPAL_DATATYPE_INT4           6 */
@@ -68,8 +76,16 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX
 #else
     &DTE_ZERO,
 #endif
-    &DTE_ZERO,                  /*OPAL_DATATYPE_BOOL           22 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_WCHAR          23 */
+#if defined(DTE_BOOL)
+    &DTE_BOOL,                  /*OPAL_DATATYPE_BOOL           22 */
+#else
+    &DTE_ZERO,
+#endif
+#if defined(DTE_WCHAR)
+    &DTE_WCHAR,                 /*OPAL_DATATYPE_WCHAR          23 */
+#else
+    &DTE_ZERO,
+#endif
     &DTE_ZERO                   /*OPAL_DATATYPE_UNAVAILABLE    24 */
 };
 
