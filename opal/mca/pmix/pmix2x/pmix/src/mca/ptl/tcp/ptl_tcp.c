@@ -235,12 +235,12 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (NULL != mca_ptl_tcp_component.super.uri) {
         /* if the string starts with "file:", then they are pointing
          * us to a file we need to read to get the URI itself */
-        if (0 != strncmp(mca_ptl_tcp_component.super.uri, "file:", 5)) {
+        if (0 == strncmp(mca_ptl_tcp_component.super.uri, "file:", 5)) {
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "ptl:tcp:tool getting connection info from %s",
                                 mca_ptl_tcp_component.super.uri);
             nspace = NULL;
-            rc = parse_uri_file(&mca_ptl_tcp_component.super.uri[6], &suri, &nspace, &rank);
+            rc = parse_uri_file(&mca_ptl_tcp_component.super.uri[5], &suri, &nspace, &rank);
             if (PMIX_SUCCESS != rc) {
                 return PMIX_ERR_UNREACH;
             }
@@ -534,8 +534,8 @@ static pmix_status_t parse_uri_file(char *filename,
     }
     *p2 = '\0';
     ++p2;
-    /* set the server nspace */
-    *nspace = strdup(p);
+    /* set the server nspace/rank */
+    *nspace = strdup(srvr);
     *rank = strtoull(p2, NULL, 10);
 
     /* now parse the uri itself */

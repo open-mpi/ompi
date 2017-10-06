@@ -171,6 +171,13 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
             PMIX_RELEASE(chain);
             goto error;
         }
+        /* check for non-default flag */
+        for (cnt=0; cnt < ninfo; cnt++) {
+            if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
+                chain->nondefault = PMIX_INFO_TRUE(&chain->info[cnt]);
+                break;
+            }
+        }
     }
     /* now put the callback object tag in the last element */
     PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);

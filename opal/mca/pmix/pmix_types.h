@@ -50,6 +50,7 @@ BEGIN_C_DECLS
 
 #define OPAL_PMIX_SERVER_TOOL_SUPPORT           "pmix.srvr.tool"        // (bool) The host RM wants to declare itself as willing to
                                                                         //        accept tool connection requests
+#define OPAL_PMIX_SERVER_REMOTE_CONNECTIONS     "pmix.srvr.remote"      // (bool) Allow connections from remote tools (do not use loopback device)
 #define OPAL_PMIX_SERVER_SYSTEM_SUPPORT         "pmix.srvr.sys"         // (bool) The host RM wants to declare itself as being the local
                                                                         //        system server for PMIx connection requests
 #define OPAL_PMIX_SERVER_TMPDIR                 "pmix.srvr.tmpdir"      // (char*) temp directory where PMIx server will place

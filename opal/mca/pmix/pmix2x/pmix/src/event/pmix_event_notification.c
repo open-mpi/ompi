@@ -797,6 +797,8 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     pmix_buffer_t *bfr;
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
     pmix_status_t rc;
+    pmix_list_t trk;
+    pmix_namelist_t *nm;
 
     /* need to acquire the object from its originating thread */
     PMIX_ACQUIRE_OBJECT(cd);
@@ -835,6 +837,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
 
     holdcd = false;
     if (PMIX_RANGE_PROC_LOCAL != cd->range) {
+        PMIX_CONSTRUCT(&trk, pmix_list_t);
         /* cycle across our registered events and send the message to
          * any client who registered for it */
         PMIX_LIST_FOREACH(reginfoptr, &pmix_server_globals.events, pmix_regevents_info_t) {
@@ -846,6 +849,17 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                      * when they generated it */
                     if (0 == strncmp(cd->source.nspace, pr->peer->info->pname.nspace, PMIX_MAX_NSLEN) &&
                         cd->source.rank == pr->peer->info->pname.rank) {
+                        continue;
+                    }
+                    /* if we have already notified this client, then don't do it again */
+                    matched = false;
+                    PMIX_LIST_FOREACH(nm, &trk, pmix_namelist_t) {
+                        if (nm->pname == &pr->peer->info->pname) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (matched) {
                         continue;
                     }
                     /* if we were given specific targets, check if this is one */
@@ -867,8 +881,15 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                         }
                     }
                     pmix_output_verbose(2, pmix_globals.debug_output,
-                                        "pmix_server: notifying client %s:%u",
-                                        pr->peer->info->pname.nspace, pr->peer->info->pname.rank);
+                                        "pmix_server: notifying client %s:%u on status %s",
+                                        pr->peer->info->pname.nspace, pr->peer->info->pname.rank,
+                                        PMIx_Error_string(cd->status));
+
+                    /* record that we notified this client */
+                    nm = PMIX_NEW(pmix_namelist_t);
+                    nm->pname = &pr->peer->info->pname;
+                    pmix_list_append(&trk, &nm->super);
+
                     bfr = PMIX_NEW(pmix_buffer_t);
                     if (NULL == bfr) {
                         continue;
@@ -896,7 +917,6 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                         PMIX_RELEASE(bfr);
                         continue;
                     }
-
                     /* pack any info */
                     PMIX_BFROPS_PACK(rc, pr->peer, bfr, &cd->ninfo, 1, PMIX_SIZE);
                     if (PMIX_SUCCESS != rc) {
@@ -917,6 +937,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                 }
             }
         }
+        PMIX_LIST_DESTRUCT(&trk);
         if (PMIX_RANGE_LOCAL != cd->range &&
             0 == strncmp(cd->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN) &&
             cd->source.rank == pmix_globals.myid.rank) {

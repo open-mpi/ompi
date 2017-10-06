@@ -105,6 +105,7 @@ static int create_app(int argc, char* argv[],
                       bool *made_app, char ***app_env);
 static int parse_locals(opal_list_t *jdata, int argc, char* argv[]);
 static void set_classpath_jar_file(opal_pmix_app_t *app, int index, char *jarfile);
+static size_t evid = INT_MAX;
 
 
 static opal_cmd_line_init_t cmd_line_init[] = {
@@ -154,12 +155,15 @@ static void regcbfunc(int status, size_t ref, void *cbdata)
 {
     opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
     OPAL_ACQUIRE_OBJECT(lock);
+    evid = ref;
     OPAL_PMIX_WAKEUP_THREAD(lock);
 }
 
-static void release(int sd, short args, void *cbdata)
+static void opcbfunc(int status, void *cbdata)
 {
-    active = false;
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+    OPAL_ACQUIRE_OBJECT(lock);
+    OPAL_PMIX_WAKEUP_THREAD(lock);
 }
 
 static bool fired = false;
@@ -184,7 +188,7 @@ static void evhandler(int status,
     }
     if (!fired) {
         fired = true;
-        ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_TERMINATED);
+        active = false;
     }
 }
 
@@ -356,6 +360,10 @@ int prun(int argc, char *argv[])
         opal_setenv(OPAL_MCA_PREFIX"ess_tool_server_pid", param, true, &environ);
         free(param);
     }
+    /* if they specified the URI, then pass it along */
+    if (NULL != orte_cmd_options.hnp) {
+        opal_setenv("PMIX_MCA_ptl_tcp_server_uri", orte_cmd_options.hnp, true, &environ);
+    }
 
     /* now initialize ORTE */
     if (OPAL_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
@@ -380,8 +388,6 @@ int prun(int argc, char *argv[])
         fprintf(stderr, "DONE\n");
         goto DONE;
     }
-
-    orte_state.add_proc_state(ORTE_PROC_STATE_TERMINATED, release, ORTE_SYS_PRI);
 
     /* get here if they want to run an application, so let's parse
      * the cmd line to get it */
@@ -621,6 +627,10 @@ int prun(int argc, char *argv[])
     while (active) {
         nanosleep(&tp, NULL);
     }
+    OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+    opal_pmix.deregister_evhandler(evid, opcbfunc, &lock);
+    OPAL_PMIX_WAIT_THREAD(&lock);
+    OPAL_PMIX_DESTRUCT_LOCK(&lock);
 
   DONE:
     /* cleanup and leave */
