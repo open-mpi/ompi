@@ -1060,15 +1060,12 @@ pmix_status_t pmix20_bfrop_copy_darray(pmix_data_array_t **dest,
     }
     p->type = src->type;
     p->size = src->size;
+    if (0 == p->size || NULL == src->array) {
+        return PMIX_SUCCESS;
+    }
+
     /* process based on type of array element */
     switch (src->type) {
-        p->type = src->type;
-        p->size = src->size;
-        if (0 == p->size || NULL == src->array) {
-            p->array = NULL;
-            p->size = 0;
-            break;
-        }
         case PMIX_UINT8:
         case PMIX_INT8:
         case PMIX_BYTE:

@@ -71,6 +71,14 @@ lib_LTLIBRARIES = libpmix.la
 libpmix_la_SOURCES = $(headers) $(sources)
 libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
 
+if WANT_PMI_BACKWARD
+lib_LTLIBRARIES += libpmi.la libpmi2.la
+libpmi_la_SOURCES = $(headers) $(sources)
+libpmi_la_LDFLAGS = -version-info $(libpmi_so_version)
+libpmi2_la_SOURCES = $(headers) $(sources)
+libpmi2_la_LDFLAGS = -version-info $(libpmi2_so_version)
+endif
+
 endif !PMIX_EMBEDDED_MODE
 
 include atomics/sys/Makefile.include
