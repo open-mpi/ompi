@@ -162,7 +162,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
             goto error;
         }
         /* check for non-default flag */
-        for (cnt=0; cnt < ninfo; cnt++) {
+        for (cnt=0; cnt < (int)ninfo; cnt++) {
             if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
                 chain->nondefault = PMIX_INFO_TRUE(&chain->info[cnt]);
                 break;
