@@ -17,7 +17,7 @@
 
 int hcoll_comm_attr_keyval;
 int hcoll_type_attr_keyval;
-
+mca_coll_hcoll_dtype_t zero_dte_mapping;
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
@@ -333,6 +333,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         }
 
         if (mca_coll_hcoll_component.derived_types_support_enabled) {
+            zero_dte_mapping.type = DTE_ZERO;
             copy_fn.attr_datatype_copy_fn = (MPI_Type_internal_copy_attr_function *) MPI_TYPE_NULL_COPY_FN;
             del_fn.attr_datatype_delete_fn = hcoll_type_attr_del_fn;
             err = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn, &hcoll_type_attr_keyval, NULL ,0, NULL);
