@@ -525,7 +525,12 @@ int pmix2x_server_notify_event(int status,
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
             (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
-            pmix2x_value_load(&pinfo[n].value, kv);
+            if (0 == strcmp(kv->key, OPAL_PMIX_JOB_TERM_STATUS)) {
+                pinfo[n].value.type = PMIX_STATUS;
+                pinfo[n].value.data.status = pmix2x_convert_opalrc(kv->data.integer);
+            } else {
+                pmix2x_value_load(&pinfo[n].value, kv);
+            }
             ++n;
         }
     } else {

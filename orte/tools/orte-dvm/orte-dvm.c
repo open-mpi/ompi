@@ -106,6 +106,8 @@ static struct {
     bool set_sid;
     bool daemonize;
     bool system_server;
+    char *report_uri;
+    bool remote_connections;
 } myglobals;
 
 static opal_cmd_line_init_t cmd_line_init[] = {
@@ -170,12 +172,19 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.system_server, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide a system-level server connection point - only one allowed per node" },
 
+    { NULL, '\0', "report-uri", "report-uri", 1,
+      &myglobals.report_uri, OPAL_CMD_LINE_TYPE_STRING,
+      "Printout URI on stdout [-], stderr [+], or a file [anything else]",
+      OPAL_CMD_LINE_OTYPE_DEBUG },
+
+    { NULL, '\0', "remote-tools", "remote-tools", 0,
+      &myglobals.remote_connections, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable connections from remote tools" },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
-
-static void notify_requestor(int sd, short args, void *cbdata);
 
 int main(int argc, char *argv[])
 {
@@ -291,6 +300,13 @@ int main(int argc, char *argv[])
     }
     /* always act as session-level PMIx server */
     opal_setenv(OPAL_MCA_PREFIX"pmix_session_server", "1", true, &environ);
+    /* if we were asked to report a uri, set the MCA param to do so */
+    if (NULL != myglobals.report_uri) {
+        opal_setenv("PMIX_MCA_ptl_tcp_report_uri", myglobals.report_uri, true, &environ);
+    }
+    if (myglobals.remote_connections) {
+        opal_setenv("PMIX_MCA_ptl_tcp_remote_connections", "1", true, &environ);
+    }
 
     /* Setup MCA params */
     orte_register_params();
@@ -446,15 +462,6 @@ int main(int argc, char *argv[])
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                             ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
 
-    /* override the notify_completed state so we can send a message
-     * back to anyone who submits a job to us telling them the job
-     * completed */
-    if (ORTE_SUCCESS != (rc = orte_state.set_job_state_callback(ORTE_JOB_STATE_NOTIFY_COMPLETED, notify_requestor))) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_UPDATE_EXIT_STATUS(rc);
-        exit(orte_exit_status);
-    }
-
     /* spawn the DVM - we skip the initial steps as this
      * isn't a user-level application */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ALLOCATE);
@@ -472,95 +479,4 @@ int main(int argc, char *argv[])
         fprintf(stderr, "exiting with status %d\n", orte_exit_status);
     }
     exit(orte_exit_status);
-}
-
-static void notify_complete(int status, void *cbdata)
-{
-    opal_list_t *info = (opal_list_t*)cbdata;
-    OPAL_LIST_RELEASE(info);
-}
-
-static void notify_requestor(int sd, short args, void *cbdata)
-{
-    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_job_t *jdata = caddy->jdata;
-    orte_proc_t *pptr=NULL;
-    int ret;
-    opal_buffer_t *reply;
-    orte_daemon_cmd_flag_t command;
-    orte_grpcomm_signature_t *sig;
-    bool notify = true;
-    opal_list_t *info;
-    opal_value_t *val;
-
-    /* see if there was any problem */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ABORTED_PROC, (void**)&pptr, OPAL_PTR) && NULL != pptr) {
-        ret = pptr->exit_code;
-    /* or whether we got cancelled by the user */
-    } else if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CANCELLED, NULL, OPAL_BOOL)) {
-        ret = ORTE_ERR_JOB_CANCELLED;
-    } else {
-        ret = ORTE_SUCCESS;
-    }
-
-    if (0 == ret && orte_get_attribute(&jdata->attributes, ORTE_JOB_SILENT_TERMINATION, NULL, OPAL_BOOL)) {
-        notify = false;
-    }
-
-    if (notify) {
-        info = OBJ_NEW(opal_list_t);
-        /* ensure this only goes to the job terminated event handler */
-        val = OBJ_NEW(opal_value_t);
-        val->key = strdup(OPAL_PMIX_EVENT_NON_DEFAULT);
-        val->type = OPAL_BOOL;
-        val->data.flag = true;
-        opal_list_append(info, &val->super);
-        /* tell the server not to cache the event as subsequent jobs
-         * do not need to know about it */
-        val = OBJ_NEW(opal_value_t);
-        val->key = strdup(OPAL_PMIX_EVENT_DO_NOT_CACHE);
-        val->type = OPAL_BOOL;
-        val->data.flag = true;
-        opal_list_append(info, &val->super);
-        /* provide the status */
-        val = OBJ_NEW(opal_value_t);
-        val->key = strdup(OPAL_PMIX_JOB_TERM_STATUS);
-        val->type = OPAL_STATUS;
-        val->data.status = ret;
-        opal_list_append(info, &val->super);
-        /* if there was a problem, we need to send the requestor more info about what happened */
-        if (ORTE_SUCCESS != ret) {
-            val = OBJ_NEW(opal_value_t);
-            val->key = strdup(OPAL_PMIX_PROCID);
-            val->type = OPAL_NAME;
-            val->data.name.jobid = jdata->jobid;
-            if (NULL != pptr) {
-                val->data.name.vpid = pptr->name.vpid;
-            } else {
-                val->data.name.vpid = ORTE_VPID_WILDCARD;
-            }
-            opal_list_append(info, &val->super);
-        }
-        opal_pmix.notify_event(OPAL_ERR_JOB_TERMINATED, NULL,
-                               OPAL_PMIX_RANGE_GLOBAL, info,
-                               notify_complete, info);
-    }
-
-    /* now ensure that _all_ daemons know that this job has terminated so even
-     * those that did not participate in it will know to cleanup the resources
-     * they assigned to the job. This is necessary now that the mapping function
-     * has been moved to the backend daemons - otherwise, non-participating daemons
-     * retain the slot assignments on the participating daemons, and then incorrectly
-     * map subsequent jobs thinking those nodes are still "busy" */
-    reply = OBJ_NEW(opal_buffer_t);
-    command = ORTE_DAEMON_DVM_CLEANUP_JOB_CMD;
-    opal_dss.pack(reply, &command, 1, ORTE_DAEMON_CMD);
-    opal_dss.pack(reply, &jdata->jobid, 1, ORTE_JOBID);
-    sig = OBJ_NEW(orte_grpcomm_signature_t);
-    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
-    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
-    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
-    orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, reply);
-    OBJ_RELEASE(reply);
-    OBJ_RELEASE(sig);
 }
