@@ -12,6 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2017      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -431,8 +433,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [dso_components],
                                                      [static_ltlibs],
                                                      [$components_looking_for_succeed],
-                                                     [components_last_result=1],
-                                                     [components_last_result=0])
+                                                     [components_last_result])
                    m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST],
                          [AS_IF([test $components_last_result -eq 1], [components_looking_for_succeed=0])])
                    m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
@@ -570,8 +571,8 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
 #                         dso_components_variable,
 #                         static_ltlibs_variable,
 #                         allowed_to_succeed,
-#                         [eval if should build],
-#                         [eval if should not build])
+#                         [set to 1 if should build],
+#                         [set to 0 if should not build])
 #
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
@@ -609,7 +610,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
           [BUILD_$1_$2_$3_DSO=0])
     AM_CONDITIONAL(MCA_BUILD_$1_$2_$3_DSO, test "$BUILD_$1_$2_$3_DSO" = "1")
 
-    AS_IF([test "$should_build" = "1"], [$9], [$10])
+    AS_IF([test "$should_build" = "1"], [$9=1], [$9=0])
 
     unset compile_mode
 ])

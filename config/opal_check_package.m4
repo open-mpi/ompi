@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
+dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -162,8 +162,7 @@ dnl                    function,
 dnl                    extra-libraries,
 dnl                    dir-prefix,
 dnl                    libdir-prefix,
-dnl                    [action-if-found], [action-if-not-found],
-dnl                    includes)
+dnl                    [action-if-found], [action-if-not-found])
 dnl -----------------------------------------------------------
 dnl Check for package defined by header and libs, and probably
 dnl located in dir-prefix, possibly with libs in libdir-prefix.
@@ -194,8 +193,6 @@ dnl   $dir_prefix/lib64, list it here.
 dnl * action_if_found: if both the header and library are found and
 dnl   usable, execute action_if_found
 dnl * action_if_not_found: otherwise, execute action_if_not_found
-dnl * extra_includes: if including header_filename requires additional
-dnl   headers to be included first, list them here
 dnl
 dnl The output _CPPFLAGS, _LDFLAGS, and _LIBS can be used to limit the
 dnl scope various flags in Makefiles.
@@ -214,7 +211,7 @@ AC_DEFUN([OPAL_CHECK_PACKAGE],[
                 [opal_check_package_happy="yes"],
                 [opal_check_package_happy="no"])],
           [opal_check_package_happy="no"],
-          [$10])
+          [])
 
     AS_IF([test "$opal_check_package_happy" = "yes"],
           [$8],

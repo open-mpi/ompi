@@ -150,8 +150,7 @@ AC_DEFUN([_PMIX_CHECK_PACKAGE_LIB], [
 #                    extra-libraries,
 #                    dir-prefix,
 #                    libdir-prefix,
-#                    [action-if-found], [action-if-not-found],
-#                    includes)
+#                    [action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 # check for package defined by header and libs, and probably
 # located in dir-prefix, possibly with libs in libdir-prefix.
@@ -171,7 +170,7 @@ AC_DEFUN([PMIX_CHECK_PACKAGE],[
                 [pmix_check_package_happy="yes"],
                 [pmix_check_package_happy="no"])],
           [pmix_check_package_happy="no"],
-          [$10])
+          [])
 
     AS_IF([test "$pmix_check_package_happy" = "yes"],
           [$8],
