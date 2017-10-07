@@ -246,6 +246,22 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             }
             free(mca_ptl_tcp_component.super.uri);
             mca_ptl_tcp_component.super.uri = suri;
+        } else {
+            /* we need to extract the nspace/rank of the server from the string */
+            p = strchr(mca_ptl_tcp_component.super.uri, ';');
+            *p = '\0';
+            p++;
+            suri = strdup(p); // save the uri portion
+            /* the '.' in the first part of the original string separates
+             * nspace from rank */
+            p = strchr(mca_ptl_tcp_component.super.uri, '.');
+            *p = '\0';
+            p++;
+            nspace = strdup(mca_ptl_tcp_component.super.uri);
+            rank = strtoull(p, NULL, 10);
+            /* now update the URI */
+            free(mca_ptl_tcp_component.super.uri);
+            mca_ptl_tcp_component.super.uri = suri;
         }
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp:tool attempt connect using given URI %s",
@@ -564,21 +580,23 @@ static pmix_status_t try_connect(int *sd)
     /* setup the path to the daemon rendezvous point */
     memset(&mca_ptl_tcp_component.connection, 0, sizeof(struct sockaddr_storage));
     if (0 == strncmp(mca_ptl_tcp_component.super.uri, "tcp4", 4)) {
-        /* separate the IP address from the port */
-        p = strdup(mca_ptl_tcp_component.super.uri);
+        /* need to skip the tcp4: part */
+        p = strdup(&mca_ptl_tcp_component.super.uri[7]);
         if (NULL == p) {
             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
             return PMIX_ERR_NOMEM;
         }
-        p2 = strchr(&p[7], ':');
+
+        /* separate the IP address from the port */
+        p2 = strchr(p, ':');
         if (NULL == p2) {
             free(p);
             PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
             return PMIX_ERR_BAD_PARAM;
         }
         *p2 = '\0';
-        ++p2;
-        host = &p[7];
+        p2++;
+        host = p;
         /* load the address */
         in = (struct sockaddr_in*)&mca_ptl_tcp_component.connection;
         in->sin_family = AF_INET;
@@ -591,13 +609,14 @@ static pmix_status_t try_connect(int *sd)
         in->sin_port = htons(atoi(p2));
         len = sizeof(struct sockaddr_in);
     } else {
-        /* separate the IP address from the port */
-        p = strdup(mca_ptl_tcp_component.super.uri);
+        /* need to skip the tcp6: part */
+        p = strdup(&mca_ptl_tcp_component.super.uri[7]);
         if (NULL == p) {
             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
             return PMIX_ERR_NOMEM;
         }
-        p2 = strchr(&p[7], ':');
+
+        p2 = strchr(p, ':');
         if (NULL == p2) {
             free(p);
             PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
@@ -607,10 +626,10 @@ static pmix_status_t try_connect(int *sd)
         if (']' == p[strlen(p)-1]) {
             p[strlen(p)-1] = '\0';
         }
-        if ('[' == p[7]) {
-            host = &p[8];
+        if ('[' == p[0]) {
+            host = &p[1];
         } else {
-            host = &p[7];
+            host = &p[0];
         }
         /* load the address */
         in6 = (struct sockaddr_in6*)&mca_ptl_tcp_component.connection;
