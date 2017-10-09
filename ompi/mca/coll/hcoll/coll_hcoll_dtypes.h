@@ -10,7 +10,7 @@
 #include "ompi/mca/op/op.h"
 #include "hcoll/api/hcoll_dte.h"
 extern int hcoll_type_attr_keyval;
-
+extern mca_coll_hcoll_dtype_t zero_dte_mapping;
 /*to keep this at hand: Ids of the basic opal_datatypes:
 #define OPAL_DATATYPE_INT1           4
 #define OPAL_DATATYPE_INT2           5
@@ -36,8 +36,16 @@ total 15 types
 static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX_PREDEFINED] = {
     &DTE_ZERO,                  /*OPAL_DATATYPE_LOOP           0 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_END_LOOP       1 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_LB             2 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_UB             3 */
+#if defined(DTE_LB)
+    &DTE_LB,                    /*OPAL_DATATYPE_LB             2 */
+#else
+    &DTE_ZERO,
+#endif
+#if defined(DTE_UB)
+    &DTE_UB,                    /*OPAL_DATATYPE_UB             3 */
+#else
+    &DTE_ZERO,
+#endif
     &DTE_BYTE,                  /*OPAL_DATATYPE_INT1           4 */
     &DTE_INT16,                 /*OPAL_DATATYPE_INT2           5 */
     &DTE_INT32,                 /*OPAL_DATATYPE_INT4           6 */
@@ -68,8 +76,16 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX
 #else
     &DTE_ZERO,
 #endif
-    &DTE_ZERO,                  /*OPAL_DATATYPE_BOOL           22 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_WCHAR          23 */
+#if defined(DTE_BOOL)
+    &DTE_BOOL,                  /*OPAL_DATATYPE_BOOL           22 */
+#else
+    &DTE_ZERO,
+#endif
+#if defined(DTE_WCHAR)
+    &DTE_WCHAR,                 /*OPAL_DATATYPE_WCHAR          23 */
+#else
+    &DTE_ZERO,
+#endif
     &DTE_ZERO                   /*OPAL_DATATYPE_UNAVAILABLE    24 */
 };
 
@@ -81,15 +97,21 @@ enum {
 
 #if HCOLL_API >= HCOLL_VERSION(3,6)
 static inline
-int hcoll_map_derived_type(ompi_datatype_t *dtype, dte_data_representation_t *new_dte)
+void hcoll_map_derived_type(ompi_datatype_t *dtype, dte_data_representation_t *new_dte)
 {
     int rc;
     if (NULL == dtype->args) {
         /* predefined type, shouldn't call this */
-        return OMPI_SUCCESS;
+        return;
     }
     rc = hcoll_create_mpi_type((void*)dtype, new_dte);
-    return rc == HCOLL_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR;
+    if (rc != HCOLL_SUCCESS) {
+        /* If hcoll fails to create mpi derived type let's set zero_dte on this dtype.
+           This will save cycles on subsequent collective calls with the same derived
+           type since we will not try to create hcoll type again. */
+        ompi_attr_set_c(TYPE_ATTR, (void*)dtype, &(dtype->d_keyhash),
+                        hcoll_type_attr_keyval, &zero_dte_mapping, false);
+    }
 }
 
 static dte_data_representation_t find_derived_mapping(ompi_datatype_t *dtype){
@@ -222,6 +244,9 @@ static int hcoll_type_attr_del_fn(MPI_Datatype type, int keyval, void *attr_val,
         (mca_coll_hcoll_dtype_t*) attr_val;
 
     assert(dtype);
+    if (&zero_dte_mapping == dtype) {
+        return OMPI_SUCCESS;
+    }
     if (HCOLL_SUCCESS != (ret = hcoll_dt_destroy(dtype->type))) {
         HCOL_ERROR("failed to delete type attr: hcoll_dte_destroy returned %d",ret);
         return OMPI_ERROR;
