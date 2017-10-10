@@ -80,6 +80,24 @@ static inline int32_t opal_atomic_add_32(volatile int32_t *addr, int32_t delta)
     return __sync_add_and_fetch(addr, delta);
 }
 
+#define OPAL_HAVE_ATOMIC_AND_32 1
+static inline int32_t opal_atomic_and_32(volatile int32_t *addr, int32_t value)
+{
+    return __sync_and_and_fetch(addr, value);
+}
+
+#define OPAL_HAVE_ATOMIC_OR_32 1
+static inline int32_t opal_atomic_or_32(volatile int32_t *addr, int32_t value)
+{
+    return __sync_or_and_fetch(addr, value);
+}
+
+#define OPAL_HAVE_ATOMIC_XOR_32 1
+static inline int32_t opal_atomic_xor_32(volatile int32_t *addr, int32_t value)
+{
+    return __sync_xor_and_fetch(addr, value);
+}
+
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
 {
@@ -112,6 +130,24 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
 static inline int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
 {
     return __sync_add_and_fetch(addr, delta);
+}
+
+#define OPAL_HAVE_ATOMIC_AND_64 1
+static inline int64_t opal_atomic_and_64(volatile int64_t *addr, int64_t value)
+{
+    return __sync_and_and_fetch(addr, value);
+}
+
+#define OPAL_HAVE_ATOMIC_OR_64 1
+static inline int64_t opal_atomic_or_64(volatile int64_t *addr, int64_t value)
+{
+    return __sync_or_and_fetch(addr, value);
+}
+
+#define OPAL_HAVE_ATOMIC_XOR_64 1
+static inline int64_t opal_atomic_xor_64(volatile int64_t *addr, int64_t value)
+{
+    return __sync_xor_and_fetch(addr, value);
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_64 1

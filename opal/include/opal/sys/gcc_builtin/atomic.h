@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -37,11 +37,17 @@
 #define OPAL_HAVE_ATOMIC_MATH_32 1
 #define OPAL_HAVE_ATOMIC_CMPSET_32 1
 #define OPAL_HAVE_ATOMIC_ADD_32 1
+#define OPAL_HAVE_ATOMIC_AND_32 1
+#define OPAL_HAVE_ATOMIC_OR_32 1
+#define OPAL_HAVE_ATOMIC_XOR_32 1
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 #define OPAL_HAVE_ATOMIC_SWAP_32 1
 #define OPAL_HAVE_ATOMIC_MATH_64 1
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
 #define OPAL_HAVE_ATOMIC_ADD_64 1
+#define OPAL_HAVE_ATOMIC_AND_64 1
+#define OPAL_HAVE_ATOMIC_OR_64 1
+#define OPAL_HAVE_ATOMIC_XOR_64 1
 #define OPAL_HAVE_ATOMIC_SUB_64 1
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 
@@ -111,6 +117,21 @@ static inline int32_t opal_atomic_add_32(volatile int32_t *addr, int32_t delta)
     return __atomic_add_fetch (addr, delta, __ATOMIC_RELAXED);
 }
 
+static inline int32_t opal_atomic_and_32(volatile int32_t *addr, int32_t value)
+{
+    return __atomic_and_fetch (addr, value, __ATOMIC_RELAXED);
+}
+
+static inline int32_t opal_atomic_or_32(volatile int32_t *addr, int32_t value)
+{
+    return __atomic_or_fetch (addr, value, __ATOMIC_RELAXED);
+}
+
+static inline int32_t opal_atomic_xor_32(volatile int32_t *addr, int32_t value)
+{
+    return __atomic_xor_fetch (addr, value, __ATOMIC_RELAXED);
+}
+
 static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
 {
     return __atomic_sub_fetch (addr, delta, __ATOMIC_RELAXED);
@@ -148,6 +169,21 @@ static inline int64_t opal_atomic_swap_64 (volatile int64_t *addr, int64_t newva
 static inline int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
 {
     return __atomic_add_fetch (addr, delta, __ATOMIC_RELAXED);
+}
+
+static inline int64_t opal_atomic_and_64(volatile int64_t *addr, int64_t value)
+{
+    return __atomic_and_fetch (addr, value, __ATOMIC_RELAXED);
+}
+
+static inline int64_t opal_atomic_or_64(volatile int64_t *addr, int64_t value)
+{
+    return __atomic_or_fetch (addr, value, __ATOMIC_RELAXED);
+}
+
+static inline int64_t opal_atomic_xor_64(volatile int64_t *addr, int64_t value)
+{
+    return __atomic_xor_fetch (addr, value, __ATOMIC_RELAXED);
 }
 
 static inline int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)

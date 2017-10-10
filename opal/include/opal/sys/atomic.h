@@ -108,8 +108,14 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_32 0
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_64 0
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_32 0
+#define OPAL_HAVE_INLINE_ATOMIC_AND_32 0
+#define OPAL_HAVE_INLINE_ATOMIC_OR_32 0
+#define OPAL_HAVE_INLINE_ATOMIC_XOR_32 0
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_32 0
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_64 0
+#define OPAL_HAVE_INLINE_ATOMIC_AND_64 0
+#define OPAL_HAVE_INLINE_ATOMIC_OR_64 0
+#define OPAL_HAVE_INLINE_ATOMIC_XOR_64 0
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_64 0
 #define OPAL_HAVE_INLINE_ATOMIC_SWAP_32 0
 #define OPAL_HAVE_INLINE_ATOMIC_SWAP_64 0
@@ -118,8 +124,14 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_64 1
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_AND_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_OR_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_XOR_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_64 1
+#define OPAL_HAVE_INLINE_ATOMIC_AND_64 1
+#define OPAL_HAVE_INLINE_ATOMIC_OR_64 1
+#define OPAL_HAVE_INLINE_ATOMIC_XOR_64 1
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_64 1
 #define OPAL_HAVE_INLINE_ATOMIC_SWAP_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_SWAP_64 1
@@ -393,6 +405,21 @@ static inline
 #endif
 int32_t opal_atomic_add_32(volatile int32_t *addr, int delta);
 
+#if OPAL_HAVE_INLINE_ATOMIC_AND_32 || (!defined(OPAL_HAVE_ATOMIC_AND_32) && OPAL_HAVE_ATOMIC_CMPSET_32)
+static inline
+#endif
+int32_t opal_atomic_and_32(volatile int32_t *addr, int32_t value);
+
+#if OPAL_HAVE_INLINE_ATOMIC_OR_32 || (!defined(OPAL_HAVE_ATOMIC_OR_32) && OPAL_HAVE_ATOMIC_CMPSET_32)
+static inline
+#endif
+int32_t opal_atomic_or_32(volatile int32_t *addr, int32_t value);
+
+#if OPAL_HAVE_INLINE_ATOMIC_XOR_32 || (!defined(OPAL_HAVE_ATOMIC_XOR_32) && OPAL_HAVE_ATOMIC_CMPSET_32)
+static inline
+#endif
+int32_t opal_atomic_xor_32(volatile int32_t *addr, int32_t value);
+
 /* OPAL_HAVE_INLINE_ATOMIC_*_32 will be 1 if <arch>/atomic.h provides
    a static inline version of it (in assembly).  If we have to fall
    back to cmpset 32, that too will be inline. */
@@ -423,6 +450,21 @@ int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
 static inline
 #endif
 int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta);
+
+#if OPAL_HAVE_INLINE_ATOMIC_AND_64 || (!defined(OPAL_HAVE_ATOMIC_AND_64) && OPAL_HAVE_ATOMIC_CMPSET_64)
+static inline
+#endif
+int64_t opal_atomic_and_64(volatile int64_t *addr, int64_t value);
+
+#if OPAL_HAVE_INLINE_ATOMIC_OR_64 || (!defined(OPAL_HAVE_ATOMIC_OR_64) && OPAL_HAVE_ATOMIC_CMPSET_64)
+static inline
+#endif
+int64_t opal_atomic_or_64(volatile int64_t *addr, int64_t value);
+
+#if OPAL_HAVE_INLINE_ATOMIC_XOR_64 || (!defined(OPAL_HAVE_ATOMIC_XOR_64) && OPAL_HAVE_ATOMIC_CMPSET_64)
+static inline
+#endif
+int64_t opal_atomic_xor_64(volatile int64_t *addr, int64_t value);
 
 /* OPAL_HAVE_INLINE_ATOMIC_*_64 will be 1 if <arch>/atomic.h provides
    a static inline version of it (in assembly).  If we have to fall
