@@ -957,8 +957,8 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
         ia64-*)
             opal_cv_asm_arch="IA64"
-            OPAL_ASM_SUPPORT_64BIT=1
-            OPAL_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
+            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
+              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 	aarch64*)
             opal_cv_asm_arch="ARM64"
@@ -991,20 +991,16 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         armv5*linux*|armv4*linux*|arm-*-linux-gnueabi)
             # uses Linux kernel helpers for some atomic operations
             opal_cv_asm_arch="ARM"
-            OPAL_ASM_SUPPORT_64BIT=0
-            OPAL_ASM_ARM_VERSION=5
-            CCASFLAGS="$CCASFLAGS -march=armv7-a"
-            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
-                               [What ARM assembly version to use])
-            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
+            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
+              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 
         mips-*|mips64*)
             # Should really find some way to make sure that we are on
             # a MIPS III machine (r4000 and later)
             opal_cv_asm_arch="MIPS"
-            OPAL_ASM_SUPPORT_64BIT=1
-            OPAL_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
+            OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
+              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 
         powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
