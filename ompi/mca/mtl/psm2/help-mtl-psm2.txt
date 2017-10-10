@@ -1,7 +1,7 @@
 # -*- text -*-
 #
 # Copyright (C) 2009. QLogic Corporation.  All rights reserved.
-# Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -47,5 +47,17 @@ Unknown path record query mechanism %s. Supported mechanisms are %s.
 Message size %llu bigger than supported by PSM2 API. Max = %llu
 #
 [no psm2 cuda env]
-Using CUDA enabled OpenMPI but PSM2_CUDA environment variable is %s.
-This is not a recommended combination. If the application uses %s.
+Warning: Open MPI has detected that you are running in an environment with CUDA
+devices present and that you are using Intel(r) Ompi-Path networking. However,
+the environment variable PSM2_CUDA was not set, meaning that the PSM2 Omni-Path
+networking library was not told how to handle CUDA support.
+
+If your application uses CUDA buffers, you should set the environment variable
+PSM2_CUDA to 1; otherwise, set it to 0. Setting the variable to the wrong value
+can have performance implications on your application, or even cause it to
+crash.
+
+Since it was not set, Open MPI has defaulted to setting the PSM2_CUDA
+environment variable to 1.
+
+Local hostname: %s
