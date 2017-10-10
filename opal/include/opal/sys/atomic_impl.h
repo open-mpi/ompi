@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -67,6 +67,48 @@ opal_atomic_add_32(volatile int32_t *addr, int delta)
 }
 #endif  /* OPAL_HAVE_ATOMIC_ADD_32 */
 
+#if !defined(OPAL_HAVE_ATOMIC_AND_32)
+#define OPAL_HAVE_ATOMIC_AND_32 1
+static inline int32_t
+opal_atomic_and_32(volatile int32_t *addr, int32_t value)
+{
+   int32_t oldval;
+
+   do {
+      oldval = *addr;
+   } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval & value));
+   return (oldval & value);
+}
+#endif  /* OPAL_HAVE_ATOMIC_AND_32 */
+
+#if !defined(OPAL_HAVE_ATOMIC_OR_32)
+#define OPAL_HAVE_ATOMIC_OR_32 1
+static inline int32_t
+opal_atomic_or_32(volatile int32_t *addr, int32_t value)
+{
+   int32_t oldval;
+
+   do {
+      oldval = *addr;
+   } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval | value));
+   return (oldval | value);
+}
+#endif  /* OPAL_HAVE_ATOMIC_OR_32 */
+
+#if !defined(OPAL_HAVE_ATOMIC_XOR_32)
+#define OPAL_HAVE_ATOMIC_XOR_32 1
+static inline int32_t
+opal_atomic_xor_32(volatile int32_t *addr, int32_t value)
+{
+   int32_t oldval;
+
+   do {
+      oldval = *addr;
+   } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval ^ value));
+   return (oldval ^ value);
+}
+#endif  /* OPAL_HAVE_ATOMIC_XOR_32 */
+
 
 #if !defined(OPAL_HAVE_ATOMIC_SUB_32)
 #define OPAL_HAVE_ATOMIC_SUB_32 1
@@ -114,6 +156,47 @@ opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
 }
 #endif  /* OPAL_HAVE_ATOMIC_ADD_64 */
 
+#if !defined(OPAL_HAVE_ATOMIC_AND_64)
+#define OPAL_HAVE_ATOMIC_AND_64 1
+static inline int64_t
+opal_atomic_and_64(volatile int64_t *addr, int64_t value)
+{
+   int64_t oldval;
+
+   do {
+      oldval = *addr;
+   } while (0 == opal_atomic_cmpset_64(addr, oldval, oldval & value));
+   return (oldval & value);
+}
+#endif  /* OPAL_HAVE_ATOMIC_AND_64 */
+
+#if !defined(OPAL_HAVE_ATOMIC_OR_64)
+#define OPAL_HAVE_ATOMIC_OR_64 1
+static inline int64_t
+opal_atomic_or_64(volatile int64_t *addr, int64_t value)
+{
+   int64_t oldval;
+
+   do {
+      oldval = *addr;
+   } while (0 == opal_atomic_cmpset_64(addr, oldval, oldval | value));
+   return (oldval | value);
+}
+#endif  /* OPAL_HAVE_ATOMIC_OR_64 */
+
+#if !defined(OPAL_HAVE_ATOMIC_XOR_64)
+#define OPAL_HAVE_ATOMIC_XOR_64 1
+static inline int64_t
+opal_atomic_xor_64(volatile int64_t *addr, int64_t value)
+{
+   int64_t oldval;
+
+   do {
+      oldval = *addr;
+   } while (0 == opal_atomic_cmpset_64(addr, oldval, oldval ^ value));
+   return (oldval ^ value);
+}
+#endif  /* OPAL_HAVE_ATOMIC_XOR_64 */
 
 #if !defined(OPAL_HAVE_ATOMIC_SUB_64)
 #define OPAL_HAVE_ATOMIC_SUB_64 1

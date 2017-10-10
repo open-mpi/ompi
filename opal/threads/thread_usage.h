@@ -103,6 +103,36 @@ static inline type opal_thread_add_ ## suffix (volatile type *addr, type delta) 
     return (*addr += delta);                                            \
 }
 
+#define OPAL_THREAD_DEFINE_ATOMIC_AND(type, suffix)     \
+static inline type opal_thread_and_ ## suffix (volatile type *addr, type delta) \
+{                                                                       \
+    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
+        return opal_atomic_and_ ## suffix (addr, delta);                \
+    }                                                                   \
+                                                                        \
+    return (*addr &= delta);                                            \
+}
+
+#define OPAL_THREAD_DEFINE_ATOMIC_OR(type, suffix)     \
+static inline type opal_thread_or_ ## suffix (volatile type *addr, type delta) \
+{                                                                       \
+    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
+        return opal_atomic_or_ ## suffix (addr, delta);                 \
+    }                                                                   \
+                                                                        \
+    return (*addr |= delta);                                            \
+}
+
+#define OPAL_THREAD_DEFINE_ATOMIC_XOR(type, suffix)     \
+static inline type opal_thread_xor_ ## suffix (volatile type *addr, type delta) \
+{                                                                       \
+    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
+        return opal_atomic_xor_ ## suffix (addr, delta);                \
+    }                                                                   \
+                                                                        \
+    return (*addr ^= delta);                                            \
+}
+
 #define OPAL_THREAD_DEFINE_ATOMIC_SUB(type, suffix)     \
 static inline type opal_thread_sub_ ## suffix (volatile type *addr, type delta) \
 {                                                                       \
@@ -143,6 +173,10 @@ static inline type opal_thread_swap_ ## suffix (volatile addr_type *ptr, type ne
 
 OPAL_THREAD_DEFINE_ATOMIC_ADD(int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_ADD(size_t, size_t)
+OPAL_THREAD_DEFINE_ATOMIC_AND(int32_t, 32)
+OPAL_THREAD_DEFINE_ATOMIC_OR(int32_t, 32)
+OPAL_THREAD_DEFINE_ATOMIC_XOR(int32_t, 32)
+OPAL_THREAD_DEFINE_ATOMIC_SUB(int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_SUB(size_t, size_t)
 OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int32_t, int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_CMPSET(void *, intptr_t, ptr)
@@ -151,6 +185,15 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 
 #define OPAL_THREAD_ADD32 opal_thread_add_32
 #define OPAL_ATOMIC_ADD32 opal_thread_add_32
+
+#define OPAL_THREAD_AND32 opal_thread_and_32
+#define OPAL_ATOMIC_AND32 opal_thread_and_32
+
+#define OPAL_THREAD_OR32 opal_thread_or_32
+#define OPAL_ATOMIC_OR32 opal_thread_or_32
+
+#define OPAL_THREAD_XOR32 opal_thread_xor_32
+#define OPAL_ATOMIC_XOR32 opal_thread_xor_32
 
 #define OPAL_THREAD_ADD_SIZE_T opal_thread_add_size_t
 #define OPAL_ATOMIC_ADD_SIZE_T opal_thread_add_size_t
@@ -174,11 +217,23 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 #if OPAL_HAVE_ATOMIC_MATH_64
 
 OPAL_THREAD_DEFINE_ATOMIC_ADD(int64_t, 64)
+OPAL_THREAD_DEFINE_ATOMIC_AND(int64_t, 64)
+OPAL_THREAD_DEFINE_ATOMIC_OR(int64_t, 64)
+OPAL_THREAD_DEFINE_ATOMIC_XOR(int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int64_t, int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
 #define OPAL_THREAD_ADD64 opal_thread_add_64
 #define OPAL_ATOMIC_ADD64 opal_thread_add_64
+
+#define OPAL_THREAD_AND64 opal_thread_and_64
+#define OPAL_ATOMIC_AND64 opal_thread_and_64
+
+#define OPAL_THREAD_OR64 opal_thread_or_64
+#define OPAL_ATOMIC_OR64 opal_thread_or_64
+
+#define OPAL_THREAD_XOR64 opal_thread_xor_64
+#define OPAL_ATOMIC_XOR64 opal_thread_xor_64
 
 #define OPAL_THREAD_CMPSET_64 opal_thread_cmpset_bool_64
 #define OPAL_ATOMIC_CMPSET_64 opal_thread_cmpset_bool_64

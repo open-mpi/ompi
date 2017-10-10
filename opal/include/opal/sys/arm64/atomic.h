@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      ARM ltd.  All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -36,8 +36,14 @@
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 #define OPAL_HAVE_ATOMIC_LLSC_64 1
 #define OPAL_HAVE_ATOMIC_ADD_32 1
+#define OPAL_HAVE_ATOMIC_AND_32 1
+#define OPAL_HAVE_ATOMIC_OR_32 1
+#define OPAL_HAVE_ATOMIC_XOR_32 1
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 #define OPAL_HAVE_ATOMIC_ADD_64 1
+#define OPAL_HAVE_ATOMIC_AND_64 1
+#define OPAL_HAVE_ATOMIC_OR_64 1
+#define OPAL_HAVE_ATOMIC_XOR_64 1
 #define OPAL_HAVE_ATOMIC_SUB_64 1
 
 #define MB()  __asm__ __volatile__ ("dmb sy" : : : "memory")
@@ -292,8 +298,14 @@ static inline int opal_atomic_sc_64 (volatile int64_t *addr, int64_t newval)
     }
 
 OPAL_ASM_MAKE_ATOMIC(int32_t, 32, add, "add", "w")
+OPAL_ASM_MAKE_ATOMIC(int32_t, 32, and, "and", "w")
+OPAL_ASM_MAKE_ATOMIC(int32_t, 32, or, "orr", "w")
+OPAL_ASM_MAKE_ATOMIC(int32_t, 32, xor, "eor", "w")
 OPAL_ASM_MAKE_ATOMIC(int32_t, 32, sub, "sub", "w")
 OPAL_ASM_MAKE_ATOMIC(int64_t, 64, add, "add", "")
+OPAL_ASM_MAKE_ATOMIC(int64_t, 64, and, "and", "")
+OPAL_ASM_MAKE_ATOMIC(int64_t, 64, or, "orr", "")
+OPAL_ASM_MAKE_ATOMIC(int64_t, 64, xor, "eor", "")
 OPAL_ASM_MAKE_ATOMIC(int64_t, 64, sub, "sub", "")
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
