@@ -272,6 +272,9 @@ static int ompi_osc_pt2pt_lock_internal (int lock_type, int target, int assert, 
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     ompi_osc_pt2pt_sync_t *lock;
     int ret = OMPI_SUCCESS;
+    ompi_osc_pt2pt_sync_t *otherlock = NULL;
+    int target_key;
+    void *iter_hash_node = NULL;
 
     /* Check if no_locks is set. TODO: we also need to track whether we are in an
      * active target epoch. Fence can make this tricky to track. */
@@ -344,6 +347,25 @@ static int ompi_osc_pt2pt_lock_internal (int lock_type, int target, int assert, 
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_CONFLICT;
     }
+
+    /* All previously requested locks must be complete before we can start a new
+     * lock, otherwise we deadlock from mis-ordering of locks.
+     */
+    ret = opal_hash_table_get_first_key_uint32(&module->outstanding_locks,
+                                               (uint32_t *) &target_key,
+                                               (void **) &otherlock,
+                                               &iter_hash_node);
+    while( OPAL_SUCCESS == ret ) {
+        if( NULL != otherlock ) {
+            ompi_osc_pt2pt_sync_wait_expected (otherlock);
+        }
+
+        ret = opal_hash_table_get_next_key_uint32(&module->outstanding_locks,
+                                                  (uint32_t *) &target_key,
+                                                  (void **) &otherlock,
+                                                  iter_hash_node, &iter_hash_node);
+    }
+    ret = OPAL_SUCCESS;
 
     ++module->passive_target_access_epoch;
 
@@ -596,7 +618,7 @@ int ompi_osc_pt2pt_flush_all (struct ompi_win_t *win)
             }
 
             ret = opal_hash_table_get_next_key_uint32 (&module->outstanding_locks, (uint32_t *) &target,
-                                                       (void **) lock, node, &node);
+                                                       (void **) &lock, node, &node);
             if (OPAL_SUCCESS != ret) {
                 ret = OPAL_SUCCESS;
                 break;
