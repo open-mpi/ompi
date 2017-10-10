@@ -815,7 +815,9 @@ static void _notify_client_event(int sd, short args, void *cbdata)
         /* check for caching instructions */
         for (n=0; n < cd->ninfo; n++) {
             if (0 == strncmp(cd->info[n].key, PMIX_EVENT_DO_NOT_CACHE, PMIX_MAX_KEYLEN)) {
-                holdcd = PMIX_INFO_TRUE(&cd->info[n]);
+                if (PMIX_INFO_TRUE(&cd->info[n])) {
+                    holdcd = false;
+                }
                 break;
             }
         }
