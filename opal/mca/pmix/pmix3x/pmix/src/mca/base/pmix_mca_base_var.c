@@ -563,7 +563,7 @@ int pmix_mca_base_var_cache_files(bool rel_path_search)
     if (NULL != pmix_mca_base_envar_file_prefix) {
        resolve_relative_paths(&pmix_mca_base_envar_file_prefix, pmix_mca_base_param_file_path, rel_path_search, &pmix_mca_base_envar_files, ',');
     }
-    read_files (pmix_mca_base_envar_files, &pmix_mca_base_envar_file_values, ',');
+    read_files (pmix_mca_base_envar_files, &pmix_mca_base_envar_file_values, ':');
 
     if (0 == access(pmix_mca_base_var_override_file, F_OK)) {
         read_files (pmix_mca_base_var_override_file, &pmix_mca_base_var_override_values, PMIX_ENV_SEP);
