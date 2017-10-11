@@ -73,6 +73,12 @@ int nb_lines(char *filename)
   char line[LINE_SIZE];
   int N = 0;
 
+  if(!access(filename, F_OK)) {
+    if(tm_get_verbose_level() >= CRITICAL)
+      fprintf(stderr,"%s does not exist\n",filename);
+    exit(-1);
+  }
+
   if(!(pf = fopen(filename,"r"))){
     if(tm_get_verbose_level() >= CRITICAL)
       fprintf(stderr,"Cannot open %s\n",filename);
@@ -97,6 +103,11 @@ void init_mat(char *filename,int N, double **mat, double *sum_row)
   int i,j;
   unsigned int vl = tm_get_verbose_level();
 
+  if(!access(filename, F_OK)) {
+    if(tm_get_verbose_level() >= CRITICAL)
+      fprintf(stderr,"%s does not exist\n",filename);
+    exit(-1);
+  }
 
   if(!(pf=fopen(filename,"r"))){
     if(vl >= CRITICAL)

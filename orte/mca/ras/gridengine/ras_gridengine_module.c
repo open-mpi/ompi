@@ -78,7 +78,7 @@ static int orte_ras_gridengine_allocate(orte_job_t *jdata, opal_list_t *nodelist
     }
 
     /* check the PE_HOSTFILE before continuing on */
-    if (!(fp = fopen(pe_hostfile, "r"))) {
+    if (!access(pe_hostfile, F_OK) || !(fp = fopen(pe_hostfile, "r"))) {
         orte_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         rc = ORTE_ERROR;
@@ -166,7 +166,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
     FILE *fp;
 
     /* check the PE_HOSTFILE before continuing on */
-    if (!(fp = fopen(pe_hostfile, "r"))) {
+    if (!access(pe_hostfile, F_OK) || !(fp = fopen(pe_hostfile, "r"))) {
         orte_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         ORTE_ERROR_LOG(ORTE_ERROR);

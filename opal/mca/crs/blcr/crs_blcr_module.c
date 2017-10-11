@@ -739,6 +739,14 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
      * Find the snapshot directory, read the metadata file
      */
     if( NULL == snapshot->super.metadata ) {
+        if(access(snapshot->super.metadata_filename, F_OK) {
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint(): Error: %s does not exist",
+                        snapshot->super.metadata_filename);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+
         if (NULL == (snapshot->super.metadata = fopen(snapshot->super.metadata_filename, "r")) ) {
             opal_output(mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint(): Error: Unable to open the file (%s)",

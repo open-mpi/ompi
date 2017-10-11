@@ -229,9 +229,17 @@ static int parse_file(char *filename)
 
     /* Open the file */
     ini_filename = filename;
+
+    if (!access(filename, F_OK)) {
+        opal_show_help("help-mpi-btl-openib.txt", "ini file:file not found",
+                       true, filename);
+        ret = OPAL_ERR_NOT_FOUND;
+        goto cleanup;
+    }
+
     btl_openib_ini_yyin = fopen(filename, "r");
     if (NULL == btl_openib_ini_yyin) {
-        opal_show_help("help-mpi-btl-openib.txt", "ini file:file not found",
+        opal_show_help("help-mpi-btl-openib.txt", "ini file:could not open",
                        true, filename);
         ret = OPAL_ERR_NOT_FOUND;
         goto cleanup;

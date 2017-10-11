@@ -581,6 +581,7 @@ int orte_sstore_base_extract_global_metadata(orte_sstore_base_global_snapshot_in
     orte_process_name_t proc;
     opal_list_item_t* item = NULL;
     orte_sstore_base_local_snapshot_info_t *vpid_snapshot = NULL;
+    char *mdfname = global_snapshot->metadata_filename;
 
     /*
      * Cleanup the structure a bit, so we can refresh it below
@@ -602,7 +603,7 @@ int orte_sstore_base_extract_global_metadata(orte_sstore_base_global_snapshot_in
     /*
      * Open the metadata file
      */
-    if (NULL == (metadata = fopen(global_snapshot->metadata_filename, "r")) ) {
+    if (!access(mdfname, F_OK) || NULL == (metadata = fopen(mdfname, "r")) ) {
         opal_output(orte_sstore_base_framework.framework_output,
                     "sstore:base:extract_global_metadata() Unable to open the file (%s)\n",
                     global_snapshot->metadata_filename);
@@ -699,13 +700,14 @@ int orte_sstore_base_find_largest_seq_num(orte_sstore_base_global_snapshot_info_
     int exit_status = ORTE_SUCCESS;
     FILE *metadata = NULL;
     int tmp_seq_num = -1;
+    char *mdfname = global_snapshot->metadata_filename;
 
     *seq_num = -1;
 
     /*
      * Open the metadata file
      */
-    if (NULL == (metadata = fopen(global_snapshot->metadata_filename, "r")) ) {
+    if (!access(mdfname, F_OK) || NULL == (metadata = fopen(mdfname, "r")) ) {
         opal_output(orte_sstore_base_framework.framework_output,
                     "sstore:base:find_largest_seq_num() Unable to open the file (%s)\n",
                     global_snapshot->metadata_filename);
@@ -739,6 +741,7 @@ int orte_sstore_base_find_all_seq_nums(orte_sstore_base_global_snapshot_info_t *
     FILE *metadata = NULL;
     int tmp_seq_num = -1;
     char * tmp_str = NULL;
+    char *mdfname = global_snapshot->metadata_filename;
 
     *num_seq = 0;
     *seq_list = NULL;
@@ -746,7 +749,7 @@ int orte_sstore_base_find_all_seq_nums(orte_sstore_base_global_snapshot_info_t *
     /*
      * Open the metadata file
      */
-    if (NULL == (metadata = fopen(global_snapshot->metadata_filename, "r")) ) {
+    if (!access(mdfname, F_OK) || NULL == (metadata = fopen(mdfname, "r")) ) {
         opal_output(orte_sstore_base_framework.framework_output,
                     "sstore:base:find_all_seq_nums() Unable to open the file (%s)\n",
                     global_snapshot->metadata_filename);

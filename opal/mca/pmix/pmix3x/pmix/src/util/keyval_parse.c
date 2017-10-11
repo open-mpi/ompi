@@ -28,6 +28,7 @@
 #include "src/util/output.h"
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 int pmix_util_keyval_parse_lineno = 0;
 
@@ -70,8 +71,7 @@ pmix_util_keyval_parse(const char *filename,
     keyval_callback = callback;
 
     /* Open the pmix */
-    pmix_util_keyval_yyin = fopen(keyval_filename, "r");
-    if (NULL == pmix_util_keyval_yyin) {
+    if (!access(keyval_filename, F_OK) || NULL == (pmix_util_keyval_yyin = fopen(keyval_filename, "r"))) {
         ret = PMIX_ERR_NOT_FOUND;
         goto cleanup;
     }

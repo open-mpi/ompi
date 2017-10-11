@@ -41,8 +41,18 @@ int main(int argc, char* argv[])
 
     MPI_Init(&argc, &argv);
 
+    if (!access(argv[1], F_OK)) {
+      fprintf(stderr, "file %s not found\n", argv[1]);
+      exit(1);
+    }
+
     /* read the file */
     fp = fopen(argv[1], "r");
+    if(NULL == fp) {
+      fprintf(stderr, "could not open %s for reading\n", argv[1]);
+      exit(1);
+    }
+
     fgets(port, 1024, fp);
     port[strlen(port)-1] = '\0';  /* remove newline */
     fclose(fp);

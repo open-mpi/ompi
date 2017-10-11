@@ -471,8 +471,7 @@ static pmix_status_t parse_uri_file(char *filename,
     struct timeval tv;
     int retries;
 
-    fp = fopen(filename, "r");
-    if (NULL == fp) {
+    if (!access(filename, F_OK) || NULL == (fp = fopen(filename, "r"))) {
         /* if we cannot open the file, then the server must not
          * be configured to support tool connections, or this
          * user isn't authorized to access it - or it may just
@@ -495,8 +494,7 @@ static pmix_status_t parse_uri_file(char *filename,
                     pmix_event_evtimer_add(&ev, &tv);
                     PMIX_WAIT_THREAD(&lock);
                     PMIX_DESTRUCT_LOCK(&lock);
-                    fp = fopen(filename, "r");
-                    if (NULL != fp) {
+                    if (access(filename, F_OK) && NULL != (fp = fopen(filename, "r"))) {
                         /* we found it! */
                         goto process;
                     }

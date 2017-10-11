@@ -26,6 +26,7 @@
 #include "opal_config.h"
 
 #include <string.h>
+#include <unistd.h>
 
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/base/base.h"
@@ -110,6 +111,9 @@ static int opal_timer_linux_find_freq(void)
     int ret;
     char buf[1024];
 
+    if(!access("/proc/cpuinfo", F_OK)) {
+        return OPAL_ERR_IN_ERRNO;
+    }
     fp = fopen("/proc/cpuinfo", "r");
     if (NULL == fp) {
         return OPAL_ERR_IN_ERRNO;

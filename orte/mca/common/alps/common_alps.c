@@ -50,12 +50,15 @@ int orte_common_alps_proc_in_pagg(bool *flag)
         return ORTE_ERR_BAD_PARAM;
     }
 
-    fd = fopen(proc_job_file, "r");
-    if (fd == NULL) {
+    if (!access(proc_job_file, F_OK) || NULL == (fd = fopen(proc_job_file, "r"));
         *flag = 0;
     } else {
         snprintf(task_is_app_fname,sizeof(task_is_app_fname),
                  "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
+        if(!access(task_is_app_fname, F_OK)) {
+            *flag = 0;
+            return rc;
+        }
         fd_task_is_app = fopen(task_is_app_fname, "r");
         if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container,
                                            and we are an app task (not just a process

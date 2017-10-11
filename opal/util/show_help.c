@@ -25,6 +25,7 @@
 #include <string.h>
 #include <locale.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/show_help.h"
@@ -158,13 +159,20 @@ static int open_file(const char *base, const char *topic)
          */
         for (i=0; NULL != search_dirs[i]; i++) {
             filename = opal_os_path( false, search_dirs[i], base, NULL );
+            if(!access(filename, F_OK)) {
+              goto doesntexist;
+            }
             opal_show_help_yyin = fopen(filename, "r");
             if (NULL == opal_show_help_yyin) {
+            doesntexist:
                 asprintf(&err_msg, "%s: %s", filename, strerror(errno));
                 base_len = strlen(base);
                 if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
                     free(filename);
                     asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
+                    if(!access(filename, F_OK)) {
+                      break;
+                    }
                     opal_show_help_yyin = fopen(filename, "r");
                 }
             }

@@ -214,7 +214,7 @@ main(int argc, char *argv[])
                  opal_restart_globals.snapshot_loc,
                  opal_restart_globals.snapshot_ref,
                  opal_restart_globals.snapshot_metadata);
-        if( NULL == (metadata = fopen(full_metadata_path, "r")) ) {
+        if(!access(full_metadata_path, F_OK) || NULL == (metadata = fopen(full_metadata_path, "r")) ) {
             opal_show_help("help-opal-restart.txt", "invalid_metadata", true,
                            opal_restart_globals.snapshot_metadata,
                            full_metadata_path);
@@ -657,7 +657,7 @@ static int post_env_vars(int prev_pid, opal_crs_base_snapshot_t *snapshot)
     /*
      * Any directories that need to be created
      */
-    if( NULL == (snapshot->metadata = fopen(snapshot->metadata_filename, "r")) ) {
+    if(!access(snapshot->metadata_filename, F_OK) || NULL == (snapshot->metadata = fopen(snapshot->metadata_filename, "r")) ) {
         opal_show_help("help-opal-restart.txt", "invalid_metadata", true,
                        opal_restart_globals.snapshot_metadata,
                        snapshot->metadata_filename);

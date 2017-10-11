@@ -65,12 +65,17 @@ static int do_test(void)
 
     /* Double check that the .la file is there that we expect; if it's
        not, skip this test. */
+    if (!access(full_filename, F_OK)) {
+      fprintf(stderr,
+              "File %s.la doesn't seem to exist; skipping this test\n",
+              full_filename);
+      exit(77);
+    }
     fp = fopen(full_filename, "r");
-    if (NULL == fp) {
-        fprintf(stderr,
-                "File %s.la doesn't seem to exist; skipping this test\n",
-                full_filename);
-        exit(77);
+    if (fp == NULL) {
+      fprintf(stderr, "File %s.la fopen failed; skipping this test\n",
+              full_filename);
+      exit(77);
     }
     /* We know the .la file is there, so read it, looking for the
        dlopen value.  If the dlopen value is '' (i.e., empty), then

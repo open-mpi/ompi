@@ -162,8 +162,8 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     if (NULL != orte_default_hostfile) {
         char *hstname = NULL;
         /* open the file */
-        fp = fopen(orte_default_hostfile, "r");
-        if (NULL == fp) {
+        if (!access(orte_default_hostfile, F_OK) ||
+		NULL == (fp = fopen(orte_default_hostfile, "r"))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             rc = ORTE_ERR_NOT_FOUND;
             goto error;
@@ -269,8 +269,8 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                                 "mca:rmaps:seq: using hostfile %s nodes on app %s", hosts, app->app);
             OBJ_CONSTRUCT(&sq_list, opal_list_t);
             /* open the file */
-            fp = fopen(hosts, "r");
-            if (NULL == fp) {
+            if(!access(hosts, F_OK) || 
+            		NULL == (fp = fopen(hosts, "r"))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 rc = ORTE_ERR_NOT_FOUND;
                 OBJ_DESTRUCT(&sq_list);

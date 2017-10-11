@@ -76,8 +76,11 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
     opal_argv_append_nosize(&pushed_vals, "ALPS");
 
     /* see if we are running in a Cray PAGG container */
+    if (!access(proc_job_file, F_OK))
+      goto nojobfile;
     fd = fopen(proc_job_file, "r");
     if (NULL == fd) {
+    nojobfile:
         /* we are a singleton */
         myenv = ORTE_SCHIZO_MANAGED_SINGLETON;
         opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"ess");
@@ -92,6 +95,8 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
         opal_argv_append_nosize(&pushed_vals, "pmi");
         snprintf(task_is_app_fname,sizeof(task_is_app_fname),
                  "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
+        if (!access(task_is_app, F_OK))
+          goto done;
         fd_task_is_app = fopen(task_is_app_fname, "r");
         if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container,
                                            and we are an app task (not just a process
@@ -99,6 +104,7 @@ static orte_schizo_launch_environ_t check_launch_environment(void)
             opal_argv_append_nosize(&pushed_envs, OPAL_MCA_PREFIX"pmix");
             opal_argv_append_nosize(&pushed_vals, "cray");
         }
+    done:
         fclose(fd);
     }
 

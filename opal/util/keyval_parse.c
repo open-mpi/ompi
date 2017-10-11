@@ -28,6 +28,7 @@
 #include "opal/threads/mutex.h"
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 int opal_util_keyval_parse_lineno = 0;
 
@@ -76,6 +77,10 @@ opal_util_keyval_parse(const char *filename,
     keyval_filename = filename;
     keyval_callback = callback;
 
+    if (!access(keyval_filename, F_OK)) {
+        ret = OPAL_ERR_NOT_FOUND;
+        goto cleanup;
+    }
     /* Open the opal */
     opal_util_keyval_yyin = fopen(keyval_filename, "r");
     if (NULL == opal_util_keyval_yyin) {

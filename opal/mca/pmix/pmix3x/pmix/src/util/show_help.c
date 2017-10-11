@@ -26,6 +26,7 @@
 #include <string.h>
 #include <locale.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "src/mca/pinstalldirs/pinstalldirs.h"
 #include "src/util/show_help.h"
@@ -169,6 +170,9 @@ static int open_file(const char *base, const char *topic)
                     free(filename);
                     if (0 > asprintf(&filename, "%s%s%s.txt", search_dirs[i], PMIX_PATH_SEP, base)) {
                         return PMIX_ERR_OUT_OF_RESOURCE;
+                    }
+                    if(!access(filename, F_OK)){
+                      return PMIX_ERR_NOT_FOUND;
                     }
                     pmix_show_help_yyin = fopen(filename, "r");
                 }
