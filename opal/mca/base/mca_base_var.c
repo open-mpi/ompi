@@ -411,7 +411,7 @@ int mca_base_var_cache_files(bool rel_path_search)
 #if OPAL_WANT_HOME_CONFIG_FILES
     asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
              "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
-             home, OPAL_ENV_SEP, opal_install_dirs.sysconfdir);
+             home, ',', opal_install_dirs.sysconfdir);
 #else
     asprintf(&mca_base_var_files, "%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
              opal_install_dirs.sysconfdir);
@@ -527,7 +527,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     if (NULL != mca_base_var_file_prefix) {
        resolve_relative_paths(&mca_base_var_file_prefix, mca_base_param_file_path, rel_path_search, &mca_base_var_files, OPAL_ENV_SEP);
     }
-    read_files (mca_base_var_files, &mca_base_var_file_values, OPAL_ENV_SEP);
+    read_files (mca_base_var_files, &mca_base_var_file_values, ',');
 
     if (NULL != mca_base_envar_file_prefix) {
        resolve_relative_paths(&mca_base_envar_file_prefix, mca_base_param_file_path, rel_path_search, &mca_base_envar_files, ',');
