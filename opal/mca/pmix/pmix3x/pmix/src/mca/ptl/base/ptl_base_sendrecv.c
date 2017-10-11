@@ -140,7 +140,7 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 }
             }
         }
-        if (!peer->finalized) {
+        if (!peer->finalized && !PMIX_PROC_IS_TOOL(peer)) {
             /* if this peer already called finalize, then
              * we are just seeing their connection go away
              * when they terminate - so do not generate

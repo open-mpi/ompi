@@ -599,19 +599,18 @@ static void dvm_notify(int sd, short args, void *cbdata)
         val->type = OPAL_STATUS;
         val->data.status = ret;
         opal_list_append(info, &val->super);
-        /* if there was a problem, we need to send the requestor more info about what happened */
-        if (ORTE_SUCCESS != ret) {
-            val = OBJ_NEW(opal_value_t);
-            val->key = strdup(OPAL_PMIX_PROCID);
-            val->type = OPAL_NAME;
-            val->data.name.jobid = jdata->jobid;
-            if (NULL != pptr) {
-                val->data.name.vpid = pptr->name.vpid;
-            } else {
-                val->data.name.vpid = ORTE_VPID_WILDCARD;
-            }
-            opal_list_append(info, &val->super);
+        /* tell the requestor which job or proc  */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_PROCID);
+        val->type = OPAL_NAME;
+        val->data.name.jobid = jdata->jobid;
+        if (NULL != pptr) {
+            val->data.name.vpid = pptr->name.vpid;
+        } else {
+            val->data.name.vpid = ORTE_VPID_WILDCARD;
         }
+        opal_list_append(info, &val->super);
+        /* setup the caddy */
         mycaddy = (mycaddy_t*)malloc(sizeof(mycaddy_t));
         mycaddy->info = info;
         OBJ_RETAIN(jdata);
