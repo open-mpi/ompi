@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -113,17 +115,33 @@ OPAL_DECLSPEC void opal_progress_event_users_decrement(void);
 /**
  * Set whether opal_progress() should yield when idle
  *
- * Set whether opal_progress() should yield the processor (either by
- * sched_yield() or SwitchToThread()) if no events were progressed
- * during the progress loop.  The return value of the callback
- * functions is used to determine whether or not yielding is required.
+ * Set whether opal_progress() should yield the processor by
+ * sched_yield() no events were progressed during the progress loop.
+ * The return value of the callback functions is used to determine
+ * whether or not yielding is required.
  * By default, the event loop will yield when the progress function is
- * idle.
+ * idle only when oversubscription.
  *
  * @param   yieldopt  Whether to yield when idle.
  * @return         Previous value of the yield_when_idle option.
  */
 OPAL_DECLSPEC bool opal_progress_set_yield_when_idle(bool yieldopt);
+
+
+/**
+ * Set whether opal_progress() should sleep when idle for a while
+ *
+ * Set whether opal_progress() should sleep if no events were progressed
+ * during the progress loop for some time.  The return value of the callback
+ * functions is used to determine whether or not sleeping is required.
+ * By default, the event loop will not sleep when the progress function is
+ * idle.
+ * -1 means no sleeping and 0 means always sleep.
+ *
+ * @param   thresholdopt  The threshold to start sleeping.
+ * @return         Previous value of the sleep_threshold option.
+ */
+OPAL_DECLSPEC int opal_progress_set_sleep_when_idle_threshold(int thresholdopt);
 
 
 /**

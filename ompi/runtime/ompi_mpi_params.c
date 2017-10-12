@@ -17,7 +17,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -63,6 +63,7 @@ bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
 bool ompi_mpi_yield_when_idle = false;
+int ompi_mpi_sleep_when_idle_threshold = -1;
 int ompi_mpi_event_tick_rate = -1;
 char *ompi_mpi_show_mca_params_string = NULL;
 bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
@@ -109,11 +110,19 @@ int ompi_mpi_register_params(void)
        exactly/under-subscribed, or 1 when oversubscribed */
     ompi_mpi_yield_when_idle = false;
     (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
-                                 "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
+                                 "Yield the processor when waiting for communication (for MPI processes, will default to 1 when oversubscribing nodes)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
+                                 OPAL_INFO_LVL_6,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_yield_when_idle);
+
+    ompi_mpi_sleep_when_idle_threshold = -1;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "sleep_when_idle_threshold",
+                                 "Sleep after waiting for communication too long",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_6,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_sleep_when_idle_threshold);
 
     ompi_mpi_event_tick_rate = -1;
     (void) mca_base_var_register("ompi", "mpi", NULL, "event_tick_rate",

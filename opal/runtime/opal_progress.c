@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2016 Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -26,6 +26,11 @@
 
 #ifdef HAVE_SCHED_H
 #include <sched.h>
+#endif
+#if HAVE_POLL_H
+#include <poll.h>
+#elif HAVE_SYS_POLL_H
+#include <sys/poll.h>
 #endif
 
 #include "opal/runtime/opal_progress.h"
@@ -66,6 +71,9 @@ static size_t callbacks_lp_size = 0;
 
 /* do we want to call sched_yield() if nothing happened */
 bool opal_progress_yield_when_idle = false;
+/* do we want to sleep if nothing happened for a while */
+int opal_progress_sleep_when_idle_threshold = -1;
+static int yield_count = 0;
 
 #if OPAL_PROGRESS_USE_TIMERS
 static opal_timer_t event_progress_last_time = 0;
@@ -229,16 +237,25 @@ opal_progress(void)
         }
     }
 
+    if (OPAL_UNLIKELY(opal_progress_yield_when_idle)) {
+        if (events <= 0) {
+            if (opal_progress_sleep_when_idle_threshold < 0 || yield_count < opal_progress_sleep_when_idle_threshold) {
+                yield_count++;
 #if OPAL_HAVE_SCHED_YIELD
-    if (opal_progress_yield_when_idle && events <= 0) {
-        /* If there is nothing to do - yield the processor - otherwise
-         * we could consume the processor for the entire time slice. If
-         * the processor is oversubscribed - this will result in a best-case
-         * latency equivalent to the time-slice.
-         */
-        sched_yield();
-    }
+                /* If there is nothing to do - yield the processor - otherwise
+                 * we could consume the processor for the entire time slice. If
+                 * the processor is oversubscribed - this will result in a best-case
+                 * latency equivalent to the time-slice.
+                 */
+                sched_yield();
 #endif  /* defined(HAVE_SCHED_YIELD) */
+            } else {
+                poll(NULL, 0, 1);
+            }
+        } else {
+            yield_count = 0;
+        }
+    }
 }
 
 
@@ -305,6 +322,20 @@ opal_progress_set_yield_when_idle(bool yieldopt)
 
     OPAL_OUTPUT((debug_output, "progress: progress_set_yield_when_idle to %s",
                                     opal_progress_yield_when_idle ? "true" : "false"));
+
+    return tmp;
+}
+
+
+int
+opal_progress_set_sleep_when_idle_threshold(int thresholdopt)
+{
+    int tmp = opal_progress_sleep_when_idle_threshold;
+
+    opal_progress_sleep_when_idle_threshold = thresholdopt;
+
+    OPAL_OUTPUT((debug_output, "progress: progress_set_sleep_threshold to %d",
+                                    thresholdopt));
 
     return tmp;
 }

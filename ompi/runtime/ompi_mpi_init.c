@@ -18,7 +18,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  *
@@ -284,6 +284,7 @@ opal_list_t ompi_registered_datareps = {{0}};
 
 bool ompi_enable_timing = false;
 extern bool ompi_mpi_yield_when_idle;
+extern uint32_t ompi_mpi_sleep_when_idle_threshold;
 extern int ompi_mpi_event_tick_rate;
 
 /**
@@ -970,6 +971,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* see if yield_when_idle was specified - if so, use it */
     opal_progress_set_yield_when_idle(ompi_mpi_yield_when_idle);
+
+    /* set the threshold to start sleeping when idle */
+    opal_progress_set_sleep_when_idle_threshold(ompi_mpi_sleep_when_idle_threshold);
 
     /* negative value means use default - just don't do anything */
     if (ompi_mpi_event_tick_rate >= 0) {
