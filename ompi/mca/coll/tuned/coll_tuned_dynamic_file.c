@@ -88,6 +88,10 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         return (-3);
     }
 
+    if (!access(fname, F_OK)) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"rules file does not exist [%s]\n", fname));
+        goto on_file_error;
+    }
     fptr = fopen (fname, "r");
     if (!fptr) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"cannot read rules file [%s]\n", fname));

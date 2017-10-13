@@ -156,6 +156,8 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
        because we would run this test on a system with a larger number
        of mount points than the array.  So just count and make sure to
        have an array large enough. */
+    if(!access("opal_path_nfs.out", F_OK))
+        goto out;
     file = fopen("opal_path_nfs.out", "r");
     int count = 0;
     while (NULL != fgets (buffer, SIZE, file)) {

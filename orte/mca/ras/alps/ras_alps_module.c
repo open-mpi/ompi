@@ -247,7 +247,7 @@ orte_ras_get_appinfo_path(void)
                             "ras:alps:allocate: Trying ALPS configuration "
                             "file: \"%s\"",
                             sysconfigs[i].path);
-        if (NULL == (fp = fopen(sysconfigs[i].path, "r"))) {
+        if (!access(sysconfigs[i].path, F_OK) || NULL == (fp = fopen(sysconfigs[i].path, "r"))) {
             int err = errno;
             opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "ras:alps:allocate: Skipping ALPS "

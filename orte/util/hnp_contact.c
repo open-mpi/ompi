@@ -108,13 +108,16 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
     int rc;
     opal_value_t val;
 
+    if (!access(filename, F_OK))
+      /* failed on first access - wait and try again */
+      sleep(1);
+    if (!access(filename, F_OK))
+      /* failed twice - give up */
+      return ORTE_ERR_FILE_OPEN_FAILURE;
+
     fp = fopen(filename, "r");
-    if (NULL == fp) { /* failed on first read - wait and try again */
-        fp = fopen(filename, "r");
-        if (NULL == fp) { /* failed twice - give up */
-            return ORTE_ERR_FILE_OPEN_FAILURE;
-        }
-    }
+    if (NULL == fp)
+      return ORTE_ERR_FILE_OPEN_FAILURE;
 
     hnp_uri = orte_getline(fp);
     if (NULL == hnp_uri) {

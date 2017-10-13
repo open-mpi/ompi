@@ -393,10 +393,13 @@ int orte_submit_init(int argc, char *argv[],
                 orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", orte_cmd_options.hnp);
                 exit(1);
             }
-
+            if (!access(filename, F_OK)) { /* can't find file! */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, orte_cmd_options.hnp);
+                exit(1);
+            }
             /* open the file and extract the uri */
             fp = fopen(filename, "r");
-            if (NULL == fp) { /* can't find or read file! */
+            if (NULL == fp) { /* can't read file! */
                 orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, orte_cmd_options.hnp);
                 exit(1);
             }
@@ -1884,7 +1887,11 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
     }
 
     /* Try to open the file */
-
+    if (!access(filename, F_OK)) {
+        orte_show_help("help-orterun.txt", "orterun:appfile-not-found", true,
+                       filename);
+        return ORTE_ERR_NOT_FOUND;
+    }
     fp = fopen(filename, "r");
     if (NULL == fp) {
         orte_show_help("help-orterun.txt", "orterun:appfile-not-found", true,

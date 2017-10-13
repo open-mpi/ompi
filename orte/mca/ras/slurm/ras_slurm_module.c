@@ -1185,7 +1185,7 @@ static int read_ip_port(char *filename, char **ip, uint16_t *port)
     bool found_port = false;
     bool found_ip = false;
 
-    if (NULL == (fp = fopen(filename, "r"))) {
+    if (!access(filename, F_OK) || NULL == (fp = fopen(filename, "r"))) {
         orte_show_help("help-ras-slurm.txt", "config-file-not-found", true, filename);
         return ORTE_ERR_SILENT;
     }

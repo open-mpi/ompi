@@ -94,7 +94,7 @@ pmix_pif_base_component_t mca_pif_linux_ipv6_component = {
 static int if_linux_ipv6_open(void)
 {
     FILE *f;
-    if ((f = fopen("/proc/net/if_inet6", "r"))) {
+    if (access("/proc/net/if_inet6", F_OK) && NULL != (f = fopen("/proc/net/if_inet6", "r"))) {
         char ifname[IF_NAMESIZE];
         unsigned int idx, pfxlen, scope, dadstat;
         struct in6_addr a6;

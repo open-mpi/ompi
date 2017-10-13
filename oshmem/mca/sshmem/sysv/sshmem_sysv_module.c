@@ -306,7 +306,7 @@ size_t sshmem_sysv_gethugepagesize(void)
     FILE *f;
 
     /* Cache the huge page size value */
-    if (huge_page_size == 0) {
+    if (huge_page_size == 0 && access("/proc/meminfo", F_OK)) {
         f = fopen("/proc/meminfo", "r");
         if (f != NULL) {
             while (fgets(buf, sizeof(buf), f)) {

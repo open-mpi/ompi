@@ -148,7 +148,7 @@ static void check(char *dir, char *file, char **locations)
         FILE *fp;
 
         /* Just try to open the file */
-        if (NULL != (fp = fopen(str, "r"))) {
+        if (access(str, F_OK) && (NULL != (fp = fopen(str, "r"))) {
             fclose(fp);
             opal_argv_append_nosize(&locations, file);
         }

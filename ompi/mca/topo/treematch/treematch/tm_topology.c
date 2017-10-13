@@ -481,6 +481,11 @@ int  tm_topology_add_binding_constraints(char *constraints_filename, tm_topology
   int i,n;
   unsigned int vl = tm_get_verbose_level();
 
+  if (!access(constraints_filename, F_OK)) {
+    if(tm_get_verbose_level() >= CRITICAL)
+      fprintf(stderr,"%s does not exist\n",constraints_filename);
+    exit(-1);
+  }
 
   if (!(pf = fopen(constraints_filename,"r"))) {
     if(vl >= CRITICAL)

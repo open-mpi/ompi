@@ -121,8 +121,7 @@ static int rte_init(void)
             }
 
             /* open the file and extract the uri */
-            fp = fopen(filename, "r");
-            if (NULL == fp) { /* can't find or read file! */
+            if (!access(filename, F_OK) || NULL == (fp = fopen(filename, "r"))) { /* can't find or read file! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
                                "singleton", mca_ess_singleton_component.server_uri);
                 return ORTE_ERROR;

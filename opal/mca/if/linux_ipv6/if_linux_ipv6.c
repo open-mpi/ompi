@@ -95,7 +95,8 @@ static int if_linux_ipv6_open(void)
 {
 #if OPAL_ENABLE_IPV6
     FILE *f;
-    if ((f = fopen("/proc/net/if_inet6", "r"))) {
+    if (access("/proc/net/if_inet6", F_OK) &&
+        (f = fopen("/proc/net/if_inet6", "r"))) {
         char ifname[IF_NAMESIZE];
         unsigned int idx, pfxlen, scope, dadstat;
         struct in6_addr a6;

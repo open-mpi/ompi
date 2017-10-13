@@ -477,13 +477,14 @@ static int dmtcp_cold_start(opal_crs_dmtcp_snapshot_t *snapshot) {
     char **tmp_argv = NULL;
     char * component_name = NULL;
     int prev_pid;
-
+    char *smfname;
     /*
      * Find the snapshot directory, read the metadata file for
      * component name and previous pid
      */
     if( NULL == snapshot->super.metadata ) {
-        if (NULL == (snapshot->super.metadata = fopen(snapshot->super.metadata_filename, "r")) ) {
+        smfname = snapshot->super.metadata_filename;
+        if (!access(smfname, F_OK) || NULL == (snapshot->super.metadata = fopen(smfname, "r")) ) {
             opal_output(mca_crs_dmtcp_component.super.output_handle,
                         "crs:dmtcp: dmtcp_cold_start(): Error: Unable to open the file (%s)",
                         snapshot->super.metadata_filename);

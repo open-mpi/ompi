@@ -264,12 +264,13 @@ int mca_btl_ugni_init (void)
         mca_btl_ugni_component.virtual_device_count = MCA_BTL_UGNI_MAX_DEV_HANDLES;
     }
 
-    fh = fopen ("/proc/sys/kernel/pid_max", "r");
-    if (NULL != fh) {
-        fscanf (fh, "%d", &pid_max);
-        fclose (fh);
+    if (access("/proc/sys/kernel/pid_max", F_OK)) {
+        fh = fopen ("/proc/sys/kernel/pid_max", "r");
+        if (NULL != fh) {
+            fscanf (fh, "%d", &pid_max);
+            fclose (fh);
+        }
     }
-
     /* Use pid to generate the cdm_id.  Although its not stated in the uGNI
      * documentation, the cdm_id only needs to be unique within a node for a
      * given ptag/cookie tuple */

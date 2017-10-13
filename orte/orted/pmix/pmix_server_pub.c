@@ -82,9 +82,14 @@ static int init_server(void)
                 return ORTE_ERR_BAD_PARAM;
             }
 
+            if (!access(filename, F_OK)) { /* can't find file! */
+              orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
+                             orte_basename, orte_data_server_uri);
+              return ORTE_ERR_BAD_PARAM;
+            }
             /* open the file and extract the uri */
             fp = fopen(filename, "r");
-            if (NULL == fp) { /* can't find or read file! */
+            if (NULL == fp) { /* can't read file! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
                                orte_basename, orte_data_server_uri);
                 return ORTE_ERR_BAD_PARAM;

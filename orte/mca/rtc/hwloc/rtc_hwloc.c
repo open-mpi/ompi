@@ -113,6 +113,9 @@ static int init(void)
                                         &shmemaddr, shmemsize))) {
         /* we couldn't find a hole, so don't use the shmem support */
         if (4 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
+            if (!access("/proc/self/maps", F_OK)) {
+                return ORTE_SUCCESS;
+            }
             FILE *file = fopen("/proc/self/maps", "r");
             if (file) {
                 char line[256];
@@ -572,6 +575,9 @@ static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
     FILE *file;
     char line[96];
 
+    if (!access("/proc/self/maps", F_OK)) {
+      return ORTE_ERROR;
+    }
     file = fopen("/proc/self/maps", "r");
     if (!file) {
         return ORTE_ERROR;

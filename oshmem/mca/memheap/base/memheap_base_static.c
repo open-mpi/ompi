@@ -176,12 +176,15 @@ static int _load_segments(void)
 
     memheap_context.n_segments = 0;
     /* FIXME!!! Linux specific code */
+    if (!access("/proc/self/maps", F_OK)) {
+        MEMHEAP_ERROR("Cannot access /proc/self/maps");
+        return OSHMEM_ERROR;
+    }
     fp = fopen("/proc/self/maps", "r");
-    if (NULL == fp) {
+    if (fp == NULL) {
         MEMHEAP_ERROR("Failed to open /proc/self/maps");
         return OSHMEM_ERROR;
     }
-
     while (NULL != fgets(line, sizeof(line), fp)) {
         memset(&seg, 0, sizeof(seg));
         if (3 > sscanf(line,

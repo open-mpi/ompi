@@ -129,7 +129,7 @@ int get_mem_usage(double *_pss, double *_rss) {
     memset(data, 0, sizeof(data));
     snprintf(data, sizeof(data), "/proc/%d/smaps", pid);
 
-    if (NULL == (smaps = fopen(data, "r"))) {
+    if (!access(data, F_OK) || NULL == (smaps = fopen(data, "r"))) {
         return -1;
     }
 

@@ -114,16 +114,18 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
 
     /* disqualify ourselves if not running in a Cray PAGG container, or we
        were launched by the orte/mpirun launcher */
-    fd = fopen(proc_job_file, "r");
-    if ((fd == NULL) || (getenv("OMPI_NO_USE_CRAY_PMI") != NULL)) {
+    if (!access(proc_job_file, F_OK) ||
+        fd = fopen(proc_job_file, "r") == NULL ||
+        (getenv("OMPI_NO_USE_CRAY_PMI") != NULL)) {
         *priority = 0;
         *module = NULL;
         rc = OPAL_ERROR;
     } else {
         snprintf(task_is_app_fname,sizeof(task_is_app_fname),
                  "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
-        fd_task_is_app = fopen(task_is_app_fname, "r");
-        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container,
+        if(access(fd_task_is_app, F_OK) &&
+           NULL != fd_task_is_app = fopen(task_is_app_fname, "r") {
+                                        /* okay we're in a PAGG container,
                                            and we are an app task (not just a process
                                            running on a mom node, for example),
                                            so we should give cray pmi a shot. */

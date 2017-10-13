@@ -289,7 +289,7 @@ static int query(pid_t pid,
             return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
         }
 
-        if (NULL == (fp = fopen(data, "r"))) {
+        if (!access(data, F_OK) || NULL == (fp = fopen(data, "r"))) {
             /* ignore this */
             return OPAL_SUCCESS;
         }
@@ -318,7 +318,7 @@ static int query(pid_t pid,
             return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
         }
 
-        if (NULL == (fp = fopen(data, "r"))) {
+        if (!access(data, F_OK) || NULL == (fp = fopen(data, "r"))) {
             /* ignore this */
             return OPAL_SUCCESS;
         }
@@ -365,7 +365,7 @@ static int query(pid_t pid,
         nstats->la15 = strtof(eptr, NULL);
 
         /* see if we can open the meminfo file */
-        if (NULL == (fp = fopen("/proc/meminfo", "r"))) {
+        if (!access("/proc/meminfo", F_OK) || NULL == (fp = fopen("/proc/meminfo", "r"))) {
             /* ignore this */
             goto diskstats;
         }
@@ -398,7 +398,7 @@ static int query(pid_t pid,
 
     diskstats:
         /* look for the diskstats file */
-        if (NULL == (fp = fopen("/proc/diskstats", "r"))) {
+        if (!access("/proc/diskstats", F_OK) || NULL == (fp = fopen("/proc/diskstats", "r"))) {
             /* not an error if we don't find this one as it
              * isn't critical
              */
@@ -441,7 +441,7 @@ static int query(pid_t pid,
 
     netstats:
         /* look for the netstats file */
-        if (NULL == (fp = fopen("/proc/net/dev", "r"))) {
+        if (!access("/proc/net/dev", F_OK) || NULL == (fp = fopen("/proc/net/dev", "r"))) {
             /* not an error if we don't find this one as it
              * isn't critical
              */

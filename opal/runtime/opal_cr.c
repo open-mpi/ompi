@@ -987,7 +987,7 @@ static int extract_env_vars(int prev_pid, char * file_name)
         goto cleanup;
     }
 
-    if (NULL == (env_data = fopen(file_name, "r")) ) {
+    if (!access(env_data, F_OK) || NULL == (env_data = fopen(file_name, "r")) ) {
         exit_status = OPAL_ERROR;
         goto cleanup;
     }

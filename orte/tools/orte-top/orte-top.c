@@ -322,9 +322,14 @@ main(int argc, char *argv[])
                 exit(1);
             }
 
+            if (!access(filename, F_OK)) { /* can't find file! */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, filename);
+                orte_finalize();
+                exit(1);
+            }
             /* open the file and extract the pid */
             fp = fopen(filename, "r");
-            if (NULL == fp) { /* can't find or read file! */
+            if (NULL == fp) { /* can't read file! */
                 orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, filename);
                 orte_finalize();
                 exit(1);
@@ -399,9 +404,14 @@ main(int argc, char *argv[])
                 exit(1);
             }
 
+            if(!access(filename, F_OK)) { /* can't find file! */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, filename);
+                orte_finalize();
+                exit(1);
+            }
             /* open the file and extract the uri */
             fp = fopen(filename, "r");
-            if (NULL == fp) { /* can't find or read file! */
+            if (NULL == fp) { /* can't read file! */
                 orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, filename);
                 orte_finalize();
                 exit(1);

@@ -454,8 +454,11 @@ static int hostfile_parse(const char *hostfile, opal_list_t* updates,
     cur_hostfile_name = hostfile;
 
     orte_util_hostfile_done = false;
+    if (!access(hostfile, F_OK))
+      goto errpath;
     orte_util_hostfile_in = fopen(hostfile, "r");
     if (NULL == orte_util_hostfile_in) {
+errpath:
         if (NULL == orte_default_hostfile ||
             0 != strcmp(orte_default_hostfile, hostfile)) {
             /* not the default hostfile, so not finding it
