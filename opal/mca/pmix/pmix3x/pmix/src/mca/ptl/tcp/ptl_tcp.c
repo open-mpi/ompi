@@ -249,12 +249,19 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         } else {
             /* we need to extract the nspace/rank of the server from the string */
             p = strchr(mca_ptl_tcp_component.super.uri, ';');
+            if (NULL == p) {
+                return PMIX_ERR_BAD_PARAM;
+            }
             *p = '\0';
             p++;
             suri = strdup(p); // save the uri portion
             /* the '.' in the first part of the original string separates
              * nspace from rank */
             p = strchr(mca_ptl_tcp_component.super.uri, '.');
+            if (NULL == p) {
+                free(suri);
+                return PMIX_ERR_BAD_PARAM;
+            }
             *p = '\0';
             p++;
             nspace = strdup(mca_ptl_tcp_component.super.uri);

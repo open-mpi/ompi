@@ -36,8 +36,6 @@ include atomics/sys/x86_64/Makefile.include
 include atomics/sys/arm/Makefile.include
 include atomics/sys/arm64/Makefile.include
 include atomics/sys/ia32/Makefile.include
-include atomics/sys/ia64/Makefile.include
-include atomics/sys/mips/Makefile.include
 include atomics/sys/powerpc/Makefile.include
 include atomics/sys/sparcv9/Makefile.include
 include atomics/sys/sync_builtin/Makefile.include

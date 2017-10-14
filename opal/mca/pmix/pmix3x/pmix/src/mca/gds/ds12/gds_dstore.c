@@ -2958,8 +2958,9 @@ static pmix_status_t _store_job_info(pmix_proc_t *proc)
     }
 
     PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
-      if (!PMIX_PROC_IS_V21(_client_peer()) && 0 != strncmp("pmix.", kv->key, 4) &&
-                kv->value->type == PMIX_DATA_ARRAY) {
+      if ((PMIX_PROC_IS_V1(_client_peer()) || PMIX_PROC_IS_V20(_client_peer())) &&
+           0 != strncmp("pmix.", kv->key, 4) &&
+           kv->value->type == PMIX_DATA_ARRAY) {
             pmix_info_t *info;
             size_t size, i;
             info = kv->value->data.darray->array;

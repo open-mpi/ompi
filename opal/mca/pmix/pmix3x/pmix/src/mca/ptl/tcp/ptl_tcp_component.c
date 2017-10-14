@@ -1000,7 +1000,15 @@ static void connection_handler(int sd, short args, void *cbdata)
         bftype = pmix_bfrops_globals.default_type;  // we can't know any better
         gds = NULL;
     } else {
-        proc_type = PMIX_PROC_V21;
+        if (0 == strncmp(version, "2.1", 3)) {
+            proc_type = PMIX_PROC_V21;
+        } else if (0 == strncmp(version, "3", 1)) {
+            proc_type = PMIX_PROC_V3;
+        } else {
+            free(msg);
+            rc = PMIX_ERR_NOT_SUPPORTED;
+            goto error;
+        }
         /* extract the name of the bfrops module they used */
         PMIX_STRNLEN(msglen, mg, cnt);
         if (msglen < cnt) {
