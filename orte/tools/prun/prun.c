@@ -352,6 +352,8 @@ int prun(int argc, char *argv[])
         exit(0);
     }
 
+    /* ensure we ONLY take the ess/tool component */
+    opal_setenv(OPAL_MCA_PREFIX"ess", "tool", true, &environ);
     /* tell the ess/tool component how we want to connect */
     if (myoptions.system_server_only) {
         opal_setenv(OPAL_MCA_PREFIX"ess_tool_system_server_only", "1", true, &environ);

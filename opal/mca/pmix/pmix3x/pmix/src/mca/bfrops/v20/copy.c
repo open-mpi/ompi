@@ -1061,6 +1061,7 @@ pmix_status_t pmix20_bfrop_copy_darray(pmix_data_array_t **dest,
     p->type = src->type;
     p->size = src->size;
     if (0 == p->size || NULL == src->array) {
+        *dest = p;
         return PMIX_SUCCESS;
     }
 

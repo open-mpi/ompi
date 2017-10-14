@@ -1933,6 +1933,7 @@ static void _cnct(int sd, short args, void *cbdata)
                 if (PMIX_SUCCESS != rc) {
                     PMIX_ERROR_LOG(rc);
                     PMIX_RELEASE(reply);
+                    PMIX_DESTRUCT(&pbkt);
                     PMIX_DESTRUCT(&cb);
                     goto cleanup;
                 }
@@ -1941,29 +1942,34 @@ static void _cnct(int sd, short args, void *cbdata)
                     if (PMIX_SUCCESS != rc) {
                         PMIX_ERROR_LOG(rc);
                         PMIX_RELEASE(reply);
+                        PMIX_DESTRUCT(&pbkt);
                         PMIX_DESTRUCT(&cb);
                         goto cleanup;
                     }
                 }
                 PMIX_DESTRUCT(&cb);
-                if (PMIX_PROC_IS_V21(cd->peer)) {
+
+                if (PMIX_PROC_IS_V1(cd->peer) || PMIX_PROC_IS_V20(cd->peer)) {
+                    PMIX_BFROPS_PACK(rc, cd->peer, reply, &pbkt, 1, PMIX_BUFFER);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(reply);
+                        PMIX_DESTRUCT(&pbkt);
+                        PMIX_DESTRUCT(&cb);
+                        goto cleanup;
+                    }
+                } else {
                     PMIX_UNLOAD_BUFFER(&pbkt, bo.bytes, bo.size);
                     PMIX_BFROPS_PACK(rc, cd->peer, reply, &bo, 1, PMIX_BYTE_OBJECT);
                     if (PMIX_SUCCESS != rc) {
                         PMIX_ERROR_LOG(rc);
                         PMIX_RELEASE(reply);
                         PMIX_DESTRUCT(&pbkt);
-                        goto cleanup;
-                    }
-                } else {
-                    PMIX_BFROPS_PACK(rc, cd->peer, reply, &pbkt, 1, PMIX_BUFFER);
-                    if (PMIX_SUCCESS != rc) {
-                        PMIX_ERROR_LOG(rc);
-                        PMIX_RELEASE(reply);
-                        PMIX_DESTRUCT(&pbkt);
+                        PMIX_DESTRUCT(&cb);
                         goto cleanup;
                     }
                 }
+
                 PMIX_DESTRUCT(&pbkt);
             }
         }
