@@ -26,10 +26,10 @@ my @csvrow;
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
 my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
 my @starterlist = qw(mpirun prun srun aprun);
-my @starteroptionlist = ("--novm",
+my @starteroptionlist = (" --novm",
                          "",
-                         "--distribution=cyclic -N",
-                         "-N");
+                         " --distribution=cyclic --ntasks-per-node=",
+                         " -N");
 
 # Set to true if the script should merely print the cmds
 # it would run, but don't run them
@@ -130,7 +130,7 @@ foreach $starter (@starterlist) {
             push @starteroptions, $opt;
         } elsif ($usesrun && $starter eq "srun") {
             push @starters, $starter;
-            $opt = $starteroptionlist[$idx] . " " . $ppn;
+            $opt = $starteroptionlist[$idx] . $ppn;
             push @starteroptions, $opt;
         }
     }
@@ -277,6 +277,10 @@ foreach $starter (@starters) {
         }
         # give it a couple of seconds to start
         sleep 2;
+    } else {
+        if ($myresults) {
+            print FILE "\n\n";
+        }
     }
 
     if ($myresults) {
@@ -292,7 +296,15 @@ foreach $starter (@starters) {
             if (!$SHOWME) {
                 # pre-position the executable
                 $cmd = $starter . $starteroptions[$index] . " $test 2>&1";
-                system($cmd);
+                my $error;
+                $error = system($cmd);
+                if (0 != $error) {
+                    if ($myresults) {
+                        print FILE "Command $cmd returned error $error\n";
+                        $testnum = $testnum + 1;
+                        next;
+                    }
+                }
             }
             $n = 1;
             while ($n <= $num_nodes) {
@@ -321,12 +333,18 @@ foreach $starter (@starters) {
             print "\n--------------------------------------------------\n";
         }
         $testnum = $testnum + 1;
+        if ($starter eq "srun" or $starter eq "aprun") {
+            if ($testnum ge 3) {
+                last;
+            }
+        }
     }
     if ($havedvm) {
         if (!$SHOWME) {
             $cmd = "prun --terminate";
             system($cmd);
         }
+        $havedvm = 0;
     }
     $index = $index + 1;
 }
