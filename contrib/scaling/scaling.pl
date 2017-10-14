@@ -27,7 +27,7 @@ my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
 my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
 my @starterlist = qw(mpirun prun srun aprun);
 my @starteroptionlist = (" --novm",
-                         "",
+                         " --system-server-only",
                          " --distribution=cyclic --ntasks-per-node=",
                          " -N");
 
@@ -267,7 +267,7 @@ foreach $starter (@starters) {
     # if we are going to use the dvm, then we
     if ($starter eq "prun") {
         # need to start it
-        $cmd = "orte-dvm -mca pmix_system_server 1 2>&1 &";
+        $cmd = "orte-dvm --system_server 2>&1 &";
         if ($myresults) {
             print FILE "\n\n$cmd\n";
         }
@@ -341,7 +341,7 @@ foreach $starter (@starters) {
     }
     if ($havedvm) {
         if (!$SHOWME) {
-            $cmd = "prun --terminate";
+            $cmd = "prun --system-server-only --terminate";
             system($cmd);
         }
         $havedvm = 0;

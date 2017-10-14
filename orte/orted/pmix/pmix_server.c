@@ -273,8 +273,10 @@ int pmix_server_init(void)
     }
 
     /* if requested, tell the server to drop a system-level
-     * PMIx connection point */
-    if (orte_pmix_server_globals.system_server) {
+     * PMIx connection point - only do this for the HNP as, in
+     * at least one case, a daemon can be colocated with the
+     * HNP and would overwrite the server rendezvous file */
+    if (orte_pmix_server_globals.system_server && ORTE_PROC_IS_HNP) {
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(OPAL_PMIX_SERVER_SYSTEM_SUPPORT);
         kv->type = OPAL_BOOL;
