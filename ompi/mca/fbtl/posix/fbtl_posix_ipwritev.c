@@ -39,6 +39,7 @@ ssize_t  mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
     mca_fbtl_posix_request_data_t *data;
     mca_ompio_request_t *req = (mca_ompio_request_t *) request;
     int i=0;
+    off_t start_offset, end_offset, total_length;
 
     data = (mca_fbtl_posix_request_data_t *) malloc ( sizeof (mca_fbtl_posix_request_data_t));
     if ( NULL == data ) {
@@ -66,6 +67,7 @@ ssize_t  mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
         free(data);
         return 0;
     }
+    data->aio_fh = fh;
 
     for ( i=0; i<fh->f_num_of_io_entries; i++ ) {
         data->aio_reqs[i].aio_offset  = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
@@ -85,10 +87,16 @@ ssize_t  mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
     else {
 	data->aio_last_active_req = data->aio_req_count;
     }
+    
+    start_offset = data->aio_reqs[data->aio_first_active_req].aio_offset;
+    end_offset   = data->aio_reqs[data->aio_last_active_req-1].aio_offset + data->aio_reqs[data->aio_last_active_req-1].aio_nbytes;
+    total_length = (end_offset - start_offset);
+    mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_WRLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
 
     for (i=0; i < data->aio_last_active_req; i++) {
         if (-1 == aio_write(&data->aio_reqs[i])) {
             opal_output(1, "aio_write() error: %s", strerror(errno));
+            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );                    
             free(data->aio_req_status);
             free(data->aio_reqs);
             free(data);
