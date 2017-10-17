@@ -231,6 +231,12 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
 
+#if defined(HAVE_SEM_OPEN)
+    if ( 0 == rank ) {
+        sem_unlink ( sm_data->sem_name);
+    }
+#endif
+
     return err;
 }
 
@@ -263,7 +269,7 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
         if (file_data->sm_offset_ptr) {
             /* destroy semaphore */
 #if defined(HAVE_SEM_OPEN)
-             sem_unlink (file_data->sem_name);
+             sem_close ( file_data->mutex);
              free (file_data->sem_name);
 #elif defined(HAVE_SEM_INIT)
             sem_destroy(&file_data->sm_offset_ptr->mutex);
