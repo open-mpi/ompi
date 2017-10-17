@@ -14,7 +14,7 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
-# Copyright (c) 2014-2016 Research Organization for Information Science
+# Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -132,8 +132,8 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                                 [], with_pmi=no)
 
     AC_ARG_WITH([pmi-libdir],
-                [AC_HELP_STRING([--with-pmi-libdir(=DIR)],
-                                [Look for libpmi or libpmi2 in the given directory, DIR/lib or DIR/lib64])])
+                [AC_HELP_STRING([--with-pmi-libdir=DIR],
+                                [Look for libpmi or libpmi2 in the given directory DIR, DIR/lib or DIR/lib64])])
 
     check_pmi_install_dir=
     check_pmi_lib_dir=
@@ -233,6 +233,10 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                 [AC_HELP_STRING([--with-pmix(=DIR)],
                                 [Build PMIx support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of PMIx.  "external" forces Open MPI to use an external installation of PMIx.  Supplying a valid directory name also forces Open MPI to use an external installation of PMIx, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI does not support --without-pmix.])])
 
+    AC_ARG_WITH([pmix-libdir],
+                [AC_HELP_STRING([--with-pmix-libdir=DIR],
+                                [Look for libpmix the given directory DIR, DIR/lib or DIR/lib64])])
+
     AS_IF([test "$with_pmix" = "no"],
           [AC_MSG_WARN([Open MPI requires PMIx support. It can be built])
            AC_MSG_WARN([with either its own internal copy of PMIx, or with])
@@ -254,7 +258,34 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
 
            # Make sure we have the headers and libs in the correct location
            OPAL_CHECK_WITHDIR([external-pmix], [$pmix_ext_install_dir/include], [pmix.h])
-           OPAL_CHECK_WITHDIR([external-libpmix], [$pmix_ext_install_dir/lib], [libpmix.*])
+
+           AS_IF([test -n "$with_pmix_libdir"],
+                 [AC_MSG_CHECKING([libpmix.* in $with_pmix_libdir])
+                  files=`ls $with_pmix_libdir/libpmix.* 2> /dev/null | wc -l`
+                  AS_IF([test "$files" -gt 0],
+                        [pmix_ext_install_libdir=$with_pmix_libdir],
+                        [AC_MSG_CHECKING([libpmix.* in $with_pmix_libdir/lib64])
+                         files=`ls $with_pmix_libdir/lib64/libpmix.* 2> /dev/null | wc -l`
+                         AS_IF([test "$files" -gt 0],
+                               [pmix_ext_install_libdir=$with_pmix_libdir/lib64],
+                               [AC_MSG_CHECKING([libpmix.* in $with_pmix_libdir/lib])
+                                files=`ls $with_pmix_libdir/lib/libpmix.* 2> /dev/null | wc -l`
+                                AS_IF([test "$files" -gt 0],
+                                      [pmix_ext_install_libdir=$with_pmix_libdir/lib],
+                                      [AC_MSG_RESULT([not found])
+                                       AC_MSG_ERROR([Cannot continue])])])])],
+                 [# check for presence of lib64 directory - if found, see if the
+                  # desired library is present and matches our build requirements
+                  AC_MSG_CHECKING([libpmix.* in $pmix_ext_install_dir/lib64])
+                  files=`ls $pmix_ext_install_dir/lib64/libpmix.* 2> /dev/null | wc -l`
+                  AS_IF([test "$files" -gt 0],
+                        [pmix_ext_install_libdir=$pmix_ext_install_dir/lib64],
+                        [AC_MSG_CHECKING([libpmix.* in $pmix_ext_install_dir/lib])
+                         files=`ls $pmix_ext_install_dir/lib/libpmix.* 2> /dev/null | wc -l`
+                         AS_IF([test "$files" -gt 0],
+                               [pmix_ext_install_libdir=$pmix_ext_install_dir/lib],
+                               [AC_MSG_RESULT([not found])
+                                AC_MSG_ERROR([Cannot continue])])])])
 
            # check the version
            opal_external_pmix_save_CPPFLAGS=$CPPFLAGS
@@ -324,8 +355,9 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            LDFLAGS=$opal_external_pmix_save_LDFLAGS
            LIBS=$opal_external_pmix_save_LIBS
 
-           opal_external_pmix_CPPFLAGS="-I$pmix_ext_install_dir/include"
-           opal_external_pmix_LDFLAGS=-L$pmix_ext_install_dir/lib
+           AS_IF([test "$pmix_ext_install_dir" != "/usr"],
+                 [opal_external_pmix_CPPFLAGS="-I$pmix_ext_install_dir/include"
+                  opal_external_pmix_LDFLAGS=-L$pmix_ext_install_libdir])
            opal_external_pmix_LIBS=-lpmix
            opal_external_pmix_happy=yes])
 
