@@ -34,6 +34,8 @@
 
 BEGIN_C_DECLS
 
+/* MPI_THREAD_MULTIPLE_SUPPORT */
+extern opal_mutex_t mtl_psm2_mq_mutex;
 
 /* MTL interface functions */
 extern int ompi_mtl_psm2_add_procs(struct mca_mtl_base_module_t* mtl,
