@@ -183,6 +183,22 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                [AC_MSG_RESULT([yes])],
                [AC_MSG_RESULT([no])
                 AC_MSG_ERROR([Cannot continue])])
+           AC_MSG_CHECKING([if external hwloc version is lower than 2.0])
+           AS_IF([test "$opal_hwloc_dir" != ""],
+                 [opal_hwloc_external_CFLAGS_save=$CFLAGS
+                  CFLAGS="-I$opal_hwloc_dir/include $opal_hwloc_external_CFLAGS_save"])
+           AC_COMPILE_IFELSE(
+               [AC_LANG_PROGRAM([[#include <hwloc.h>]],
+                   [[
+#if HWLOC_API_VERSION >= 0x00020000
+#error "hwloc API version is greater or equal than 0x00020000"
+#endif
+                   ]])],
+               [AC_MSG_RESULT([yes])],
+               [AC_MSG_RESULT([no])
+                AC_MSG_ERROR([The Open MPI v2.0.x series does not support hwloc >= v2.0.
+Open MPI v3.1.0 and later support hwloc >= v2.0.
+Cannot continue])])
            AS_IF([test "$opal_hwloc_dir" != ""],
                  [CFLAGS=$opal_hwloc_external_CFLAGS_save])
 
