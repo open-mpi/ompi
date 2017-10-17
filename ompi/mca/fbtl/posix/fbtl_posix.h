@@ -73,6 +73,8 @@ struct mca_fbtl_posix_request_data_t {
     struct aiocb       *aio_reqs;       /* pointer array of req structures */
     int          *aio_req_status;       /* array of statuses */
     ssize_t        aio_total_len;       /* total amount of data written */
+    struct flock   aio_lock;            /* lock used for certain file systems */
+    mca_io_ompio_file_t  *aio_fh;       /* pointer back to the mca_io_ompio_fh structure */
 };
 typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
 
