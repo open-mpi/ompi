@@ -406,58 +406,62 @@ int ompi_mtl_psm2_progress( void ) {
     int completed = 1;
 
     do {
+        OPAL_THREAD_LOCK(&mtl_psm2_mq_mutex);
         err = psm2_mq_ipeek2(ompi_mtl_psm2.mq, &req, NULL);
-	if (err == PSM2_MQ_INCOMPLETE) {
-	    return completed;
-	} else if (err != PSM2_OK) {
-	    goto error;
-	}
+        if (err == PSM2_MQ_INCOMPLETE) {
+            OPAL_THREAD_UNLOCK(&mtl_psm2_mq_mutex);
+            return completed;
+        } else if (OPAL_UNLIKELY(err != PSM2_OK)) {
+            OPAL_THREAD_UNLOCK(&mtl_psm2_mq_mutex);
+            goto error;
+        }
 
-	completed++;
+        err = psm2_mq_test2(&req, &psm2_status);
+        OPAL_THREAD_UNLOCK(&mtl_psm2_mq_mutex);
 
-	err = psm2_mq_test2(&req, &psm2_status);
-	if (err != PSM2_OK) {
-	    goto error;
-	}
+        if (OPAL_UNLIKELY (err != PSM2_OK)) {
+            goto error;
+        }
+
+        completed++;
 
         mtl_psm2_request = (mca_mtl_psm2_request_t*) psm2_status.context;
 
-	if (mtl_psm2_request->type == OMPI_mtl_psm2_IRECV) {
+        if (mtl_psm2_request->type == OMPI_mtl_psm2_IRECV) {
 
-        mtl_psm2_request->super.ompi_req->req_status.MPI_SOURCE =
-            psm2_status.msg_tag.tag1;
-	    mtl_psm2_request->super.ompi_req->req_status.MPI_TAG =
-		    psm2_status.msg_tag.tag0;
+            mtl_psm2_request->super.ompi_req->req_status.MPI_SOURCE =
+                psm2_status.msg_tag.tag1;
+            mtl_psm2_request->super.ompi_req->req_status.MPI_TAG =
+                psm2_status.msg_tag.tag0;
             mtl_psm2_request->super.ompi_req->req_status._ucount =
                 psm2_status.nbytes;
 
             ompi_mtl_datatype_unpack(mtl_psm2_request->convertor,
-                                     mtl_psm2_request->buf,
-                                     psm2_status.msg_length);
-	}
+                mtl_psm2_request->buf,
+                psm2_status.msg_length);
+        }
 
-	if(mtl_psm2_request->type == OMPI_mtl_psm2_ISEND) {
-	  if (mtl_psm2_request->free_after) {
-	    free(mtl_psm2_request->buf);
-	  }
-	}
+        if(mtl_psm2_request->type == OMPI_mtl_psm2_ISEND) {
+          if (mtl_psm2_request->free_after) {
+            free(mtl_psm2_request->buf);
+          }
+        }
 
-	switch (psm2_status.error_code) {
-	    case PSM2_OK:
-		mtl_psm2_request->super.ompi_req->req_status.MPI_ERROR =
-		    OMPI_SUCCESS;
-		break;
-	    case PSM2_MQ_TRUNCATION:
-		mtl_psm2_request->super.ompi_req->req_status.MPI_ERROR =
-		    MPI_ERR_TRUNCATE;
-		break;
-	    default:
-		mtl_psm2_request->super.ompi_req->req_status.MPI_ERROR =
-                        MPI_ERR_INTERN;
-	}
+        switch (psm2_status.error_code) {
+            case PSM2_OK:
+            mtl_psm2_request->super.ompi_req->req_status.MPI_ERROR =
+                OMPI_SUCCESS;
+            break;
+            case PSM2_MQ_TRUNCATION:
+            mtl_psm2_request->super.ompi_req->req_status.MPI_ERROR =
+                MPI_ERR_TRUNCATE;
+            break;
+            default:
+            mtl_psm2_request->super.ompi_req->req_status.MPI_ERROR =
+                MPI_ERR_INTERN;
+        }
 
-	mtl_psm2_request->super.completion_callback(&mtl_psm2_request->super);
-
+        mtl_psm2_request->super.completion_callback(&mtl_psm2_request->super);
     }
     while (1);
 
