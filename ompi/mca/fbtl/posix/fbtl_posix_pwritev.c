@@ -39,7 +39,7 @@ ssize_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
     OMPI_MPI_OFFSET_TYPE iov_offset = 0;
     ssize_t ret_code=0, bytes_written=0;
     struct flock lock;
-    off_t total_length;
+    off_t total_length, end_offset=0;
 
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
@@ -57,6 +57,7 @@ ssize_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
 	    iov[iov_count].iov_base = fh->f_io_array[i].memory_address;
 	    iov[iov_count].iov_len = fh->f_io_array[i].length;
 	    iov_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset;
+            end_offset = (off_t)fh->f_io_array[i].offset + (off_t)fh->f_io_array[i].length;
 	    iov_count ++;
 	}
 
@@ -78,6 +79,7 @@ ssize_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
 		 (iov_count < IOV_MAX )) {
 		iov[iov_count].iov_base = fh->f_io_array[i+1].memory_address;
 		iov[iov_count].iov_len  = fh->f_io_array[i+1].length;
+                end_offset = (off_t)fh->f_io_array[i].offset + (off_t)fh->f_io_array[i].length;
                 iov_count ++;
 		continue;
 	    }
@@ -95,7 +97,7 @@ ssize_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
 
 	*/
 
-        total_length = ((off_t)iov[iov_count-1].iov_base + iov[iov_count-1].iov_len - (off_t)iov_offset);
+        total_length = (end_offset - (off_t)iov_offset);
         mca_fbtl_posix_lock ( &lock, fh, F_WRLCK, iov_offset, total_length, OMPIO_LOCK_SELECTIVE ); 
 #if defined (HAVE_PWRITEV) 
 	ret_code = pwritev (fh->fd, iov, iov_count, iov_offset);

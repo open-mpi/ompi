@@ -43,6 +43,9 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
     lock->l_whence = SEEK_SET;
     lock->l_start  =-1;
     lock->l_len    =-1;
+    if ( 0 == len ) {
+        return 0;
+    } 
     if ( fh->f_atomicity ||
          fh->f_flags & OMPIO_LOCK_ALWAYS ) {
         /* Need to lock the entire region */
@@ -66,7 +69,7 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
             */
             return 0;
         }
-        if ( OMPIO_LOCK_ENTIRE_REGION ) {
+        if ( flags == OMPIO_LOCK_ENTIRE_REGION ) {
             lock->l_start = (off_t) offset;
             lock->l_len   = len;            
         }
@@ -79,13 +82,13 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
                the two into a single lock.
             */
             bmod = offset % fh->f_fs_block_size; 
-            if ( !bmod  ) {
+            if ( bmod  ) {
                 lock->l_start = (off_t) offset;
-                lock->l_len   = fh->f_fs_block_size - bmod;
+                lock->l_len   = bmod;
             }
-            lmod = (offset+len-1)%fh->f_fs_block_size;
-            if ( !lmod ) {
-                if ( bmod ) {
+            lmod = (offset+len)%fh->f_fs_block_size;
+            if ( lmod ) {
+                if ( !bmod ) {
                     lock->l_start = (offset+len-lmod );
                     lock->l_len   = lmod;
                 }
@@ -100,15 +103,28 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
         }
     }
 
+
+#ifdef OMPIO_DEBUG
+    printf("%d: acquiring lock for offset %ld length %ld requested offset %ld request len %ld \n", 
+           fh->f_rank, lock->l_start, lock->l_len, offset, len);
+#endif
     return (fcntl ( fh->fd, F_SETLKW, lock));     
 }
 
 int mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh )
 {
+    int ret;
     if ( -1 == lock->l_start && -1 == lock->l_len ) {
         return 0;
     }
     
     lock->l_type = F_UNLCK;
-    return (fcntl ( fh->fd, F_SETLK, lock));     
+#ifdef OMPIO_DEBUG
+    printf("%d: releasing lock for offset %ld length %ld\n", fh->f_rank, lock->l_start, lock->l_len);
+#endif
+    ret = fcntl ( fh->fd, F_SETLK, lock);     
+    lock->l_start = -1;
+    lock->l_len   = -1;
+
+    return ret;
 }

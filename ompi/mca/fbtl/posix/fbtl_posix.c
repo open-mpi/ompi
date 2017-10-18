@@ -203,6 +203,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 	/* all pending operations are finished for this request */
 	req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
 	req->req_ompi.req_status._ucount = data->aio_total_len;
+        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
 	ret = true;
     }
 #endif
@@ -215,6 +216,7 @@ void mca_fbtl_posix_request_free ( mca_ompio_request_t *req)
     /* Free the fbtl specific data structures */
     mca_fbtl_posix_request_data_t *data=(mca_fbtl_posix_request_data_t *)req->req_data;
     if (NULL != data ) {
+        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
 	if ( NULL != data->aio_reqs ) {
 	    free ( data->aio_reqs);
 	}
