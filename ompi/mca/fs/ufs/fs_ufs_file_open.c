@@ -28,9 +28,11 @@
 #include <sys/stat.h>
 #include "mpi.h"
 #include "ompi/constants.h"
+#include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
+#include "opal/util/path.h"
 
 /*
  *	file_open_ufs
@@ -100,6 +102,35 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
        4096 is the most common value, but it might not always be accurate.
     */
     fh->f_fs_block_size = 4096;
+
+    /* Need to check for NFS here. If the file system is not NFS but a regular UFS file system,
+       we do not need to enforce locking. A regular XFS or EXT4 file system can only be used 
+       within a single node, local environment, and in this case the OS will already ensure correct
+       handling of file system blocks;
+    */
+       
+    char *fstype=NULL;
+    bool bret = opal_path_nfs ( (char *)filename, &fstype );
+
+    if ( false == bret ) {
+        char *dir;
+        mca_fs_base_get_parent_dir ( (char *)filename, &dir );
+        bret = opal_path_nfs (dir, &fstype);
+        free(dir);
+    }
+    
+    if ( true == bret ) {
+        if ( 0 == strncasecmp(fstype, "nfs", sizeof("nfs")) ) {
+            /* Nothing really to be done in this case. Locking can stay */
+        }
+        else {
+            fh->f_flags |= OMPIO_LOCK_NEVER;
+        }
+    }
+    else {
+            fh->f_flags |= OMPIO_LOCK_NEVER;
+    }
+    free (fstype);
 
     return OMPI_SUCCESS;
 }
