@@ -56,6 +56,7 @@ typedef struct {
 } mca_coll_hcoll_dtype_t;
 OBJ_CLASS_DECLARATION(mca_coll_hcoll_dtype_t);
 
+extern mca_coll_hcoll_dtype_t zero_dte_mapping;
 struct mca_coll_hcoll_component_t {
     /** Base coll component */
     mca_coll_base_component_2_0_0_t super;
