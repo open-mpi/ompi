@@ -96,6 +96,10 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
 
     fh->f_stripe_size=0;
     fh->f_stripe_count=1;
+    /* Need to find a way to determine the file system block size at run time.
+       4096 is the most common value, but it might not always be accurate.
+    */
+    fh->f_fs_block_size = 4096;
 
     return OMPI_SUCCESS;
 }
