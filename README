@@ -1078,6 +1078,10 @@ MISCELLANEOUS SUPPORT LIBRARIES
   to include Open MPI and use their default hwloc installation instead
   of Open MPI's bundled hwloc.
 
+  Note that this version of Open MPI does not support hwloc >= v2.0.
+  If hwloc v2.0.x support is needed, Open MPI v3.1.x (and later) can
+  be used.
+
   hwloc is a support library that provides processor and memory
   affinity information for NUMA platforms.
 
