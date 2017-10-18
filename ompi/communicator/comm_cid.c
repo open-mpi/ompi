@@ -506,7 +506,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     if (MPI_UNDEFINED != (*newcomm)->c_local_group->grp_my_rank) {
         /* Initialize the PML stuff in the newcomm  */
         if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
-            OBJ_RELEASE(newcomm);
+            OBJ_RELEASE(*newcomm);
             OBJ_RELEASE(context);
             *newcomm = MPI_COMM_NULL;
             return ret;
