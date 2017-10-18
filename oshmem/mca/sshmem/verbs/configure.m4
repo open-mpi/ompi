@@ -76,6 +76,26 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
     exp_reg_mr_happy=0
     AS_IF([test "$oshmem_have_mpage" = "3"],
             [
+                oshmem_verbs_save_CFLAGS="$CFLAGS"
+                CFLAGS="$CFLAGS -Wno-strict-prototypes -Werror"
+
+                AC_COMPILE_IFELSE(
+                         [AC_LANG_PROGRAM([[#include <infiniband/verbs_exp.h>]],
+                                           [[
+                                             struct ibv_exp_reg_shared_mr_in in_smr;
+                                             uint64_t access_flags = IBV_EXP_ACCESS_SHARED_MR_USER_READ   |
+                                                                     IBV_EXP_ACCESS_SHARED_MR_USER_WRITE  |
+                                                                     IBV_EXP_ACCESS_SHARED_MR_GROUP_READ  |
+                                                                     IBV_EXP_ACCESS_SHARED_MR_GROUP_WRITE |
+                                                                     IBV_EXP_ACCESS_SHARED_MR_OTHER_READ  |
+                                                                     IBV_EXP_ACCESS_SHARED_MR_OTHER_WRITE;
+                                             in_smr.exp_access = access_flags;
+                                             ibv_exp_reg_shared_mr(&in_smr);
+                                          ]])], [],
+                          [oshmem_verbs_sm_build_verbs=0])
+
+                CFLAGS="$oshmem_verbs_save_CFLAGS"
+
               AC_CHECK_MEMBER([struct ibv_exp_reg_shared_mr_in.exp_access],
                 [exp_access_happy=1],
                 [],
