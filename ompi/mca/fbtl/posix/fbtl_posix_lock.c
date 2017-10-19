@@ -23,21 +23,29 @@
 #include "mpi.h"
 #include <unistd.h>
 #include <sys/uio.h>
+#include <errno.h>
 #include <limits.h>
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-
+#define MAX_ERRCOUNT 100
 
 /*
   op:    can be F_WRLCK or F_RDLCK
-  flags: can be OMPIO_LOCK_ENTIRE_REGION or OMPIO_LOCK_SELECTIVE
+  flags: can be OMPIO_LOCK_ENTIRE_REGION or OMPIO_LOCK_SELECTIVE. This is typically set by the operation, not the fs component.
+         e.g. a collective and an individual component might require different level of protection through locking, 
+         also one might need to do different things for blocking (pwritev,preadv) operations and non-blocking (aio) operations.
+
+  fh->f_flags can contain similar sounding flags, those were set by the fs component and/or user requests.
+  
+  Support for MPI atomicity operations are envisioned, but not yet tested.
 */
 
 int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op, 
                           OMPI_MPI_OFFSET_TYPE offset, off_t len, int flags)
 {
     off_t lmod, bmod;
+    int ret, err_count;
 
     lock->l_type   = op;
     lock->l_whence = SEEK_SET;
@@ -46,11 +54,10 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
     if ( 0 == len ) {
         return 0;
     } 
-    if ( fh->f_atomicity ||
-         fh->f_flags & OMPIO_LOCK_ALWAYS ) {
-        /* Need to lock the entire region */
-        lock->l_start = (off_t) offset;
-        lock->l_len   = len;
+
+    if ( fh->f_flags & OMPIO_LOCK_ENTIRE_FILE ) {
+        lock->l_start = (off_t) 0;
+        lock->l_len   = 0;
     }  
     else {
         if ( (fh->f_flags & OMPIO_LOCK_NEVER) ||
@@ -108,23 +115,35 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
     printf("%d: acquiring lock for offset %ld length %ld requested offset %ld request len %ld \n", 
            fh->f_rank, lock->l_start, lock->l_len, offset, len);
 #endif
-    return (fcntl ( fh->fd, F_SETLKW, lock));     
+    errno=0;
+    err_count=0;
+    do {
+        ret = fcntl ( fh->fd, F_SETLKW, lock);
+        if ( ret ) {
+#ifdef OMPIO_DEBUG
+            printf("[%d] ret = %d errno=%d %s\n", fh->f_rank, ret, errno, strerror(errno) );
+#endif
+            err_count++;
+        }
+    } while (  ret && ((errno == EINTR) || ((errno == EINPROGRESS) && err_count < MAX_ERRCOUNT )));
+
+
+    return ret;
 }
 
-int mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh )
+void  mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh )
 {
-    int ret;
     if ( -1 == lock->l_start && -1 == lock->l_len ) {
-        return 0;
+        return;
     }
     
     lock->l_type = F_UNLCK;
 #ifdef OMPIO_DEBUG
     printf("%d: releasing lock for offset %ld length %ld\n", fh->f_rank, lock->l_start, lock->l_len);
 #endif
-    ret = fcntl ( fh->fd, F_SETLK, lock);     
+    fcntl ( fh->fd, F_SETLK, lock);     
     lock->l_start = -1;
     lock->l_len   = -1;
 
-    return ret;
+    return;
 }

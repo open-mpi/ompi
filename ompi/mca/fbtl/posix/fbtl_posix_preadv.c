@@ -31,7 +31,7 @@
 ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 {
     /*int *fp = NULL;*/
-    int i, block=1;
+    int i, block=1, ret;
     struct iovec *iov = NULL;
     int iov_count = 0;
     OMPI_MPI_OFFSET_TYPE iov_offset = 0;
@@ -85,12 +85,20 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	}
 
         total_length = (end_offset - (off_t)iov_offset );
-        mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, iov_offset, total_length, OMPIO_LOCK_SELECTIVE ); 
+
+        ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, iov_offset, total_length, OMPIO_LOCK_SELECTIVE ); 
+        if ( 0 < ret ) {
+            opal_output(1, "mca_fbtl_posix_preadv: error in mca_fbtl_posix_lock() ret=%d: %s", ret, strerror(errno));
+            free (iov);
+            /* Just in case some part of the lock worked */
+            mca_fbtl_posix_unlock ( &lock, fh);
+            return OMPI_ERROR;
+        }
 #if defined(HAVE_PREADV)
 	ret_code = preadv (fh->fd, iov, iov_count, iov_offset);
 #else
 	if (-1 == lseek (fh->fd, iov_offset, SEEK_SET)) {
-            opal_output(1, "lseek:%s", strerror(errno));
+            opal_output(1, "mca_fbtl_posix_preadv: error in lseek:%s", strerror(errno));
             free(iov);
             mca_fbtl_posix_unlock ( &lock, fh );
 	    return OMPI_ERROR;
@@ -102,7 +110,7 @@ ssize_t mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh )
 	    bytes_read+=ret_code;
 	}
 	else if ( ret_code == -1 ) {
-            opal_output(1, "readv:%s", strerror(errno));
+            opal_output(1, "mca_fbtl_posix_preadv: error in (p)readv:%s", strerror(errno));
             free(iov);
 	    return OMPI_ERROR;
 	}
