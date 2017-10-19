@@ -39,7 +39,7 @@ ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *fh,
 #if defined (FBTL_POSIX_HAVE_AIO)
     mca_fbtl_posix_request_data_t *data;
     mca_ompio_request_t *req = (mca_ompio_request_t *) request;
-    int i=0;
+    int i=0, ret;
     off_t start_offset, end_offset, total_length;
 
     data = (mca_fbtl_posix_request_data_t *) malloc ( sizeof (mca_fbtl_posix_request_data_t));
@@ -92,11 +92,19 @@ ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *fh,
     start_offset = data->aio_reqs[data->aio_first_active_req].aio_offset;
     end_offset   = data->aio_reqs[data->aio_last_active_req-1].aio_offset + data->aio_reqs[data->aio_last_active_req-1].aio_nbytes;
     total_length = (end_offset - start_offset);
-    mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
+    ret = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
+    if ( 0 < ret ) {
+        opal_output(1, "mca_fbtl_posix_ipreadv: error in mca_fbtl_posix_lock() error ret=%d  %s", ret, strerror(errno));
+        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );            
+        free(data->aio_reqs);
+        free(data->aio_req_status);
+        free(data);
+        return OMPI_ERROR;
+    }
 
     for (i=0; i < data->aio_last_active_req; i++) {
         if (-1 == aio_read(&data->aio_reqs[i])) {
-            opal_output(1, "aio_read() error: %s", strerror(errno));
+            opal_output(1, "mca_fbtl_posix_ipreadv: error in aio_read(): %s", strerror(errno));
             mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );            
             free(data->aio_reqs);
             free(data->aio_req_status);

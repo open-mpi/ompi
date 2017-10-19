@@ -90,6 +90,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_amode  = amode;
     ompio_fh->f_info   = info;
     ompio_fh->f_atomicity = 0;
+    ompio_fh->f_fs_block_size = 4096;
 
     mca_common_ompio_set_file_defaults (ompio_fh);
     ompio_fh->f_filename = filename;
