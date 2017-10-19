@@ -64,7 +64,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_CONTIGUOUS_FVIEW       0x00000010
 #define OMPIO_AGGREGATOR_IS_SET      0x00000020
 #define OMPIO_SHAREDFP_IS_SET        0x00000040
-#define OMPIO_LOCK_ALWAYS            0x00000080
+#define OMPIO_LOCK_ENTIRE_FILE       0x00000080
 #define OMPIO_LOCK_NEVER             0x00000100
 #define OMPIO_LOCK_NOT_THIS_OP       0x00000200
 

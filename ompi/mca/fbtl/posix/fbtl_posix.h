@@ -60,7 +60,7 @@ void mca_fbtl_posix_request_free ( mca_ompio_request_t *req);
 
 int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op, 
                           OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags);
-int mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh );
+void  mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh );
 
 
 struct mca_fbtl_posix_request_data_t {

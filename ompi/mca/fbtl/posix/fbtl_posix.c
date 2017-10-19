@@ -116,7 +116,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 {
     bool ret=false;
 #if defined (FBTL_POSIX_HAVE_AIO)
-    int i=0, lcount=0;
+    int i=0, lcount=0, ret_code;
     mca_fbtl_posix_request_data_t *data=(mca_fbtl_posix_request_data_t *)req->req_data;
     off_t start_offset, end_offset, total_length;
 
@@ -172,23 +172,29 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
         total_length = (end_offset - start_offset);
 
         if ( FBTL_POSIX_READ == data->aio_req_type ) {
-            mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
+            ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
         }
         else if ( FBTL_POSIX_WRITE == data->aio_req_type ) {
-            mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_WRLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
+            ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_WRLCK, start_offset, total_length, OMPIO_LOCK_ENTIRE_REGION );
         }
-
+        if ( 0 < ret_code ) {
+            opal_output(1, "mca_fbtl_posix_progress: error in mca_fbtl_posix_lock() %d", ret_code);
+            /* Just in case some part of the lock actually succeeded. */
+            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
+            return OMPI_ERROR;
+        }
+        
 	for ( i=data->aio_first_active_req; i< data->aio_last_active_req; i++ ) {
 	    if ( FBTL_POSIX_READ == data->aio_req_type ) {
 		if (-1 == aio_read(&data->aio_reqs[i])) {
-		    perror("aio_read() error");
+		    opal_output(1, "mca_fbtl_posix_progress: error in aio_read()");
                     mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
 		    return OMPI_ERROR;
 		}
 	    }
 	    else if ( FBTL_POSIX_WRITE == data->aio_req_type ) {
 		if (-1 == aio_write(&data->aio_reqs[i])) {
-		    perror("aio_write() error");
+		    opal_output(1, "mca_fbtl_posix_progress: error in aio_write()");
                     mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh );
 		    return OMPI_ERROR;
 		}

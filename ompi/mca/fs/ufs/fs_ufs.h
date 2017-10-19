@@ -29,6 +29,12 @@
 #include "ompi/mca/common/ompio/common_ompio.h"
 
 extern int mca_fs_ufs_priority;
+extern int mca_fs_ufs_lock_algorithm;
+
+#define FS_UFS_LOCK_AUTO        0
+#define FS_UFS_LOCK_NEVER       1
+#define FS_UFS_LOCK_ENTIRE_FILE 2
+#define FS_UFS_LOCK_RANGES      3
 
 BEGIN_C_DECLS
 
