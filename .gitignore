@@ -383,6 +383,7 @@ orte/test/mpi/hello_output
 orte/test/mpi/hello_show_help
 orte/test/mpi/hello
 orte/test/mpi/hello++
+orte/test/mpi/interlib
 orte/test/mpi/loop_child
 orte/test/mpi/loop_spawn
 orte/test/mpi/mpi_barrier
