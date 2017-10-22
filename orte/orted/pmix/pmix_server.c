@@ -148,6 +148,14 @@ void pmix_server_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_pmix_server_globals.wait_for_server);
 
+    /* whether or not to support legacy usock connections as well as tcp */
+    orte_pmix_server_globals.legacy = false;
+    (void) mca_base_var_register ("orte", "pmix", NULL, "server_usock_connections",
+                                  "Whether or not to support legacy usock connections",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_pmix_server_globals.legacy);
+
     /* whether or not to drop a session-level tool rendezvous point */
     orte_pmix_server_globals.session_server = false;
     (void) mca_base_var_register ("orte", "pmix", NULL, "session_server",
@@ -250,12 +258,14 @@ int pmix_server_init(void)
     kv->type = OPAL_STRING;
     kv->data.string = opal_os_path(false, orte_process_info.jobfam_session_dir, NULL);
     opal_list_append(&info, &kv->super);
-    /* use only one listener */
-    kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_SINGLE_LISTENER);
-    kv->type = OPAL_BOOL;
-    kv->data.flag = true;
-    opal_list_append(&info, &kv->super);
+    if (!orte_pmix_server_globals.legacy) {
+        /* use only one listener */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_SINGLE_LISTENER);
+        kv->type = OPAL_BOOL;
+        kv->data.flag = true;
+        opal_list_append(&info, &kv->super);
+    }
     /* tell the server to use its own internal monitoring */
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_SERVER_ENABLE_MONITORING);

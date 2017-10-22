@@ -421,7 +421,11 @@ int pmix12_v2_to_v1_datatype(pmix_data_type_t v2type)
             v1type = 6;
             break;
 
-        case 22:
+        case 39:
+            /* data arrays must be converted to info arrays */
+            v1type = 22;
+            break;
+
         case 23:
         case 24:
         case 25:
@@ -494,6 +498,10 @@ pmix_status_t pmix12_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t
     pmix_status_t rc;
 
     rc = pmix12_bfrop_unpack_datatype(buffer, &v1type, &n, PMIX_INT);
+    if (UINT16_MAX < v1type) {
+        *type = 0;
+        return PMIX_ERR_UNKNOWN_DATA_TYPE;
+    }
     if (PMIX_SUCCESS == rc) {
         *type = pmix12_v1_to_v2_datatype(v1type);
     }
