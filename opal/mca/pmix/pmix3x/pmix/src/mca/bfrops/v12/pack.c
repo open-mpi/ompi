@@ -86,6 +86,9 @@ pmix_status_t pmix12_bfrop_pack_buffer(pmix_buffer_t *buffer,
         case PMIX_PERSIST:
             v1type = PMIX_INT;
             break;
+        case PMIX_INFO_ARRAY:
+            v1type = 22;
+            break;
         default:
             v1type = type;
     }
@@ -95,6 +98,11 @@ pmix_status_t pmix12_bfrop_pack_buffer(pmix_buffer_t *buffer,
         if (PMIX_SUCCESS != (rc = pmix12_bfrop_store_data_type(buffer, v1type))) {
             return rc;
         }
+    }
+    /* if it is an info array, we have to set the type back
+     * so the pack routine will get the correct function */
+    if (PMIX_INFO_ARRAY == type) {
+        v1type = PMIX_INFO_ARRAY;
     }
 
     /* Lookup the pack function for this type and call it */
@@ -436,6 +444,7 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
 {
     pmix_status_t ret;
     pmix_info_array_t array;
+    int rank;
 
     switch (p->type) {
     case PMIX_BOOL:
@@ -529,7 +538,7 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
         }
         break;
     case PMIX_INFO_ARRAY:
-        if (PMIX_SUCCESS != (ret = pmix12_bfrop_pack_buffer(buffer, p->data.array, 1, PMIX_INFO_ARRAY))) {
+        if (PMIX_SUCCESS != (ret = pmix12_bfrop_pack_buffer(buffer, &p->data.array, 1, PMIX_INFO_ARRAY))) {
             return ret;
         }
         break;
@@ -546,6 +555,14 @@ static pmix_status_t pack_val(pmix_buffer_t *buffer,
         array.size = p->data.darray->size;
         array.array = (pmix_info_t*)p->data.darray->array;
         if (PMIX_SUCCESS != (ret = pmix12_bfrop_pack_buffer(buffer, &array, 1, PMIX_INFO_ARRAY))) {
+            return ret;
+        }
+        break;
+
+    case PMIX_PROC_RANK:
+        /* must convert this to an int */
+        rank = p->data.rank;
+        if (PMIX_SUCCESS != (ret = pmix12_bfrop_pack_buffer(buffer, &rank, 1, PMIX_INT))) {
             return ret;
         }
         break;

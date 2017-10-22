@@ -563,6 +563,16 @@ void pmix_server_execute_collective(int sd, short args, void *cbdata)
              * each participant. */
             peer = pmix_globals.mypeer;
         } else {
+            /* in some error situations, the list of local callbacks can
+             * be empty - if that happens, we just need to call the fence
+             * function to prevent others from hanging */
+            if (0 == pmix_list_get_size(&trk->local_cbs)) {
+                pmix_host_server.fence_nb(trk->pcs, trk->npcs,
+                                          trk->info, trk->ninfo,
+                                          data, sz, trk->modexcbfunc, trk);
+                PMIX_RELEASE(tcd);
+                return;
+            }
             /* since all procs are the same, just use the first proc's module */
             cd = (pmix_server_caddy_t*)pmix_list_get_first(&trk->local_cbs);
             peer = cd->peer;
@@ -1676,8 +1686,6 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     }
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
         rc = PMIX_SUCCESS;
-    } else if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
     }
 
   finish_collective:

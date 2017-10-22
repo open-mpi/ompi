@@ -188,7 +188,8 @@ pmix_status_t pmix12_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst, int32
         }
         /* if the data types don't match, then return an error */
         if (v1type != local_type) {
-            pmix_output(0, "PMIX bfrop:unpack: got type %d when expecting type %d", local_type, v1type);
+            pmix_output_verbose(1, pmix_bfrops_base_framework.framework_output,
+                                "PMIX bfrop:unpack: got type %d when expecting type %d", local_type, v1type);
             return PMIX_ERR_PACK_MISMATCH;
         }
     }
