@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -118,8 +118,9 @@ pmix_status_t pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst, int32_t
     pmix_data_type_t local_type;
     pmix_bfrop_type_info_t *info;
 
-    pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrop_unpack_buffer( %p, %p, %lu, %d )\n",
-                   (void*)buffer, dst, (long unsigned int)*num_vals, (int)type);
+    pmix_output_verbose(20, pmix_globals.debug_output,
+                        "pmix_bfrop_unpack_buffer( %p, %p, %lu, %d )\n",
+                        (void*)buffer, dst, (long unsigned int)*num_vals, (int)type);
 
     /** Unpack the declared data type */
     if (PMIX_BFROP_BUFFER_FULLY_DESC == buffer->type) {
@@ -221,8 +222,7 @@ pmix_status_t pmix_bfrop_unpack_sizet(pmix_buffer_t *buffer, void *dest,
     if (remote_type == BFROP_TYPE_SIZE_T) {
         /* fast path it if the sizes are the same */
         /* Turn around and unpack the real type */
-        if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, dest, num_vals, BFROP_TYPE_SIZE_T))) {
-        }
+        ret = pmix_bfrop_unpack_buffer(buffer, dest, num_vals, BFROP_TYPE_SIZE_T);
     } else {
         /* slow path - types are different sizes */
         UNPACK_SIZE_MISMATCH(size_t, remote_type, ret);
@@ -614,7 +614,7 @@ static pmix_status_t unpack_val(pmix_buffer_t *buffer, pmix_value_t *val)
         }
         break;
     default:
-        pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE");
+        pmix_output(0, "UNPACK-PMIX-VALUE: UNSUPPORTED TYPE %d", val->type);
         return PMIX_ERROR;
     }
 
@@ -953,7 +953,7 @@ pmix_status_t pmix_bfrop_unpack_array(pmix_buffer_t *buffer, void *dest,
         if (0 < ptr[i].size) {
             ptr[i].array = (pmix_info_t*)malloc(ptr[i].size * sizeof(pmix_info_t));
             m=ptr[i].size;
-            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_value(buffer, ptr[i].array, &m, PMIX_INFO))) {
+            if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_info(buffer, ptr[i].array, &m, PMIX_INFO))) {
                 return ret;
             }
         }
