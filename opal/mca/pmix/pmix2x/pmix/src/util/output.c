@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -143,6 +143,7 @@ bool pmix_output_init(void)
         }
     }
     str = getenv("PMIX_OUTPUT_SYSLOG_PRI");
+#ifdef HAVE_SYSLOG_H
     if (NULL != str) {
         if (0 == strcasecmp(str, "info")) {
             pmix_output_redirected_syslog_pri = LOG_INFO;
@@ -156,6 +157,7 @@ bool pmix_output_init(void)
     } else {
         pmix_output_redirected_syslog_pri = LOG_ERR;
     }
+#endif
 
     str = getenv("PMIX_OUTPUT_SYSLOG_IDENT");
     if (NULL != str) {
