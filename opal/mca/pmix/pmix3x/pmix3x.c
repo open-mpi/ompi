@@ -578,6 +578,8 @@ pmix_data_range_t pmix3x_convert_opalrange(opal_pmix_data_range_t range) {
         return PMIX_RANGE_GLOBAL;
     case OPAL_PMIX_RANGE_CUSTOM:
         return PMIX_RANGE_CUSTOM;
+    case OPAL_PMIX_RANGE_PROC_LOCAL:
+        return PMIX_RANGE_PROC_LOCAL;
     default:
         return PMIX_SCOPE_UNDEF;
     }

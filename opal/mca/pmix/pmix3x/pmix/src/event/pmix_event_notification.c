@@ -117,9 +117,9 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     pmix_notify_caddy_t *cd, *rbout;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "client: notifying server %s:%d of status %s",
+                        "client: notifying server %s:%d of status %s for range %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                        PMIx_Error_string(status));
+                        PMIx_Error_string(status), PMIx_Data_range_string(range));
 
     if (PMIX_RANGE_PROC_LOCAL != range) {
         /* create the msg object */

@@ -62,19 +62,18 @@ static void model_callback(int status,
 {
     opal_value_t *val;
 
-    /* we can ignore our own callback as we obviously
-     * know that we are MPI */
-    if (NULL != info) {
-        OPAL_LIST_FOREACH(val, info, opal_value_t) {
-            if (OPAL_STRING == val->type) {
-#if 0
-                opal_output(0, "OMPI Model Callback Key: %s Val %s", val->key, val->data.string);
-#else
-                if (0 == strcmp(val->key, OPAL_PMIX_MODEL_LIBRARY_NAME) &&
-                    0 == strcmp(val->data.string, "OpenMPI")) {
+    if (NULL != getenv("OMPI_SHOW_MODEL_CALLBACK")) {
+        /* we can ignore our own callback as we obviously
+         * know that we are MPI */
+        if (NULL != info) {
+            OPAL_LIST_FOREACH(val, info, opal_value_t) {
+                if (0 == strcmp(val->key, OPAL_PMIX_PROGRAMMING_MODEL) &&
+                    0 == strcmp(val->data.string, "MPI")) {
                     goto cback;
                 }
-#endif
+                if (OPAL_STRING == val->type) {
+                        opal_output(0, "OMPI Model Callback Key: %s Val %s", val->key, val->data.string);
+                }
             }
         }
     }
