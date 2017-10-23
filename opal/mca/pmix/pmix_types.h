@@ -401,16 +401,16 @@ typedef enum {
 } opal_pmix_scope_t;
 
 /* define a range for data "published" by PMI */
-#define OPAL_PMIX_DATA_RANGE OPAL_UINT
-typedef enum {
-    OPAL_PMIX_RANGE_UNDEF = 0,
-    OPAL_PMIX_RANGE_RM,          // data is intended for the host resource manager
-    OPAL_PMIX_RANGE_LOCAL,       // available on local node only
-    OPAL_PMIX_RANGE_NAMESPACE,   // data is available to procs in the same nspace only
-    OPAL_PMIX_RANGE_SESSION,     // data available to all procs in session
-    OPAL_PMIX_RANGE_GLOBAL,      // data available to all procs
-    OPAL_PMIX_RANGE_CUSTOM       // range is specified in a opal_value_t
-} opal_pmix_data_range_t;
+#define OPAL_PMIX_DATA_RANGE OPAL_UINT8
+typedef uint8_t opal_pmix_data_range_t;
+#define OPAL_PMIX_RANGE_UNDEF        0
+#define OPAL_PMIX_RANGE_RM           1   // data is intended for the host resource manager
+#define OPAL_PMIX_RANGE_LOCAL        2   // available on local node only
+#define OPAL_PMIX_RANGE_NAMESPACE    3   // data is available to procs in the same nspace only
+#define OPAL_PMIX_RANGE_SESSION      4   // data available to all procs in session
+#define OPAL_PMIX_RANGE_GLOBAL       5   // data available to all procs
+#define OPAL_PMIX_RANGE_CUSTOM       6   // range is specified in a pmix_info_t
+#define OPAL_PMIX_RANGE_PROC_LOCAL   7   // restrict range to the local proc
 
 /* define a "persistence" policy for data published by clients */
 typedef enum {

@@ -35,18 +35,15 @@ static void model_callback(int status,
     opal_value_t *val;
 
     /* we can ignore our own callback as we obviously
-     * know that we are MPI */
+     * know that we are OpenMP */
     if (NULL != info) {
         OPAL_LIST_FOREACH(val, info, opal_value_t) {
+            if (0 == strcmp(val->key, OPAL_PMIX_PROGRAMMING_MODEL) &&
+                0 == strcmp(val->data.string, "OpenMP")) {
+                goto cback;
+            }
             if (OPAL_STRING == val->type) {
-#if 1
                 opal_output(0, "Thread Model Callback Key: %s Val %s", val->key, val->data.string);
-#else
-                if (0 == strcmp(val->key, OPAL_PMIX_MODEL_LIBRARY_NAME) &&
-                    0 == strcmp(val->data.string, "OpenMPI")) {
-                    goto cback;
-                }
-#endif
             }
         }
     }
@@ -62,12 +59,19 @@ static void model_callback(int status,
     OPAL_PMIX_WAKEUP_THREAD(&thread_complete);
 }
 
+static void opcbfunc(int status, void *cbdata)
+{
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+    OPAL_PMIX_WAKEUP_THREAD(lock);
+}
+
 static void *mylib(void *ptr)
 {
     opal_list_t info, directives;
     opal_value_t *kv;
     int ret;
     opal_pmix_lock_t lock;
+    bool init = false;
 
     OPAL_PMIX_CONSTRUCT_LOCK(&thread_complete);
 
@@ -94,9 +98,31 @@ static void *mylib(void *ptr)
     kv->data.string = strdup("PTHREAD");
     opal_list_append(&info, &kv->super);
 
-    /* call pmix to initialize these values */
-    ret = opal_pmix.init(&info);
-    OPAL_LIST_DESTRUCT(&info);
+    /* see if pmix is already initialized */
+    if (opal_pmix.initialized()) {
+        /* mark that this isn't to go to any default event handler - pmix_init
+         * takes care of that for us, but we have to explicitly do it here */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_EVENT_NON_DEFAULT);
+        kv->type = OPAL_BOOL;
+        kv->data.flag = true;
+        opal_list_append(&info, &kv->super);
+        /* it is, so let's just use the event notification
+         * API to let everyone know we are here */
+        OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+        ret = opal_pmix.notify_event(OPAL_ERR_MODEL_DECLARED,
+                                     &orte_process_info.my_name,
+                                     OPAL_PMIX_RANGE_PROC_LOCAL, &info,
+                                     opcbfunc, &lock);
+        OPAL_PMIX_WAIT_THREAD(&lock);
+        OPAL_PMIX_DESTRUCT_LOCK(&lock);
+        OPAL_LIST_DESTRUCT(&info);
+    } else {
+        /* call pmix to initialize these values */
+        ret = opal_pmix.init(&info);
+        OPAL_LIST_DESTRUCT(&info);
+        init = true;
+    }
 
     /* register to receive model callbacks */
 
@@ -128,8 +154,10 @@ static void *mylib(void *ptr)
     /* wait for the model callback */
     OPAL_PMIX_WAIT_THREAD(&thread_complete);
 
-    /* finalize */
-    opal_pmix.finalize();
+    if (init) {
+        /* need to finalize to maintain refcount */
+        opal_pmix.finalize();
+    }
 
     /* done */
     return NULL;

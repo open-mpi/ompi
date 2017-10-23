@@ -139,6 +139,8 @@ PMIX_EXPORT const char* PMIx_Data_range_string(pmix_data_range_t range)
             return "AVAIL TO ANYONE WITH AUTHORIZATION";
         case PMIX_RANGE_CUSTOM:
             return "AVAIL AS SPECIFIED IN DIRECTIVES";
+        case PMIX_RANGE_PROC_LOCAL:
+            return "AVAIL ON LOCAL PROC ONLY";
         default:
             return "UNKNOWN";
     }
