@@ -26,7 +26,7 @@ my @csvrow;
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
 my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca pmix_base_collect_data 0", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1 -mca pmix_base_collect_data 0");
 my @starterlist = qw(mpirun prun srun aprun);
-my @starteroptionlist = (" --novm",
+my @starteroptionlist = (" --novm --timeout 600",
                          " --system-server-only",
                          " --distribution=cyclic --ntasks-per-node=",
                          " -N");
