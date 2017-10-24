@@ -24,7 +24,7 @@ my $ppn = 1;
 my @csvrow;
 
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op ./mpi_no_op);
-my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1");
+my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca pmix_base_collect_data 0", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1 -mca async_mpi_init 1 -mca async_mpi_finalize 1 -mca pmix_base_collect_data 0");
 my @starterlist = qw(mpirun prun srun aprun);
 my @starteroptionlist = (" --novm",
                          " --system-server-only",
@@ -87,6 +87,7 @@ my $option;
 my $havedvm = 0;
 my @starters;
 my @starteroptions;
+my $pid;
 
 # if they explicitly requested specific starters, then
 # only use those
@@ -267,12 +268,17 @@ foreach $starter (@starters) {
     # if we are going to use the dvm, then we
     if ($starter eq "prun") {
         # need to start it
-        $cmd = "orte-dvm --system_server 2>&1 &";
         if ($myresults) {
-            print FILE "\n\n$cmd\n";
+            print FILE "\n\norte-dvm --system-server\n";
         }
         if (!$SHOWME) {
-            system($cmd);
+            unless ($pid = fork) {
+                unless (fork) {
+                    exec "orte-dvm --system-server 2>&1";
+                    die "no exec";
+                }
+                exit 0;
+            }
             $havedvm = 1;
         }
         # give it a couple of seconds to start
@@ -297,7 +303,7 @@ foreach $starter (@starters) {
                 # pre-position the executable
                 $cmd = $starter . $starteroptions[$index] . " $test 2>&1";
                 my $error;
-                $error = system($cmd);
+                $error = `$cmd`;
                 if (0 != $error) {
                     if ($myresults) {
                         print FILE "Command $cmd returned error $error\n";
@@ -342,7 +348,8 @@ foreach $starter (@starters) {
     if ($havedvm) {
         if (!$SHOWME) {
             $cmd = "prun --system-server-only --terminate";
-            system($cmd);
+            my $rc = `$cmd`;
+            waitpid($pid, 0);
         }
         $havedvm = 0;
     }

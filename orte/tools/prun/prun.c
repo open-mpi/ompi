@@ -781,7 +781,8 @@ static int create_app(int argc, char* argv[],
     /* Grab all MCA environment variables */
     app->env = opal_argv_copy(*app_env);
     for (i=0; NULL != environ[i]; i++) {
-        if (0 == strncmp("PMIX_", environ[i], 5)) {
+        if (0 == strncmp("PMIX_", environ[i], 5) ||
+            0 == strncmp("OMPI_", environ[i], 5)) {
             /* check for duplicate in app->env - this
              * would have been placed there by the
              * cmd line processor. By convention, we
