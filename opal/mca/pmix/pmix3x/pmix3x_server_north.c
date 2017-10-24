@@ -285,17 +285,21 @@ static void opmdx_response(int status, const char *data, size_t sz, void *cbdata
         opalcaddy->ocbdata = relcbdata;
         opalcaddy->mdxcbfunc(rc, data, sz, opalcaddy->cbdata,
                              _data_release, opalcaddy);
+    } else {
+        OBJ_RELEASE(opalcaddy);
+    }
+    if (opal_pmix_collect_all_data) {
         /* if we were collecting all data, then check for any pending
          * dmodx requests that we cached and notify them that the
          * data has arrived */
         OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
         while (NULL != (dmdx = (opal_pmix3x_dmx_trkr_t*)opal_list_remove_first(&mca_pmix_pmix3x_component.dmdx))) {
+            OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             dmdx->cbfunc(PMIX_SUCCESS, NULL, 0, dmdx->cbdata, NULL, NULL);
+            OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
             OBJ_RELEASE(dmdx);
         }
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-    } else {
-        OBJ_RELEASE(opalcaddy);
     }
 }
 
