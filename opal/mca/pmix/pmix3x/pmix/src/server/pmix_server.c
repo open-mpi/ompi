@@ -1019,10 +1019,8 @@ static void _dmodex_req(int sd, short args, void *cbdata)
             rc = PMIX_ERR_NOMEM;
             goto cleanup;
         }
-        PMIX_RETAIN(cd);
         dcd->cd = cd;
         pmix_list_append(&pmix_server_globals.remote_pnd, &dcd->super);
-        PMIX_WAKEUP_THREAD(&cd->lock);  // ensure the request doesn't hang
         return;
     }
 
@@ -1051,13 +1049,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
         PMIX_DESTRUCT(&cb);
         PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
         PMIX_DESTRUCT(&pbkt);
-        /* execute the callback */
-        cd->cbfunc(rc, data, sz, cd->cbdata);
-        PMIX_WAKEUP_THREAD(&cd->lock);  // ensure the request doesn't hang
-        if (NULL != data) {
-            free(data);
-        }
-        return;
+        goto cleanup;
     }
 
     /* see if we have this peer in our list */
@@ -1072,10 +1064,8 @@ static void _dmodex_req(int sd, short args, void *cbdata)
         /* rank isn't known yet - defer
          * the request until we do */
         dcd = PMIX_NEW(pmix_dmdx_remote_t);
-        PMIX_RETAIN(cd);
         dcd->cd = cd;
         pmix_list_append(&pmix_server_globals.remote_pnd, &dcd->super);
-        PMIX_WAKEUP_THREAD(&cd->lock);  // ensure the request doesn't hang
         return;
     }
 
@@ -1085,10 +1075,8 @@ static void _dmodex_req(int sd, short args, void *cbdata)
         /* track the request so we can fulfill it once
          * data is recvd */
         dcd = PMIX_NEW(pmix_dmdx_remote_t);
-        PMIX_RETAIN(cd);
         dcd->cd = cd;
         pmix_list_append(&pmix_server_globals.remote_pnd, &dcd->super);
-        PMIX_WAKEUP_THREAD(&cd->lock);  // ensure the request doesn't hang
         return;
     }
 
@@ -1120,7 +1108,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     if (NULL != data) {
         free(data);
     }
-    PMIX_WAKEUP_THREAD(&cd->lock);
+    PMIX_RELEASE(cd);
 }
 
 PMIX_EXPORT pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
@@ -1154,9 +1142,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
     /* we have to push this into our event library to avoid
      * potential threading issues */
     PMIX_THREADSHIFT(cd, _dmodex_req);
-
-    PMIX_WAIT_THREAD(&cd->lock);
-    PMIX_RELEASE(cd);
     return PMIX_SUCCESS;
 }
 
