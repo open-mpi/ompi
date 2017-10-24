@@ -54,9 +54,23 @@ included in the vX.Y.Z section and be denoted as:
                                  included in release version vA.B.C.
 
 2.0.4 -- October, 2017
---------------------
+----------------------
 
 Bug fixes/minor improvements:
+- Add configure check to prevent trying to build this release of
+  Open MPI with an external hwloc 2.0 or newer release.
+- Add ability to specify layered providers for OFI MTL.
+- Fix a correctness issue with Open MPI's memory manager code
+  that could result in corrupted message data.  Thanks to
+  Valentin Petrov for reporting.
+- Fix issues encountered when using newer versions of PBS Pro.
+  Thanks to Petr Hanousek for reporting.
+- Fix a problem with MPI_GET when using the vader BTL.  Thanks
+  to Dahai Guo for reporting.
+- Fix a problem when using MPI_ANY_SOURCE with MPI_SENDRECV_REPLACE.
+  Thanks to Dahai Guo for reporting.
+- Fix a problem using MPI_FILE_OPEN with a communicator with an
+  attached cartesian topology.  Thanks to Wei-keng Liao for reporting.
 - Remove IB XRC support from the OpenIB BTL due to lack of support.
 - Remove support for big endian PowerPC.
 - Remove support for XL compilers older than v13.1
