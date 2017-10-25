@@ -3,7 +3,7 @@
  *                         reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,7 @@ BEGIN_C_DECLS
 /**
  * Framework structure declaration
  */
-extern pmix_mca_base_framework_t pmix_pinstalldirs_base_framework;
+PMIX_EXPORT extern pmix_mca_base_framework_t pmix_pinstalldirs_base_framework;
 
 /* Just like pmix_pinstall_dirs_expand() (see pinstalldirs.h), but will
    also insert the value of the environment variable $PMIX_DESTDIR, if

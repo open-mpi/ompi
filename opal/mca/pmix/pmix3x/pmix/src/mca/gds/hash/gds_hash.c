@@ -1151,7 +1151,6 @@ static pmix_status_t hash_store_modex(struct pmix_nspace_t *nspace,
 {
     pmix_nspace_t *ns = (pmix_nspace_t*)nspace;
     pmix_hash_trkr_t *trk, *t;
-    pmix_server_caddy_t *scd;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;
     pmix_buffer_t pbkt;

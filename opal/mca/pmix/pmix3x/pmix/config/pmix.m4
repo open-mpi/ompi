@@ -123,6 +123,24 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_DEFINE_UNQUOTED([PMIX_RELEASE_VERSION], [$PMIX_RELEASE_VERSION],
                        [The library release version is always available, contrary to VERSION])
 
+    PMIX_GREEK_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --greek`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_GREEK_VERSION)
+
+    PMIX_REPO_REV="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --repo-rev`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_REPO_REV)
+
+    PMIX_RELEASE_DATE="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release-date`"
+    if test "$?" != "0"; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
+    AC_SUBST(PMIX_RELEASE_DATE)
+
     # Debug mode?
     AC_MSG_CHECKING([if want pmix maintainer support])
     pmix_debug=
@@ -174,6 +192,21 @@ AC_DEFUN([PMIX_SETUP_CORE],[
           [AC_MSG_RESULT([no])
            PMIX_EXTRA_LIB=])
     AC_SUBST(PMIX_EXTRA_LIB)
+
+    #
+    # Package/brand string
+    #
+    AC_MSG_CHECKING([if want package/brand string])
+    AC_ARG_WITH([pmix-package-string],
+         [AC_HELP_STRING([--with-pmix-package-string=STRING],
+                         [Use a branding string throughout PMIx])])
+    if test "$with_pmix_package_string" = "" || test "$with_pmix_package_string" = "no"; then
+        with_package_string="PMIx $PMIX_CONFIGURE_USER@$PMIX_CONFIGURE_HOST Distribution"
+    fi
+    AC_DEFINE_UNQUOTED([PMIX_PACKAGE_STRING], ["$with_package_string"],
+         [package/branding string for PMIx])
+    AC_MSG_RESULT([$with_package_string])
+
 
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
@@ -794,6 +827,10 @@ AC_DEFUN([PMIX_SETUP_CORE],[
         pmix_config_prefix[src/Makefile]
         pmix_config_prefix[src/util/keyval/Makefile]
         pmix_config_prefix[src/mca/base/Makefile]
+        pmix_config_prefix[src/tools/pevent/Makefile]
+        pmix_config_prefix[src/tools/pinfo/Makefile]
+        pmix_config_prefix[src/tools/plookup/Makefile]
+        pmix_config_prefix[src/tools/pps/Makefile]
         )
 
     # publish any embedded flags so external wrappers can use them
@@ -1059,6 +1096,13 @@ else
 fi
 
 AM_CONDITIONAL([WANT_INSTALL_HEADERS], [test $WANT_INSTALL_HEADERS -eq 1])
+
+#
+# Do we want to install binaries?
+#
+AM_CONDITIONAL([PMIX_INSTALL_BINARIES], [test "$pmix_mode" != "embedded"])
+
+
 ])dnl
 
 # This must be a standalone routine so that it can be called both by

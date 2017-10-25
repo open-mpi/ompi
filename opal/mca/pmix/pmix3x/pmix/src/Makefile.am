@@ -92,6 +92,7 @@ include client/Makefile.include
 include server/Makefile.include
 include runtime/Makefile.include
 include tool/Makefile.include
+include tools/Makefile.include
 include common/Makefile.include
 
 MAINTAINERCLEANFILES = Makefile.in config.h config.h.in

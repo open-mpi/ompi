@@ -461,7 +461,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root, -)
 %if %(test "%{_prefix}" = "/usr" && echo 1 || echo 0)
-#%{_bindir}/*
+%{_bindir}/*
 %{_includedir}/*
 %{_libdir}/*
 %{_datadir}
@@ -472,7 +472,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if !%{sysconfdir_in_prefix}
 %{_sysconfdir}/*
 %endif
-# If %{install_in_opt}, then we're instaling PMIx to
+# If %{install_in_opt}, then we're installing PMIx to
 # /opt/pmix<version>.  But be sure to also explicitly mention
 # /opt/pmix so that it can be removed by RPM when everything under
 # there is also removed.
@@ -497,6 +497,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Tue Oct 17 2017 Ralph Castain <rhc@open-mpi.org>
+- Add PMIx bin directory
+
 * Thu Sep 21 2017 Ralph Castain <rhc@open-mpi.org>
 - Add PMIx etc directory
 

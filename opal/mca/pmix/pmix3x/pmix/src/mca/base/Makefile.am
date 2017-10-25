@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,6 +44,7 @@ headers = \
 libpmix_mca_base_la_SOURCES = \
         $(headers) \
         pmix_mca_base_close.c \
+        pmix_mca_base_cmd_line.c \
         pmix_mca_base_component_compare.c \
         pmix_mca_base_component_find.c \
         pmix_mca_base_component_repository.c \

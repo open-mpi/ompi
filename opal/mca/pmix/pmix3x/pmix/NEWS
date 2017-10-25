@@ -25,8 +25,44 @@ Master (not on release branches yet)
 ------------------------------------
 
 
-2.0.0
-------
+2.1.0 -- 26 Oct 2017
+----------------------
+**** NOTE: This release contains the first implementation of cross-version
+**** support. Servers using v2.1.0 are capable of supporting clients using
+**** PMIx versions v1.2 and above. Clients using v2.1.0 are able to interact
+**** with servers based on v1.2 and above.
+- Added cross-version communication support
+- Enable reporting of contact URI to stdout, stderr, or file (PR #538)
+- Enable support for remote tool connections (PR #540, #542)
+- Cleanup libevent configure logi to support default install paths (PR #541)
+- Debounce "unreachable" notifications for tools when they disconnect (PR #544)
+
+
+2.0.2 -- 19 Oct 2017
+----------------------
+- Update RPM spec file (rpmbuild -ta, and --rebuild fixes) (PR #523)
+- Support singletons in PMI-1/PMI-2 (PR #537)
+- Provide missing implementation support for arrays of pmix_value_t's (PR #531)
+- Remove unsupported assembly code for MIPS and ARM processors
+  prior to v6 (PR #547)
+- Fix path separator for PMIx configuration files (PR #547)
+- Add configure option to enable/disable the default value for the
+  show-load-errors MCA param (PR #547)
+
+
+2.0.1 -- 24 Aug. 2017
+----------------------
+- Protect PMIX_INFO_FREE macro from NULL data arrays
+- Added attributes to support HWLOC shared memory regions
+- Fixed several syntax errors in configure code
+- Fixed several visibility errors
+- Correctly return status from PMIx_Fence operation
+- Restore tool connection support and implement search
+  operations to discover rendezvous files
+
+
+2.0.0 -- 22 Jun 2017
+----------------------
 **** NOTE: This release implements the complete PMIX v2.0 Standard
 **** and therefore includes a number of new APIs and features. These
 **** can be tracked by their RFC's in the RFC repository at:

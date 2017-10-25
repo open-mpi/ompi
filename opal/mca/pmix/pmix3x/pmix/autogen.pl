@@ -254,7 +254,7 @@ sub mca_generate_framework_header(\$\@) {
 
     foreach my $framework (@frameworks) {
         # There is no common framework object
-        if ($framework ne "common") {
+        if ($framework ne "common" and $framework ne "src") {
             my $framework_name = "pmix_${framework}_base_framework";
             $framework_array_output .= "    &$framework_name,\n";
             $framework_decl_output .= "extern pmix_mca_base_framework_t $framework_name;\n";
@@ -269,7 +269,7 @@ sub mca_generate_framework_header(\$\@) {
 #ifndef $ifdef_string
 #define $ifdef_string
 
-#include <pmix/mca/base/mca_base_framework.h>
+#include <src/mca/base/pmix_mca_base_framework.h>
 
 $framework_decl_output
 static pmix_mca_base_framework_t *pmix_frameworks[] = {

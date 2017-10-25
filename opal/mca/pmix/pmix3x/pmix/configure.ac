@@ -51,16 +51,20 @@ AC_CONFIG_AUX_DIR(./config)
 # -I in ACLOCAL_AMFLAGS in the top-level Makefile.am.
 AC_CONFIG_MACRO_DIR(./config)
 
+PMIX_CAPTURE_CONFIGURE_CLI([PMIX_CONFIGURE_CLI])
+
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 PMIX_LOAD_PLATFORM
 
 PMIX_TOP_BUILDDIR="`pwd`"
 AC_SUBST(PMIX_TOP_BUILDDIR)
+top_buildir=`pwd`
 cd "$srcdir"
 PMIX_TOP_SRCDIR="`pwd`"
 AC_SUBST(PMIX_TOP_SRCDIR)
 cd "$PMIX_TOP_BUILDDIR"
+top_srcdir=`pwd`
 
 AC_MSG_NOTICE([builddir: $PMIX_TOP_BUILDDIR])
 AC_MSG_NOTICE([srcdir: $PMIX_TOP_SRCDIR])
@@ -164,6 +168,10 @@ AM_PROG_LEX
 ############################################################################
 # Configuration options
 ############################################################################
+
+# Set the MCA prefix
+PMIX_SET_MCA_PREFIX([PMIX_MCA_])
+PMIX_SET_MCA_CMD_LINE_ID([pmca])
 
 # Define PMIx configure arguments
 PMIX_DEFINE_ARGS
