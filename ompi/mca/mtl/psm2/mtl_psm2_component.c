@@ -42,6 +42,8 @@
 #include <glob.h>
 
 static int param_priority;
+/* MPI_THREAD_MULTIPLE_SUPPORT */
+opal_mutex_t mtl_psm2_mq_mutex = OPAL_MUTEX_STATIC_INIT;
 
 static int ompi_mtl_psm2_component_open(void);
 static int ompi_mtl_psm2_component_close(void);
