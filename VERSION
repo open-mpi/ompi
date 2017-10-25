@@ -3,7 +3,7 @@
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 
@@ -15,8 +15,8 @@
 # major, minor, and release are generally combined in the form
 # <major>.<minor>.<release>.
 
-major=4
-minor=0
+major=3
+minor=2
 release=0
 
 # greek is generally used for alpha or beta release tags.  If it is
