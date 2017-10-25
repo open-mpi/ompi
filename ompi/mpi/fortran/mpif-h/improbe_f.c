@@ -95,7 +95,7 @@ void ompi_improbe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);
-        if (OMPI_FORTRAN_VALUE_TRUE == *flag) {
+        if (1 == OMPI_LOGICAL_2_INT(*flag)) {
             OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
             *message = PMPI_Message_c2f(c_message);
         }
