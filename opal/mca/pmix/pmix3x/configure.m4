@@ -53,15 +53,14 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
         opal_pmix_pmix3x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix3x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ $opal_pmix_pmix3x_timing_flag --without-tests-examples --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
+    opal_pmix_pmix3x_args="$opal_pmix_pmix3x_timing_flag --without-tests-examples --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix3x_args="--enable-debug $opal_pmix_pmix3x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
           [opal_pmix_pmix3x_args="--disable-debug $opal_pmix_pmix3x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
-    AS_IF([test "$enable_install_libpmix" = "yes" && test "$enable_dlopen" != "no"],
-          [opal_pmix_pmix3x_args="--with-pmix-extra-lib=$OPAL_TOP_BUILDDIR/opal/lib${OPAL_LIB_PREFIX}open-pal.la $opal_pmix_pmix3x_args"],
-          [opal_pmix_pmix3x_args="--enable-embedded-mode $opal_pmix_pmix3x_args"])
+    AS_IF([test "$enable_install_libpmix" != "yes"],
+          [opal_pmix_pmix3x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ --enable-embedded-mode $opal_pmix_pmix3x_args"])
     AS_IF([test "$with_devel_headers" = "yes"],
           [opal_pmix_pmix3x_args="--with-devel-headers  $opal_pmix_pmix3x_args"])
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
