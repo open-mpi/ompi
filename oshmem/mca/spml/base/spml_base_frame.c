@@ -144,6 +144,7 @@ static int mca_spml_base_open(mca_base_open_flag_t flags)
         if( (NULL == default_spml || NULL == default_spml[0] ||
              0 == strlen(default_spml[0])) || (default_spml[0][0] == '^') ) {
             opal_pointer_array_add(&mca_spml_base_spml, strdup("ikrit"));
+            opal_pointer_array_add(&mca_spml_base_spml, strdup("ucx"));
         } else {
             opal_pointer_array_add(&mca_spml_base_spml, strdup(default_spml[0]));
         }
