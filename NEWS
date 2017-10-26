@@ -41,6 +41,13 @@ it is possible for items to appear more than once in the list.
   true when using SLURM, as it improves interoperability with SLURM's signal
   propagation tools.  By default it is set to false, except for Cray XC systems.
 
+- Fix a problem reported on the mailing separately by Kevin McGrattan and Stephen Guzik about
+  consistency issues on NFS file systems when using OMPIO. This fix also introduces a new
+  mca parameter fs_ufs_lock_algorithm which allows to control the locking algorithm used
+  by ompio for read/write operations. By default, ompio does not perfom locking on local UNIX
+  file systems, locks the entire file per operation on NFS file systems, and selective byte-range
+  locking on other distributed file systems.
+
 3.0.0 -- July, 2017
 -------------------
 
