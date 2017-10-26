@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
+dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
@@ -300,7 +300,12 @@ AC_DEFUN([OPAL_CHECK_LIBNL_V3],[
     # If we found everything
     AS_IF([test $opal_libnlv3_happy -eq 1],
           [$2_LIBS="-lnl-3 -lnl-route-3"
-           OPAL_HAVE_LIBNL3=1])
+           OPAL_HAVE_LIBNL3=1],
+          [# OPAL_CHECK_PACKAGE(...,nl_recvmsgs_report,...) might have set the variables below
+           # so reset them if libnl v3 cannot be used
+           $2_CPPFLAGS=""
+           $2_LDFLAGS=""
+           $2_LIBS=""])
 
    OPAL_VAR_SCOPE_POP
 ])
