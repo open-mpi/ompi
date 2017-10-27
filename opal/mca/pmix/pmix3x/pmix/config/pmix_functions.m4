@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2017      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
@@ -102,21 +102,21 @@ PMIX_CONFIGURE_DATE="`date`"
 # Save these details so that they can be used in pmix_info later
 #
 AC_SUBST(PMIX_CONFIGURE_USER)
+AC_DEFINE_UNQUOTED([PMIX_CONFIGURE_USER], "$PMIX_CONFIGURE_USER",
+                   [User who built PMIx])
 AC_SUBST(PMIX_CONFIGURE_HOST)
-AC_SUBST(PMIX_CONFIGURE_DATE)])dnl
+AC_DEFINE_UNQUOTED([PMIX_CONFIGURE_HOST], "$PMIX_CONFIGURE_HOST",
+                   [Hostname where PMIx was built])
+AC_SUBST(PMIX_CONFIGURE_DATE)
+AC_DEFINE_UNQUOTED([PMIX_CONFIGURE_DATE], "$PMIX_CONFIGURE_DATE",
+                   [Date when PMIx was built])
+])dnl
 
 dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
 AC_DEFUN([PMIX_BASIC_SETUP],[
-#
-# Save some stats about this build
-#
-
-PMIX_CONFIGURE_USER="`whoami`"
-PMIX_CONFIGURE_HOST="`(hostname || uname -n) 2> /dev/null | sed 1q`"
-PMIX_CONFIGURE_DATE="`date`"
 
 #
 # Make automake clean emacs ~ files for "make clean"

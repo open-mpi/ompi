@@ -3,7 +3,7 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,7 @@ BEGIN_C_DECLS
 /**
  * Globals
  */
-extern pmix_mca_base_framework_t pmix_pdl_base_framework;
+PMIX_EXPORT extern pmix_mca_base_framework_t pmix_pdl_base_framework;
 extern pmix_pdl_base_component_t
 *pmix_pdl_base_selected_component;
 extern pmix_pdl_base_module_t *pmix_pdl;

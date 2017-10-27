@@ -2,9 +2,10 @@
 #
 # Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -95,9 +96,17 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
            AS_IF([test "$with_libevent" != "external" && test "$with_libevent" != "yes"],
                  [opal_event_dir=$with_libevent
                   AC_MSG_RESULT([$opal_event_dir])
-                  OPAL_CHECK_WITHDIR([libevent], [$with_libdir],
+                  OPAL_CHECK_WITHDIR([libevent], [$opal_event_dir],
                                      [include/event.h])
-                 ],
+                  AS_IF([test -z "$with_libevent_libdir" || test "$with_libevent_libdir" = "yes"],
+                        [AS_IF([test -d "$with_libevent/lib64"],
+                               [opal_event_libdir="$with_libevent/lib64"],
+                               [AS_IF([test -d "$with_libevent/lib"],
+                                      [opal_event_libdir="$with_libevent/lib"],
+                                      [AC_MSG_WARN([libevent library were neither found under:])
+                                       AC_MSG_WARN([    $with_libevent/lib64])
+                                       AC_MSG_WARN([    $with_libevent/lib])
+                                       AC_MSG_ERROR([Cannot continue])])])])],
                  [AC_MSG_RESULT([(default search paths)])])
            AS_IF([test ! -z "$with_libevent_libdir" && test "$with_libevent_libdir" != "yes"],
                  [opal_event_libdir="$with_libevent_libdir"])

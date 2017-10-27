@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -49,6 +49,7 @@ int pmix_mca_base_opened = 0;
 char *pmix_mca_base_system_default_path = NULL;
 char *pmix_mca_base_user_default_path = NULL;
 bool pmix_mca_base_component_show_load_errors = (bool) PMIX_SHOW_LOAD_ERRORS_DEFAULT;
+bool pmix_mca_base_component_track_load_errors = false;
 bool pmix_mca_base_component_disable_dlopen = false;
 
 static char *pmix_mca_base_verbose = NULL;
@@ -118,6 +119,14 @@ int pmix_mca_base_open(void)
                                    &pmix_mca_base_component_show_load_errors);
     (void) pmix_mca_base_var_register_synonym(var_id, "pmix", "mca", NULL, "component_show_load_errors",
                                               PMIX_MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    pmix_mca_base_component_track_load_errors = false;
+    var_id = pmix_mca_base_var_register("pmix", "mca", "base", "component_track_load_errors",
+                                        "Whether to track errors for components that failed to load or not",
+                                        PMIX_MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                        PMIX_INFO_LVL_9,
+                                        PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                        &pmix_mca_base_component_track_load_errors);
 
     pmix_mca_base_component_disable_dlopen = false;
     var_id = pmix_mca_base_var_register("pmix", "mca", "base", "component_disable_dlopen",

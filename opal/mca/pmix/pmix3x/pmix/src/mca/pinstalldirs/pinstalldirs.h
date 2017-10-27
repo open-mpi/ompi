@@ -54,7 +54,7 @@ struct pmix_pinstall_dirs_t {
 typedef struct pmix_pinstall_dirs_t pmix_pinstall_dirs_t;
 
 /* Install directories.  Only available after pmix_init() */
-extern pmix_pinstall_dirs_t pmix_pinstall_dirs;
+PMIX_EXPORT extern pmix_pinstall_dirs_t pmix_pinstall_dirs;
 
 /**
  * Expand out path variables (such as ${prefix}) in the input string

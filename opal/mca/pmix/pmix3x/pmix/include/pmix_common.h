@@ -190,6 +190,7 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_TDIR_RMCLEAN                   "pmix.tdir.rmclean"     // (bool)  Resource Manager will clean session directories
 
 /* information about relative ranks as assigned by the RM */
+#define PMIX_CLUSTER_ID                     "pmix.clid"             // (char*) a string name for the cluster this proc is executing on
 #define PMIX_PROCID                         "pmix.procid"           // (pmix_proc_t) process identifier
 #define PMIX_NSPACE                         "pmix.nspace"           // (char*) nspace of a job
 #define PMIX_JOBID                          "pmix.jobid"            // (char*) jobid assigned by scheduler
@@ -370,6 +371,7 @@ typedef uint32_t pmix_rank_t;
                                                                     //        terminate without having connected
 #define PMIX_CONNECT_XCHG_ONLY              "pmix.cnt.xchg"         // (bool) provide participants with job-level info for all participating
                                                                     //        nspaces, but do not assign a new nspace or rank
+#define PMIX_CONNECT_ID                     "pmix.cnt.id"           // (char*) an application-provided string identifier for a PMIx_Connect operation.
 
 
 /* query attributes */
@@ -850,6 +852,39 @@ typedef struct pmix_proc {
             free((m));                          \
         }                                       \
     } while (0)
+
+#define PMIX_PROC_LOAD(m, n, r)                             \
+    do {                                                    \
+        PMIX_PROC_CONSTRUCT((m));                           \
+        (void)strncpy((m)->nspace, (n), PMIX_MAX_NSLEN);    \
+        (m)->rank = (r);                                    \
+    } while(0)
+
+#define PMIX_MULTICLUSTER_NSPACE_CONSTRUCT(t, c, n)                         \
+    do {                                                                    \
+        size_t _len;                                                        \
+        memset((t), 0, PMIX_MAX_NSLEN+1);                                   \
+        _len = strlen((c));                                                 \
+        if ((_len + strlen((n))) < PMIX_MAX_NSLEN) {                        \
+            (void)strncpy((t), (c), PMIX_MAX_NSLEN);                        \
+            (t)[_len] = ':';                                                \
+            (void)strncpy(&(t)[_len+1], (n), PMIX_MAX_NSLEN - _len - 1);    \
+        }                                                                   \
+    } while(0)
+
+#define PMIX_MULTICLUSTER_NSPACE_PARSE(t, c, n)             \
+    do {                                                    \
+        size_t _n, _j;                                      \
+        for (_n=0; '\0' != (t)[_n] && ':' != (t)[_n] &&     \
+             _n <= PMIX_MAX_NSLEN; _n++) {                  \
+            (c)[_n] = (t)[_n];                              \
+        }                                                   \
+        _n++;                                               \
+        for (_j=0; _n <= PMIX_MAX_NSLEN &&                  \
+             '\0' != (t)[_n]; _n++, _j++) {                 \
+            (n)[_j] = (t)[_n];                              \
+        }                                                   \
+    } while(0)
 
 
 /****    PMIX PROC INFO STRUCT    ****/

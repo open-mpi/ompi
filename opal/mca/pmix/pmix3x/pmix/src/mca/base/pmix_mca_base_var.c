@@ -1365,7 +1365,10 @@ static int register_variable (const char *project_name, const char *framework_na
 
     /* Initialize the array if it has never been initialized */
     if (!pmix_mca_base_var_initialized) {
-        pmix_mca_base_var_init();
+        ret = pmix_mca_base_var_init();
+        if (PMIX_SUCCESS != ret) {
+            return ret;
+        }
     }
 
     /* See if this entry is already in the array */

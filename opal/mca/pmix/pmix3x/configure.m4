@@ -53,13 +53,19 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
         opal_pmix_pmix3x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix3x_args="$opal_pmix_pmix3x_timing_flag --without-tests-examples --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
+    opal_pmix_pmix3x_args="$opal_pmix_pmix3x_timing_flag --without-tests-examples --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix3x_args="--enable-debug $opal_pmix_pmix3x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
           [opal_pmix_pmix3x_args="--disable-debug $opal_pmix_pmix3x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
-    AS_IF([test "$enable_install_libpmix" != "yes"],
+    AS_IF([test "$enable_install_libpmix" == "yes"],
+          [AS_IF([test "$opal_event_external_want" != "yes"],
+                 [AC_MSG_WARN([Installing the embedded PMIx library as a separate])
+                  AC_MSG_WARN([standalone library requires that OMPI be configured])
+                  AC_MSG_WARN([against an external version of libevent.])
+                  AC_MSG_ERROR([Cannot continue])])
+           opal_pmix_pmix3x_args="--with-pmix-extra-lib=\"$opal_event_libdir/libevent.la $opal_event_libdir/libevent_pthreads.la\" $opal_pmix_pmix3x_args"],
           [opal_pmix_pmix3x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX2X_ --enable-embedded-mode $opal_pmix_pmix3x_args"])
     AS_IF([test "$with_devel_headers" = "yes"],
           [opal_pmix_pmix3x_args="--with-devel-headers  $opal_pmix_pmix3x_args"])
