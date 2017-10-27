@@ -1100,7 +1100,19 @@ AM_CONDITIONAL([WANT_INSTALL_HEADERS], [test $WANT_INSTALL_HEADERS -eq 1])
 #
 # Do we want to install binaries?
 #
-AM_CONDITIONAL([PMIX_INSTALL_BINARIES], [test "$pmix_mode" != "embedded"])
+AC_MSG_CHECKING([if want to disable binaries])
+AC_ARG_ENABLE(pmix-binaries,
+              AC_HELP_STRING([--enable-pmix-binaries],
+                             [enable PMIx tools]))
+if test "$enable_pmix_binaries" = "no"; then
+    AC_MSG_RESULT([no])
+    WANT_PMIX_BINARIES=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_PMIX_BINARIES=1
+fi
+
+AM_CONDITIONAL([PMIX_INSTALL_BINARIES], [test $WANT_PMIX_BINARIES -eq 1])
 
 
 ])dnl

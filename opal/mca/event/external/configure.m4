@@ -5,6 +5,7 @@
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -95,8 +96,9 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
            AS_IF([test "$with_libevent" != "external" && test "$with_libevent" != "yes"],
                  [opal_event_dir=$with_libevent
                   AC_MSG_RESULT([$opal_event_dir])
-                  OPAL_CHECK_WITHDIR([libevent], [$with_libdir],
+                  OPAL_CHECK_WITHDIR([libevent], [$opal_event_dir],
                                      [include/event.h])
+                  opal_event_libdir=$with_libevent/lib
                  ],
                  [AC_MSG_RESULT([(default search paths)])])
            AS_IF([test ! -z "$with_libevent_libdir" && test "$with_libevent_libdir" != "yes"],
