@@ -163,15 +163,18 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
      */
     OB1_MATCHING_LOCK(&comm->matching_lock);
 
-     /* get sequence number of next message that can be processed */
-    if(OPAL_UNLIKELY((((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence)) ||
-                     (opal_list_get_size(&proc->frags_cant_match) > 0 ))) {
-        goto slow_path;
+    if(OPAL_UNLIKELY(((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence))) {
+        append_frag_to_list(&proc->frags_cant_match, btl,
+                            hdr, segments, num_segments, NULL);
+        OB1_MATCHING_UNLOCK(&comm->matching_lock);
+        return;
     }
 
     /* This is the sequence number we were expecting, so we can try
      * matching it to already posted receives.
      */
+    if(opal_list_get_size(&proc->frags_cant_match) > 0)
+        goto slow_path;
 
     /* We're now expecting the next sequence number. */
     proc->expected_sequence++;
