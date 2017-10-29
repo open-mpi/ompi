@@ -394,6 +394,7 @@ orte/test/mpi/parallel_r8
 orte/test/mpi/parallel_r64
 orte/test/mpi/parallel_w8
 orte/test/mpi/parallel_w64
+orte/test/mpi/pinterlib
 orte/test/mpi/pmix
 orte/test/mpi/pubsub
 orte/test/mpi/read_write
