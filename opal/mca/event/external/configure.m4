@@ -99,13 +99,23 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                   OPAL_CHECK_WITHDIR([libevent], [$opal_event_dir],
                                      [include/event.h])
                   AS_IF([test -z "$with_libevent_libdir" || test "$with_libevent_libdir" = "yes"],
-                        [AS_IF([test -d "$with_libevent/lib64"],
+                        [AC_MSG_CHECKING([for $with_libevent/lib64])
+                         AS_IF([test -d "$with_libevent/lib64"],
+                               [opal_event_libdir_found=yes
+                                AC_MSG_RESULT([found])],
+                               [opal_event_libdir_found=no
+                                AC_MSG_RESULT([not found])])
+                         AS_IF([test "$opal_event_libdir_found" = "yes"],
                                [opal_event_libdir="$with_libevent/lib64"],
-                               [AS_IF([test -d "$with_libevent/lib"],
-                                      [opal_event_libdir="$with_libevent/lib"],
-                                      [AC_MSG_WARN([libevent library were neither found under:])
+                               [AC_MSG_CHECKING([for $with_libevent/lib])
+                                AS_IF([test -d "$with_libevent/lib"],
+                                      [AC_MSG_RESULT([found])
+                                       opal_event_libdir="$with_libevent/lib"],
+                                      [AC_MSG_RESULT([not found])
+                                       AC_MSG_WARN([Library directories were not found:])
                                        AC_MSG_WARN([    $with_libevent/lib64])
                                        AC_MSG_WARN([    $with_libevent/lib])
+                                       AC_MSG_WARN([Please use --with-libevent-libdir to identify it.])
                                        AC_MSG_ERROR([Cannot continue])])])])],
                  [AC_MSG_RESULT([(default search paths)])])
            AS_IF([test ! -z "$with_libevent_libdir" && test "$with_libevent_libdir" != "yes"],
@@ -136,6 +146,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                          AC_MSG_WARN([Open MPI requires libevent to be compiled with])
                          AC_MSG_WARN([thread support enabled])
                          AC_MSG_ERROR([Cannot continue])])
+
            AC_CHECK_LIB([event_pthreads], [evthread_use_pthreads],
                         [],
                         [AC_MSG_WARN([External libevent does not have thread support])
