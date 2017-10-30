@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -189,7 +189,7 @@ typedef struct {
     /** print function */
     pmix_bfrop_print_fn_t odti_print_fn;
 } pmix_bfrop_type_info_t;
-PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_bfrop_type_info_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_bfrop_type_info_t);
 
 /*
  * globals needed within bfrop
@@ -235,10 +235,10 @@ extern pmix_data_type_t pmix_bfrop_num_reg_types;
 /*
  * Specialized functions
  */
-PMIX_DECLSPEC    pmix_status_t pmix_bfrop_pack_buffer(pmix_buffer_t *buffer, const void *src,
+PMIX_EXPORT    pmix_status_t pmix_bfrop_pack_buffer(pmix_buffer_t *buffer, const void *src,
                                                       int32_t num_vals, pmix_data_type_t type);
 
-PMIX_DECLSPEC    pmix_status_t pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst,
+PMIX_EXPORT    pmix_status_t pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst,
                                                         int32_t *num_vals, pmix_data_type_t type);
 
 /*

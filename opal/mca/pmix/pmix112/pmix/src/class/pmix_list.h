@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,13 +83,13 @@ BEGIN_C_DECLS
  *
  * The class for the list container.
  */
-PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_list_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_list_t);
 /**
  * \internal
  *
  * Base class for items that are put in list (pmix_list_t) containers.
  */
-PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_list_item_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_list_item_t);
 
 
 /**
@@ -807,7 +807,7 @@ static inline void pmix_list_insert_pos(pmix_list_t *list, pmix_list_item_t *pos
    * If index is greater than the length of the list, no action is
    * performed and false is returned.
    */
-  PMIX_DECLSPEC bool pmix_list_insert(pmix_list_t *list, pmix_list_item_t *item,
+  PMIX_EXPORT bool pmix_list_insert(pmix_list_t *list, pmix_list_item_t *item,
                                       long long idx);
 
 
@@ -828,7 +828,7 @@ static inline void pmix_list_insert_pos(pmix_list_t *list, pmix_list_item_t *pos
      * containers remain valid, including those that point to elements
      * in \c xlist.
      */
-    PMIX_DECLSPEC void pmix_list_join(pmix_list_t *thislist, pmix_list_item_t *pos,
+    PMIX_EXPORT void pmix_list_join(pmix_list_t *thislist, pmix_list_item_t *pos,
                                       pmix_list_t *xlist);
 
 
@@ -855,7 +855,7 @@ static inline void pmix_list_insert_pos(pmix_list_t *list, pmix_list_item_t *pos
      * This is an O(N) operation because the length of both lists must
      * be recomputed.
      */
-    PMIX_DECLSPEC void pmix_list_splice(pmix_list_t *thislist, pmix_list_item_t *pos,
+    PMIX_EXPORT void pmix_list_splice(pmix_list_t *thislist, pmix_list_item_t *pos,
                                         pmix_list_t *xlist, pmix_list_item_t *first,
                                         pmix_list_item_t *last);
 
@@ -902,7 +902,7 @@ static inline void pmix_list_insert_pos(pmix_list_t *list, pmix_list_item_t *pos
      * whatever the underlying type is).  See the documentation of
      * pmix_list_item_compare_fn_t for an example).
      */
-    PMIX_DECLSPEC int pmix_list_sort(pmix_list_t* list, pmix_list_item_compare_fn_t compare);
+    PMIX_EXPORT int pmix_list_sort(pmix_list_t* list, pmix_list_item_compare_fn_t compare);
 
 END_C_DECLS
 
