@@ -15,7 +15,7 @@
 # MCA_zlib_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([OPAL_ZLIB_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([opal_zlib_dir opal_zlib_libdir])
+    OPAL_VAR_SCOPE_PUSH([opal_zlib_dir opal_zlib_libdir opal_zlib_standard_header_location opal_zlib_standard_lib_location])
 
     AC_ARG_WITH([zlib],
                 [AC_HELP_STRING([--with-zlib=DIR],
@@ -29,7 +29,6 @@ AC_DEFUN([OPAL_ZLIB_CONFIG],[
     if test "$with_zlib" != "no"; then
         AC_MSG_CHECKING([for zlib in])
         if test ! -z "$with_zlib" && test "$with_zlib" != "yes"; then
-            AC_MSG_RESULT([$with_zlib])
             opal_zlib_dir=$with_zlib
             opal_zlib_standard_header_location=no
             opal_zlib_standard_lib_location=no
