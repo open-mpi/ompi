@@ -79,6 +79,7 @@ struct pmix_ptl_globals_t {
     bool listen_thread_active;
     pmix_list_t listeners;
     uint32_t current_tag;
+    size_t max_msg_size;
 };
 typedef struct pmix_ptl_globals_t pmix_ptl_globals_t;
 
