@@ -58,3 +58,12 @@ by any of the following:
   that includes at least one usable plugin for this framework.
 
 Please check your installation and environment.
+#
+[ptl:msg_size]
+A received msg header indicates a size that is too large:
+
+  Requested size:  %lu
+  Size limit:      %lu
+
+If you believe this msg is legitimate, please increase the
+max msg size via the ptl_base_max_msg_size parameter.

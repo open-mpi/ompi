@@ -13,7 +13,7 @@
 # MCA_zlib_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([PMIX_ZLIB_CONFIG],[
-    PMIX_VAR_SCOPE_PUSH([pmix_zlib_dir pmix_zlib_libdir])
+    PMIX_VAR_SCOPE_PUSH([pmix_zlib_dir pmix_zlib_libdir pmix_zlib_standard_lib_location pmix_zlib_standard_header_location])
 
     AC_ARG_WITH([zlib],
                 [AC_HELP_STRING([--with-zlib=DIR],
@@ -24,28 +24,32 @@ AC_DEFUN([PMIX_ZLIB_CONFIG],[
                                 [Search for zlib libraries in DIR ])])
 
     pmix_zlib_support=0
+
     if test "$with_zlib" != "no"; then
         AC_MSG_CHECKING([for zlib in])
         if test ! -z "$with_zlib" && test "$with_zlib" != "yes"; then
             pmix_zlib_dir=$with_zlib
             pmix_zlib_standard_header_location=no
-            if test -d $with_zlib/lib; then
-                pmix_zlib_libdir=$with_zlib/lib
-            elif test -d $with_zlib/lib64; then
-                pmix_zlib_libdir=$with_zlib/lib64
-            else
-                AC_MSG_RESULT([Could not find $with_zlib/lib or $with_zlib/lib64])
-                AC_MSG_ERROR([Can not continue])
-            fi
-            AC_MSG_RESULT([$pmix_zlib_dir and $pmix_zlib_libdir])
+            pmix_zlib_standard_lib_location=no
+            AS_IF([test -z "$with_zlib_libdir" || test "$with_zlib_libdir" = "yes"],
+                  [if test -d $with_zlib/lib; then
+                       pmix_zlib_libdir=$with_zlib/lib
+                   elif test -d $with_zlib/lib64; then
+                       pmix_zlib_libdir=$with_zlib/lib64
+                   else
+                       AC_MSG_RESULT([Could not find $with_zlib/lib or $with_zlib/lib64])
+                       AC_MSG_ERROR([Can not continue])
+                   fi
+                   AC_MSG_RESULT([$pmix_zlib_dir and $pmix_zlib_libdir])],
+                  [AC_MSG_RESULT([$with_zlib_libdir])])
         else
             AC_MSG_RESULT([(default search paths)])
             pmix_zlib_standard_header_location=yes
+            pmix_zlib_standard_lib_location=yes
         fi
         AS_IF([test ! -z "$with_zlib_libdir" && test "$with_zlib_libdir" != "yes"],
               [pmix_zlib_libdir="$with_zlib_libdir"
-               pmix_zlib_standard_lib_location=no],
-              [pmix_zlib_standard_lib_location=yes])
+               pmix_zlib_standard_lib_location=no])
 
         PMIX_CHECK_PACKAGE([pmix_zlib],
                            [zlib.h],

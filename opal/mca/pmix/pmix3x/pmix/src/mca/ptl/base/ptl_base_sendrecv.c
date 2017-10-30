@@ -44,6 +44,7 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
+#include "src/util/show_help.h"
 
 #include "src/mca/ptl/base/base.h"
 
@@ -459,6 +460,12 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
                                     "ptl:base:recv:handler allocate data region of size %lu",
                                     (unsigned long)peer->recv_msg->hdr.nbytes);
                 /* allocate the data region */
+                if (pmix_ptl_globals.max_msg_size < peer->recv_msg->hdr.nbytes) {
+                    pmix_show_help("help-pmix-runtime.txt", "ptl:msg_size", true,
+                                   (unsigned long)peer->recv_msg->hdr.nbytes,
+                                   (unsigned long)pmix_ptl_globals.max_msg_size);
+                    goto err_close;
+                }
                 peer->recv_msg->data = (char*)malloc(peer->recv_msg->hdr.nbytes);
                 memset(peer->recv_msg->data, 0, peer->recv_msg->hdr.nbytes);
                 /* point to it */
