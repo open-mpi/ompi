@@ -959,8 +959,8 @@ AC_DEFUN([PMIX_CONFIG_ASM],[
 
         ia64-*)
             pmix_cv_asm_arch="IA64"
-            PMIX_ASM_SUPPORT_64BIT=1
-            PMIX_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
+            PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"],
+                          [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 	aarch64*)
             pmix_cv_asm_arch="ARM64"
@@ -993,20 +993,16 @@ AC_DEFUN([PMIX_CONFIG_ASM],[
         armv5*linux*|armv4*linux*|arm-*-linux-gnueabi)
             # uses Linux kernel helpers for some atomic operations
             pmix_cv_asm_arch="ARM"
-            PMIX_ASM_SUPPORT_64BIT=0
-            PMIX_ASM_ARM_VERSION=5
-            CCASFLAGS="$CCASFLAGS -march=armv7-a"
-            AC_DEFINE_UNQUOTED([PMIX_ASM_ARM_VERSION], [$PMIX_ASM_ARM_VERSION],
-                               [What ARM assembly version to use])
-            PMIX_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
+            PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"],
+                          [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 
         mips-*|mips64*)
             # Should really find some way to make sure that we are on
             # a MIPS III machine (r4000 and later)
             pmix_cv_asm_arch="MIPS"
-            PMIX_ASM_SUPPORT_64BIT=1
-            PMIX_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
+            PMIX_CHECK_SYNC_BUILTINS([pmix_cv_asm_builtin="BUILTIN_SYNC"],
+                          [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 
         powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)

@@ -443,45 +443,32 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
         for (n=0; n < cd->ninfo; n++) {
             if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_FIRST, PMIX_MAX_KEYLEN)) {
                 /* flag if they asked to put this one first overall */
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
-                    firstoverall = true;
-                }
+                firstoverall = PMIX_INFO_TRUE(&cd->info[n]);
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_LAST, PMIX_MAX_KEYLEN)) {
                 /* flag if they asked to put this one last overall */
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
-                    lastoverall = true;
-                }
+                lastoverall = PMIX_INFO_TRUE(&cd->info[n]);
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_PREPEND, PMIX_MAX_KEYLEN)) {
                 /* flag if they asked to prepend this handler */
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
+                if (PMIX_INFO_TRUE(&cd->info[n])) {
                     location = PMIX_EVENT_ORDER_PREPEND;
                 }
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_APPEND, PMIX_MAX_KEYLEN)) {
                 /* flag if they asked to append this handler */
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
+                if (PMIX_INFO_TRUE(&cd->info[n])) {
                     location = PMIX_EVENT_ORDER_APPEND;
                 }
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
                 name = cd->info[n].value.data.string;
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_ENVIRO_LEVEL, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
-                    cd->enviro = true;
-                }
+                cd->enviro = PMIX_INFO_TRUE(&cd->info[n]);
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
                 cbobject = cd->info[n].value.data.ptr;
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_FIRST_IN_CATEGORY, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
+                if (PMIX_INFO_TRUE(&cd->info[n])) {
                     location = PMIX_EVENT_ORDER_FIRST;
                 }
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_LAST_IN_CATEGORY, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == cd->info[n].value.type ||
-                    cd->info[n].value.data.flag) {
+                if (PMIX_INFO_TRUE(&cd->info[n])) {
                     location = PMIX_EVENT_ORDER_LAST;
                 }
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_BEFORE, PMIX_MAX_KEYLEN)) {
@@ -760,13 +747,17 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
 
   ack:
     /* acknowledge the registration so the caller can release
-     * their data */
+     * their data AND record the event handler index */
     if (NULL != cd->evregcbfn) {
         cd->evregcbfn(rc, index, cd->cbdata);
     }
 
     /* check if any matching notifications have been cached */
     check_cached_events(cd);
+    if (NULL != cd->codes) {
+        free(cd->codes);
+        cd->codes = NULL;
+    }
 
     /* all done */
     PMIX_RELEASE(cd);
@@ -779,6 +770,7 @@ PMIX_EXPORT void PMIx_Register_event_handler(pmix_status_t codes[], size_t ncode
                                              void *cbdata)
 {
     pmix_rshift_caddy_t *cd;
+    size_t n;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -794,7 +786,23 @@ PMIX_EXPORT void PMIx_Register_event_handler(pmix_status_t codes[], size_t ncode
     /* need to thread shift this request so we can access
      * our global data to register this *local* event handler */
     cd = PMIX_NEW(pmix_rshift_caddy_t);
-    cd->codes = codes;
+    /* we have to save the codes as we will check them against existing
+     * registrations AFTER we have executed the callback which allows
+     * the caller to release their storage */
+    if (0 < ncodes) {
+        cd->codes = (pmix_status_t*)malloc(ncodes * sizeof(pmix_status_t));
+        if (NULL == cd->codes) {
+            /* immediately return error */
+            PMIX_RELEASE(cd);
+            if (NULL != cbfunc) {
+                cbfunc(PMIX_ERR_NOMEM, SIZE_MAX, cbdata);
+            }
+            return;
+        }
+        for (n=0; n < ncodes; n++) {
+            cd->codes[n] = codes[n];
+        }
+    }
     cd->ncodes = ncodes;
     cd->info = info;
     cd->ninfo = ninfo;

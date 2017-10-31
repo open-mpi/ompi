@@ -45,11 +45,11 @@
 #define PMI_MAX_VAL_LEN      4096            /* Maximum size of a PMI value */
 
 
-#define PMI_CHECK() \
-        do {                     \
-        if (!pmi_init) {     \
-            return PMI_FAIL; \
-        }                    \
+#define PMI_CHECK()             \
+    do {                        \
+        if (!pmi_init) {        \
+            return PMI_FAIL;    \
+        }                       \
     } while (0)
 
 /* local functions */
@@ -57,6 +57,7 @@ static pmix_status_t convert_int(int *value, pmix_value_t *kv);
 static int convert_err(pmix_status_t rc);
 static pmix_proc_t myproc;
 static int pmi_init = 0;
+static bool pmi_singleton = false;
 
 PMIX_EXPORT int PMI_Init(int *spawned)
 {
@@ -66,7 +67,19 @@ PMIX_EXPORT int PMI_Init(int *spawned)
     pmix_info_t info[1];
     bool  val_optinal = 1;
 
-    if (PMIX_SUCCESS != PMIx_Init(&myproc, NULL, 0)) {
+    if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
+        /* if we didn't see a PMIx server (e.g., missing envar),
+         * then allow us to run as a singleton */
+        if (PMIX_ERR_INVALID_NAMESPACE == rc) {
+            if (NULL != spawned) {
+                *spawned = 0;
+            }
+            pmi_singleton = true;
+            (void)strncpy(myproc.nspace, "1234", PMIX_MAX_NSLEN);
+            myproc.rank = 0;
+            pmi_init = 1;
+            return PMI_SUCCESS;
+        }
         return PMI_ERR_INIT;
     }
 
@@ -109,7 +122,11 @@ PMIX_EXPORT int PMI_Initialized(PMI_BOOL *initialized)
         return PMI_ERR_INVALID_ARG;
     }
 
-    *initialized = (PMIx_Initialized() ? PMI_TRUE : PMI_FALSE);
+    if (pmi_singleton) {
+        *initialized = PMI_TRUE;
+    } else {
+        *initialized = (PMIx_Initialized() ? PMI_TRUE : PMI_FALSE);
+    }
 
     return PMI_SUCCESS;
 }
@@ -119,6 +136,10 @@ PMIX_EXPORT int PMI_Finalize(void)
     pmix_status_t rc = PMIX_SUCCESS;
 
     PMI_CHECK();
+
+    if (pmi_singleton) {
+        return PMI_SUCCESS;
+    }
 
     pmi_init = 0;
     rc = PMIx_Finalize(NULL, 0);
@@ -130,6 +151,10 @@ PMIX_EXPORT int PMI_Abort(int flag, const char msg[])
     pmix_status_t rc = PMIX_SUCCESS;
 
     PMI_CHECK();
+
+    if (pmi_singleton) {
+        return PMI_SUCCESS;
+    }
 
     rc = PMIx_Abort(flag, msg, NULL, 0);
     return convert_err(rc);
@@ -153,6 +178,9 @@ PMIX_EXPORT int PMI_KVS_Put(const char kvsname[], const char key[], const char v
     if ((value == NULL) || (strlen(value) > PMI_MAX_VAL_LEN)) {
         return PMI_ERR_INVALID_VAL;
     }
+    if (pmi_singleton) {
+        return PMI_SUCCESS;
+    }
 
     pmix_output_verbose(2, pmix_globals.debug_output,
             "PMI_KVS_Put: KVS=%s, key=%s value=%s", kvsname, key, value);
@@ -172,6 +200,9 @@ PMIX_EXPORT int PMI_KVS_Commit(const char kvsname[])
 
     if ((kvsname == NULL) || (strlen(kvsname) > PMI_MAX_KVSNAME_LEN)) {
         return PMI_ERR_INVALID_KVS;
+    }
+    if (pmi_singleton) {
+        return PMI_SUCCESS;
     }
 
     pmix_output_verbose(2, pmix_globals.debug_output, "PMI_KVS_Commit: KVS=%s",
@@ -256,6 +287,10 @@ PMIX_EXPORT int PMI_Barrier(void)
 
     PMI_CHECK();
 
+    if (pmi_singleton) {
+        return PMI_SUCCESS;
+    }
+
     info = &buf;
     PMIX_INFO_CONSTRUCT(info);
     PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &val, PMIX_BOOL);
@@ -280,6 +315,11 @@ PMIX_EXPORT int PMI_Get_size(int *size)
 
     if (NULL == size) {
         return PMI_ERR_INVALID_ARG;
+    }
+
+    if (pmi_singleton) {
+        *size = 1;
+        return PMI_SUCCESS;
     }
 
     /* set controlling parameters
@@ -326,6 +366,11 @@ PMIX_EXPORT int PMI_Get_universe_size(int *size)
         return PMI_ERR_INVALID_ARG;
     }
 
+    if (pmi_singleton) {
+        *size = 1;
+        return PMI_SUCCESS;
+    }
+
     /* set controlling parameters
      * PMIX_OPTIONAL - expect that these keys should be available on startup
      */
@@ -356,6 +401,11 @@ PMIX_EXPORT int PMI_Get_appnum(int *appnum)
 
     if (NULL == appnum) {
         return PMI_ERR_INVALID_ARG;
+    }
+
+    if (pmi_singleton) {
+        *appnum = 0;
+        return PMI_SUCCESS;
     }
 
     /* set controlling parameters
@@ -390,6 +440,10 @@ PMIX_EXPORT int PMI_Publish_name(const char service_name[], const char port[])
         return PMI_ERR_INVALID_ARG;
     }
 
+    if (pmi_singleton) {
+        return PMI_FAIL;
+    }
+
     /* pass the service/port */
     (void) strncpy(info.key, service_name, PMIX_MAX_KEYLEN);
     info.value.type = PMIX_STRING;
@@ -413,6 +467,10 @@ PMIX_EXPORT int PMI_Unpublish_name(const char service_name[])
         return PMI_ERR_INVALID_ARG;
     }
 
+    if (pmi_singleton) {
+        return PMI_FAIL;
+    }
+
     /* pass the service */
     keys[0] = (char*) service_name;
     keys[1] = NULL;
@@ -430,6 +488,10 @@ PMIX_EXPORT int PMI_Lookup_name(const char service_name[], char port[])
 
     if (NULL == service_name || NULL == port) {
         return PMI_ERR_INVALID_ARG;
+    }
+
+    if (pmi_singleton) {
+        return PMI_FAIL;
     }
 
     PMIX_PDATA_CONSTRUCT(&pdata);
@@ -512,6 +574,11 @@ PMIX_EXPORT int PMI_Get_clique_size(int *size)
         return PMI_ERR_INVALID_ARG;
     }
 
+    if (pmi_singleton) {
+        *size = 1;
+        return PMI_SUCCESS;
+    }
+
     /* set controlling parameters
      * PMIX_OPTIONAL - expect that these keys should be available on startup
      */
@@ -542,6 +609,11 @@ PMIX_EXPORT int PMI_Get_clique_ranks(int ranks[], int length)
 
     if (NULL == ranks) {
         return PMI_ERR_INVALID_ARGS;
+    }
+
+    if (pmi_singleton) {
+        ranks[0] = 0;
+        return PMI_SUCCESS;
     }
 
     rc = PMIx_Get(&proc, PMIX_LOCAL_PEERS, NULL, 0, &val);
@@ -653,6 +725,10 @@ PMIX_EXPORT int PMI_Spawn_multiple(int count,
 
     if (NULL == cmds) {
         return PMI_ERR_INVALID_ARG;
+    }
+
+    if (pmi_singleton) {
+        return PMI_FAIL;
     }
 
     /* setup the apps */

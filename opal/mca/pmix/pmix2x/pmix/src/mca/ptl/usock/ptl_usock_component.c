@@ -191,11 +191,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(info[n].key, PMIX_USOCK_DISABLE)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    disabled = true;;
-                } else {
-                    disabled = info[n].value.data.flag;
-                }
+                disabled = PMIX_INFO_TRUE(&info[n]);;
                 break;
             }
         }

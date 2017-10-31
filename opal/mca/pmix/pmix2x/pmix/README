@@ -128,6 +128,32 @@ INSTALLATION OPTIONS
   --disable-shared; enabling static libraries and disabling shared
   libraries are two independent options.
 
+ --disable-show-load-errors-by-default
+   Set the default value of the mca_base_component_show_load_errors MCA
+   variable: the --enable form of this option sets the MCA variable to
+   true, the --disable form sets the MCA variable to false.  The MCA
+   mca_base_component_show_load_errors variable can still be overridden
+   at run time via the usual MCA-variable-setting mechanisms; this
+   configure option simply sets the default value.
+
+   The --disable form of this option is intended for PMIx packagers
+   who tend to enable support for many different types of networks and
+   systems in their packages.  For example, consider a packager who
+   includes support for both the FOO and BAR networks in their PMIx
+   package, both of which require support libraries (libFOO.so and
+   libBAR.so).  If an end user only has BAR hardware, they likely only
+   have libBAR.so available on their systems -- not libFOO.so.
+   Disabling load errors by default will prevent the user from seeing
+   potentially confusing warnings about the FOO components failing to
+   load because libFOO.so is not available on their systems.
+
+   Conversely, system administrators tend to build a PMIx that is
+   targeted at their specific environment, and contains few (if any)
+   components that are not needed.  In such cases, they might want
+   their users to be warned that the FOO network components failed to
+   load (e.g., if libFOO.so was mistakenly unavailable), and thus
+   some PMIx calls might unexpectedly return "not supported".
+
 --with-platform=FILE
   Load configure options for the build from FILE.  Options on the
   command line that are not in FILE are also used.  Options on the

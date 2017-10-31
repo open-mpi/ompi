@@ -82,10 +82,12 @@ extern opal_pmix_base_t opal_pmix_base;
         OBJ_CONSTRUCT(&(l)->mutex, opal_mutex_t);       \
         pthread_cond_init(&(l)->cond, NULL);            \
         (l)->active = true;                             \
+        OPAL_POST_OBJECT((l));                          \
     } while(0)
 
 #define OPAL_PMIX_DESTRUCT_LOCK(l)          \
     do {                                    \
+        OPAL_ACQUIRE_OBJECT((l));           \
         OBJ_DESTRUCT(&(l)->mutex);          \
         pthread_cond_destroy(&(l)->cond);   \
     } while(0)

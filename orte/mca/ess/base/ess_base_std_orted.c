@@ -550,6 +550,9 @@ int orte_ess_base_orted_setup(void)
             error = "construct nidmap";
             goto error;
         }
+        /* be sure to update the routing tree so any tree spawn operation
+         * properly gets the number of children underneath us */
+        orte_routed.update_routing_plan(NULL);
     }
 
     if (orte_static_ports || orte_fwd_mpirun_port) {
