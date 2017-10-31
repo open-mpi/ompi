@@ -95,8 +95,10 @@ extern bool ompi_enable_timing;
 
 static void fence_cbfunc(int status, void *cbdata)
 {
-  volatile bool *active = (volatile bool*)cbdata;
-  *active = false;
+    volatile bool *active = (volatile bool*)cbdata;
+    OPAL_ACQUIRE_OBJECT(active);
+    *active = false;
+    OPAL_POST_OBJECT(active);
 }
 
 int ompi_mpi_finalize(void)
@@ -256,6 +258,7 @@ int ompi_mpi_finalize(void)
     if (!ompi_async_mpi_finalize) {
         if (NULL != opal_pmix.fence_nb) {
             active = true;
+            OPAL_POST_OBJECT(&active);
             /* Note that use of the non-blocking PMIx fence will
              * allow us to lazily cycle calling
              * opal_progress(), which will allow any other pending

@@ -366,8 +366,10 @@ static int ompi_register_mca_variables(void)
 
 static void fence_release(int status, void *cbdata)
 {
-    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
-    OPAL_PMIX_WAKEUP_THREAD(lock);
+    volatile bool *active = (volatile bool*)cbdata;
+    OPAL_ACQUIRE_OBJECT(active);
+    *active = false;
+    OPAL_POST_OBJECT(active);
 }
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
@@ -379,7 +381,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_errhandler_errtrk_t errtrk;
     opal_list_t info;
     opal_value_t *kv;
-    opal_pmix_lock_t lock;
+    volatile bool active;
     bool background_fence = false;
 
     OMPI_TIMING_INIT(32);
@@ -684,16 +686,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             /* execute the fence_nb in the background to collect
              * the data */
             background_fence = true;
-            OPAL_PMIX_CONSTRUCT_LOCK(&lock);
-            opal_pmix.fence_nb(NULL, true, fence_release, (void*)&lock);
+            active = true;
+            OPAL_POST_OBJECT(&active);
+            opal_pmix.fence_nb(NULL, true, fence_release, (void*)&active);
         } else if (!opal_pmix_base_async_modex) {
             /* we want to do the modex */
-            OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+            active = true;
+            OPAL_POST_OBJECT(&active);
             opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
-                               fence_release, (void*)&lock);
+                               fence_release, (void*)&active);
             /* cannot just wait on thread as we need to call opal_progress */
-            OMPI_LAZY_WAIT_FOR_COMPLETION(lock.active);
-            OPAL_PMIX_DESTRUCT_LOCK(&lock);
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         }
         /* otherwise, we don't want to do the modex, so fall thru */
     } else if (!opal_pmix_base_async_modex || opal_pmix_collect_all_data) {
@@ -867,18 +870,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * we have to wait here for it to complete. However, there
      * is no reason to do two barriers! */
     if (background_fence) {
-        OMPI_LAZY_WAIT_FOR_COMPLETION(lock.active);
-        OPAL_PMIX_DESTRUCT_LOCK(&lock);
+        OMPI_LAZY_WAIT_FOR_COMPLETION(active);
     } else if (!ompi_async_mpi_init) {
         /* wait for everyone to reach this point - this is a hard
          * barrier requirement at this time, though we hope to relax
          * it at a later point */
         if (NULL != opal_pmix.fence_nb) {
-            OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+            active = true;
+            OPAL_POST_OBJECT(&active);
             opal_pmix.fence_nb(NULL, false,
-                               fence_release, (void*)&lock);
-            OMPI_LAZY_WAIT_FOR_COMPLETION(lock.active);
-            OPAL_PMIX_DESTRUCT_LOCK(&lock);
+                               fence_release, (void*)&active);
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
             opal_pmix.fence(NULL, false);
         }
