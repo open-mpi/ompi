@@ -147,7 +147,7 @@ static inline type opal_thread_sub_ ## suffix (volatile type *addr, type delta) 
 static inline bool opal_thread_cmpset_bool_ ## suffix (volatile addr_type *addr, type compare, type value) \
 {                                                                       \
     if (OPAL_UNLIKELY(opal_using_threads())) {                          \
-        return opal_atomic_cmpset_ ## suffix ((volatile type *) addr, compare, value); \
+        return opal_atomic_bool_cmpset_ ## suffix ((volatile type *) addr, compare, value); \
     }                                                                   \
                                                                         \
     if ((type) *addr == compare) {                                      \
@@ -201,11 +201,11 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 #define OPAL_THREAD_SUB_SIZE_T opal_thread_sub_size_t
 #define OPAL_ATOMIC_SUB_SIZE_T opal_thread_sub_size_t
 
-#define OPAL_THREAD_CMPSET_32 opal_thread_cmpset_bool_32
-#define OPAL_ATOMIC_CMPSET_32 opal_thread_cmpset_bool_32
+#define OPAL_THREAD_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
+#define OPAL_ATOMIC_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
 
-#define OPAL_THREAD_CMPSET_PTR(x, y, z) opal_thread_cmpset_bool_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
-#define OPAL_ATOMIC_CMPSET_PTR OPAL_THREAD_CMPSET_PTR
+#define OPAL_THREAD_BOOL_CMPSET_PTR(x, y, z) opal_thread_cmpset_bool_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
+#define OPAL_ATOMIC_BOOL_CMPSET_PTR OPAL_THREAD_BOOL_CMPSET_PTR
 
 #define OPAL_THREAD_SWAP_32 opal_thread_swap_32
 #define OPAL_ATOMIC_SWAP_32 opal_thread_swap_32
@@ -235,8 +235,8 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 #define OPAL_THREAD_XOR64 opal_thread_xor_64
 #define OPAL_ATOMIC_XOR64 opal_thread_xor_64
 
-#define OPAL_THREAD_CMPSET_64 opal_thread_cmpset_bool_64
-#define OPAL_ATOMIC_CMPSET_64 opal_thread_cmpset_bool_64
+#define OPAL_THREAD_BOOL_CMPSET_64 opal_thread_cmpset_bool_64
+#define OPAL_ATOMIC_BOOL_CMPSET_64 opal_thread_cmpset_bool_64
 
 #define OPAL_THREAD_SWAP_64 opal_thread_swap_64
 #define OPAL_ATOMIC_SWAP_64 opal_thread_swap_64

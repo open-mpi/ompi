@@ -65,7 +65,7 @@ int oshmem_shmem_finalize(void)
     int ret = OSHMEM_SUCCESS;
     static int32_t finalize_has_already_started = 0;
 
-    if (opal_atomic_cmpset_32(&finalize_has_already_started, 0, 1)
+    if (opal_atomic_bool_cmpset_32(&finalize_has_already_started, 0, 1)
             && oshmem_shmem_initialized && !oshmem_shmem_aborted) {
         /* Should be called first because ompi_mpi_finalize makes orte and opal finalization */
         ret = _shmem_finalize();

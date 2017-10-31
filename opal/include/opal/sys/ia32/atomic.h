@@ -84,9 +84,9 @@ static inline void opal_atomic_isync(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
-                                        int32_t oldval,
-                                        int32_t newval)
+static inline bool opal_atomic_bool_cmpset_32(volatile int32_t *addr,
+                                              int32_t oldval,
+                                              int32_t newval)
 {
    unsigned char ret;
    __asm__ __volatile__ (
@@ -96,13 +96,13 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
                        : "q"(newval)
                        : "memory", "cc");
 
-   return (int)ret;
+   return (bool) ret;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#define opal_atomic_cmpset_acq_32 opal_atomic_cmpset_32
-#define opal_atomic_cmpset_rel_32 opal_atomic_cmpset_32
+#define opal_atomic_bool_cmpset_acq_32 opal_atomic_bool_cmpset_32
+#define opal_atomic_bool_cmpset_rel_32 opal_atomic_bool_cmpset_32
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 

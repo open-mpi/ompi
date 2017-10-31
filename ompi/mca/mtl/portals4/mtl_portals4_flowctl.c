@@ -298,7 +298,7 @@ ompi_mtl_portals4_flowctl_trigger(void)
 {
     int ret;
 
-    if (true == OPAL_ATOMIC_CMPSET_32(&ompi_mtl_portals4.flowctl.flowctl_active, false, true)) {
+    if (true == OPAL_ATOMIC_BOOL_CMPSET_32(&ompi_mtl_portals4.flowctl.flowctl_active, false, true)) {
         /* send trigger to root */
         ret = PtlPut(ompi_mtl_portals4.zero_md_h,
                      0,

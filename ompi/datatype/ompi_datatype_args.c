@@ -487,7 +487,7 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
     void* recursive_buffer;
 
     if (NULL == packed_description) {
-        if (opal_atomic_cmpset (&datatype->packed_description, NULL, (void *) 1)) {
+        if (opal_atomic_bool_cmpset (&datatype->packed_description, NULL, (void *) 1)) {
             if( ompi_datatype_is_predefined(datatype) ) {
                 packed_description = malloc(2 * sizeof(int));
             } else if( NULL == args ) {

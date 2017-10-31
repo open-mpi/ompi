@@ -59,7 +59,7 @@ static inline int ompi_osc_rdma_lock_cmpset (volatile int64_t *p, int64_t comp, 
     int ret;
 
     opal_atomic_mb ();
-    ret = opal_atomic_cmpset_64 (p, comp, value);
+    ret = opal_atomic_bool_cmpset_64 (p, comp, value);
     opal_atomic_mb ();
 
     return ret;
@@ -88,7 +88,7 @@ static inline int ompi_osc_rdma_lock_cmpset (volatile int32_t *p, int32_t comp, 
     int ret;
 
     opal_atomic_mb ();
-    ret = opal_atomic_cmpset_32 (p, comp, value);
+    ret = opal_atomic_bool_cmpset_32 (p, comp, value);
     opal_atomic_mb ();
 
     return ret;

@@ -239,7 +239,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 #else
     /* protect against ABA issues by "locking" the head */
     do {
-        if (opal_atomic_cmpset_32 ((int32_t *) &fifo->opal_fifo_head.data.counter, 0, 1)) {
+        if (opal_atomic_bool_cmpset_32 ((int32_t *) &fifo->opal_fifo_head.data.counter, 0, 1)) {
             break;
         }
 
@@ -259,7 +259,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 #endif
 
     if (&fifo->opal_fifo_ghost == next) {
-        if (!opal_atomic_cmpset_ptr (&fifo->opal_fifo_tail.data.item, item, &fifo->opal_fifo_ghost)) {
+        if (!opal_atomic_bool_cmpset_ptr (&fifo->opal_fifo_tail.data.item, item, &fifo->opal_fifo_ghost)) {
             while (&fifo->opal_fifo_ghost == item->opal_list_next) {
                 opal_atomic_rmb ();
             }

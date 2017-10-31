@@ -173,7 +173,7 @@ static const uint32_t ProcInc    = 0x2;
  }
 #define OPAL_CR_THREAD_LOCK()                                                      \
  {                                                                                 \
-    while(!OPAL_ATOMIC_CMPSET_32(&opal_cr_thread_num_in_library, 0, ThreadFlag)) { \
+    while(!OPAL_ATOMIC_BOOL_CMPSET_32(&opal_cr_thread_num_in_library, 0, ThreadFlag)) { \
       if( !opal_cr_thread_is_active && opal_cr_thread_is_done) {                   \
           break;                                                                   \
       }                                                                            \

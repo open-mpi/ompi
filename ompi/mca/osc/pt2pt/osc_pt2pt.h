@@ -153,7 +153,7 @@ static inline void ompi_osc_pt2pt_peer_set_flag (ompi_osc_pt2pt_peer_t *peer, in
         } else {
             new_flags = peer_flags & ~flag;
         }
-    } while (!OPAL_ATOMIC_CMPSET_32 (&peer->flags, peer_flags, new_flags));
+    } while (!OPAL_ATOMIC_BOOL_CMPSET_32 (&peer->flags, peer_flags, new_flags));
 }
 
 static inline void ompi_osc_pt2pt_peer_set_locked (ompi_osc_pt2pt_peer_t *peer, bool value)

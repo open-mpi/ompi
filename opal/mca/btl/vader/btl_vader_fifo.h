@@ -31,7 +31,7 @@
 #include "btl_vader_frag.h"
 
 #if SIZEOF_VOID_P == 8
-  #define vader_item_cmpset(x, y, z) opal_atomic_cmpset_64((volatile int64_t *)(x), (int64_t)(y), (int64_t)(z))
+  #define vader_item_cmpset(x, y, z) opal_atomic_bool_cmpset_64((volatile int64_t *)(x), (int64_t)(y), (int64_t)(z))
   #define vader_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
 
   #define MCA_BTL_VADER_OFFSET_MASK 0xffffffffll
@@ -40,7 +40,7 @@
 
   typedef int64_t fifo_value_t;
 #else
-  #define vader_item_cmpset(x, y, z) opal_atomic_cmpset_32((volatile int32_t *)(x), (int32_t)(y), (int32_t)(z))
+  #define vader_item_cmpset(x, y, z) opal_atomic_bool_cmpset_32((volatile int32_t *)(x), (int32_t)(y), (int32_t)(z))
   #define vader_item_swap(x, y)      opal_atomic_swap_32((volatile int32_t *)(x), (int32_t)(y))
 
   #define MCA_BTL_VADER_OFFSET_MASK 0x00ffffffl

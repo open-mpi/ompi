@@ -68,7 +68,7 @@ int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
      error_handler became atomic. */
   do {
       tmp = file->error_handler;
-  } while (!OPAL_ATOMIC_CMPSET_PTR(&(file->error_handler), tmp, tmp));
+  } while (!OPAL_ATOMIC_BOOL_CMPSET_PTR(&(file->error_handler), tmp, tmp));
 
   /* Retain the errhandler, corresponding to object refcount
      decrease in errhandler_free.c. */

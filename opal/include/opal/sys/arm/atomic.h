@@ -106,8 +106,8 @@ void opal_atomic_isync(void)
 
 #define OPAL_HAVE_ATOMIC_CMPSET_32 1
 #define OPAL_HAVE_ATOMIC_MATH_32 1
-static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
-                                        int32_t oldval, int32_t newval)
+static inline bool opal_atomic_bool_cmpset_32(volatile int32_t *addr,
+                                              int32_t oldval, int32_t newval)
 {
   int32_t ret, tmp;
 
@@ -132,30 +132,30 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline int opal_atomic_cmpset_acq_32(volatile int32_t *addr,
-                                            int32_t oldval, int32_t newval)
+static inline bool opal_atomic_bool_cmpset_acq_32(volatile int32_t *addr,
+                                                  int32_t oldval, int32_t newval)
 {
-    int rc;
+    bool rc;
 
-    rc = opal_atomic_cmpset_32(addr, oldval, newval);
+    rc = opal_atomic_bool_cmpset_32(addr, oldval, newval);
     opal_atomic_rmb();
 
     return rc;
 }
 
 
-static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
-                                            int32_t oldval, int32_t newval)
+static inline bool opal_atomic_bool_cmpset_rel_32(volatile int32_t *addr,
+                                                  int32_t oldval, int32_t newval)
 {
     opal_atomic_wmb();
-    return opal_atomic_cmpset_32(addr, oldval, newval);
+    return opal_atomic_bool_cmpset_32(addr, oldval, newval);
 }
 
 #if (OPAL_ASM_SUPPORT_64BIT == 1)
 
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
-static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
-                                        int64_t oldval, int64_t newval)
+static inline bool opal_atomic_bool_cmpset_64(volatile int64_t *addr,
+                                              int64_t oldval, int64_t newval)
 {
   int64_t ret;
   int tmp;
@@ -184,23 +184,23 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
-                                            int64_t oldval, int64_t newval)
+static inline bool opal_atomic_bool_cmpset_acq_64(volatile int64_t *addr,
+                                                  int64_t oldval, int64_t newval)
 {
-    int rc;
+    bool rc;
 
-    rc = opal_atomic_cmpset_64(addr, oldval, newval);
+    rc = opal_atomic_bool_cmpset_64(addr, oldval, newval);
     opal_atomic_rmb();
 
     return rc;
 }
 
 
-static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
-                                            int64_t oldval, int64_t newval)
+static inline bool opal_atomic_bool_cmpset_rel_64(volatile int64_t *addr,
+                                                  int64_t oldval, int64_t newval)
 {
     opal_atomic_wmb();
-    return opal_atomic_cmpset_64(addr, oldval, newval);
+    return opal_atomic_bool_cmpset_64(addr, oldval, newval);
 }
 
 #endif
@@ -251,24 +251,24 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int dec)
 
 #define OPAL_HAVE_ATOMIC_CMPSET_32 1
 #define __kuser_cmpxchg (*((int (*)(int, int, volatile int*))(0xffff0fc0)))
-static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
-                                        int32_t oldval, int32_t newval)
+static inline bool opal_atomic_bool_cmpset_32(volatile int32_t *addr,
+                                              int32_t oldval, int32_t newval)
 {
     return !(__kuser_cmpxchg(oldval, newval, addr));
 }
 
-static inline int opal_atomic_cmpset_acq_32(volatile int32_t *addr,
-                                            int32_t oldval, int32_t newval)
+static inline bool opal_atomic_bool_cmpset_acq_32(volatile int32_t *addr,
+                                                  int32_t oldval, int32_t newval)
 {
     /* kernel function includes all necessary memory barriers */
-    return opal_atomic_cmpset_32(addr, oldval, newval);
+    return opal_atomic_bool_cmpset_32(addr, oldval, newval);
 }
 
-static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
-                                            int32_t oldval, int32_t newval)
+static inline bool opal_atomic_bool_cmpset_rel_32(volatile int32_t *addr,
+                                                  int32_t oldval, int32_t newval)
 {
     /* kernel function includes all necessary memory barriers */
-    return opal_atomic_cmpset_32(addr, oldval, newval);
+    return opal_atomic_bool_cmpset_32(addr, oldval, newval);
 }
 
 #endif
