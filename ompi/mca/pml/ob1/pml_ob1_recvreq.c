@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -192,10 +192,10 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
 
     OPAL_THREAD_ADD32(&recvreq->req_pipeline_depth, -1);
 
+    assert ((uint64_t) rdma_size == frag->rdma_length);
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 
     if (OPAL_LIKELY(0 < rdma_size)) {
-        assert ((uint64_t) rdma_size == frag->rdma_length);
 
         /* check completion status */
         OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, rdma_size);
