@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -170,6 +170,10 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
 
     /* register the psm2 progress function */
     opal_progress_register(ompi_mtl_psm2_progress);
+
+#if OPAL_CUDA_SUPPORT
+    ompi_mtl_psm2.super.mtl_flags |= MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE;
+#endif
 
     return OMPI_SUCCESS;
 }
