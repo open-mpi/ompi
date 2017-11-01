@@ -57,6 +57,8 @@ included in the vX.Y.Z section and be denoted as:
 ----------------------
 
 Bug fixes/minor improvements:
+- Fix an issue with visibility of functions defined in the built-in PMIx.
+  Thanks to Siegmar Gross for reporting this issue.
 - Add configure check to prevent trying to build this release of
   Open MPI with an external hwloc 2.0 or newer release.
 - Add ability to specify layered providers for OFI MTL.
