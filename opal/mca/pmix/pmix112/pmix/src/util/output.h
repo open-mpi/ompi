@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -94,8 +94,8 @@ BEGIN_C_DECLS
  * subsystem to tell it to dump any collected output directly to
  * syslog instead of forwarding it to another location.
  */
-PMIX_DECLSPEC extern bool pmix_output_redirected_to_syslog;
-PMIX_DECLSPEC extern int pmix_output_redirected_syslog_pri;
+PMIX_EXPORT extern bool pmix_output_redirected_to_syslog;
+PMIX_EXPORT extern int pmix_output_redirected_syslog_pri;
 
 /**
  * \class pmix_output_stream_t
@@ -266,7 +266,7 @@ struct pmix_output_stream_t {
      * By definition, the default verbose stream has a handle ID of 0,
      * and has a verbose level of 0.
      */
-    PMIX_DECLSPEC bool pmix_output_init(void);
+    PMIX_EXPORT bool pmix_output_init(void);
 
     /**
      * Shut down the output stream system.
@@ -274,7 +274,7 @@ struct pmix_output_stream_t {
      * Shut down the output stream system, including the default verbose
      * stream.
      */
-    PMIX_DECLSPEC void pmix_output_finalize(void);
+    PMIX_EXPORT void pmix_output_finalize(void);
 
     /**
      * Opens an output stream.
@@ -298,7 +298,7 @@ struct pmix_output_stream_t {
      * when open_open() / pmix_output() is directed to send output to a
      * file but the process session directory does not yet exist.
      */
-    PMIX_DECLSPEC int pmix_output_open(pmix_output_stream_t *lds);
+    PMIX_EXPORT int pmix_output_open(pmix_output_stream_t *lds);
 
     /**
      * Re-opens / redirects an output stream.
@@ -312,7 +312,7 @@ struct pmix_output_stream_t {
      * passed is invalid, this call is effectively the same as opening a
      * new stream with a specific stream handle.
      */
-    PMIX_DECLSPEC int pmix_output_reopen(int output_id, pmix_output_stream_t *lds);
+    PMIX_EXPORT int pmix_output_reopen(int output_id, pmix_output_stream_t *lds);
 
     /**
      * Enables and disables output streams.
@@ -331,7 +331,7 @@ struct pmix_output_stream_t {
      * to the stream via PMIX_OUTPUT() or pmix_output() until the output
      * is re-enabled.
      */
-    PMIX_DECLSPEC bool pmix_output_switch(int output_id, bool enable);
+    PMIX_EXPORT bool pmix_output_switch(int output_id, bool enable);
 
     /**
      * \internal
@@ -342,7 +342,7 @@ struct pmix_output_stream_t {
      * typically only invoked after a restart (i.e., in a new process)
      * where output streams need to be re-initialized.
      */
-    PMIX_DECLSPEC void pmix_output_reopen_all(void);
+    PMIX_EXPORT void pmix_output_reopen_all(void);
 
     /**
      * Close an output stream.
@@ -354,7 +354,7 @@ struct pmix_output_stream_t {
      * re-used; it is possible that after a stream is closed, if another
      * stream is opened, it will get the same handle value.
      */
-    PMIX_DECLSPEC void pmix_output_close(int output_id);
+    PMIX_EXPORT void pmix_output_close(int output_id);
 
     /**
      * Main function to send output to a stream.
@@ -381,7 +381,7 @@ struct pmix_output_stream_t {
      * created, pmix_output() will automatically create the file and
      * writing to it.
      */
-    PMIX_DECLSPEC void pmix_output(int output_id, const char *format, ...) __pmix_attribute_format__(__printf__, 2, 3);
+    PMIX_EXPORT void pmix_output(int output_id, const char *format, ...) __pmix_attribute_format__(__printf__, 2, 3);
 
     /**
      * Send output to a stream only if the passed verbosity level is
@@ -411,13 +411,13 @@ struct pmix_output_stream_t {
      *
      * @see pmix_output_set_verbosity()
      */
-    PMIX_DECLSPEC void pmix_output_verbose(int verbose_level, int output_id,
+    PMIX_EXPORT void pmix_output_verbose(int verbose_level, int output_id,
                                            const char *format, ...) __pmix_attribute_format__(__printf__, 3, 4);
 
    /**
     * Same as pmix_output_verbose(), but takes a va_list form of varargs.
     */
-    PMIX_DECLSPEC void pmix_output_vverbose(int verbose_level, int output_id,
+    PMIX_EXPORT void pmix_output_vverbose(int verbose_level, int output_id,
                                             const char *format, va_list ap) __pmix_attribute_format__(__printf__, 3, 0);
 
     /**
@@ -434,13 +434,13 @@ struct pmix_output_stream_t {
      * level is not high enough, NULL is returned.  The caller is
      * responsible for free()'ing the returned string.
      */
-    PMIX_DECLSPEC char *pmix_output_string(int verbose_level, int output_id,
+    PMIX_EXPORT char *pmix_output_string(int verbose_level, int output_id,
                                            const char *format, ...) __pmix_attribute_format__(__printf__, 3, 4);
 
    /**
     * Same as pmix_output_string, but accepts a va_list form of varargs.
     */
-    PMIX_DECLSPEC char *pmix_output_vstring(int verbose_level, int output_id,
+    PMIX_EXPORT char *pmix_output_vstring(int verbose_level, int output_id,
                                             const char *format, va_list ap) __pmix_attribute_format__(__printf__, 3, 0);
 
     /**
@@ -452,7 +452,7 @@ struct pmix_output_stream_t {
      * This function sets the verbosity level on a given stream.  It
      * will be used for all future invocations of pmix_output_verbose().
      */
-    PMIX_DECLSPEC void pmix_output_set_verbosity(int output_id, int level);
+    PMIX_EXPORT void pmix_output_set_verbosity(int output_id, int level);
 
     /**
      * Get the verbosity level for a stream
@@ -460,7 +460,7 @@ struct pmix_output_stream_t {
      * @param output_id Stream id returned from pmix_output_open()
      * @returns Verbosity of stream
      */
-    PMIX_DECLSPEC int pmix_output_get_verbosity(int output_id);
+    PMIX_EXPORT int pmix_output_get_verbosity(int output_id);
 
     /**
      * Set characteristics for output files.
@@ -502,7 +502,7 @@ struct pmix_output_stream_t {
      * this function affects both new streams \em and any stream that
      * was previously opened but had not yet output anything.
      */
-    PMIX_DECLSPEC void pmix_output_set_output_file_info(const char *dir,
+    PMIX_EXPORT void pmix_output_set_output_file_info(const char *dir,
                                                         const char *prefix,
                                                         char **olddir,
                                                         char **oldprefix);
@@ -510,7 +510,7 @@ struct pmix_output_stream_t {
     /**
      * Same as pmix_output_verbose(), but pointer to buffer and size.
      */
-    PMIX_DECLSPEC void pmix_output_hexdump(int verbose_level, int output_id,
+    PMIX_EXPORT void pmix_output_hexdump(int verbose_level, int output_id,
                                            void *ptr, int buflen);
 
 #if PMIX_ENABLE_DEBUG
@@ -559,9 +559,8 @@ struct pmix_output_stream_t {
  * The intended usage is to invoke the constructor and then enable
  * the output fields that you want.
  */
-PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_output_stream_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_output_stream_t);
 
 END_C_DECLS
 
 #endif /* PMIX_OUTPUT_H_ */
-

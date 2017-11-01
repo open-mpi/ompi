@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -132,11 +132,11 @@ typedef struct {
     pmix_sec_base_module_server_hndshk_fn_t  server_handshake;
 } pmix_sec_base_module_t;
 
-PMIX_DECLSPEC extern pmix_sec_base_module_t pmix_sec;
+PMIX_EXPORT extern pmix_sec_base_module_t pmix_sec;
 
 /* initialize and finalize the security system */
-PMIX_DECLSPEC int pmix_sec_init(void);
-PMIX_DECLSPEC void pmix_sec_finalize(void);
+PMIX_EXPORT int pmix_sec_init(void);
+PMIX_EXPORT void pmix_sec_finalize(void);
 
 END_C_DECLS
 

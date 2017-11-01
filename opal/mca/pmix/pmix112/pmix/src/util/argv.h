@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -74,7 +74,7 @@ BEGIN_C_DECLS
    * value into the argv array; there is no need to keep the original
    * string (i.e., the arg parameter) after invoking this function.
    */
-PMIX_DECLSPEC  pmix_status_t pmix_argv_append(int *argc, char ***argv, const char *arg) __pmix_attribute_nonnull__(1) __pmix_attribute_nonnull__(3);
+PMIX_EXPORT  pmix_status_t pmix_argv_append(int *argc, char ***argv, const char *arg) __pmix_attribute_nonnull__(1) __pmix_attribute_nonnull__(3);
 
   /**
    * Append to an argv-style array, but ignore the size of the array.
@@ -91,7 +91,7 @@ PMIX_DECLSPEC  pmix_status_t pmix_argv_append(int *argc, char ***argv, const cha
    * argv-style arrays that do not have integers that are actively
    * maintaing their sizes.
    */
-PMIX_DECLSPEC  pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg);
+PMIX_EXPORT  pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg);
 
 /**
  * Insert the provided arg at the beginning of the array
@@ -102,7 +102,7 @@ PMIX_DECLSPEC  pmix_status_t pmix_argv_append_nosize(char ***argv, const char *a
  * @retval PMIX_SUCCESS On success
  * @retval PMIX_ERROR On failure
  */
-PMIX_DECLSPEC pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *arg);
+PMIX_EXPORT pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *arg);
 
 /**
  * Append to an argv-style array, but only if the provided argument
@@ -119,7 +119,7 @@ PMIX_DECLSPEC pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *a
  * except that it only appends the provided argument if it does not already
  * exist in the provided array, or overwrites it if it is.
  */
-PMIX_DECLSPEC  pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite);
+PMIX_EXPORT  pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite);
 
 /**
    * Free a NULL-terminated argv array.
@@ -134,7 +134,7 @@ PMIX_DECLSPEC  pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const 
    * not safe to invoke this function with a non-NULL-terminated argv
    * array.
    */
-PMIX_DECLSPEC  void pmix_argv_free(char **argv);
+PMIX_EXPORT  void pmix_argv_free(char **argv);
 
   /**
    * Split a string into a NULL-terminated argv array. Do not include empty
@@ -151,7 +151,7 @@ PMIX_DECLSPEC  void pmix_argv_free(char **argv);
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-PMIX_DECLSPEC  char **pmix_argv_split(const char *src_string, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT  char **pmix_argv_split(const char *src_string, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
   /**
    * Split a string into a NULL-terminated argv array. Include empty
@@ -168,7 +168,7 @@ PMIX_DECLSPEC  char **pmix_argv_split(const char *src_string, int delimiter) __p
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-PMIX_DECLSPEC  char **pmix_argv_split_with_empty(const char *src_string, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT  char **pmix_argv_split_with_empty(const char *src_string, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
   /**
    * Return the length of a NULL-terminated argv array.
@@ -180,7 +180,7 @@ PMIX_DECLSPEC  char **pmix_argv_split_with_empty(const char *src_string, int del
    *
    * The argv array must be NULL-terminated.
    */
-PMIX_DECLSPEC  int pmix_argv_count(char **argv);
+PMIX_EXPORT  int pmix_argv_count(char **argv);
 
   /**
    * Join all the elements of an argv array into a single
@@ -198,9 +198,9 @@ PMIX_DECLSPEC  int pmix_argv_count(char **argv);
    *
    * It is the callers responsibility to free the returned string.
    */
-PMIX_DECLSPEC  char *pmix_argv_join(char **argv, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT  char *pmix_argv_join(char **argv, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
-PMIX_DECLSPEC  char *pmix_argv_join_range(char **argv, size_t start, size_t end, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT  char *pmix_argv_join_range(char **argv, size_t start, size_t end, int delimiter) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
   /**
    * Return the number of bytes consumed by an argv array.
@@ -211,7 +211,7 @@ PMIX_DECLSPEC  char *pmix_argv_join_range(char **argv, size_t start, size_t end,
    * array.  This includes the number of bytes used by each of the
    * strings as well as the pointers used in the argv array.
    */
-PMIX_DECLSPEC  size_t pmix_argv_len(char **argv);
+PMIX_EXPORT  size_t pmix_argv_len(char **argv);
 
   /**
    * Copy a NULL-terminated argv array.
@@ -225,7 +225,7 @@ PMIX_DECLSPEC  size_t pmix_argv_len(char **argv);
    * Specifically, the output argv will be an array of the same length
    * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
    */
-PMIX_DECLSPEC  char **pmix_argv_copy(char **argv) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT  char **pmix_argv_copy(char **argv) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
     /**
      * Delete one or more tokens from the middle of an argv.
@@ -252,7 +252,7 @@ PMIX_DECLSPEC  char **pmix_argv_copy(char **argv) __pmix_attribute_malloc__ __pm
      * free()ed (it is assumed that the argv "owns" the memory that
      * the pointer points to).
      */
-PMIX_DECLSPEC  pmix_status_t pmix_argv_delete(int *argc, char ***argv,
+PMIX_EXPORT  pmix_status_t pmix_argv_delete(int *argc, char ***argv,
                                               int start, int num_to_delete);
 
     /**
@@ -276,7 +276,7 @@ PMIX_DECLSPEC  pmix_status_t pmix_argv_delete(int *argc, char ***argv,
      * source points to are strdup'ed into the new locations in
      * target).
      */
-PMIX_DECLSPEC  pmix_status_t pmix_argv_insert(char ***target, int start, char **source);
+PMIX_EXPORT  pmix_status_t pmix_argv_insert(char ***target, int start, char **source);
 
 /**
  * Insert one argv element in front of a specific position in an array
@@ -299,7 +299,7 @@ PMIX_DECLSPEC  pmix_status_t pmix_argv_insert(char ***target, int start, char **
  * source points to is strdup'ed into the new location in
  * target).
  */
-PMIX_DECLSPEC  pmix_status_t pmix_argv_insert_element(char ***target, int location, char *source);
+PMIX_EXPORT  pmix_status_t pmix_argv_insert_element(char ***target, int location, char *source);
 
 END_C_DECLS
 
