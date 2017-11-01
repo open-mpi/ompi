@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -28,6 +28,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/opal_environ.h"
 #include "ompi/proc/proc.h"
 
 #include "mtl_psm2.h"
@@ -44,6 +45,10 @@
 static int param_priority;
 /* MPI_THREAD_MULTIPLE_SUPPORT */
 opal_mutex_t mtl_psm2_mq_mutex = OPAL_MUTEX_STATIC_INIT;
+
+#if OPAL_CUDA_SUPPORT
+static bool cuda_envvar_set = false;
+#endif
 
 static int ompi_mtl_psm2_component_open(void);
 static int ompi_mtl_psm2_component_close(void);
@@ -201,9 +206,6 @@ static int
 ompi_mtl_psm2_component_register(void)
 {
     int num_local_procs, num_total_procs;
-#if OPAL_CUDA_SUPPORT
-    char *cuda_env;
-#endif
 
     ompi_mtl_psm2.connect_timeout = 180;
     (void) mca_base_component_var_register(&mca_mtl_psm2_component.super.mtl_version,
@@ -228,30 +230,6 @@ ompi_mtl_psm2_component_register(void)
         param_priority = 40;
     }
 
-#if OPAL_CUDA_SUPPORT
-    /*
-     * If using CUDA enabled OpenMPI, the user likely intends to
-     * run with CUDA buffers. So, force-set the envvar here if user failed
-     * to set it.
-     */
-    cuda_env = getenv("PSM2_CUDA");
-    if (!cuda_env) {
-        opal_show_help("help-mtl-psm2.txt",
-                       "no psm2 cuda env", true,
-                       "not set",
-                       "Host buffers,\nthere will be a performance penalty"
-                       " due to OMPI force setting this variable now.\n"
-                       "Set environment variable to 0 if using Host buffers" );
-        setenv("PSM2_CUDA", "1", 0);
-    } else if (strcmp(cuda_env, "0") == 0) {
-        opal_show_help("help-mtl-psm2.txt",
-                       "no psm2 cuda env", true,
-                       "set to 0",
-                       "CUDA buffers,\nthe execution will SEGFAULT."
-                       " Set environment variable to 1 if using CUDA buffers");
-    }
-#endif
-
     (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version,
                                             "priority", "Priority of the PSM2 MTL component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -272,17 +250,16 @@ static int
 ompi_mtl_psm2_component_open(void)
 {
   int res;
-  glob_t globbuf;
-  globbuf.gl_offs = 0;
+  glob_t globbuf = {0};
 
   /* Component available only if Omni-Path hardware is present */
   res = glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf);
-  if (0 == res || GLOB_NOMATCH == res) {
+  if (globbuf.gl_pathc > 0) {
       globfree(&globbuf);
   }
   if (0 != res) {
       res = glob("/dev/hfi1_[0-9][0-9]", GLOB_APPEND, NULL, &globbuf);
-      if (0 == res || GLOB_NOMATCH == res) {
+      if (globbuf.gl_pathc > 0) {
           globfree(&globbuf);
       }
       if (0 != res) {
@@ -336,6 +313,11 @@ ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority)
 static int
 ompi_mtl_psm2_component_close(void)
 {
+#if OPAL_CUDA_SUPPORT
+    if (cuda_envvar_set) {
+        opal_unsetenv("PSM2_CUDA", &environ);
+    }
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -362,6 +344,11 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
     int	verno_major = PSM2_VERNO_MAJOR;
     int verno_minor = PSM2_VERNO_MINOR;
     int local_rank = -1, num_local_procs = 0;
+#if OPAL_CUDA_SUPPORT
+    int ret;
+    char *cuda_env;
+    glob_t globbuf = {0};
+#endif
 
     /* Compute the total number of processes on this host and our local rank
      * on that node. We need to provide PSM2 with these values so it can
@@ -388,6 +375,27 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
     for (int i = 0 ; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0 ; ++i) {
         ompi_mtl_psm2_set_shadow_env (ompi_mtl_psm2_shadow_variables + i);
     }
+
+#if OPAL_CUDA_SUPPORT
+    /*
+     * If using CUDA enabled Open MPI, the user likely intends to
+     * run with CUDA buffers. So, force-set the envvar here if user failed
+     * to set it.
+     */
+    ret = glob("/sys/module/nvidia", GLOB_DOOFFS, NULL, &globbuf);
+    if (globbuf.gl_pathc > 0) {
+        globfree(&globbuf);
+    }
+
+    cuda_env = getenv("PSM2_CUDA");
+    if (!cuda_env && (0 == ret)) {
+        opal_show_help("help-mtl-psm2.txt",
+                       "no psm2 cuda env", true,
+                       ompi_process_info.nodename);
+        opal_setenv("PSM2_CUDA", "1", false, &environ);
+        cuda_envvar_set = true;
+    }
+#endif
 
     err = psm2_init(&verno_major, &verno_minor);
     if (err) {
