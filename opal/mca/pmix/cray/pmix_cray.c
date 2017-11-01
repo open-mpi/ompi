@@ -53,6 +53,7 @@ static int cray_resolve_peers(const char *nodename,
                               opal_list_t *procs);
 static int cray_resolve_nodes(opal_jobid_t jobid, char **nodelist);
 static int cray_put(opal_pmix_scope_t scope, opal_value_t *kv);
+static int cray_fence(opal_list_t *procs, int collect_data);
 static int cray_fencenb(opal_list_t *procs, int collect_data,
                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 static int cray_commit(void);
@@ -87,7 +88,7 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
     .initialized = cray_initialized,
     .abort = cray_abort,
     .commit = cray_commit,
-    .fence = NULL,
+    .fence = cray_fence,
     .fence_nb = cray_fencenb,
     .put = cray_put,
     .get = cray_get,
@@ -127,6 +128,11 @@ static OBJ_CLASS_INSTANCE(pmi_opcaddy_t,
                           opal_object_t,
                           NULL, NULL);
 
+struct fence_result {
+    volatile int flag;
+    int status;
+};
+
 // PMI constant values:
 static int pmix_kvslen_max = 0;
 static int pmix_keylen_max = 0;
@@ -153,6 +159,13 @@ static char* pmix_error(int pmix_err);
                     pmi_func, __FILE__, __LINE__, __func__,     \
                     pmix_error(pmi_err));                       \
     } while(0);
+
+#define CRAY_WAIT_FOR_COMPLETION(a)               \
+    do {                                          \
+        while ((a)) {                             \
+            usleep(10);                           \
+        }                                         \
+    } while (0)
 
 static void cray_get_more_info(void)
 {
@@ -900,6 +913,23 @@ fn_exit:
     OBJ_RELEASE(op);
     return;
 }
+
+static void fence_release(int status, void *cbdata)
+{
+    struct fence_result *res = (struct fence_result*)cbdata;
+    res->status = status;
+    opal_atomic_wmb();
+    res->flag = 0;
+}
+
+static int cray_fence(opal_list_t *procs, int collect_data)
+{
+    struct fence_result result = { 1, OPAL_SUCCESS };
+    cray_fencenb(procs, collect_data, fence_release, (void*)&result);
+    CRAY_WAIT_FOR_COMPLETION(result.flag);
+    return result.status;
+}
+
 
 static int cray_fencenb(opal_list_t *procs, int collect_data,
                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
