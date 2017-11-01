@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -68,6 +68,7 @@ ORTE_DECLSPEC extern int orte_notifier_debug_output;
 
 /* Severities */
 typedef enum {
+#ifdef HAVE_SYSLOG_H
     ORTE_NOTIFIER_EMERG = LOG_EMERG,
     ORTE_NOTIFIER_ALERT = LOG_ALERT,
     ORTE_NOTIFIER_CRIT = LOG_CRIT,
@@ -76,6 +77,16 @@ typedef enum {
     ORTE_NOTIFIER_NOTICE = LOG_NOTICE,
     ORTE_NOTIFIER_INFO = LOG_INFO,
     ORTE_NOTIFIER_DEBUG = LOG_DEBUG
+#else
+    ORTE_NOTIFIER_EMERG,
+    ORTE_NOTIFIER_ALERT,
+    ORTE_NOTIFIER_CRIT,
+    ORTE_NOTIFIER_ERROR,
+    ORTE_NOTIFIER_WARN,
+    ORTE_NOTIFIER_NOTICE,
+    ORTE_NOTIFIER_INFO,
+    ORTE_NOTIFIER_DEBUG
+#endif
 } orte_notifier_severity_t;
 
 typedef struct {
