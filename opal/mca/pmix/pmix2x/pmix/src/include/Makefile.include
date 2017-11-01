@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2013-2016 Intel, Inc. All rights reserved
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,6 +45,6 @@ headers += \
 endif ! PMIX_EMBEDDED_MODE
 
 if WANT_INSTALL_HEADERS
-headers += \
+nodist_headers += \
     include/pmix_config.h
 endif
