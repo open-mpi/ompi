@@ -13,7 +13,7 @@
 AC_DEFUN([MCA_ompi_osc_monitoring_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/osc/monitoring/Makefile])
 
-    AS_IF([test MCA_BUILD_ompi_common_monitoring_DSO_TRUE == ''],
+    AS_IF([test "$MCA_BUILD_ompi_common_monitoring_DSO_TRUE" == ''],
           [$1],
           [$2])
     OPAL_CHECK_PORTALS4([osc_monitoring],
