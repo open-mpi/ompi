@@ -144,7 +144,7 @@ static void *mylib(void *ptr)
     /* mark that this isn't to go to any default event handler - pmix_init
      * takes care of that for us, but we have to explicitly do it here */
     flag = true;
-    PMIX_INFO_LOAD(&info[0], PMIX_EVENT_NON_DEFAULT, &flag, PMIX_BOOL);
+    PMIX_INFO_LOAD(&info[4], PMIX_EVENT_NON_DEFAULT, &flag, PMIX_BOOL);
 
     /* see if pmix is already initialized - note that if we
      * don't know our process identifier at this point (e.g.,
