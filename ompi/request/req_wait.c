@@ -110,7 +110,7 @@ int ompi_request_default_wait_any(size_t count,
             continue;
         }
 
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync) ) {
+        if( !OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync) ) {
             assert(REQUEST_COMPLETE(request));
             completed = i;
             *index = i;
@@ -146,7 +146,7 @@ int ompi_request_default_wait_any(size_t count,
          * Otherwise, the request has been completed meanwhile, and it
          * has been atomically marked as REQUEST_COMPLETE.
          */
-        if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+        if( !OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             *index = i;
         }
     }
@@ -218,7 +218,7 @@ int ompi_request_default_wait_all( size_t count,
             continue;
         }
 
-        if (!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync)) {
+        if (!OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync)) {
             if( OPAL_UNLIKELY( MPI_SUCCESS != request->req_status.MPI_ERROR ) ) {
                 failed++;
             }
@@ -260,7 +260,7 @@ int ompi_request_default_wait_all( size_t count,
                  * mark the request as pending then it is neither failed nor complete, and
                  * we must stop altering it.
                  */
-                if( OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING ) ) {
+                if( OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING ) ) {
                     /*
                      * Per MPI 2.2 p 60:
                      * Allows requests to be marked as MPI_ERR_PENDING if they are
@@ -320,7 +320,7 @@ int ompi_request_default_wait_all( size_t count,
                 /* If the request is still pending due to a failed request
                  * then skip it in this loop.
                  */
-                 if( OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING ) ) {
+                 if( OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING ) ) {
                     /*
                      * Per MPI 2.2 p 60:
                      * Allows requests to be marked as MPI_ERR_PENDING if they are
@@ -407,7 +407,7 @@ int ompi_request_default_wait_some(size_t count,
             num_requests_null_inactive++;
             continue;
         }
-        indices[i] = OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync);
+        indices[i] = OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync);
         if( !indices[i] ) {
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
@@ -454,7 +454,7 @@ int ompi_request_default_wait_some(size_t count,
          */
         if( !indices[i] ){
             indices[num_requests_done++] = i;
-        } else if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+        } else if( !OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             indices[num_requests_done++] = i;
         }
     }

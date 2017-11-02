@@ -67,7 +67,7 @@ static inline ompi_osc_pt2pt_frag_t *ompi_osc_pt2pt_frag_alloc_non_buffered (omp
 
     /* to ensure ordering flush the buffer on the peer */
     curr = peer->active_frag;
-    if (NULL != curr && opal_atomic_cmpset (&peer->active_frag, curr, NULL)) {
+    if (NULL != curr && opal_atomic_bool_cmpset (&peer->active_frag, curr, NULL)) {
         /* If there's something pending, the pending finish will
            start the buffer.  Otherwise, we need to start it now. */
         int ret = ompi_osc_pt2pt_frag_finish (module, curr);

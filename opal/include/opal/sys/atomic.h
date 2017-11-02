@@ -44,7 +44,7 @@
  *  - \c OPAL_HAVE_ATOMIC_MATH_64 if 64 bit add/sub/cmpset can be done "atomicly"
  *
  * Note that for the Atomic math, atomic add/sub may be implemented as
- * C code using opal_atomic_cmpset.  The appearance of atomic
+ * C code using opal_atomic_bool_cmpset.  The appearance of atomic
  * operation will be upheld in these cases.
  */
 
@@ -348,20 +348,20 @@ void opal_atomic_unlock(opal_atomic_lock_t *lock);
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
 static inline
 #endif
-int opal_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval,
-                          int32_t newval);
+bool opal_atomic_bool_cmpset_32(volatile int32_t *addr, int32_t oldval,
+                                int32_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
 static inline
 #endif
-int opal_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval,
-                              int32_t newval);
+bool opal_atomic_bool_cmpset_acq_32(volatile int32_t *addr, int32_t oldval,
+                                    int32_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
 static inline
 #endif
-int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
-                              int32_t newval);
+bool opal_atomic_bool_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
+                                    int32_t newval);
 #endif
 
 
@@ -373,20 +373,20 @@ int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
 static inline
 #endif
-int opal_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval,
-                          int64_t newval);
+bool opal_atomic_bool_cmpset_64(volatile int64_t *addr, int64_t oldval,
+                                int64_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
 static inline
 #endif
-int opal_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval,
-                              int64_t newval);
+bool opal_atomic_bool_cmpset_acq_64(volatile int64_t *addr, int64_t oldval,
+                                    int64_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
 static inline
 #endif
-int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
-                              int64_t newval);
+bool opal_atomic_bool_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
+                                    int64_t newval);
 
 #endif
 
@@ -525,24 +525,24 @@ opal_atomic_sub_size_t(volatile size_t *addr, size_t delta)
 #if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
 /* these are always done with inline functions, so always mark as
    static inline */
-static inline int opal_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
-                                        int64_t newval, size_t length);
-static inline int opal_atomic_cmpset_acq_xx(volatile void* addr,
-                                            int64_t oldval,  int64_t newval,
-                                            size_t length);
-static inline int opal_atomic_cmpset_rel_xx(volatile void* addr,
-                                            int64_t oldval, int64_t newval,
-                                            size_t length);
+static inline bool opal_atomic_bool_cmpset_xx(volatile void* addr, int64_t oldval,
+                                              int64_t newval, size_t length);
+static inline bool opal_atomic_bool_cmpset_acq_xx(volatile void* addr,
+                                                  int64_t oldval,  int64_t newval,
+                                                  size_t length);
+static inline bool opal_atomic_bool_cmpset_rel_xx(volatile void* addr,
+                                                  int64_t oldval, int64_t newval,
+                                                  size_t length);
 
-static inline int opal_atomic_cmpset_ptr(volatile void* addr,
-                                         void* oldval,
-                                         void* newval);
-static inline int opal_atomic_cmpset_acq_ptr(volatile void* addr,
-                                             void* oldval,
-                                             void* newval);
-static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
-                                             void* oldval,
-                                             void* newval);
+static inline bool opal_atomic_bool_cmpset_ptr(volatile void* addr,
+                                               void* oldval,
+                                               void* newval);
+static inline bool opal_atomic_bool_cmpset_acq_ptr(volatile void* addr,
+                                                   void* oldval,
+                                                   void* newval);
+static inline bool opal_atomic_bool_cmpset_rel_ptr(volatile void* addr,
+                                                   void* oldval,
+                                                   void* newval);
 
 /**
  * Atomic compare and set of pointer with relaxed semantics. This
@@ -555,10 +555,10 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
  * @param oldval        Comparison value <TYPE>.
  * @param newval        New value to set if comparision is true <TYPE>.
  *
- * See opal_atomic_cmpset_* for pseudo-code.
+ * See opal_atomic_bool_cmpset_* for pseudo-code.
  */
-#define opal_atomic_cmpset( ADDR, OLDVAL, NEWVAL )                  \
-   opal_atomic_cmpset_xx( (volatile void*)(ADDR), (intptr_t)(OLDVAL), \
+#define opal_atomic_bool_cmpset( ADDR, OLDVAL, NEWVAL )                  \
+   opal_atomic_bool_cmpset_xx( (volatile void*)(ADDR), (intptr_t)(OLDVAL), \
                           (intptr_t)(NEWVAL), sizeof(*(ADDR)) )
 
 /**
@@ -572,10 +572,10 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
  * @param oldval        Comparison value <TYPE>.
  * @param newval        New value to set if comparision is true <TYPE>.
  *
- * See opal_atomic_cmpset_acq_* for pseudo-code.
+ * See opal_atomic_bool_cmpset_acq_* for pseudo-code.
  */
-#define opal_atomic_cmpset_acq( ADDR, OLDVAL, NEWVAL )           \
-   opal_atomic_cmpset_acq_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
+#define opal_atomic_bool_cmpset_acq( ADDR, OLDVAL, NEWVAL )           \
+   opal_atomic_bool_cmpset_acq_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
                               (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
 
@@ -590,10 +590,10 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
  * @param oldval        Comparison value <TYPE>.
  * @param newval        New value to set if comparision is true <TYPE>.
  *
- * See opal_atomic_cmpsetrel_* for pseudo-code.
+ * See opal_atomic_bool_cmpsetrel_* for pseudo-code.
  */
-#define opal_atomic_cmpset_rel( ADDR, OLDVAL, NEWVAL )           \
-   opal_atomic_cmpset_rel_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
+#define opal_atomic_bool_cmpset_rel( ADDR, OLDVAL, NEWVAL )           \
+   opal_atomic_bool_cmpset_rel_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
                               (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
 #endif /* (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64) */

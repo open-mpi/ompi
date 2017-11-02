@@ -356,7 +356,7 @@ static inline struct ompi_proc_t *ompi_group_dense_lookup (ompi_group_t *group, 
         ompi_proc_t *real_proc =
             (ompi_proc_t *) ompi_proc_for_name (ompi_proc_sentinel_to_name ((uintptr_t) proc));
 
-        if (opal_atomic_cmpset_ptr (group->grp_proc_pointers + peer_id, proc, real_proc)) {
+        if (opal_atomic_bool_cmpset_ptr (group->grp_proc_pointers + peer_id, proc, real_proc)) {
             OBJ_RETAIN(real_proc);
         }
 

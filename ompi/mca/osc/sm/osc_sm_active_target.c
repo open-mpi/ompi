@@ -133,7 +133,7 @@ ompi_osc_sm_start(struct ompi_group_t *group,
 
     OBJ_RETAIN(group);
 
-    if (!OPAL_ATOMIC_CMPSET_PTR(&module->start_group, NULL, group)) {
+    if (!OPAL_ATOMIC_BOOL_CMPSET_PTR(&module->start_group, NULL, group)) {
         OBJ_RELEASE(group);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -162,7 +162,7 @@ ompi_osc_sm_start(struct ompi_group_t *group,
 
             do {
                 old = module->posts[my_rank][rank_byte];
-            } while (!opal_atomic_cmpset ((volatile osc_sm_post_type_t *) module->posts[my_rank] + rank_byte, old, old ^ rank_bit));
+            } while (!opal_atomic_bool_cmpset ((volatile osc_sm_post_type_t *) module->posts[my_rank] + rank_byte, old, old ^ rank_bit));
        }
 
         free (ranks);
@@ -185,7 +185,7 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
     opal_atomic_mb();
 
     group = module->start_group;
-    if (NULL == group || !OPAL_ATOMIC_CMPSET_PTR(&module->start_group, group, NULL)) {
+    if (NULL == group || !OPAL_ATOMIC_BOOL_CMPSET_PTR(&module->start_group, group, NULL)) {
         return OMPI_ERR_RMA_SYNC;
     }
 

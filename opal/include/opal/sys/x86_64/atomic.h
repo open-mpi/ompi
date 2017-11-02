@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -82,8 +82,8 @@ static inline void opal_atomic_isync(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
-                                        int32_t oldval, int32_t newval)
+static inline bool opal_atomic_bool_cmpset_32( volatile int32_t *addr,
+                                               int32_t oldval, int32_t newval)
 {
    unsigned char ret;
    __asm__ __volatile__ (
@@ -93,18 +93,18 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                        : "q"(newval)
                        : "memory", "cc");
 
-   return (int)ret;
+   return (bool) ret;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#define opal_atomic_cmpset_acq_32 opal_atomic_cmpset_32
-#define opal_atomic_cmpset_rel_32 opal_atomic_cmpset_32
+#define opal_atomic_bool_cmpset_acq_32 opal_atomic_bool_cmpset_32
+#define opal_atomic_bool_cmpset_rel_32 opal_atomic_bool_cmpset_32
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
-                                         int64_t oldval, int64_t newval)
+static inline bool opal_atomic_bool_cmpset_64( volatile int64_t *addr,
+                                               int64_t oldval, int64_t newval)
 {
    unsigned char ret;
    __asm__ __volatile__ (
@@ -115,18 +115,18 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                        : "memory", "cc"
                        );
 
-   return (int)ret;
+   return (bool) ret;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
-#define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
+#define opal_atomic_bool_cmpset_acq_64 opal_atomic_bool_cmpset_64
+#define opal_atomic_bool_cmpset_rel_64 opal_atomic_bool_cmpset_64
 
 #if OPAL_GCC_INLINE_ASSEMBLY && OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
 
-static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr, opal_int128_t oldval,
-                                          opal_int128_t newval)
+static inline bool opal_atomic_bool_cmpset_128 (volatile opal_int128_t *addr, opal_int128_t oldval,
+                                                opal_int128_t newval)
 {
     unsigned char ret;
 
@@ -140,7 +140,7 @@ static inline int opal_atomic_cmpset_128 (volatile opal_int128_t *addr, opal_int
                             "a" (((int64_t *)&oldval)[0]), "d" (((int64_t *)&oldval)[1])
                           : "memory", "cc");
 
-    return (int) ret;
+    return (bool) ret;
 }
 
 #define OPAL_HAVE_ATOMIC_CMPSET_128 1

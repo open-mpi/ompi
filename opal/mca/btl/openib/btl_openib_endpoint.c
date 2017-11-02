@@ -377,7 +377,7 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
          * was not in "connect" or "bad" flow (failed to allocate memory)
          * and changed the pointer back to NULL
          */
-        if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL, (void*)1)) {
+        if(!opal_atomic_bool_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL, (void*)1)) {
             if (NULL != endpoint->eager_rdma_local.reg) {
                 endpoint->endpoint_btl->device->rcache->rcache_deregister (endpoint->endpoint_btl->device->rcache,
                                                                            &endpoint->eager_rdma_local.reg->base);
@@ -897,7 +897,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
-    if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
+    if(!opal_atomic_bool_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
                 (void*)1))
         return;
 
@@ -975,7 +975,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         endpoint->eager_rdma_local.rd_win?endpoint->eager_rdma_local.rd_win:1;
 
     /* set local rdma pointer to real value */
-    (void)opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
+    (void)opal_atomic_bool_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
                                  (void*)1, buf);
     endpoint->eager_rdma_local.alloc_base = alloc_base;
 
@@ -986,7 +986,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         assert(((opal_object_t*)endpoint)->obj_reference_count == 2);
         do {
             p = &device->eager_rdma_buffers[device->eager_rdma_buffers_count];
-        } while(!opal_atomic_cmpset_ptr(p, NULL, endpoint));
+        } while(!opal_atomic_bool_cmpset_ptr(p, NULL, endpoint));
 
         OPAL_THREAD_ADD32(&openib_btl->eager_rdma_channels, 1);
         /* from this point progress function starts to poll new buffer */
@@ -1001,7 +1001,7 @@ free_headers_buf:
     free(headers_buf);
 unlock_rdma_local:
     /* set local rdma pointer back to zero. Will retry later */
-    (void)opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
+    (void)opal_atomic_bool_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
                                  endpoint->eager_rdma_local.base.pval, NULL);
     endpoint->eager_rdma_local.frags = NULL;
 }

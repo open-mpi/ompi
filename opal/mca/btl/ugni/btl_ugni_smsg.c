@@ -64,7 +64,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
     uint32_t len;
     int count = 0;
 
-    if (!opal_atomic_cmpset_32 (&ep->smsg_progressing, 0, 1)) {
+    if (!opal_atomic_bool_cmpset_32 (&ep->smsg_progressing, 0, 1)) {
         /* already progressing (we can't support reentry here) */
         return 0;
     }
