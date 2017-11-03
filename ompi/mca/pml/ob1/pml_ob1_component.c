@@ -209,18 +209,19 @@ static int mca_pml_ob1_component_register(void)
                                            "Name of allocator component for unexpected messages",
                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_ob1.allocator_name);
+    (void)mca_base_component_pvar_register(&mca_pml_ob1_component.pmlm_version,
+                                           "unexpected_msgq_length", "Number of unexpected messages "
+                                           "received by each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                           MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                           mca_pml_ob1_get_unex_msgq_size, NULL, mca_pml_ob1_comm_size_notify, NULL);
 
-    (void) mca_base_pvar_register ("ompi", "pml", "ob1", "unexpected_msgq_length", "Number of unexpected messages "
-                                   "received by each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                   mca_pml_ob1_get_unex_msgq_size, NULL, mca_pml_ob1_comm_size_notify, NULL);
-
-    (void) mca_base_pvar_register ("ompi", "pml", "ob1", "posted_recvq_length", "Number of unmatched receives "
-                                   "posted for each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                   mca_pml_ob1_get_posted_recvq_size, NULL, mca_pml_ob1_comm_size_notify, NULL);
+    (void)mca_base_component_pvar_register(&mca_pml_ob1_component.pmlm_version,
+                                           "posted_recvq_length", "Number of unmatched receives "
+                                           "posted for each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                           MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                           mca_pml_ob1_get_posted_recvq_size, NULL, mca_pml_ob1_comm_size_notify, NULL);
 
     return OMPI_SUCCESS;
 }
