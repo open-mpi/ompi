@@ -114,7 +114,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     .session_filename = NULL,
     .system_filename = NULL,
     .wait_to_connect = 4,
-    .max_retries = 2
+    .max_retries = 2,
+    .report_uri = NULL,
+    .remote_connections = false
 };
 
 static char **split_and_resolve(char **orig_str, char *name);
@@ -127,11 +129,26 @@ static int component_register(void)
     pmix_mca_base_component_t *component = &mca_ptl_tcp_component.super.base;
 
     (void)pmix_mca_base_component_var_register(component, "server_uri",
-                                               "URI of a server a tool wishes to connect to",
+                                               "URI of a server a tool wishes to connect to - either the "
+                                               "URI itself, or file:path-to-file-containing-uri",
                                                PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                                PMIX_INFO_LVL_2,
                                                PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
                                                &mca_ptl_tcp_component.super.uri);
+
+    (void)pmix_mca_base_component_var_register(component, "report_uri",
+                                               "Output URI [- => stdout, + => stderr, or filename]",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                               PMIX_INFO_LVL_2,
+                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
+                                               &mca_ptl_tcp_component.report_uri);
+
+    (void)pmix_mca_base_component_var_register(component, "remote_connections",
+                                               "Enable connections from remote tools",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                               PMIX_INFO_LVL_2,
+                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
+                                               &mca_ptl_tcp_component.remote_connections);
 
     (void)pmix_mca_base_component_var_register(component, "if_include",
                                                "Comma-delimited list of devices and/or CIDR notation of TCP networks (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with ptl_tcp_if_exclude.",
@@ -203,6 +220,8 @@ static int component_register(void)
     return PMIX_SUCCESS;
 }
 
+static char *urifile = NULL;
+
 static pmix_status_t component_open(void)
 {
     char *tdir;
@@ -232,6 +251,11 @@ static pmix_status_t component_open(void)
     if (NULL == mca_ptl_tcp_component.system_tmpdir) {
         mca_ptl_tcp_component.system_tmpdir = strdup(tdir);
     }
+    if (NULL != mca_ptl_tcp_component.report_uri &&
+        0 != strcmp(mca_ptl_tcp_component.report_uri, "-") &&
+        0 != strcmp(mca_ptl_tcp_component.report_uri, "+")) {
+        urifile = strdup(mca_ptl_tcp_component.report_uri);
+    }
     return PMIX_SUCCESS;
 }
 
@@ -243,6 +267,12 @@ pmix_status_t component_close(void)
     }
     if (NULL != mca_ptl_tcp_component.session_filename) {
         unlink(mca_ptl_tcp_component.session_filename);
+    }
+    if (NULL != urifile) {
+        /* remove the file */
+        unlink(urifile);
+        free(urifile);
+        urifile = NULL;
     }
     return PMIX_SUCCESS;
 }
@@ -274,7 +304,6 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     struct sockaddr_storage my_ss;
     int kindex;
     size_t n;
-    bool remote_connections = false;
     bool session_tool = false;
     bool system_tool = false;
     pmix_socklen_t addrlen;
@@ -308,28 +337,21 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             } else if (0 == strcmp(info[n].key, PMIX_TCP_IPV6_PORT)) {
                 mca_ptl_tcp_component.ipv6_port = info[n].value.data.integer;
             } else if (0 == strcmp(info[n].key, PMIX_TCP_DISABLE_IPV4)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    mca_ptl_tcp_component.disable_ipv4_family = true;
-                } else {
-                    mca_ptl_tcp_component.disable_ipv4_family = info[n].value.data.flag;
-                }
+                mca_ptl_tcp_component.disable_ipv4_family = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_TCP_DISABLE_IPV6)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    mca_ptl_tcp_component.disable_ipv6_family = true;
-                } else {
-                    mca_ptl_tcp_component.disable_ipv6_family = info[n].value.data.flag;
-                }
+                mca_ptl_tcp_component.disable_ipv6_family = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_REMOTE_CONNECTIONS)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    remote_connections = true;
-                } else {
-                    remote_connections = info[n].value.data.flag;
-                }
+                mca_ptl_tcp_component.remote_connections = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_TCP_URI)) {
                 if (NULL != mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);
                 }
                 mca_ptl_tcp_component.super.uri = strdup(info[n].value.data.string);
+            } else if (0 == strcmp(info[n].key, PMIX_TCP_REPORT_URI)) {
+                if (NULL != mca_ptl_tcp_component.report_uri) {
+                    free(mca_ptl_tcp_component.report_uri);
+                }
+                mca_ptl_tcp_component.report_uri = strdup(info[n].value.data.string);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_TMPDIR)) {
                 if (NULL != mca_ptl_tcp_component.session_tmpdir) {
                     free(mca_ptl_tcp_component.session_tmpdir);
@@ -341,17 +363,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                 }
                 mca_ptl_tcp_component.system_tmpdir = strdup(info[n].value.data.string);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_TOOL_SUPPORT)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    session_tool = true;
-                } else {
-                    session_tool = info[n].value.data.flag;
-                }
+                session_tool = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_SYSTEM_SUPPORT)) {
-               if (PMIX_UNDEF == info[n].value.type) {
-                   system_tool = true;
-               } else {
-                   system_tool = info[n].value.data.flag;
-               }
+                system_tool = PMIX_INFO_TRUE(&info[n]);
            }
         }
     }
@@ -440,7 +454,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         /* if this is the loopback device and they didn't enable
          * remote connections, then we are done */
         if (pmix_ifisloopback(i)) {
-            if (remote_connections) {
+            if (mca_ptl_tcp_component.remote_connections) {
                 /* ignore loopback */
                 continue;
             } else {
@@ -574,6 +588,33 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     }
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp URI %s", lt->uri);
+
+    if (NULL != mca_ptl_tcp_component.report_uri) {
+        /* if the string is a "-", then output to stdout */
+        if (0 == strcmp(mca_ptl_tcp_component.report_uri, "-")) {
+            fprintf(stdout, "%s\n", lt->uri);
+        } else if (0 == strcmp(mca_ptl_tcp_component.report_uri, "+")) {
+            /* output to stderr */
+            fprintf(stderr, "%s\n", lt->uri);
+        } else {
+            /* must be a file */
+            FILE *fp;
+            fp = fopen(mca_ptl_tcp_component.report_uri, "w");
+            if (NULL == fp) {
+                pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.report_uri);
+                PMIX_ERROR_LOG(PMIX_ERR_FILE_OPEN_FAILURE);
+                CLOSE_THE_SOCKET(lt->socket);
+                free(mca_ptl_tcp_component.system_filename);
+                mca_ptl_tcp_component.system_filename = NULL;
+                goto sockerror;
+            }
+            /* output my nspace and rank plus the URI */
+            fprintf(fp, "%s\n", lt->uri);
+            /* add a flag that indicates we accept v2.1 protocols */
+            fprintf(fp, "v%s\n", PMIX_VERSION);
+            fclose(fp);
+        }
+    }
 
     /* if we are going to support tools, then drop contact file(s) */
     if (system_tool) {
@@ -959,7 +1000,15 @@ static void connection_handler(int sd, short args, void *cbdata)
         bftype = pmix_bfrops_globals.default_type;  // we can't know any better
         gds = NULL;
     } else {
-        proc_type = PMIX_PROC_V21;
+        if (0 == strncmp(version, "2.1", 3)) {
+            proc_type = PMIX_PROC_V21;
+        } else if (0 == strncmp(version, "3", 1)) {
+            proc_type = PMIX_PROC_V3;
+        } else {
+            free(msg);
+            rc = PMIX_ERR_NOT_SUPPORTED;
+            goto error;
+        }
         /* extract the name of the bfrops module they used */
         PMIX_STRNLEN(msglen, mg, cnt);
         if (msglen < cnt) {

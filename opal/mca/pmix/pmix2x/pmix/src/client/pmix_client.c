@@ -171,6 +171,13 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
             PMIX_RELEASE(chain);
             goto error;
         }
+        /* check for non-default flag */
+        for (cnt=0; cnt < (int)ninfo; cnt++) {
+            if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
+                chain->nondefault = PMIX_INFO_TRUE(&chain->info[cnt]);
+                break;
+            }
+        }
     }
     /* now put the callback object tag in the last element */
     PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
@@ -664,16 +671,11 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         if (NULL != info && 0 < ninfo) {
             for (n=0; n < ninfo; n++) {
                 if (0 == strcmp(PMIX_EMBED_BARRIER, info[n].key)) {
-                    /* did they specify a value? */
-                    if (PMIX_BOOL == info[n].value.type) {
-                        if (info[n].value.data.flag) {
-                            /* they do want the barrier */
-                            PMIx_Fence(NULL, 0, NULL, 0);
+                    if (PMIX_INFO_TRUE(&info[n])) {
+                        rc = PMIx_Fence(NULL, 0, NULL, 0);
+                        if (PMIX_SUCCESS != rc) {
+                            PMIX_ERROR_LOG(rc);
                         }
-                    } else {
-                        /* providing this attribute is considered
-                         * to be "true" by default */
-                        PMIx_Fence(NULL, 0, NULL, 0);
                     }
                     break;
                 }

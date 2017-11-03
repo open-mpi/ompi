@@ -265,6 +265,7 @@ typedef struct {
     bool pubsub_init;
     bool session_server;
     bool system_server;
+    bool legacy;
 } pmix_server_globals_t;
 
 extern pmix_server_globals_t orte_pmix_server_globals;

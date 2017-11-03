@@ -316,15 +316,12 @@ opal/mca/pmix/ext2x/ext2x_client.c
 opal/mca/pmix/ext2x/ext2x_component.c
 opal/mca/pmix/ext2x/ext2x_server_north.c
 opal/mca/pmix/ext2x/ext2x_server_south.c
-opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h
-opal/mca/pmix/pmix*/pmix/include/pmix/autogen/config.h.in
-opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in
-opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h
 opal/mca/pmix/pmix2x/pmix/src/include/frameworks.h
 opal/mca/pmix/pmix2x/pmix/src/mca/pinstalldirs/config/pinstall_dirs.h
 opal/mca/pmix/pmix2x/pmix/config/autogen_found_items.m4
 opal/mca/pmix/pmix2x/pmix/src/include/pmix_config.h
 opal/mca/pmix/pmix2x/pmix/src/include/pmix_config.h.in
+opal/mca/pmix/pmix2x/pmix/include/pmix_common.h
 opal/mca/pmix/pmix2x/pmix/include/pmix_rename.h
 opal/mca/pmix/pmix2x/pmix/include/pmix_version.h
 opal/mca/pmix/pmix2x/pmix/src/util/keyval/keyval_lex.c

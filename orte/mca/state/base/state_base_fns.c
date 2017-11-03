@@ -651,7 +651,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_proc_t *pdata;
     int i;
     char *rtmod;
-    orte_process_name_t parent, target, *npptr;
+    orte_process_name_t parent, target;
 
     ORTE_ACQUIRE_OBJECT(caddy);
     proc = &caddy->name;
@@ -769,22 +769,6 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
                 orte_state_base_notify_data_server(&target);
             }
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-            /* if they requested notification upon completion, provide it */
-            if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NOTIFY_COMPLETION, NULL, OPAL_BOOL)) {
-                /* notify_completion => notify the parent of the termination
-                 * of this child job. So get the parent jobid info */
-                npptr = &parent;
-                if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&npptr, OPAL_NAME)) {
-                    /* notify everyone who asked for it */
-                    target.jobid = jdata->jobid;
-                    target.vpid = ORTE_VPID_WILDCARD;
-                    _send_notification(OPAL_ERR_JOB_TERMINATED, pdata->state, &target, ORTE_NAME_WILDCARD);
-                } else {
-                    target.jobid = jdata->jobid;
-                    target.vpid = ORTE_VPID_WILDCARD;
-                    _send_notification(OPAL_ERR_JOB_TERMINATED, pdata->state, &target, &parent);
-                }
-            }
         } else if (ORTE_PROC_STATE_TERMINATED < pdata->state &&
                    !orte_job_term_ordered) {
             /* if this was an abnormal term, notify the other procs of the termination */

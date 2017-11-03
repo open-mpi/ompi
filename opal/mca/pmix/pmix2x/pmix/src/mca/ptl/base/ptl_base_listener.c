@@ -79,9 +79,8 @@ static pmix_status_t setup_listeners(pmix_info_t *info, size_t ninfo, bool *need
     /* scan the directives to see if they want only one listener setup */
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
-            if (0 == strncmp(info[n].key, PMIX_SINGLE_LISTENER, PMIX_MAX_KEYLEN) &&
-                (PMIX_UNDEF == info[n].value.type || info[n].value.data.flag)) {
-                single = true;
+            if (0 == strncmp(info[n].key, PMIX_SINGLE_LISTENER, PMIX_MAX_KEYLEN)) {
+                single = PMIX_INFO_TRUE(&info[n]);
                 break;
             }
         }

@@ -212,21 +212,12 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strcmp(info[n].key, PMIX_CONNECT_TO_SYSTEM)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    system_level_only = true;
-                } else {
-                    system_level_only = info[n].value.data.flag;
-                }
+                system_level_only = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_CONNECT_SYSTEM_FIRST)) {
                 /* try the system-level */
-                if (PMIX_UNDEF == info[n].value.type) {
-                    system_level = true;
-                } else {
-                    system_level = info[n].value.data.flag;
-                }
+                system_level = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_PIDINFO)) {
                 pid = info[n].value.data.pid;
-                pmix_output(0, "GOT PID %d", (int)pid);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_URI)) {
                 if (NULL == mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);
@@ -244,15 +235,38 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (NULL != mca_ptl_tcp_component.super.uri) {
         /* if the string starts with "file:", then they are pointing
          * us to a file we need to read to get the URI itself */
-        if (0 != strncmp(mca_ptl_tcp_component.super.uri, "file:", 5)) {
+        if (0 == strncmp(mca_ptl_tcp_component.super.uri, "file:", 5)) {
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "ptl:tcp:tool getting connection info from %s",
                                 mca_ptl_tcp_component.super.uri);
             nspace = NULL;
-            rc = parse_uri_file(&mca_ptl_tcp_component.super.uri[6], &suri, &nspace, &rank);
+            rc = parse_uri_file(&mca_ptl_tcp_component.super.uri[5], &suri, &nspace, &rank);
             if (PMIX_SUCCESS != rc) {
                 return PMIX_ERR_UNREACH;
             }
+            free(mca_ptl_tcp_component.super.uri);
+            mca_ptl_tcp_component.super.uri = suri;
+        } else {
+            /* we need to extract the nspace/rank of the server from the string */
+            p = strchr(mca_ptl_tcp_component.super.uri, ';');
+            if (NULL == p) {
+                return PMIX_ERR_BAD_PARAM;
+            }
+            *p = '\0';
+            p++;
+            suri = strdup(p); // save the uri portion
+            /* the '.' in the first part of the original string separates
+             * nspace from rank */
+            p = strchr(mca_ptl_tcp_component.super.uri, '.');
+            if (NULL == p) {
+                free(suri);
+                return PMIX_ERR_BAD_PARAM;
+            }
+            *p = '\0';
+            p++;
+            nspace = strdup(mca_ptl_tcp_component.super.uri);
+            rank = strtoull(p, NULL, 10);
+            /* now update the URI */
             free(mca_ptl_tcp_component.super.uri);
             mca_ptl_tcp_component.super.uri = suri;
         }
@@ -543,8 +557,8 @@ static pmix_status_t parse_uri_file(char *filename,
     }
     *p2 = '\0';
     ++p2;
-    /* set the server nspace */
-    *nspace = strdup(p);
+    /* set the server nspace/rank */
+    *nspace = strdup(srvr);
     *rank = strtoull(p2, NULL, 10);
 
     /* now parse the uri itself */
@@ -573,21 +587,23 @@ static pmix_status_t try_connect(int *sd)
     /* setup the path to the daemon rendezvous point */
     memset(&mca_ptl_tcp_component.connection, 0, sizeof(struct sockaddr_storage));
     if (0 == strncmp(mca_ptl_tcp_component.super.uri, "tcp4", 4)) {
-        /* separate the IP address from the port */
-        p = strdup(mca_ptl_tcp_component.super.uri);
+        /* need to skip the tcp4: part */
+        p = strdup(&mca_ptl_tcp_component.super.uri[7]);
         if (NULL == p) {
             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
             return PMIX_ERR_NOMEM;
         }
-        p2 = strchr(&p[7], ':');
+
+        /* separate the IP address from the port */
+        p2 = strchr(p, ':');
         if (NULL == p2) {
             free(p);
             PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
             return PMIX_ERR_BAD_PARAM;
         }
         *p2 = '\0';
-        ++p2;
-        host = &p[7];
+        p2++;
+        host = p;
         /* load the address */
         in = (struct sockaddr_in*)&mca_ptl_tcp_component.connection;
         in->sin_family = AF_INET;
@@ -600,13 +616,14 @@ static pmix_status_t try_connect(int *sd)
         in->sin_port = htons(atoi(p2));
         len = sizeof(struct sockaddr_in);
     } else {
-        /* separate the IP address from the port */
-        p = strdup(mca_ptl_tcp_component.super.uri);
+        /* need to skip the tcp6: part */
+        p = strdup(&mca_ptl_tcp_component.super.uri[7]);
         if (NULL == p) {
             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
             return PMIX_ERR_NOMEM;
         }
-        p2 = strchr(&p[7], ':');
+
+        p2 = strchr(p, ':');
         if (NULL == p2) {
             free(p);
             PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
@@ -616,10 +633,10 @@ static pmix_status_t try_connect(int *sd)
         if (']' == p[strlen(p)-1]) {
             p[strlen(p)-1] = '\0';
         }
-        if ('[' == p[7]) {
-            host = &p[8];
+        if ('[' == p[0]) {
+            host = &p[1];
         } else {
-            host = &p[7];
+            host = &p[0];
         }
         /* load the address */
         in6 = (struct sockaddr_in6*)&mca_ptl_tcp_component.connection;

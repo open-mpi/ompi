@@ -70,6 +70,8 @@ orte_state_base_module_t orte_state_dvm_module = {
     orte_state_base_remove_proc_state
 };
 
+static void dvm_notify(int sd, short args, void *cbdata);
+
 /* defined default state machine sequence - individual
  * plm's must add a state for launching daemons
  */
@@ -91,6 +93,7 @@ static orte_job_state_t launch_states[] = {
     /* termination states */
     ORTE_JOB_STATE_TERMINATED,
     ORTE_JOB_STATE_NOTIFY_COMPLETED,
+    ORTE_JOB_STATE_NOTIFIED,
     ORTE_JOB_STATE_ALL_JOBS_COMPLETE
 };
 static orte_state_cbfunc_t launch_callbacks[] = {
@@ -109,6 +112,7 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_post_launch,
     orte_plm_base_registered,
     check_complete,
+    dvm_notify,
     cleanup_job,
     orte_quit
 };
@@ -517,4 +521,119 @@ static void cleanup_job(int sd, short args, void *cbdata)
     opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, NULL);
 
     OBJ_RELEASE(caddy);
+}
+
+typedef struct {
+    opal_list_t *info;
+    orte_job_t *jdata;
+} mycaddy_t;
+
+static void notify_complete(int status, void *cbdata)
+{
+    mycaddy_t *mycaddy = (mycaddy_t*)cbdata;
+
+    OPAL_LIST_RELEASE(mycaddy->info);
+    ORTE_ACTIVATE_JOB_STATE(mycaddy->jdata, ORTE_JOB_STATE_NOTIFIED);
+    OBJ_RELEASE(mycaddy->jdata);
+    free(mycaddy);
+}
+
+static void dvm_notify(int sd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = caddy->jdata;
+    orte_proc_t *pptr=NULL;
+    int ret;
+    opal_buffer_t *reply;
+    orte_daemon_cmd_flag_t command;
+    orte_grpcomm_signature_t *sig;
+    bool notify = true;
+    opal_list_t *info;
+    opal_value_t *val;
+    opal_process_name_t pname, *proc;
+    mycaddy_t *mycaddy;
+
+    /* see if there was any problem */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ABORTED_PROC, (void**)&pptr, OPAL_PTR) && NULL != pptr) {
+        ret = pptr->exit_code;
+    /* or whether we got cancelled by the user */
+    } else if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CANCELLED, NULL, OPAL_BOOL)) {
+        ret = ORTE_ERR_JOB_CANCELLED;
+    } else {
+        ret = ORTE_SUCCESS;
+    }
+
+    if (0 == ret && orte_get_attribute(&jdata->attributes, ORTE_JOB_SILENT_TERMINATION, NULL, OPAL_BOOL)) {
+        notify = false;
+    }
+    /* if the jobid matches that of the requestor, then don't notify */
+    proc = &pname;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&proc, OPAL_NAME)) {
+        if (pname.jobid == jdata->jobid) {
+            notify = false;
+        }
+    }
+
+    if (notify) {
+        /* the source is the job that terminated */
+        pname.jobid = jdata->jobid;
+        pname.vpid = OPAL_VPID_WILDCARD;
+
+        info = OBJ_NEW(opal_list_t);
+        /* ensure this only goes to the job terminated event handler */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_EVENT_NON_DEFAULT);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(info, &val->super);
+        /* tell the server not to cache the event as subsequent jobs
+         * do not need to know about it */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_EVENT_DO_NOT_CACHE);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(info, &val->super);
+        /* provide the status */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_JOB_TERM_STATUS);
+        val->type = OPAL_STATUS;
+        val->data.status = ret;
+        opal_list_append(info, &val->super);
+        /* tell the requestor which job or proc  */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_PROCID);
+        val->type = OPAL_NAME;
+        val->data.name.jobid = jdata->jobid;
+        if (NULL != pptr) {
+            val->data.name.vpid = pptr->name.vpid;
+        } else {
+            val->data.name.vpid = ORTE_VPID_WILDCARD;
+        }
+        opal_list_append(info, &val->super);
+        /* setup the caddy */
+        mycaddy = (mycaddy_t*)malloc(sizeof(mycaddy_t));
+        mycaddy->info = info;
+        OBJ_RETAIN(jdata);
+        mycaddy->jdata = jdata;
+        opal_pmix.server_notify_event(OPAL_ERR_JOB_TERMINATED, &pname,
+                                      info, notify_complete, mycaddy);
+    }
+
+    /* now ensure that _all_ daemons know that this job has terminated so even
+     * those that did not participate in it will know to cleanup the resources
+     * they assigned to the job. This is necessary now that the mapping function
+     * has been moved to the backend daemons - otherwise, non-participating daemons
+     * retain the slot assignments on the participating daemons, and then incorrectly
+     * map subsequent jobs thinking those nodes are still "busy" */
+    reply = OBJ_NEW(opal_buffer_t);
+    command = ORTE_DAEMON_DVM_CLEANUP_JOB_CMD;
+    opal_dss.pack(reply, &command, 1, ORTE_DAEMON_CMD);
+    opal_dss.pack(reply, &jdata->jobid, 1, ORTE_JOBID);
+    sig = OBJ_NEW(orte_grpcomm_signature_t);
+    sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+    sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, reply);
+    OBJ_RELEASE(reply);
+    OBJ_RELEASE(sig);
 }

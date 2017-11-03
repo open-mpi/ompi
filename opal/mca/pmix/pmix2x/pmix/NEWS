@@ -21,8 +21,40 @@ example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
 
-Master (not on release branches yet)
-------------------------------------
+2.1.0 -- 26 Oct 2017
+----------------------
+**** NOTE: This release contains the first implementation of cross-version
+**** support. Servers using v2.1.0 are capable of supporting clients using
+**** PMIx versions v1.2 and above. Clients using v2.1.0 are able to interact
+**** with servers based on v1.2 and above.
+- Added cross-version communication support
+- Enable reporting of contact URI to stdout, stderr, or file (PR #538)
+- Enable support for remote tool connections (PR #540, #542)
+- Cleanup libevent configure logi to support default install paths (PR #541)
+- Debounce "unreachable" notifications for tools when they disconnect (PR #544)
+
+
+2.0.2 -- 19 Oct 2017
+----------------------
+- Update RPM spec file (rpmbuild -ta, and --rebuild fixes) (PR #523)
+- Support singletons in PMI-1/PMI-2 (PR #537)
+- Provide missing implementation support for arrays of pmix_value_t's (PR #531)
+- Remove unsupported assembly code for MIPS and ARM processors
+  prior to v6 (PR #547)
+- Fix path separator for PMIx configuration files (PR #547)
+- Add configure option to enable/disable the default value for the
+  show-load-errors MCA param (PR #547)
+
+
+2.0.1 -- 24 Aug. 2017
+----------------------
+- Protect PMIX_INFO_FREE macro from NULL data arrays
+- Added attributes to support HWLOC shared memory regions
+- Fixed several syntax errors in configure code
+- Fixed several visibility errors
+- Correctly return status from PMIx_Fence operation
+- Restore tool connection support and implement search
+  operations to discover rendezvous files
 
 
 2.0.0
@@ -81,6 +113,28 @@ Master (not on release branches yet)
 - Fix a number of race condition issues that arose at scale
 - Enable PMIx servers to generate notifications to the host RM
   and to themselves
+
+
+1.2.4 -- 13 Oct. 2017
+----------------------
+- Silence some unnecessary warning messages (PR #487)
+- Coverity fix - TOCTOU (PR #465)
+- automake 1.13 configure fix (PR #486)
+- Update RPM spec file (rpmbuild -ta, and --rebuild fixes) (PR #523)
+- Support singletons in PMI-1/PMI-2 (PR #537)
+
+
+1.2.3 -- 24 Aug. 2017
+----------------------
+- Resolve visibility issues for public APIs (PR #451)
+- Atomics update - remove custom ASM atomics (PR #458)
+- Fix job-fence test (PR #423)
+- Replace stale PMIX_DECLSPEC with PMIX_EXPORT (PR #448)
+- Memory barrier fixes for thread shifting (PR #387)
+- Fix race condition in dmodex (PR #346)
+- Allow disable backward compatability for PMI-1/2 (PR #350)
+- Fix segv in PMIx_server_deregister_nspace (PR #343)
+- Fix possible hang in PMIx_Abort (PR #339)
 
 
 1.2.2 -- 21 March 2017

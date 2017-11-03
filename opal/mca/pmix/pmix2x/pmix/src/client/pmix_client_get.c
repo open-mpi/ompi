@@ -492,15 +492,9 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     if (NULL != cb->info) {
         for (n=0; n < cb->ninfo; n++) {
             if (0 == strncmp(cb->info[n].key, PMIX_OPTIONAL, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == cb->info[n].value.type ||
-                    cb->info[n].value.data.flag) {
-                    optional = true;
-                }
+                optional = PMIX_INFO_TRUE(&cb->info[n]);
             } else if (0 == strncmp(cb->info[n].key, PMIX_IMMEDIATE, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == cb->info[n].value.type ||
-                    cb->info[n].value.data.flag) {
-                    immediate = true;
-                }
+                immediate = PMIX_INFO_TRUE(&cb->info[n]);
             } else if (0 == strncmp(cb->info[n].key, PMIX_TIMEOUT, PMIX_MAX_KEYLEN)) {
                 /* set a timer to kick us out if we don't
                  * have an answer within their window */

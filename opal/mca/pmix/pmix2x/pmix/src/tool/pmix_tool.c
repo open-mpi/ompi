@@ -110,6 +110,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
                        buf, &cmd, &cnt, PMIX_COMMAND);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(chain);
         goto error;
     }
     /* unpack the status */
@@ -118,6 +119,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
                        buf, &chain->status, &cnt, PMIX_STATUS);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(chain);
         goto error;
     }
 
@@ -127,6 +129,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
                        buf, &chain->source, &cnt, PMIX_PROC);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(chain);
         goto error;
     }
 
@@ -136,18 +139,34 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
                        buf, &ninfo, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(chain);
         goto error;
     }
+
     /* we always leave space for a callback object */
     chain->ninfo = ninfo + 1;
     PMIX_INFO_CREATE(chain->info, chain->ninfo);
+    if (NULL == chain->info) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        PMIX_RELEASE(chain);
+        return;
+    }
+
     if (0 < ninfo) {
         cnt = ninfo;
         PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
                            buf, chain->info, &cnt, PMIX_INFO);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(chain);
             goto error;
+        }
+        /* check for non-default flag */
+        for (cnt=0; cnt < (int)ninfo; cnt++) {
+            if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
+                chain->nondefault = PMIX_INFO_TRUE(&chain->info[cnt]);
+                break;
+            }
         }
     }
     /* now put the callback object tag in the last element */
@@ -267,11 +286,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                 PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, info[n].value.data.string, PMIX_STRING);
                 found = true;
             } else if (0 == strncmp(info[n].key, PMIX_TOOL_DO_NOT_CONNECT, PMIX_MAX_KEYLEN)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    do_not_connect = true;
-                } else {
-                    do_not_connect = info[n].value.data.flag;
-                }
+                do_not_connect = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strncmp(info[n].key, PMIX_TOOL_NSPACE, PMIX_MAX_KEYLEN)) {
                 (void)strncpy(pmix_globals.myid.nspace, info[n].value.data.string, PMIX_MAX_NSLEN);
                 nspace_given = true;

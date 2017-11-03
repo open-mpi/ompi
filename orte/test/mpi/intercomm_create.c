@@ -65,7 +65,6 @@ main(int argc, char *argv[])
     }
 
     /* All done */
-
     MPI_Finalize();
     return 0;
 }
@@ -171,4 +170,3 @@ do_target(char* argv[], MPI_Comm parent)
 
     MPI_Comm_disconnect(&parent);
 }
-

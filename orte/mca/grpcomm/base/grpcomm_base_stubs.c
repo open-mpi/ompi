@@ -178,6 +178,11 @@ static void allgather_stub(int fd, short args, void *cbdata)
         return;
     }
     coll = orte_grpcomm_base_get_tracker(cd->sig, true);
+    if (NULL == coll) {
+        OBJ_RELEASE(cd->sig);
+        OBJ_RELEASE(cd);
+        return;
+    }
     OBJ_RELEASE(cd->sig);
     coll->cbfunc = cd->cbfunc;
     coll->cbdata = cd->cbdata;
