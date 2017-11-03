@@ -250,6 +250,10 @@ Compiler Notes
   command.  Officially, Solaris Studio is not supported on Ubuntu Linux
   distributions, so additional problems might be incurred.
 
+- There are known problems building the internal PMIx package using
+  Oracle (Sun) Studio C compiler, at least version 5.15.  A possible
+  workaround is to build against the latest external PMIx 1.2 release.
+
 - Open MPI does not support the gccfss compiler (GCC For SPARC
   Systems; a now-defunct compiler project from Sun).
 
