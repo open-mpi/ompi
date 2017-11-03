@@ -53,8 +53,8 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.0.4 -- October, 2017
-----------------------
+2.0.4 -- November, 2017
+-----------------------
 
 Bug fixes/minor improvements:
 - Fix an issue with visibility of functions defined in the built-in PMIx.
