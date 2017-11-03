@@ -185,7 +185,7 @@ mca_pml_cm_recv(void *addr,
 		&(datatype->super),
 		count,
 		addr,
-		flags,
+                flags,
 		&convertor );
 #else
     MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
@@ -195,7 +195,7 @@ mca_pml_cm_recv(void *addr,
 		&(datatype->super),
 		count,
 		addr,
-		flags,
+                flags,
 		&convertor );
 #endif
 

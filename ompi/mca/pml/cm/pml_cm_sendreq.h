@@ -127,7 +127,7 @@ do {                                                                    \
                                             sendmode,                   \
                                             buf,                        \
                                             count,                      \
-					    flags )                     \
+                                            flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
@@ -139,7 +139,7 @@ do {                                                                    \
                                              &(datatype->super),        \
                                              count,                     \
                                              buf,                       \
-                                             flags,                         \
+                                             flags,                     \
                                              &(req_send)->req_base.req_convertor ); \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
     (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
@@ -158,7 +158,7 @@ do {                                                                    \
                                             sendmode,                   \
                                             buf,                        \
                                             count,                      \
-					    flags )                     \
+                                            flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
@@ -170,7 +170,7 @@ do {                                                                    \
         &(datatype->super),                                             \
         count,                                                          \
         buf,                                                            \
-        flags,                                                              \
+        flags,                                                          \
         &(req_send)->req_base.req_convertor );                          \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
     (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
@@ -191,7 +191,7 @@ do {                                                                    \
                                             sendmode,                   \
                                             buf,                        \
                                             count,                      \
-					    flags )                     \
+                                            flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
@@ -203,7 +203,7 @@ do {                                                                    \
                                              &(datatype->super),        \
                                              count,                     \
                                              buf,                       \
-                                             flags,                         \
+                                             flags,                     \
                                              &(req_send)->req_base.req_convertor ); \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
     (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
@@ -223,7 +223,7 @@ do {                                                                    \
                                             sendmode,                   \
                                             buf,                        \
                                             count,                      \
-					    flags )                     \
+                                            flags )                     \
 {                                                                       \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
@@ -249,7 +249,7 @@ do {                                                                    \
             &(datatype->super),                                         \
             count,                                                      \
             buf,                                                        \
-            flags,                                                          \
+            flags,                                                      \
             &(req_send)->req_base.req_convertor );                      \
     }                                                                   \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
@@ -273,7 +273,7 @@ do {                                                                    \
                                           blocking,                     \
                                           buf,                          \
                                           count,                        \
-					  flags )                       \
+                                          flags )                       \
     do {                                                                \
         OMPI_REQUEST_INIT(&(sendreq->req_send.req_base.req_ompi),       \
                           persistent);                                  \
@@ -289,7 +289,7 @@ do {                                                                    \
                                              sendmode,                  \
                                              buf,                       \
                                              count,                     \
-					     flags )                    \
+                                             flags )                    \
         opal_convertor_get_packed_size(                                 \
                                        &sendreq->req_send.req_base.req_convertor, \
                                        &sendreq->req_count );           \
@@ -309,7 +309,7 @@ do {                                                                    \
                                            sendmode,                    \
                                            buf,                         \
                                            count,                       \
-					   flags )                      \
+                                           flags )                      \
     do {                                                                \
         OMPI_REQUEST_INIT(&(sendreq->req_send.req_base.req_ompi),       \
                           false);                                       \
