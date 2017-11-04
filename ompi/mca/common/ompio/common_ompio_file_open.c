@@ -157,7 +157,9 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 					ompio_fh);
 
     if ( OMPI_SUCCESS != ret ) {
-	ret = MPI_ERR_FILE;
+#ifdef OMPIO_DEBUG
+        opal_output(1, "fs_file failed, error code %d\n", ret);
+#endif
         goto fn_fail;
     }
 

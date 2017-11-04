@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -63,9 +63,9 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      struct opal_info_t *info,
                      mca_io_ompio_file_t *fh)
 {
-    int amode;
+    int amode, rank;
     int old_mask, perm;
-    int rc;
+    int rc, ret=OMPI_SUCCESS;
     int flag;
     int fs_lustre_stripe_size = -1;
     int fs_lustre_stripe_width = -1;
@@ -81,19 +81,16 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     else {
         perm = fh->f_perm;
     }
+    
+    rank = fh->f_rank;
 
     amode = 0;
-    if (access_mode & MPI_MODE_CREATE)
-        amode = amode | O_CREAT;
     if (access_mode & MPI_MODE_RDONLY)
         amode = amode | O_RDONLY;
     if (access_mode & MPI_MODE_WRONLY)
         amode = amode | O_WRONLY;
     if (access_mode & MPI_MODE_RDWR)
         amode = amode | O_RDWR;
-    if (access_mode & MPI_MODE_EXCL)
-        amode = amode | O_EXCL;
-
 
     opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
@@ -107,38 +104,98 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
 
     if (fs_lustre_stripe_size < 0) {
         fs_lustre_stripe_size = mca_fs_lustre_stripe_size;
-    }
+    }   
 
     if (fs_lustre_stripe_width < 0) {
         fs_lustre_stripe_width = mca_fs_lustre_stripe_width;
     }
 
-    if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
-        (amode&O_CREAT) && (amode&O_RDWR)) {
-        if (0 == fh->f_rank) {
+    
+    /* Reset errno */
+    errno = 0;
+    if (0 == fh->f_rank) {
+       /* MODE_CREATE and MODE_EXCL can only be set by one process */
+        if ( !(fh->f_flags & OMPIO_SHAREDFP_IS_SET)) {
+            if ( access_mode & MPI_MODE_CREATE )
+                amode = amode | O_CREAT;
+            if (access_mode & MPI_MODE_EXCL)
+                amode = amode | O_EXCL;
+        }
+
+        if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
+             ( amode&O_CREAT)                                      && 
+             ( (amode&O_RDWR)|| amode&O_WRONLY) ) {
             llapi_file_create(filename,
                               fs_lustre_stripe_size,
                               -1, /* MSC need to change that */
                               fs_lustre_stripe_width,
                               0); /* MSC need to change that */
-
-            fh->fd = open(filename, O_CREAT | O_RDWR | O_LOV_DELAY_CREATE, perm);
-            if (fh->fd < 0) {
-                fprintf(stderr, "Can't open %s file: %d (%s)\n",
-                        filename, errno, strerror(errno));
-                return OMPI_ERROR;
-            }
-            close (fh->fd);
+            
+            fh->fd = open(filename, amode | O_LOV_DELAY_CREATE, perm);
         }
-        fh->f_comm->c_coll->coll_barrier (fh->f_comm,
-                                         fh->f_comm->c_coll->coll_barrier_module);
+        else {
+            fh->fd = open (filename, amode, perm);
+        }
+        if ( 0 > fh->fd ) {
+            if ( EACCES == errno ) {
+                ret = MPI_ERR_ACCESS;
+            }
+            else if ( ENAMETOOLONG == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( ENOENT == errno ) {
+                ret = MPI_ERR_NO_SUCH_FILE;
+            }
+            else if ( EISDIR == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( EROFS == errno ) {
+                ret = MPI_ERR_READ_ONLY;
+            }
+            else if ( EEXIST == errno ) {
+                ret = MPI_ERR_FILE_EXISTS;
+            }
+            else {
+                ret = MPI_ERR_OTHER;
+            }
+        }
     }
 
-    fh->fd = open (filename, amode, perm);
-    if (fh->fd < 0) {
-        opal_output(1, "error opening file %s\n", filename);
-        return OMPI_ERROR;
+   comm->c_coll->coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module);
+    if ( OMPI_SUCCESS != ret ) {
+        fh->fd = -1;
+        return ret;
     }
+
+    if ( 0 != rank ) {
+        fh->fd = open (filename, amode, perm);
+        if ( 0 > fh->fd) {
+            if ( EACCES == errno ) {
+                ret = MPI_ERR_ACCESS;
+            }
+            else if ( ENAMETOOLONG == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( ENOENT == errno ) {
+                ret = MPI_ERR_NO_SUCH_FILE;
+            }
+            else if ( EISDIR == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( EROFS == errno ) {
+                ret = MPI_ERR_READ_ONLY;
+            }
+            else if ( EEXIST == errno ) {
+                ret = MPI_ERR_FILE_EXISTS;
+            }
+            else {
+                ret = MPI_ERR_OTHER;
+            }
+        }
+        return ret;
+    }
+
+
 
     lump = alloc_lum();
     if (NULL == lump ){
@@ -150,11 +207,9 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         opal_output(1, "get_stripe failed: %d (%s)\n", errno, strerror(errno));
         return OMPI_ERROR;
     }
-    fh->f_stripe_size = lump->lmm_stripe_size;
-    fh->f_stripe_count = lump->lmm_stripe_count;
+    fh->f_stripe_size   = lump->lmm_stripe_size;
+    fh->f_stripe_count  = lump->lmm_stripe_count;
+    fh->f_fs_block_size = lump->lmm_stripe_size;
     
-      //      if ( NULL != lump ) {
-      //	free ( lump );
-      //      }
     return OMPI_SUCCESS;
 }
