@@ -414,19 +414,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     }
 
     if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
-        /* we didn't add the nodes to the node map as it would cause them to
-         * be in a different order than on the backend if this is a dynamic
-         * spawn (which means we may have started somewhere other than at
-         * the beginning of the allocation) */
-        for (i=0; i < orte_node_pool->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                continue;
-            }
-            if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
-                OBJ_RETAIN(node);
-                opal_pointer_array_add(jdata->map->nodes, node);
-            }
-        }
         /* compute and save location assignments */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
             ORTE_ERROR_LOG(rc);
