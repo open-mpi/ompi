@@ -51,6 +51,7 @@ int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
     size_t total_bytes_written = 0;
     size_t max_data=0, real_bytes_written=0;
     ssize_t ret_code=0;
+    size_t spc=0;
     int i = 0; /* index into the decoded iovec of the buffer */
     int j = 0; /* index into the file view iovec */
 
@@ -92,7 +93,8 @@ int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_written);
+                                          &total_bytes_written, 
+                                          &spc);
 
         if (fh->f_num_of_io_entries) {
             ret_code =fh->f_fbtl->fbtl_pwritev (fh);
@@ -152,6 +154,7 @@ int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_ompio_request_t *ompio_req=NULL;
+    size_t spc=0;
 
     ompio_req = OBJ_NEW(mca_ompio_request_t);
     ompio_req->req_type = MCA_OMPIO_REQUEST_WRITE;
@@ -195,7 +198,8 @@ int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_written);
+                                          &total_bytes_written, 
+                                          &spc);
         
         if (fh->f_num_of_io_entries) {
 	  fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
@@ -327,13 +331,16 @@ int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
 
 int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles,
                                       size_t bytes_per_cycle, int max_data, uint32_t iov_count,
-                                      struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw )
+                                      struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw, 
+                                      size_t *spc)
 {
     ptrdiff_t disp;
     int block = 1;
     size_t total_bytes_written = *tbw;  /* total bytes that have been written*/
     size_t bytes_to_write_in_cycle = 0; /* left to be written in a cycle*/
-    size_t sum_previous_counts = 0;
+    size_t sum_previous_counts = *spc;  /* total bytes used, up to the start
+                                           of the memory block decoded_iov[*ii];
+                                           is always less or equal to tbw */
     size_t sum_previous_length = 0;
     int k = 0; /* index into the io_array */
     int i = *ii;
@@ -432,16 +439,18 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
 	printf("*************************** %d\n", fh->f_num_of_io_entries);
 
 	for (d=0 ; d<fh->f_num_of_io_entries ; d++) {
-	    printf(" ADDRESS: %p  OFFSET: %p   LENGTH: %d\n",
+	    printf(" ADDRESS: %p  OFFSET: %p   LENGTH: %d prev_count=%ld prev_length=%ld\n",
 		   fh->f_io_array[d].memory_address,
 		   fh->f_io_array[d].offset,
-		   fh->f_io_array[d].length);
+		   fh->f_io_array[d].length, 
+                   sum_previous_counts, sum_previous_length);
 	}
     }
 #endif
     *ii = i;
     *jj = j;
     *tbw = total_bytes_written;
+    *spc = sum_previous_counts;
 
     return OMPI_SUCCESS;
 }
