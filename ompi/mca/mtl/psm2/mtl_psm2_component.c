@@ -43,6 +43,8 @@
 #include <glob.h>
 
 static int param_priority;
+/* MPI_THREAD_MULTIPLE_SUPPORT */
+opal_mutex_t mtl_psm2_mq_mutex = OPAL_MUTEX_STATIC_INIT;
 
 #if OPAL_CUDA_SUPPORT
 static bool cuda_envvar_set = false;
