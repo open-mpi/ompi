@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -101,6 +101,15 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
             else if ( EEXIST == errno ) {
                 ret = MPI_ERR_FILE_EXISTS;
             }
+            else if ( ENOSPC == errno ) {
+                ret = MPI_ERR_NO_SPACE;
+            }
+            else if ( EDQUOT == errno ) {
+                ret = MPI_ERR_QUOTA;
+            }
+            else if ( ETXTBSY == errno ) {
+                ret = MPI_ERR_FILE_IN_USE;
+            }
             else {
                 ret = MPI_ERR_OTHER;
             }
@@ -133,6 +142,15 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
             }
             else if ( EEXIST == errno ) {
                 ret = MPI_ERR_FILE_EXISTS;
+            }
+            else if ( ENOSPC == errno ) {
+                ret = MPI_ERR_NO_SPACE;
+            }
+            else if ( EDQUOT == errno ) {
+                ret = MPI_ERR_QUOTA;
+            }
+            else if ( ETXTBSY == errno ) {
+                ret = MPI_ERR_FILE_IN_USE;
             }
             else {
                 ret = MPI_ERR_OTHER;
