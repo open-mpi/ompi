@@ -131,6 +131,7 @@ void ompi_info_do_config(bool want_all)
     char *ft_support;
     char *crdebug_support;
     char *topology_support;
+    char *ipv6_support;
 
     /* Do a little preprocessor trickery here to figure opal_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
@@ -283,6 +284,7 @@ void ompi_info_do_config(bool want_all)
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     topology_support = "yes";
+    ipv6_support = OPAL_ENABLE_IPV6 ? "yes" : "no";
 
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) {
@@ -640,6 +642,7 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
     opal_info_out("Host topology support", "options:host-topology",
                   topology_support);
+    opal_info_out("IPv6 support", "options:ipv6", ipv6_support);
 
     opal_info_out("MPI extensions", "options:mpi_ext", OMPI_MPIEXT_COMPONENTS);
 
