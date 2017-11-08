@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -100,6 +100,8 @@ int ompi_request_default_wait_any(size_t count,
 
     num_requests_null_inactive = 0;
     for (i = 0; i < count; i++) {
+        void *_tmp_ptr = REQUEST_PENDING;
+
         request = requests[i];
 
         /* Check for null or completed persistent request. For
@@ -110,7 +112,7 @@ int ompi_request_default_wait_any(size_t count,
             continue;
         }
 
-        if( !OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync) ) {
+        if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync) ) {
             assert(REQUEST_COMPLETE(request));
             completed = i;
             *index = i;
@@ -136,6 +138,8 @@ int ompi_request_default_wait_any(size_t count,
      * user.
      */
     for(i = completed-1; (i+1) > 0; i--) {
+        void *tmp_ptr = &sync;
+
         request = requests[i];
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
@@ -146,7 +150,7 @@ int ompi_request_default_wait_any(size_t count,
          * Otherwise, the request has been completed meanwhile, and it
          * has been atomically marked as REQUEST_COMPLETE.
          */
-        if( !OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+        if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &tmp_ptr, REQUEST_PENDING) ) {
             *index = i;
         }
     }
@@ -211,6 +215,8 @@ int ompi_request_default_wait_all( size_t count,
     WAIT_SYNC_INIT(&sync, count);
     rptr = requests;
     for (i = 0; i < count; i++) {
+        void *_tmp_ptr = REQUEST_PENDING;
+
         request = *rptr++;
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
@@ -218,7 +224,7 @@ int ompi_request_default_wait_all( size_t count,
             continue;
         }
 
-        if (!OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync)) {
+        if (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync)) {
             if( OPAL_UNLIKELY( MPI_SUCCESS != request->req_status.MPI_ERROR ) ) {
                 failed++;
             }
@@ -246,6 +252,8 @@ int ompi_request_default_wait_all( size_t count,
     if (MPI_STATUSES_IGNORE != statuses) {
         /* fill out status and free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
+            void *_tmp_ptr = &sync;
+
             request = *rptr;
 
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
@@ -260,7 +268,7 @@ int ompi_request_default_wait_all( size_t count,
                  * mark the request as pending then it is neither failed nor complete, and
                  * we must stop altering it.
                  */
-                if( OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING ) ) {
+                if( OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_PENDING ) ) {
                     /*
                      * Per MPI 2.2 p 60:
                      * Allows requests to be marked as MPI_ERR_PENDING if they are
@@ -306,6 +314,8 @@ int ompi_request_default_wait_all( size_t count,
         int rc;
         /* free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
+            void *_tmp_ptr = &sync;
+
             request = *rptr;
 
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
@@ -320,7 +330,7 @@ int ompi_request_default_wait_all( size_t count,
                 /* If the request is still pending due to a failed request
                  * then skip it in this loop.
                  */
-                 if( OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING ) ) {
+                 if( OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_PENDING ) ) {
                     /*
                      * Per MPI 2.2 p 60:
                      * Allows requests to be marked as MPI_ERR_PENDING if they are
@@ -398,6 +408,8 @@ int ompi_request_default_wait_some(size_t count,
     num_requests_null_inactive = 0;
     num_requests_done = 0;
     for (size_t i = 0; i < count; i++, rptr++) {
+        void *_tmp_ptr = REQUEST_PENDING;
+
         request = *rptr;
         /*
          * Check for null or completed persistent request.
@@ -407,7 +419,7 @@ int ompi_request_default_wait_some(size_t count,
             num_requests_null_inactive++;
             continue;
         }
-        indices[i] = OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync);
+        indices[i] = OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync);
         if( !indices[i] ) {
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
@@ -434,6 +446,8 @@ int ompi_request_default_wait_some(size_t count,
     rptr = requests;
     num_requests_done = 0;
     for (size_t i = 0; i < count; i++, rptr++) {
+        void *_tmp_ptr = &sync;
+
         request = *rptr;
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
@@ -454,7 +468,7 @@ int ompi_request_default_wait_some(size_t count,
          */
         if( !indices[i] ){
             indices[num_requests_done++] = i;
-        } else if( !OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
+        } else if( !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_PENDING) ) {
             indices[num_requests_done++] = i;
         }
     }

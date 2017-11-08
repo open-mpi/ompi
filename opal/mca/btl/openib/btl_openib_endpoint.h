@@ -446,14 +446,16 @@ static inline int mca_btl_openib_endpoint_post_rr(
     return ret;
 }
 
-#define BTL_OPENIB_CREDITS_SEND_TRYLOCK(E, Q) \
-    OPAL_ATOMIC_BOOL_CMPSET_32(&(E)->qps[(Q)].rd_credit_send_lock, 0, 1)
-#define BTL_OPENIB_CREDITS_SEND_UNLOCK(E, Q) \
-    OPAL_ATOMIC_BOOL_CMPSET_32(&(E)->qps[(Q)].rd_credit_send_lock, 1, 0)
-#define BTL_OPENIB_GET_CREDITS(FROM, TO)                                        \
-    do {                                                     \
-        TO = FROM;                                           \
-    } while(0 == OPAL_ATOMIC_BOOL_CMPSET_32(&FROM, TO, 0))
+static inline __opal_attribute_always_inline__ bool btl_openib_credits_send_trylock (mca_btl_openib_endpoint_t *ep, int qp)
+{
+    int32_t _tmp_value = 0;
+    return OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32(&ep->qps[qp].rd_credit_send_lock, &_tmp_value, 1);
+}
+
+#define BTL_OPENIB_CREDITS_SEND_UNLOCK(E, Q)                    \
+    OPAL_ATOMIC_SWAP_32 (&(E)->qps[(Q)].rd_credit_send_lock, 0)
+#define BTL_OPENIB_GET_CREDITS(FROM, TO)        \
+    TO = OPAL_ATOMIC_SWAP_32(&FROM, 0)
 
 
 static inline bool check_eager_rdma_credits(const mca_btl_openib_endpoint_t *ep)
@@ -486,7 +488,7 @@ static inline void send_credits(mca_btl_openib_endpoint_t *ep, int qp)
         return;
 
 try_send:
-    if(BTL_OPENIB_CREDITS_SEND_TRYLOCK(ep, qp))
+    if(btl_openib_credits_send_trylock(ep, qp))
         mca_btl_openib_endpoint_send_credits(ep, qp);
 }
 

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
@@ -171,15 +171,16 @@ static const uint32_t ProcInc    = 0x2;
       opal_cr_thread_in_library = false;                         \
     }                                                            \
  }
-#define OPAL_CR_THREAD_LOCK()                                                      \
- {                                                                                 \
-    while(!OPAL_ATOMIC_BOOL_CMPSET_32(&opal_cr_thread_num_in_library, 0, ThreadFlag)) { \
-      if( !opal_cr_thread_is_active && opal_cr_thread_is_done) {                   \
-          break;                                                                   \
-      }                                                                            \
-      sched_yield();                                                               \
-      usleep(opal_cr_thread_sleep_check);                                          \
-    }                                                                              \
+#define OPAL_CR_THREAD_LOCK()                                           \
+    {                                                                   \
+      int32_t _tmp_value = 0;                                           \
+      while(!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32 (&opal_cr_thread_num_in_library, &_tmp_value, ThreadFlag)) { \
+          if( !opal_cr_thread_is_active && opal_cr_thread_is_done) {    \
+              break;                                                    \
+          }                                                             \
+          sched_yield();                                                \
+          usleep(opal_cr_thread_sleep_check);                           \
+      }                                                                 \
  }
 #define OPAL_CR_THREAD_UNLOCK()                                     \
  {                                                                  \

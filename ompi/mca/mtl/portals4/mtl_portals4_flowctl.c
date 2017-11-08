@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -296,9 +296,10 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
 int
 ompi_mtl_portals4_flowctl_trigger(void)
 {
+    int32_t _tmp_value = 0;
     int ret;
 
-    if (true == OPAL_ATOMIC_BOOL_CMPSET_32(&ompi_mtl_portals4.flowctl.flowctl_active, false, true)) {
+    if (true == OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32(&ompi_mtl_portals4.flowctl.flowctl_active, &_tmp_value, 1)) {
         /* send trigger to root */
         ret = PtlPut(ompi_mtl_portals4.zero_md_h,
                      0,
