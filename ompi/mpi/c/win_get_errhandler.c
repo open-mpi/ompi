@@ -42,8 +42,6 @@ static const char FUNC_NAME[] = "MPI_Win_get_errhandler";
 
 int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
 {
-    MPI_Errhandler tmp;
-
     OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
@@ -57,16 +55,12 @@ int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
         }
     }
 
-    /* On 64 bits environments we have to make sure the reading of the
-       error_handler became atomic. */
-    do {
-        tmp = win->error_handler;
-    } while (!OPAL_ATOMIC_BOOL_CMPSET_PTR(&(win->error_handler), tmp, tmp));
-
+    opal_mutex_lock (&win->w_lock);
     /* Retain the errhandler, corresponding to object refcount
        decrease in errhandler_free.c. */
     OBJ_RETAIN(win->error_handler);
     *errhandler = win->error_handler;
+    opal_mutex_unlock (&win->w_lock);
 
     /* All done */
     return MPI_SUCCESS;

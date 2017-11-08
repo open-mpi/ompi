@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -63,11 +63,12 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
     /* Prepare the new error handler */
     OBJ_RETAIN(errhandler);
 
-    /* Ditch the old errhandler, and decrement its refcount.  On 64
-       bits environments we have to make sure the reading of the
-       error_handler became atomic. */
-    tmp = OPAL_ATOMIC_SWAP_PTR(&win->error_handler, errhandler);
+    opal_mutex_lock (&win->w_lock);
+    /* Ditch the old errhandler, and decrement its refcount. */
+    tmp = win->error_handler;
+    win->error_handler = errhandler;
     OBJ_RELEASE(tmp);
+    opal_mutex_unlock (&win->w_lock);
 
     /* All done */
     return MPI_SUCCESS;
