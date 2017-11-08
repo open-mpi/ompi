@@ -819,6 +819,8 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     pmix_show_subtitle "Final output"
 
+    AC_CONFIG_HEADERS(pmix_config_prefix[include/pmix_common.h])
+
     AC_CONFIG_FILES(
         pmix_config_prefix[Makefile]
         pmix_config_prefix[config/Makefile]

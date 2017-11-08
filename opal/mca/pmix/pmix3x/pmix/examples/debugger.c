@@ -232,7 +232,7 @@ int main(int argc, char **argv)
     pmix_info_t *info;
     pmix_app_t *app;
     size_t ninfo, napps;
-    char *tdir, *filename, *sdir, *str, *nspace = NULL;
+    char *nspace = NULL;
     char appspace[PMIX_MAX_NSLEN+1];
     int i;
     pmix_query_t *query;
@@ -241,7 +241,6 @@ int main(int argc, char **argv)
     bool cospawn = false, stop_on_exec = false;
     char cwd[1024];
     pmix_status_t code = PMIX_ERR_JOB_TERMINATED;
-    char hostname[1024];
     mylock_t mylock;
 
     /* Process any arguments we were given */

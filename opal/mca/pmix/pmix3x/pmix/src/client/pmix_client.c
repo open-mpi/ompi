@@ -97,7 +97,7 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
     pmix_event_chain_t *chain;
     size_t ninfo;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix:client_notify_recv - processing event");
 
     /* a zero-byte buffer indicates that this recv is being
@@ -182,7 +182,7 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
     /* now put the callback object tag in the last element */
     PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "[%s:%d] pmix:client_notify_recv - processing event %d, calling errhandler",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank, chain->status);
 
@@ -191,7 +191,7 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
 
   error:
     /* we always need to return */
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix:client_notify_recv - unpack error status =%d, calling def errhandler", rc);
     chain = PMIX_NEW(pmix_event_chain_t);
     if (NULL == chain) {
@@ -212,7 +212,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
 {
     pmix_lock_t *lock = (pmix_lock_t*)cbdata;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix:client wait_cbfunc received");
     PMIX_WAKEUP_THREAD(lock);
 }
@@ -418,8 +418,15 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     PMIX_CONSTRUCT(&pmix_globals.notifications, pmix_ring_buffer_t);
     pmix_ring_buffer_init(&pmix_globals.notifications, 256);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix: init called");
+    /* setup the base verbosity */
+    if (0 < pmix_client_globals.base_verbose) {
+        /* set default output */
+        pmix_client_globals.base_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_client_globals.base_output,
+                                  pmix_client_globals.base_verbose);
+    }
 
     /* we require our nspace */
     if (NULL == (evar = getenv("PMIX_NAMESPACE"))) {
@@ -618,7 +625,7 @@ static void fin_timeout(int sd, short args, void *cbdata)
     pmix_client_timeout_t *tev;
     tev = (pmix_client_timeout_t*)cbdata;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix:client finwait timeout fired");
     if (tev->active) {
         tev->active = false;
@@ -633,7 +640,7 @@ static void finwait_cbfunc(struct pmix_peer_t *pr,
     pmix_client_timeout_t *tev;
     tev = (pmix_client_timeout_t*)cbdata;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix:client finwait_cbfunc received");
     if (tev->active) {
         tev->active = false;
@@ -658,7 +665,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     }
     pmix_globals.init_cntr = 0;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "%s:%d pmix:client finalize called",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank);
 
@@ -696,7 +703,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         }
 
 
-        pmix_output_verbose(2, pmix_globals.debug_output,
+        pmix_output_verbose(2, pmix_client_globals.base_output,
                              "%s:%d pmix:client sending finalize sync to server",
                              pmix_globals.myid.nspace, pmix_globals.myid.rank);
 
@@ -723,7 +730,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
             pmix_event_del(&tev.ev);
         }
 
-        pmix_output_verbose(2, pmix_globals.debug_output,
+        pmix_output_verbose(2, pmix_client_globals.base_output,
                              "%s:%d pmix:client finalize sync received",
                              pmix_globals.myid.nspace, pmix_globals.myid.rank);
     }
@@ -760,7 +767,7 @@ PMIX_EXPORT pmix_status_t PMIx_Abort(int flag, const char msg[],
     pmix_status_t rc;
     pmix_lock_t reglock;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix:client abort called");
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
@@ -911,7 +918,7 @@ PMIX_EXPORT pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_va
     pmix_cb_t *cb;
     pmix_status_t rc;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.base_output,
                         "pmix: executing put for key %s type %d",
                         key, val->type);
 

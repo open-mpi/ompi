@@ -107,6 +107,28 @@ typedef struct {
     pmix_list_t gdata;                      // cache of data given to me for passing to all clients
     pmix_list_t events;                     // list of pmix_regevents_info_t registered events
     bool tool_connections_allowed;
+    // verbosity for server get operations
+    int get_output;
+    int get_verbose;
+    // verbosity for server connect operations
+    int connect_output;
+    int connect_verbose;
+    // verbosity for server fence operations
+    int fence_output;
+    int fence_verbose;
+    // verbosity for server pub operations
+    int pub_output;
+    int pub_verbose;
+    // verbosity for server spawn operations
+    int spawn_output;
+    int spawn_verbose;
+    // verbosity for server event operations
+    int event_output;
+    int event_verbose;
+    // verbosity for basic server functions
+    int base_output;
+    int base_verbose;
+
 } pmix_server_globals_t;
 
 #define PMIX_GDS_CADDY(c, p, t)                \

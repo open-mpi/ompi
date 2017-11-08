@@ -61,11 +61,15 @@
 #include <unistd.h> /* for uid_t and gid_t */
 #include <sys/types.h> /* for uid_t and gid_t */
 
-#ifdef PMIX_HAVE_VISIBILITY
+/* Whether C compiler supports -fvisibility */
+#undef PMIX_HAVE_VISIBILITY
+
+#if PMIX_HAVE_VISIBILITY == 1
 #define PMIX_EXPORT __attribute__((__visibility__("default")))
 #else
 #define PMIX_EXPORT
 #endif
+
 
 #include <pmix_rename.h>
 #include <pmix_version.h>

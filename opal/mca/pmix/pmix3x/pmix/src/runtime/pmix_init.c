@@ -50,6 +50,7 @@
 #include "src/mca/preg/base/base.h"
 #include "src/mca/ptl/base/base.h"
 
+#include "src/client/pmix_client_ops.h"
 #include "src/event/pmix_event.h"
 #include "src/include/types.h"
 #include "src/util/error.h"
@@ -159,6 +160,45 @@ int pmix_rte_init(pmix_proc_type_t type,
     PMIX_CONSTRUCT(&pmix_globals.notifications, pmix_ring_buffer_t);
     pmix_ring_buffer_init(&pmix_globals.notifications, 256);
 
+    /* Setup client verbosities as all procs are allowed to
+     * access client APIs */
+    if (0 < pmix_client_globals.get_verbose) {
+        /* set default output */
+        pmix_client_globals.get_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_client_globals.get_output,
+                                  pmix_client_globals.get_verbose);
+    }
+    if (0 < pmix_client_globals.connect_verbose) {
+        /* set default output */
+        pmix_client_globals.connect_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_client_globals.connect_output,
+                                  pmix_client_globals.connect_verbose);
+    }
+    if (0 < pmix_client_globals.fence_verbose) {
+        /* set default output */
+        pmix_client_globals.fence_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_client_globals.fence_output,
+                                  pmix_client_globals.fence_verbose);
+    }
+    if (0 < pmix_client_globals.pub_verbose) {
+        /* set default output */
+        pmix_client_globals.pub_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_client_globals.pub_output,
+                                  pmix_client_globals.pub_verbose);
+    }
+    if (0 < pmix_client_globals.spawn_verbose) {
+        /* set default output */
+        pmix_client_globals.spawn_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_client_globals.spawn_output,
+                                  pmix_client_globals.spawn_verbose);
+    }
+    if (0 < pmix_client_globals.event_verbose) {
+        /* set default output */
+        pmix_client_globals.event_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_client_globals.event_output,
+                                  pmix_client_globals.event_verbose);
+    }
+
     /* get our effective id's */
     pmix_globals.uid = geteuid();
     pmix_globals.gid = getegid();
@@ -174,8 +214,8 @@ int pmix_rte_init(pmix_proc_type_t type,
         ret = PMIX_ERR_NOMEM;
         goto return_error;
     }
-    /* whatever our declared proc type, we are definitely v2.1 */
-    pmix_globals.mypeer->proc_type = type | PMIX_PROC_V21;
+    /* whatever our declared proc type, we are definitely v3.0 */
+    pmix_globals.mypeer->proc_type = type | PMIX_PROC_V3;
     /* create an nspace object for ourselves - we will
      * fill in the nspace name later */
     pmix_globals.mypeer->nptr = PMIX_NEW(pmix_nspace_t);

@@ -319,6 +319,7 @@ opal/mca/pmix/pmix*/pmix/src/mca/pinstalldirs/config/pinstall_dirs.h
 opal/mca/pmix/pmix*/pmix/config/autogen_found_items.m4
 opal/mca/pmix/pmix*/pmix/src/include/pmix_config.h
 opal/mca/pmix/pmix*/pmix/src/include/pmix_config.h.in
+opal/mca/pmix/pmix*/pmix/include/pmix_common.h
 opal/mca/pmix/pmix*/pmix/include/pmix_rename.h
 opal/mca/pmix/pmix*/pmix/include/pmix_version.h
 opal/mca/pmix/pmix*/pmix/src/util/keyval/keyval_lex.c
