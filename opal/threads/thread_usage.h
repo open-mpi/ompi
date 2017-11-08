@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -158,6 +158,23 @@ static inline bool opal_thread_cmpset_bool_ ## suffix (volatile addr_type *addr,
     return false;                                                       \
 }
 
+#define OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(type, addr_type, suffix)       \
+static inline bool opal_thread_compare_exchange_strong_ ## suffix (volatile addr_type *addr, type *compare, type value) \
+{                                                                       \
+    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
+        return opal_atomic_compare_exchange_strong_ ## suffix ((volatile type *) addr, compare, value); \
+    }                                                                   \
+                                                                        \
+    if ((type) *addr == *compare) {                                     \
+        ((type *) addr)[0] = value;                                     \
+        return true;                                                    \
+    }                                                                   \
+                                                                        \
+    *compare = ((type *) addr)[0];                                      \
+                                                                        \
+    return false;                                                       \
+}
+
 #define OPAL_THREAD_DEFINE_ATOMIC_SWAP(type, addr_type, suffix)         \
 static inline type opal_thread_swap_ ## suffix (volatile addr_type *ptr, type newvalue) \
 {                                                                       \
@@ -180,6 +197,8 @@ OPAL_THREAD_DEFINE_ATOMIC_SUB(int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_SUB(size_t, size_t)
 OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int32_t, int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_CMPSET(void *, intptr_t, ptr)
+OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(int32_t, int32_t, 32)
+OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(void *, intptr_t, ptr)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int32_t, int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 
@@ -204,8 +223,14 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 #define OPAL_THREAD_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
 #define OPAL_ATOMIC_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
 
+#define OPAL_THREAD_BOOL_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
+#define OPAL_ATOMIC_BOOL_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
+
 #define OPAL_THREAD_BOOL_CMPSET_PTR(x, y, z) opal_thread_cmpset_bool_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
 #define OPAL_ATOMIC_BOOL_CMPSET_PTR OPAL_THREAD_BOOL_CMPSET_PTR
+
+#define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_PTR(x, y, z) opal_thread_compare_exchange_strong_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
+#define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR OPAL_THREAD_COMPARE_EXCHANGE_STRONG_PTR
 
 #define OPAL_THREAD_SWAP_32 opal_thread_swap_32
 #define OPAL_ATOMIC_SWAP_32 opal_thread_swap_32
@@ -221,6 +246,7 @@ OPAL_THREAD_DEFINE_ATOMIC_AND(int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_OR(int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_XOR(int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int64_t, int64_t, 64)
+OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(int64_t, int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
 #define OPAL_THREAD_ADD64 opal_thread_add_64
@@ -237,6 +263,9 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
 #define OPAL_THREAD_BOOL_CMPSET_64 opal_thread_cmpset_bool_64
 #define OPAL_ATOMIC_BOOL_CMPSET_64 opal_thread_cmpset_bool_64
+
+#define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
+#define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
 
 #define OPAL_THREAD_SWAP_64 opal_thread_swap_64
 #define OPAL_ATOMIC_SWAP_64 opal_thread_swap_64

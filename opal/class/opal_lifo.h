@@ -36,8 +36,8 @@
 BEGIN_C_DECLS
 
 /* NTH: temporarily suppress warnings about this not being defined */
-#if !defined(OPAL_HAVE_ATOMIC_CMPSET_128)
-#define OPAL_HAVE_ATOMIC_CMPSET_128 0
+#if !defined(OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128)
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 0
 #endif
 
 /**
@@ -50,7 +50,7 @@ union opal_counted_pointer_t {
         /** list item pointer */
         volatile opal_list_item_t * volatile item;
     } data;
-#if OPAL_HAVE_ATOMIC_CMPSET_128 && HAVE_OPAL_INT128_T
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && HAVE_OPAL_INT128_T
     /** used for atomics when there is a cmpset that can operate on
      * two 64-bit values */
     opal_int128_t value;
@@ -59,7 +59,7 @@ union opal_counted_pointer_t {
 typedef union opal_counted_pointer_t opal_counted_pointer_t;
 
 
-#if OPAL_HAVE_ATOMIC_CMPSET_128
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
 
 /* Add one element to the FIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the
@@ -110,7 +110,7 @@ static inline bool opal_lifo_is_empty( opal_lifo_t* lifo )
 }
 
 
-#if OPAL_HAVE_ATOMIC_CMPSET_128
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
 
 /* Add one element to the LIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the

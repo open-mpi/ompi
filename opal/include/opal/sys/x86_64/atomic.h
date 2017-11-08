@@ -40,9 +40,9 @@
  *********************************************************************/
 #define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OPAL_HAVE_ATOMIC_CMPSET_32 1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 
-#define OPAL_HAVE_ATOMIC_CMPSET_64 1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 
 /**********************************************************************
  *
@@ -82,14 +82,13 @@ static inline void opal_atomic_isync(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline bool opal_atomic_bool_cmpset_32( volatile int32_t *addr,
-                                               int32_t oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
 {
    unsigned char ret;
    __asm__ __volatile__ (
                        SMPLOCK "cmpxchgl %3,%2   \n\t"
                                "sete     %0      \n\t"
-                       : "=qm" (ret), "+a" (oldval), "+m" (*addr)
+                       : "=qm" (ret), "+a" (*oldval), "+m" (*addr)
                        : "q"(newval)
                        : "memory", "cc");
 
@@ -98,19 +97,18 @@ static inline bool opal_atomic_bool_cmpset_32( volatile int32_t *addr,
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#define opal_atomic_bool_cmpset_acq_32 opal_atomic_bool_cmpset_32
-#define opal_atomic_bool_cmpset_rel_32 opal_atomic_bool_cmpset_32
+#define opal_atomic_compare_exchange_strong_acq_32 opal_atomic_compare_exchange_strong_32
+#define opal_atomic_compare_exchange_strong_rel_32 opal_atomic_compare_exchange_strong_32
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline bool opal_atomic_bool_cmpset_64( volatile int64_t *addr,
-                                               int64_t oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
 {
    unsigned char ret;
    __asm__ __volatile__ (
                        SMPLOCK "cmpxchgq %3,%2   \n\t"
                                "sete     %0      \n\t"
-                       : "=qm" (ret), "+a" (oldval), "+m" (*((volatile long*)addr))
+                       : "=qm" (ret), "+a" (*oldval), "+m" (*((volatile long*)addr))
                        : "q"(newval)
                        : "memory", "cc"
                        );
@@ -120,13 +118,12 @@ static inline bool opal_atomic_bool_cmpset_64( volatile int64_t *addr,
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#define opal_atomic_bool_cmpset_acq_64 opal_atomic_bool_cmpset_64
-#define opal_atomic_bool_cmpset_rel_64 opal_atomic_bool_cmpset_64
+#define opal_atomic_compare_exchange_strong_acq_64 opal_atomic_compare_exchange_strong_64
+#define opal_atomic_compare_exchange_strong_rel_64 opal_atomic_compare_exchange_strong_64
 
 #if OPAL_GCC_INLINE_ASSEMBLY && OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
 
-static inline bool opal_atomic_bool_cmpset_128 (volatile opal_int128_t *addr, opal_int128_t oldval,
-                                                opal_int128_t newval)
+static inline bool opal_atomic_compare_exchange_strong_128 (volatile opal_int128_t *addr, opal_int128_t *oldval, opal_int128_t newval)
 {
     unsigned char ret;
 
@@ -135,15 +132,14 @@ static inline bool opal_atomic_bool_cmpset_128 (volatile opal_int128_t *addr, op
      * at the address is returned in eax:edx. */
     __asm__ __volatile__ (SMPLOCK "cmpxchg16b (%%rsi)   \n\t"
                                   "sete     %0      \n\t"
-                          : "=qm" (ret)
-                          : "S" (addr), "b" (((int64_t *)&newval)[0]), "c" (((int64_t *)&newval)[1]),
-                            "a" (((int64_t *)&oldval)[0]), "d" (((int64_t *)&oldval)[1])
-                          : "memory", "cc");
+                          : "=qm" (ret), "+a" (((int64_t *)oldval)[0]), "+d" (((int64_t *)oldval)[1])
+                          : "S" (addr), "b" (((int64_t *)&newval)[0]), "c" (((int64_t *)&newval)[1])
+                          : "memory", "cc", "eax", "edx");
 
     return (bool) ret;
 }
 
-#define OPAL_HAVE_ATOMIC_CMPSET_128 1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 

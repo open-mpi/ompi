@@ -76,7 +76,7 @@ static inline bool opal_fifo_is_empty( opal_fifo_t* fifo )
     return opal_fifo_head (fifo) == &fifo->opal_fifo_ghost;
 }
 
-#if OPAL_HAVE_ATOMIC_CMPSET_128
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
 
 /* Add one element to the FIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the
