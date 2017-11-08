@@ -223,8 +223,8 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 #define OPAL_THREAD_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
 #define OPAL_ATOMIC_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
 
-#define OPAL_THREAD_BOOL_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
-#define OPAL_ATOMIC_BOOL_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
+#define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
+#define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
 
 #define OPAL_THREAD_BOOL_CMPSET_PTR(x, y, z) opal_thread_cmpset_bool_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
 #define OPAL_ATOMIC_BOOL_CMPSET_PTR OPAL_THREAD_BOOL_CMPSET_PTR

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reseved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -65,13 +65,13 @@ typedef union opal_counted_pointer_t opal_counted_pointer_t;
  * to allow the upper level to detect if this element is the first one in the
  * list (if the list was empty before this operation).
  */
-static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t *addr, opal_counted_pointer_t old,
+static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t *addr, opal_counted_pointer_t *old,
                                                 opal_list_item_t *item)
 {
     opal_counted_pointer_t new_p;
     new_p.data.item = item;
-    new_p.data.counter = old.data.counter + 1;
-    return opal_atomic_bool_cmpset_128 (&addr->value, old.value, new_p.value);
+    new_p.data.counter = old->data.counter + 1;
+    return opal_atomic_compare_exchange_strong_128 (&addr->value, &old->value, new_p.value);
 }
 
 #endif
@@ -119,14 +119,14 @@ static inline bool opal_lifo_is_empty( opal_lifo_t* lifo )
 static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
                                                        opal_list_item_t *item)
 {
-    do {
-        opal_list_item_t *next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
+    opal_list_item_t *next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
 
+    do {
         item->opal_list_next = next;
         opal_atomic_wmb ();
 
         /* to protect against ABA issues it is sufficient to only update the counter in pop */
-        if (opal_atomic_bool_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
+        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, &next, item)) {
             return next;
         }
         /* DO some kind of pause to release the bus */
@@ -141,17 +141,17 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
     opal_counted_pointer_t old_head;
     opal_list_item_t *item;
 
+    old_head.data.counter = lifo->opal_lifo_head.data.counter;
+    opal_atomic_rmb ();
+    old_head.data.item = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
+
     do {
-
-        old_head.data.counter = lifo->opal_lifo_head.data.counter;
-        opal_atomic_rmb ();
-        old_head.data.item = item = (opal_list_item_t*)lifo->opal_lifo_head.data.item;
-
+        item = (opal_list_item_t *) old_head.data.item;
         if (item == &lifo->opal_lifo_ghost) {
             return NULL;
         }
 
-        if (opal_update_counted_pointer (&lifo->opal_lifo_head, old_head,
+        if (opal_update_counted_pointer (&lifo->opal_lifo_head, &old_head,
                                          (opal_list_item_t *) item->opal_list_next)) {
             opal_atomic_wmb ();
             item->opal_list_next = NULL;
@@ -169,13 +169,15 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
                                                        opal_list_item_t *item)
 {
+    opal_list_item_t *next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
+
     /* item free acts as a mini lock to avoid ABA problems */
     item->item_free = 1;
+
     do {
-        opal_list_item_t *next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
         item->opal_list_next = next;
         opal_atomic_wmb();
-        if (opal_atomic_bool_cmpset_ptr (&lifo->opal_lifo_head.data.item, next, item)) {
+        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, &next, item)) {
             opal_atomic_wmb ();
             /* now safe to pop this item */
             item->item_free = 0;
@@ -236,8 +238,11 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
  */
 static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 {
-    opal_list_item_t *item;
-    while ((item = (opal_list_item_t *) lifo->opal_lifo_head.data.item) != &lifo->opal_lifo_ghost) {
+    opal_list_item_t *item, *head, *ghost = &lifo->opal_lifo_ghost;
+
+    item = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
+
+    while (item != ghost) {
         /* ensure it is safe to pop the head */
         if (opal_atomic_swap_32((volatile int32_t *) &item->item_free, 1)) {
             continue;
@@ -245,14 +250,16 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 
         opal_atomic_wmb ();
 
+        head = item;
         /* try to swap out the head pointer */
-        if (opal_atomic_bool_cmpset_ptr (&lifo->opal_lifo_head.data.item, item,
-                                   (void *) item->opal_list_next)) {
+        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, &head,
+                                                     (void *) item->opal_list_next)) {
             break;
         }
 
         /* NTH: don't need another atomic here */
         item->item_free = 0;
+        item = head;
 
         /* Do some kind of pause to release the bus */
     }
