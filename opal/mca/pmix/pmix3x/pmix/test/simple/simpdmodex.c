@@ -84,7 +84,7 @@ static void valcbfunc(pmix_status_t status,
         }
         pmix_output(0, "%s:%d PMIx_Get_nb Key %s returned correctly", myproc.nspace, myproc.rank, key);
     } else {
-        pmix_output(0, "%s:%d PMIx_Get_nb Key %s failed", myproc.nspace, myproc.rank, key);
+        pmix_output(0, "%s:%d PMIx_Get_nb Key %s failed: %s", myproc.nspace, myproc.rank, key, PMIx_Error_string(status));
     }
  done:
     free(key);
@@ -100,6 +100,11 @@ int main(int argc, char **argv)
     pmix_proc_t proc;
     uint32_t n, num_gets;
     bool active;
+    bool dofence = true;
+
+    if (NULL != getenv("PMIX_SIMPDMODEX_ASYNC")) {
+        dofence = false;
+    }
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
@@ -148,6 +153,7 @@ int main(int argc, char **argv)
      * if a "get" is received prior to data being provided */
     if (0 == myproc.rank) {
         sleep(2);
+        pmix_output(0, "\n\n\nWOKE UP");
     }
 
     /* commit the data to the server */
@@ -156,14 +162,16 @@ int main(int argc, char **argv)
         goto done;
     }
 
-    /* call fence_nb, but don't return any data */
-    PMIX_PROC_CONSTRUCT(&proc);
-    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
-    proc.rank = PMIX_RANK_WILDCARD;
-    active = true;
-    if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(&proc, 1, NULL, 0, opcbfunc, &active))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Fence failed: %d", myproc.nspace, myproc.rank, rc);
-        goto done;
+    if (dofence) {
+        /* call fence_nb, but don't return any data */
+        PMIX_PROC_CONSTRUCT(&proc);
+        (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+        proc.rank = PMIX_RANK_WILDCARD;
+        active = true;
+        if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(&proc, 1, NULL, 0, opcbfunc, &active))) {
+            pmix_output(0, "Client ns %s rank %d: PMIx_Fence failed: %d", myproc.nspace, myproc.rank, rc);
+            goto done;
+        }
     }
 
     /* get the committed data - ask for someone who doesn't exist as well */
@@ -186,8 +194,10 @@ int main(int argc, char **argv)
         ++num_gets;
     }
 
-    /* wait for the first fence to finish */
-    PMIX_WAIT_FOR_COMPLETION(active);
+    if (dofence) {
+        /* wait for the first fence to finish */
+        PMIX_WAIT_FOR_COMPLETION(active);
+    }
 
     /* wait for all my "get" calls to complete */
     while (getcount < num_gets) {

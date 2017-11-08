@@ -130,7 +130,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     size_t sz, n;
     pmix_peer_t *peer;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_server_globals.get_output,
                         "recvd GET");
 
     /* setup */
@@ -191,7 +191,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         }
     }
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_server_globals.get_output,
                         "%s:%d EXECUTE GET FOR %s:%d ON BEHALF OF %s:%d",
                         pmix_globals.myid.nspace,
                         pmix_globals.myid.rank, nspace, rank,
@@ -320,8 +320,17 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
      * we do know how many clients to expect, so first check to see if
      * all clients have been registered with us */
      if (!nptr->all_registered) {
+        pmix_output_verbose(2, pmix_server_globals.get_output,
+                            "%s:%d NSPACE %s not all registered",
+                            pmix_globals.myid.nspace,
+                            pmix_globals.myid.rank, nspace);
+
         if (localonly) {
             /* the client asked that we not wait, so return now */
+            pmix_output_verbose(2, pmix_server_globals.get_output,
+                                "%s:%d CLIENT REQUESTED IMMEDIATE",
+                                pmix_globals.myid.nspace,
+                                pmix_globals.myid.rank);
             return PMIX_ERR_NOT_FOUND;
         }
         /* we cannot do anything further, so just track this request
@@ -331,6 +340,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         if (PMIX_ERR_NOMEM == rc) {
             PMIX_INFO_FREE(info, ninfo);
         }
+        pmix_output_verbose(2, pmix_server_globals.get_output,
+                            "%s:%d TRACKER CREATED - WAITING",
+                            pmix_globals.myid.nspace,
+                            pmix_globals.myid.rank);
         return rc;
     }
 
@@ -342,9 +355,18 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         return rc;
     }
 
+    pmix_output_verbose(2, pmix_server_globals.get_output,
+                        "%s:%d DATA NOT FOUND",
+                        pmix_globals.myid.nspace,
+                        pmix_globals.myid.rank);
+
     /* If we get here, then we don't have the data at this time. If
      * the user doesn't want to look for it, then we are done */
     if (localonly) {
+        pmix_output_verbose(2, pmix_server_globals.get_output,
+                            "%s:%d CLIENT REQUESTED IMMEDIATE",
+                            pmix_globals.myid.nspace,
+                            pmix_globals.myid.rank);
         return PMIX_ERR_NOT_FOUND;
     }
 
@@ -379,6 +401,10 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     if (NULL != pmix_host_server.direct_modex) {
         rc = pmix_host_server.direct_modex(&lcd->proc, info, ninfo, dmdx_cbfunc, lcd);
     } else {
+        pmix_output_verbose(2, pmix_server_globals.get_output,
+                            "%s:%d NO SERVER SUPPORT",
+                            pmix_globals.myid.nspace,
+                            pmix_globals.myid.rank);
         /* if we don't have direct modex feature, just respond with "not found" */
         cbfunc(PMIX_ERR_NOT_FOUND, NULL, 0, cbdata, NULL, NULL);
         PMIX_INFO_FREE(info, ninfo);
@@ -503,6 +529,11 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
     size_t sz = 0;
     pmix_scope_t scope = PMIX_SCOPE_UNDEF;
 
+    pmix_output_verbose(2, pmix_server_globals.get_output,
+                        "%s:%d SATISFY REQUEST CALLED",
+                        pmix_globals.myid.nspace,
+                        pmix_globals.myid.rank);
+
     /* check to see if this data already has been
      * obtained as a result of a prior direct modex request from
      * a remote peer, or due to data from a local client
@@ -582,6 +613,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
             /* assemble the provided data into a byte object */
             PMIX_GDS_ASSEMB_KVS_REQ(rc, cd->peer, &proc, &cb.kvs, &pkt, cd);
             if (rc != PMIX_SUCCESS) {
+                PMIX_ERROR_LOG(rc);
                 PMIX_DESTRUCT(&pkt);
                 PMIX_DESTRUCT(&pbkt);
                 PMIX_DESTRUCT(&cb);
@@ -595,6 +627,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
                 PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
                 PMIX_BFROPS_PACK(rc, cd->peer, &xfer, &pkt, 1, PMIX_BUFFER);
                 if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
                     PMIX_DESTRUCT(&pkt);
                     PMIX_DESTRUCT(&pbkt);
                     PMIX_DESTRUCT(&xfer);
@@ -610,6 +643,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
             /* pack it for transmission */
             PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, &bo, 1, PMIX_BYTE_OBJECT);
             if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
                 PMIX_DESTRUCT(&pbkt);
                 PMIX_DESTRUCT(&cb);
                 return rc;
@@ -638,6 +672,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
             /* assemble the provided data into a byte object */
             PMIX_GDS_ASSEMB_KVS_REQ(rc, cd->peer, &proc, &cb.kvs, &pkt, cd);
             if (rc != PMIX_SUCCESS) {
+                PMIX_ERROR_LOG(rc);
                 PMIX_DESTRUCT(&pkt);
                 PMIX_DESTRUCT(&pbkt);
                 PMIX_DESTRUCT(&cb);
@@ -650,6 +685,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
                 /* pack the rank */
                 PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, &rank, 1, PMIX_PROC_RANK);
                 if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
                     PMIX_DESTRUCT(&pkt);
                     PMIX_DESTRUCT(&pbkt);
                     PMIX_DESTRUCT(&cb);
@@ -658,6 +694,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
                 /* now pack the data itself as a buffer */
                 PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, &pkt, 1, PMIX_BUFFER);
                 if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
                     PMIX_DESTRUCT(&pkt);
                     PMIX_DESTRUCT(&pbkt);
                     PMIX_DESTRUCT(&cb);
@@ -670,6 +707,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
                 /* pack it for transmission */
                 PMIX_BFROPS_PACK(rc, cd->peer, &pbkt, &bo, 1, PMIX_BYTE_OBJECT);
                 if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
                     PMIX_DESTRUCT(&pbkt);
                     PMIX_DESTRUCT(&cb);
                     return rc;
@@ -685,12 +723,6 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
         /* pass it back */
         cbfunc(rc, data, sz, cbdata, relfn, data);
         return rc;
-    }
-
-    if ((PMIX_LOCAL == scope) && !found) {
-        /* pass PMIX_ERR_NOT_FOUND for local request if it's not found*/
-        cbfunc(PMIX_ERR_NOT_FOUND, NULL, 0, cbdata, NULL, NULL);
-        return PMIX_SUCCESS;
     }
 
     return PMIX_ERR_NOT_FOUND;
@@ -774,7 +806,7 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
 
     PMIX_ACQUIRE_OBJECT(caddy);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_server_globals.get_output,
                     "[%s:%d] process dmdx reply from %s:%u",
                     __FILE__, __LINE__,
                     caddy->lcd->proc.nspace, caddy->lcd->proc.rank);
@@ -903,7 +935,7 @@ static void dmdx_cbfunc(pmix_status_t status,
     caddy->data   = data;
     caddy->ndata  = ndata;
     caddy->lcd    = (pmix_dmdx_local_t *)cbdata;
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_server_globals.get_output,
                         "[%s:%d] queue dmdx reply for %s:%u",
                         __FILE__, __LINE__,
                         caddy->lcd->proc.nspace, caddy->lcd->proc.rank);

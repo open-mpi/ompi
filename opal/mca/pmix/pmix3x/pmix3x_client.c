@@ -99,6 +99,11 @@ int pmix3x_client_init(opal_list_t *ilist)
         ninfo = 0;
     }
 
+    /* check for direct modex use-case */
+    if (opal_pmix_base_async_modex && !opal_pmix_collect_all_data) {
+        opal_setenv("PMIX_MCA_gds", "hash", true, &environ);
+    }
+
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
     rc = PMIx_Init(&my_proc, pinfo, ninfo);
     if (NULL != pinfo) {

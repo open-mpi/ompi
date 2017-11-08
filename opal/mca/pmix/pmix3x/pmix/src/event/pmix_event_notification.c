@@ -65,7 +65,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
         rc = pmix_server_notify_client_of_event(status, source, range,
                                                 info, ninfo,
                                                 cbfunc, cbdata);
-        pmix_output_verbose(2, pmix_globals.debug_output,
+        pmix_output_verbose(2, pmix_server_globals.event_output,
                             "pmix_server_notify_event source = %s:%d event_status = %d, rc= %d",
                             (NULL == source) ? "UNKNOWN" : source->nspace,
                             (NULL == source) ? PMIX_RANK_WILDCARD : source->rank, status, rc);
@@ -73,7 +73,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
         rc = notify_server_of_event(status, source, range,
                                     info, ninfo,
                                     cbfunc, cbdata);
-        pmix_output_verbose(2, pmix_globals.debug_output,
+        pmix_output_verbose(2, pmix_client_globals.event_output,
                             "pmix_client_notify_event source = %s:%d event_status =%d, rc=%d",
                             (NULL == source) ? pmix_globals.myid.nspace : source->nspace,
                             (NULL == source) ? pmix_globals.myid.rank : source->rank, status, rc);
@@ -116,7 +116,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     size_t n;
     pmix_notify_caddy_t *cd, *rbout;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.event_output,
                         "client: notifying server %s:%d of status %s for range %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         PMIx_Error_string(status), PMIx_Data_range_string(range));
@@ -243,7 +243,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         cb->cbfunc.opfn = cbfunc;
         cb->cbdata = cbdata;
         /* send to the server */
-        pmix_output_verbose(2, pmix_globals.debug_output,
+        pmix_output_verbose(2, pmix_client_globals.event_output,
                             "client: notifying server %s:%d - sending",
                             pmix_globals.myid.nspace, pmix_globals.myid.rank);
         PMIX_PTL_SEND_RECV(rc, pmix_client_globals.myserver,
@@ -263,7 +263,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     return PMIX_SUCCESS;
 
   cleanup:
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.event_output,
                         "client: notifying server - unable to send");
     PMIX_RELEASE(msg);
     /* we were unable to send anything, so we just return the error */
@@ -803,7 +803,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     /* need to acquire the object from its originating thread */
     PMIX_ACQUIRE_OBJECT(cd);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_server_globals.event_output,
                         "pmix_server: _notify_client_event notifying clients of event %s range %s type %s",
                         PMIx_Error_string(cd->status),
                         PMIx_Data_range_string(cd->range),
@@ -882,7 +882,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                             continue;
                         }
                     }
-                    pmix_output_verbose(2, pmix_globals.debug_output,
+                    pmix_output_verbose(2, pmix_server_globals.event_output,
                                         "pmix_server: notifying client %s:%u on status %s",
                                         pr->peer->info->pname.nspace, pr->peer->info->pname.rank,
                                         PMIx_Error_string(cd->status));
@@ -1007,7 +1007,7 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     pmix_notify_caddy_t *cd;
     size_t n;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_server_globals.event_output,
                         "pmix_server: notify client of event %s",
                         PMIx_Error_string(status));
 
@@ -1079,7 +1079,7 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     cd->cbfunc = cbfunc;
     cd->cbdata = cbdata;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_server_globals.event_output,
                         "pmix_server_notify_event status =%d, source = %s:%d, ninfo =%lu",
                          status, cd->source.nspace, cd->source.rank, ninfo);
 

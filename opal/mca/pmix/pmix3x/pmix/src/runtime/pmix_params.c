@@ -35,6 +35,8 @@
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/runtime/pmix_rte.h"
 #include "src/util/timings.h"
+#include "src/client/pmix_client_ops.h"
+#include "src/server/pmix_server_ops.h"
 
 #if PMIX_ENABLE_TIMING
 char *pmix_timing_output = NULL;
@@ -105,6 +107,93 @@ pmix_status_t pmix_register_params(void)
                                   PMIX_MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
                                   &pmix_suppress_missing_data_warning);
+
+    /****   CLIENT: VERBOSE OUTPUT PARAMS   ****/
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "get_verbose",
+                                  "Verbosity for client get operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_client_globals.get_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "connect_verbose",
+                                  "Verbosity for client connect operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_client_globals.connect_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "fence_verbose",
+                                  "Verbosity for client fence operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_client_globals.fence_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "pub_verbose",
+                                  "Verbosity for client publish, lookup, and unpublish operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_client_globals.pub_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "spawn_verbose",
+                                  "Verbosity for client spawn operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_client_globals.spawn_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "event_verbose",
+                                  "Verbosity for eventt spawn operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_client_globals.event_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "base_verbose",
+                                  "Verbosity for basic client operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_client_globals.base_verbose);
+
+    /****   SERVER: VERBOSE OUTPUT PARAMS   ****/
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "get_verbose",
+                                  "Verbosity for server get operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_server_globals.get_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "connect_verbose",
+                                  "Verbosity for server connect operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_server_globals.connect_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "fence_verbose",
+                                  "Verbosity for server fence operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_server_globals.fence_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "pub_verbose",
+                                  "Verbosity for server publish, lookup, and unpublish operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_server_globals.pub_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "spawn_verbose",
+                                  "Verbosity for server spawn operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_server_globals.spawn_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "event_verbose",
+                                  "Verbosity for server event operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_server_globals.event_verbose);
+
+    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "base_verbose",
+                                  "Verbosity for basic server operations",
+                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
+                                  &pmix_server_globals.base_verbose);
+
 
     return PMIX_SUCCESS;
 }

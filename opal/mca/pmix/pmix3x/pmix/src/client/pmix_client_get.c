@@ -91,6 +91,12 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
+    pmix_output_verbose(2, pmix_client_globals.get_verbose,
+                        "pmix:client get for %s:%d key %s",
+                        (NULL == proc) ? "NULL" : proc->nspace,
+                        (NULL == proc) ? PMIX_RANK_UNDEF : proc->rank,
+                        (NULL == key) ? "NULL" : key);
+
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the return message is recvd */
@@ -108,7 +114,7 @@ PMIX_EXPORT pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
     }
     PMIX_RELEASE(cb);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.get_verbose,
                         "pmix:client get completed");
 
     return rc;
@@ -142,12 +148,16 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
      * Either case is supported. However, we don't currently
      * support the case where -both- values are NULL */
     if (NULL == proc && NULL == key) {
+        pmix_output_verbose(2, pmix_client_globals.get_verbose,
+                            "pmix: get_nb value error - both proc and key are NULL");
         return PMIX_ERR_BAD_PARAM;
     }
 
     /* if the key is NULL, the rank cannot be WILDCARD as
      * we cannot return all info from every rank */
     if (NULL != proc && PMIX_RANK_WILDCARD == proc->rank && NULL == key) {
+        pmix_output_verbose(2, pmix_client_globals.get_verbose,
+                            "pmix: get_nb value error - WILDCARD rank and key is NULL");
         return PMIX_ERR_BAD_PARAM;
     }
 
@@ -168,7 +178,7 @@ PMIX_EXPORT pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
         rank = proc->rank;
     }
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.get_verbose,
                         "pmix: get_nb value for proc %s:%u key %s",
                         nm, rank, (NULL == key) ? "NULL" : key);
 
@@ -273,7 +283,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     pmix_proc_t proc;
     pmix_kval_t *kv;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.get_verbose,
                         "pmix: get_nb callback recvd");
 
     if (NULL == cb) {
@@ -479,7 +489,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     /* cb was passed to us from another thread - acquire it */
     PMIX_ACQUIRE_OBJECT(cb);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.get_verbose,
                         "pmix: getnbfn value for proc %s:%u key %s",
                         cb->pname.nspace, cb->pname.rank,
                         (NULL == cb->key) ? "NULL" : cb->key);
@@ -517,9 +527,13 @@ static void _getnbfn(int fd, short flags, void *cbdata)
     cb->copy = true;
     PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, cb);
     if (PMIX_SUCCESS == rc) {
+        pmix_output_verbose(5, pmix_client_globals.get_verbose,
+                            "pmix:client data found in internal storage");
         rc = process_values(&val, cb);
         goto respond;
     }
+    pmix_output_verbose(5, pmix_client_globals.get_verbose,
+                        "pmix:client data NOT found in internal storage");
 
     /* if the key is NULL or starts with "pmix", then they are looking
      * for data that was provided by the server at startup */
@@ -530,6 +544,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         cb->copy = true;
         PMIX_GDS_FETCH_KV(rc, pmix_client_globals.myserver, cb);
         if (PMIX_SUCCESS != rc) {
+            pmix_output_verbose(5, pmix_client_globals.get_verbose,
+                                "pmix:client job-level data NOT found");
             if (0 != strncmp(cb->pname.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
                 /* we are asking about the job-level info from another
                  * namespace. It seems that we don't have it - go and
@@ -542,6 +558,8 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                  * job-level info. In some cases, a server may elect not
                  * to provide info at init to save memory */
                 if (immediate) {
+                    pmix_output_verbose(5, pmix_client_globals.get_verbose,
+                                        "pmix:client IMMEDIATE given - querying data");
                     /* the direct modex request doesn't pass a key as it
                      * was intended to support non-job-level information.
                      * So instead, we will use the PMIx_Query function
@@ -560,11 +578,17 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                     return;
                 }
                 /* we should have had this info, so respond with the error */
+                pmix_output_verbose(5, pmix_client_globals.get_verbose,
+                                    "pmix:client returning NOT FOUND error");
                 goto respond;
             } else {
+                pmix_output_verbose(5, pmix_client_globals.get_verbose,
+                                    "pmix:client NULL KEY - returning error");
                 goto respond;
             }
         }
+        pmix_output_verbose(5, pmix_client_globals.get_verbose,
+                            "pmix:client job-level data NOT found");
         rc = process_values(&val, cb);
         goto respond;
     } else {
@@ -619,7 +643,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
      * us to attempt to retrieve it from the server */
     if (optional) {
         /* they don't want us to try and retrieve it */
-        pmix_output_verbose(2, pmix_globals.debug_output,
+        pmix_output_verbose(2, pmix_client_globals.get_verbose,
                             "PMIx_Get key=%s for rank = %u, namespace = %s was not found - request was optional",
                             cb->key, cb->pname.rank, cb->pname.nspace);
         rc = PMIX_ERR_NOT_FOUND;
@@ -647,7 +671,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
         goto respond;
     }
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.get_verbose,
                         "%s:%d REQUESTING DATA FROM SERVER FOR %s:%d KEY %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         cb->pname.nspace, cb->pname.rank, cb->key);
