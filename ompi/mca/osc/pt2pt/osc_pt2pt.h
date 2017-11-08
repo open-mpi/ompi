@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -145,15 +145,11 @@ static inline bool ompi_osc_pt2pt_peer_eager_active (ompi_osc_pt2pt_peer_t *peer
 
 static inline void ompi_osc_pt2pt_peer_set_flag (ompi_osc_pt2pt_peer_t *peer, int32_t flag, bool value)
 {
-    int32_t peer_flags, new_flags;
-    do {
-        peer_flags = peer->flags;
-        if (value) {
-            new_flags = peer_flags | flag;
-        } else {
-            new_flags = peer_flags & ~flag;
-        }
-    } while (!OPAL_ATOMIC_BOOL_CMPSET_32 (&peer->flags, peer_flags, new_flags));
+    if (value) {
+        OPAL_ATOMIC_OR32 (&peer->flags, flag);
+    } else {
+        OPAL_ATOMIC_AND32 (&peer->flags, ~flag);
+    }
 }
 
 static inline void ompi_osc_pt2pt_peer_set_locked (ompi_osc_pt2pt_peer_t *peer, bool value)

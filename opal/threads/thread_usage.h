@@ -143,21 +143,6 @@ static inline type opal_thread_sub_ ## suffix (volatile type *addr, type delta) 
     return (*addr -= delta);                                            \
 }
 
-#define OPAL_THREAD_DEFINE_ATOMIC_CMPSET(type, addr_type, suffix)       \
-static inline bool opal_thread_cmpset_bool_ ## suffix (volatile addr_type *addr, type compare, type value) \
-{                                                                       \
-    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
-        return opal_atomic_bool_cmpset_ ## suffix ((volatile type *) addr, compare, value); \
-    }                                                                   \
-                                                                        \
-    if ((type) *addr == compare) {                                      \
-        ((type *) addr)[0] = value;                                     \
-        return true;                                                    \
-    }                                                                   \
-                                                                        \
-    return false;                                                       \
-}
-
 #define OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(type, addr_type, suffix)       \
 static inline bool opal_thread_compare_exchange_strong_ ## suffix (volatile addr_type *addr, type *compare, type value) \
 {                                                                       \
@@ -195,8 +180,6 @@ OPAL_THREAD_DEFINE_ATOMIC_OR(int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_XOR(int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_SUB(int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_SUB(size_t, size_t)
-OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int32_t, int32_t, 32)
-OPAL_THREAD_DEFINE_ATOMIC_CMPSET(void *, intptr_t, ptr)
 OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(int32_t, int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(void *, intptr_t, ptr)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int32_t, int32_t, 32)
@@ -220,14 +203,8 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 #define OPAL_THREAD_SUB_SIZE_T opal_thread_sub_size_t
 #define OPAL_ATOMIC_SUB_SIZE_T opal_thread_sub_size_t
 
-#define OPAL_THREAD_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
-#define OPAL_ATOMIC_BOOL_CMPSET_32 opal_thread_cmpset_bool_32
-
 #define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
 #define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
-
-#define OPAL_THREAD_BOOL_CMPSET_PTR(x, y, z) opal_thread_cmpset_bool_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
-#define OPAL_ATOMIC_BOOL_CMPSET_PTR OPAL_THREAD_BOOL_CMPSET_PTR
 
 #define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_PTR(x, y, z) opal_thread_compare_exchange_strong_ptr ((volatile intptr_t *) x, (void *) y, (void *) z)
 #define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR OPAL_THREAD_COMPARE_EXCHANGE_STRONG_PTR
@@ -245,7 +222,6 @@ OPAL_THREAD_DEFINE_ATOMIC_ADD(int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_AND(int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_OR(int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_XOR(int64_t, 64)
-OPAL_THREAD_DEFINE_ATOMIC_CMPSET(int64_t, int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(int64_t, int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
@@ -260,9 +236,6 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
 #define OPAL_THREAD_XOR64 opal_thread_xor_64
 #define OPAL_ATOMIC_XOR64 opal_thread_xor_64
-
-#define OPAL_THREAD_BOOL_CMPSET_64 opal_thread_cmpset_bool_64
-#define OPAL_ATOMIC_BOOL_CMPSET_64 opal_thread_cmpset_bool_64
 
 #define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
 #define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -54,12 +54,12 @@ static inline int64_t ompi_osc_rdma_lock_add (volatile int64_t *p, int64_t value
     return new;
 }
 
-static inline int ompi_osc_rdma_lock_cmpset (volatile int64_t *p, int64_t comp, int64_t value)
+static inline int ompi_osc_rdma_lock_compare_exchange (volatile int64_t *p, int64_t *comp, int64_t value)
 {
     int ret;
 
     opal_atomic_mb ();
-    ret = opal_atomic_bool_cmpset_64 (p, comp, value);
+    ret = opal_atomic_compare_exchange_strong_64 (p, comp, value);
     opal_atomic_mb ();
 
     return ret;
@@ -83,12 +83,12 @@ static inline int32_t ompi_osc_rdma_lock_add (volatile int32_t *p, int32_t value
     return new;
 }
 
-static inline int ompi_osc_rdma_lock_cmpset (volatile int32_t *p, int32_t comp, int32_t value)
+static inline int ompi_osc_rdma_lock_compare_exchange (volatile int32_t *p, int32_t *comp, int32_t value)
 {
     int ret;
 
     opal_atomic_mb ();
-    ret = opal_atomic_bool_cmpset_32 (p, comp, value);
+    ret = opal_atomic_compare_exchange_strong_32 (p, comp, value);
     opal_atomic_mb ();
 
     return ret;

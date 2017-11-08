@@ -744,14 +744,13 @@ static bool ompi_osc_pt2pt_lock_try_acquire (ompi_osc_pt2pt_module_t* module, in
                 break;
             }
 
-            if (opal_atomic_bool_cmpset_32 (&module->lock_status, lock_status, lock_status + 1)) {
+            if (opal_atomic_compare_exchange_strong_32 (&module->lock_status, &lock_status, lock_status + 1)) {
                 break;
             }
-
-            lock_status = module->lock_status;
         } while (1);
     } else {
-        queue = !opal_atomic_bool_cmpset_32 (&module->lock_status, 0, -1);
+        int32_t _tmp_value = 0;
+        queue = !opal_atomic_compare_exchange_strong_32 (&module->lock_status, &_tmp_value, -1);
     }
 
     if (queue) {

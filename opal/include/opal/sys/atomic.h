@@ -347,19 +347,23 @@ void opal_atomic_unlock(opal_atomic_lock_t *lock);
 #endif
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_32
 
-#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
 static inline
 #endif
-bool opal_atomic_bool_cmpset_32(volatile int32_t *addr, int32_t oldval,
-                                int32_t newval);
+bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval,
+                                             int32_t newval);
 
+#if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
 static inline
-bool opal_atomic_bool_cmpset_acq_32(volatile int32_t *addr, int32_t oldval,
-                                    int32_t newval);
+#endif
+bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval,
+                                                 int32_t newval);
 
+#if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
 static inline
-bool opal_atomic_bool_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
-                                    int32_t newval);
+#endif
+bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval,
+                                                 int32_t newval);
 #endif
 
 
@@ -368,42 +372,23 @@ bool opal_atomic_bool_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
 #endif
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
 
-#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
 static inline
 #endif
 bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval,
                                              int64_t newval);
 
-#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
 static inline
 #endif
 bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval,
                                                  int64_t newval);
 
-#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
 static inline
 #endif
 bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval,
                                                  int64_t newval);
-
-/* XXX -- DEPRECATED -- XXX -- Legacy cmpset functions */
-#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
-static inline
-#endif
-bool opal_atomic_bool_cmpset_64(volatile int64_t *addr, int64_t oldval,
-                                int64_t newval);
-
-#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
-static inline
-#endif
-bool opal_atomic_bool_cmpset_acq_64(volatile int64_t *addr, int64_t oldval,
-                                    int64_t newval);
-
-#if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
-static inline
-#endif
-bool opal_atomic_bool_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
-                                    int64_t newval);
 
 #endif
 
@@ -558,26 +543,6 @@ static inline bool opal_atomic_compare_exchange_strong_acq_ptr (volatile void* a
 static inline bool opal_atomic_compare_exchange_strong_rel_ptr (volatile void* addr, void *oldval,
                                                                 void *newval);
 
-/* XXX -- DEPRECATED -- XXX -- Define legacy cmpset functions */
-static inline bool opal_atomic_bool_cmpset_xx(volatile void* addr, int64_t oldval,
-                                              int64_t newval, size_t length);
-static inline bool opal_atomic_bool_cmpset_acq_xx(volatile void* addr,
-                                                  int64_t oldval,  int64_t newval,
-                                                  size_t length);
-static inline bool opal_atomic_bool_cmpset_rel_xx(volatile void* addr,
-                                                  int64_t oldval, int64_t newval,
-                                                  size_t length);
-
-static inline bool opal_atomic_bool_cmpset_ptr(volatile void* addr,
-                                               void* oldval,
-                                               void* newval);
-static inline bool opal_atomic_bool_cmpset_acq_ptr(volatile void* addr,
-                                                   void* oldval,
-                                                   void* newval);
-static inline bool opal_atomic_bool_cmpset_rel_ptr(volatile void* addr,
-                                                   void* oldval,
-                                                   void* newval);
-
 /**
  * Atomic compare and set of generic type with relaxed semantics. This
  * macro detect at compile time the type of the first argument and
@@ -629,61 +594,6 @@ static inline bool opal_atomic_bool_cmpset_rel_ptr(volatile void* addr,
     opal_atomic_compare_exchange_strong_rel_xx( (volatile void*)(ADDR), (void *)(OLDVAL), \
                                                 (intptr_t)(NEWVAL), sizeof(*(ADDR)) )
 
-
-
-/* XXX -- DEPRECATED -- XXX -- Define legacy cmpset functions */
-
-/**
- * Atomic compare and set of pointer with relaxed semantics. This
- * macro detect at compile time the type of the first argument and
- * choose the correct function to be called.
- *
- * \note This macro should only be used for integer types.
- *
- * @param addr          Address of <TYPE>.
- * @param oldval        Comparison value <TYPE>.
- * @param newval        New value to set if comparision is true <TYPE>.
- *
- * See opal_atomic_bool_cmpset_* for pseudo-code.
- */
-#define opal_atomic_bool_cmpset( ADDR, OLDVAL, NEWVAL )                  \
-   opal_atomic_bool_cmpset_xx( (volatile void*)(ADDR), (intptr_t)(OLDVAL), \
-                          (intptr_t)(NEWVAL), sizeof(*(ADDR)) )
-
-/**
- * Atomic compare and set of pointer with acquire semantics. This
- * macro detect at compile time the type of the first argument
- * and choose the correct function to be called.
- *
- * \note This macro should only be used for integer types.
- *
- * @param addr          Address of <TYPE>.
- * @param oldval        Comparison value <TYPE>.
- * @param newval        New value to set if comparision is true <TYPE>.
- *
- * See opal_atomic_bool_cmpset_acq_* for pseudo-code.
- */
-#define opal_atomic_bool_cmpset_acq( ADDR, OLDVAL, NEWVAL )           \
-   opal_atomic_bool_cmpset_acq_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
-                              (int64_t)(NEWVAL), sizeof(*(ADDR)) )
-
-
-/**
- * Atomic compare and set of pointer with release semantics. This
- * macro detect at compile time the type of the first argument
- * and choose the correct function to b
- *
- * \note This macro should only be used for integer types.
- *
- * @param addr          Address of <TYPE>.
- * @param oldval        Comparison value <TYPE>.
- * @param newval        New value to set if comparision is true <TYPE>.
- *
- * See opal_atomic_bool_cmpsetrel_* for pseudo-code.
- */
-#define opal_atomic_bool_cmpset_rel( ADDR, OLDVAL, NEWVAL )           \
-   opal_atomic_bool_cmpset_rel_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
-                              (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
 #endif /* (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64) */
 
