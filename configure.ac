@@ -439,6 +439,11 @@ AC_CHECK_SIZEOF(wchar_t)
 
 AC_CHECK_SIZEOF(pid_t)
 
+# Check sizes of atomic types so we can define fixed-width types in OPAL
+AC_CHECK_SIZEOF(atomic_short, [],[[#include <stdatomic.h>]])
+AC_CHECK_SIZEOF(atomic_int,[],[[#include <stdatomic.h>]])
+AC_CHECK_SIZEOF(atomic_long,[],[[#include <stdatomic.h>]])
+AC_CHECK_SIZEOF(atomic_llong,[],[[#include <stdatomic.h>]])
 
 #
 # Check for type alignments
@@ -845,7 +850,7 @@ OPAL_SEARCH_LIBS_CORE([ceil], [m])
 # -lrt might be needed for clock_gettime
 OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv __malloc_initialize_hook])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign aligned_alloc strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv __malloc_initialize_hook])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
 if test $ac_cv_func_statfs = no && test $ac_cv_func_statvfs = no; then
