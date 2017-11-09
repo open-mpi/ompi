@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -49,7 +49,7 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
 {
     int amode;
     int old_mask, perm;
-    int rank, ret;
+    int rank, ret=OMPI_SUCCESS;
 
     rank = ompi_comm_rank ( comm );
 
@@ -71,6 +71,8 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
     if (access_mode & MPI_MODE_RDWR)
         amode = amode | O_RDWR;
 
+    /* Reset errno */
+    errno = 0;
     if ( 0 == rank ) {
 	/* MODE_CREATE and MODE_EXCL can only be set by one process */
         if ( !(fh->f_flags & OMPIO_SHAREDFP_IS_SET)) {
@@ -80,19 +82,81 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
                 amode = amode | O_EXCL;
         }
 	fh->fd = open (filename, amode, perm);
-	ret = fh->fd;
+	if ( 0 > fh->fd ) {
+            if ( EACCES == errno ) {
+                ret = MPI_ERR_ACCESS;
+            }
+            else if ( ENAMETOOLONG == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( ENOENT == errno ) {
+                ret = MPI_ERR_NO_SUCH_FILE;
+            }
+            else if ( EISDIR == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( EROFS == errno ) {
+                ret = MPI_ERR_READ_ONLY;
+            }
+            else if ( EEXIST == errno ) {
+                ret = MPI_ERR_FILE_EXISTS;
+            }
+            else if ( ENOSPC == errno ) {
+                ret = MPI_ERR_NO_SPACE;
+            }
+            else if ( EDQUOT == errno ) {
+                ret = MPI_ERR_QUOTA;
+            }
+            else if ( ETXTBSY == errno ) {
+                ret = MPI_ERR_FILE_IN_USE;
+            }
+            else {
+                ret = MPI_ERR_OTHER;
+            }
+        }
     }
 
     comm->c_coll->coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module);
-    if ( -1 == ret ) {
-	fh->fd = ret;
-	return OMPI_ERROR;
+    if ( OMPI_SUCCESS != ret ) {
+	fh->fd = -1;
+	return ret;
     }
+
     if ( 0 != rank ) {
 	fh->fd = open (filename, amode, perm);
-	if (-1 == fh->fd) {
-	    return OMPI_ERROR;
+	if ( 0 > fh->fd) {
+            if ( EACCES == errno ) {
+                ret = MPI_ERR_ACCESS;
+            }
+            else if ( ENAMETOOLONG == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( ENOENT == errno ) {
+                ret = MPI_ERR_NO_SUCH_FILE;
+            }
+            else if ( EISDIR == errno ) {
+                ret = MPI_ERR_BAD_FILE;
+            }
+            else if ( EROFS == errno ) {
+                ret = MPI_ERR_READ_ONLY;
+            }
+            else if ( EEXIST == errno ) {
+                ret = MPI_ERR_FILE_EXISTS;
+            }
+            else if ( ENOSPC == errno ) {
+                ret = MPI_ERR_NO_SPACE;
+            }
+            else if ( EDQUOT == errno ) {
+                ret = MPI_ERR_QUOTA;
+            }
+            else if ( ETXTBSY == errno ) {
+                ret = MPI_ERR_FILE_IN_USE;
+            }
+            else {
+                ret = MPI_ERR_OTHER;
+            }
 	}
+        return ret;
     }
 
     fh->f_stripe_size=0;
