@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,7 +75,8 @@ void opal_btl_usnic_util_abort(const char *msg, const char *file, int line)
 
 
 void
-opal_btl_usnic_dump_hex(void *vaddr, int len)
+opal_btl_usnic_dump_hex(int verbose_level, int output_id,
+                        void *vaddr, int len)
 {
     char buf[128];
     size_t bufspace;
@@ -96,7 +97,8 @@ opal_btl_usnic_dump_hex(void *vaddr, int len)
 
         sum += addr[i];
         if ((i&15) == 15) {
-            opal_output(0, "%4x: %s\n", i&~15, buf);
+            opal_output_verbose(verbose_level, output_id,
+                                "%4x: %s\n", i&~15, buf);
 
             p = buf;
             memset(buf, 0, sizeof(buf));
@@ -104,9 +106,10 @@ opal_btl_usnic_dump_hex(void *vaddr, int len)
         }
     }
     if ((i&15) != 0) {
-        opal_output(0, "%4x: %s\n", i&~15, buf);
+        opal_output_verbose(verbose_level, output_id,
+                            "%4x: %s\n", i&~15, buf);
     }
-    /*opal_output(0, "buffer sum = %x\n", sum); */
+    /*opal_output_verbose(verbose_level, output_id, "buffer sum = %x\n", sum); */
 }
 
 
