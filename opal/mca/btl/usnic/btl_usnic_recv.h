@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -295,7 +295,7 @@ opal_btl_usnic_recv_fast(opal_btl_usnic_module_t *module,
 
 #if 0
 opal_output(0, "fast recv %d bytes:\n", bseg->us_btl_header->payload_len + sizeof(opal_btl_usnic_btl_header_t));
-opal_btl_usnic_dump_hex(bseg->us_btl_header, bseg->us_btl_header->payload_len + sizeof(opal_btl_usnic_btl_header_t));
+opal_btl_usnic_dump_hex(15, USNIC_OUT, bseg->us_btl_header, bseg->us_btl_header->payload_len + sizeof(opal_btl_usnic_btl_header_t));
 #endif
     /* If this is a short incoming message (i.e., the message is
        wholly contained in this one message -- it is not chunked
