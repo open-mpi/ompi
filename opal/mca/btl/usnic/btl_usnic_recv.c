@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -351,9 +351,9 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
     else {
         ++module->stats.num_unk_recvs;
         if (module->stats.num_unk_recvs < 10) {
-            opal_output(0, "unrecognized payload type %d", bseg->us_btl_header->payload_type);
-            opal_output(0, "base = %p, proto = %p, hdr = %p", bseg->us_list.ptr, seg->rs_protocol_header, (void*) bseg->us_btl_header);
-            opal_btl_usnic_dump_hex(bseg->us_list.ptr, 96+sizeof(*bseg->us_btl_header));
+            opal_output_verbose(15, USNIC_OUT, "unrecognized payload type %d", bseg->us_btl_header->payload_type);
+            opal_output_verbose(15, USNIC_OUT, "base = %p, proto = %p, hdr = %p", bseg->us_list.ptr, seg->rs_protocol_header, (void*) bseg->us_btl_header);
+            opal_btl_usnic_dump_hex(15, USNIC_OUT, bseg->us_list.ptr, 96+sizeof(*bseg->us_btl_header));
         }
         goto repost;
     }
