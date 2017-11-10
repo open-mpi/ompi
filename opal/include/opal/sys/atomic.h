@@ -53,6 +53,8 @@
 
 #include "opal_config.h"
 
+#include <stdbool.h>
+
 #include "opal/sys/architecture.h"
 #include "opal_stdint.h"
 
