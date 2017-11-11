@@ -594,23 +594,23 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
     opal_progress_unregister(ompi_mtl_ofi_progress_no_inline);
 
     /* Close all the OFI objects */
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.ep)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.ep))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.cq)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.cq))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.av)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.av))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.domain)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.domain))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.fabric)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.fabric))) {
         goto finalize_err;
     }
 
