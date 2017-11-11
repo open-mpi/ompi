@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
  *
- * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -362,7 +362,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                      NULL,          /* Optional name or fabric to resolve       */
                      NULL,          /* Optional service name or port to request */
                      0ULL,          /* Optional flag                            */
-                     hints,        /* In: Hints to filter providers            */
+                     hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
     if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
