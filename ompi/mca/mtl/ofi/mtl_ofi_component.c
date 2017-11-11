@@ -364,7 +364,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                      0ULL,          /* Optional flag                            */
                      hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
-    if (0 != ret) {
+    if (FI_ENODATA == -ret) {
+        // It is not an error if no information is returned.
+        goto error;
+    } else if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_getinfo",
                        ompi_process_info.nodename, __FILE__, __LINE__,
