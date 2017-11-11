@@ -335,7 +335,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_getinfo",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -364,7 +364,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_fabric",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -381,7 +381,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_domain",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -400,7 +400,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_endpoint",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -584,7 +584,7 @@ finalize_err:
     opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                    "fi_close",
                    ompi_process_info.nodename, __FILE__, __LINE__,
-                   fi_strerror(-ret), ret);
+                   fi_strerror(-ret), -ret);
 
     return OMPI_ERROR;
 }
