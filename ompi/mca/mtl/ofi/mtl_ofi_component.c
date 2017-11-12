@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
  *
- * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -362,13 +362,16 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                      NULL,          /* Optional name or fabric to resolve       */
                      NULL,          /* Optional service name or port to request */
                      0ULL,          /* Optional flag                            */
-                     hints,        /* In: Hints to filter providers            */
+                     hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
-    if (0 != ret) {
+    if (FI_ENODATA == -ret) {
+        // It is not an error if no information is returned.
+        goto error;
+    } else if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_getinfo",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -397,7 +400,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_fabric",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -414,7 +417,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_domain",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -433,7 +436,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_endpoint",
                        ompi_process_info.nodename, __FILE__, __LINE__,
-                       fi_strerror(-ret), ret);
+                       fi_strerror(-ret), -ret);
         goto error;
     }
 
@@ -591,23 +594,23 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
     opal_progress_unregister(ompi_mtl_ofi_progress_no_inline);
 
     /* Close all the OFI objects */
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.ep)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.ep))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.cq)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.cq))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.av)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.av))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.domain)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.domain))) {
         goto finalize_err;
     }
 
-    if (ret = fi_close((fid_t)ompi_mtl_ofi.fabric)) {
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.fabric))) {
         goto finalize_err;
     }
 
@@ -617,7 +620,7 @@ finalize_err:
     opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                    "fi_close",
                    ompi_process_info.nodename, __FILE__, __LINE__,
-                   fi_strerror(-ret), ret);
+                   fi_strerror(-ret), -ret);
 
     return OMPI_ERROR;
 }
