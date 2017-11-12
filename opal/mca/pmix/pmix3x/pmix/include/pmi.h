@@ -48,11 +48,8 @@
 #ifndef PMI_H
 #define PMI_H
 
-#ifdef PMIX_HAVE_VISIBILITY
-#define PMIX_EXPORT __attribute__((__visibility__("default")))
-#else
-#define PMIX_EXPORT
-#endif
+/* Structure and constant definitions */
+#include <pmix_common.h>
 
 /* prototypes for the PMI interface in MPICH2 */
 
