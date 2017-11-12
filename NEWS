@@ -48,6 +48,12 @@ it is possible for items to appear more than once in the list.
   file systems, locks the entire file per operation on NFS file systems, and selective byte-range
   locking on other distributed file systems.
 
+- Add an mca parameter pmix_server_usock_connections to allow mpirun to
+  support applications statically built against the Open MPI v2.x release,
+  or installed in a container along with the Open MPI v2.x libraries. It is
+  set to false by default.
+
+
 3.0.0 -- July, 2017
 -------------------
 
