@@ -114,27 +114,31 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
     /* if we don't have a path to the daemon rendezvous point,
      * then we need to return an error */
-    if (NULL == (evar = getenv("PMIX_SERVER_URI"))) {
+    if (NULL != (evar = getenv("PMIX_SERVER_URI2USOCK"))) {
+        /* this is a v2.1+ server */
+        pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module("v21");
+        if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
+            return PMIX_ERR_INIT;
+        }
+    } else if (NULL != (evar = getenv("PMIX_SERVER_URI"))) {
+        /* this is a pre-v2.1 server - must use the v12 bfrops module */
+        pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module("v12");
+        if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
+            return PMIX_ERR_INIT;
+        }
+    } else {
         /* let the caller know that the server isn't available */
         return PMIX_ERR_SERVER_NOT_AVAIL;
     }
+    /* the server will be using the same bfrops as us */
+    pmix_client_globals.myserver->nptr->compat.bfrops = pmix_globals.mypeer->nptr->compat.bfrops;
+
     uri = pmix_argv_split(evar, ':');
     if (3 != pmix_argv_count(uri)) {
         pmix_argv_free(uri);
         PMIX_ERROR_LOG(PMIX_ERROR);
         return PMIX_ERROR;
     }
-    /* definitely a v1 server */
-    pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V1;
-    /* must use the v12 bfrops module */
-    pmix_globals.mypeer->nptr->compat.bfrops = pmix_bfrops_base_assign_module("v12");
-    if (NULL == pmix_globals.mypeer->nptr->compat.bfrops) {
-        pmix_argv_free(uri);
-        return PMIX_ERR_INIT;
-    }
-    /* the server will be using the same */
-    pmix_client_globals.myserver->nptr->compat.bfrops = pmix_globals.mypeer->nptr->compat.bfrops;
-
     /* set the server nspace */
     if (NULL == pmix_client_globals.myserver->info) {
         pmix_client_globals.myserver->info = PMIX_NEW(pmix_rank_info_t);
@@ -272,6 +276,8 @@ static pmix_status_t send_connect_ack(int sd)
     size_t sdsize=0, csize=0, len;
     char *cred = NULL;
     pmix_status_t rc;
+    char *sec, *bfrops, *gds;
+    pmix_bfrop_buffer_type_t bftype;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix: SEND CONNECT ACK");
@@ -292,8 +298,24 @@ static pmix_status_t send_connect_ack(int sd)
         return rc;
     }
 
+    /* add the name of our active sec module - we selected it
+     * in pmix_client.c prior to entering here */
+    sec = pmix_globals.mypeer->nptr->compat.psec->name;
+
+    /* add our active bfrops module name */
+    bfrops = pmix_globals.mypeer->nptr->compat.bfrops->version;
+    /* and the type of buffer we are using */
+    bftype = pmix_globals.mypeer->nptr->compat.type;
+
+    /* add our active gds module for working with the server */
+    gds = (char*)pmix_client_globals.myserver->nptr->compat.gds->name;
+
     /* set the number of bytes to be read beyond the header */
-    hdr.nbytes = sdsize + strlen(PMIX_VERSION) + 1 + len;  // must NULL terminate the VERSION string!
+    hdr.nbytes = sdsize + (strlen(PMIX_VERSION) + 1) + \
+                (sizeof(size_t) + len) + \
+                (strlen(sec) + 1) + \
+                (strlen(bfrops) + 1) + sizeof(bftype) + \
+                (strlen(gds) + 1);  // must NULL terminate the strings!
 
     /* create a space for our message */
     sdsize = (sizeof(hdr) + hdr.nbytes);
@@ -309,16 +331,41 @@ static pmix_status_t send_connect_ack(int sd)
     csize=0;
     memcpy(msg, &hdr, sizeof(pmix_usock_hdr_t));
     csize += sizeof(pmix_usock_hdr_t);
+    /* pass our nspace */
     memcpy(msg+csize, pmix_globals.myid.nspace, strlen(pmix_globals.myid.nspace));
     csize += strlen(pmix_globals.myid.nspace)+1;
+    /* pass our rank */
     memcpy(msg+csize, &pmix_globals.myid.rank, sizeof(int));
     csize += sizeof(int);
+
+    /* pass our version string */
     memcpy(msg+csize, PMIX_VERSION, strlen(PMIX_VERSION));
     csize += strlen(PMIX_VERSION)+1;
-    if (NULL != cred) {
-        memcpy(msg+csize, cred, strlen(cred));  // leaves last position in msg set to NULL
+
+    /* pass the size of the credential */
+    memcpy(msg+csize, &len, sizeof(size_t));
+    csize += sizeof(size_t);
+    if (0 < len) {
+        memcpy(msg+csize, cred, len);
+        csize += len;
     }
 
+    /* pass our active sec module */
+    memcpy(msg+csize, sec, strlen(sec));
+    csize += strlen(sec)+1;
+
+    /* provide our active bfrops module */
+    memcpy(msg+csize, bfrops, strlen(bfrops));
+    csize += strlen(bfrops)+1;
+
+    /* provide the bfrops type */
+    memcpy(msg+csize, &bftype, sizeof(bftype));
+    csize += sizeof(bftype);
+
+    /* provide the gds module */
+    memcpy(msg+csize, gds, strlen(gds));
+
+    /* send the entire msg across */
     if (PMIX_SUCCESS != pmix_ptl_base_send_blocking(sd, msg, sdsize)) {
         free(msg);
         if (NULL != cred) {

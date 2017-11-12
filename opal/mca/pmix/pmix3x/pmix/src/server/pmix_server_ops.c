@@ -264,7 +264,13 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
         }
     }
     /* see if anyone local is waiting on this data- could be more than one */
-    return pmix_pending_resolve(nptr, info->pname.rank, PMIX_SUCCESS, NULL);
+    pmix_output(0, "CHECKING PENDING");
+    rc = pmix_pending_resolve(nptr, info->pname.rank, PMIX_SUCCESS, NULL);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+    }
+    pmix_output(0, "RETURNING %d", rc);
+    return rc;
 }
 
 /* get an existing object for tracking LOCAL participation in a collective

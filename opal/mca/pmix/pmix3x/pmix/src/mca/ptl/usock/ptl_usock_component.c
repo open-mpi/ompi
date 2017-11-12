@@ -104,7 +104,6 @@ PMIX_EXPORT pmix_ptl_usock_component_t mca_ptl_usock_component = {
 
 static void connection_handler(int sd, short args, void *cbdata);
 static void listener_cb(int incoming_sd, void *cbdata);
-static char *sec_mode = NULL;
 
 pmix_status_t component_open(void)
 {
@@ -133,9 +132,6 @@ pmix_status_t component_open(void)
 
 pmix_status_t component_close(void)
 {
-    if (NULL != sec_mode) {
-        free(sec_mode);
-    }
     if (NULL != mca_ptl_usock_component.tmpdir) {
         free(mca_ptl_usock_component.tmpdir);
     }
@@ -176,7 +172,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     socklen_t addrlen;
     struct sockaddr_un *address;
     bool disabled = false;
-    char *secmods, **options, *pmix_pid;
+    char *pmix_pid;
     pid_t mypid;
 
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
@@ -211,17 +207,6 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     address = (struct sockaddr_un*)&mca_ptl_usock_component.connection;
     address->sun_family = AF_UNIX;
 
-    /* any client we hear from will be using v1.x protocols. This
-     * means that they cannot tell us what security module they
-     * are using as this wasn't included in their handshake. So
-     * the best we can assume is that they are using the highest
-     * priority default we have */
-    secmods = pmix_psec_base_get_available_modules();
-    options = pmix_argv_split(secmods, ',');
-    sec_mode = strdup(options[0]);
-    pmix_argv_free(options);
-    free(secmods);
-
     /* define the listener */
     lt = PMIX_NEW(pmix_listener_t);
 
@@ -242,7 +227,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     snprintf(address->sun_path, sizeof(address->sun_path)-1, "%s", pmix_pid);
     free(pmix_pid);
     /* set the URI */
-    lt->varname = strdup("PMIX_SERVER_URI");
+    lt->varname = strdup("PMIX_SERVER_URI:PMIX_SERVER_URI2USOCK");
     if (0 > asprintf(&lt->uri, "%s:%lu:%s", pmix_globals.myid.nspace,
                     (unsigned long)pmix_globals.myid.rank, address->sun_path)) {
         PMIX_RELEASE(lt);
@@ -349,57 +334,10 @@ static void listener_cb(int incoming_sd, void *cbdata)
     pmix_event_active(&pending_connection->ev, EV_WRITE, 1);
 }
 
-/* Parse init-ack message:
- *    NSPACE<0><rank>VERSION<0>[CRED<0>]
- */
-static pmix_status_t parse_connect_ack (char *msg, unsigned int len,
-                                        char **nspace, unsigned int *rank,
-                                        char **version, char **cred)
-{
-    unsigned int msglen;
-
-    PMIX_STRNLEN(msglen, msg, len);
-    if (msglen < len) {
-        *nspace = msg;
-        msg += strlen(*nspace) + 1;
-        len -= strlen(*nspace) + 1;
-    } else {
-        return PMIX_ERR_BAD_PARAM;
-    }
-
-    PMIX_STRNLEN(msglen, msg, len);
-    if (msglen <= len) {
-        memcpy(rank, msg, sizeof(int));
-        msg += sizeof(int);
-        len -= sizeof(int);
-    } else {
-        return PMIX_ERR_BAD_PARAM;
-    }
-
-    PMIX_STRNLEN(msglen, msg, len);
-    if (msglen < len) {
-        *version = msg;
-        msg += strlen(*version) + 1;
-        len -= strlen(*version) + 1;
-    } else {
-        return PMIX_ERR_BAD_PARAM;
-    }
-
-    PMIX_STRNLEN(msglen, msg, len);
-    if (msglen < len)
-        *cred = msg;
-    else {
-        *cred = NULL;
-    }
-
-    return PMIX_SUCCESS;
-}
-
-
 static void connection_handler(int sd, short args, void *cbdata)
 {
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cbdata;
-    char *msg, *nspace, *version, *cred;
+    char *msg, *ptr, *nspace, *version, *cred, *sec, *bfrops, *gds;
     pmix_status_t rc;
     unsigned int rank;
     pmix_usock_hdr_t hdr;
@@ -409,6 +347,12 @@ static void connection_handler(int sd, short args, void *cbdata)
     bool found;
     pmix_proc_t proc;
     size_t len;
+    pmix_bfrop_buffer_type_t bftype;
+    char **vers;
+    int major, minor, rel;
+    unsigned int msglen;
+    pmix_info_t ginfo;
+    size_t credlen;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(pnd);
@@ -448,11 +392,140 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
+    len = hdr.nbytes;
+    ptr = msg;
 
-    if (PMIX_SUCCESS != (rc = parse_connect_ack(msg, hdr.nbytes, &nspace,
-                                                &rank, &version, &cred))) {
+    /* extract the nspace of the requestor */
+    PMIX_STRNLEN(msglen, ptr, len);
+    if (msglen < len) {
+        nspace = ptr;
+        ptr += strlen(nspace) + 1;
+        len -= strlen(nspace) + 1;
+    } else {
+        free(msg);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* extract the rank */
+    PMIX_STRNLEN(msglen, ptr, len);
+    if (msglen <= len) {
+        memcpy(&rank, ptr, sizeof(int));
+        ptr += sizeof(int);
+        len -= sizeof(int);
+    } else {
+        free(msg);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* get their version string */
+    PMIX_STRNLEN(msglen, ptr, len);
+    if (msglen < len) {
+        version = ptr;
+        ptr += strlen(version) + 1;
+        len -= strlen(version) + 1;
+    } else {
+        free(msg);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* check the version - we do NOT support anything less than
+     * v1.2.5 */
+    vers = pmix_argv_split(version, '.');
+    major = strtol(vers[0], NULL, 10);
+    minor = strtol(vers[1], NULL, 10);
+    rel = strtol(vers[2], NULL, 10);
+    pmix_argv_free(vers);
+    if (1 == major && (2 != minor || 5 > rel)) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "error parsing connect-ack from client ON SOCKET %d", pnd->sd);
+                            "connection request from client of unsupported version %s", version);
+        free(msg);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* get any provided credential */
+    if (1 == major) {
+        PMIX_STRNLEN(msglen, ptr, len);
+        if (msglen < len) {
+            cred = ptr;
+            ptr += strlen(cred) + 1;
+            len -= strlen(cred) + 1;
+        } else {
+            free(msg);
+            CLOSE_THE_SOCKET(pnd->sd);
+            PMIX_RELEASE(pnd);
+            return;
+        }
+    } else {
+        if (sizeof(size_t) < len) {
+            memcpy(&credlen, ptr, sizeof(size_t));
+            ptr += sizeof(size_t);
+            len -= sizeof(size_t);
+        } else {
+            free(msg);
+            CLOSE_THE_SOCKET(pnd->sd);
+            PMIX_RELEASE(pnd);
+            return;
+        }
+        if (0 < credlen) {
+            cred = ptr;
+            ptr += credlen;
+            len -= credlen;
+        }
+    }
+
+    /* get their sec module */
+    PMIX_STRNLEN(msglen, ptr, len);
+    if (msglen < len) {
+        sec = ptr;
+        ptr += strlen(sec) + 1;
+        len -= strlen(sec) + 1;
+    } else {
+        free(msg);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* get their bfrops module */
+    PMIX_STRNLEN(msglen, ptr, len);
+    if (msglen < len) {
+        bfrops = ptr;
+        ptr += strlen(bfrops) + 1;
+        len -= strlen(bfrops) + 1;
+    } else {
+        free(msg);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* get their buffer type */
+    if (0 < len) {
+        bftype = ptr[0];
+        ptr += 1;
+        len -= 1;
+    } else {
+        free(msg);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
+
+    /* get their gds module */
+    PMIX_STRNLEN(msglen, ptr, len);
+    if (msglen < len) {
+        gds = ptr;
+        ptr += strlen(gds) + 1;
+        len -= strlen(gds) + 1;
+    } else {
         free(msg);
         CLOSE_THE_SOCKET(pnd->sd);
         PMIX_RELEASE(pnd);
@@ -462,11 +535,6 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "connect-ack recvd from peer %s:%d:%s on socket %d",
                         nspace, rank, version, pnd->sd);
-
-    /* do not check the version - we only retain it at this
-     * time in case we need to check it at some future date.
-     * For now, our intent is to retain backward compatibility
-     * and so we will assume that all versions are compatible. */
 
     /* see if we know this nspace */
     nptr = NULL;
@@ -509,8 +577,25 @@ static void connection_handler(int sd, short args, void *cbdata)
         rc = PMIX_ERR_NOMEM;
         goto error;
     }
-    /* mark it as being a v1 type */
-    psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V1;
+    /* mark it as being a client of the correct type */
+    if (1 == major) {
+        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V1;
+    } else if (2 == major && 0 == minor) {
+        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V20;
+    } else if (2 == major && 1 == minor) {
+        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V21;
+    } else if (3 == major) {
+        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V3;
+    } else {
+        /* we don't recognize this version */
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "connection request from client of unrecognized version %s", version);
+        free(msg);
+        PMIX_RELEASE(psave);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        return;
+    }
     /* add the nspace tracker */
     PMIX_RETAIN(nptr);
     psave->nptr = nptr;
@@ -531,7 +616,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     info->peerid = psave->index;
 
     /* get the appropriate compatibility modules */
-    nptr->compat.psec = pmix_psec_base_assign_module(sec_mode);
+    nptr->compat.psec = pmix_psec_base_assign_module(sec);
     if (NULL == nptr->compat.psec) {
         free(msg);
         info->proc_cnt--;
@@ -541,8 +626,9 @@ static void connection_handler(int sd, short args, void *cbdata)
         /* send an error reply to the client */
         goto error;
     }
-    /* we need the v1.2 bfrops module */
-    nptr->compat.bfrops = pmix_bfrops_base_assign_module("v12");
+
+    /* set the bfrops module to match this peer */
+    nptr->compat.bfrops = pmix_bfrops_base_assign_module(bfrops);
     if (NULL == nptr->compat.bfrops) {
         free(msg);
         info->proc_cnt--;
@@ -552,16 +638,20 @@ static void connection_handler(int sd, short args, void *cbdata)
        /* send an error reply to the client */
         goto error;
     }
-    /* we have no way of knowing their buffer type, so take our default */
-    nptr->compat.type = pmix_bfrops_globals.default_type;
+    /* set the buffer type */
+    nptr->compat.type = bftype;
 
-    /* take the highest priority gds module - in the absence of any info,
-     * we assume they can handle both dstore and hash */
-    nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
+    /* set the gds module to match this peer */
+    if (NULL != gds) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, gds, PMIX_STRING);
+        nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+    } else {
+        nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
+    }
     if (NULL == nptr->compat.gds) {
         free(msg);
         info->proc_cnt--;
-        PMIX_RELEASE(info);
         pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
         PMIX_RELEASE(psave);
         /* send an error reply to the client */
@@ -581,11 +671,13 @@ static void connection_handler(int sd, short args, void *cbdata)
     }
     PMIX_PSEC_VALIDATE_CONNECTION(rc, psave,
                                   PMIX_PROTOCOL_V1, cred, len);
+    /* now done with the msg */
+    free(msg);
+
     if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client credentials failed: %s",
                             PMIx_Error_string(rc));
-        free(msg);
         info->proc_cnt--;
         PMIX_RELEASE(info);
         pmix_pointer_array_set_item(&pmix_server_globals.clients, psave->index, NULL);
@@ -595,7 +687,6 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
-    free(msg);
 
     /* send the client's array index */
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&psave->index, sizeof(int)))) {
@@ -642,6 +733,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     return;
 
   error:
+    if (NULL != cred) {
+        free(cred);
+    }
     /* send an error reply to the client */
     if (PMIX_SUCCESS != pmix_ptl_base_send_blocking(pnd->sd, (char*)&rc, sizeof(int))) {
         PMIX_ERROR_LOG(rc);
