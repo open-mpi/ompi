@@ -248,7 +248,7 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
                 PMIX_LIST_FOREACH(kp, &cb.kvs, pmix_kval_t) {
                     /* we pack this in our native BFROPS form as it
                      * will be sent to another daemon */
-                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &pbkt, &kp, 1, PMIX_KVAL);
+                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &pbkt, kp, 1, PMIX_KVAL);
                 }
                 PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
             }
