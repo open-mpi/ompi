@@ -742,9 +742,18 @@ static void _toolconn(int sd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
    /* if we are the HNP, we can directly assign the jobid */
-    if (ORTE_PROC_IS_HNP) {
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_MASTER) {
         jdata = OBJ_NEW(orte_job_t);
         rc = orte_plm_base_create_jobid(jdata);
+        if (ORTE_SUCCESS != rc) {
+            tool.jobid = ORTE_JOBID_INVALID;
+            tool.vpid = 0;
+            if (NULL != cd->toolcbfunc) {
+                cd->toolcbfunc(rc, tool, cd->cbdata);
+            }
+            OBJ_RELEASE(cd);
+            return;
+        }
         opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
         /* setup some required job-level fields in case this
          * tool calls spawn, or uses some other functions that
