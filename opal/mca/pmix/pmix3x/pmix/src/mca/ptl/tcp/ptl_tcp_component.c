@@ -625,6 +625,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
         }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "WRITING SYSTEM FILE %s",
+                            mca_ptl_tcp_component.system_filename);
         fp = fopen(mca_ptl_tcp_component.system_filename, "w");
         if (NULL == fp) {
             pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.system_filename);
@@ -637,7 +640,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
 
         /* output my nspace and rank plus the URI */
         fprintf(fp, "%s\n", lt->uri);
-        /* add a flag that indicates we accept v2.1 protocols */
+        /* add a flag that indicates we accept v3.0 protocols */
         fprintf(fp, "v%s\n", PMIX_VERSION);
         fclose(fp);
         /* set the file mode */
@@ -659,6 +662,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
         }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "WRITING TOOL FILE %s",
+                            mca_ptl_tcp_component.session_filename);
         fp = fopen(mca_ptl_tcp_component.session_filename, "w");
         if (NULL == fp) {
             pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.session_filename);
