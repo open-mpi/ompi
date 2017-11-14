@@ -88,14 +88,14 @@ OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
  *  @param if_name (IN)  Interface name
  *  @return              Interface kernel index
  */
-OPAL_DECLSPEC int16_t opal_ifnametokindex(const char* if_name);
+OPAL_DECLSPEC int opal_ifnametokindex(const char* if_name);
 
 /*
  *  Attempt to resolve an address (given as either IPv4/IPv6 string
  *  or hostname) and return the kernel index of the interface
  *  that is on the same network as the specified address
  */
-OPAL_DECLSPEC int16_t opal_ifaddrtokindex(const char* if_addr);
+OPAL_DECLSPEC int opal_ifaddrtokindex(const char* if_addr);
 
 /**
  *  Lookup an interface by opal_list index and return its kernel index.
