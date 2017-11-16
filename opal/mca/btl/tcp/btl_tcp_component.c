@@ -511,6 +511,8 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
         btl->tcp_send_handler = 0;
 #endif
 
+        opal_ifkindextoaddr(if_kindex, (struct sockaddr*) &btl->tcp_ifaddr,
+                                        sizeof (btl->tcp_ifaddr));
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);

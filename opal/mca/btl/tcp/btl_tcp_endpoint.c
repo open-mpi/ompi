@@ -715,6 +715,21 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         }
     }
 
+    /* Bind the socket to one of the addresses associated with
+     * this btl module.  This sets the source IP to one of the 
+     * addresses shared in modex, so that the destination rank 
+     * can properly pair btl modules, even in cases where Linux 
+     * might do something unexpected with routing */
+    opal_socklen_t sockaddr_addrlen = sizeof(struct sockaddr_storage);
+    if (NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr) {
+        if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr, sockaddr_addrlen) < 0) {
+            BTL_ERROR(("bind() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
+
+            CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
+            return OPAL_ERROR;
+       }
+    }
+
     /* start the connect - will likely fail with EINPROGRESS */
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
