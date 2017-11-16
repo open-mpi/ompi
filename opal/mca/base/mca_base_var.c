@@ -1896,6 +1896,14 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
 
     assert (MCA_BASE_VAR_TYPE_MAX > var->mbv_type);
 
+    /** Parameters with MCA_BASE_VAR_FLAG_DEF_UNSET flag should be shown
+     * as "unset" by default. */
+    if ((var->mbv_flags & MCA_BASE_VAR_FLAG_DEF_UNSET) &&
+        (MCA_BASE_VAR_SOURCE_DEFAULT == var->mbv_source)){
+        asprintf (value_string, "%s", "unset");
+        return OPAL_SUCCESS;
+    }
+
     ret = mca_base_var_get_value(var->mbv_index, &value, NULL, NULL);
     if (OPAL_SUCCESS != ret || NULL == value) {
         return ret;

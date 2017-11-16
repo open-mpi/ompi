@@ -56,10 +56,11 @@ struct mca_mtl_psm2_module_t {
     unsigned long psm2_mq_recvreqs_max;
     unsigned long psm2_mq_rndv_hfi_threshold;
     unsigned long psm2_mq_rndv_shm_threshold;
-    unsigned long psm2_shared_contexts_max;
+    unsigned long psm2_max_contexts_per_job;
     unsigned long psm2_tracemask;
     bool psm2_recvthread;
     bool psm2_shared_contexts;
+    unsigned long psm2_opa_sl;
 };
 
 typedef struct mca_mtl_psm2_module_t mca_mtl_psm2_module_t;
