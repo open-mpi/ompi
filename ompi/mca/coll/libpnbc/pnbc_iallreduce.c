@@ -54,11 +54,16 @@
 
 #include <assert.h>
 
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf,
-                                    void *recvbuf, MPI_Op op, char inplace, PNBC_Schedule *schedule, PNBC_Handle *handle);
+/* only used for intra-communicators - small cases */
+static inline int allred_sched_binomial(int rank, int p, int count, MPI_Datatype datatype,
+                                        ptrdiff_t gap, const void *sendbuf, void *recvbuf,
+                                        MPI_Op op, char inplace, PNBC_Schedule *schedule,
+                                        PNBC_Handle *handle);
+/* only used for intra-communicators - large cases */
 static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, int size, int ext, PNBC_Schedule *schedule,
                                     PNBC_Handle *handle);
+/* only used for inter-communicators - all cases */
 static inline int allred_sched_linear(int rank, int p, const void *sendbuf, void *recvbuf, int count,
                                       MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op, int ext, int size,
                                       PNBC_Schedule *schedule, PNBC_Handle *handle);
@@ -81,7 +86,7 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
   char inplace;
   PNBC_Handle *handle = NULL;
   ompi_coll_libpnbc_module_t *libpnbc_module = (ompi_coll_libpnbc_module_t*) module;
-  ptrdiff_t span, gap;
+  ptrdiff_t span, gap=0;
 
   PNBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
@@ -152,7 +157,7 @@ int ompi_coll_libpnbc_iallreduce_init(const void* sendbuf, void* recvbuf, int co
 
   switch(alg) {
     case PNBC_ARED_BINOMIAL:
-      res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, handle);
+      res = allred_sched_binomial(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, handle);
       break;
     case PNBC_ARED_RING:
       res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, handle);
@@ -189,7 +194,7 @@ int ompi_coll_libpnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int c
   PNBC_Schedule *schedule;
   PNBC_Handle *handle;
   ompi_coll_libpnbc_module_t *libpnbc_module = (ompi_coll_libpnbc_module_t*) module;
-  ptrdiff_t span, gap;
+  ptrdiff_t span, gap=0;
 
   rank = ompi_comm_rank (comm);
   rsize = ompi_comm_remote_size (comm);
@@ -240,22 +245,8 @@ int ompi_coll_libpnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int c
     return res;
   }
 
-  /*
-   * FIXME - if this is a persistent initialisation function
-   *         then the schedule must not be started yet
-   *         if this is a nonblocking collective function
-   *         then we should let the NBC module provide it
-   *         i.e. this function should not be in this module
-   */
-  res = PNBC_Start_internal(handle, schedule);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    PNBC_Return_handle (handle);
-    return res;
-  }
-
   *request = (ompi_request_t *) handle;
 
-  /* tmpbuf is freed with the handle */
   return OMPI_SUCCESS;
 }
 
@@ -295,8 +286,10 @@ int ompi_coll_libpnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int c
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf, void *recvbuf,
-                                    MPI_Op op, char inplace, PNBC_Schedule *schedule, PNBC_Handle *handle) {
+static inline int allred_sched_binomial(int rank, int p, int count, MPI_Datatype datatype,
+                                        ptrdiff_t gap, const void *sendbuf, void *recvbuf,
+                                        MPI_Op op, char inplace, PNBC_Schedule *schedule,
+                                        PNBC_Handle *handle) {
   int root, vrank, maxr, vpeer, peer, res;
   char *rbuf, *lbuf, *buf;
   int tmprbuf, tmplbuf;
