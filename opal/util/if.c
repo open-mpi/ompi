@@ -133,7 +133,7 @@ int opal_ifnametoindex(const char* if_name)
  *  corresponding kernel index.
  */
 
-int16_t opal_ifnametokindex(const char* if_name)
+int opal_ifnametokindex(const char* if_name)
 {
     opal_if_t* intf;
 
@@ -235,7 +235,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
  *  or hostname) and return the kernel index of the interface
  *  on the same network as the specified address
  */
-int16_t opal_ifaddrtokindex(const char* if_addr)
+int opal_ifaddrtokindex(const char* if_addr)
 {
     opal_if_t* intf;
     int error;
@@ -729,7 +729,7 @@ opal_ifnametoindex(const char* if_name)
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-int16_t
+int
 opal_ifnametokindex(const char* if_name)
 {
     return OPAL_ERR_NOT_SUPPORTED;
