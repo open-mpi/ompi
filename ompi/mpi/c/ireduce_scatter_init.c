@@ -35,15 +35,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Ireduce_scatter_init = PMPIX_Ireduce_scatter_init
+#pragma weak MPI_Reduce_scatter_init = PMPI_Reduce_scatter_init
 #endif
-#define MPIX_Ireduce_scatter_init PMPIX_Ireduce_scatter_init
+#define MPI_Reduce_scatter_init PMPI_Reduce_scatter_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Ireduce_scatter_init";
+static const char FUNC_NAME[] = "MPI_Reduce_scatter_init";
 
 
-int MPIX_Ireduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvcounts[],
+int MPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvcounts[],
                         MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int i, err, size, count;

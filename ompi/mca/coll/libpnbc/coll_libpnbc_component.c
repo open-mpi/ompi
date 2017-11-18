@@ -133,8 +133,6 @@ libpnbc_open(void)
        a persistent nonblocking collective started */
     mca_coll_libpnbc_component.active_comms = 0;
 
-    opal_atomic_init(&mca_coll_libpnbc_component.progress_lock, OPAL_ATOMIC_UNLOCKED);
-
     return OMPI_SUCCESS;
 }
 

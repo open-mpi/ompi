@@ -29,7 +29,6 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/communicator/comm_helpers.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
@@ -38,21 +37,21 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Ineighbor_alltoallv_init = PMPIX_Ineighbor_alltoallv_init
+#pragma weak MPI_Neighbor_alltoallv_init = PMPI_Neighbor_alltoallv_init
 #endif
-#define MPIX_Ineighbor_alltoallv_init PMPIX_Ineighbor_alltoallv_init
+#define MPI_Neighbor_alltoallv_init PMPI_Neighbor_alltoallv_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Ineighbor_alltoallv_init";
+static const char FUNC_NAME[] = "MPI_Neighbor_alltoallv_init";
 
 
-int MPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
+int MPI_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
                             MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
                             const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
                             MPI_Info info, MPI_Request *request)
 {
     int i, err;
-    int indegree, outdegree, weighted;
+    int indegree, outdegree;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -68,7 +67,7 @@ int MPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], c
         memchecker_datatype(recvtype);
         ompi_datatype_type_extent(sendtype, &send_ext);
 
-        err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
+        err = mca_topo_base_neighbor_count(comm, &indegree, &outdegree);
         if (MPI_SUCCESS == err) {
             if (MPI_IN_PLACE != sendbuf) {
                 for ( i = 0; i < outdegree; i++ ) {
@@ -105,7 +104,7 @@ int MPIX_Ineighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], c
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
-        err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
+        err = mca_topo_base_neighbor_count(comm, &indegree, &outdegree);
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         for (i = 0; i < outdegree; ++i) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);

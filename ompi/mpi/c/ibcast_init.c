@@ -23,15 +23,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Ibcast_init = PMPIX_Ibcast_init
+#pragma weak MPI_Bcast_init = PMPI_Bcast_init
 #endif
-#define MPIX_Ibcast_init PMPIX_Ibcast_init
+#define MPI_Bcast_init PMPI_Bcast_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Ibcast_init";
+static const char FUNC_NAME[] = "MPI_Bcast_init";
 
 
-int MPIX_Ibcast_init(void *buffer, int count, MPI_Datatype datatype,
+int MPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype,
               int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int err;

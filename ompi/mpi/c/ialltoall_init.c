@@ -35,15 +35,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Ialltoall_init = PMPIX_Ialltoall_init
+#pragma weak MPI_Alltoall_init = PMPI_Alltoall_init
 #endif
-#define MPIX_Ialltoall_init PMPIX_Ialltoall_init
+#define MPI_Alltoall_init PMPI_Alltoall_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Ialltoall_init";
+static const char FUNC_NAME[] = "MPI_Alltoall_init";
 
 
-int MPIX_Ialltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm,  MPI_Info info, MPI_Request *request)
 {
