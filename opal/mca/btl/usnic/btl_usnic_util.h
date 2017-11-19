@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,7 +117,8 @@ void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
 
 void opal_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[], size_t alen);
 
-void opal_btl_usnic_dump_hex(void *vaddr, int len);
+void opal_btl_usnic_dump_hex(int verbose_level, int output_id,
+                             void *vaddr, int len);
 
 size_t opal_btl_usnic_convertor_pack_peek(const opal_convertor_t *conv,
                                           size_t max_len);
