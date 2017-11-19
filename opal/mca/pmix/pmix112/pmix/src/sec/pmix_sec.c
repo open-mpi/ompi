@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -114,12 +114,6 @@ int pmix_sec_init(void)
                         ++navail;
                         break;
                     }
-                }
-                if (NULL == all[i]) {
-                    /* we didn't find one they specified */
-                    pmix_output(0, "Security mode %s is not available", options[j]);
-                    pmix_argv_free(options);
-                    return PMIX_ERR_NOT_FOUND;
                 }
             }
         }
