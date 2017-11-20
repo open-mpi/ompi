@@ -38,18 +38,20 @@ static int data_progress;
 enum {
     MTL_OFI_PROG_AUTO=1,
     MTL_OFI_PROG_MANUAL,
-    MTL_OFI_PROG_UNKNOWN,
+    MTL_OFI_PROG_UNSPEC,
 };
 
 mca_base_var_enum_value_t control_prog_type[] = {
     {MTL_OFI_PROG_AUTO, "auto"},
     {MTL_OFI_PROG_MANUAL, "manual"},
+    {MTL_OFI_PROG_UNSPEC, "unspec"},
     {0, NULL}
 };
 
 mca_base_var_enum_value_t data_prog_type[] = {
     {MTL_OFI_PROG_AUTO, "auto"},
     {MTL_OFI_PROG_MANUAL, "manual"},
+    {MTL_OFI_PROG_UNSPEC, "unspec"},
     {0, NULL}
 };
 
@@ -115,10 +117,10 @@ ompi_mtl_ofi_component_register(void)
         return ret;
     }
 
-    control_progress = MTL_OFI_PROG_MANUAL;
+    control_progress = MTL_OFI_PROG_UNSPEC;
     mca_base_component_var_register (&mca_mtl_ofi_component.super.mtl_version,
                                      "control_progress",
-                                     "Specify control progress model (default: manual). Set to auto for auto progress.",
+                                     "Specify control progress model (default: unspecificed, use provider's default). Set to auto or manual for auto or manual progress respectively.",
                                      MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
                                      OPAL_INFO_LVL_3,
                                      MCA_BASE_VAR_SCOPE_READONLY,
@@ -130,10 +132,10 @@ ompi_mtl_ofi_component_register(void)
         return ret;
     }
 
-    data_progress = MTL_OFI_PROG_AUTO;
+    data_progress = MTL_OFI_PROG_UNSPEC;
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "data_progress",
-                                    "Specify data progress model (default: auto). Set to manual for manual progress.",
+                                    "Specify data progress model (default: unspecified, use provider's default). Set to auto or manual for auto or manual progress respectively.",
                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
                                     OPAL_INFO_LVL_3,
                                     MCA_BASE_VAR_SCOPE_READONLY,
@@ -298,16 +300,26 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
     hints->domain_attr->threading        = FI_THREAD_UNSPEC;
 
-    if (MTL_OFI_PROG_AUTO == control_progress) {
-        hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
-    } else {
+    switch (control_progress) {
+    case MTL_OFI_PROG_AUTO:
+	hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+	break;
+    case MTL_OFI_PROG_MANUAL:
         hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
+	break;
+    default:
+        hints->domain_attr->control_progress = FI_PROGRESS_UNSPEC;
     }
 
-    if (MTL_OFI_PROG_MANUAL == data_progress) {
+    switch (data_progress) {
+    case MTL_OFI_PROG_AUTO:
+	hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
+	break;
+    case MTL_OFI_PROG_MANUAL:
         hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;
-    } else {
-        hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
+	break;
+    default:
+        hints->domain_attr->data_progress = FI_PROGRESS_UNSPEC;
     }
 
     hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
