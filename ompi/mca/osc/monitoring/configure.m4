@@ -16,7 +16,11 @@ AC_DEFUN([MCA_ompi_osc_monitoring_CONFIG],[
     AS_IF([test "$MCA_BUILD_ompi_common_monitoring_DSO_TRUE" = ''],
           [$1],
           [$2])
-    OPAL_CHECK_PORTALS4([osc_monitoring],
+    OPAL_CHECK_PORTALS4([osc_monitoring_portals4],
                         [AC_DEFINE([OMPI_WITH_OSC_PORTALS4], [1], [Whether or not to generate template for osc_portals4])],
                         [])
+    # substitute in the things needed to build portals4
+    AC_SUBST([osc_monitoring_portals4_CPPFLAGS])
+    AC_SUBST([osc_monitoring_portals4_LDFLAGS])
+    AC_SUBST([osc_monitoring_portals4_LIBS])
 ])dnl
