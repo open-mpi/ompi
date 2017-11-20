@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -17,6 +17,90 @@
 #include "osc_rdma_comm.h"
 
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+
+enum ompi_osc_rdma_event_type_t {
+    OMPI_OSC_RDMA_EVENT_TYPE_PUT,
+};
+
+typedef enum ompi_osc_rdma_event_type_t ompi_osc_rdma_event_type_t;
+
+struct ompi_osc_rdma_event_t {
+    opal_event_t super;
+    ompi_osc_rdma_module_t *module;
+    struct mca_btl_base_endpoint_t *endpoint;
+    void *local_address;
+    mca_btl_base_registration_handle_t *local_handle;
+    uint64_t remote_address;
+    mca_btl_base_registration_handle_t *remote_handle;
+    uint64_t length;
+    mca_btl_base_rdma_completion_fn_t cbfunc;
+    void *cbcontext;
+    void *cbdata;
+};
+
+typedef struct ompi_osc_rdma_event_t ompi_osc_rdma_event_t;
+
+static void *ompi_osc_rdma_event_put (int fd, int flags, void *context)
+{
+    ompi_osc_rdma_event_t *event = (ompi_osc_rdma_event_t *) context;
+    int ret;
+
+    ret = event->module->selected_btl->btl_put (event->module->selected_btl, event->endpoint, event->local_address,
+                                                event->remote_address, event->local_handle, event->remote_handle,
+                                                event->length, 0, MCA_BTL_NO_ORDER, event->cbfunc, event->cbcontext,
+                                                event->cbdata);
+    if (OPAL_LIKELY(OPAL_SUCCESS == ret)) {
+        /* done with this event */
+        opal_event_del (&event->super);
+        free (event);
+    } else {
+        /* re-activate the event */
+        opal_event_active (&event->super, OPAL_EV_READ, 1);
+    }
+
+    return NULL;
+}
+
+static int ompi_osc_rdma_event_queue (ompi_osc_rdma_module_t *module, struct mca_btl_base_endpoint_t *endpoint,
+                                      ompi_osc_rdma_event_type_t event_type, void *local_address, mca_btl_base_registration_handle_t *local_handle,
+                                      uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
+                                      uint64_t length, mca_btl_base_rdma_completion_fn_t cbfunc,  void *cbcontext,
+                                      void *cbdata)
+{
+    ompi_osc_rdma_event_t *event = malloc (sizeof (*event));
+    void *(*event_func) (int, int, void *);
+
+    if (OPAL_UNLIKELY(NULL == event)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    event->module = module;
+    event->endpoint = endpoint;
+    event->local_address = local_address;
+    event->local_handle = local_handle;
+    event->remote_address = remote_address;
+    event->remote_handle = remote_handle;
+    event->length = length;
+    event->cbfunc = cbfunc;
+    event->cbcontext = cbcontext;
+    event->cbdata = cbdata;
+
+    switch (event_type) {
+    case OMPI_OSC_RDMA_EVENT_TYPE_PUT:
+        event_func = ompi_osc_rdma_event_put;
+        break;
+    default:
+        opal_output(0, "osc/rdma: cannot queue unknown event type %d", event_type);
+        abort ();
+    }
+
+    opal_event_set (opal_sync_event_base, &event->super, -1, OPAL_EV_READ,
+                    event_func, event);
+    opal_event_active (&event->super, OPAL_EV_READ, 1);
+
+    return OMPI_SUCCESS;
+}
+
 
 static int ompi_osc_rdma_gacc_local (const void *source_buffer, int source_count, ompi_datatype_t *source_datatype,
                                      void *result_buffer, int result_count, ompi_datatype_t *result_datatype,
@@ -113,7 +197,7 @@ static void ompi_osc_rdma_acc_put_complete (struct mca_btl_base_module_t *btl, s
     }
 
     ompi_osc_rdma_sync_rdma_dec (sync);
-    peer->flags &= ~OMPI_OSC_RDMA_PEER_ACCUMULATING;
+    ompi_osc_rdma_peer_clear_flag (peer, OMPI_OSC_RDMA_PEER_ACCUMULATING);
 }
 
 /* completion of an accumulate get operation */
@@ -171,7 +255,12 @@ static void ompi_osc_rdma_acc_get_complete (struct mca_btl_base_module_t *btl, s
                                             (mca_btl_base_registration_handle_t *) request->ctx,
                                             request->len, 0, MCA_BTL_NO_ORDER, ompi_osc_rdma_acc_put_complete,
                                             request, NULL);
-    /* TODO -- we can do better. probably should queue up the next step and handle it in progress */
+    if (OPAL_SUCCESS != status) {
+        status = ompi_osc_rdma_event_queue (module, endpoint, OMPI_OSC_RDMA_EVENT_TYPE_PUT, (void *) source, local_handle,
+                                            request->target_address, (mca_btl_base_registration_handle_t *) request->ctx,
+                                            request->len, ompi_osc_rdma_acc_put_complete, request, NULL);
+    }
+
     assert (OPAL_SUCCESS == status);
 }
 
@@ -203,13 +292,12 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
 
     OPAL_THREAD_LOCK(&module->lock);
     /* to ensure order wait until the previous accumulate completes */
-    while (ompi_osc_rdma_peer_is_accumulating (peer)) {
+    while (!ompi_osc_rdma_peer_test_set_flag (peer, OMPI_OSC_RDMA_PEER_ACCUMULATING)) {
         OPAL_THREAD_UNLOCK(&module->lock);
         ompi_osc_rdma_progress (module);
         OPAL_THREAD_LOCK(&module->lock);
     }
 
-    peer->flags |= OMPI_OSC_RDMA_PEER_ACCUMULATING;
     OPAL_THREAD_UNLOCK(&module->lock);
 
     if (!ompi_osc_rdma_peer_is_exclusive (peer)) {
@@ -847,11 +935,12 @@ static void ompi_osc_rdma_cas_get_complete (struct mca_btl_base_module_t *btl, s
                                              ompi_osc_rdma_acc_put_complete, request, NULL);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "could not start put to complete accumulate operation. opal return code "
-                             "%d", ret);
-        }
+                             "%d. queuing operation...", ret);
 
-        /* TODO -- we can do better. probably should queue up the next step and handle it in progress */
-        assert (OPAL_SUCCESS == ret);
+            ret = ompi_osc_rdma_event_queue (module, peer->data_endpoint, OMPI_OSC_RDMA_EVENT_TYPE_PUT, local_address, local_handle,
+                                             request->target_address, (mca_btl_base_registration_handle_t *) request->ctx, request->len,
+                                             ompi_osc_rdma_acc_put_complete, request, NULL);
+        }
 
         return;
     }
@@ -868,7 +957,7 @@ static void ompi_osc_rdma_cas_get_complete (struct mca_btl_base_module_t *btl, s
     ompi_osc_rdma_request_complete (request, status);
 
     ompi_osc_rdma_sync_rdma_dec (sync);
-    peer->flags &= ~OMPI_OSC_RDMA_PEER_ACCUMULATING;
+    ompi_osc_rdma_peer_clear_flag (peer, OMPI_OSC_RDMA_PEER_ACCUMULATING);
 }
 
 static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr, const void *compare_addr, void *result_addr,
@@ -894,12 +983,11 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
 
     OPAL_THREAD_LOCK(&module->lock);
     /* to ensure order wait until the previous accumulate completes */
-    while (ompi_osc_rdma_peer_is_accumulating (peer)) {
+    while (!ompi_osc_rdma_peer_test_set_flag (peer, OMPI_OSC_RDMA_PEER_ACCUMULATING)) {
         OPAL_THREAD_UNLOCK(&module->lock);
         ompi_osc_rdma_progress (module);
         OPAL_THREAD_LOCK(&module->lock);
     }
-    peer->flags |= OMPI_OSC_RDMA_PEER_ACCUMULATING;
     OPAL_THREAD_UNLOCK(&module->lock);
 
     offset = target_address & btl_alignment_mask;;
