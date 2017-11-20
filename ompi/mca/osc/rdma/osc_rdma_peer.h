@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -40,7 +40,7 @@ struct ompi_osc_rdma_peer_t {
     int rank;
 
     /** peer flags */
-    int flags;
+    volatile int32_t flags;
 
     /** aggregation support */
     ompi_osc_rdma_aggregation_t *aggregate;
@@ -188,13 +188,41 @@ static inline bool ompi_osc_rdma_peer_is_exclusive (ompi_osc_rdma_peer_t *peer)
 }
 
 /**
- * @brief check if this process is currently accumulating on a peer
+ * @brief try to set a flag on a peer object
  *
- * @param[in] peer            peer object to check
+ * @param[in] peer            peer object to modify
+ * @param[in] flag            flag to set
+ *
+ * @returns true if the flag was not already set
+ * @returns flase otherwise
  */
-static inline bool ompi_osc_rdma_peer_is_accumulating (ompi_osc_rdma_peer_t *peer)
+static inline bool ompi_osc_rdma_peer_test_set_flag (ompi_osc_rdma_peer_t *peer, int flag)
 {
-    return !!(peer->flags & OMPI_OSC_RDMA_PEER_ACCUMULATING);
+    int32_t flags;
+
+    opal_atomic_mb ();
+
+    do {
+        flags = peer->flags;
+        if (flags & flag) {
+            return false;
+        }
+
+    } while (!OPAL_THREAD_BOOL_CMPSET_32 (&peer->flags, flags, flags | flag));
+
+    return true;
+}
+
+/**
+ * @brief clear a flag from a peer object
+ *
+ * @param[in] peer            peer object to modify
+ * @param[in] flag            flag to set
+ */
+static inline void ompi_osc_rdma_peer_clear_flag (ompi_osc_rdma_peer_t *peer, int flag)
+{
+    OPAL_ATOMIC_AND32(&peer->flags, ~flag);
+    opal_atomic_mb ();
 }
 
 /**

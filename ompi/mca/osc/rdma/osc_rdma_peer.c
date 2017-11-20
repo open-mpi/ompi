@@ -61,7 +61,8 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
     *peer_out = NULL;
 
     endpoint = ompi_osc_rdma_peer_btl_endpoint (module, peer_id);
-    if (OPAL_UNLIKELY(NULL == endpoint)) {
+    if (OPAL_UNLIKELY(NULL == endpoint && !((module->selected_btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) &&
+                                            peer_id == ompi_comm_rank (module->comm)))) {
         return OMPI_ERR_UNREACH;
     }
 

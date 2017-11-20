@@ -850,11 +850,18 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
     }
 
     for (int i = 0 ; i < max_btls ; ++i) {
+        int btl_count = btl_counts[i];
+
         if (NULL == possible_btls[i]) {
             break;
         }
 
-        if (btl_counts[i] == comm_size && possible_btls[i]->btl_latency < selected_latency) {
+        if (possible_btls[i]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) {
+            /* do not need to use the btl for self communication */
+            btl_count++;
+        }
+
+        if (btl_count >= comm_size && possible_btls[i]->btl_latency < selected_latency) {
             selected_btl = possible_btls[i];
             selected_latency = possible_btls[i]->btl_latency;
         }

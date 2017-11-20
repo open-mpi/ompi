@@ -160,7 +160,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
 
     subreq = NULL;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "scheduling rdma on non-contiguous datatype(s)");
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "scheduling rdma on non-contiguous datatype(s) or large region");
 
     /* prepare convertors for the source and target. these convertors will be used to determine the
      * contiguous segments within the source and target. */
