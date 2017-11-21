@@ -233,7 +233,7 @@ upper_ilog2(const int i) {
  *  Returns:	- integer result
  */ 
 static int
-upper_isqrt(const int i; const int ilog2) {
+upper_isqrt(const int i, const int ilog2) {
 	if (i < 2) return i;
 	int a, b, c;
 	a = 1 << (((ilog2+1) >> 1) - 1);
@@ -281,7 +281,7 @@ getfactors(int num, int *nfactors, int **factors) {
         (*factors)[i++] = 2;
     }
 
-    sqrt_num = upper_isqrt(num, size - i);
+    sqrtnum = upper_isqrt(num, size - i);
     /* determine all occurences of uneven prime numbers up to sqrt(num) */
     d = 3;
     for(d = 3; (num > 1) && (d < sqrtnum); d += 2) {
