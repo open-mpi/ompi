@@ -1,10 +1,18 @@
 # -*- text -*-
 #
-# Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved
 #
+# Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
+[OFI call fail]
+Open MPI failed an OFI Libfabric library call (%s).  This is highly
+unusual; your job may behave unpredictably (and/or abort) after this.
+
+  Local host: %s
+  Location: %s:%d
+  Error: %s (%zd)
