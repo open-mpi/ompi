@@ -21,6 +21,4 @@ AC_DEFUN([MCA_ompi_osc_monitoring_CONFIG],[
                         [])
     # substitute in the things needed to build portals4
     AC_SUBST([osc_monitoring_portals4_CPPFLAGS])
-    AC_SUBST([osc_monitoring_portals4_LDFLAGS])
-    AC_SUBST([osc_monitoring_portals4_LIBS])
 ])dnl
