@@ -67,6 +67,7 @@ int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
     struct iovec *decoded_iov = NULL;
 
     size_t max_data=0, real_bytes_read=0;
+    size_t spc=0;
     ssize_t ret_code=0;
     int i = 0; /* index into the decoded iovec of the buffer */
     int j = 0; /* index into the file vie iovec */
@@ -117,7 +118,8 @@ int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_read);
+                                          &total_bytes_read, 
+                                          &spc);
 
         if (fh->f_num_of_io_entries) {
             ret_code = fh->f_fbtl->fbtl_preadv (fh);
@@ -181,6 +183,7 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_ompio_request_t *ompio_req=NULL;
+    size_t spc=0;
 
     ompio_req = OBJ_NEW(mca_ompio_request_t);
     ompio_req->req_type = MCA_OMPIO_REQUEST_READ;
@@ -226,7 +229,8 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_read);
+                                          &total_bytes_read, 
+                                          &spc);
 
 	if (fh->f_num_of_io_entries) {
 	  fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
