@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Inria.  All rights reserved.
+ * Copyright (c) 2013-2018 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +38,8 @@ int mca_pml_monitoring_start(size_t count,
          * If this fails the destination is not part of my MPI_COM_WORLD
          */
         if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(pml_request->req_peer,
-                                                                pml_request->req_comm, &world_rank)) {
+                                                                pml_request->req_comm->c_remote_group,
+								&world_rank)) {
             size_t type_size, data_size;
             ompi_datatype_type_size(pml_request->req_datatype, &type_size);
             data_size = pml_request->req_count * type_size;
