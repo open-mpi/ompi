@@ -468,7 +468,9 @@ static int do_parent(orte_odls_spawn_caddy_t *cd, int read_fd)
     orte_odls_pipe_err_msg_t msg;
     char file[ORTE_ODLS_MAX_FILE_LEN + 1], topic[ORTE_ODLS_MAX_TOPIC_LEN + 1], *str = NULL;
 
-    close(cd->opts.p_stdin[0]);
+    if (cd->opts.connect_stdin) {
+        close(cd->opts.p_stdin[0]);
+    }
     close(cd->opts.p_stdout[1]);
     close(cd->opts.p_stderr[1]);
     close(cd->opts.p_internal[1]);
