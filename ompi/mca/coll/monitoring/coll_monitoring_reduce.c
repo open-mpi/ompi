@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Inria. All rights reserved.
+ * Copyright (c) 2016-2018 Inria. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +34,7 @@ int mca_coll_monitoring_reduce(const void *sbuf, void *rbuf, int count,
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
              */
-            if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm, &rank) ) {
+            if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm->c_remote_group, &rank) ) {
                 mca_common_monitoring_record_coll(rank, data_size);
             }
         }
@@ -64,7 +64,7 @@ int mca_coll_monitoring_ireduce(const void *sbuf, void *rbuf, int count,
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
              */
-            if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm, &rank) ) {
+            if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm->c_remote_group, &rank) ) {
                 mca_common_monitoring_record_coll(rank, data_size);
             }
         }
