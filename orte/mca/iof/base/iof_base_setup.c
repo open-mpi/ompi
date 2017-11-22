@@ -107,9 +107,11 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
             return ORTE_ERR_SYS_LIMITS_PIPES;
         }
     }
-    if (pipe(opts->p_stdin) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-        return ORTE_ERR_SYS_LIMITS_PIPES;
+    if (opts->connect_stdin) {
+        if (pipe(opts->p_stdin) < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+            return ORTE_ERR_SYS_LIMITS_PIPES;
+        }
     }
     if (pipe(opts->p_stderr) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
@@ -130,7 +132,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
     int ret;
     char *str;
 
-    close(opts->p_stdin[1]);
+    if (opts->connect_stdin) {
+        close(opts->p_stdin[1]);
+    }
     close(opts->p_stdout[0]);
     close(opts->p_stderr[0]);
     close(opts->p_internal[0]);
@@ -181,7 +185,6 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
     } else {
         int fd;
 
-        close(opts->p_stdin[0]);
         /* connect input to /dev/null */
         fd = open("/dev/null", O_RDONLY, 0);
         if(fd != fileno(stdin)) {
@@ -229,8 +232,6 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
             ORTE_ERROR_LOG(ret);
             return ret;
         }
-    } else {
-        close(opts->p_stdin[1]);
     }
 
     /* connect read ends to IOF */
