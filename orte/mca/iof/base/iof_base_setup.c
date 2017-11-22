@@ -12,6 +12,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -182,7 +184,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         close(opts->p_stdin[0]);
         /* connect input to /dev/null */
         fd = open("/dev/null", O_RDONLY, 0);
-        if(fd > fileno(stdin)) {
+        if(fd != fileno(stdin)) {
             dup2(fd, fileno(stdin));
             close(fd);
         }
