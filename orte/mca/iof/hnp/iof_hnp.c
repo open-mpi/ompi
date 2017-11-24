@@ -201,7 +201,8 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          * because one of the readevents fires -prior- to all of them having
          * been defined!
          */
-        if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
+        if (NULL != proct->revstdout && NULL != proct->revstddiag &&
+            (orte_iof_base.redirect_app_stderr_to_stdout || NULL != proct->revstderr)) {
             if (proct->copy) {
                 /* see if there are any wildcard subscribers out there that
                  * apply to us */
@@ -216,7 +217,9 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                 }
             }
             ORTE_IOF_READ_ACTIVATE(proct->revstdout);
-            ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+            if (!orte_iof_base.redirect_app_stderr_to_stdout) {
+                ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+            }
             ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
        }
         return ORTE_SUCCESS;
