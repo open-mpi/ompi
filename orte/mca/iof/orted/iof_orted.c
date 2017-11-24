@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -190,9 +192,12 @@ SETUP:
      * because one of the readevents fires -prior- to all of them having
      * been defined!
      */
-    if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
+    if (NULL != proct->revstdout && NULL != proct->revstddiag &&
+        (orte_iof_base.redirect_app_stderr_to_stdout || NULL != proct->revstderr)) {
         ORTE_IOF_READ_ACTIVATE(proct->revstdout);
-        ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+        if (!orte_iof_base.redirect_app_stderr_to_stdout) {
+            ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+        }
         ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
     }
     return ORTE_SUCCESS;

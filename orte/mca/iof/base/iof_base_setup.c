@@ -113,9 +113,11 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
             return ORTE_ERR_SYS_LIMITS_PIPES;
         }
     }
-    if (pipe(opts->p_stderr) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-        return ORTE_ERR_SYS_LIMITS_PIPES;
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        if (pipe(opts->p_stderr) < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+            return ORTE_ERR_SYS_LIMITS_PIPES;
+        }
     }
     if (pipe(opts->p_internal) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
@@ -136,7 +138,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         close(opts->p_stdin[1]);
     }
     close(opts->p_stdout[0]);
-    close(opts->p_stderr[0]);
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        close(opts->p_stderr[0]);
+    }
     close(opts->p_internal[0]);
 
     if (opts->usepty) {
@@ -197,8 +201,8 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
             ret = dup2(opts->p_stderr[1], fileno(stderr));
             if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            close(opts->p_stderr[1]);
         }
-        close(opts->p_stderr[1]);
     }
 
     if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
@@ -241,10 +245,12 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
         return ret;
     }
 
-    ret = orte_iof.push(name, ORTE_IOF_STDERR, opts->p_stderr[0]);
-    if(ORTE_SUCCESS != ret) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        ret = orte_iof.push(name, ORTE_IOF_STDERR, opts->p_stderr[0]);
+        if(ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
 
     ret = orte_iof.push(name, ORTE_IOF_STDDIAG, opts->p_internal[0]);
