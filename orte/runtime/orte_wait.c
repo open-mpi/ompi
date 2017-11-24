@@ -80,14 +80,7 @@ OBJ_CLASS_INSTANCE(orte_timer_t,
                    timer_const,
                    timer_dest);
 
-/* Local objects */
-typedef struct {
-    opal_list_item_t super;
-    opal_event_t ev;
-    orte_proc_t *child;
-    orte_wait_fn_t cbfunc;
-    void *cbdata;
-} orte_wait_tracker_t;
+
 static void wccon(orte_wait_tracker_t *p)
 {
     p->child = NULL;
@@ -100,9 +93,9 @@ static void wcdes(orte_wait_tracker_t *p)
         OBJ_RELEASE(p->child);
     }
 }
-static OBJ_CLASS_INSTANCE(orte_wait_tracker_t,
-                          opal_list_item_t,
-                          wccon, wcdes);
+OBJ_CLASS_INSTANCE(orte_wait_tracker_t,
+                   opal_list_item_t,
+                   wccon, wcdes);
 
 /* Local Variables */
 static opal_event_t handler;
@@ -150,7 +143,8 @@ int orte_wait_finalize(void)
 
 /* this function *must* always be called from
  * within an event in the orte_event_base */
-void orte_wait_cb(orte_proc_t *child, orte_wait_fn_t callback, void *data)
+void orte_wait_cb(orte_proc_t *child, orte_wait_cbfunc_t callback,
+                  opal_event_base_t *evb, void *data)
 {
     orte_wait_tracker_t *t2;
 
@@ -162,8 +156,19 @@ void orte_wait_cb(orte_proc_t *child, orte_wait_fn_t callback, void *data)
 
     /* see if this proc is still alive */
     if (!ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_ALIVE)) {
-        /* already heard this proc is dead, so just do the callback */
-        callback(child, data);
+        if (NULL != callback) {
+            /* already heard this proc is dead, so just do the callback */
+            t2 = OBJ_NEW(orte_wait_tracker_t);
+            OBJ_RETAIN(child);  // protect against race conditions
+            t2->child = child;
+            t2->evb = evb;
+            t2->cbfunc = callback;
+            t2->cbdata = data;
+            opal_event_set(t2->evb, &t2->ev, -1,
+                           OPAL_EV_WRITE, t2->cbfunc, t2);
+            opal_event_set_priority(&t2->ev, ORTE_MSG_PRI);
+            opal_event_active(&t2->ev, OPAL_EV_WRITE, 1);
+        }
         return;
     }
 
@@ -179,6 +184,7 @@ void orte_wait_cb(orte_proc_t *child, orte_wait_fn_t callback, void *data)
     t2 = OBJ_NEW(orte_wait_tracker_t);
     OBJ_RETAIN(child);  // protect against race conditions
     t2->child = child;
+    t2->evb = evb;
     t2->cbfunc = callback;
     t2->cbdata = data;
     opal_list_append(&pending_cbs, &t2->super);
@@ -254,11 +260,15 @@ static void wait_signal_callback(int fd, short event, void *arg)
             if (pid == t2->child->pid) {
                 /* found it! */
                 t2->child->exit_code = status;
-                if (NULL != t2->cbfunc) {
-                    t2->cbfunc(t2->child, t2->cbdata);
-                }
                 opal_list_remove_item(&pending_cbs, &t2->super);
-                OBJ_RELEASE(t2);
+                if (NULL != t2->cbfunc) {
+                    opal_event_set(t2->evb, &t2->ev, -1,
+                                   OPAL_EV_WRITE, t2->cbfunc, t2);
+                    opal_event_set_priority(&t2->ev, ORTE_MSG_PRI);
+                    opal_event_active(&t2->ev, OPAL_EV_WRITE, 1);
+                } else {
+                    OBJ_RELEASE(t2);
+                }
                 break;
             }
         }

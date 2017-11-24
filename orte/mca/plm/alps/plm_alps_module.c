@@ -517,7 +517,9 @@ static int plm_alps_finalize(void)
 }
 
 
-static void alps_wait_cb(orte_proc_t *proc, void* cbdata){
+static void alps_wait_cb(int sd, short args, void *cbdata) {
+    orte_wait_tracker_t *t2 = (orte_wait_tracker_t*)cbdata;
+    orte_proc_t *proc = t2->child;
     orte_job_t *jdata;
 
     /* According to the ALPS folks, alps always returns the highest exit
@@ -550,6 +552,7 @@ static void alps_wait_cb(orte_proc_t *proc, void* cbdata){
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ABORTED);
         }
     }
+    OBJ_RELEASE(t2);
 }
 
 

@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -39,12 +39,13 @@
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/plm/plm_types.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/show_help.h"
-#include "orte/util/parse_options.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/plm/plm_types.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
+#include "orte/util/parse_options.h"
+#include "orte/util/show_help.h"
+#include "orte/util/threads.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/base/base.h"
@@ -78,13 +79,29 @@ static int orte_odls_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_odls_globals.timeout_before_sigkill);
 
-    orte_odls_globals.num_threads = 0;
+    orte_odls_globals.max_threads = 4;
+    (void) mca_base_var_register("orte", "odls", "base", "max_threads",
+                                 "Maximum number of threads to use for spawning local procs",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_odls_globals.max_threads);
+
+    orte_odls_globals.num_threads = -1;
     (void) mca_base_var_register("orte", "odls", "base", "num_threads",
-                                 "Number of threads to use for spawning local procs",
+                                 "Specific number of threads to use for spawning local procs",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_odls_globals.num_threads);
+
+    orte_odls_globals.cutoff = 32;
+    (void) mca_base_var_register("orte", "odls", "base", "cutoff",
+                                 "Minimum number of local procs before using thread pool for spawn",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_odls_globals.cutoff);
 
     orte_odls_globals.signal_direct_children_only = false;
     (void) mca_base_var_register("orte", "odls", "base", "signal_direct_children_only",
@@ -98,12 +115,80 @@ static int orte_odls_base_register(mca_base_register_flag_t flags)
     return ORTE_SUCCESS;
 }
 
+void orte_odls_base_harvest_threads(void)
+{
+    int i;
+
+    ORTE_ACQUIRE_THREAD(&orte_odls_globals.lock);
+    if (0 < orte_odls_globals.num_threads) {
+        /* stop the progress threads */
+        for (i=0; NULL != orte_odls_globals.ev_threads[i]; i++) {
+            opal_progress_thread_finalize(orte_odls_globals.ev_threads[i]);
+        }
+        free(orte_odls_globals.ev_bases);
+        orte_odls_globals.ev_bases = (opal_event_base_t**)malloc(sizeof(opal_event_base_t*));
+        /* use the default event base */
+        orte_odls_globals.ev_bases[0] = orte_event_base;
+        orte_odls_globals.num_threads = 0;
+        if (NULL != orte_odls_globals.ev_threads) {
+            opal_argv_free(orte_odls_globals.ev_threads);
+            orte_odls_globals.ev_threads = NULL;
+        }
+    }
+    ORTE_RELEASE_THREAD(&orte_odls_globals.lock);
+}
+
+void orte_odls_base_start_threads(orte_job_t *jdata)
+{
+    int i;
+    char *tmp;
+
+    ORTE_ACQUIRE_THREAD(&orte_odls_globals.lock);
+    /* only do this once */
+    if (NULL != orte_odls_globals.ev_threads) {
+        ORTE_RELEASE_THREAD(&orte_odls_globals.lock);
+        return;
+    }
+
+    /* setup the pool of worker threads */
+    orte_odls_globals.ev_threads = NULL;
+    orte_odls_globals.next_base = 0;
+    if (0 == orte_odls_globals.num_threads ||
+        (int)jdata->num_local_procs < orte_odls_globals.cutoff) {
+        orte_odls_globals.ev_bases = (opal_event_base_t**)malloc(sizeof(opal_event_base_t*));
+        /* use the default event base */
+        orte_odls_globals.ev_bases[0] = orte_event_base;
+    } else {
+        if (-1 == orte_odls_globals.num_threads) {
+            /* user didn't specify anything, so default to some fraction of
+             * the number of local procs, capping it at the max num threads
+             * parameter value. */
+            orte_odls_globals.num_threads = jdata->num_local_procs / 8;
+            if (0 == orte_odls_globals.num_threads) {
+                orte_odls_globals.num_threads = 1;
+            } else if (orte_odls_globals.max_threads < orte_odls_globals.num_threads) {
+                orte_odls_globals.num_threads = orte_odls_globals.max_threads;
+            }
+        }
+        orte_odls_globals.ev_bases =
+            (opal_event_base_t**)malloc(orte_odls_globals.num_threads * sizeof(opal_event_base_t*));
+        for (i=0; i < orte_odls_globals.num_threads; i++) {
+            asprintf(&tmp, "ORTE-ODLS-%d", i);
+            orte_odls_globals.ev_bases[i] = opal_progress_thread_init(tmp);
+            opal_argv_append_nosize(&orte_odls_globals.ev_threads, tmp);
+            free(tmp);
+        }
+    }
+    ORTE_RELEASE_THREAD(&orte_odls_globals.lock);
+}
+
 static int orte_odls_base_close(void)
 {
     int i;
     orte_proc_t *proc;
     opal_list_item_t *item;
 
+opal_output(0, "CLOSE");
     /* cleanup ODLS globals */
     while (NULL != (item = opal_list_remove_first(&orte_odls_globals.xterm_ranks))) {
         OBJ_RELEASE(item);
@@ -118,14 +203,9 @@ static int orte_odls_base_close(void)
     }
     OBJ_RELEASE(orte_local_children);
 
-    if (0 < orte_odls_globals.num_threads) {
-        /* stop the progress threads */
-        for (i=0; NULL != orte_odls_globals.ev_threads[i]; i++) {
-            opal_progress_thread_finalize(orte_odls_globals.ev_threads[i]);
-        }
-    }
-    free(orte_odls_globals.ev_bases);
-    opal_argv_free(orte_odls_globals.ev_threads);
+    orte_odls_base_harvest_threads();
+
+    ORTE_DESTRUCT_LOCK(&orte_odls_globals.lock);
 
     return mca_base_framework_components_close(&orte_odls_base_framework, NULL);
 }
@@ -140,6 +220,9 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
     int rc, i, rank;
     orte_namelist_t *nm;
     bool xterm_hold;
+
+    ORTE_CONSTRUCT_LOCK(&orte_odls_globals.lock);
+    orte_odls_globals.lock.active = false;   // start with nobody having the thread
 
     /* initialize the global array of local children */
     orte_local_children = OBJ_NEW(opal_pointer_array_t);
@@ -200,25 +283,6 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
             opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-hold");
         }
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
-    }
-
-    /* setup the pool of worker threads */
-    orte_odls_globals.ev_threads = NULL;
-    orte_odls_globals.next_base = 0;
-    if (0 == orte_odls_globals.num_threads) {
-        orte_odls_globals.ev_bases = (opal_event_base_t**)malloc(sizeof(opal_event_base_t*));
-        /* use the default event base */
-       orte_odls_globals.ev_bases[0] = orte_event_base;
-    } else {
-        orte_odls_globals.ev_bases =
-            (opal_event_base_t**)malloc(orte_odls_globals.num_threads * sizeof(opal_event_base_t*));
-        for (i=0; i < orte_odls_globals.num_threads; i++) {
-            asprintf(&tmp, "ORTE-ODLS-%d", i);
-            orte_odls_globals.ev_bases[i] = opal_progress_thread_init(tmp);
-            opal_argv_append_nosize(&orte_odls_globals.ev_threads, tmp);
-            free(tmp);
-        }
-
     }
 
      /* Open up all available components */

@@ -23,6 +23,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/base/base.h"
+#include "orte/mca/odls/base/base.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
@@ -288,6 +289,13 @@ static void track_procs(int fd, short argc, void *cbdata)
         /* update the proc state */
         pdata->state = state;
         jdata->num_launched++;
+        if (jdata->num_launched == jdata->num_local_procs) {
+            /* tell the state machine that all local procs for this job
+             * were launched so that it can do whatever it needs to do,
+             * like send a state update message for all procs to the HNP
+             */
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE);
+        }
         /* don't update until we are told that all are done */
     } else if (ORTE_PROC_STATE_REGISTERED == state) {
         /* update the proc state */

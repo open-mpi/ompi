@@ -53,7 +53,18 @@
 BEGIN_C_DECLS
 
 /** typedef for callback function used in \c orte_wait_cb */
-typedef void (*orte_wait_fn_t)(orte_proc_t *proc, void *data);
+typedef void (*orte_wait_cbfunc_t)(int fd, short args, void* cb);
+
+/* define a tracker */
+typedef struct {
+    opal_list_item_t super;
+    opal_event_t ev;
+    opal_event_base_t *evb;
+    orte_proc_t *child;
+    orte_wait_cbfunc_t cbfunc;
+    void *cbdata;
+} orte_wait_tracker_t;
+OBJ_CLASS_DECLARATION(orte_wait_tracker_t);
 
 /**
  * Disable / re-Enable SIGCHLD handler
@@ -71,7 +82,8 @@ ORTE_DECLSPEC void orte_wait_disable(void);
  * \c waitpid() will have already been called on the process at this
  * time.
  */
-ORTE_DECLSPEC void orte_wait_cb(orte_proc_t *proc, orte_wait_fn_t callback, void *data);
+ORTE_DECLSPEC void orte_wait_cb(orte_proc_t *proc, orte_wait_cbfunc_t callback,
+                                opal_event_base_t *evb, void *data);
 
 ORTE_DECLSPEC void orte_wait_cb_cancel(orte_proc_t *proc);
 
