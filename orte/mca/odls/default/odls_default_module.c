@@ -453,7 +453,9 @@ static int do_parent(orte_odls_spawn_caddy_t *cd, int read_fd)
         close(cd->opts.p_stdin[0]);
     }
     close(cd->opts.p_stdout[1]);
-    close(cd->opts.p_stderr[1]);
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        close(cd->opts.p_stderr[1]);
+    }
     close(cd->opts.p_internal[1]);
 
     /* Block reading a message from the pipe */
