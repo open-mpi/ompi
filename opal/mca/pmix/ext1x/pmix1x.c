@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -50,6 +50,7 @@ static const char *pmix1_get_nspace(opal_jobid_t jobid);
 static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_ext1x_module = {
+    .name = "pmix1",
     /* client APIs */
     .init = pmix1_client_init,
     .finalize = pmix1_client_finalize,

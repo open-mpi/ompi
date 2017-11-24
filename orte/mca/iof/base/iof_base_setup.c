@@ -64,6 +64,7 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -119,9 +120,11 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
             return ORTE_ERR_SYS_LIMITS_PIPES;
         }
     }
-    if (pipe(opts->p_internal) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-        return ORTE_ERR_SYS_LIMITS_PIPES;
+    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
+        if (pipe(opts->p_internal) < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+            return ORTE_ERR_SYS_LIMITS_PIPES;
+        }
     }
 
     return ORTE_SUCCESS;
@@ -141,7 +144,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
     if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
         close(opts->p_stderr[0]);
     }
-    close(opts->p_internal[0]);
+    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
+        close(opts->p_internal[0]);
+    }
 
     if (opts->usepty) {
         /* disable echo */
@@ -163,19 +168,27 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             return ORTE_ERR_PIPE_SETUP_FAILURE;
         }
         ret = dup2(opts->p_stdout[1], fileno(stdout));
-        if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if (ret < 0) {
+            return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         if( orte_iof_base.redirect_app_stderr_to_stdout ) {
             ret = dup2(opts->p_stdout[1], fileno(stderr));
-            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if (ret < 0) {
+                return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
         }
         close(opts->p_stdout[1]);
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));
-            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if (ret < 0) {
+                return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
             if( orte_iof_base.redirect_app_stderr_to_stdout ) {
                 ret = dup2(opts->p_stdout[1], fileno(stderr));
-                if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+                if (ret < 0) {
+                    return ORTE_ERR_PIPE_SETUP_FAILURE;
+                }
             }
             close(opts->p_stdout[1]);
         }
@@ -183,7 +196,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
     if (opts->connect_stdin) {
         if(opts->p_stdin[0] != fileno(stdin)) {
             ret = dup2(opts->p_stdin[0], fileno(stdin));
-            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if (ret < 0) {
+                return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
             close(opts->p_stdin[0]);
         }
     } else {
@@ -205,17 +220,19 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         }
     }
 
-    if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
-        /* Set an environment variable that the new child process can use
-           to get the fd of the pipe connected to the INTERNAL IOF tag. */
-        asprintf(&str, "%d", opts->p_internal[1]);
-        if (NULL != str) {
-            opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
-            free(str);
+    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
+        if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
+            /* Set an environment variable that the new child process can use
+               to get the fd of the pipe connected to the INTERNAL IOF tag. */
+            asprintf(&str, "%d", opts->p_internal[1]);
+            if (NULL != str) {
+                opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
+                free(str);
+            }
         }
-    }
-    else if( orte_map_stddiag_to_stdout ) {
-        opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
+        else if( orte_map_stddiag_to_stdout ) {
+            opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
+        }
     }
 
     return ORTE_SUCCESS;
@@ -253,10 +270,12 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
         }
     }
 
-    ret = orte_iof.push(name, ORTE_IOF_STDDIAG, opts->p_internal[0]);
-    if(ORTE_SUCCESS != ret) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
+        ret = orte_iof.push(name, ORTE_IOF_STDDIAG, opts->p_internal[0]);
+        if(ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
 
     return ORTE_SUCCESS;

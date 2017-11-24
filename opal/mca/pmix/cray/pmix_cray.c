@@ -83,6 +83,7 @@ static bool cray_get_attr(const char *attr, opal_value_t **kv);
 #endif
 
 const opal_pmix_base_module_t opal_pmix_cray_module = {
+    .name = "cray",
     .init = cray_init,
     .finalize = cray_fini,
     .initialized = cray_initialized,

@@ -42,6 +42,7 @@
 #endif
 
 #include "opal/util/os_dirpath.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -164,7 +165,7 @@ static int orted_push(const orte_process_name_t* dst_name,
     proct->name.vpid = dst_name->vpid;
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
 
-SETUP:
+  SETUP:
     /* get the local jobdata for this proc */
     if (NULL == (jobdat = orte_get_job_data_object(proct->name.jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -177,7 +178,7 @@ SETUP:
     } else if (src_tag & ORTE_IOF_STDERR) {
         ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                             orte_iof_orted_read_handler, false);
-    } else if (src_tag & ORTE_IOF_STDDIAG) {
+    } else if (0 == strncmp(opal_pmix.name, "pmix1", 5) && src_tag & ORTE_IOF_STDDIAG) {
         ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                             orte_iof_orted_read_handler, false);
     }
@@ -192,13 +193,16 @@ SETUP:
      * because one of the readevents fires -prior- to all of them having
      * been defined!
      */
-    if (NULL != proct->revstdout && NULL != proct->revstddiag &&
+    if (NULL != proct->revstdout &&
+        (0 != strncmp(opal_pmix.name, "pmix1", 5) || NULL != proct->revstddiag) &&
         (orte_iof_base.redirect_app_stderr_to_stdout || NULL != proct->revstderr)) {
         ORTE_IOF_READ_ACTIVATE(proct->revstdout);
         if (!orte_iof_base.redirect_app_stderr_to_stdout) {
             ORTE_IOF_READ_ACTIVATE(proct->revstderr);
         }
-        ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
+        if (NULL != proct->revstddiag) {
+            ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
+        }
     }
     return ORTE_SUCCESS;
 }
