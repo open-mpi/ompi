@@ -244,6 +244,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AC_MSG_ERROR([Cannot continue])])
 
     AC_MSG_CHECKING([if user requested external PMIx support($with_pmix)])
+    opal_external_have_pmix1=0
     AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([no])
            opal_external_pmix_happy=no],
@@ -297,7 +298,8 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AS_IF([test "x`ls $pmix_ext_install_dir/include/pmix_version.h 2> /dev/null`" = "x"],
                  [AC_MSG_RESULT([version file not found - assuming v1.1.4])
                   opal_external_pmix_version_found=1
-                  opal_external_pmix_version=114],
+                  opal_external_pmix_version=114
+                  opal_external_have_pmix1=1],
                  [AC_MSG_RESULT([version file found])
                   opal_external_pmix_version_found=0])
 
@@ -339,7 +341,8 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                                                       ], [])],
                                     [AC_MSG_RESULT([found])
                                      opal_external_pmix_version=1x
-                                     opal_external_pmix_version_found=1],
+                                     opal_external_pmix_version_found=1
+                                     opal_external_have_pmix1=1],
                                     [AC_MSG_RESULT([not found])])])
 
            AS_IF([test "x$opal_external_pmix_version" = "x"],
@@ -358,5 +361,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            opal_external_pmix_LIBS=-lpmix
            opal_external_pmix_happy=yes])
 
+    AC_DEFINE_UNQUOTED([OPAL_PMIX_V1],[$opal_external_have_pmix1],
+                       [Whether the external PMIx library is v1])
     OPAL_VAR_SCOPE_POP
 ])

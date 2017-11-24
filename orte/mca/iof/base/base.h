@@ -126,7 +126,9 @@ typedef struct {
     orte_iof_sink_t *stdinev;
     orte_iof_read_event_t *revstdout;
     orte_iof_read_event_t *revstderr;
+#if OPAL_PMIX_V1
     orte_iof_read_event_t *revstddiag;
+#endif
     opal_list_t *subscribers;
     bool copy;
 } orte_iof_proc_t;
