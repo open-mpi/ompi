@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -71,8 +73,11 @@ struct ompi_mtl_ofi_request_t {
     /** Flag to prevent MPI_Cancel from cancelling a started Recv request */
     volatile bool req_started;
 
-    /** Request's tag used in case of an error. */
+    /** Request's tag used in case of an error. Also for FI_CLAIM requests. */
     uint64_t match_bits;
+
+    /** Used to build msg for fi_trecvmsg with FI_CLAIM  */
+    uint64_t mask_bits;
 
     /** Remote OFI address used when a Recv needs to be ACKed */
     fi_addr_t remote_addr;
