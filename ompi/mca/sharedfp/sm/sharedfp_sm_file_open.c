@@ -133,7 +133,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     ** and then mapping it to memory
     ** For sharedfp we also want to put the file backed shared memory into the tmp directory
     */
-    filename_basename = basename(filename);
+    filename_basename = basename((char*)filename);
     /* format is "%s/%s_cid-%d.sm", see below */
     sm_filename_length = strlen(ompi_process_info.job_session_dir) + 1 + strlen(filename_basename) + 5 + (3*sizeof(uint32_t)+1) + 4;
     sm_filename = (char*) malloc( sizeof(char) * sm_filename_length);
@@ -191,7 +191,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
 #if defined(HAVE_SEM_OPEN)
 
-#if defined (__APPLE__)    
+#if defined (__APPLE__)
     sm_data->sem_name = (char*) malloc( sizeof(char) * 32);
     snprintf(sm_data->sem_name,31,"OMPIO_%s",filename_basename);
 #else

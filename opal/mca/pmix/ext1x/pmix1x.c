@@ -50,7 +50,6 @@ static const char *pmix1_get_nspace(opal_jobid_t jobid);
 static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_ext1x_module = {
-    .name = "pmix1",
     /* client APIs */
     .init = pmix1_client_init,
     .finalize = pmix1_client_finalize,

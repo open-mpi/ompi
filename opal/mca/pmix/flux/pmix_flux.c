@@ -59,7 +59,6 @@ static const char *flux_get_nspace(opal_jobid_t jobid);
 static void flux_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_flux_module = {
-    .name = "flux",
     .init = flux_init,
     .finalize = flux_fini,
     .initialized = flux_initialized,

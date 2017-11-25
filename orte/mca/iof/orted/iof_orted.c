@@ -42,7 +42,6 @@
 #endif
 
 #include "opal/util/os_dirpath.h"
-#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -178,9 +177,11 @@ static int orted_push(const orte_process_name_t* dst_name,
     } else if (src_tag & ORTE_IOF_STDERR) {
         ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                             orte_iof_orted_read_handler, false);
-    } else if (0 == strncmp(opal_pmix.name, "pmix1", 5) && src_tag & ORTE_IOF_STDDIAG) {
+#if OPAL_PMIX_V1
+    } else if (src_tag & ORTE_IOF_STDDIAG) {
         ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                             orte_iof_orted_read_handler, false);
+#endif
     }
     /* setup any requested output files */
     if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct))) {
@@ -194,15 +195,19 @@ static int orted_push(const orte_process_name_t* dst_name,
      * been defined!
      */
     if (NULL != proct->revstdout &&
-        (0 != strncmp(opal_pmix.name, "pmix1", 5) || NULL != proct->revstddiag) &&
+#if OPAL_PMIX_V1
+        NULL != proct->revstddiag &&
+#endif
         (orte_iof_base.redirect_app_stderr_to_stdout || NULL != proct->revstderr)) {
         ORTE_IOF_READ_ACTIVATE(proct->revstdout);
         if (!orte_iof_base.redirect_app_stderr_to_stdout) {
             ORTE_IOF_READ_ACTIVATE(proct->revstderr);
         }
+#if OPAL_PMIX_V1
         if (NULL != proct->revstddiag) {
             ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
         }
+#endif
     }
     return ORTE_SUCCESS;
 }
@@ -301,6 +306,7 @@ static int orted_close(const orte_process_name_t* peer,
                 }
                 ++cnt;
             }
+#if OPAL_PMIX_V1
             if (ORTE_IOF_STDDIAG & source_tag) {
                 if (NULL != proct->revstddiag) {
                     orte_iof_base_static_dump_output(proct->revstddiag);
@@ -308,6 +314,9 @@ static int orted_close(const orte_process_name_t* peer,
                 }
                 ++cnt;
             }
+#else
+            ++cnt;
+#endif
             /* if we closed them all, then remove this proc */
             if (4 == cnt) {
                 opal_list_remove_item(&mca_iof_orted_component.procs, &proct->super);
@@ -346,9 +355,11 @@ static int finalize(void)
         if (NULL != proct->revstderr) {
             orte_iof_base_static_dump_output(proct->revstderr);
         }
+#if OPAL_PMIX_V1
         if (NULL != proct->revstddiag) {
             orte_iof_base_static_dump_output(proct->revstddiag);
         }
+#endif
         OBJ_RELEASE(proct);
     }
     OBJ_DESTRUCT(&mca_iof_orted_component.procs);

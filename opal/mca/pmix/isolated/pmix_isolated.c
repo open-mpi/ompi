@@ -83,7 +83,6 @@ static const char *isolated_get_nspace(opal_jobid_t jobid);
 static void isolated_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_isolated_module = {
-    .name = "isolated",
     .init = isolated_init,
     .finalize = isolated_fini,
     .initialized = isolated_initialized,

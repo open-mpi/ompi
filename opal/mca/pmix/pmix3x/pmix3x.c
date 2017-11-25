@@ -72,7 +72,6 @@ static void pmix3x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
-    .name = "pmix3",
     /* client APIs */
     .init = pmix3x_client_init,
     .finalize = pmix3x_client_finalize,

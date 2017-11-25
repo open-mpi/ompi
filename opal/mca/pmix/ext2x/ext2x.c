@@ -72,7 +72,6 @@ static void ext2x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 const opal_pmix_base_module_t opal_pmix_ext2x_module = {
-    .name = "pmix2",
     /* client APIs */
     .init = ext2x_client_init,
     .finalize = ext2x_client_finalize,

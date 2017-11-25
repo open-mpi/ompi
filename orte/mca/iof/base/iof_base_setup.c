@@ -64,7 +64,6 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
-#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -120,13 +119,12 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
             return ORTE_ERR_SYS_LIMITS_PIPES;
         }
     }
-    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
-        if (pipe(opts->p_internal) < 0) {
-            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-            return ORTE_ERR_SYS_LIMITS_PIPES;
-        }
+#if OPAL_PMIX_V1
+    if (pipe(opts->p_internal) < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+        return ORTE_ERR_SYS_LIMITS_PIPES;
     }
-
+#endif
     return ORTE_SUCCESS;
 }
 
@@ -135,7 +133,9 @@ int
 orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
 {
     int ret;
+#if OPAL_PMIX_V1
     char *str;
+#endif
 
     if (opts->connect_stdin) {
         close(opts->p_stdin[1]);
@@ -144,9 +144,9 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
     if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
         close(opts->p_stderr[0]);
     }
-    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
-        close(opts->p_internal[0]);
-    }
+#if OPAL_PMIX_V1
+    close(opts->p_internal[0]);
+#endif
 
     if (opts->usepty) {
         /* disable echo */
@@ -220,20 +220,19 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         }
     }
 
-    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
-        if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
-            /* Set an environment variable that the new child process can use
-               to get the fd of the pipe connected to the INTERNAL IOF tag. */
-            asprintf(&str, "%d", opts->p_internal[1]);
-            if (NULL != str) {
-                opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
-                free(str);
-            }
+#if OPAL_PMIX_V1
+    if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
+        /* Set an environment variable that the new child process can use
+           to get the fd of the pipe connected to the INTERNAL IOF tag. */
+        asprintf(&str, "%d", opts->p_internal[1]);
+        if (NULL != str) {
+            opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
+            free(str);
         }
-        else if( orte_map_stddiag_to_stdout ) {
-            opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
-        }
+    } else if( orte_map_stddiag_to_stdout ) {
+        opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
     }
+#endif
 
     return ORTE_SUCCESS;
 }
@@ -270,13 +269,13 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
         }
     }
 
-    if (0 == strncmp(opal_pmix.name, "pmix1", 5)) {
-        ret = orte_iof.push(name, ORTE_IOF_STDDIAG, opts->p_internal[0]);
-        if(ORTE_SUCCESS != ret) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
+#if OPAL_PMIX_V1
+    ret = orte_iof.push(name, ORTE_IOF_STDDIAG, opts->p_internal[0]);
+    if(ORTE_SUCCESS != ret) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
     }
+#endif
 
     return ORTE_SUCCESS;
 }
@@ -372,12 +371,13 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
                                      orte_iof_base_write_handler);
             }
         }
-
+#if OPAL_PMIX_V1
         if (NULL != proct->revstddiag && NULL == proct->revstddiag->sink) {
             /* always tie the sink for stddiag to stderr */
             OBJ_RETAIN(proct->revstderr->sink);
             proct->revstddiag->sink = proct->revstderr->sink;
         }
+#endif
     }
 
     return ORTE_SUCCESS;

@@ -62,7 +62,6 @@ static const char *s2_get_nspace(opal_jobid_t jobid);
 static void s2_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_s2_module = {
-    .name = "s2",
     .init = s2_init,
     .finalize = s2_fini,
     .initialized = s2_initialized,

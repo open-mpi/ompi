@@ -871,7 +871,6 @@ typedef int (*opal_pmix_base_process_monitor_fn_t)(opal_list_t *monitor,
  * the standard public API data structure
  */
 typedef struct {
-    char *name;
     /* client APIs */
     opal_pmix_base_module_init_fn_t                         init;
     opal_pmix_base_module_fini_fn_t                         finalize;
