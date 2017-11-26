@@ -21,10 +21,12 @@
 [orte-rmaps-seq:alloc-error]
 There are not enough slots available in the system to satisfy the %d slots
 that were requested by the application:
+
   %s
 
-Either request fewer slots for your application, or make more slots available
-for use.
+Either request fewer slots for your application or make more slots
+available for use.  If oversubscription is intended, add
+--oversubscribe to the command line.
 #
 [orte-rmaps-seq:resource-not-found]
 The specified hostfile contained a node (%s) that is not in your
