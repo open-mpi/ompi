@@ -389,7 +389,7 @@ static int hnp_close(const orte_process_name_t* peer,
 {
     orte_iof_proc_t* proct;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
-    int cnt = 0;
+    int cnt;
 
     OPAL_LIST_FOREACH(proct, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, peer)) {
@@ -399,7 +399,8 @@ static int hnp_close(const orte_process_name_t* peer,
                 }
                 ++cnt;
             }
-            if (ORTE_IOF_STDOUT & source_tag) {
+            if ((ORTE_IOF_STDOUT & source_tag) ||
+                (ORTE_IOF_STDMERGE & source_tag)) {
                 if (NULL != proct->revstdout) {
                     orte_iof_base_static_dump_output(proct->revstdout);
                     OBJ_RELEASE(proct->revstdout);
