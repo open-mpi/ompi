@@ -292,7 +292,8 @@ static int orted_close(const orte_process_name_t* peer,
                 }
                 ++cnt;
             }
-            if (ORTE_IOF_STDOUT & source_tag) {
+            if ((ORTE_IOF_STDOUT & source_tag) ||
+                (ORTE_IOF_STDMERGE & source_tag)) {
                 if (NULL != proct->revstdout) {
                     orte_iof_base_static_dump_output(proct->revstdout);
                     OBJ_RELEASE(proct->revstdout);
