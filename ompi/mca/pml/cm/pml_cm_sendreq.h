@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -382,28 +382,31 @@ do {                                                                    \
  } while(0);
 
 
-#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                          \
-do {                                                                             \
-    ret = OMPI_SUCCESS;                                                          \
-    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);                   \
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {         \
-        MCA_PML_CM_HVY_SEND_REQUEST_BSEND_ALLOC(sendreq, ret);                   \
-    }                                                                            \
-    if (OMPI_SUCCESS == ret) {                                                   \
-        ret = OMPI_MTL_CALL(isend(ompi_mtl,                                      \
-                                  sendreq->req_send.req_base.req_comm,           \
-                                  sendreq->req_peer,                             \
-                                  sendreq->req_tag,                              \
-                                  &sendreq->req_send.req_base.req_convertor,     \
-                                  sendreq->req_send.req_send_mode,               \
-                                  sendreq->req_blocking,                         \
-                                  &sendreq->req_mtl));                           \
-        if(OMPI_SUCCESS == ret &&                                                \
-           sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {      \
-            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = 0;        \
-            ompi_request_complete(&(sendreq)->req_send.req_base.req_ompi, true); \
-        }                                                                        \
-    }                                                                            \
+#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                              \
+do {                                                                                 \
+    ret = OMPI_SUCCESS;                                                              \
+    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);                       \
+    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {             \
+        MCA_PML_CM_HVY_SEND_REQUEST_BSEND_ALLOC(sendreq, ret);                       \
+    }                                                                                \
+    if (OMPI_SUCCESS == ret) {                                                       \
+        ret = OMPI_MTL_CALL(isend(ompi_mtl,                                          \
+                                  sendreq->req_send.req_base.req_comm,               \
+                                  sendreq->req_peer,                                 \
+                                  sendreq->req_tag,                                  \
+                                  &sendreq->req_send.req_base.req_convertor,         \
+                                  sendreq->req_send.req_send_mode,                   \
+                                  sendreq->req_blocking,                             \
+                                  &sendreq->req_mtl));                               \
+        if(OMPI_SUCCESS == ret &&                                                    \
+           sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {          \
+            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = 0;            \
+            if(!REQUEST_COMPLETE(&sendreq->req_send.req_base.req_ompi)) {            \
+                /* request may have already been marked complete by the MTL */       \
+                ompi_request_complete(&(sendreq)->req_send.req_base.req_ompi, true); \
+            }                                                                        \
+        }                                                                            \
+    }                                                                                \
  } while (0)
 
 /*
@@ -423,7 +426,7 @@ do {                                                                            
     }                                                                              \
                                                                                    \
     if( !REQUEST_COMPLETE(&sendreq->req_send.req_base.req_ompi)) {                 \
-        /* Should only be called for long messages (maybe synchronous) */          \
+        /* the request may have already been marked complete by the MTL */         \
         ompi_request_complete(&(sendreq->req_send.req_base.req_ompi), true);       \
     }                                                                              \
     sendreq->req_send.req_base.req_pml_complete = true;                            \
