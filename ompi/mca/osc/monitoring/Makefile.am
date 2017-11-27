@@ -19,6 +19,8 @@ monitoring_sources  = \
 	osc_monitoring_module.h \
 	osc_monitoring_template.h
 
+AM_CPPFLAGS = $(osc_monitoring_portals4_CPPFLAGS)
+
 if MCA_BUILD_ompi_osc_monitoring_DSO
 component_noinst =
 component_install = mca_osc_monitoring.la
