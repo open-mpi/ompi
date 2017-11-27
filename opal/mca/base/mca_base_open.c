@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -48,7 +48,8 @@ char *mca_base_component_path = NULL;
 int mca_base_opened = 0;
 char *mca_base_system_default_path = NULL;
 char *mca_base_user_default_path = NULL;
-bool mca_base_component_show_load_errors = true;
+bool mca_base_component_show_load_errors =
+    (bool) OPAL_SHOW_LOAD_ERRORS_DEFAULT;
 bool mca_base_component_track_load_errors = false;
 bool mca_base_component_disable_dlopen = false;
 
@@ -102,7 +103,8 @@ int mca_base_open(void)
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     free(value);
 
-    mca_base_component_show_load_errors = true;
+    mca_base_component_show_load_errors =
+        (bool) OPAL_SHOW_LOAD_ERRORS_DEFAULT;
     var_id = mca_base_var_register("opal", "mca", "base", "component_show_load_errors",
                                    "Whether to show errors for components that failed to load or not",
                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,

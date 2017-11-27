@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -285,6 +285,34 @@ else
 fi
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_DLOPEN_SUPPORT, $OPAL_ENABLE_DLOPEN_SUPPORT,
     [Whether we want to enable dlopen support])
+
+
+#
+# Do we want to show component load error messages by default?
+#
+
+AC_MSG_CHECKING([for default value of mca_base_component_show_load_errors])
+AC_ARG_ENABLE([show-load-errors-by-default],
+    [AC_HELP_STRING([--enable-show-load-errors-by-default],
+                    [Set the default value for the MCA parameter
+                     mca_base_component_show_load_errors (but can be
+                     overridden at run time by the usual
+                     MCA-variable-setting mechansism).  This MCA variable
+                     controls whether warnings are displayed when an MCA
+                     component fails to load at run time due to an error.
+                     (default: enabled, meaning that
+                      mca_base_component_show_load_errors is enabled
+                      by default])])
+if test "$enable_show_load_errors_by_default" = "no" ; then
+    OPAL_SHOW_LOAD_ERRORS_DEFAULT=0
+    AC_MSG_RESULT([disabled by default])
+else
+    OPAL_SHOW_LOAD_ERRORS_DEFAULT=1
+    AC_MSG_RESULT([enabled by default])
+fi
+AC_DEFINE_UNQUOTED(OPAL_SHOW_LOAD_ERRORS_DEFAULT, $OPAL_SHOW_LOAD_ERRORS_DEFAULT,
+                   [Default value for mca_base_component_show_load_errors MCA variable])
+
 
 #
 # Heterogeneous support
