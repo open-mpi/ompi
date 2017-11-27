@@ -361,7 +361,9 @@ opal_net_addr_isipv4public(const struct sockaddr *addr)
 bool
 opal_net_addr_isipv6linklocal(const struct sockaddr *addr)
 {
+#if OPAL_ENABLE_IPV6
     struct sockaddr_in6 if_addr;
+#endif
 
     switch (addr->sa_family) {
 #if OPAL_ENABLE_IPV6

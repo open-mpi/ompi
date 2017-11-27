@@ -65,10 +65,10 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
 static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                                            int flavor, int *model);
-
+#if 0  // stale code?
 static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct opal_info_t *info);
 static int ompi_osc_rdma_get_info (struct ompi_win_t *win, struct opal_info_t **info_used);
-
+#endif
 static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_base_module_t **btl);
 
 static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *key, char *value);
@@ -1250,12 +1250,13 @@ static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *ke
     }
     /* enforce collectiveness... */
     module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
-/* 
+/*
  * Accept any value
  */
     return module->no_locks ? "true" : "false";
 }
 
+#if 0  // stale code?
 static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct opal_info_t *info)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
@@ -1302,5 +1303,5 @@ static int ompi_osc_rdma_get_info (struct ompi_win_t *win, struct opal_info_t **
 
     return OMPI_SUCCESS;
 }
-
+#endif
 OBJ_CLASS_INSTANCE(ompi_osc_rdma_aggregation_t, opal_list_item_t, NULL, NULL);

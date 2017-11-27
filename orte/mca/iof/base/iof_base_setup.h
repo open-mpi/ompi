@@ -35,7 +35,9 @@ struct orte_iof_base_io_conf_t {
     int p_stdin[2];
     int p_stdout[2];
     int p_stderr[2];
+#if OPAL_PMIX_V1
     int p_internal[2];
+#endif
 };
 typedef struct orte_iof_base_io_conf_t orte_iof_base_io_conf_t;
 
