@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +34,7 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mpiext/affinity/c/mpiext_affinity_c.h"
 
@@ -104,12 +105,12 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
         return OMPI_SUCCESS;
     }
 
-    if (NULL == orte_proc_applied_binding) {
+    if (NULL == ompi_proc_applied_binding) {
         ret = OPAL_ERR_NOT_BOUND;
     } else {
         ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
                                        opal_hwloc_topology,
-                                       orte_proc_applied_binding);
+                                       ompi_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
         strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
@@ -297,12 +298,12 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     }
 
     /* Find out what OMPI bound us to and prettyprint it */
-    if (NULL == orte_proc_applied_binding) {
+    if (NULL == ompi_proc_applied_binding) {
         ret = OPAL_ERR_NOT_BOUND;
     } else {
         ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
                                           opal_hwloc_topology,
-                                          orte_proc_applied_binding);
+                                          ompi_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
         strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);

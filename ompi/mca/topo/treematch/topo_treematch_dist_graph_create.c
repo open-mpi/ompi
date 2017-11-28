@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2011-2016 INRIA.  All rights reserved.
  * Copyright (c) 2012-2017 Bordeaux Polytechnic Institute
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -22,7 +22,7 @@
 #include "ompi_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/hwloc/hwloc-internal.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "ompi/mca/topo/treematch/topo_treematch.h"
 #include "ompi/mca/topo/treematch/treematch/treematch.h"
@@ -172,7 +172,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         OPAL_MODEX_RECV_VALUE(err, OPAL_PMIX_NODEID, &(proc->super.proc_name), &pval, OPAL_UINT32);
         if( OPAL_SUCCESS != err ) {
             opal_output(0, "Unable to extract peer %s nodeid from the modex.\n",
-                        OMPI_NAME_PRINT(&(proc->super)));
+                        OMPI_NAME_PRINT(&(proc->super.proc_name)));
             colors[i] = -1;
             continue;
         }

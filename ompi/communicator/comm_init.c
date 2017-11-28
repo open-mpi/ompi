@@ -158,7 +158,7 @@ int ompi_comm_init(void)
        in the most generic sense. This is used by OMPIO for deciding which
        ranks to use for aggregators
     */
-    opal_process_name_t wildcard = {ORTE_PROC_MY_NAME->jobid, OPAL_VPID_WILDCARD};
+    opal_process_name_t wildcard = {OMPI_PROC_MY_NAME->jobid, OPAL_VPID_WILDCARD};
     char *str=NULL;
     int rc;
 

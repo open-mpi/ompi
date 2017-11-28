@@ -67,13 +67,11 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define OMPI_NAME ORTE_NAME
 #define OMPI_PROCESS_NAME_HTON ORTE_PROCESS_NAME_HTON
 #define OMPI_PROCESS_NAME_NTOH ORTE_PROCESS_NAME_NTOH
-#define OMPI_RTE_MY_NODEID ORTE_PROC_MY_DAEMON->vpid
 
-/* database keys */
-#define OMPI_RTE_NODE_ID     ORTE_DB_DAEMON_VPID
-#define OMPI_RTE_HOST_ID     ORTE_DB_HOSTID
 #if OPAL_ENABLE_DEBUG
-static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * name);
+static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * name) {
+    return (orte_process_name_t *)name;
+}
 #else
 #define OMPI_CAST_RTE_NAME(a) ((orte_process_name_t*)(a))
 #endif
@@ -95,29 +93,10 @@ OMPI_DECLSPEC void __opal_attribute_noreturn__
 #define ompi_rte_finalize() orte_finalize()
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 
-typedef struct {
-    ompi_rte_component_t super;
-    opal_mutex_t lock;
-    opal_list_t modx_reqs;
-} ompi_rte_orte_component_t;
-
-typedef struct {
-    opal_list_item_t super;
-    opal_mutex_t lock;
-    opal_condition_t cond;
-    bool active;
-    orte_process_name_t peer;
-} ompi_orte_tracker_t;
-OBJ_CLASS_DECLARATION(ompi_orte_tracker_t);
-
-#if OPAL_ENABLE_DEBUG
-static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * name) {
-    return (orte_process_name_t *)name;
-}
-#endif
-
 /* check dynamics support */
 OMPI_DECLSPEC bool ompi_rte_connect_accept_support(const char *port);
+
+#define ompi_proc_applied_binding orte_proc_applied_binding
 
 END_C_DECLS
 

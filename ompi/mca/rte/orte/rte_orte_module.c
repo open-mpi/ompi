@@ -51,7 +51,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 
-extern ompi_rte_orte_component_t mca_rte_orte_component;
+extern ompi_rte_component_t mca_rte_orte_component;
 
 void ompi_rte_abort(int error_code, char *fmt, ...)
 {
