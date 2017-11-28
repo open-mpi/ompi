@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -130,6 +130,7 @@ typedef struct {
     pmix_spawn_cbfunc_t spwncbfunc;
     pmix_info_cbfunc_t infocbfunc;
     pmix_tool_connection_cbfunc_t toolcbfunc;
+    pmix_connect_cbfunc_t cnctcbfunc;
     void *cbdata;
     opal_pmix_release_cbfunc_t odmdxfunc;
     void *ocbdata;
