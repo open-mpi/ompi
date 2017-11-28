@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -43,8 +43,6 @@ static const char FUNC_NAME[] = "MPI_Comm_get_errhandler";
 
 int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
-    MPI_Errhandler tmp;
-
     /* Error checking */
     MEMCHECKER(
         memchecker_comm(comm);
@@ -65,16 +63,12 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
     }
   }
 
-  /* On 64 bits environments we have to make sure the reading of the
-     error_handler became atomic. */
-  do {
-      tmp = comm->error_handler;
-  } while (!OPAL_ATOMIC_BOOL_CMPSET_PTR(&(comm->error_handler), tmp, tmp));
-
+  opal_mutex_lock (&comm->c_lock);
   /* Retain the errhandler, corresponding to object refcount decrease
      in errhandler_free.c. */
-  *errhandler = tmp;
-  OBJ_RETAIN(tmp);
+  OBJ_RETAIN(comm->error_handler);
+  *errhandler = comm->error_handler;
+  opal_mutex_unlock (&comm->c_lock);
 
   /* All done */
 
