@@ -82,11 +82,11 @@ static void *thread_main(void *arg)
     /* thread tests */
 
     for (i = 0; i < nreps; i++) {
-        opal_atomic_add_32(&val32, 5);
+        opal_atomic_add_fetch_32(&val32, 5);
 #if OPAL_HAVE_ATOMIC_MATH_64
-        opal_atomic_add_64(&val64, 5);
+        opal_atomic_add_fetch_64(&val64, 5);
 #endif
-        opal_atomic_add(&valint, 5);
+        opal_atomic_add_fetch(&valint, 5);
     }
 
     return (void *) (unsigned long) (rank + 1000);
@@ -272,21 +272,21 @@ int main(int argc, char *argv[])
     /* -- add_32 tests -- */
 
     val32 = 42;
-    assert(opal_atomic_add_32(&val32, 5) == (42 + 5));
+    assert(opal_atomic_add_fetch_32(&val32, 5) == (42 + 5));
     opal_atomic_rmb();
     assert((42 + 5) == val32);
 
     /* -- add_64 tests -- */
 #if OPAL_HAVE_ATOMIC_MATH_64
     val64 = 42;
-    assert(opal_atomic_add_64(&val64, 5) == (42 + 5));
+    assert(opal_atomic_add_fetch_64(&val64, 5) == (42 + 5));
     opal_atomic_rmb();
     assert((42 + 5) == val64);
 #endif
     /* -- add_int tests -- */
 
     valint = 42;
-    opal_atomic_add(&valint, 5);
+    opal_atomic_add_fetch(&valint, 5);
     opal_atomic_rmb();
     assert((42 + 5) == valint);
 

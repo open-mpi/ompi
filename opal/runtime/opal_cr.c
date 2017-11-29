@@ -159,14 +159,14 @@ static const uint32_t ProcInc    = 0x2;
 #define OPAL_CR_LOCK()                                            \
  {                                                                \
     opal_cr_thread_in_library = true;                             \
-    OPAL_THREAD_ADD32(&opal_cr_thread_num_in_library, ProcInc);   \
+    OPAL_THREAD_ADD_FETCH32(&opal_cr_thread_num_in_library, ProcInc);   \
     while( (opal_cr_thread_num_in_library & ThreadFlag ) != 0 ) { \
       sched_yield();                                              \
     }                                                             \
  }
 #define OPAL_CR_UNLOCK()                                         \
  {                                                               \
-    OPAL_THREAD_ADD32(&opal_cr_thread_num_in_library, -ProcInc); \
+    OPAL_THREAD_ADD_FETCH32(&opal_cr_thread_num_in_library, -ProcInc); \
     if( opal_cr_thread_num_in_library <= 0 ) {                   \
       opal_cr_thread_in_library = false;                         \
     }                                                            \
@@ -184,7 +184,7 @@ static const uint32_t ProcInc    = 0x2;
  }
 #define OPAL_CR_THREAD_UNLOCK()                                     \
  {                                                                  \
-    OPAL_THREAD_ADD32(&opal_cr_thread_num_in_library, -ThreadFlag); \
+    OPAL_THREAD_ADD_FETCH32(&opal_cr_thread_num_in_library, -ThreadFlag); \
  }
 #endif
 

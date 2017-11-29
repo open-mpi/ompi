@@ -99,7 +99,7 @@ ompi_osc_portals4_complete(struct ompi_win_t *win)
                             PTL_SUM,
                             PTL_INT32_T);
             if (ret != OMPI_SUCCESS) return ret;
-            OPAL_THREAD_ADD64(&module->opcount, 1);
+            OPAL_THREAD_ADD_FETCH64(&module->opcount, 1);
         }
 
         ret = ompi_osc_portals4_complete_all(module);
@@ -144,7 +144,7 @@ ompi_osc_portals4_post(struct ompi_group_t *group,
                             PTL_SUM,
                             PTL_INT32_T);
             if (ret != OMPI_SUCCESS) return ret;
-            OPAL_THREAD_ADD64(&module->opcount, 1);
+            OPAL_THREAD_ADD_FETCH64(&module->opcount, 1);
         }
     } else {
         module->post_group = NULL;

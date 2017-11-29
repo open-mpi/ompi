@@ -131,7 +131,7 @@ attach_and_init(opal_shmem_ds_t *shmem_bufp,
     }
 
     /* increment the number of processes that are attached to the segment. */
-    (void)opal_atomic_add_size_t(&map->module_seg->seg_num_procs_inited, 1);
+    (void)opal_atomic_add_fetch_size_t(&map->module_seg->seg_num_procs_inited, 1);
 
     /* commit the changes before we return */
     opal_atomic_wmb();

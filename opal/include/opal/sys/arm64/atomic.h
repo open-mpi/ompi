@@ -293,7 +293,7 @@ static inline int opal_atomic_sc_64 (volatile int64_t *addr, int64_t newval)
 }
 
 #define OPAL_ASM_MAKE_ATOMIC(type, bits, name, inst, reg)                   \
-    static inline type opal_atomic_ ## name ## _ ## bits (volatile type *addr, type value) \
+    static inline type opal_atomic_ ## name ## _fetch_ ## bits (volatile type *addr, type value) \
     {                                                                   \
         type newval;                                                    \
         int32_t tmp;                                                    \

@@ -96,7 +96,7 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
 
 #define MCA_BTL_OPENIB_RDMA_MOVE_INDEX(HEAD, OLD_HEAD, SEQ)             \
     do {                                                                \
-        (SEQ) = OPAL_THREAD_ADD32(&(HEAD), 1) - 1;                      \
+        (SEQ) = OPAL_THREAD_ADD_FETCH32(&(HEAD), 1) - 1;                      \
         (OLD_HEAD) = (SEQ) % mca_btl_openib_component.eager_rdma_num;   \
     } while(0)
 
@@ -108,7 +108,7 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
 
 #define MCA_BTL_OPENIB_RDMA_MOVE_INDEX(HEAD, OLD_HEAD)                  \
     do {                                                                \
-        (OLD_HEAD) = (OPAL_THREAD_ADD32(&(HEAD), 1) - 1) % mca_btl_openib_component.eager_rdma_num; \
+        (OLD_HEAD) = (OPAL_THREAD_ADD_FETCH32(&(HEAD), 1) - 1) % mca_btl_openib_component.eager_rdma_num; \
     } while(0)
 
 #endif

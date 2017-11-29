@@ -261,14 +261,14 @@ static inline bool mca_btl_vader_check_fboxes (void)
 
 static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mca_btl_vader_hdr_t *hdr)
 {
-    if (OPAL_UNLIKELY(NULL == ep->fbox_out.buffer && mca_btl_vader_component.fbox_threshold == OPAL_THREAD_ADD_SIZE_T (&ep->send_count, 1))) {
+    if (OPAL_UNLIKELY(NULL == ep->fbox_out.buffer && mca_btl_vader_component.fbox_threshold == OPAL_THREAD_ADD_FETCH_SIZE_T (&ep->send_count, 1))) {
         /* protect access to mca_btl_vader_component.segment_offset */
         OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
 
         if (mca_btl_vader_component.segment_size >= mca_btl_vader_component.segment_offset + mca_btl_vader_component.fbox_size &&
             mca_btl_vader_component.fbox_max > mca_btl_vader_component.fbox_count) {
             /* verify the remote side will accept another fbox */
-            if (0 <= opal_atomic_add_32 (&ep->fifo->fbox_available, -1)) {
+            if (0 <= opal_atomic_add_fetch_32 (&ep->fifo->fbox_available, -1)) {
                 void *fbox_base = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
                 mca_btl_vader_component.segment_offset += mca_btl_vader_component.fbox_size;
 
@@ -280,7 +280,7 @@ static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mc
                 hdr->fbox_base = virtual2relative((char *) ep->fbox_out.buffer);
                 ++mca_btl_vader_component.fbox_count;
             } else {
-                opal_atomic_add_32 (&ep->fifo->fbox_available, 1);
+                opal_atomic_add_fetch_32 (&ep->fifo->fbox_available, 1);
             }
 
             opal_atomic_wmb ();

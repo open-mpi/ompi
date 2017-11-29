@@ -35,7 +35,7 @@ static inline void ompi_osc_rdma_cleanup_rdma (ompi_osc_rdma_sync_t *sync, ompi_
     }
 
     if (request) {
-        (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, -1);
+        (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1);
     }
 
     ompi_osc_rdma_sync_rdma_dec (sync);

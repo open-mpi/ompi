@@ -543,7 +543,7 @@ int mca_btl_ugni_progress_datagram (mca_btl_ugni_device_t *device)
         BTL_VERBOSE(("directed datagram complete for endpoint %p", (void *) ep));
 
         ep->dg_posted = false;
-        (void) opal_atomic_add_32 (&ugni_module->active_datagrams, -1);
+        (void) opal_atomic_add_fetch_32 (&ugni_module->active_datagrams, -1);
     }
 
     (void) mca_btl_ugni_ep_connect_progress (ep);

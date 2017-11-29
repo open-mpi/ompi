@@ -104,27 +104,27 @@ static inline int32_t opal_atomic_swap_32 (volatile int32_t *addr, int32_t newva
     return oldval;
 }
 
-static inline int32_t opal_atomic_add_32(volatile int32_t *addr, int32_t delta)
+static inline int32_t opal_atomic_add_fetch_32(volatile int32_t *addr, int32_t delta)
 {
     return __atomic_add_fetch (addr, delta, __ATOMIC_RELAXED);
 }
 
-static inline int32_t opal_atomic_and_32(volatile int32_t *addr, int32_t value)
+static inline int32_t opal_atomic_and_fetch_32(volatile int32_t *addr, int32_t value)
 {
     return __atomic_and_fetch (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int32_t opal_atomic_or_32(volatile int32_t *addr, int32_t value)
+static inline int32_t opal_atomic_or_fetch_32(volatile int32_t *addr, int32_t value)
 {
     return __atomic_or_fetch (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int32_t opal_atomic_xor_32(volatile int32_t *addr, int32_t value)
+static inline int32_t opal_atomic_xor_fetch_32(volatile int32_t *addr, int32_t value)
 {
     return __atomic_xor_fetch (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
+static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t *addr, int32_t delta)
 {
     return __atomic_sub_fetch (addr, delta, __ATOMIC_RELAXED);
 }
@@ -152,27 +152,27 @@ static inline int64_t opal_atomic_swap_64 (volatile int64_t *addr, int64_t newva
     return oldval;
 }
 
-static inline int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
+static inline int64_t opal_atomic_add_fetch_64(volatile int64_t *addr, int64_t delta)
 {
     return __atomic_add_fetch (addr, delta, __ATOMIC_RELAXED);
 }
 
-static inline int64_t opal_atomic_and_64(volatile int64_t *addr, int64_t value)
+static inline int64_t opal_atomic_and_fetch_64(volatile int64_t *addr, int64_t value)
 {
     return __atomic_and_fetch (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int64_t opal_atomic_or_64(volatile int64_t *addr, int64_t value)
+static inline int64_t opal_atomic_or_fetch_64(volatile int64_t *addr, int64_t value)
 {
     return __atomic_or_fetch (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int64_t opal_atomic_xor_64(volatile int64_t *addr, int64_t value)
+static inline int64_t opal_atomic_xor_fetch_64(volatile int64_t *addr, int64_t value)
 {
     return __atomic_xor_fetch (addr, value, __ATOMIC_RELAXED);
 }
 
-static inline int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
+static inline int64_t opal_atomic_sub_fetch_64(volatile int64_t *addr, int64_t delta)
 {
     return __atomic_sub_fetch (addr, delta, __ATOMIC_RELAXED);
 }

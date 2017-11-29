@@ -51,7 +51,7 @@ static inline int ompi_osc_pt2pt_frag_finish (ompi_osc_pt2pt_module_t *module,
                                               ompi_osc_pt2pt_frag_t* buffer)
 {
     opal_atomic_wmb ();
-    if (0 == OPAL_THREAD_ADD32(&buffer->pending, -1)) {
+    if (0 == OPAL_THREAD_ADD_FETCH32(&buffer->pending, -1)) {
         opal_atomic_mb ();
         return ompi_osc_pt2pt_frag_start(module, buffer);
     }
@@ -142,11 +142,11 @@ static inline int _ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, i
             curr->pending_long_sends = long_send;
             peer->active_frag = curr;
         } else {
-            OPAL_THREAD_ADD32(&curr->header->num_ops, 1);
+            OPAL_THREAD_ADD_FETCH32(&curr->header->num_ops, 1);
             curr->pending_long_sends += long_send;
         }
 
-        OPAL_THREAD_ADD32(&curr->pending, 1);
+        OPAL_THREAD_ADD_FETCH32(&curr->pending, 1);
     } else {
         curr = ompi_osc_pt2pt_frag_alloc_non_buffered (module, peer, request_len);
         if (OPAL_UNLIKELY(NULL == curr)) {

@@ -347,7 +347,7 @@ start_recover(void)
     int64_t epoch_counter;
 
     ompi_mtl_portals4.flowctl.flowctl_active = true;
-    epoch_counter = opal_atomic_add_64(&ompi_mtl_portals4.flowctl.epoch_counter, 1);
+    epoch_counter = opal_atomic_add_fetch_64(&ompi_mtl_portals4.flowctl.epoch_counter, 1);
 
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Entering flowctl_start_recover %ld",

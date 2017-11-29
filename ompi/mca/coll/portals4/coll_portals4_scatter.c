@@ -399,7 +399,7 @@ ompi_coll_portals4_scatter_intra_linear_top(const void *sbuf, int scount, struct
 
     i_am_root = (request->u.scatter.my_rank == request->u.scatter.root_rank);
 
-    request->u.scatter.coll_count = opal_atomic_add_size_t(&portals4_module->coll_count, 1);
+    request->u.scatter.coll_count = opal_atomic_add_fetch_size_t(&portals4_module->coll_count, 1);
 
     ret = setup_scatter_buffers_linear(comm, request, portals4_module);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }

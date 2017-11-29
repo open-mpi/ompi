@@ -236,8 +236,8 @@ void mca_common_monitoring_coll_o2a(size_t size, mca_monitoring_coll_data_t*data
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
-    opal_atomic_add_size_t(&data->o2a_size, size);
-    opal_atomic_add_size_t(&data->o2a_count, 1);
+    opal_atomic_add_fetch_size_t(&data->o2a_size, size);
+    opal_atomic_add_fetch_size_t(&data->o2a_count, 1);
 }
 
 int mca_common_monitoring_coll_get_o2a_count(const struct mca_base_pvar_t *pvar,
@@ -277,8 +277,8 @@ void mca_common_monitoring_coll_a2o(size_t size, mca_monitoring_coll_data_t*data
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
-    opal_atomic_add_size_t(&data->a2o_size, size);
-    opal_atomic_add_size_t(&data->a2o_count, 1);
+    opal_atomic_add_fetch_size_t(&data->a2o_size, size);
+    opal_atomic_add_fetch_size_t(&data->a2o_count, 1);
 }
 
 int mca_common_monitoring_coll_get_a2o_count(const struct mca_base_pvar_t *pvar,
@@ -318,8 +318,8 @@ void mca_common_monitoring_coll_a2a(size_t size, mca_monitoring_coll_data_t*data
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
-    opal_atomic_add_size_t(&data->a2a_size, size);
-    opal_atomic_add_size_t(&data->a2a_count, 1);
+    opal_atomic_add_fetch_size_t(&data->a2a_size, size);
+    opal_atomic_add_fetch_size_t(&data->a2a_count, 1);
 }
 
 int mca_common_monitoring_coll_get_a2a_count(const struct mca_base_pvar_t *pvar,

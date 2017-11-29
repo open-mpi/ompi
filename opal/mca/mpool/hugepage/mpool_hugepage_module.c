@@ -131,7 +131,7 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
     if (huge_page->path) {
         int32_t count;
 
-        count = opal_atomic_add_32 (&huge_page->count, 1);
+        count = opal_atomic_add_fetch_32 (&huge_page->count, 1);
 
         rc = asprintf (&path, "%s/hugepage.openmpi.%d.%d", huge_page->path,
                        getpid (), count);
@@ -183,7 +183,7 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
 
     opal_mutex_lock (&hugepage_module->lock);
     opal_rb_tree_insert (&hugepage_module->allocation_tree, base, (void *) (intptr_t) size);
-    opal_atomic_add (&mca_mpool_hugepage_component.bytes_allocated, (int64_t) size);
+    opal_atomic_add_fetch (&mca_mpool_hugepage_component.bytes_allocated, (int64_t) size);
     opal_mutex_unlock (&hugepage_module->lock);
 
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_mpool_base_framework.framework_verbose,
@@ -207,7 +207,7 @@ void mca_mpool_hugepage_seg_free (void *ctx, void *addr)
         OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_mpool_base_framework.framework_verbose,
                              "freeing segment %p of size %lu bytes", addr, size));
         munmap (addr, size);
-        opal_atomic_add (&mca_mpool_hugepage_component.bytes_allocated, -(int64_t) size);
+        opal_atomic_add_fetch (&mca_mpool_hugepage_component.bytes_allocated, -(int64_t) size);
     }
 
     opal_mutex_unlock (&hugepage_module->lock);

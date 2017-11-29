@@ -61,7 +61,7 @@
     static inline void*                                                 \
     ompi_osc_monitoring_## template ##_set_template (ompi_osc_base_module_t*module) \
     {                                                                   \
-        if( 1 == opal_atomic_add_32(&(OMPI_OSC_MONITORING_MODULE_INIT(template)), 1) ) { \
+        if( 1 == opal_atomic_add_fetch_32(&(OMPI_OSC_MONITORING_MODULE_INIT(template)), 1) ) { \
 	    /* Saves the original module functions in			\
 	     * ompi_osc_monitoring_module_## template ##_template	\
 	     */								\

@@ -217,7 +217,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
                 subreq->parent_request = request;
 
                 if (request) {
-                    (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, 1);
+                    (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, 1);
                 }
             } else if (!alloc_reqs) {
                 subreq = request;
@@ -232,7 +232,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 if (OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE != ret)) {
                     if (request) {
-                        (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, -1);
+                        (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1);
                     }
 
                     if (alloc_reqs) {
@@ -266,7 +266,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
             ompi_osc_rdma_request_complete (request, OMPI_SUCCESS);
         }
 
-        (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, -1);
+        (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1);
     }
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "finished scheduling rdma on non-contiguous datatype(s)");
@@ -551,7 +551,7 @@ static int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_p
 
     /* increment the outstanding request counter in the request object */
     if (request) {
-        (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, 1);
+        (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, 1);
         cbcontext = (void *) ((intptr_t) request | 1);
         request->sync = sync;
     } else {
@@ -643,12 +643,12 @@ static int ompi_osc_rdma_get_partial (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_
     subreq->internal = true;
     subreq->type = OMPI_OSC_RDMA_TYPE_RDMA;
     subreq->parent_request = request;
-    (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, 1);
+    (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, 1);
 
     ret = ompi_osc_rdma_get_contig (sync, peer, source_address, source_handle, target_buffer, size, subreq);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OMPI_OSC_RDMA_REQUEST_RETURN(subreq);
-        (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, -1);
+        (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1);
     }
 
     return ret;

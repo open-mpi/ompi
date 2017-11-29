@@ -53,14 +53,14 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
     int32_t frag_count;
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    while (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
-        OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+    while (OPAL_UNLIKELY(OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
+        OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         ompi_mtl_portals4_progress();
     }
 #endif
 
     frag_count = (length + ompi_mtl_portals4.max_msg_size_mtl - 1) / ompi_mtl_portals4.max_msg_size_mtl;
-    ret = OPAL_THREAD_ADD32(&(request->pending_reply), frag_count);
+    ret = OPAL_THREAD_ADD_FETCH32(&(request->pending_reply), frag_count);
 
     for (i = 0 ; i < frag_count ; i++) {
         opal_free_list_item_t *tmp;
@@ -385,14 +385,14 @@ ompi_mtl_portals4_rndv_get_frag_progress(ptl_event_t *ev,
     opal_free_list_return (&ompi_mtl_portals4.fl_rndv_get_frag,
                            &rndv_get_frag->super);
 
-    ret = OPAL_THREAD_ADD32(&(ptl_request->pending_reply), -1);
+    ret = OPAL_THREAD_ADD_FETCH32(&(ptl_request->pending_reply), -1);
     if (ret > 0) {
         return OMPI_SUCCESS;
     }
     assert(ptl_request->pending_reply == 0);
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+    OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
 #endif
 
     /* make sure the data is in the right place.  Use _ucount for
@@ -468,7 +468,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.type = portals4_req_recv;
     ptl_request->super.event_callback = ompi_mtl_portals4_recv_progress;
 #if OPAL_ENABLE_DEBUG
-    ptl_request->opcount = OPAL_THREAD_ADD64((int64_t*) &ompi_mtl_portals4.recv_opcount, 1);
+    ptl_request->opcount = OPAL_THREAD_ADD_FETCH64((int64_t*) &ompi_mtl_portals4.recv_opcount, 1);
     ptl_request->hdr_data = 0;
 #endif
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
@@ -549,7 +549,7 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
     }
 
 #if OPAL_ENABLE_DEBUG
-    ptl_request->opcount = OPAL_THREAD_ADD64((int64_t*) &ompi_mtl_portals4.recv_opcount, 1);
+    ptl_request->opcount = OPAL_THREAD_ADD_FETCH64((int64_t*) &ompi_mtl_portals4.recv_opcount, 1);
     ptl_request->hdr_data = 0;
 #endif
     ptl_request->super.type = portals4_req_recv;

@@ -183,7 +183,7 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
                          incoming_reqs));
 
     /* set our complete condition for incoming requests */
-    OPAL_THREAD_ADD32(&module->active_incoming_frag_count, -incoming_reqs);
+    OPAL_THREAD_ADD_FETCH32(&module->active_incoming_frag_count, -incoming_reqs);
 
     /* wait for completion */
     while (module->outgoing_frag_count < 0 || module->active_incoming_frag_count < 0) {
@@ -272,7 +272,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                 OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                      "found unexpected post from %d",
                                      peer->rank));
-                OPAL_THREAD_ADD32 (&sync->sync_expected, -1);
+                OPAL_THREAD_ADD_FETCH32 (&sync->sync_expected, -1);
                 ompi_osc_pt2pt_peer_set_unex (peer, false);
             }
         }
@@ -574,12 +574,12 @@ void osc_pt2pt_incoming_complete (ompi_osc_pt2pt_module_t *module, int source, i
                          frag_count, module->active_incoming_frag_count, module->num_complete_msgs));
 
     /* the current fragment is not part of the frag_count so we need to add it here */
-    OPAL_THREAD_ADD32(&module->active_incoming_frag_count, -frag_count);
+    OPAL_THREAD_ADD_FETCH32(&module->active_incoming_frag_count, -frag_count);
 
     /* make sure the signal count is written before changing the complete message count */
     opal_atomic_wmb ();
 
-    if (0 == OPAL_THREAD_ADD32(&module->num_complete_msgs, 1)) {
+    if (0 == OPAL_THREAD_ADD_FETCH32(&module->num_complete_msgs, 1)) {
         OPAL_THREAD_LOCK(&module->lock);
         opal_condition_broadcast (&module->cond);
         OPAL_THREAD_UNLOCK(&module->lock);

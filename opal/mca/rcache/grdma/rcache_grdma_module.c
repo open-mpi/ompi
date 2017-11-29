@@ -232,7 +232,7 @@ static int mca_rcache_grdma_check_cached (mca_rcache_base_registration_t *grdma_
 
         /* This segment fits fully within an existing segment. */
         rcache_grdma->stat_cache_hit++;
-        int32_t ref_cnt = opal_atomic_add_32 (&grdma_reg->ref_count, 1);
+        int32_t ref_cnt = opal_atomic_add_fetch_32 (&grdma_reg->ref_count, 1);
         OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
                              "returning existing registration %p. references %d", (void *) grdma_reg, ref_cnt));
         (void)ref_cnt;
@@ -296,7 +296,7 @@ static int mca_rcache_grdma_register (mca_rcache_base_module_t *rcache, void *ad
         /* get updated access flags */
         access_flags = find_args.access_flags;
 
-        OPAL_THREAD_ADD32((volatile int32_t *) &rcache_grdma->stat_cache_miss, 1);
+        OPAL_THREAD_ADD_FETCH32((volatile int32_t *) &rcache_grdma->stat_cache_miss, 1);
     }
 
     item = opal_free_list_get_mt (&rcache_grdma->reg_list);
@@ -380,7 +380,7 @@ static int mca_rcache_grdma_find (mca_rcache_base_module_t *rcache, void *addr,
                                   (opal_list_item_t*)(*reg));
         }
         rcache_grdma->stat_cache_found++;
-        opal_atomic_add_32 (&(*reg)->ref_count, 1);
+        opal_atomic_add_fetch_32 (&(*reg)->ref_count, 1);
     } else {
         rcache_grdma->stat_cache_notfound++;
     }
@@ -398,7 +398,7 @@ static int mca_rcache_grdma_deregister (mca_rcache_base_module_t *rcache,
     int rc;
 
     opal_mutex_lock (&rcache_grdma->cache->vma_module->vma_lock);
-    ref_count = opal_atomic_add_32 (&reg->ref_count, -1);
+    ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
 
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
                          "returning registration %p, remaining references %d", (void *) reg, ref_count));

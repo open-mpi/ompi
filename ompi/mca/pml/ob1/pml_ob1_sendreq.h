@@ -76,12 +76,12 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
 
 static inline bool lock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD32(&sendreq->req_lock,  1) == 1;
+    return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock,  1) == 1;
 }
 
 static inline bool unlock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD32(&sendreq->req_lock, -1) == 0;
+    return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock, -1) == 0;
 }
 
 static inline void
@@ -485,7 +485,7 @@ mca_pml_ob1_send_request_start( mca_pml_ob1_send_request_t* sendreq )
         return OMPI_ERR_UNREACH;
     }
 
-    seqn = OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
+    seqn = OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
 
     return mca_pml_ob1_send_request_start_seq (sendreq, endpoint, seqn);
 }

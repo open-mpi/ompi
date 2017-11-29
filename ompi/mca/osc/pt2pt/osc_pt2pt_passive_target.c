@@ -64,7 +64,7 @@ static inline int ompi_osc_pt2pt_lock_self (ompi_osc_pt2pt_module_t *module, omp
 
     assert (lock->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK);
 
-    (void) OPAL_THREAD_ADD32(&lock->sync_expected, 1);
+    (void) OPAL_THREAD_ADD_FETCH32(&lock->sync_expected, 1);
 
     acquired = ompi_osc_pt2pt_lock_try_acquire (module, my_rank, lock_type, (uint64_t) (uintptr_t) lock);
     if (!acquired) {
@@ -91,7 +91,7 @@ static inline void ompi_osc_pt2pt_unlock_self (ompi_osc_pt2pt_module_t *module, 
     ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, my_rank);
     int lock_type = lock->sync.lock.type;
 
-    (void) OPAL_THREAD_ADD32(&lock->sync_expected, 1);
+    (void) OPAL_THREAD_ADD_FETCH32(&lock->sync_expected, 1);
 
     assert (lock->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK);
 
@@ -99,9 +99,9 @@ static inline void ompi_osc_pt2pt_unlock_self (ompi_osc_pt2pt_module_t *module, 
                          "ompi_osc_pt2pt_unlock_self: unlocking myself. lock state = %d", module->lock_status));
 
     if (MPI_LOCK_EXCLUSIVE == lock_type) {
-        OPAL_THREAD_ADD32(&module->lock_status, 1);
+        OPAL_THREAD_ADD_FETCH32(&module->lock_status, 1);
         ompi_osc_pt2pt_activate_next_lock (module);
-    } else if (0 == OPAL_THREAD_ADD32(&module->lock_status, -1)) {
+    } else if (0 == OPAL_THREAD_ADD_FETCH32(&module->lock_status, -1)) {
         ompi_osc_pt2pt_activate_next_lock (module);
     }
 
@@ -128,7 +128,7 @@ int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, omp
         return OMPI_SUCCESS;
     }
 
-    (void) OPAL_THREAD_ADD32(&lock->sync_expected, 1);
+    (void) OPAL_THREAD_ADD_FETCH32(&lock->sync_expected, 1);
 
     assert (lock->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK);
 
@@ -145,7 +145,7 @@ int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, omp
 
     ret = ompi_osc_pt2pt_control_send_unbuffered (module, target, &lock_req, sizeof (lock_req));
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        OPAL_THREAD_ADD32(&lock->sync_expected, -1);
+        OPAL_THREAD_ADD_FETCH32(&lock->sync_expected, -1);
     } else {
         ompi_osc_pt2pt_peer_set_locked (peer, true);
     }
@@ -163,7 +163,7 @@ static inline int ompi_osc_pt2pt_unlock_remote (ompi_osc_pt2pt_module_t *module,
     ompi_osc_pt2pt_header_unlock_t unlock_req;
     int ret;
 
-    (void) OPAL_THREAD_ADD32(&lock->sync_expected, 1);
+    (void) OPAL_THREAD_ADD_FETCH32(&lock->sync_expected, 1);
 
     assert (lock->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK);
 
@@ -207,7 +207,7 @@ static inline int ompi_osc_pt2pt_flush_remote (ompi_osc_pt2pt_module_t *module, 
     int32_t frag_count = opal_atomic_swap_32 ((int32_t *) module->epoch_outgoing_frag_count + target, -1);
     int ret;
 
-    (void) OPAL_THREAD_ADD32(&lock->sync_expected, 1);
+    (void) OPAL_THREAD_ADD_FETCH32(&lock->sync_expected, 1);
 
     assert (lock->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK);
 
@@ -908,9 +908,9 @@ int ompi_osc_pt2pt_process_unlock (ompi_osc_pt2pt_module_t *module, int source,
     }
 
     if (-1 == module->lock_status) {
-        OPAL_THREAD_ADD32(&module->lock_status, 1);
+        OPAL_THREAD_ADD_FETCH32(&module->lock_status, 1);
         ompi_osc_pt2pt_activate_next_lock (module);
-    } else if (0 == OPAL_THREAD_ADD32(&module->lock_status, -1)) {
+    } else if (0 == OPAL_THREAD_ADD_FETCH32(&module->lock_status, -1)) {
         ompi_osc_pt2pt_activate_next_lock (module);
     }
 

@@ -48,7 +48,7 @@ static int request_complete (struct ompi_request_t *request)
 {
     ompi_osc_rdma_request_t *parent_request = ((ompi_osc_rdma_request_t *) request)->parent_request;
 
-    if (parent_request && 0 == OPAL_THREAD_ADD32 (&parent_request->outstanding_requests, -1)) {
+    if (parent_request && 0 == OPAL_THREAD_ADD_FETCH32 (&parent_request->outstanding_requests, -1)) {
         ompi_osc_rdma_request_complete (parent_request, OMPI_SUCCESS);
     }
 

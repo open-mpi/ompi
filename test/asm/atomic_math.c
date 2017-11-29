@@ -44,11 +44,11 @@ static void* atomic_math_test(void* arg)
     int i;
 
     for (i = 0 ; i < count ; ++i) {
-        (void)opal_atomic_add_32(&val32, 5);
+        (void)opal_atomic_add_fetch_32(&val32, 5);
 #if OPAL_HAVE_ATOMIC_MATH_64
-        (void)opal_atomic_add_64(&val64, 6);
+        (void)opal_atomic_add_fetch_64(&val64, 6);
 #endif
-        (void)opal_atomic_add(&valint, 4);
+        (void)opal_atomic_add_fetch(&valint, 4);
     }
 
     return NULL;
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
     if (ret == 77) return ret;
     opal_atomic_mb();
     if (val32 != TEST_REPS * num_threads * 5) {
-        printf("opal_atomic_add32 failed.  Expected %d, got %d.\n",
+        printf("opal_atomic_add_fetch32 failed.  Expected %d, got %d.\n",
                TEST_REPS * num_threads * 5, val32);
         ret = 1;
     }
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
     if (val64 != TEST_REPS * num_threads * 6) {
         /* Safe to case to (int) here because we know it's going to be
            a small value */
-        printf("opal_atomic_add32 failed.  Expected %d, got %d.\n",
+        printf("opal_atomic_add_fetch32 failed.  Expected %d, got %d.\n",
                TEST_REPS * num_threads * 6, (int) val64);
         ret = 1;
     }
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
     printf("      * skipping 64 bit tests\n");
 #endif
     if (valint != TEST_REPS * num_threads * 4) {
-        printf("opal_atomic_add32 failed.  Expected %d, got %d.\n",
+        printf("opal_atomic_add_fetch32 failed.  Expected %d, got %d.\n",
                TEST_REPS * num_threads * 4, valint);
         ret = 1;
     }

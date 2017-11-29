@@ -445,7 +445,7 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
          * protocol has req_state == 0 and as such should not be
          * decremented.
          */
-        OPAL_THREAD_ADD32(&sendreq->req_state, -1);
+        OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
     }
 
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */

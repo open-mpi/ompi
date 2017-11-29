@@ -636,7 +636,7 @@ int mca_btl_smcuda_add_procs(
     /* Sync with other local procs. Force the FIFO initialization to always
      * happens before the readers access it.
      */
-    (void)opal_atomic_add_32(&mca_btl_smcuda_component.sm_seg->module_seg->seg_inited, 1);
+    (void)opal_atomic_add_fetch_32(&mca_btl_smcuda_component.sm_seg->module_seg->seg_inited, 1);
     while( n_local_procs >
            mca_btl_smcuda_component.sm_seg->module_seg->seg_inited) {
         opal_progress();
@@ -976,7 +976,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
          * the return code indicates failure, the write has still "completed" from
          * our point of view:  it has been posted to a "pending send" queue.
          */
-        OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
+        OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
         MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                               endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
         (void)rc; /* this is safe to ignore as the message is requeued till success */
@@ -1026,7 +1026,7 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
      * post the descriptor in the queue - post with the relative
      * address
      */
-    OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
+    OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
     MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                           endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
     if( OPAL_LIKELY(0 == rc) ) {
@@ -1241,7 +1241,7 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
      * the return code indicates failure, the write has still "completed" from
      * our point of view:  it has been posted to a "pending send" queue.
      */
-    OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
+    OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
     opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
                         "Sending CUDA IPC REQ (try=%d): myrank=%d, mydev=%d, peerrank=%d",
                         endpoint->ipctries,

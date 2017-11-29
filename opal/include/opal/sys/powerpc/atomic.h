@@ -235,7 +235,7 @@ static inline int32_t opal_atomic_swap_32(volatile int32_t *addr, int32_t newval
 #if  OPAL_GCC_INLINE_ASSEMBLY
 
 #define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(type, instr)               \
-static inline int64_t opal_atomic_ ## type ## _64(volatile int64_t* v, int64_t val) \
+static inline int64_t opal_atomic_ ## type ## _fetch_64(volatile int64_t* v, int64_t val) \
 {                                                                       \
     int64_t t;                                                          \
                                                                         \
@@ -396,7 +396,7 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t 
 
 
 #define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(type, instr)               \
-static inline int32_t opal_atomic_ ## type ## _32(volatile int32_t* v, int val) \
+static inline int32_t opal_atomic_ ## type ## _fetch_32(volatile int32_t* v, int val) \
 {                                                                       \
     int32_t t;                                                          \
                                                                         \

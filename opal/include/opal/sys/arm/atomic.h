@@ -209,7 +209,7 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t 
 
 
 #define OPAL_HAVE_ATOMIC_ADD_32 1
-static inline int32_t opal_atomic_add_32(volatile int32_t* v, int inc)
+static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int inc)
 {
    int32_t t;
    int tmp;
@@ -230,7 +230,7 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int inc)
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_32 1
-static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int dec)
+static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t* v, int dec)
 {
    int32_t t;
    int tmp;

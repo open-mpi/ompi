@@ -582,7 +582,7 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
     /* Setup Common Parameters        */
     /**********************************/
 
-    request->u.gather.coll_count = opal_atomic_add_size_t(&portals4_module->coll_count, 1);
+    request->u.gather.coll_count = opal_atomic_add_fetch_size_t(&portals4_module->coll_count, 1);
 
     COLL_PORTALS4_UPDATE_IN_ORDER_BMTREE( comm, portals4_module, request->u.gather.root_rank );
     bmtree = portals4_module->cached_in_order_bmtree;
@@ -879,7 +879,7 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
 
     i_am_root = (request->u.gather.my_rank == request->u.gather.root_rank);
 
-    request->u.gather.coll_count = opal_atomic_add_size_t(&portals4_module->coll_count, 1);
+    request->u.gather.coll_count = opal_atomic_add_fetch_size_t(&portals4_module->coll_count, 1);
 
     ret = setup_gather_buffers_linear(comm, request, portals4_module);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }

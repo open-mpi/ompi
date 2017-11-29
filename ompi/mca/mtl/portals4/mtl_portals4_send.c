@@ -45,7 +45,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         (ompi_mtl_portals4_isend_request_t*) ptl_base_request;
 
     if (PTL_EVENT_GET == ev->type) {
-        ret = OPAL_THREAD_ADD32(&(ptl_request->pending_get), -1);
+        ret = OPAL_THREAD_ADD_FETCH32(&(ptl_request->pending_get), -1);
         if (ret > 0) {
             /* wait for other gets */
             OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "PTL_EVENT_GET received now pending_get=%d",ret));
@@ -94,7 +94,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
 
         opal_list_append(&ompi_mtl_portals4.flowctl.pending_sends,
                          &pending->super.super);
-        OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+        OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         ompi_mtl_portals4_flowctl_trigger();
 
         return OMPI_SUCCESS;
@@ -124,7 +124,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
 
         if ((eager == ompi_mtl_portals4.protocol) ||
              (ptl_request->length % ompi_mtl_portals4.max_msg_size_mtl <= ompi_mtl_portals4.eager_limit)) {
-           val = OPAL_THREAD_ADD32(&(ptl_request->pending_get), -1);
+           val = OPAL_THREAD_ADD_FETCH32(&(ptl_request->pending_get), -1);
         }
         if (0 == val) {
             add = 2; /* We haven't to wait for any get, so we have to add an extra count to cause the message to complete */
@@ -161,7 +161,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         ptl_request->me_h = PTL_INVALID_HANDLE;
         add++;
     }
-    val = OPAL_THREAD_ADD32((int32_t*)&ptl_request->event_count, add);
+    val = OPAL_THREAD_ADD_FETCH32((int32_t*)&ptl_request->event_count, add);
     assert(val <= 3);
 
     if (val == 3) {
@@ -174,7 +174,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
 
         *complete = true;
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-        OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+        OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         opal_free_list_return (&ompi_mtl_portals4.flowctl.pending_fl,
                                &ptl_request->pending->super);
 
@@ -422,15 +422,15 @@ ompi_mtl_portals4_pending_list_progress()
 
     while ((!ompi_mtl_portals4.flowctl.flowctl_active) &&
            (0 != opal_list_get_size(&ompi_mtl_portals4.flowctl.pending_sends))) {
-        val = OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1);
+        val = OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, -1);
         if (val < 0) {
-            OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+            OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
             return;
         }
 
         item = opal_list_remove_first(&ompi_mtl_portals4.flowctl.pending_sends);
         if (OPAL_UNLIKELY(NULL == item)) {
-            OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+            OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
             return;
         }
 
@@ -456,7 +456,7 @@ ompi_mtl_portals4_pending_list_progress()
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             opal_list_prepend(&ompi_mtl_portals4.flowctl.pending_sends,
                               &pending->super.super);
-            OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+            OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         }
     }
 }
@@ -492,7 +492,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
     if (OMPI_SUCCESS != ret) return ret;
 
-    ptl_request->opcount = OPAL_THREAD_ADD64((int64_t*)&ompi_mtl_portals4.opcount, 1);
+    ptl_request->opcount = OPAL_THREAD_ADD_FETCH64((int64_t*)&ompi_mtl_portals4.opcount, 1);
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
     ptl_request->length = length;
     ptl_request->event_count = 0;
@@ -520,15 +520,15 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     pending->ptl_proc = ptl_proc;
     pending->ptl_request = ptl_request;
 
-    if (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
-        OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+    if (OPAL_UNLIKELY(OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
+        OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         opal_list_append(&ompi_mtl_portals4.flowctl.pending_sends,
                          &pending->super.super);
         return OMPI_SUCCESS;
     }
 
     if (OPAL_UNLIKELY(0 != opal_list_get_size(&ompi_mtl_portals4.flowctl.pending_sends))) {
-        OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+        OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         opal_list_append(&ompi_mtl_portals4.flowctl.pending_sends,
                          &pending->super.super);
         ompi_mtl_portals4_pending_list_progress();
@@ -536,7 +536,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     }
 
     if (OPAL_UNLIKELY(ompi_mtl_portals4.flowctl.flowctl_active)) {
-        OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
+        OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         opal_list_append(&ompi_mtl_portals4.flowctl.pending_sends,
                          &pending->super.super);
         return OMPI_SUCCESS;

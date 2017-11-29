@@ -53,16 +53,16 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
     int ret;
 
     /* reserve space in the event queue for rdma operations immediately */
-    while (OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, 1) >
+    while (OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, 1) >
            portals4_btl->portals_max_outstanding_ops) {
-        OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+        OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "Call to mca_btl_portals4_component_progress (1)\n"));
         mca_btl_portals4_component_progress();
     }
 
     OPAL_BTL_PORTALS4_FRAG_ALLOC_USER(portals4_btl, frag);
     if (NULL == frag){
-        OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+        OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
         return OPAL_ERROR;
     }
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,

@@ -62,7 +62,7 @@ static int ompi_osc_pt2pt_req_comm_complete (ompi_request_t *request)
     /* update the cbdata for ompi_osc_pt2pt_comm_complete */
     request->req_complete_cb_data = pt2pt_request->module;
 
-    if (0 == OPAL_THREAD_ADD32(&pt2pt_request->outstanding_requests, -1)) {
+    if (0 == OPAL_THREAD_ADD_FETCH32(&pt2pt_request->outstanding_requests, -1)) {
         ompi_osc_pt2pt_request_complete (pt2pt_request, request->req_status.MPI_ERROR);
     }
 

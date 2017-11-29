@@ -106,7 +106,7 @@ static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, om
                          active_frag->target, active_frag->pending));
 
     if (opal_atomic_compare_exchange_strong_ptr (&peer->active_frag, &active_frag, NULL)) {
-        if (0 != OPAL_THREAD_ADD32(&active_frag->pending, -1)) {
+        if (0 != OPAL_THREAD_ADD_FETCH32(&active_frag->pending, -1)) {
             /* communication going on while synchronizing; this is an rma usage bug */
             return OMPI_ERR_RMA_SYNC;
         }

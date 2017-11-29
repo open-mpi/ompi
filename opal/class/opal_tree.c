@@ -210,7 +210,7 @@ void opal_tree_add_child(opal_tree_item_t *parent_item,
     /* Spot check: ensure this item is only on the list that we just
        appended it to */
 
-    OPAL_THREAD_ADD32( &(new_item->opal_tree_item_refcount), 1 );
+    OPAL_THREAD_ADD_FETCH32( &(new_item->opal_tree_item_refcount), 1 );
     assert(1 == new_item->opal_tree_item_refcount);
     new_item->opal_tree_item_belong_to = new_item->opal_tree_container;
 #endif

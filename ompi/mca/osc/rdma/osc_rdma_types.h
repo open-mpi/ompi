@@ -25,7 +25,7 @@ typedef int64_t osc_rdma_base_t;
 typedef int64_t osc_rdma_size_t;
 typedef int64_t osc_rdma_counter_t;
 
-#define ompi_osc_rdma_counter_add opal_atomic_add_64
+#define ompi_osc_rdma_counter_add opal_atomic_add_fetch_64
 
 #else
 
@@ -33,7 +33,7 @@ typedef int32_t osc_rdma_base_t;
 typedef int32_t osc_rdma_size_t;
 typedef int32_t osc_rdma_counter_t;
 
-#define ompi_osc_rdma_counter_add opal_atomic_add_32
+#define ompi_osc_rdma_counter_add opal_atomic_add_fetch_32
 
 #endif
 
@@ -48,7 +48,7 @@ static inline int64_t ompi_osc_rdma_lock_add (volatile int64_t *p, int64_t value
     int64_t new;
 
     opal_atomic_mb ();
-    new = opal_atomic_add_64 (p, value) - value;
+    new = opal_atomic_add_fetch_64 (p, value) - value;
     opal_atomic_mb ();
 
     return new;
@@ -76,8 +76,8 @@ static inline int32_t ompi_osc_rdma_lock_add (volatile int32_t *p, int32_t value
     int32_t new;
 
     opal_atomic_mb ();
-    /* opal_atomic_add_32 differs from normal atomics in that is returns the new value */
-    new = opal_atomic_add_32 (p, value) - value;
+    /* opal_atomic_add_fetch_32 differs from normal atomics in that is returns the new value */
+    new = opal_atomic_add_fetch_32 (p, value) - value;
     opal_atomic_mb ();
 
     return new;
