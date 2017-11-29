@@ -3,6 +3,7 @@
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013      Sandia National Laboratories. All rights reserved.
 #
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -10,8 +11,9 @@
 # $HEADER$
 #
 
-# Highest priority, as it's the default
-AC_DEFUN([MCA_ompi_rte_orte_PRIORITY], [100])
+# Lowest priority, as it's the default and we want
+# it to be able to be overridden
+AC_DEFUN([MCA_ompi_rte_orte_PRIORITY], [10])
 
 # Force this component to compile in static-only mode
 AC_DEFUN([MCA_ompi_rte_orte_COMPILE_MODE], [

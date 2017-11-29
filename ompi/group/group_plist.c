@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/class/opal_bitmap.h"
 #include "ompi/group/group.h"
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
