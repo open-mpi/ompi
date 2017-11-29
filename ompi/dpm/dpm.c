@@ -588,13 +588,8 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
     }
 
     /* ensure we tell the host RM to disconnect us - this
-     * is a blocking operation that must include a fence */
-    if (NULL == opal_pmix.disconnect) {
-        /* use the fence */
-        ret = opal_pmix.fence(&coll, false);
-    } else {
-        ret = opal_pmix.disconnect(&coll);
-    }
+     * is a blocking operation so just use a fence */
+    ret = opal_pmix.fence(&coll, false);
     OPAL_LIST_DESTRUCT(&coll);
 
     return ret;
