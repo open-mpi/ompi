@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -69,12 +69,16 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
     /* Prepare the new error handler */
     OBJ_RETAIN(errhandler);
 
-    opal_mutex_lock (&comm->c_lock);
+#ifdef USE_MUTEX_FOR_COMMS
+    OPAL_THREAD_LOCK(&(comm->c_lock));
+#endif
     /* Ditch the old errhandler, and decrement its refcount. */
     tmp = comm->error_handler;
     comm->error_handler = errhandler;
     OBJ_RELEASE(tmp);
-    opal_mutex_unlock (&comm->c_lock);
+#ifdef USE_MUTEX_FOR_COMMS
+    OPAL_THREAD_UNLOCK(&(comm->c_lock));
+#endif
 
     /* All done */
     return MPI_SUCCESS;

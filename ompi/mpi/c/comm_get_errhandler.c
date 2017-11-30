@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -63,12 +63,16 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
     }
   }
 
-  opal_mutex_lock (&comm->c_lock);
+#ifdef USE_MUTEX_FOR_COMMS
+    OPAL_THREAD_LOCK(&(comm->c_lock));
+#endif
   /* Retain the errhandler, corresponding to object refcount decrease
      in errhandler_free.c. */
   OBJ_RETAIN(comm->error_handler);
   *errhandler = comm->error_handler;
-  opal_mutex_unlock (&comm->c_lock);
+#ifdef USE_MUTEX_FOR_COMMS
+    OPAL_THREAD_UNLOCK(&(comm->c_lock));
+#endif
 
   /* All done */
 
