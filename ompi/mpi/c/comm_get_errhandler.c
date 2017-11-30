@@ -50,31 +50,27 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 
     OPAL_CR_NOOP_PROGRESS();
 
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (ompi_comm_invalid(comm)) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
-                                    FUNC_NAME);
-    } else if (NULL == errhandler) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                    FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (ompi_comm_invalid(comm)) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+                                      FUNC_NAME);
+      } else if (NULL == errhandler) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                      FUNC_NAME);
+      }
     }
-  }
 
-#ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_LOCK(&(comm->c_lock));
-#endif
-  /* Retain the errhandler, corresponding to object refcount decrease
-     in errhandler_free.c. */
-  OBJ_RETAIN(comm->error_handler);
-  *errhandler = comm->error_handler;
-#ifdef USE_MUTEX_FOR_COMMS
+    /* Retain the errhandler, corresponding to object refcount decrease
+       in errhandler_free.c. */
+    OBJ_RETAIN(comm->error_handler);
+    *errhandler = comm->error_handler;
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
-#endif
 
-  /* All done */
+    /* All done */
 
-  return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

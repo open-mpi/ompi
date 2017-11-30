@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -60,9 +60,7 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
             return OMPI_ERRHANDLER_INVOKE ( comm, MPI_ERR_ARG,
                                             FUNC_NAME);
     }
-#ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_LOCK(&(comm->c_lock));
-#endif
     /* Note that MPI-2.1 requires:
        - terminating the string with a \0
        - name[*resultlen] == '\0'
@@ -80,9 +78,7 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
         name[0] = '\0';
         *length = 0;
     }
-#ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
-#endif
 
     return MPI_SUCCESS;
 }

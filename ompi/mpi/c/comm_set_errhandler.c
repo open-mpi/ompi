@@ -69,16 +69,12 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
     /* Prepare the new error handler */
     OBJ_RETAIN(errhandler);
 
-#ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_LOCK(&(comm->c_lock));
-#endif
     /* Ditch the old errhandler, and decrement its refcount. */
     tmp = comm->error_handler;
     comm->error_handler = errhandler;
     OBJ_RELEASE(tmp);
-#ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
-#endif
 
     /* All done */
     return MPI_SUCCESS;
