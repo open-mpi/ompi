@@ -15,7 +15,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -285,6 +285,9 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     if(OPAL_LIKELY(match)) {
         bytes_received = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
         match->req_recv.req_bytes_packed = bytes_received;
+        for (size_t i=1; i < num_segments; i++) {
+            match->req_recv.req_bytes_packed += segments[i].seg_len;
+        }
 
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         if(match->req_bytes_expected > 0) {
