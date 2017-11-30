@@ -14,6 +14,8 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -578,7 +580,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
     /* be sure to mark it as alive so we don't instantly fire */
     ORTE_FLAG_SET(alpsrun, ORTE_PROC_FLAG_ALIVE);
     /* setup the waitpid so we can find out if alps succeeds! */
-    orte_wait_cb(alpsrun, alps_wait_cb, NULL);
+    orte_wait_cb(alpsrun, alps_wait_cb, orte_event_base, NULL);
 
     if (0 == alps_pid) {  /* child */
         char *bin_base = NULL, *lib_base = NULL;
