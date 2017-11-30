@@ -387,6 +387,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
 #ifdef OMPI_WANT_PERUSE
     comm->c_peruse_handles = NULL;
 #endif
+    OBJ_CONSTRUCT(&comm->c_lock, opal_mutex_t);
 }
 
 static void ompi_comm_destruct(ompi_communicator_t* comm)

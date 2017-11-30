@@ -1315,16 +1315,12 @@ int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, in
 int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
 {
 
-#ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_LOCK(&(comm->c_lock));
-#endif
     memset(comm->c_name, 0, MPI_MAX_OBJECT_NAME);
     strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
     comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
     comm->c_flags |= OMPI_COMM_NAMEISSET;
-#ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
-#endif
 
     return OMPI_SUCCESS;
 }
