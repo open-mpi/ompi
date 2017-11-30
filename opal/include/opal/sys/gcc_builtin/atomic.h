@@ -33,7 +33,7 @@
 #define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
 #define OPAL_HAVE_ATOMIC_MATH_32 1
-#define OPAL_HAVE_ATOMIC_CMPSET_32 1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #define OPAL_HAVE_ATOMIC_ADD_32 1
 #define OPAL_HAVE_ATOMIC_AND_32 1
 #define OPAL_HAVE_ATOMIC_OR_32 1
@@ -41,7 +41,7 @@
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 #define OPAL_HAVE_ATOMIC_SWAP_32 1
 #define OPAL_HAVE_ATOMIC_MATH_64 1
-#define OPAL_HAVE_ATOMIC_CMPSET_64 1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 #define OPAL_HAVE_ATOMIC_ADD_64 1
 #define OPAL_HAVE_ATOMIC_AND_64 1
 #define OPAL_HAVE_ATOMIC_OR_64 1
@@ -81,26 +81,20 @@ static inline void opal_atomic_wmb(void)
 #pragma error_messages(off, E_ARG_INCOMPATIBLE_WITH_ARG_L)
 #endif
 
-static inline bool opal_atomic_bool_cmpset_acq_32( volatile int32_t *addr,
-                                                   int32_t oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
 {
-    return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
+    return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 
-static inline bool opal_atomic_bool_cmpset_rel_32( volatile int32_t *addr,
-                                                   int32_t oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
 {
-    return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+    return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
-static inline bool opal_atomic_bool_cmpset_32( volatile int32_t *addr,
-                                               int32_t oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
 {
-    return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
+    return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 static inline int32_t opal_atomic_swap_32 (volatile int32_t *addr, int32_t newval)
@@ -135,26 +129,20 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
     return __atomic_sub_fetch (addr, delta, __ATOMIC_RELAXED);
 }
 
-static inline bool opal_atomic_bool_cmpset_acq_64( volatile int64_t *addr,
-                                                   int64_t oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
 {
-    return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
+    return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
-static inline bool opal_atomic_bool_cmpset_rel_64( volatile int64_t *addr,
-                                                   int64_t oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
 {
-    return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+    return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 
-static inline bool opal_atomic_bool_cmpset_64( volatile int64_t *addr,
-                                               int64_t oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
 {
-    return __atomic_compare_exchange_n (addr, &oldval, newval, false,
-                                        __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
+    return __atomic_compare_exchange_n (addr, oldval, newval, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 static inline int64_t opal_atomic_swap_64 (volatile int64_t *addr, int64_t newval)
@@ -191,25 +179,28 @@ static inline int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 
 #if OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128
 
-#define OPAL_HAVE_ATOMIC_CMPSET_128 1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
-static inline bool opal_atomic_bool_cmpset_128 (volatile opal_int128_t *addr,
-                                                opal_int128_t oldval, opal_int128_t newval)
+static inline bool opal_atomic_compare_exchange_strong_128 (volatile opal_int128_t *addr,
+                                                            opal_int128_t *oldval, opal_int128_t newval)
 {
-    return __atomic_compare_exchange_n (addr, &oldval, newval, false,
+    return __atomic_compare_exchange_n (addr, oldval, newval, false,
                                         __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 #elif defined(OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128) && OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128
 
-#define OPAL_HAVE_ATOMIC_CMPSET_128 1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
 /* __atomic version is not lock-free so use legacy __sync version */
 
-static inline bool opal_atomic_bool_cmpset_128 (volatile opal_int128_t *addr,
-                                                opal_int128_t oldval, opal_int128_t newval)
+static inline bool opal_atomic_compare_exchange_strong_128 (volatile opal_int128_t *addr,
+                                                            opal_int128_t *oldval, opal_int128_t newval)
 {
-    return __sync_bool_compare_and_swap (addr, oldval, newval);
+    opal_int128_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);
+    bool ret = prev == *oldval;
+    *oldval = prev;
+    return ret;
 }
 
 #endif

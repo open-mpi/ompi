@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -105,7 +105,7 @@ static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, om
                          "osc pt2pt: flushing active fragment to target %d. pending: %d",
                          active_frag->target, active_frag->pending));
 
-    if (opal_atomic_bool_cmpset (&peer->active_frag, active_frag, NULL)) {
+    if (opal_atomic_compare_exchange_strong_ptr (&peer->active_frag, &active_frag, NULL)) {
         if (0 != OPAL_THREAD_ADD32(&active_frag->pending, -1)) {
             /* communication going on while synchronizing; this is an rma usage bug */
             return OMPI_ERR_RMA_SYNC;

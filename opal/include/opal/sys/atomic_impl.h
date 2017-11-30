@@ -34,20 +34,31 @@
  *
  * Some architectures do not provide support for the 64 bits
  * atomic operations. Until we find a better solution let's just
- * undefine all those functions if there is no 64 bit cmpset
+ * undefine all those functions if there is no 64 bit compare-exchange
  *
  *********************************************************************/
-#if OPAL_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
+
+#define OPAL_ATOMIC_DEFINE_CMPXCG_OP(type, bits, operand, name)  \
+    static inline type opal_atomic_ ## name ## _ ## bits (volatile type *addr, type value) \
+    {                                                                   \
+        type oldval, newval;                                            \
+        do {                                                            \
+            oldval = *addr;                                             \
+            newval = oldval operand value;                              \
+        } while (!opal_atomic_compare_exchange_strong_ ## bits (addr, &oldval, newval)); \
+                                                                        \
+        return newval;                                                  \
+    }
 
 #if !defined(OPAL_HAVE_ATOMIC_SWAP_32)
 #define OPAL_HAVE_ATOMIC_SWAP_32 1
 static inline int32_t opal_atomic_swap_32(volatile int32_t *addr,
                                           int32_t newval)
 {
-    int32_t old;
+    int32_t old = *addr;
     do {
-        old = *addr;
-    } while (!opal_atomic_bool_cmpset_32(addr, old, newval));
+    } while (!opal_atomic_compare_exchange_strong_32 (addr, &old, newval));
 
     return old;
 }
@@ -55,161 +66,91 @@ static inline int32_t opal_atomic_swap_32(volatile int32_t *addr,
 
 #if !defined(OPAL_HAVE_ATOMIC_ADD_32)
 #define OPAL_HAVE_ATOMIC_ADD_32 1
-static inline int32_t
-opal_atomic_add_32(volatile int32_t *addr, int delta)
-{
-   int32_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_32(addr, oldval, oldval + delta));
-   return (oldval + delta);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, +, add)
+
 #endif  /* OPAL_HAVE_ATOMIC_ADD_32 */
 
 #if !defined(OPAL_HAVE_ATOMIC_AND_32)
 #define OPAL_HAVE_ATOMIC_AND_32 1
-static inline int32_t
-opal_atomic_and_32(volatile int32_t *addr, int32_t value)
-{
-   int32_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_32(addr, oldval, oldval & value));
-   return (oldval & value);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, &, and)
+
 #endif  /* OPAL_HAVE_ATOMIC_AND_32 */
 
 #if !defined(OPAL_HAVE_ATOMIC_OR_32)
 #define OPAL_HAVE_ATOMIC_OR_32 1
-static inline int32_t
-opal_atomic_or_32(volatile int32_t *addr, int32_t value)
-{
-   int32_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_32(addr, oldval, oldval | value));
-   return (oldval | value);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, |, or)
+
 #endif  /* OPAL_HAVE_ATOMIC_OR_32 */
 
 #if !defined(OPAL_HAVE_ATOMIC_XOR_32)
 #define OPAL_HAVE_ATOMIC_XOR_32 1
-static inline int32_t
-opal_atomic_xor_32(volatile int32_t *addr, int32_t value)
-{
-   int32_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_32(addr, oldval, oldval ^ value));
-   return (oldval ^ value);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, ^, xor)
+
 #endif  /* OPAL_HAVE_ATOMIC_XOR_32 */
 
 
 #if !defined(OPAL_HAVE_ATOMIC_SUB_32)
 #define OPAL_HAVE_ATOMIC_SUB_32 1
-static inline int32_t
-opal_atomic_sub_32(volatile int32_t *addr, int delta)
-{
-   int32_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_32(addr, oldval, oldval - delta));
-   return (oldval - delta);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, -, sub)
+
 #endif  /* OPAL_HAVE_ATOMIC_SUB_32 */
 
-#endif /* OPAL_HAVE_ATOMIC_CMPSET_32 */
+#endif /* OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 */
 
 
-#if OPAL_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
 
 #if !defined(OPAL_HAVE_ATOMIC_SWAP_64)
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 static inline int64_t opal_atomic_swap_64(volatile int64_t *addr,
                                           int64_t newval)
 {
-    int64_t old;
+    int64_t old = *addr;
     do {
-        old = *addr;
-    } while (!opal_atomic_bool_cmpset_64(addr, old, newval));
+    } while (!opal_atomic_compare_exchange_strong_64 (addr, &old, newval));
+
     return old;
 }
 #endif /* OPAL_HAVE_ATOMIC_SWAP_32 */
 
 #if !defined(OPAL_HAVE_ATOMIC_ADD_64)
 #define OPAL_HAVE_ATOMIC_ADD_64 1
-static inline int64_t
-opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
-{
-   int64_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_64(addr, oldval, oldval + delta));
-   return (oldval + delta);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, +, add)
+
 #endif  /* OPAL_HAVE_ATOMIC_ADD_64 */
 
 #if !defined(OPAL_HAVE_ATOMIC_AND_64)
 #define OPAL_HAVE_ATOMIC_AND_64 1
-static inline int64_t
-opal_atomic_and_64(volatile int64_t *addr, int64_t value)
-{
-   int64_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_64(addr, oldval, oldval & value));
-   return (oldval & value);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, &, and)
+
 #endif  /* OPAL_HAVE_ATOMIC_AND_64 */
 
 #if !defined(OPAL_HAVE_ATOMIC_OR_64)
 #define OPAL_HAVE_ATOMIC_OR_64 1
-static inline int64_t
-opal_atomic_or_64(volatile int64_t *addr, int64_t value)
-{
-   int64_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_64(addr, oldval, oldval | value));
-   return (oldval | value);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, |, or)
+
 #endif  /* OPAL_HAVE_ATOMIC_OR_64 */
 
 #if !defined(OPAL_HAVE_ATOMIC_XOR_64)
 #define OPAL_HAVE_ATOMIC_XOR_64 1
-static inline int64_t
-opal_atomic_xor_64(volatile int64_t *addr, int64_t value)
-{
-   int64_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (!opal_atomic_bool_cmpset_64(addr, oldval, oldval ^ value));
-   return (oldval ^ value);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, ^, xor)
+
 #endif  /* OPAL_HAVE_ATOMIC_XOR_64 */
 
 #if !defined(OPAL_HAVE_ATOMIC_SUB_64)
 #define OPAL_HAVE_ATOMIC_SUB_64 1
-static inline int64_t
-opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
-{
-    int64_t oldval;
 
-    do {
-        oldval = *addr;
-    } while (!opal_atomic_bool_cmpset_64(addr, oldval, oldval - delta));
-    return (oldval - delta);
-}
+OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, -, sub)
+
 #endif  /* OPAL_HAVE_ATOMIC_SUB_64 */
 
 #else
@@ -222,130 +163,70 @@ opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 #define OPAL_HAVE_ATOMIC_SUB_64 0
 #endif
 
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 */
 
+#if (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64)
 
-#if (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
-
-static inline bool
-opal_atomic_bool_cmpset_xx(volatile void* addr, int64_t oldval,
-                           int64_t newval, size_t length)
-{
-   switch( length ) {
-#if OPAL_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      return opal_atomic_bool_cmpset_32( (volatile int32_t*)addr,
-                                    (int32_t)oldval, (int32_t)newval );
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
-
-#if OPAL_HAVE_ATOMIC_CMPSET_64
-   case 8:
-      return opal_atomic_bool_cmpset_64( (volatile int64_t*)addr,
-                                    (int64_t)oldval, (int64_t)newval );
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
-   }
-   abort();
-   /* This should never happen, so deliberately abort (hopefully
-      leaving a corefile for analysis) */
-}
-
-
-static inline bool
-opal_atomic_bool_cmpset_acq_xx(volatile void* addr, int64_t oldval,
-                               int64_t newval, size_t length)
-{
-   switch( length ) {
-#if OPAL_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      return opal_atomic_bool_cmpset_acq_32( (volatile int32_t*)addr,
-                                        (int32_t)oldval, (int32_t)newval );
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
-
-#if OPAL_HAVE_ATOMIC_CMPSET_64
-   case 8:
-      return opal_atomic_bool_cmpset_acq_64( (volatile int64_t*)addr,
-                                        (int64_t)oldval, (int64_t)newval );
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
-   }
-   /* This should never happen, so deliberately abort (hopefully
-      leaving a corefile for analysis) */
-   abort();
-}
-
-
-static inline bool
-opal_atomic_bool_cmpset_rel_xx(volatile void* addr, int64_t oldval,
-                               int64_t newval, size_t length)
-{
-   switch( length ) {
-#if OPAL_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      return opal_atomic_bool_cmpset_rel_32( (volatile int32_t*)addr,
-                                        (int32_t)oldval, (int32_t)newval );
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
-
-#if OPAL_HAVE_ATOMIC_CMPSET_64
-   case 8:
-      return opal_atomic_bool_cmpset_rel_64( (volatile int64_t*)addr,
-                                        (int64_t)oldval, (int64_t)newval );
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
-   }
-   /* This should never happen, so deliberately abort (hopefully
-      leaving a corefile for analysis) */
-   abort();
-}
-
-
-static inline bool
-opal_atomic_bool_cmpset_ptr(volatile void* addr,
-                            void* oldval,
-                            void* newval)
-{
-#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
-    return opal_atomic_bool_cmpset_32((int32_t*) addr, (unsigned long) oldval,
-                                 (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_bool_cmpset_64((int64_t*) addr, (unsigned long) oldval,
-                                 (unsigned long) newval);
+#if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 && OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
+#define OPAL_ATOMIC_DEFINE_CMPXCG_XX(semantics)                         \
+    static inline bool                                                  \
+    opal_atomic_compare_exchange_strong ## semantics ## xx (volatile void* addr, void *oldval, \
+                                                            int64_t newval, const size_t length) \
+    {                                                                   \
+        switch (length) {                                               \
+        case 4:                                                         \
+            return opal_atomic_compare_exchange_strong_32 ((volatile int32_t *) addr, \
+                                                           (int32_t *) oldval, (int32_t) newval); \
+        case 8:                                                         \
+            return opal_atomic_compare_exchange_strong_64 ((volatile int64_t *) addr, \
+                                                           (int64_t *) oldval, (int64_t) newval); \
+        }                                                               \
+        abort();                                                        \
+    }
+#elif OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
+#define OPAL_ATOMIC_DEFINE_CMPXCG_XX(semantics)                         \
+    static inline bool                                                  \
+    opal_atomic_compare_exchange_strong ## semantics ## xx (volatile void* addr, void *oldval, \
+                                                            int64_t newval, const size_t length) \
+    {                                                                   \
+        switch (length) {                                               \
+        case 4:                                                         \
+            return opal_atomic_compare_exchange_strong_32 ((volatile int32_t *) addr, \
+                                                           (int32_t *) oldval, (int32_t) newval); \
+        abort();                                                        \
+    }
 #else
-    abort();
+#error "Platform does not have required atomic compare-and-swap functionality"
 #endif
-}
 
+OPAL_ATOMIC_DEFINE_CMPXCG_XX(_)
+OPAL_ATOMIC_DEFINE_CMPXCG_XX(_acq_)
+OPAL_ATOMIC_DEFINE_CMPXCG_XX(_rel_)
 
-static inline bool
-opal_atomic_bool_cmpset_acq_ptr(volatile void* addr,
-                                void* oldval,
-                                void* newval)
-{
-#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
-    return opal_atomic_bool_cmpset_acq_32((int32_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_bool_cmpset_acq_64((int64_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
+#define OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(semantics)                     \
+    static inline bool                                                  \
+        opal_atomic_compare_exchange_strong ## semantics ## ptr (volatile void* addr, void *oldval, void *newval) \
+    {                                                                   \
+        return opal_atomic_compare_exchange_strong_32 ((volatile int32_t *) addr, (int32_t *) oldval, (int32_t) newval); \
+    }
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
+#define OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(semantics)                     \
+    static inline bool                                                  \
+        opal_atomic_compare_exchange_strong ## semantics ## ptr (volatile void* addr, void *oldval, void *newval) \
+    {                                                                   \
+        return opal_atomic_compare_exchange_strong_64 ((volatile int64_t *) addr, (int64_t *) oldval, (int64_t) newval); \
+    }
 #else
-    abort();
+#error "Can not define opal_atomic_compare_exchange_strong_ptr with existing atomics"
 #endif
-}
 
+OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(_)
+OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(_acq_)
+OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(_rel_)
 
-static inline bool opal_atomic_bool_cmpset_rel_ptr(volatile void* addr,
-                                                   void* oldval,
-                                                   void* newval)
-{
-#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
-    return opal_atomic_bool_cmpset_rel_32((int32_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_bool_cmpset_rel_64((int64_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
-#else
-    abort();
-#endif
-}
+#endif /* (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64) */
 
-#endif /* (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64) */
 
 #if (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64)
 
@@ -392,7 +273,7 @@ opal_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
    case 4:
       opal_atomic_add_32( (volatile int32_t*)addr, (int32_t)value );
       break;
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 */
 
 #if OPAL_HAVE_ATOMIC_ADD_64
    case 8:
@@ -493,21 +374,20 @@ opal_atomic_lock_init( opal_atomic_lock_t* lock, int32_t value )
 static inline int
 opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
-    bool ret = opal_atomic_bool_cmpset_acq_32( &(lock->u.lock),
-                                               OPAL_ATOMIC_LOCK_UNLOCKED, OPAL_ATOMIC_LOCK_LOCKED);
-    return (ret == 0) ? 1 : 0;
+    int32_t unlocked = OPAL_ATOMIC_LOCK_UNLOCKED;
+    bool ret = opal_atomic_compare_exchange_strong_32 (&lock->u.lock, &unlocked, OPAL_ATOMIC_LOCK_LOCKED);
+    return (ret == false) ? 1 : 0;
 }
 
 
 static inline void
 opal_atomic_lock(opal_atomic_lock_t *lock)
 {
-   while( !opal_atomic_bool_cmpset_acq_32( &(lock->u.lock),
-                                      OPAL_ATOMIC_LOCK_UNLOCKED, OPAL_ATOMIC_LOCK_LOCKED) ) {
-      while (lock->u.lock == OPAL_ATOMIC_LOCK_LOCKED) {
-         /* spin */ ;
-      }
-   }
+    while (opal_atomic_trylock (lock)) {
+        while (lock->u.lock == OPAL_ATOMIC_LOCK_LOCKED) {
+            /* spin */ ;
+        }
+    }
 }
 
 

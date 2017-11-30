@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -356,7 +356,7 @@ static inline struct ompi_proc_t *ompi_group_dense_lookup (ompi_group_t *group, 
         ompi_proc_t *real_proc =
             (ompi_proc_t *) ompi_proc_for_name (ompi_proc_sentinel_to_name ((uintptr_t) proc));
 
-        if (opal_atomic_bool_cmpset_ptr (group->grp_proc_pointers + peer_id, proc, real_proc)) {
+        if (opal_atomic_compare_exchange_strong_ptr (group->grp_proc_pointers + peer_id, &proc, real_proc)) {
             OBJ_RETAIN(real_proc);
         }
 

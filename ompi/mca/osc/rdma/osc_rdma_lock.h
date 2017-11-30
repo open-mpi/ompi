@@ -17,7 +17,8 @@
 
 static inline int ompi_osc_rdma_trylock_local (volatile ompi_osc_rdma_lock_t *lock)
 {
-    return !ompi_osc_rdma_lock_cmpset (lock, 0, OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
+    ompi_osc_rdma_lock_t _tmp_value = 0;
+    return !ompi_osc_rdma_lock_compare_exchange (lock, &_tmp_value, OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
 }
 
 static inline void ompi_osc_rdma_unlock_local (volatile ompi_osc_rdma_lock_t *lock)
