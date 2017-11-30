@@ -12,6 +12,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,19 +107,24 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
             return ORTE_ERR_SYS_LIMITS_PIPES;
         }
     }
-    if (pipe(opts->p_stdin) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-        return ORTE_ERR_SYS_LIMITS_PIPES;
+    if (opts->connect_stdin) {
+        if (pipe(opts->p_stdin) < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+            return ORTE_ERR_SYS_LIMITS_PIPES;
+        }
     }
-    if (pipe(opts->p_stderr) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-        return ORTE_ERR_SYS_LIMITS_PIPES;
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        if (pipe(opts->p_stderr) < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+            return ORTE_ERR_SYS_LIMITS_PIPES;
+        }
     }
+#if OPAL_PMIX_V1
     if (pipe(opts->p_internal) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
         return ORTE_ERR_SYS_LIMITS_PIPES;
     }
-
+#endif
     return ORTE_SUCCESS;
 }
 
@@ -126,12 +133,20 @@ int
 orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
 {
     int ret;
+#if OPAL_PMIX_V1
     char *str;
+#endif
 
-    close(opts->p_stdin[1]);
+    if (opts->connect_stdin) {
+        close(opts->p_stdin[1]);
+    }
     close(opts->p_stdout[0]);
-    close(opts->p_stderr[0]);
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        close(opts->p_stderr[0]);
+    }
+#if OPAL_PMIX_V1
     close(opts->p_internal[0]);
+#endif
 
     if (opts->usepty) {
         /* disable echo */
@@ -153,19 +168,27 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             return ORTE_ERR_PIPE_SETUP_FAILURE;
         }
         ret = dup2(opts->p_stdout[1], fileno(stdout));
-        if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+        if (ret < 0) {
+            return ORTE_ERR_PIPE_SETUP_FAILURE;
+        }
         if( orte_iof_base.redirect_app_stderr_to_stdout ) {
             ret = dup2(opts->p_stdout[1], fileno(stderr));
-            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if (ret < 0) {
+                return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
         }
         close(opts->p_stdout[1]);
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));
-            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if (ret < 0) {
+                return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
             if( orte_iof_base.redirect_app_stderr_to_stdout ) {
                 ret = dup2(opts->p_stdout[1], fileno(stderr));
-                if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+                if (ret < 0) {
+                    return ORTE_ERR_PIPE_SETUP_FAILURE;
+                }
             }
             close(opts->p_stdout[1]);
         }
@@ -173,16 +196,17 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
     if (opts->connect_stdin) {
         if(opts->p_stdin[0] != fileno(stdin)) {
             ret = dup2(opts->p_stdin[0], fileno(stdin));
-            if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            if (ret < 0) {
+                return ORTE_ERR_PIPE_SETUP_FAILURE;
+            }
             close(opts->p_stdin[0]);
         }
     } else {
         int fd;
 
-        close(opts->p_stdin[0]);
         /* connect input to /dev/null */
         fd = open("/dev/null", O_RDONLY, 0);
-        if(fd > fileno(stdin)) {
+        if(fd != fileno(stdin)) {
             dup2(fd, fileno(stdin));
             close(fd);
         }
@@ -192,10 +216,11 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
             ret = dup2(opts->p_stderr[1], fileno(stderr));
             if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
+            close(opts->p_stderr[1]);
         }
-        close(opts->p_stderr[1]);
     }
 
+#if OPAL_PMIX_V1
     if (!orte_map_stddiag_to_stderr && !orte_map_stddiag_to_stdout ) {
         /* Set an environment variable that the new child process can use
            to get the fd of the pipe connected to the INTERNAL IOF tag. */
@@ -204,10 +229,10 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
             opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
             free(str);
         }
-    }
-    else if( orte_map_stddiag_to_stdout ) {
+    } else if( orte_map_stddiag_to_stdout ) {
         opal_setenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT", "1", true, env);
     }
+#endif
 
     return ORTE_SUCCESS;
 }
@@ -227,8 +252,6 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
             ORTE_ERROR_LOG(ret);
             return ret;
         }
-    } else {
-        close(opts->p_stdin[1]);
     }
 
     /* connect read ends to IOF */
@@ -238,17 +261,21 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
         return ret;
     }
 
-    ret = orte_iof.push(name, ORTE_IOF_STDERR, opts->p_stderr[0]);
-    if(ORTE_SUCCESS != ret) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        ret = orte_iof.push(name, ORTE_IOF_STDERR, opts->p_stderr[0]);
+        if(ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
 
+#if OPAL_PMIX_V1
     ret = orte_iof.push(name, ORTE_IOF_STDDIAG, opts->p_internal[0]);
     if(ORTE_SUCCESS != ret) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
+#endif
 
     return ORTE_SUCCESS;
 }
@@ -344,12 +371,13 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
                                      orte_iof_base_write_handler);
             }
         }
-
+#if OPAL_PMIX_V1
         if (NULL != proct->revstddiag && NULL == proct->revstddiag->sink) {
             /* always tie the sink for stddiag to stderr */
             OBJ_RETAIN(proct->revstderr->sink);
             proct->revstddiag->sink = proct->revstderr->sink;
         }
+#endif
     }
 
     return ORTE_SUCCESS;

@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -162,7 +164,7 @@ static int orted_push(const orte_process_name_t* dst_name,
     proct->name.vpid = dst_name->vpid;
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
 
-SETUP:
+  SETUP:
     /* get the local jobdata for this proc */
     if (NULL == (jobdat = orte_get_job_data_object(proct->name.jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -175,9 +177,11 @@ SETUP:
     } else if (src_tag & ORTE_IOF_STDERR) {
         ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                             orte_iof_orted_read_handler, false);
+#if OPAL_PMIX_V1
     } else if (src_tag & ORTE_IOF_STDDIAG) {
         ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                             orte_iof_orted_read_handler, false);
+#endif
     }
     /* setup any requested output files */
     if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jobdat, proct))) {
@@ -190,10 +194,20 @@ SETUP:
      * because one of the readevents fires -prior- to all of them having
      * been defined!
      */
-    if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
+    if (NULL != proct->revstdout &&
+#if OPAL_PMIX_V1
+        NULL != proct->revstddiag &&
+#endif
+        (orte_iof_base.redirect_app_stderr_to_stdout || NULL != proct->revstderr)) {
         ORTE_IOF_READ_ACTIVATE(proct->revstdout);
-        ORTE_IOF_READ_ACTIVATE(proct->revstderr);
-        ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
+        if (!orte_iof_base.redirect_app_stderr_to_stdout) {
+            ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+        }
+#if OPAL_PMIX_V1
+        if (NULL != proct->revstddiag) {
+            ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
+        }
+#endif
     }
     return ORTE_SUCCESS;
 }
@@ -268,7 +282,6 @@ static int orted_close(const orte_process_name_t* peer,
 {
     orte_iof_proc_t* proct;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
-    int cnt = 0;
 
     OPAL_LIST_FOREACH(proct, &mca_iof_orted_component.procs, orte_iof_proc_t) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, peer)) {
@@ -276,31 +289,39 @@ static int orted_close(const orte_process_name_t* peer,
                 if (NULL != proct->stdinev) {
                     OBJ_RELEASE(proct->stdinev);
                 }
-                ++cnt;
+                proct->stdinev = NULL;
             }
-            if (ORTE_IOF_STDOUT & source_tag) {
+            if ((ORTE_IOF_STDOUT & source_tag) ||
+                (ORTE_IOF_STDMERGE & source_tag)) {
                 if (NULL != proct->revstdout) {
                     orte_iof_base_static_dump_output(proct->revstdout);
                     OBJ_RELEASE(proct->revstdout);
                 }
-                ++cnt;
+                proct->revstdout = NULL;
             }
             if (ORTE_IOF_STDERR & source_tag) {
                 if (NULL != proct->revstderr) {
                     orte_iof_base_static_dump_output(proct->revstderr);
                     OBJ_RELEASE(proct->revstderr);
                 }
-                ++cnt;
+                proct->revstderr = NULL;
             }
+#if OPAL_PMIX_V1
             if (ORTE_IOF_STDDIAG & source_tag) {
                 if (NULL != proct->revstddiag) {
                     orte_iof_base_static_dump_output(proct->revstddiag);
                     OBJ_RELEASE(proct->revstddiag);
                 }
-                ++cnt;
+                proct->revstddiag = NULL;
             }
+#endif
             /* if we closed them all, then remove this proc */
-            if (4 == cnt) {
+            if (NULL == proct->stdinev &&
+                NULL == proct->revstdout &&
+#if OPAL_PMIX_V1
+                NULL == proct->revstddiag &&
+#endif
+                NULL == proct->revstderr) {
                 opal_list_remove_item(&mca_iof_orted_component.procs, &proct->super);
                 OBJ_RELEASE(proct);
             }
@@ -337,9 +358,11 @@ static int finalize(void)
         if (NULL != proct->revstderr) {
             orte_iof_base_static_dump_output(proct->revstderr);
         }
+#if OPAL_PMIX_V1
         if (NULL != proct->revstddiag) {
             orte_iof_base_static_dump_output(proct->revstddiag);
         }
+#endif
         OBJ_RELEASE(proct);
     }
     OBJ_DESTRUCT(&mca_iof_orted_component.procs);
