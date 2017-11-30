@@ -188,7 +188,6 @@ static int orte_odls_base_close(void)
     orte_proc_t *proc;
     opal_list_item_t *item;
 
-opal_output(0, "CLOSE");
     /* cleanup ODLS globals */
     while (NULL != (item = opal_list_remove_first(&orte_odls_globals.xterm_ranks))) {
         OBJ_RELEASE(item);
