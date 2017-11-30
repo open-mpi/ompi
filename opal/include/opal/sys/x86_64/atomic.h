@@ -196,7 +196,7 @@ static inline int64_t opal_atomic_swap_64( volatile int64_t *addr,
  *
  * Atomically adds @i to @v.
  */
-static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int i)
+static inline int32_t opal_atomic_fetch_add_32(volatile int32_t* v, int i)
 {
     int ret = i;
    __asm__ __volatile__(
@@ -205,7 +205,7 @@ static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int i)
                         :
                         :"memory", "cc"
                         );
-   return (ret+i);
+   return ret;
 }
 
 #define OPAL_HAVE_ATOMIC_ADD_64 1
@@ -217,7 +217,7 @@ static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int i)
  *
  * Atomically adds @i to @v.
  */
-static inline int64_t opal_atomic_add_fetch_64(volatile int64_t* v, int64_t i)
+static inline int64_t opal_atomic_fetch_add_64(volatile int64_t* v, int64_t i)
 {
     int64_t ret = i;
    __asm__ __volatile__(
@@ -226,7 +226,7 @@ static inline int64_t opal_atomic_add_fetch_64(volatile int64_t* v, int64_t i)
                         :
                         :"memory", "cc"
                         );
-   return (ret+i);
+   return ret;
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_32 1
@@ -238,7 +238,7 @@ static inline int64_t opal_atomic_add_fetch_64(volatile int64_t* v, int64_t i)
  *
  * Atomically subtracts @i from @v.
  */
-static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t* v, int i)
+static inline int32_t opal_atomic_fetch_sub_32(volatile int32_t* v, int i)
 {
     int ret = -i;
    __asm__ __volatile__(
@@ -247,7 +247,7 @@ static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t* v, int i)
                         :
                         :"memory", "cc"
                         );
-   return (ret-i);
+   return ret;
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_64 1
@@ -259,7 +259,7 @@ static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t* v, int i)
  *
  * Atomically subtracts @i from @v.
  */
-static inline int64_t opal_atomic_sub_fetch_64(volatile int64_t* v, int64_t i)
+static inline int64_t opal_atomic_fetch_sub_64(volatile int64_t* v, int64_t i)
 {
     int64_t ret = -i;
    __asm__ __volatile__(
@@ -268,7 +268,7 @@ static inline int64_t opal_atomic_sub_fetch_64(volatile int64_t* v, int64_t i)
                         :
                         :"memory", "cc"
                         );
-   return (ret-i);
+   return ret;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */

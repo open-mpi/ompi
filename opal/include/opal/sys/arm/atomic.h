@@ -209,44 +209,44 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t 
 
 
 #define OPAL_HAVE_ATOMIC_ADD_32 1
-static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int inc)
+static inline int32_t opal_atomic_fetch_add_32(volatile int32_t* v, int inc)
 {
-   int32_t t;
-   int tmp;
+    int32_t t, old;
+    int tmp;
 
-   __asm__ __volatile__(
-                         "1:  ldrex   %0, [%2]        \n"
-                         "    add     %0, %0, %3      \n"
-                         "    strex   %1, %0, [%2]    \n"
-                         "    cmp     %1, #0          \n"
+    __asm__ __volatile__(
+                         "1:  ldrex   %1, [%3]        \n"
+                         "    add     %0, %1, %4      \n"
+                         "    strex   %2, %0, [%3]    \n"
+                         "    cmp     %2, #0          \n"
                          "    bne     1b              \n"
 
-                         : "=&r" (t), "=&r" (tmp)
+                         : "=&r" (t), "=&r" (old), "=&r" (tmp)
                          : "r" (v), "r" (inc)
                          : "cc", "memory");
 
 
-   return t;
+    return old;
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_32 1
-static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t* v, int dec)
+static inline int32_t opal_atomic_fetch_sub_32(volatile int32_t* v, int dec)
 {
-   int32_t t;
-   int tmp;
+    int32_t t, old;
+    int tmp;
 
-   __asm__ __volatile__(
-                         "1:  ldrex   %0, [%2]        \n"
-                         "    sub     %0, %0, %3      \n"
-                         "    strex   %1, %0, [%2]    \n"
-                         "    cmp     %1, #0          \n"
+    __asm__ __volatile__(
+                         "1:  ldrex   %1, [%3]        \n"
+                         "    sub     %0, %1, %4      \n"
+                         "    strex   %2, %0, [%3]    \n"
+                         "    cmp     %2, #0          \n"
                          "    bne     1b              \n"
 
-                         : "=&r" (t), "=&r" (tmp)
+                         : "=&r" (t), "=&r" (old), "=&r" (tmp)
                          : "r" (v), "r" (dec)
                          : "cc", "memory");
 
-   return t;
+    return t;
 }
 
 #endif

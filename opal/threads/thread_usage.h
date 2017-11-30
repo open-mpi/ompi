@@ -93,54 +93,26 @@ static inline bool opal_set_using_threads(bool have)
  * indicates that threads are in use by the application or library.
  */
 
-#define OPAL_THREAD_DEFINE_ATOMIC_ADD(type, suffix)     \
-static inline type opal_thread_add_fetch_ ## suffix (volatile type *addr, type delta) \
+#define OPAL_THREAD_DEFINE_ATOMIC_OP(type, name, operator, suffix)      \
+static inline type opal_thread_ ## name ## _fetch_ ## suffix (volatile type *addr, type delta) \
 {                                                                       \
     if (OPAL_UNLIKELY(opal_using_threads())) {                          \
-        return opal_atomic_add_fetch_ ## suffix (addr, delta);                \
+        return opal_atomic_ ## name ## _fetch_ ## suffix (addr, delta); \
     }                                                                   \
                                                                         \
-    return (*addr += delta);                                            \
-}
-
-#define OPAL_THREAD_DEFINE_ATOMIC_AND(type, suffix)     \
-static inline type opal_thread_and_fetch_ ## suffix (volatile type *addr, type delta) \
+    *addr = *addr operator delta;                                       \
+    return *addr;                                                       \
+}                                                                       \
+                                                                        \
+static inline type opal_thread_fetch_ ## name ## _ ## suffix (volatile type *addr, type delta) \
 {                                                                       \
     if (OPAL_UNLIKELY(opal_using_threads())) {                          \
-        return opal_atomic_and_fetch_ ## suffix (addr, delta);                \
+        return opal_atomic_fetch_ ## name ## _ ## suffix (addr, delta); \
     }                                                                   \
                                                                         \
-    return (*addr &= delta);                                            \
-}
-
-#define OPAL_THREAD_DEFINE_ATOMIC_OR(type, suffix)     \
-static inline type opal_thread_or_fetch_ ## suffix (volatile type *addr, type delta) \
-{                                                                       \
-    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
-        return opal_atomic_or_fetch_ ## suffix (addr, delta);                 \
-    }                                                                   \
-                                                                        \
-    return (*addr |= delta);                                            \
-}
-
-#define OPAL_THREAD_DEFINE_ATOMIC_XOR(type, suffix)     \
-static inline type opal_thread_xor_fetch_ ## suffix (volatile type *addr, type delta) \
-{                                                                       \
-    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
-        return opal_atomic_xor_fetch_ ## suffix (addr, delta);                \
-    }                                                                   \
-                                                                        \
-    return (*addr ^= delta);                                            \
-}
-
-#define OPAL_THREAD_DEFINE_ATOMIC_SUB(type, suffix)     \
-static inline type opal_thread_sub_fetch_ ## suffix (volatile type *addr, type delta) \
-{                                                                       \
-    if (OPAL_UNLIKELY(opal_using_threads())) {                          \
-        return opal_atomic_sub_fetch_ ## suffix (addr, delta);                \
-    }                                                                   \
-                                                                        \
-    return (*addr -= delta);                                            \
+    type old = *addr;                                                   \
+    *addr = old operator delta;                                         \
+    return old;                                                         \
 }
 
 #define OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(type, addr_type, suffix)       \
@@ -173,13 +145,14 @@ static inline type opal_thread_swap_ ## suffix (volatile addr_type *ptr, type ne
     return old;                                                         \
 }
 
-OPAL_THREAD_DEFINE_ATOMIC_ADD(int32_t, 32)
-OPAL_THREAD_DEFINE_ATOMIC_ADD(size_t, size_t)
-OPAL_THREAD_DEFINE_ATOMIC_AND(int32_t, 32)
-OPAL_THREAD_DEFINE_ATOMIC_OR(int32_t, 32)
-OPAL_THREAD_DEFINE_ATOMIC_XOR(int32_t, 32)
-OPAL_THREAD_DEFINE_ATOMIC_SUB(int32_t, 32)
-OPAL_THREAD_DEFINE_ATOMIC_SUB(size_t, size_t)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int32_t, add, +, 32)
+OPAL_THREAD_DEFINE_ATOMIC_OP(size_t, add, +, size_t)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int32_t, and, &, 32)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int32_t, or, |, 32)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int32_t, xor, ^, 32)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int32_t, sub, -, 32)
+OPAL_THREAD_DEFINE_ATOMIC_OP(size_t, sub, -, size_t)
+
 OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(int32_t, int32_t, 32)
 OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(void *, intptr_t, ptr)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int32_t, int32_t, 32)
@@ -203,6 +176,24 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 #define OPAL_THREAD_SUB_FETCH_SIZE_T opal_thread_sub_fetch_size_t
 #define OPAL_ATOMIC_SUB_FETCH_SIZE_T opal_thread_sub_fetch_size_t
 
+#define OPAL_THREAD_FETCH_ADD32 opal_thread_fetch_add_32
+#define OPAL_ATOMIC_FETCH_ADD32 opal_thread_fetch_add_32
+
+#define OPAL_THREAD_FETCH_AND32 opal_thread_fetch_and_32
+#define OPAL_ATOMIC_FETCH_AND32 opal_thread_fetch_and_32
+
+#define OPAL_THREAD_FETCH_OR32 opal_thread_fetch_or_32
+#define OPAL_ATOMIC_FETCH_OR32 opal_thread_fetch_or_32
+
+#define OPAL_THREAD_FETCH_XOR32 opal_thread_fetch_xor_32
+#define OPAL_ATOMIC_FETCH_XOR32 opal_thread_fetch_xor_32
+
+#define OPAL_THREAD_FETCH_ADD_SIZE_T opal_thread_fetch_add_size_t
+#define OPAL_ATOMIC_FETCH_ADD_SIZE_T opal_thread_fetch_add_size_t
+
+#define OPAL_THREAD_FETCH_SUB_SIZE_T opal_thread_fetch_sub_size_t
+#define OPAL_ATOMIC_FETCH_SUB_SIZE_T opal_thread_fetch_sub_size_t
+
 #define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
 #define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32 opal_thread_compare_exchange_strong_32
 
@@ -218,10 +209,11 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(void *, intptr_t, ptr)
 /* define 64-bit macros is 64-bit atomic math is available */
 #if OPAL_HAVE_ATOMIC_MATH_64
 
-OPAL_THREAD_DEFINE_ATOMIC_ADD(int64_t, 64)
-OPAL_THREAD_DEFINE_ATOMIC_AND(int64_t, 64)
-OPAL_THREAD_DEFINE_ATOMIC_OR(int64_t, 64)
-OPAL_THREAD_DEFINE_ATOMIC_XOR(int64_t, 64)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, add, +, 64)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, and, &, 64)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, or, |, 64)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, xor, ^, 64)
+OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, sub, -, 64)
 OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(int64_t, int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
@@ -236,6 +228,18 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
 #define OPAL_THREAD_XOR_FETCH64 opal_thread_xor_fetch_64
 #define OPAL_ATOMIC_XOR_FETCH64 opal_thread_xor_fetch_64
+
+#define OPAL_THREAD_FETCH_ADD64 opal_thread_fetch_add_64
+#define OPAL_ATOMIC_FETCH_ADD64 opal_thread_fetch_add_64
+
+#define OPAL_THREAD_FETCH_AND64 opal_thread_fetch_and_64
+#define OPAL_ATOMIC_FETCH_AND64 opal_thread_fetch_and_64
+
+#define OPAL_THREAD_FETCH_OR64 opal_thread_fetch_or_64
+#define OPAL_ATOMIC_FETCH_OR64 opal_thread_fetch_or_64
+
+#define OPAL_THREAD_FETCH_XOR64 opal_thread_fetch_xor_64
+#define OPAL_ATOMIC_FETCH_XOR64 opal_thread_fetch_xor_64
 
 #define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
 #define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64

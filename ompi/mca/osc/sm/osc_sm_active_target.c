@@ -151,7 +151,7 @@ ompi_osc_sm_start(struct ompi_group_t *group,
 
         for (int i = 0 ; i < size ; ++i) {
             int rank_byte = ranks[i] >> OSC_SM_POST_BITS;
-            osc_sm_post_type_t old, rank_bit = ((osc_sm_post_type_t) 1) << (ranks[i] & 0x3f);
+            osc_sm_post_type_t rank_bit = ((osc_sm_post_type_t) 1) << (ranks[i] & 0x3f);
 
             /* wait for rank to post */
             while (!(module->posts[my_rank][rank_byte] & rank_bit)) {
@@ -162,9 +162,9 @@ ompi_osc_sm_start(struct ompi_group_t *group,
             opal_atomic_rmb ();
 
 #if OPAL_HAVE_ATOMIC_MATH_64
-            opal_atomic_xor_fetch_64 ((volatile osc_sm_post_type_t *) module->posts[my_rank] + rank_byte, rank_bit);
+            (void) opal_atomic_fetch_xor_64 ((volatile int64_t *) module->posts[my_rank] + rank_byte, rank_bit);
 #else
-            opal_atomic_xor_fetch_32 ((volatile osc_sm_post_type_t *) module->posts[my_rank] + rank_byte, rank_bit);
+            (void) opal_atomic_fetch_xor_32 ((volatile int32_t *) module->posts[my_rank] + rank_byte, rank_bit);
 #endif
        }
 
@@ -247,7 +247,7 @@ ompi_osc_sm_post(struct ompi_group_t *group,
 
         gsize = ompi_group_size(module->post_group);
         for (int i = 0 ; i < gsize ; ++i) {
-            (void) opal_atomic_add_fetch ((volatile osc_sm_post_type_t *) module->posts[ranks[i]] + my_byte, my_bit);
+            opal_atomic_add ((volatile osc_sm_post_type_t *) module->posts[ranks[i]] + my_byte, my_bit);
         }
 
         opal_atomic_wmb ();

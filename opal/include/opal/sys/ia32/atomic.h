@@ -130,7 +130,7 @@ static inline int32_t opal_atomic_swap_32( volatile int32_t *addr,
  *
  * Atomically adds @i to @v.
  */
-static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int i)
+static inline int32_t opal_atomic_fetch_add_32(volatile int32_t* v, int i)
 {
     int ret = i;
    __asm__ __volatile__(
@@ -139,7 +139,7 @@ static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int i)
                         :
                         :"memory", "cc"
                         );
-   return (ret+i);
+   return ret;
 }
 
 
@@ -150,7 +150,7 @@ static inline int32_t opal_atomic_add_fetch_32(volatile int32_t* v, int i)
  *
  * Atomically subtracts @i from @v.
  */
-static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t* v, int i)
+static inline int32_t opal_atomic_fetch_sub_32(volatile int32_t* v, int i)
 {
     int ret = -i;
    __asm__ __volatile__(
@@ -159,7 +159,7 @@ static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t* v, int i)
                         :
                         :"memory", "cc"
                         );
-   return (ret-i);
+   return ret;
 }
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */

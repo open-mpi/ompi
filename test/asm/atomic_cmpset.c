@@ -86,7 +86,7 @@ static void *thread_main(void *arg)
 #if OPAL_HAVE_ATOMIC_MATH_64
         opal_atomic_add_fetch_64(&val64, 5);
 #endif
-        opal_atomic_add_fetch(&valint, 5);
+        opal_atomic_add (&valint, 5);
     }
 
     return (void *) (unsigned long) (rank + 1000);
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
     /* -- add_int tests -- */
 
     valint = 42;
-    opal_atomic_add_fetch(&valint, 5);
+    opal_atomic_add (&valint, 5);
     opal_atomic_rmb();
     assert((42 + 5) == valint);
 

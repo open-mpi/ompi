@@ -54,7 +54,7 @@ static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
     vader_ctx->reg[0] = reg;
 
     if (vader_ctx->bound <= (uintptr_t) reg->bound && vader_ctx->base >= (uintptr_t) reg->base) {
-        (void)opal_atomic_add_fetch (&reg->ref_count, 1);
+        opal_atomic_add (&reg->ref_count, 1);
         return 1;
     }
 

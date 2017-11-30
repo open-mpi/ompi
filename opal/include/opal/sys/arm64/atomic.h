@@ -293,20 +293,20 @@ static inline int opal_atomic_sc_64 (volatile int64_t *addr, int64_t newval)
 }
 
 #define OPAL_ASM_MAKE_ATOMIC(type, bits, name, inst, reg)                   \
-    static inline type opal_atomic_ ## name ## _fetch_ ## bits (volatile type *addr, type value) \
+    static inline type opal_atomic_fetch_ ## name ## _ ## bits (volatile type *addr, type value) \
     {                                                                   \
-        type newval;                                                    \
+        type newval, old;                                               \
         int32_t tmp;                                                    \
                                                                         \
-        __asm__ __volatile__("1:  ldxr   %" reg "0, [%2]        \n"     \
-                             "    " inst "   %" reg "0, %" reg "0, %" reg "3 \n" \
-                             "    stxr   %w1, %" reg "0, [%2]   \n"     \
-                             "    cbnz   %w1, 1b         \n"            \
-                             : "=&r" (newval), "=&r" (tmp)              \
+        __asm__ __volatile__("1:  ldxr   %" reg "1, [%3]        \n"     \
+                             "    " inst "   %" reg "0, %" reg "1, %" reg "4 \n" \
+                             "    stxr   %w2, %" reg "0, [%3]   \n"     \
+                             "    cbnz   %w2, 1b         \n"            \
+                             : "=&r" (newval), "=&r" (old), "=&r" (tmp) \
                              : "r" (addr), "r" (value)                  \
                              : "cc", "memory");                         \
                                                                         \
-        return newval;                                                  \
+        return old;                                                     \
     }
 
 OPAL_ASM_MAKE_ATOMIC(int32_t, 32, add, "add", "w")
