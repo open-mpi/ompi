@@ -259,10 +259,11 @@ static int rsh_init(void)
 /**
  * Callback on daemon exit.
  */
-static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
+static void rsh_wait_daemon(int sd, short flags, void *cbdata)
 {
     orte_job_t *jdata;
     orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)cbdata;
+    orte_proc_t *daemon = caddy->daemon;
     char *rtmod;
 
     if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
@@ -938,7 +939,7 @@ static void process_launch_list(int fd, short args, void *cbdata)
         caddy = (orte_plm_rsh_caddy_t*)item;
         /* register the sigchild callback */
         ORTE_FLAG_SET(caddy->daemon, ORTE_PROC_FLAG_ALIVE);
-        orte_wait_cb(caddy->daemon, rsh_wait_daemon, (void*)caddy);
+        orte_wait_cb(caddy->daemon, rsh_wait_daemon, orte_event_base, (void*)caddy);
 
         /* fork a child to exec the rsh/ssh session */
         pid = fork();

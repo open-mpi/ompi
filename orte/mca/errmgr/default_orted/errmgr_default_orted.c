@@ -46,6 +46,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/state/state.h"
 
+#include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_quit.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/data_type_support/orte_dt_support.h"
@@ -327,6 +328,7 @@ static void proc_errors(int fd, short args, void *cbdata)
     orte_plm_cmd_flag_t cmd;
     int rc=ORTE_SUCCESS;
     int i;
+    orte_wait_tracker_t *t2;
 
     ORTE_ACQUIRE_OBJECT(caddy);
 
@@ -412,7 +414,14 @@ static void proc_errors(int fd, short args, void *cbdata)
                 goto cleanup;
             }
             /* leave the exit code alone - process this as a waitpid */
-            ompi_odls_base_default_wait_local_proc(child, NULL);
+            t2 = OBJ_NEW(orte_wait_tracker_t);
+            OBJ_RETAIN(child);  // protect against race conditions
+            t2->child = child;
+            t2->evb = orte_event_base;
+            opal_event_set(t2->evb, &t2->ev, -1,
+                           OPAL_EV_WRITE, orte_odls_base_default_wait_local_proc, t2);
+            opal_event_set_priority(&t2->ev, ORTE_MSG_PRI);
+            opal_event_active(&t2->ev, OPAL_EV_WRITE, 1);
             goto cleanup;
         }
         OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,

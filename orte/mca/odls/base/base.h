@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +44,10 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_odls_base_framework;
  * Select an available component.
  */
 ORTE_DECLSPEC int orte_odls_base_select(void);
+
+ORTE_DECLSPEC void orte_odls_base_start_threads(orte_job_t *jdata);
+
+ORTE_DECLSPEC void orte_odls_base_harvest_threads(void);
 
 END_C_DECLS
 #endif

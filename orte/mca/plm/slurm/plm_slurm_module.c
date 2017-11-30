@@ -524,7 +524,9 @@ static int plm_slurm_finalize(void)
 }
 
 
-static void srun_wait_cb(orte_proc_t *proc, void* cbdata){
+static void srun_wait_cb(int sd, short fd, void *cbdata){
+    orte_wait_tracker_t *t2 = (orte_wait_tracker_t*)cbdata;
+    orte_proc_t *proc = t2->child;
     orte_job_t *jdata;
 
     /* According to the SLURM folks, srun always returns the highest exit
@@ -576,7 +578,7 @@ static void srun_wait_cb(orte_proc_t *proc, void* cbdata){
     }
 
     /* done with this dummy */
-    OBJ_RELEASE(proc);
+    OBJ_RELEASE(t2);
 }
 
 
@@ -613,7 +615,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
     /* be sure to mark it as alive so we don't instantly fire */
     ORTE_FLAG_SET(dummy, ORTE_PROC_FLAG_ALIVE);
     /* setup the waitpid so we can find out if srun succeeds! */
-    orte_wait_cb(dummy, srun_wait_cb, NULL);
+    orte_wait_cb(dummy, srun_wait_cb, orte_event_base, NULL);
 
     if (0 == srun_pid) {  /* child */
         char *bin_base = NULL, *lib_base = NULL;

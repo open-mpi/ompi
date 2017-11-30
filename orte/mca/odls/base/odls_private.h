@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,7 @@
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
-
+#include "orte/util/threads.h"
 #include "orte/mca/odls/odls_types.h"
 
 BEGIN_C_DECLS
@@ -59,11 +61,14 @@ typedef struct {
     /* the xterm cmd to be used */
     char **xtermcmd;
     /* thread pool */
+    int max_threads;
     int num_threads;
+    int cutoff;
     opal_event_base_t **ev_bases;   // event base array for progress threads
     char** ev_threads;              // event progress thread names
     int next_base;                  // counter to load-level thread use
     bool signal_direct_children_only;
+    orte_lock_t lock;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
@@ -127,7 +132,7 @@ OBJ_CLASS_DECLARATION(orte_odls_launch_local_t);
 
 ORTE_DECLSPEC void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata);
 
-ORTE_DECLSPEC void ompi_odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata);
+ORTE_DECLSPEC void orte_odls_base_default_wait_local_proc(int fd, short sd, void *cbdata);
 
 /* define a function type to signal a local proc */
 typedef int (*orte_odls_base_signal_local_fn_t)(pid_t pid, int signum);
