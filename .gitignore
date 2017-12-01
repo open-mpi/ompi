@@ -474,6 +474,7 @@ orte/test/system/orte_sensor
 orte/test/system/event-threads
 orte/test/system/test-time
 orte/test/system/psm_keygen
+orte/test/system/pspawn
 orte/test/system/regex
 orte/test/system/orte_errors
 orte/test/system/evthread-test

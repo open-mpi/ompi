@@ -40,27 +40,32 @@
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/odls_private.h"
-#include "orte/mca/odls/default/odls_default.h"
+#include "orte/mca/odls/pspawn/odls_pspawn.h"
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-orte_odls_base_component_t mca_odls_default_component = {
+static int component_open(void);
+static int component_close(void);
+static int component_query(mca_base_module_t **module, int *priority);
+
+
+orte_odls_base_component_t mca_odls_pspawn_component = {
     /* First, the mca_component_t struct containing meta information
     about the component itself */
     .version = {
         ORTE_ODLS_BASE_VERSION_2_0_0,
         /* Component name and version */
-        .mca_component_name = "default",
+        .mca_component_name = "pspawn",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),
 
         /* Component open and close functions */
-        .mca_open_component = orte_odls_default_component_open,
-        .mca_close_component = orte_odls_default_component_close,
-        .mca_query_component = orte_odls_default_component_query,
+        .mca_open_component = component_open,
+        .mca_close_component = component_close,
+        .mca_query_component = component_query,
     },
     .base_data = {
         /* The component is checkpoint ready */
@@ -70,29 +75,29 @@ orte_odls_base_component_t mca_odls_default_component = {
 
 
 
-int orte_odls_default_component_open(void)
+static int component_open(void)
 {
     return ORTE_SUCCESS;
 }
 
-int orte_odls_default_component_query(mca_base_module_t **module, int *priority)
+static int component_query(mca_base_module_t **module, int *priority)
 {
     /* the base open/select logic protects us against operation when
      * we are NOT in a daemon, so we don't have to check that here
      */
 
     /* we have built some logic into the configure.m4 file that checks
-     * to see if we have "fork" support and only builds this component
+     * to see if we have "posix_spawn" support and only builds this component
      * if we do. Hence, we only get here if we CAN build - in which
-     * case, we definitely should be considered for selection
+     * case, we only should be considered for selection if specified
      */
-    *priority = 10; /* let others override us - we are the default */
-    *module = (mca_base_module_t *) &orte_odls_default_module;
+    *priority = 1; /* let others override us */
+    *module = (mca_base_module_t *) &orte_odls_pspawn_module;
     return ORTE_SUCCESS;
 }
 
 
-int orte_odls_default_component_close(void)
+static int component_close(void)
 {
     return ORTE_SUCCESS;
 }
