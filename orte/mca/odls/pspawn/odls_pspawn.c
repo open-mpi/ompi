@@ -362,6 +362,7 @@ static int odls_pspawn_fork_local_proc(void *cdptr)
     }
 
     cd->child->state = ORTE_PROC_STATE_RUNNING;
+    cd->child->pid = pid;
     ORTE_FLAG_SET(cd->child, ORTE_PROC_FLAG_ALIVE);
     return ORTE_SUCCESS;
 }
