@@ -186,7 +186,11 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	status->_ucount = max_data;
     }
 
-    fh->f_get_num_aggregators (&two_phase_num_io_procs);
+    two_phase_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+    if ( OMPI_ERR_MAX == two_phase_num_io_procs ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     if (-1 == two_phase_num_io_procs ){
 	ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *)fh,
 					  two_phase_num_io_procs,
@@ -575,7 +579,11 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 	}
     }
 
-    fh->f_get_bytes_per_agg ( &two_phase_cycle_buffer_size);
+    two_phase_cycle_buffer_size = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
+    if ( OMPI_ERR_MAX == two_phase_cycle_buffer_size ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     ntimes = (int)((end_loc - st_loc + two_phase_cycle_buffer_size)/
 		   two_phase_cycle_buffer_size);
 

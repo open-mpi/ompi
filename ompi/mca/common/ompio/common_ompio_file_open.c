@@ -106,8 +106,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_decode_datatype=ompi_io_ompio_decode_datatype;
     ompio_fh->f_generate_current_file_view=ompi_io_ompio_generate_current_file_view;
 
-    ompio_fh->f_get_num_aggregators=mca_io_ompio_get_num_aggregators;
-    ompio_fh->f_get_bytes_per_agg=mca_io_ompio_get_bytes_per_agg;
+    ompio_fh->f_get_mca_parameter_value=mca_io_ompio_get_mca_parameter_value;
     ompio_fh->f_set_aggregator_props=mca_io_ompio_set_aggregator_props;
 
     /* This fix is needed for data seiving to work with

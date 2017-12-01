@@ -222,7 +222,11 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	status->_ucount = max_data;
     }
 
-    fh->f_get_num_aggregators ( &two_phase_num_io_procs );
+    two_phase_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+    if ( OMPI_ERR_MAX == two_phase_num_io_procs ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     if(-1 == two_phase_num_io_procs){
 	ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *)fh,
 					  two_phase_num_io_procs,
@@ -642,7 +646,11 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	}
     }
 
-    fh->f_get_bytes_per_agg ( &two_phase_cycle_buffer_size );
+    two_phase_cycle_buffer_size = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
+    if ( OMPI_ERR_MAX == two_phase_cycle_buffer_size ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     ntimes = (int) ((end_loc - st_loc + two_phase_cycle_buffer_size)/two_phase_cycle_buffer_size);
 
     if ((st_loc == -1) && (end_loc == -1)) {
@@ -1073,13 +1081,18 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 		fh->f_io_array[0].length = size;
 		fh->f_io_array[0].memory_address = write_buf;
 		if (fh->f_num_of_io_entries){
-                    if ( fh->f_amode & MPI_MODE_WRONLY &&
-                         !mca_io_ompio_overwrite_amode ){
+                    int amode_overwrite;
+                    amode_overwrite = fh->f_get_mca_parameter_value ("overwrite_amode", strlen("overwrite_amode"));
+                    if ( OMPI_ERR_MAX == amode_overwrite ) {
+                        ret = OMPI_ERROR;
+                        goto exit;
+                    }
+                    if ( fh->f_amode & MPI_MODE_WRONLY && !amode_overwrite ){
                         if ( 0 == fh->f_rank ) {
                             printf("\n File not opened in RDWR mode, can not continue."
                                    "\n To resolve this problem, you can either \n"
                                    "  a. open the file with MPI_MODE_RDWR instead of MPI_MODE_WRONLY\n"
-                                   "  b. ensure that the mca parameter mca_io_ompio_amode_overwrite is set to 1\n"
+                                   "  b. ensure that the mca parameter mca_io_ompio_overwrite_amode is set to 1\n"
                                    "  c. use an fcoll component that does not use data sieving (e.g. dynamic)\n");
                         }
                         ret = MPI_ERR_FILE;

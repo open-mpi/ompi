@@ -144,7 +144,11 @@ mca_fcoll_dynamic_gen2_file_read_all (mca_io_ompio_file_t *fh,
         status->_ucount = max_data;
     }
 
-    fh->f_get_num_aggregators ( &dynamic_gen2_num_io_procs);
+    dynamic_gen2_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+    if ( OMPI_ERR_MAX == dynamic_gen2_num_io_procs ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
                                       dynamic_gen2_num_io_procs,
                                       max_data);
@@ -333,7 +337,11 @@ mca_fcoll_dynamic_gen2_file_read_all (mca_io_ompio_file_t *fh,
      *** 6. Determine the number of cycles required to execute this
      ***    operation
      *************************************************************/
-    fh->f_get_bytes_per_agg ( (int *) &bytes_per_cycle);
+    bytes_per_cycle = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
+    if ( OMPI_ERR_MAX == bytes_per_cycle ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     cycles = ceil((double)total_bytes/bytes_per_cycle);
 
     if ( my_aggregator == fh->f_rank) {

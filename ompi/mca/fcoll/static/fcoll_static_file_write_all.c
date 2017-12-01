@@ -69,7 +69,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 
 
 
-    size_t max_data = 0, bytes_per_cycle=0;
+    size_t max_data = 0;
+    MPI_Aint bytes_per_cycle=0;
     struct iovec *iov=NULL, *decoded_iov=NULL;
     uint32_t iov_count=0, iov_index=0;
     int i=0,j=0,l=0, temp_index;
@@ -144,7 +145,11 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	status->_ucount = max_data;
     }
 
-    fh->f_get_num_aggregators ( & static_num_io_procs );
+    static_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+    if ( OMPI_ERR_MAX == static_num_io_procs ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *)fh,
 				static_num_io_procs,
 				max_data);
@@ -202,7 +207,11 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 
     }
 
-    fh->f_get_bytes_per_agg ( (int *) &bytes_per_cycle);
+    bytes_per_cycle = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
+    if ( OMPI_ERR_MAX == bytes_per_cycle ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     local_cycles = ceil( ((double)max_data*fh->f_procs_per_group) /bytes_per_cycle);
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
@@ -475,7 +484,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
             if ((index == local_cycles-1) && (max_data % (bytes_per_cycle/fh->f_procs_per_group)) ) {
                 bytes_to_write_in_cycle = max_data - total_bytes_written;
             }
-            else if (max_data <= bytes_per_cycle/fh->f_procs_per_group) {
+            else if (max_data <= (size_t) (bytes_per_cycle/fh->f_procs_per_group)) {
                 bytes_to_write_in_cycle = max_data;
             }
             else {
