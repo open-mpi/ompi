@@ -166,7 +166,7 @@ static inline void ompi_osc_pt2pt_sync_wait_expected (ompi_osc_pt2pt_sync_t *syn
 
 static inline void ompi_osc_pt2pt_sync_expected (ompi_osc_pt2pt_sync_t *sync)
 {
-    int32_t new_value = OPAL_THREAD_ADD32 (&sync->sync_expected, -1);
+    int32_t new_value = OPAL_THREAD_ADD_FETCH32 (&sync->sync_expected, -1);
     if (0 == new_value) {
         OPAL_THREAD_LOCK(&sync->lock);
         if (!(sync->type == OMPI_OSC_PT2PT_SYNC_TYPE_LOCK && sync->num_peers > 1)) {

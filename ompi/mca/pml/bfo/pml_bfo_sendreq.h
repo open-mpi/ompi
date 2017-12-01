@@ -78,12 +78,12 @@ OBJ_CLASS_DECLARATION(mca_pml_bfo_send_range_t);
 
 static inline bool lock_send_request(mca_pml_bfo_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD32(&sendreq->req_lock,  1) == 1;
+    return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock,  1) == 1;
 }
 
 static inline bool unlock_send_request(mca_pml_bfo_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD32(&sendreq->req_lock, -1) == 0;
+    return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock, -1) == 0;
 }
 
 static inline void
@@ -445,7 +445,7 @@ mca_pml_bfo_send_request_start( mca_pml_bfo_send_request_t* sendreq )
     sendreq->req_pipeline_depth = 0;
     sendreq->req_bytes_delivered = 0;
     sendreq->req_pending = MCA_PML_BFO_SEND_PENDING_NONE;
-    sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(
+    sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD_FETCH32(
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);
 #if PML_BFO
     sendreq->req_restartseq = 0;      /* counts up restarts */

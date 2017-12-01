@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -378,7 +378,7 @@ int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
      * a read only memory).
      */
     if( NULL != pArgs ) {
-        OPAL_THREAD_ADD32(&pArgs->ref_count, 1);
+        OPAL_THREAD_ADD_FETCH32(&pArgs->ref_count, 1);
         dest_data->args = pArgs;
     }
     return OMPI_SUCCESS;
@@ -396,7 +396,7 @@ int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
 
     assert( 0 < pArgs->ref_count );
-    OPAL_THREAD_ADD32(&pArgs->ref_count, -1);
+    OPAL_THREAD_ADD_FETCH32(&pArgs->ref_count, -1);
     if( 0 == pArgs->ref_count ) {
         /* There are some duplicated datatypes around that have a pointer to this
          * args. We will release them only when the last datatype will dissapear.
@@ -487,7 +487,8 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
     void* recursive_buffer;
 
     if (NULL == packed_description) {
-        if (opal_atomic_bool_cmpset (&datatype->packed_description, NULL, (void *) 1)) {
+        void *_tmp_ptr = NULL;
+        if (opal_atomic_compare_exchange_strong_ptr (&datatype->packed_description, (void *) &_tmp_ptr, (void *) 1)) {
             if( ompi_datatype_is_predefined(datatype) ) {
                 packed_description = malloc(2 * sizeof(int));
             } else if( NULL == args ) {

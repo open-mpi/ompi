@@ -667,7 +667,7 @@ static int accumulate_cb (ompi_request_t *request)
         rank = acc_data->peer;
     }
 
-    if (0 == OPAL_THREAD_ADD32(&acc_data->request_count, -1)) {
+    if (0 == OPAL_THREAD_ADD_FETCH32(&acc_data->request_count, -1)) {
         /* no more requests needed before the buffer can be accumulated */
 
         if (acc_data->source) {
@@ -716,9 +716,9 @@ static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_os
     /* NTH: ensure we don't leave wait/process_flush/etc until this
      * accumulate operation is complete. */
     if (active_target) {
-        OPAL_THREAD_ADD32(&module->active_incoming_frag_count, -1);
+        OPAL_THREAD_ADD_FETCH32(&module->active_incoming_frag_count, -1);
     } else {
-        OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
+        OPAL_THREAD_ADD_FETCH32(&peer->passive_incoming_frag_count, -1);
     }
 
     pending_acc->active_target = active_target;
@@ -1353,7 +1353,7 @@ static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
                          "process_flush header = {.frag_count = %d}", flush_header->frag_count));
 
     /* increase signal count by incoming frags */
-    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -(int32_t) flush_header->frag_count);
+    OPAL_THREAD_ADD_FETCH32(&peer->passive_incoming_frag_count, -(int32_t) flush_header->frag_count);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "%d: process_flush: received message from %d. passive_incoming_frag_count = %d",
@@ -1372,7 +1372,7 @@ static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
     }
 
     /* signal incomming will increment this counter */
-    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
+    OPAL_THREAD_ADD_FETCH32(&peer->passive_incoming_frag_count, -1);
 
     return sizeof (*flush_header);
 }
@@ -1387,7 +1387,7 @@ static inline int process_unlock (ompi_osc_pt2pt_module_t *module, int source,
                          "process_unlock header = {.frag_count = %d}", unlock_header->frag_count));
 
     /* increase signal count by incoming frags */
-    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -(int32_t) unlock_header->frag_count);
+    OPAL_THREAD_ADD_FETCH32(&peer->passive_incoming_frag_count, -(int32_t) unlock_header->frag_count);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "osc pt2pt: processing unlock request from %d. frag count = %d, processed_count = %d",
@@ -1406,7 +1406,7 @@ static inline int process_unlock (ompi_osc_pt2pt_module_t *module, int source,
     }
 
     /* signal incoming will increment this counter */
-    OPAL_THREAD_ADD32(&peer->passive_incoming_frag_count, -1);
+    OPAL_THREAD_ADD_FETCH32(&peer->passive_incoming_frag_count, -1);
 
     return sizeof (*unlock_header);
 }

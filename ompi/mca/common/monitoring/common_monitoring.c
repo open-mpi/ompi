@@ -209,7 +209,7 @@ static int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
 int mca_common_monitoring_init( void )
 {
     if( !mca_common_monitoring_enabled ) return OMPI_ERROR;
-    if( 1 < opal_atomic_add_32(&mca_common_monitoring_hold, 1) ) return OMPI_SUCCESS; /* Already initialized */
+    if( 1 < opal_atomic_add_fetch_32(&mca_common_monitoring_hold, 1) ) return OMPI_SUCCESS; /* Already initialized */
 
     char hostname[OPAL_MAXHOSTNAMELEN] = "NA";
     /* Initialize constant */
@@ -229,7 +229,7 @@ int mca_common_monitoring_init( void )
 void mca_common_monitoring_finalize( void )
 {
     if( ! mca_common_monitoring_enabled || /* Don't release if not last */
-        0 < opal_atomic_sub_32(&mca_common_monitoring_hold, 1) ) return;
+        0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1) ) return;
     
     OPAL_MONITORING_PRINT_INFO("common_component_finish");
     /* Dump monitoring informations */
@@ -503,21 +503,21 @@ void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag)
 
     /* Keep tracks of the data_size distribution */
     if( 0 == data_size ) {
-        opal_atomic_add_size_t(&size_histogram[world_rank * max_size_histogram], 1);
+        opal_atomic_add_fetch_size_t(&size_histogram[world_rank * max_size_histogram], 1);
     } else {
         int log2_size = log10(data_size)/log10_2;
         if(log2_size > max_size_histogram - 2) /* Avoid out-of-bound write */
             log2_size = max_size_histogram - 2;
-        opal_atomic_add_size_t(&size_histogram[world_rank * max_size_histogram + log2_size + 1], 1);
+        opal_atomic_add_fetch_size_t(&size_histogram[world_rank * max_size_histogram + log2_size + 1], 1);
     }
         
     /* distinguishses positive and negative tags if requested */
     if( (tag < 0) && (mca_common_monitoring_filter()) ) {
-        opal_atomic_add_size_t(&filtered_pml_data[world_rank], data_size);
-        opal_atomic_add_size_t(&filtered_pml_count[world_rank], 1);
+        opal_atomic_add_fetch_size_t(&filtered_pml_data[world_rank], data_size);
+        opal_atomic_add_fetch_size_t(&filtered_pml_count[world_rank], 1);
     } else { /* if filtered monitoring is not activated data is aggregated indifferently */
-        opal_atomic_add_size_t(&pml_data[world_rank], data_size);
-        opal_atomic_add_size_t(&pml_count[world_rank], 1);
+        opal_atomic_add_fetch_size_t(&pml_data[world_rank], data_size);
+        opal_atomic_add_fetch_size_t(&pml_count[world_rank], 1);
     }
 }
 
@@ -564,11 +564,11 @@ void mca_common_monitoring_record_osc(int world_rank, size_t data_size,
     if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
 
     if( SEND == dir ) {
-        opal_atomic_add_size_t(&osc_data_s[world_rank], data_size);
-        opal_atomic_add_size_t(&osc_count_s[world_rank], 1);
+        opal_atomic_add_fetch_size_t(&osc_data_s[world_rank], data_size);
+        opal_atomic_add_fetch_size_t(&osc_count_s[world_rank], 1);
     } else {
-        opal_atomic_add_size_t(&osc_data_r[world_rank], data_size);
-        opal_atomic_add_size_t(&osc_count_r[world_rank], 1);
+        opal_atomic_add_fetch_size_t(&osc_data_r[world_rank], data_size);
+        opal_atomic_add_fetch_size_t(&osc_count_r[world_rank], 1);
     }
 }
 
@@ -650,8 +650,8 @@ void mca_common_monitoring_record_coll(int world_rank, size_t data_size)
 {
     if( 0 == mca_common_monitoring_current_state ) return;  /* right now the monitoring is not started */
 
-    opal_atomic_add_size_t(&coll_data[world_rank], data_size);
-    opal_atomic_add_size_t(&coll_count[world_rank], 1);
+    opal_atomic_add_fetch_size_t(&coll_data[world_rank], data_size);
+    opal_atomic_add_fetch_size_t(&coll_count[world_rank], 1);
 }
 
 static int mca_common_monitoring_get_coll_count(const struct mca_base_pvar_t *pvar,

@@ -148,9 +148,9 @@ int mca_btl_openib_get_internal (mca_btl_base_module_t *btl, struct mca_btl_base
     }
 
     /* check for a get token */
-    if (OPAL_THREAD_ADD32(&ep->get_tokens,-1) < 0) {
+    if (OPAL_THREAD_ADD_FETCH32(&ep->get_tokens,-1) < 0) {
         qp_put_wqe(ep, qp);
-        OPAL_THREAD_ADD32(&ep->get_tokens,1);
+        OPAL_THREAD_ADD_FETCH32(&ep->get_tokens,1);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -159,7 +159,7 @@ int mca_btl_openib_get_internal (mca_btl_base_module_t *btl, struct mca_btl_base
 
     if (ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr)) {
         qp_put_wqe(ep, qp);
-        OPAL_THREAD_ADD32(&ep->get_tokens,1);
+        OPAL_THREAD_ADD_FETCH32(&ep->get_tokens,1);
         return OPAL_ERROR;
     }
 

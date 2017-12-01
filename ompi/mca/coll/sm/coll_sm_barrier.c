@@ -101,7 +101,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     if (0 != rank) {
         /* Get parent *in* buffer */
         parent = &data->mcb_barrier_control_parent[buffer_set];
-        (void)opal_atomic_add(parent, 1);
+        opal_atomic_add (parent, 1);
 
         SPIN_CONDITION(0 != *me_out, exit_label2);
         *me_out = 0;

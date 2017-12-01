@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -285,7 +285,9 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
                 ret = ompi_osc_rdma_lock_btl_cswap (module, peer, target, 0, 1 + (int64_t) my_rank, &result);
                 assert (OMPI_SUCCESS == ret);
             } else {
-                result = !ompi_osc_rdma_lock_cmpset ((osc_rdma_counter_t *) target, 0, 1 + (osc_rdma_counter_t) my_rank);
+                ompi_osc_rdma_lock_t _tmp_value = 0;
+
+                result = !ompi_osc_rdma_lock_compare_exchange ((osc_rdma_counter_t *) target, &_tmp_value, 1 + (osc_rdma_counter_t) my_rank);
             }
 
             if (OPAL_LIKELY(0 == result)) {

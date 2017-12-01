@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -396,10 +396,12 @@ static inline int ompi_request_free(ompi_request_t** request)
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
     if (opal_using_threads () && !REQUEST_COMPLETE(req)) {
+        void *_tmp_ptr = REQUEST_PENDING;
         ompi_wait_sync_t sync;
+
         WAIT_SYNC_INIT(&sync, 1);
 
-        if (OPAL_ATOMIC_BOOL_CMPSET_PTR(&req->req_complete, REQUEST_PENDING, &sync)) {
+        if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
             SYNC_WAIT(&sync);
         } else {
             /* completed before we had a chance to swap in the sync object */
@@ -439,7 +441,9 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
 
     if (0 == rc) {
         if( OPAL_LIKELY(with_signal) ) {
-            if(!OPAL_ATOMIC_BOOL_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
+            void *_tmp_ptr = REQUEST_PENDING;
+
+            if(!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_COMPLETED)) {
                 ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
                                                                                        REQUEST_COMPLETED);
                 /* In the case where another thread concurrently changed the request to REQUEST_PENDING */

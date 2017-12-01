@@ -510,7 +510,7 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
 static inline int opal_obj_update(opal_object_t *object, int inc) __opal_attribute_always_inline__;
 static inline int opal_obj_update(opal_object_t *object, int inc)
 {
-    return OPAL_THREAD_ADD32(&object->obj_reference_count, inc);
+    return OPAL_THREAD_ADD_FETCH32(&object->obj_reference_count, inc);
 }
 
 END_C_DECLS

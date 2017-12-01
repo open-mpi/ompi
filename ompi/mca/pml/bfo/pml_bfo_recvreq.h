@@ -70,12 +70,12 @@ OBJ_CLASS_DECLARATION(mca_pml_bfo_recv_request_t);
 
 static inline bool lock_recv_request(mca_pml_bfo_recv_request_t *recvreq)
 {
-        return OPAL_THREAD_ADD32(&recvreq->req_lock,  1) == 1;
+        return OPAL_THREAD_ADD_FETCH32(&recvreq->req_lock,  1) == 1;
 }
 
 static inline bool unlock_recv_request(mca_pml_bfo_recv_request_t *recvreq)
 {
-        return OPAL_THREAD_ADD32(&recvreq->req_lock, -1) == 0;
+        return OPAL_THREAD_ADD_FETCH32(&recvreq->req_lock, -1) == 0;
 }
 
 /**

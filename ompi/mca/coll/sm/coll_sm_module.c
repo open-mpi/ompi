@@ -463,7 +463,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     OBJ_RETAIN(sm_module->previous_reduce_module);
 
     /* Indicate that we have successfully attached and setup */
-    (void)opal_atomic_add(&(data->sm_bootstrap_meta->module_seg->seg_inited), 1);
+    opal_atomic_add (&(data->sm_bootstrap_meta->module_seg->seg_inited), 1);
 
     /* Wait for everyone in this communicator to attach and setup */
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,

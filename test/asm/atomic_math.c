@@ -44,11 +44,11 @@ static void* atomic_math_test(void* arg)
     int i;
 
     for (i = 0 ; i < count ; ++i) {
-        (void)opal_atomic_add_32(&val32, 5);
+        (void)opal_atomic_add_fetch_32(&val32, 5);
 #if OPAL_HAVE_ATOMIC_MATH_64
-        (void)opal_atomic_add_64(&val64, 6);
+        (void)opal_atomic_add_fetch_64(&val64, 6);
 #endif
-        (void)opal_atomic_add(&valint, 4);
+        opal_atomic_add (&valint, 4);
     }
 
     return NULL;
@@ -100,6 +100,10 @@ atomic_math_test_th(int count, int thr_count)
 int
 main(int argc, char *argv[])
 {
+    int32_t test32;
+#if OPAL_HAVE_ATOMIC_MATH_64
+    int64_t test64;
+#endif
     int ret = 77;
     int num_threads = 1;
 
@@ -109,11 +113,147 @@ main(int argc, char *argv[])
     }
     num_threads = atoi(argv[1]);
 
+    test32 = opal_atomic_add_fetch_32 (&val32, 17);
+    if (test32 != 17 || val32 != 17) {
+        fprintf (stderr, "error in opal_atomic_add_fetch_32. expected (17, 17), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+    test32 = opal_atomic_fetch_add_32 (&val32, 13);
+    if (test32 != 17 || val32 != 30) {
+        fprintf (stderr, "error in opal_atomic_fetch_add_32. expected (17, 30), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+
+
+    test32 = opal_atomic_and_fetch_32 (&val32, 0x18);
+    if (test32 != 24 || val32 != 24) {
+        fprintf (stderr, "error in opal_atomic_and_fetch_32. expected (24, 24), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+    test32 = opal_atomic_fetch_and_32 (&val32, 0x10);
+    if (test32 != 24 || val32 != 16) {
+        fprintf (stderr, "error in opal_atomic_fetch_and_32. expected (24, 16), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+
+
+    test32 = opal_atomic_or_fetch_32 (&val32, 0x03);
+    if (test32 != 19 || val32 != 19) {
+        fprintf (stderr, "error in opal_atomic_or_fetch_32. expected (19, 19), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+    test32 = opal_atomic_fetch_or_32 (&val32, 0x04);
+    if (test32 != 19 || val32 != 23) {
+        fprintf (stderr, "error in opal_atomic_fetch_or_32. expected (19, 23), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+
+    test32 = opal_atomic_xor_fetch_32 (&val32, 0x03);
+    if (test32 != 20 || val32 != 20) {
+        fprintf (stderr, "error in opal_atomic_xor_fetch_32. expected (20, 20), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+    test32 = opal_atomic_fetch_xor_32 (&val32, 0x05);
+    if (test32 != 20 || val32 != 17) {
+        fprintf (stderr, "error in opal_atomic_fetch_xor_32. expected (20, 17), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+
+
+    test32 = opal_atomic_sub_fetch_32 (&val32, 14);
+    if (test32 != 3 || val32 != 3) {
+        fprintf (stderr, "error in opal_atomic_sub_fetch_32. expected (3, 3), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+    test32 = opal_atomic_fetch_xor_32 (&val32, 3);
+    if (test32 != 3 || val32 != 0) {
+        fprintf (stderr, "error in opal_atomic_fetch_sub_32. expected (3, 0), got (%d, %d)\n", test32, val32);
+        exit(EXIT_FAILURE);
+    }
+
+#if OPAL_HAVE_ATOMIC_MATH_64
+    test64 = opal_atomic_add_fetch_64 (&val64, 17);
+    if (test64 != 17 || val64 != 17) {
+        fprintf (stderr, "error in opal_atomic_add_fetch_64. expected (17, 17), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+    test64 = opal_atomic_fetch_add_64 (&val64, 13);
+    if (test64 != 17 || val64 != 30) {
+        fprintf (stderr, "error in opal_atomic_fetch_add_64. expected (17, 30), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+
+
+    test64 = opal_atomic_and_fetch_64 (&val64, 0x18);
+    if (test64 != 24 || val64 != 24) {
+        fprintf (stderr, "error in opal_atomic_and_fetch_64. expected (24, 24), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+    test64 = opal_atomic_fetch_and_64 (&val64, 0x10);
+    if (test64 != 24 || val64 != 16) {
+        fprintf (stderr, "error in opal_atomic_fetch_and_64. expected (24, 16), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+
+
+    test64 = opal_atomic_or_fetch_64 (&val64, 0x03);
+    if (test64 != 19 || val64 != 19) {
+        fprintf (stderr, "error in opal_atomic_or_fetch_64. expected (19, 19), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+    test64 = opal_atomic_fetch_or_64 (&val64, 0x04);
+    if (test64 != 19 || val64 != 23) {
+        fprintf (stderr, "error in opal_atomic_fetch_or_64. expected (19, 23), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+
+    test64 = opal_atomic_xor_fetch_64 (&val64, 0x03);
+    if (test64 != 20 || val64 != 20) {
+        fprintf (stderr, "error in opal_atomic_xor_fetch_64. expected (20, 20), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+    test64 = opal_atomic_fetch_xor_64 (&val64, 0x05);
+    if (test64 != 20 || val64 != 17) {
+        fprintf (stderr, "error in opal_atomic_fetch_xor_64. expected (20, 17), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+
+
+    test64 = opal_atomic_sub_fetch_64 (&val64, 14);
+    if (test64 != 3 || val64 != 3) {
+        fprintf (stderr, "error in opal_atomic_sub_fetch_64. expected (3, 3), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+
+    test64 = opal_atomic_fetch_xor_64 (&val64, 3);
+    if (test64 != 3 || val64 != 0) {
+        fprintf (stderr, "error in opal_atomic_fetch_sub_64. expected (3, 0), got (%" PRId64 ", %" PRId64 ")\n", test64, val64);
+        exit(EXIT_FAILURE);
+    }
+#endif
+
     ret = atomic_math_test_th(TEST_REPS, num_threads);
     if (ret == 77) return ret;
     opal_atomic_mb();
     if (val32 != TEST_REPS * num_threads * 5) {
-        printf("opal_atomic_add32 failed.  Expected %d, got %d.\n",
+        printf("opal_atomic_add_fetch32 failed.  Expected %d, got %d.\n",
                TEST_REPS * num_threads * 5, val32);
         ret = 1;
     }
@@ -121,7 +261,7 @@ main(int argc, char *argv[])
     if (val64 != TEST_REPS * num_threads * 6) {
         /* Safe to case to (int) here because we know it's going to be
            a small value */
-        printf("opal_atomic_add32 failed.  Expected %d, got %d.\n",
+        printf("opal_atomic_add_fetch32 failed.  Expected %d, got %d.\n",
                TEST_REPS * num_threads * 6, (int) val64);
         ret = 1;
     }
@@ -129,7 +269,7 @@ main(int argc, char *argv[])
     printf("      * skipping 64 bit tests\n");
 #endif
     if (valint != TEST_REPS * num_threads * 4) {
-        printf("opal_atomic_add32 failed.  Expected %d, got %d.\n",
+        printf("opal_atomic_add_fetch32 failed.  Expected %d, got %d.\n",
                TEST_REPS * num_threads * 4, valint);
         ret = 1;
     }

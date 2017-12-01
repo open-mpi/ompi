@@ -272,7 +272,7 @@ static int ugni_reg_mem (void *reg_data, void *base, size_t size,
 
     rc = mca_btl_ugni_reg_mem (ugni_module, base, size, (mca_btl_ugni_reg_t *) reg, cq, flags);
     if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
-        opal_atomic_add_32(&ugni_module->reg_count,1);
+        opal_atomic_add_fetch_32(&ugni_module->reg_count,1);
     }
 
     return rc;
@@ -286,7 +286,7 @@ ugni_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg)
 
     rc = mca_btl_ugni_dereg_mem (ugni_module, (mca_btl_ugni_reg_t *) reg);
     if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
-        opal_atomic_add_32(&ugni_module->reg_count,-1);
+        opal_atomic_add_fetch_32(&ugni_module->reg_count,-1);
     }
 
     return rc;

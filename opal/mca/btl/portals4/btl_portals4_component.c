@@ -609,7 +609,7 @@ mca_btl_portals4_component_progress(void)
                         mca_btl_portals4_free(&portals4_btl->super, &frag->base);
                     }
                     if (0 != frag->size) {
-                        OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+                        OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
                         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                             "PTL_EVENT_SEND: Decrementing portals_outstanding_ops=%d (1)\n",
                             portals4_btl->portals_outstanding_ops));
@@ -646,7 +646,7 @@ mca_btl_portals4_component_progress(void)
                 }
 
                 if (0 != frag->size) {
-                    OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+                    OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                         "PTL_EVENT_ACK: Decrementing portals_outstanding_ops=%d (2)\n", portals4_btl->portals_outstanding_ops));
                 }
@@ -749,7 +749,7 @@ mca_btl_portals4_component_progress(void)
                                  OPAL_SUCCESS);
 
                     OPAL_BTL_PORTALS4_FRAG_RETURN_USER(&portals4_btl->super, frag);
-                    OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
+                    OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                         "PTL_EVENT_REPLY: Decrementing portals_outstanding_ops=%d\n", portals4_btl->portals_outstanding_ops));
                     goto done;

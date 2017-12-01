@@ -207,10 +207,10 @@ mca_pml_bfo_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
     }
 
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
+    OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     /* advance the request */
-    OPAL_THREAD_ADD32(&sendreq->req_state, -1);
+    OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
 
     send_request_pml_complete_check(sendreq);
 
@@ -287,7 +287,7 @@ mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
                                                               (void *) des->des_local,
                                                               des->des_local_count, 0);
     if (OPAL_LIKELY(0 < req_bytes_delivered)) {
-        OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
+        OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
     }
 
     send_request_pml_complete_check(sendreq);
@@ -360,8 +360,8 @@ mca_pml_bfo_frag_completion( mca_btl_base_module_t* btl,
                                                               des->des_local_count,
                                                               sizeof(mca_pml_bfo_frag_hdr_t));
 
-    OPAL_THREAD_SUB_SIZE_T(&sendreq->req_pipeline_depth, 1);
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
+    OPAL_THREAD_SUB_FETCH_SIZE_T(&sendreq->req_pipeline_depth, 1);
+    OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
 #if PML_BFO
     MCA_PML_BFO_FRAG_COMPLETION_SENDREQ_ERROR_CHECK(sendreq, status, btl,
@@ -1164,7 +1164,7 @@ cannot_pack:
             range->range_btls[btl_idx].length -= size;
             range->range_send_length -= size;
             range->range_send_offset += size;
-            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, 1);
+            OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_pipeline_depth, 1);
             if(range->range_send_length == 0) {
                 range = get_next_send_range(sendreq, range);
                 prev_bytes_remaining = 0;
@@ -1226,7 +1226,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
 #endif /* PML_BFO */
 
     /* check for request completion */
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
+    OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
 
     send_request_pml_complete_check(sendreq);
 
@@ -1335,7 +1335,7 @@ void mca_pml_bfo_send_request_put( mca_pml_bfo_send_request_t* sendreq,
     size_t i, size = 0;
 
     if(hdr->hdr_common.hdr_flags & MCA_PML_BFO_HDR_TYPE_ACK) {
-        OPAL_THREAD_ADD32(&sendreq->req_state, -1);
+        OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
     }
 #if PML_BFO
     MCA_PML_BFO_VERIFY_SENDREQ_REQ_STATE_VALUE(sendreq);

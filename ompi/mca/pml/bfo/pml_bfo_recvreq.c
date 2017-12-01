@@ -206,7 +206,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
                                                              (void *) des->des_remote,
                                                              des->des_remote_count, 0);
     }
-    OPAL_THREAD_SUB_SIZE_T(&recvreq->req_pipeline_depth, 1);
+    OPAL_THREAD_SUB_FETCH_SIZE_T(&recvreq->req_pipeline_depth, 1);
 
 #if PML_BFO
     btl->btl_free(btl, des);
@@ -217,7 +217,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
 #endif /* PML_BFO */
 
     /* check completion status */
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+    OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     if(recv_request_pml_complete_check(recvreq) == false &&
             recvreq->req_rdma_offset < recvreq->req_send_offset) {
         /* schedule additional rdma operations */
@@ -388,7 +388,7 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 #endif /* PML_BFO */
 
     /* is receive request complete */
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length);
+    OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length);
     recv_request_pml_complete_check(recvreq);
 
     MCA_PML_BFO_RDMA_FRAG_RETURN(frag);
@@ -506,7 +506,7 @@ void mca_pml_bfo_recv_request_progress_frag( mca_pml_bfo_recv_request_t* recvreq
                                recvreq->req_recv.req_base.req_datatype);
                );
 
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+    OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
             recvreq->req_rdma_offset < recvreq->req_send_offset) {
@@ -668,7 +668,7 @@ void mca_pml_bfo_recv_request_progress_rndv( mca_pml_bfo_recv_request_t* recvreq
                                    recvreq->req_recv.req_base.req_datatype);
                    );
     }
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+    OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
        recvreq->req_rdma_offset < recvreq->req_send_offset) {
@@ -903,7 +903,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
 #endif /* PML_BFO */
             /* update request state */
             recvreq->req_rdma_offset += size;
-            OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth, 1);
+            OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_pipeline_depth, 1);
             recvreq->req_rdma[rdma_idx].length -= size;
             bytes_remaining -= size;
         } else {

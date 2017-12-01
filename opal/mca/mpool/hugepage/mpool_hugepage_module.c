@@ -131,7 +131,7 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
     if (huge_page->path) {
         int32_t count;
 
-        count = opal_atomic_add_32 (&huge_page->count, 1);
+        count = opal_atomic_add_fetch_32 (&huge_page->count, 1);
 
         rc = asprintf (&path, "%s/hugepage.openmpi.%d.%d", huge_page->path,
                        getpid (), count);

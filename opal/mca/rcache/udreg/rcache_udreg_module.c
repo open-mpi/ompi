@@ -301,7 +301,7 @@ static int mca_rcache_udreg_register(mca_rcache_base_module_t *rcache, void *add
     OPAL_THREAD_UNLOCK(&rcache_udreg->lock);
 
     *reg = udreg_reg;
-    (void) OPAL_THREAD_ADD32(&udreg_reg->ref_count, 1);
+    (void) OPAL_THREAD_ADD_FETCH32(&udreg_reg->ref_count, 1);
     udreg_reg->rcache_context = udreg_entry;
 
     return OPAL_SUCCESS;
@@ -318,7 +318,7 @@ static int mca_rcache_udreg_deregister(mca_rcache_base_module_t *rcache,
                                       mca_rcache_base_registration_t *reg)
 {
     mca_rcache_udreg_module_t *rcache_udreg = (mca_rcache_udreg_module_t *) rcache;
-    int32_t ref_count = OPAL_THREAD_ADD32 (&reg->ref_count, -1);
+    int32_t ref_count = OPAL_THREAD_ADD_FETCH32 (&reg->ref_count, -1);
 
     assert(ref_count >= 0);
 

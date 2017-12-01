@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -30,8 +30,9 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_frag.h"
 
+#define vader_item_compare_exchange(x, y, z) opal_atomic_compare_exchange_strong_ptr ((volatile void **) (x), (void **) (y), (void *) (z))
+
 #if SIZEOF_VOID_P == 8
-  #define vader_item_cmpset(x, y, z) opal_atomic_bool_cmpset_64((volatile int64_t *)(x), (int64_t)(y), (int64_t)(z))
   #define vader_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
 
   #define MCA_BTL_VADER_OFFSET_MASK 0xffffffffll
@@ -40,7 +41,6 @@
 
   typedef int64_t fifo_value_t;
 #else
-  #define vader_item_cmpset(x, y, z) opal_atomic_bool_cmpset_32((volatile int32_t *)(x), (int32_t)(y), (int32_t)(z))
   #define vader_item_swap(x, y)      opal_atomic_swap_32((volatile int32_t *)(x), (int32_t)(y))
 
   #define MCA_BTL_VADER_OFFSET_MASK 0x00ffffffl
@@ -138,7 +138,7 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct m
     if (OPAL_UNLIKELY(VADER_FIFO_FREE == hdr->next)) {
         opal_atomic_rmb();
 
-        if (!vader_item_cmpset (&fifo->fifo_tail, value, VADER_FIFO_FREE)) {
+        if (!vader_item_compare_exchange (&fifo->fifo_tail, &value, VADER_FIFO_FREE)) {
             while (VADER_FIFO_FREE == hdr->next) {
                 opal_atomic_rmb ();
             }

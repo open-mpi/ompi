@@ -37,7 +37,7 @@ OBJ_CLASS_DECLARATION(ompi_osc_rdma_frag_t);
 
 static inline void ompi_osc_rdma_frag_complete (ompi_osc_rdma_frag_t *frag)
 {
-    if (0 == OPAL_THREAD_ADD32(&frag->pending, -1)) {
+    if (0 == OPAL_THREAD_ADD_FETCH32(&frag->pending, -1)) {
         opal_atomic_rmb ();
 
         ompi_osc_rdma_deregister (frag->module, frag->handle);
@@ -113,7 +113,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
 
     curr->top += request_len;
     curr->remain_len -= request_len;
-    OPAL_THREAD_ADD32(&curr->pending, 1);
+    OPAL_THREAD_ADD_FETCH32(&curr->pending, 1);
 
     OPAL_THREAD_UNLOCK(&module->lock);
 

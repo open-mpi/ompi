@@ -176,7 +176,7 @@ bcast_kary_tree_top(void *buff, int count,
     zero_md_h = mca_coll_portals4_component.zero_md_h;
     data_md_h = mca_coll_portals4_component.data_md_h;
 
-    internal_count = opal_atomic_add_size_t(&portals4_module->coll_count, 1);
+    internal_count = opal_atomic_add_fetch_size_t(&portals4_module->coll_count, 1);
 
 
     /*
@@ -513,7 +513,7 @@ bcast_pipeline_top(void *buff, int count,
     zero_md_h = mca_coll_portals4_component.zero_md_h;
     data_md_h = mca_coll_portals4_component.data_md_h;
 
-    internal_count = opal_atomic_add_size_t(&portals4_module->coll_count, 1);
+    internal_count = opal_atomic_add_fetch_size_t(&portals4_module->coll_count, 1);
 
     /*
      ** DATATYPE and SIZES

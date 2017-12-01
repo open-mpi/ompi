@@ -207,7 +207,7 @@ opal_progress(void)
 #else /* OPAL_PROGRESS_USE_TIMERS */
     /* trip the event library if we've reached our tick rate and we are
        enabled */
-        if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 ) {
+        if (OPAL_THREAD_ADD_FETCH32(&event_progress_counter, -1) <= 0 ) {
                 event_progress_counter =
                     (num_event_users > 0) ? 0 : event_progress_delta;
                 events += opal_event_loop(opal_sync_event_base, opal_progress_event_flag);
@@ -222,7 +222,7 @@ opal_progress(void)
         events += (callbacks[i])();
     }
 
-    if (callbacks_lp_len > 0 && (OPAL_THREAD_ADD32((volatile int32_t *) &num_calls, 1) & 0x7) == 0) {
+    if (callbacks_lp_len > 0 && (OPAL_THREAD_ADD_FETCH32((volatile int32_t *) &num_calls, 1) & 0x7) == 0) {
         /* run low priority callbacks once every 8 calls to opal_progress() */
         for (i = 0 ; i < callbacks_lp_len ; ++i) {
             events += (callbacks_lp[i])();
@@ -259,11 +259,11 @@ opal_progress_event_users_increment(void)
 {
 #if OPAL_ENABLE_DEBUG
     int32_t val;
-    val = opal_atomic_add_32(&num_event_users, 1);
+    val = opal_atomic_add_fetch_32(&num_event_users, 1);
 
     OPAL_OUTPUT((debug_output, "progress: event_users_increment setting count to %d", val));
 #else
-    (void)opal_atomic_add_32(&num_event_users, 1);
+    (void)opal_atomic_add_fetch_32(&num_event_users, 1);
 #endif
 
 #if OPAL_PROGRESS_USE_TIMERS
@@ -281,11 +281,11 @@ opal_progress_event_users_decrement(void)
 {
 #if OPAL_ENABLE_DEBUG || ! OPAL_PROGRESS_USE_TIMERS
     int32_t val;
-    val = opal_atomic_sub_32(&num_event_users, 1);
+    val = opal_atomic_sub_fetch_32(&num_event_users, 1);
 
     OPAL_OUTPUT((debug_output, "progress: event_users_decrement setting count to %d", val));
 #else
-    (void)opal_atomic_sub_32(&num_event_users, 1);
+    (void)opal_atomic_sub_fetch_32(&num_event_users, 1);
 #endif
 
 #if !OPAL_PROGRESS_USE_TIMERS

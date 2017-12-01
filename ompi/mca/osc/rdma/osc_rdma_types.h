@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -25,7 +25,7 @@ typedef int64_t osc_rdma_base_t;
 typedef int64_t osc_rdma_size_t;
 typedef int64_t osc_rdma_counter_t;
 
-#define ompi_osc_rdma_counter_add opal_atomic_add_64
+#define ompi_osc_rdma_counter_add opal_atomic_add_fetch_64
 
 #else
 
@@ -33,7 +33,7 @@ typedef int32_t osc_rdma_base_t;
 typedef int32_t osc_rdma_size_t;
 typedef int32_t osc_rdma_counter_t;
 
-#define ompi_osc_rdma_counter_add opal_atomic_add_32
+#define ompi_osc_rdma_counter_add opal_atomic_add_fetch_32
 
 #endif
 
@@ -48,18 +48,18 @@ static inline int64_t ompi_osc_rdma_lock_add (volatile int64_t *p, int64_t value
     int64_t new;
 
     opal_atomic_mb ();
-    new = opal_atomic_add_64 (p, value) - value;
+    new = opal_atomic_add_fetch_64 (p, value) - value;
     opal_atomic_mb ();
 
     return new;
 }
 
-static inline int ompi_osc_rdma_lock_cmpset (volatile int64_t *p, int64_t comp, int64_t value)
+static inline int ompi_osc_rdma_lock_compare_exchange (volatile int64_t *p, int64_t *comp, int64_t value)
 {
     int ret;
 
     opal_atomic_mb ();
-    ret = opal_atomic_bool_cmpset_64 (p, comp, value);
+    ret = opal_atomic_compare_exchange_strong_64 (p, comp, value);
     opal_atomic_mb ();
 
     return ret;
@@ -76,19 +76,19 @@ static inline int32_t ompi_osc_rdma_lock_add (volatile int32_t *p, int32_t value
     int32_t new;
 
     opal_atomic_mb ();
-    /* opal_atomic_add_32 differs from normal atomics in that is returns the new value */
-    new = opal_atomic_add_32 (p, value) - value;
+    /* opal_atomic_add_fetch_32 differs from normal atomics in that is returns the new value */
+    new = opal_atomic_add_fetch_32 (p, value) - value;
     opal_atomic_mb ();
 
     return new;
 }
 
-static inline int ompi_osc_rdma_lock_cmpset (volatile int32_t *p, int32_t comp, int32_t value)
+static inline int ompi_osc_rdma_lock_compare_exchange (volatile int32_t *p, int32_t *comp, int32_t value)
 {
     int ret;
 
     opal_atomic_mb ();
-    ret = opal_atomic_bool_cmpset_32 (p, comp, value);
+    ret = opal_atomic_compare_exchange_strong_32 (p, comp, value);
     opal_atomic_mb ();
 
     return ret;

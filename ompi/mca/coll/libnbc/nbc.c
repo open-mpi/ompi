@@ -618,7 +618,7 @@ int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t
   /* register progress */
   if (need_register) {
       int32_t tmp =
-          OPAL_THREAD_ADD32(&mca_coll_libnbc_component.active_comms, 1);
+          OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, 1);
       if (tmp == 1) {
           opal_progress_register(ompi_coll_libnbc_progress);
       }

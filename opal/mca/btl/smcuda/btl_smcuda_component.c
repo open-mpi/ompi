@@ -658,7 +658,7 @@ static void mca_btl_smcuda_send_cuda_ipc_ack(struct mca_btl_base_module_t* btl,
      * the return code indicates failure, the write has still "completed" from
      * our point of view:  it has been posted to a "pending send" queue.
      */
-    OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
+    OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
 
     MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                               endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
@@ -980,7 +980,7 @@ void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
 
         if(NULL == si) return; /* Another thread got in before us. Thats ok. */
 
-        OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_pending_sends, -1);
+        OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_pending_sends, -1);
 
         MCA_BTL_SMCUDA_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
                           true, false, rc);
@@ -1093,7 +1093,7 @@ int mca_btl_smcuda_component_progress(void)
                 if( btl_ownership ) {
                     MCA_BTL_SMCUDA_FRAG_RETURN(frag);
                 }
-                OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, -1);
+                OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_outstanding_frags, -1);
                 if ( 0 < opal_list_get_size(&endpoint->pending_sends) ) {
                     btl_smcuda_process_pending_sends(endpoint);
                 }

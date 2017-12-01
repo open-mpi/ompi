@@ -81,7 +81,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
 {
     size_t tmp;
 
-    if(OPAL_THREAD_ADD32(&mca_pml_bsend_init, 1) > 1)
+    if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, 1) > 1)
         return OMPI_SUCCESS;
 
     /* initialize static objects */
@@ -109,7 +109,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
  */
 int mca_pml_base_bsend_fini(void)
 {
-    if(OPAL_THREAD_ADD32(&mca_pml_bsend_init,-1) > 0)
+    if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init,-1) > 0)
         return OMPI_SUCCESS;
 
     if(NULL != mca_pml_bsend_allocator)

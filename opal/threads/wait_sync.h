@@ -109,7 +109,7 @@ static inline int sync_wait_st (ompi_wait_sync_t *sync)
 static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int status)
 {
     if( OPAL_LIKELY(OPAL_SUCCESS == status) ) {
-        if( 0 != (OPAL_THREAD_ADD32(&sync->count, -updates)) ) {
+        if( 0 != (OPAL_THREAD_ADD_FETCH32(&sync->count, -updates)) ) {
             return;
         }
     } else {

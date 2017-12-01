@@ -181,7 +181,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
             }
         } while (device->dev_smsg_local_cq.active_operations);
 
-        (void) opal_atomic_add_32 (&ep->smsg_ep_handle->device->smsg_connections, -1);
+        (void) opal_atomic_add_fetch_32 (&ep->smsg_ep_handle->device->smsg_connections, -1);
     }
 
     mca_btl_ugni_device_lock (device);
@@ -278,7 +278,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 
     ep->rmt_irq_mem_hndl = ep->remote_attr->rmt_irq_mem_hndl;
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
-    (void) opal_atomic_add_32 (&ep->smsg_ep_handle->device->smsg_connections, 1);
+    (void) opal_atomic_add_fetch_32 (&ep->smsg_ep_handle->device->smsg_connections, 1);
 
     /* send all pending messages */
     BTL_VERBOSE(("endpoint connected. posting %u sends", (unsigned int) opal_list_get_size (&ep->frag_wait_list)));
@@ -312,7 +312,7 @@ static int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep)
                             ep->remote_attr, sizeof (*ep->remote_attr),
                             MCA_BTL_UGNI_CONNECT_DIRECTED_ID | ep->index);
     if (OPAL_LIKELY(GNI_RC_SUCCESS == rc)) {
-        (void) opal_atomic_add_32 (&ugni_module->active_datagrams, 1);
+        (void) opal_atomic_add_fetch_32 (&ugni_module->active_datagrams, 1);
     }
 
     return mca_btl_rc_ugni_to_opal (rc);

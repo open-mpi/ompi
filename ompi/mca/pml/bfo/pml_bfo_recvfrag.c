@@ -328,7 +328,7 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
          * protocol has req_state == 0 and as such should not be
          * decremented.
          */
-        OPAL_THREAD_ADD32(&sendreq->req_state, -1);
+        OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
     }
 
     if(send_request_pml_complete_check(sendreq) == false)

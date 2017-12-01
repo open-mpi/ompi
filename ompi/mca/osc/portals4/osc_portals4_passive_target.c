@@ -43,7 +43,7 @@ lk_cas64(ompi_osc_portals4_module_t *module,
     int ret;
     size_t offset = offsetof(ompi_osc_portals4_node_state_t, lock);
 
-    (void)opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
     ret = PtlSwap(module->md_h,
                   (ptl_size_t) result_val,
@@ -76,7 +76,7 @@ lk_write64(ompi_osc_portals4_module_t *module,
     int ret;
     size_t offset = offsetof(ompi_osc_portals4_node_state_t, lock);
 
-    (void)opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
     ret = PtlPut(module->md_h,
                  (ptl_size_t) &write_val,
@@ -106,7 +106,7 @@ lk_add64(ompi_osc_portals4_module_t *module,
     int ret;
     size_t offset = offsetof(ompi_osc_portals4_node_state_t, lock);
 
-    (void)opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
     ret = PtlFetchAtomic(module->md_h,
                          (ptl_size_t) result_val,

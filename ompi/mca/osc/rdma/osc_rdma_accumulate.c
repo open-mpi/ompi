@@ -516,7 +516,7 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
             subreq->internal = true;
             subreq->parent_request = request;
             if (request) {
-                (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, 1);
+                (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, 1);
             }
 
             if (result_datatype) {
@@ -557,7 +557,7 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
 
     if (request) {
         /* release our reference so the request can complete */
-        (void) OPAL_THREAD_ADD32 (&request->outstanding_requests, -1);
+        (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1);
     }
 
     if (source_datatype) {

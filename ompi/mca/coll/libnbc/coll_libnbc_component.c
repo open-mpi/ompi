@@ -314,7 +314,7 @@ libnbc_module_destruct(ompi_coll_libnbc_module_t *module)
     /* if we ever were used for a collective op, do the progress cleanup. */
     if (true == module->comm_registered) {
         int32_t tmp =
-            OPAL_THREAD_ADD32(&mca_coll_libnbc_component.active_comms, -1);
+            OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, -1);
         if (0 == tmp) {
             opal_progress_unregister(ompi_coll_libnbc_progress);
         }

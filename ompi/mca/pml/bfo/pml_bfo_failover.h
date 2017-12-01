@@ -261,7 +261,7 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
  */
 #define MCA_PML_BFO_VERIFY_SENDREQ_REQ_STATE_VALUE(sendreq)  \
     if (sendreq->req_state == -1) {                          \
-        OPAL_THREAD_ADD32(&sendreq->req_state, 1);           \
+        OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, 1);           \
     }
 
 /* Now check the error state.  This request can be in error if the

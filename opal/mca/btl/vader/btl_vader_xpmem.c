@@ -54,7 +54,7 @@ static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
     vader_ctx->reg[0] = reg;
 
     if (vader_ctx->bound <= (uintptr_t) reg->bound && vader_ctx->base >= (uintptr_t) reg->base) {
-        (void)opal_atomic_add (&reg->ref_count, 1);
+        opal_atomic_add (&reg->ref_count, 1);
         return 1;
     }
 
@@ -93,7 +93,7 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
         /* start the new segment from the lower of the two bases */
         base = (uintptr_t) reg->base < base ? (uintptr_t) reg->base : base;
 
-        if (OPAL_LIKELY(0 == opal_atomic_add_32 (&reg->ref_count, -1))) {
+        if (OPAL_LIKELY(0 == opal_atomic_add_fetch_32 (&reg->ref_count, -1))) {
             /* this pointer is not in use */
             (void) xpmem_detach (reg->rcache_context);
             OBJ_RELEASE(reg);
@@ -143,7 +143,7 @@ void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_
     mca_rcache_base_vma_module_t *vma_module =  mca_btl_vader_component.vma_module;
     int32_t ref_count;
 
-    ref_count = opal_atomic_add_32 (&reg->ref_count, -1);
+    ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
     if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_RCACHE_FLAGS_PERSIST))) {
         /* protect rcache access */
         mca_rcache_base_vma_delete (vma_module, reg);

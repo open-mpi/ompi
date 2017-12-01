@@ -201,14 +201,13 @@ static inline bool ompi_osc_rdma_peer_test_set_flag (ompi_osc_rdma_peer_t *peer,
     int32_t flags;
 
     opal_atomic_mb ();
+    flags = peer->flags;
 
     do {
-        flags = peer->flags;
         if (flags & flag) {
             return false;
         }
-
-    } while (!OPAL_THREAD_BOOL_CMPSET_32 (&peer->flags, flags, flags | flag));
+    } while (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32 (&peer->flags, &flags, flags | flag));
 
     return true;
 }
@@ -221,7 +220,7 @@ static inline bool ompi_osc_rdma_peer_test_set_flag (ompi_osc_rdma_peer_t *peer,
  */
 static inline void ompi_osc_rdma_peer_clear_flag (ompi_osc_rdma_peer_t *peer, int flag)
 {
-    OPAL_ATOMIC_AND32(&peer->flags, ~flag);
+    OPAL_ATOMIC_AND_FETCH32(&peer->flags, ~flag);
     opal_atomic_mb ();
 }
 

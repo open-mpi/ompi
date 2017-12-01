@@ -206,7 +206,7 @@ segmentedPut(int64_t *opcount,
     ptl_size_t bytes_put = 0;
 
     do {
-        opal_atomic_add_64(opcount, 1);
+        opal_atomic_add_fetch_64(opcount, 1);
 
         ptl_size_t frag_length = MIN(put_length, segment_length);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
@@ -222,7 +222,7 @@ segmentedPut(int64_t *opcount,
                      user_ptr,
                      hdr_data);
         if (PTL_OK != ret) {
-            opal_atomic_add_64(opcount, -1);
+            opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlPut failed with return value %d",
                                  __FUNCTION__, __LINE__, ret);
@@ -251,7 +251,7 @@ segmentedGet(int64_t *opcount,
     ptl_size_t bytes_gotten = 0;
 
     do {
-        opal_atomic_add_64(opcount, 1);
+        opal_atomic_add_fetch_64(opcount, 1);
 
         ptl_size_t frag_length = MIN(get_length, segment_length);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
@@ -266,7 +266,7 @@ segmentedGet(int64_t *opcount,
                      target_offset + bytes_gotten,
                      user_ptr);
         if (PTL_OK != ret) {
-            opal_atomic_add_64(opcount, -1);
+            opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlGet failed with return value %d",
                                  __FUNCTION__, __LINE__, ret);
@@ -297,7 +297,7 @@ segmentedAtomic(int64_t *opcount,
     ptl_size_t sent = 0;
 
     do {
-        opal_atomic_add_64(opcount, 1);
+        opal_atomic_add_fetch_64(opcount, 1);
 
         ptl_size_t frag_length = MIN(length, segment_length);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
@@ -315,7 +315,7 @@ segmentedAtomic(int64_t *opcount,
                         ptl_op,
                         ptl_dt);
         if (PTL_OK != ret) {
-            opal_atomic_add_64(opcount, -1);
+            opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlAtomic failed with return value %d",
                                  __FUNCTION__, __LINE__, ret);
@@ -348,7 +348,7 @@ segmentedFetchAtomic(int64_t *opcount,
     ptl_size_t sent = 0;
 
     do {
-        opal_atomic_add_64(opcount, 1);
+        opal_atomic_add_fetch_64(opcount, 1);
 
         ptl_size_t frag_length = MIN(length, segment_length);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
@@ -367,7 +367,7 @@ segmentedFetchAtomic(int64_t *opcount,
                              ptl_op,
                              ptl_dt);
         if (PTL_OK != ret) {
-            opal_atomic_add_64(opcount, -1);
+            opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlFetchAtomic failed with return value %d",
                                  __FUNCTION__, __LINE__, ret);
@@ -399,7 +399,7 @@ segmentedSwap(int64_t *opcount,
     ptl_size_t sent = 0;
 
     do {
-        opal_atomic_add_64(opcount, 1);
+        opal_atomic_add_fetch_64(opcount, 1);
 
         ptl_size_t frag_length = MIN(length, segment_length);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
@@ -419,7 +419,7 @@ segmentedSwap(int64_t *opcount,
                       PTL_SWAP,
                       ptl_dt);
         if (PTL_OK != ret) {
-            opal_atomic_add_64(opcount, -1);
+            opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlSwap failed with return value %d",
                                  __FUNCTION__, __LINE__, ret);
@@ -547,7 +547,7 @@ get_to_iovec(ompi_osc_portals4_module_t *module,
         return ret;
     }
 
-    opal_atomic_add_64(&module->opcount, 1);
+    opal_atomic_add_fetch_64(&module->opcount, 1);
 
     OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                  "%s,%d Get(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, size=%lu, length=%lu, offset=%lu, op_count=%ld)",
@@ -564,7 +564,7 @@ get_to_iovec(ompi_osc_portals4_module_t *module,
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                      "%s,%d PtlGet() failed: ret = %d",
                      __FUNCTION__, __LINE__, ret));
-        opal_atomic_add_64(&module->opcount, -1);
+        opal_atomic_add_fetch_64(&module->opcount, -1);
         return ret;
     }
 
@@ -716,7 +716,7 @@ put_from_iovec(ompi_osc_portals4_module_t *module,
         return ret;
     }
 
-    opal_atomic_add_64(&module->opcount, 1);
+    opal_atomic_add_fetch_64(&module->opcount, 1);
 
     OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                  "%s,%d Put(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, size=%lu, length=%lu, offset=%lu, op_count=%ld)",
@@ -735,7 +735,7 @@ put_from_iovec(ompi_osc_portals4_module_t *module,
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                      "%s,%d PtlPut() failed: ret = %d",
                      __FUNCTION__, __LINE__, ret));
-        opal_atomic_add_64(&module->opcount, -1);
+        opal_atomic_add_fetch_64(&module->opcount, -1);
         return ret;
     }
 
@@ -1252,7 +1252,7 @@ put_to_noncontig(int64_t          *opcount,
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
 
-            opal_atomic_add_64(opcount, 1);
+            opal_atomic_add_fetch_64(opcount, 1);
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "performing rdma on contiguous region. local: %p, remote: %p, len: %lu",
@@ -1270,7 +1270,7 @@ put_to_noncontig(int64_t          *opcount,
                          user_ptr,
                          0);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                opal_atomic_add_64(opcount, -1);
+                opal_atomic_add_fetch_64(opcount, -1);
                 return ret;
             }
 
@@ -1361,7 +1361,7 @@ atomic_put_to_noncontig(ompi_osc_portals4_module_t *module,
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
 
-            opal_atomic_add_64(&module->opcount, 1);
+            opal_atomic_add_fetch_64(&module->opcount, 1);
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "performing rdma on contiguous region. local: %p, remote: %p, len: %lu",
@@ -1379,7 +1379,7 @@ atomic_put_to_noncontig(ompi_osc_portals4_module_t *module,
                          user_ptr,
                          0);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                opal_atomic_add_64(&module->opcount, -1);
+                opal_atomic_add_fetch_64(&module->opcount, -1);
                 return ret;
             }
 
@@ -1479,7 +1479,7 @@ atomic_to_noncontig(ompi_osc_portals4_module_t *module,
             /* determine how much to transfer in this operation */
             atomic_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), module->atomic_max);
 
-            opal_atomic_add_64(&module->opcount, 1);
+            opal_atomic_add_fetch_64(&module->opcount, 1);
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "performing rdma on contiguous region. local: %p, remote: %p, len: %lu",
@@ -1501,7 +1501,7 @@ atomic_to_noncontig(ompi_osc_portals4_module_t *module,
                             ptl_op,
                             ptl_dt);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                opal_atomic_add_64(&module->opcount, -1);
+                opal_atomic_add_fetch_64(&module->opcount, -1);
                 return ret;
             }
 
@@ -1586,7 +1586,7 @@ get_from_noncontig(int64_t          *opcount,
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
 
-            opal_atomic_add_64(opcount, 1);
+            opal_atomic_add_fetch_64(opcount, 1);
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "performing rdma on contiguous region. local: %p, remote: %p, len: %lu",
@@ -1602,7 +1602,7 @@ get_from_noncontig(int64_t          *opcount,
                          offset + (ptl_size_t)target_iovec[target_iov_index].iov_base,
                          user_ptr);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                opal_atomic_add_64(opcount, -1);
+                opal_atomic_add_fetch_64(opcount, -1);
                 return ret;
             }
 
@@ -1687,7 +1687,7 @@ atomic_get_from_noncontig(ompi_osc_portals4_module_t *module,
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
 
-            opal_atomic_add_64(&module->opcount, 1);
+            opal_atomic_add_fetch_64(&module->opcount, 1);
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "performing rdma on contiguous region. local: %p, remote: %p, len: %lu",
@@ -1703,7 +1703,7 @@ atomic_get_from_noncontig(ompi_osc_portals4_module_t *module,
                          offset + (ptl_size_t)target_iovec[target_iov_index].iov_base,
                          user_ptr);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                opal_atomic_add_64(&module->opcount, -1);
+                opal_atomic_add_fetch_64(&module->opcount, -1);
                 return ret;
             }
 
@@ -1817,7 +1817,7 @@ swap_from_noncontig(ompi_osc_portals4_module_t *module,
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
 
-            opal_atomic_add_64(&module->opcount, 1);
+            opal_atomic_add_fetch_64(&module->opcount, 1);
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "performing swap on contiguous region. result: %p origin: %p, target: %p, len: %lu",
@@ -1844,7 +1844,7 @@ swap_from_noncontig(ompi_osc_portals4_module_t *module,
                 opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                      "%s:%d PtlSwap failed with return value %d",
                                      __FUNCTION__, __LINE__, ret);
-                opal_atomic_add_64(&module->opcount, -1);
+                opal_atomic_add_fetch_64(&module->opcount, -1);
                 return ret;
             }
 
@@ -1969,7 +1969,7 @@ fetch_atomic_from_noncontig(ompi_osc_portals4_module_t *module,
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
 
-            opal_atomic_add_64(&module->opcount, 1);
+            opal_atomic_add_fetch_64(&module->opcount, 1);
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "performing swap on contiguous region. result: %p origin: %p, target: %p, len: %lu",
@@ -1995,7 +1995,7 @@ fetch_atomic_from_noncontig(ompi_osc_portals4_module_t *module,
                 opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                      "%s:%d PtlFetchAtomic failed with return value %d",
                                      __FUNCTION__, __LINE__, ret);
-                opal_atomic_add_64(&module->opcount, -1);
+                opal_atomic_add_fetch_64(&module->opcount, -1);
                 return ret;
             }
 
@@ -2411,7 +2411,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
             do {
                 size_t msg_length = MIN(module->atomic_max, length - sent);
 
-                (void)opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d Atomic", __FUNCTION__, __LINE__));
@@ -2428,7 +2428,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                                 ptl_op,
                                 ptl_dt);
                 if (OMPI_SUCCESS != ret) {
-                    (void)opal_atomic_add_64(&module->opcount, -1);
+                    (void)opal_atomic_add_fetch_64(&module->opcount, -1);
                     OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                     return ret;
                 }
@@ -3149,7 +3149,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
             do {
                 size_t msg_length = MIN(module->atomic_max, length - sent);
 
-                (void)opal_atomic_add_64(&module->opcount, 1);
+                (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d Atomic", __FUNCTION__, __LINE__));
@@ -3166,7 +3166,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
                                 ptl_op,
                                 ptl_dt);
                 if (OMPI_SUCCESS != ret) {
-                    (void)opal_atomic_add_64(&module->opcount, -1);
+                    (void)opal_atomic_add_fetch_64(&module->opcount, -1);
                     return ret;
                 }
                 sent += msg_length;
@@ -3541,7 +3541,7 @@ ompi_osc_portals4_compare_and_swap(const void *origin_addr,
     result_md_offset = (ptl_size_t) result_addr;
     origin_md_offset = (ptl_size_t) origin_addr;
 
-    (void)opal_atomic_add_64(&module->opcount, 1);
+    (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
     OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
                          "%s,%d Swap", __FUNCTION__, __LINE__));
@@ -3613,7 +3613,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
         result_md_offset = (ptl_size_t) result_addr;
         origin_md_offset = (ptl_size_t) origin_addr;
 
-        (void)opal_atomic_add_64(&module->opcount, 1);
+        (void)opal_atomic_add_fetch_64(&module->opcount, 1);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d Swap", __FUNCTION__, __LINE__));
         ret = PtlSwap(module->md_h,
@@ -3635,7 +3635,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
 
         md_offset = (ptl_size_t) result_addr;
 
-        (void)opal_atomic_add_64(&module->opcount, 1);
+        (void)opal_atomic_add_fetch_64(&module->opcount, 1);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d Get", __FUNCTION__, __LINE__));
         ret = PtlGet(module->md_h,
@@ -3648,7 +3648,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
                      NULL);
     } else {
         ptl_size_t result_md_offset, origin_md_offset;
-        (void)opal_atomic_add_64(&module->opcount, 1);
+        (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
         ret = ompi_osc_portals4_get_op(op, &ptl_op);
         if (OMPI_SUCCESS != ret) {

@@ -358,7 +358,7 @@ extern uint32_t mca_coll_sm_one;
  * Macro to release an in-use flag from this process
  */
 #define FLAG_RELEASE(flag) \
-    (void)opal_atomic_add(&(flag)->mcsiuf_num_procs_using, -1)
+    opal_atomic_add(&(flag)->mcsiuf_num_procs_using, -1)
 
 /**
  * Macro to copy a single segment in from a user buffer to a shared

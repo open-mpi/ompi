@@ -673,7 +673,7 @@ static inline void get_completion_cb(void *ctx)
 {
     mca_spml_ikrit_get_request_t *get_req = (mca_spml_ikrit_get_request_t *) ctx;
 
-    OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_gets, -1);
+    OPAL_THREAD_ADD_FETCH32(&mca_spml_ikrit.n_active_gets, -1);
     free_get_req(get_req);
 }
 
@@ -701,7 +701,7 @@ static inline int mca_spml_ikrit_get_async(void *src_addr,
     get_req->mxm_req.flags = 0;
     get_req->mxm_req.base.completed_cb = get_completion_cb;
     get_req->mxm_req.base.context = get_req;
-    OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_gets, 1);
+    OPAL_THREAD_ADD_FETCH32(&mca_spml_ikrit.n_active_gets, 1);
 
     SPML_IKRIT_MXM_POST_SEND(get_req->mxm_req);
 
@@ -713,7 +713,7 @@ static inline void fence_completion_cb(void *ctx)
     mca_spml_ikrit_get_request_t *fence_req =
             (mca_spml_ikrit_get_request_t *) ctx;
 
-    OPAL_THREAD_ADD32(&mca_spml_ikrit.n_mxm_fences, -1);
+    OPAL_THREAD_ADD_FETCH32(&mca_spml_ikrit.n_mxm_fences, -1);
     free_get_req(fence_req);
 }
 
@@ -735,7 +735,7 @@ static int mca_spml_ikrit_mxm_fence(int dst)
     fence_req->mxm_req.base.state = MXM_REQ_NEW;
     fence_req->mxm_req.base.completed_cb = fence_completion_cb;
     fence_req->mxm_req.base.context = fence_req;
-    OPAL_THREAD_ADD32(&mca_spml_ikrit.n_mxm_fences, 1);
+    OPAL_THREAD_ADD_FETCH32(&mca_spml_ikrit.n_mxm_fences, 1);
 
     SPML_IKRIT_MXM_POST_SEND(fence_req->mxm_req);
     return OSHMEM_SUCCESS;
@@ -746,7 +746,7 @@ static inline void put_completion_cb(void *ctx)
     mca_spml_ikrit_put_request_t *put_req = (mca_spml_ikrit_put_request_t *) ctx;
     mxm_peer_t *peer;
 
-    OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, -1);
+    OPAL_THREAD_ADD_FETCH32(&mca_spml_ikrit.n_active_puts, -1);
     /* TODO: keep pointer to peer in the request */
     peer = &mca_spml_ikrit.mxm_peers[put_req->pe];
 
@@ -848,7 +848,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 
     put_req->mxm_req.op.mem.remote_mkey = mkey; 
 
-    OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, 1);
+    OPAL_THREAD_ADD_FETCH32(&mca_spml_ikrit.n_active_puts, 1);
     if (mca_spml_ikrit.mxm_peers[dst].need_fence == 0) {
         opal_list_append(&mca_spml_ikrit.active_peers,
                          &mca_spml_ikrit.mxm_peers[dst].link);

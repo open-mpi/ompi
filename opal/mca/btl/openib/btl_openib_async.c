@@ -237,7 +237,7 @@ static void btl_openib_async_device (int fd, short flags, void *arg)
         /* Set the flag to fatal */
         device->got_fatal_event = true;
         /* It is not critical to protect the counter */
-        OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
+        OPAL_THREAD_ADD_FETCH32(&mca_btl_openib_component.error_counter, 1);
         /* fall through */
     case IBV_EVENT_CQ_ERR:
     case IBV_EVENT_QP_FATAL:
@@ -280,7 +280,7 @@ static void btl_openib_async_device (int fd, short flags, void *arg)
                        openib_event_to_str((enum ibv_event_type)event_type));
         /* Set the flag to indicate port error */
         device->got_port_event = true;
-        OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
+        OPAL_THREAD_ADD_FETCH32(&mca_btl_openib_component.error_counter, 1);
         break;
     case IBV_EVENT_COMM_EST:
     case IBV_EVENT_PORT_ACTIVE:
@@ -470,7 +470,7 @@ void mca_btl_openib_async_fini (void)
 void mca_btl_openib_async_add_device (mca_btl_openib_device_t *device)
 {
     if (mca_btl_openib_component.async_evbase) {
-        if (1 == OPAL_THREAD_ADD32 (&btl_openib_async_device_count, 1)) {
+        if (1 == OPAL_THREAD_ADD_FETCH32 (&btl_openib_async_device_count, 1)) {
             mca_btl_openib_async_init ();
         }
         opal_event_set (mca_btl_openib_component.async_evbase, &device->async_event,
@@ -484,7 +484,7 @@ void mca_btl_openib_async_rem_device (mca_btl_openib_device_t *device)
 {
     if (mca_btl_openib_component.async_evbase) {
         opal_event_del (&device->async_event);
-        if (0 == OPAL_THREAD_ADD32 (&btl_openib_async_device_count, -1)) {
+        if (0 == OPAL_THREAD_ADD_FETCH32 (&btl_openib_async_device_count, -1)) {
             mca_btl_openib_async_fini ();
         }
     }

@@ -1119,7 +1119,7 @@ int mca_btl_openib_add_procs(
     }
 
     if (nprocs_new) {
-        opal_atomic_add_32 (&openib_btl->num_peers, nprocs_new);
+        opal_atomic_add_fetch_32 (&openib_btl->num_peers, nprocs_new);
 
         /* adjust cq sizes given the new procs */
         rc = openib_btl_size_queues (openib_btl);
@@ -1229,7 +1229,7 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 
         /* this is a new process to this openib btl
          * account this procs if need */
-        opal_atomic_add_32 (&openib_btl->num_peers, 1);
+        opal_atomic_add_fetch_32 (&openib_btl->num_peers, 1);
         rc = openib_btl_size_queues(openib_btl);
         if (OPAL_SUCCESS != rc) {
             BTL_ERROR(("error creating cqs"));
