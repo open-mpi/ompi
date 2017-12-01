@@ -186,9 +186,11 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         } else if (src_tag & ORTE_IOF_STDERR) {
             ORTE_IOF_READ_EVENT(&proct->revstderr, proct, fd, ORTE_IOF_STDERR,
                                 orte_iof_hnp_read_local_handler, false);
+#if OPAL_PMIX_V1
         } else if (src_tag & ORTE_IOF_STDDIAG) {
             ORTE_IOF_READ_EVENT(&proct->revstddiag, proct, fd, ORTE_IOF_STDDIAG,
                                 orte_iof_hnp_read_local_handler, false);
+#endif
         }
         /* setup any requested output files */
         if (ORTE_SUCCESS != (rc = orte_iof_base_setup_output_files(dst_name, jdata, proct))) {
@@ -201,7 +203,11 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          * because one of the readevents fires -prior- to all of them having
          * been defined!
          */
-        if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
+        if (NULL != proct->revstdout &&
+#if OPAL_PMIX_V1
+           NULL != proct->revstddiag &&
+#endif
+            (orte_iof_base.redirect_app_stderr_to_stdout || NULL != proct->revstderr)) {
             if (proct->copy) {
                 /* see if there are any wildcard subscribers out there that
                  * apply to us */
@@ -216,8 +222,14 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                 }
             }
             ORTE_IOF_READ_ACTIVATE(proct->revstdout);
-            ORTE_IOF_READ_ACTIVATE(proct->revstderr);
-            ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
+            if (!orte_iof_base.redirect_app_stderr_to_stdout) {
+                ORTE_IOF_READ_ACTIVATE(proct->revstderr);
+            }
+#if OPAL_PMIX_V1
+            if (NULL != proct->revstddiag) {
+                ORTE_IOF_READ_ACTIVATE(proct->revstddiag);
+            }
+#endif
        }
         return ORTE_SUCCESS;
     }
@@ -377,7 +389,6 @@ static int hnp_close(const orte_process_name_t* peer,
 {
     orte_iof_proc_t* proct;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
-    int cnt = 0;
 
     OPAL_LIST_FOREACH(proct, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, peer)) {
@@ -385,31 +396,39 @@ static int hnp_close(const orte_process_name_t* peer,
                 if (NULL != proct->stdinev) {
                     OBJ_RELEASE(proct->stdinev);
                 }
-                ++cnt;
+                proct->stdinev = NULL;
             }
-            if (ORTE_IOF_STDOUT & source_tag) {
+            if ((ORTE_IOF_STDOUT & source_tag) ||
+                (ORTE_IOF_STDMERGE & source_tag)) {
                 if (NULL != proct->revstdout) {
                     orte_iof_base_static_dump_output(proct->revstdout);
                     OBJ_RELEASE(proct->revstdout);
                 }
-                ++cnt;
+                proct->revstdout = NULL;
             }
             if (ORTE_IOF_STDERR & source_tag) {
                 if (NULL != proct->revstderr) {
                     orte_iof_base_static_dump_output(proct->revstderr);
                     OBJ_RELEASE(proct->revstderr);
                 }
-                ++cnt;
+                proct->revstderr = NULL;
             }
+#if OPAL_PMIX_V1
             if (ORTE_IOF_STDDIAG & source_tag) {
                 if (NULL != proct->revstddiag) {
                     orte_iof_base_static_dump_output(proct->revstddiag);
                     OBJ_RELEASE(proct->revstddiag);
                 }
-                ++cnt;
+                proct->revstddiag = NULL;
             }
+#endif
             /* if we closed them all, then remove this proc */
-            if (4 == cnt) {
+            if (NULL == proct->stdinev &&
+                NULL == proct->revstdout &&
+#if OPAL_PMIX_V1
+                NULL == proct->revstddiag &&
+#endif
+                NULL == proct->revstderr) {
                 opal_list_remove_item(&mca_iof_hnp_component.procs, &proct->super);
                 OBJ_RELEASE(proct);
             }
@@ -484,9 +503,11 @@ static int finalize(void)
         if (NULL != proct->revstderr) {
             orte_iof_base_static_dump_output(proct->revstderr);
         }
+#if OPAL_PMIX_V1
         if (NULL != proct->revstddiag) {
             orte_iof_base_static_dump_output(proct->revstddiag);
         }
+#endif
         OBJ_RELEASE(proct);
     }
     OBJ_DESTRUCT(&mca_iof_hnp_component.procs);
@@ -583,9 +604,9 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
     }
     goto check;
-re_enter:
+  re_enter:
     ORTE_IOF_SINK_ACTIVATE(wev);
-check:
+  check:
     if (NULL != mca_iof_hnp_component.stdinev &&
         !orte_abnormal_term_ordered &&
         !mca_iof_hnp_component.stdinev->active) {
@@ -609,7 +630,7 @@ check:
         }
     }
     return;
-finish:
+  finish:
     OBJ_RELEASE(wev);
     sink->wev = NULL;
     return;

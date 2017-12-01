@@ -164,16 +164,20 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
             orte_iof_base_static_dump_output(proct->revstderr);
             OBJ_RELEASE(proct->revstderr);
         }
+#if OPAL_PMIX_V1
     } else if (rev->tag & ORTE_IOF_STDDIAG) {
         if( NULL != proct->revstddiag ) {
             orte_iof_base_static_dump_output(proct->revstddiag);
             OBJ_RELEASE(proct->revstddiag);
         }
+#endif
     }
     /* check to see if they are all done */
     if (NULL == proct->revstdout &&
-        NULL == proct->revstderr &&
-        NULL == proct->revstddiag) {
+#if OPAL_PMIX_V1
+        NULL == proct->revstddiag &&
+#endif
+        NULL == proct->revstderr) {
         /* this proc's iof is complete */
         ORTE_ACTIVATE_PROC_STATE(&proct->name, ORTE_PROC_STATE_IOF_COMPLETE);
     }

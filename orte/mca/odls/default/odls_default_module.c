@@ -293,9 +293,8 @@ static void send_error_show_help(int fd, int exit_status,
     exit(exit_status);
 }
 
-/* close all open file descriptors w/ exception of stdin/stdout/stderr,
-   the pipe used for the IOF INTERNAL messages, and the pipe up to
-   the parent. */
+/* close all open file descriptors w/ exception of stdin/stdout/stderr
+   and the pipe up to the parent. */
 static int close_open_file_descriptors(int write_fd,
                                       orte_iof_base_io_conf_t opts) {
     DIR *dir = opendir("/proc/self/fd");
@@ -312,7 +311,11 @@ static int close_open_file_descriptors(int write_fd,
             closedir(dir);
             return ORTE_ERR_TYPE_MISMATCH;
         }
-        if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd) {
+        if (fd >=3 &&
+#if OPAL_PMIX_V1
+            fd != opts.p_internal[1] &&
+#endif
+            fd != write_fd) {
             close(fd);
         }
     }
@@ -374,11 +377,13 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
             }
             close(fdnull);
         }
+#if OPAL_PMIX_V1
         fdnull = open("/dev/null", O_RDONLY, 0);
         if (fdnull > cd->opts.p_internal[1]) {
             dup2(fdnull, cd->opts.p_internal[1]);
         }
         close(fdnull);
+#endif
     }
 
     /* close all open file descriptors w/ exception of stdin/stdout/stderr,
@@ -387,7 +392,11 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
     if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, cd->opts)) {
         // close *all* file descriptors -- slow
         for(fd=3; fd<fdmax; fd++) {
-            if (fd != cd->opts.p_internal[1] && fd != write_fd) {
+            if (
+#if OPAL_PMIX_V1
+                fd != cd->opts.p_internal[1] &&
+#endif
+                fd != write_fd) {
                 close(fd);
             }
         }
@@ -449,10 +458,16 @@ static int do_parent(orte_odls_spawn_caddy_t *cd, int read_fd)
     orte_odls_pipe_err_msg_t msg;
     char file[ORTE_ODLS_MAX_FILE_LEN + 1], topic[ORTE_ODLS_MAX_TOPIC_LEN + 1], *str = NULL;
 
-    close(cd->opts.p_stdin[0]);
+    if (cd->opts.connect_stdin) {
+        close(cd->opts.p_stdin[0]);
+    }
     close(cd->opts.p_stdout[1]);
-    close(cd->opts.p_stderr[1]);
+    if( !orte_iof_base.redirect_app_stderr_to_stdout ) {
+        close(cd->opts.p_stderr[1]);
+    }
+#if OPAL_PMIX_V1
     close(cd->opts.p_internal[1]);
+#endif
 
     /* Block reading a message from the pipe */
     while (1) {
