@@ -160,7 +160,11 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     /**************************************************************************
      ** 1.  In case the data is not contigous in memory, decode it into an iovec
      **************************************************************************/
-    fh->f_get_bytes_per_agg ( (int *)&bytes_per_cycle );
+    bytes_per_cycle = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
+    if ( OMPI_ERR_MAX == bytes_per_cycle ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     /* since we want to overlap 2 iterations, define the bytes_per_cycle to be half of what
        the user requested */
     bytes_per_cycle =bytes_per_cycle/2;
@@ -188,7 +192,11 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
         dynamic_gen2_num_io_procs =  fh->f_stripe_count;
     }
     else {
-        fh->f_get_num_aggregators ( &dynamic_gen2_num_io_procs );
+        dynamic_gen2_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+        if ( OMPI_ERR_MAX == dynamic_gen2_num_io_procs ) {
+            ret = OMPI_ERROR;
+            goto exit;
+        }
     }
 
 

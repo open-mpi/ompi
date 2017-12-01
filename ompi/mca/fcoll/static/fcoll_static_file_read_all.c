@@ -82,7 +82,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     MPI_Aint **displs_per_process=NULL, global_iov_count=0, global_count=0;
     MPI_Aint *memory_displacements=NULL;
     int bytes_to_read_in_cycle=0;
-    size_t max_data=0, bytes_per_cycle=0;
+    size_t max_data=0;
+    MPI_Aint bytes_per_cycle=0;
     uint32_t iov_count=0, iov_index=0;
     struct iovec *decoded_iov=NULL, *iov=NULL;
     mca_fcoll_static_local_io_array *local_iov_array=NULL, *global_iov_array=NULL;
@@ -143,7 +144,11 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     }
 
 
-    fh->f_get_num_aggregators ( &static_num_io_procs );
+    static_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+    if ( OMPI_ERR_MAX == static_num_io_procs ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
                                 static_num_io_procs,
                                 max_data);
@@ -210,7 +215,11 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     ompi_datatype_commit (&io_array_type);
 
     /* #########################################################*/
-    fh->f_get_bytes_per_agg ( (int*) &bytes_per_cycle);
+    bytes_per_cycle = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
+    if ( OMPI_ERR_MAX == bytes_per_cycle ) {
+        ret = OMPI_ERROR;
+        goto exit;
+    }
     local_cycles = ceil((double)max_data*fh->f_procs_per_group/bytes_per_cycle);
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
@@ -483,7 +492,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
             if ((index == local_cycles-1) && (max_data % (bytes_per_cycle/fh->f_procs_per_group))) {
                 bytes_to_read_in_cycle = max_data - position;
             }
-            else if (max_data <= bytes_per_cycle/fh->f_procs_per_group) {
+            else if (max_data <= (size_t) (bytes_per_cycle/fh->f_procs_per_group)) {
                 bytes_to_read_in_cycle = max_data;
             }
             else {

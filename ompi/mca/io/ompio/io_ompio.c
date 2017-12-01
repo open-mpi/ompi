@@ -640,17 +640,37 @@ int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
 }
 
 
-void mca_io_ompio_get_num_aggregators ( int *num_aggregators)
+int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_length )
 {
-    *num_aggregators = mca_io_ompio_num_aggregators;
-    return;
+    if ( !strncmp ( mca_parameter_name, "num_aggregators", name_length )) {
+        return mca_io_ompio_num_aggregators;
+    }
+    else if ( !strncmp ( mca_parameter_name, "bytes_per_agg", name_length )) {
+        return mca_io_ompio_bytes_per_agg;
+    }
+    else if ( !strncmp ( mca_parameter_name, "overwrite_amode", name_length )) {
+        return mca_io_ompio_overwrite_amode;
+    }
+    else if ( !strncmp ( mca_parameter_name, "cycle_buffer_size", name_length )) {
+        return mca_io_ompio_cycle_buffer_size;
+    }
+    else if ( !strncmp ( mca_parameter_name, "max_aggregators_ratio", name_length )) {
+        return mca_io_ompio_max_aggregators_ratio;
+    }
+    else if ( !strncmp ( mca_parameter_name, "aggregators_cutoff_threshold", name_length )) {
+        return mca_io_ompio_aggregators_cutoff_threshold;
+    }
+    else {
+        opal_output (1, "Error in mca_io_ompio_get_mca_parameter_value: unknown parameter name");
+    }
+
+    /* Using here OMPI_ERROR_MAX instead of OMPI_ERROR, since -1 (which is OMPI_ERROR) 
+    ** is a valid value for some mca parameters, indicating that the user did not set 
+    ** that parameter value 
+    */
+    return OMPI_ERR_MAX;
 }
 
-void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg)
-{
-    *bytes_per_agg = mca_io_ompio_bytes_per_agg;
-    return;
-}
 
 
 
