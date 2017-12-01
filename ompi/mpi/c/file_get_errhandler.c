@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -62,12 +62,12 @@ int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
     }
   }
 
-  opal_mutex_lock (&file->f_mutex);
+  opal_mutex_lock (&file->f_lock);
   /* Retain the errhandler, corresponding to object refcount
      decrease in errhandler_free.c. */
   *errhandler = file->error_handler;
   OBJ_RETAIN(file->error_handler);
-  opal_mutex_unlock (&file->f_mutex);
+  opal_mutex_unlock (&file->f_lock);
 
   /* All done */
 

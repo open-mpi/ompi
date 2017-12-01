@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -128,7 +128,7 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
     }
 
     /* Create the mutex */
-    OBJ_CONSTRUCT(&file->f_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&file->f_lock, opal_mutex_t);
 
     /* Select a module and actually open the file */
 
@@ -150,7 +150,7 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
 int ompi_file_close(ompi_file_t **file)
 {
 
-    OBJ_DESTRUCT(&(*file)->f_mutex);
+    OBJ_DESTRUCT(&(*file)->f_lock);
 
     (*file)->f_flags |= OMPI_FILE_ISCLOSED;
     OBJ_RELEASE(*file);

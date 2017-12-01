@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -79,7 +79,7 @@ struct ompi_file_t {
 
     /** Mutex to be used to protect access to the selected component
         on a per file-handle basis */
-    opal_mutex_t f_mutex;
+    opal_mutex_t f_lock;
 
     /** The selected component (note that this is a union) -- we need
         this to add and remove the component from the list of

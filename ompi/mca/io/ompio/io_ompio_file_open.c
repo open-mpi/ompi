@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -137,7 +137,7 @@ int mca_io_ompio_file_preallocate (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     tmp = diskspace;
 
     ret = data->ompio_fh.f_comm->c_coll->coll_bcast (&tmp,
@@ -147,23 +147,23 @@ int mca_io_ompio_file_preallocate (ompi_file_t *fh,
                                                     data->ompio_fh.f_comm,
                                                     data->ompio_fh.f_comm->c_coll->coll_bcast_module);
     if ( OMPI_SUCCESS != ret ) {
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_ERROR;
     }
 
     if (tmp != diskspace) {
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_ERROR;
     }
     ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh,
                                                  &current_size);
     if ( OMPI_SUCCESS != ret ) {
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_ERROR;
     }
     
     if ( current_size > diskspace ) {
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_SUCCESS;
     }
 
@@ -240,7 +240,7 @@ exit:
     if ( diskspace > current_size ) {
         data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, diskspace);
     }
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return ret;
 }
@@ -255,7 +255,7 @@ int mca_io_ompio_file_set_size (ompi_file_t *fh,
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     tmp = size;
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     ret = data->ompio_fh.f_comm->c_coll->coll_bcast (&tmp,
                                                     1,
                                                     OMPI_OFFSET_DATATYPE,
@@ -264,20 +264,20 @@ int mca_io_ompio_file_set_size (ompi_file_t *fh,
                                                     data->ompio_fh.f_comm->c_coll->coll_bcast_module);
     if ( OMPI_SUCCESS != ret ) {
         opal_output(1, ",mca_io_ompio_file_set_size: error in bcast\n");
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return ret;
     }
     
 
     if (tmp != size) {
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_ERROR;
     }
 
     ret = data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, size);
     if ( OMPI_SUCCESS != ret ) {
         opal_output(1, ",mca_io_ompio_file_set_size: error in fs->set_size\n");
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return ret;
     }
     
@@ -285,10 +285,10 @@ int mca_io_ompio_file_set_size (ompi_file_t *fh,
                                                       data->ompio_fh.f_comm->c_coll->coll_barrier_module);
     if ( OMPI_SUCCESS != ret ) {
         opal_output(1, ",mca_io_ompio_file_set_size: error in barrier\n");
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return ret;
     }
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return ret;
 }
@@ -300,9 +300,9 @@ int mca_io_ompio_file_get_size (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     ret = mca_common_ompio_file_get_size(&data->ompio_fh,size);
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return ret;
 }
@@ -339,7 +339,7 @@ int mca_io_ompio_file_set_atomicity (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     if (flag) {
         flag = 1;
     }
@@ -354,12 +354,12 @@ int mca_io_ompio_file_set_atomicity (ompi_file_t *fh,
                                               data->ompio_fh.f_comm->c_coll->coll_bcast_module);
 
     if (tmp != flag) {
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_ERROR;
     }
 
     data->ompio_fh.f_atomicity = flag;
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return OMPI_SUCCESS;
 }
@@ -371,9 +371,9 @@ int mca_io_ompio_file_get_atomicity (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     *flag = data->ompio_fh.f_atomicity;
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return OMPI_SUCCESS;
 }
@@ -385,9 +385,9 @@ int mca_io_ompio_file_sync (ompi_file_t *fh)
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     ret = data->ompio_fh.f_fs->fs_file_sync (&data->ompio_fh);
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return ret;
 }
@@ -403,13 +403,13 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     offset = off * data->ompio_fh.f_etype_size;
 
     switch(whence) {
     case MPI_SEEK_SET:
         if (offset < 0) {
-            OPAL_THREAD_UNLOCK(&fh->f_mutex);
+            OPAL_THREAD_UNLOCK(&fh->f_lock);
             return OMPI_ERROR;
         }
         break;
@@ -417,7 +417,7 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
         offset += data->ompio_fh.f_position_in_file_view;
         offset += data->ompio_fh.f_disp;
         if (offset < 0) {
-            OPAL_THREAD_UNLOCK(&fh->f_mutex);
+            OPAL_THREAD_UNLOCK(&fh->f_lock);
             return OMPI_ERROR;
         }
         break;
@@ -426,18 +426,18 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
                                                      &temp_offset);
         offset += temp_offset;
         if (offset < 0 || OMPI_SUCCESS != ret) {
-            OPAL_THREAD_UNLOCK(&fh->f_mutex);
+            OPAL_THREAD_UNLOCK(&fh->f_lock);
             return OMPI_ERROR;
         }
         break;
     default:
-        OPAL_THREAD_UNLOCK(&fh->f_mutex);
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_ERROR;
     }
 
     ret = mca_common_ompio_set_explicit_offset (&data->ompio_fh,
                                              offset/data->ompio_fh.f_etype_size);
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return ret;
 }
@@ -452,9 +452,9 @@ int mca_io_ompio_file_get_position (ompi_file_t *fd,
     data = (mca_io_ompio_data_t *) fd->f_io_selected_data;
     fh = &data->ompio_fh;
 
-    OPAL_THREAD_LOCK(&fd->f_mutex);
+    OPAL_THREAD_LOCK(&fd->f_lock);
     ret = mca_common_ompio_file_get_position (fh, offset);
-    OPAL_THREAD_UNLOCK(&fd->f_mutex);
+    OPAL_THREAD_UNLOCK(&fd->f_lock);
 
     return ret;
 }
@@ -470,7 +470,7 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    OPAL_THREAD_LOCK(&fh->f_mutex);
+    OPAL_THREAD_LOCK(&fh->f_lock);
     temp_offset = data->ompio_fh.f_view_extent *
         (offset*data->ompio_fh.f_etype_size / data->ompio_fh.f_view_size);
     
@@ -497,7 +497,7 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 
     *disp = data->ompio_fh.f_disp + temp_offset +
         (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base + k;
-    OPAL_THREAD_UNLOCK(&fh->f_mutex);
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return OMPI_SUCCESS;
 }
@@ -521,9 +521,9 @@ int mca_io_ompio_file_seek_shared (ompi_file_t *fp,
         return OMPI_ERROR;
     }
 
-    OPAL_THREAD_LOCK(&fp->f_mutex);
+    OPAL_THREAD_LOCK(&fp->f_lock);
     ret = shared_fp_base_module->sharedfp_seek(fh,offset,whence);
-    OPAL_THREAD_UNLOCK(&fp->f_mutex);
+    OPAL_THREAD_UNLOCK(&fp->f_lock);
 
     return ret;
 }
@@ -546,10 +546,10 @@ int mca_io_ompio_file_get_position_shared (ompi_file_t *fp,
         opal_output(0, "No shared file pointer component found for this communicator. Can not execute\n");
         return OMPI_ERROR;
     }
-    OPAL_THREAD_LOCK(&fp->f_mutex);
+    OPAL_THREAD_LOCK(&fp->f_lock);
     ret = shared_fp_base_module->sharedfp_get_position(fh,offset);
     *offset = *offset / fh->f_etype_size;
-    OPAL_THREAD_UNLOCK(&fp->f_mutex);
+    OPAL_THREAD_UNLOCK(&fp->f_lock);
 
     return ret;
 }

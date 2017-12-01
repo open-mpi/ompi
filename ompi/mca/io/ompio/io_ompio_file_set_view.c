@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *  Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  *  $COPYRIGHT$
@@ -74,7 +74,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     */
     fh = &data->ompio_fh;
 
-    OPAL_THREAD_LOCK(&fp->f_mutex);
+    OPAL_THREAD_LOCK(&fp->f_lock);
     ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
 
     if ( NULL != fh->f_sharedfp_data) {
@@ -82,7 +82,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
         ret = mca_common_ompio_set_view(sh, disp, etype, filetype, datarep, info);
     }
 
-    OPAL_THREAD_UNLOCK(&fp->f_mutex);
+    OPAL_THREAD_UNLOCK(&fp->f_lock);
     return ret;
 }
 
@@ -98,12 +98,12 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
-    OPAL_THREAD_LOCK(&fp->f_mutex);
+    OPAL_THREAD_LOCK(&fp->f_lock);
     *disp = fh->f_disp;
     datatype_duplicate (fh->f_etype, etype);
     datatype_duplicate (fh->f_orig_filetype, filetype);
     strcpy (datarep, fh->f_datarep);
-    OPAL_THREAD_UNLOCK(&fp->f_mutex);
+    OPAL_THREAD_UNLOCK(&fp->f_lock);
 
     return OMPI_SUCCESS;
 }
