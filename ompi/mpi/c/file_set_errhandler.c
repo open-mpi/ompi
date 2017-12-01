@@ -68,12 +68,12 @@ int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler)
     /* Prepare the new error handler */
     OBJ_RETAIN(errhandler);
 
-    opal_mutex_lock (&file->f_lock);
+    OPAL_THREAD_LOCK(&file->f_lock);
     /* Ditch the old errhandler, and decrement its refcount. */
     tmp = file->error_handler;
     file->error_handler = errhandler;
     OBJ_RELEASE(tmp);
-    opal_mutex_unlock (&file->f_lock);
+    OPAL_THREAD_UNLOCK(&file->f_lock);
 
     /* All done */
     return MPI_SUCCESS;

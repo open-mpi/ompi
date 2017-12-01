@@ -62,12 +62,12 @@ int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
     }
   }
 
-  opal_mutex_lock (&file->f_lock);
+  OPAL_THREAD_LOCK(&file->f_lock);
   /* Retain the errhandler, corresponding to object refcount
      decrease in errhandler_free.c. */
   *errhandler = file->error_handler;
   OBJ_RETAIN(file->error_handler);
-  opal_mutex_unlock (&file->f_lock);
+  OPAL_THREAD_UNLOCK(&file->f_lock);
 
   /* All done */
 
