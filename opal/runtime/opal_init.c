@@ -40,6 +40,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/vmtracker.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
@@ -636,6 +637,9 @@ opal_init(int* pargc, char*** pargv)
         error = "opal_cr_init";
         goto return_error;
     }
+
+    /* init the vmtracker */
+    opal_vmtracker_init();
 
     return OPAL_SUCCESS;
 

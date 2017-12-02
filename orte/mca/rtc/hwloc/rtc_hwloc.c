@@ -37,6 +37,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
+#include "opal/util/vmtracker.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/error_strings.h"
@@ -68,17 +69,6 @@ static size_t shmemaddr;
 static char *shmemfile = NULL;
 static int shmemfd = -1;
 
-static int parse_map_line(const char *line,
-                          unsigned long *beginp,
-                          unsigned long *endp,
-                          orte_rtc_hwloc_vm_map_kind_t *kindp);
-static int use_hole(unsigned long holebegin,
-                    unsigned long holesize,
-                    unsigned long *addrp,
-                    unsigned long size);
-static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
-                     size_t *addrp,
-                     size_t size);
 static int enough_space(const char *filename,
                         size_t space_req,
                         uint64_t *space_avail,
@@ -109,8 +99,9 @@ static int init(void)
         return ORTE_SUCCESS;
     }
 
-    if (ORTE_SUCCESS != (rc = find_hole(mca_rtc_hwloc_component.kind,
-                                        &shmemaddr, shmemsize))) {
+    rc = opal_vmtracker_assign_address(mca_rtc_hwloc_component.kind,
+                                       &shmemaddr, shmemsize);
+    if (ORTE_SUCCESS != rc) {
         /* we couldn't find a hole, so don't use the shmem support */
         if (4 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
             FILE *file = fopen("/proc/self/maps", "r");
@@ -130,6 +121,7 @@ static int init(void)
         }
         return ORTE_SUCCESS;
     }
+
     /* create the shmem file in our session dir so it
      * will automatically get cleaned up */
     asprintf(&shmemfile, "%s/hwloc.sm", orte_process_info.jobfam_session_dir);
@@ -443,232 +435,7 @@ static void set(orte_job_t *jobdat,
 
 #if HWLOC_API_VERSION >= 0x20000
 
-static int parse_map_line(const char *line,
-                          unsigned long *beginp,
-                          unsigned long *endp,
-                          orte_rtc_hwloc_vm_map_kind_t *kindp)
-{
-    const char *tmp = line, *next;
-    unsigned long value;
-
-    /* "beginaddr-endaddr " */
-    value = strtoull(tmp, (char **) &next, 16);
-    if (next == tmp) {
-        return ORTE_ERROR;
-    }
-
-    *beginp = (unsigned long) value;
-
-    if (*next != '-') {
-        return ORTE_ERROR;
-    }
-
-     tmp = next + 1;
-
-    value = strtoull(tmp, (char **) &next, 16);
-    if (next == tmp) {
-        return ORTE_ERROR;
-    }
-    *endp = (unsigned long) value;
-    tmp = next;
-
-    if (*next != ' ') {
-        return ORTE_ERROR;
-    }
-    tmp = next + 1;
-
-    /* look for ending absolute path */
-    next = strchr(tmp, '/');
-    if (next) {
-        *kindp = VM_MAP_FILE;
-    } else {
-        /* look for ending special tag [foo] */
-        next = strchr(tmp, '[');
-        if (next) {
-            if (!strncmp(next, "[heap]", 6)) {
-                *kindp = VM_MAP_HEAP;
-            } else if (!strncmp(next, "[stack]", 7)) {
-                *kindp = VM_MAP_STACK;
-            } else {
-                char *end;
-                if ((end = strchr(next, '\n')) != NULL) {
-                    *end = '\0';
-                }
-                opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                                    "Found special VMA \"%s\" before stack", next);
-                *kindp = VM_MAP_OTHER;
-            }
-        } else {
-            *kindp = VM_MAP_ANONYMOUS;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
 #define ALIGN2MB (2*1024*1024UL)
-
-static int use_hole(unsigned long holebegin,
-                    unsigned long holesize,
-                    unsigned long *addrp,
-                    unsigned long size)
-{
-    unsigned long aligned;
-    unsigned long middle = holebegin+holesize/2;
-
-    opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                        "looking in hole [0x%lx-0x%lx] size %lu (%lu MB) for %lu (%lu MB)\n",
-                        holebegin, holebegin+holesize, holesize, holesize>>20, size, size>>20);
-
-    if (holesize < size) {
-        return ORTE_ERROR;
-    }
-
-    /* try to align the middle of the hole on 64MB for POWER's 64k-page PMD */
-    #define ALIGN64MB (64*1024*1024UL)
-    aligned = (middle + ALIGN64MB) & ~(ALIGN64MB-1);
-    if (aligned + size <= holebegin + holesize) {
-        opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                            "aligned [0x%lx-0x%lx] (middle 0x%lx) to 0x%lx for 64MB\n",
-                            holebegin, holebegin+holesize, middle, aligned);
-        opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                            " there are %lu MB free before and %lu MB free after\n",
-                            (aligned-holebegin)>>20, (holebegin+holesize-aligned-size)>>20);
-
-        *addrp = aligned;
-        return ORTE_SUCCESS;
-    }
-
-    /* try to align the middle of the hole on 2MB for x86 PMD */
-    aligned = (middle + ALIGN2MB) & ~(ALIGN2MB-1);
-    if (aligned + size <= holebegin + holesize) {
-        opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                            "aligned [0x%lx-0x%lx] (middle 0x%lx) to 0x%lx for 2MB\n",
-                            holebegin, holebegin+holesize, middle, aligned);
-        opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                            " there are %lu MB free before and %lu MB free after\n",
-                            (aligned-holebegin)>>20, (holebegin+holesize-aligned-size)>>20);
-        *addrp = aligned;
-        return ORTE_SUCCESS;
-    }
-
-    /* just use the end of the hole */
-    *addrp = holebegin + holesize - size;
-    opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                        "using the end of hole starting at 0x%lx\n", *addrp);
-    opal_output_verbose(80, orte_rtc_base_framework.framework_output,
-                        " there are %lu MB free before\n", (*addrp-holebegin)>>20);
-    return ORTE_SUCCESS;
-}
-
-static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
-                     size_t *addrp, size_t size)
-{
-    unsigned long biggestbegin = 0;
-    unsigned long biggestsize = 0;
-    unsigned long prevend = 0;
-    orte_rtc_hwloc_vm_map_kind_t prevmkind = VM_MAP_OTHER;
-    int in_libs = 0;
-    FILE *file;
-    char line[96];
-
-    file = fopen("/proc/self/maps", "r");
-    if (!file) {
-        return ORTE_ERROR;
-    }
-
-    while (fgets(line, sizeof(line), file) != NULL) {
-        unsigned long begin=0, end=0;
-        orte_rtc_hwloc_vm_map_kind_t mkind=VM_MAP_OTHER;
-
-        if (!parse_map_line(line, &begin, &end, &mkind)) {
-            opal_output_verbose(90, orte_rtc_base_framework.framework_output,
-                                "found %s from 0x%lx to 0x%lx\n",
-                                mkind == VM_MAP_HEAP ? "HEAP" :
-                                mkind == VM_MAP_STACK ? "STACK" :
-                                mkind == VM_MAP_OTHER ? "OTHER" :
-                                mkind == VM_MAP_FILE ? "FILE" :
-                                mkind == VM_MAP_ANONYMOUS ? "ANON" : "unknown",
-                                begin, end);
-
-            switch (hkind) {
-                case VM_HOLE_BEGIN:
-                    fclose(file);
-                    return use_hole(0, begin, addrp, size);
-
-                case VM_HOLE_AFTER_HEAP:
-                    if (prevmkind == VM_MAP_HEAP && mkind != VM_MAP_HEAP) {
-                        /* only use HEAP when there's no other HEAP after it
-                         * (there can be several of them consecutively).
-                         */
-                        fclose(file);
-                        return use_hole(prevend, begin-prevend, addrp, size);
-                    }
-                    break;
-
-                case VM_HOLE_BEFORE_STACK:
-                    if (mkind == VM_MAP_STACK) {
-                        fclose(file);
-                        return use_hole(prevend, begin-prevend, addrp, size);
-                    }
-                    break;
-
-                case VM_HOLE_IN_LIBS:
-                    /* see if we are between heap and stack */
-                    if (prevmkind == VM_MAP_HEAP) {
-                        in_libs = 1;
-                    }
-                    if (mkind == VM_MAP_STACK) {
-                        in_libs = 0;
-                    }
-                    if (!in_libs) {
-                        /* we're not in libs, ignore this entry */
-                        break;
-                    }
-                    /* we're in libs, consider this entry for searching the biggest hole below */
-                    /* fallthrough */
-
-                case VM_HOLE_BIGGEST:
-                    if (begin-prevend > biggestsize) {
-                        opal_output_verbose(90, orte_rtc_base_framework.framework_output,
-                                            "new biggest 0x%lx - 0x%lx = %lu (%lu MB)\n",
-                                            prevend, begin, begin-prevend, (begin-prevend)>>20);
-                        biggestbegin = prevend;
-                        biggestsize = begin-prevend;
-                    }
-                    break;
-
-                    default:
-                        assert(0);
-            }
-        }
-
-        while (!strchr(line, '\n')) {
-            if (!fgets(line, sizeof(line), file)) {
-                goto done;
-            }
-        }
-
-        if (mkind == VM_MAP_STACK) {
-          /* Don't go beyond the stack. Other VMAs are special (vsyscall, vvar, vdso, etc),
-           * There's no spare room there. And vsyscall is even above the userspace limit.
-           */
-          break;
-        }
-
-        prevend = end;
-        prevmkind = mkind;
-
-    }
-
-  done:
-    fclose(file);
-    if (hkind == VM_HOLE_IN_LIBS || hkind == VM_HOLE_BIGGEST) {
-        return use_hole(biggestbegin, biggestsize, addrp, size);
-    }
-
-    return ORTE_ERROR;
-}
 
 static int enough_space(const char *filename,
                         size_t space_req,
