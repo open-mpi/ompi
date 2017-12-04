@@ -153,13 +153,11 @@ void orte_odls_base_start_threads(orte_job_t *jdata)
     /* setup the pool of worker threads */
     orte_odls_globals.ev_threads = NULL;
     orte_odls_globals.next_base = 0;
-    if (0 == orte_odls_globals.num_threads ||
-        (int)jdata->num_local_procs < orte_odls_globals.cutoff) {
-        orte_odls_globals.ev_bases = (opal_event_base_t**)malloc(sizeof(opal_event_base_t*));
-        /* use the default event base */
-        orte_odls_globals.ev_bases[0] = orte_event_base;
-    } else {
-        if (-1 == orte_odls_globals.num_threads) {
+    if (-1 == orte_odls_globals.num_threads) {
+        if ((int)jdata->num_local_procs < orte_odls_globals.cutoff) {
+            /* do not use any dedicated odls thread */
+            orte_odls_globals.num_threads = 0;
+        } else {
             /* user didn't specify anything, so default to some fraction of
              * the number of local procs, capping it at the max num threads
              * parameter value. */
@@ -170,6 +168,12 @@ void orte_odls_base_start_threads(orte_job_t *jdata)
                 orte_odls_globals.num_threads = orte_odls_globals.max_threads;
             }
         }
+    }
+    if (0 == orte_odls_globals.num_threads) {
+        orte_odls_globals.ev_bases = (opal_event_base_t**)malloc(sizeof(opal_event_base_t*));
+        /* use the default event base */
+        orte_odls_globals.ev_bases[0] = orte_event_base;
+    } else {
         orte_odls_globals.ev_bases =
             (opal_event_base_t**)malloc(orte_odls_globals.num_threads * sizeof(opal_event_base_t*));
         for (i=0; i < orte_odls_globals.num_threads; i++) {
