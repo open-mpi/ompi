@@ -122,8 +122,10 @@ void orte_odls_base_harvest_threads(void)
     ORTE_ACQUIRE_THREAD(&orte_odls_globals.lock);
     if (0 < orte_odls_globals.num_threads) {
         /* stop the progress threads */
-        for (i=0; NULL != orte_odls_globals.ev_threads[i]; i++) {
-            opal_progress_thread_finalize(orte_odls_globals.ev_threads[i]);
+        if (NULL != orte_odls_globals.ev_threads) {
+            for (i=0; NULL != orte_odls_globals.ev_threads[i]; i++) {
+                opal_progress_thread_finalize(orte_odls_globals.ev_threads[i]);
+            }
         }
         free(orte_odls_globals.ev_bases);
         orte_odls_globals.ev_bases = (opal_event_base_t**)malloc(sizeof(opal_event_base_t*));
