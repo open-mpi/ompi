@@ -13,6 +13,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +59,7 @@ static inline void opal_atomic_wmb(void)
 
 static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
 {
-    int32_t prev = __sync_val_compare_and_swap (add, *oldval, newval);
+    int32_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);
     bool ret = prev == *oldval;
     *oldval = prev;
     return ret;
@@ -104,7 +106,7 @@ static inline int32_t opal_atomic_fetch_sub_32(volatile int32_t *addr, int32_t d
 
 static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
 {
-    int64_t prev = __sync_val_compare_and_swap (add, *oldval, newval);
+    int64_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);
     bool ret = prev == *oldval;
     *oldval = prev;
     return ret;
