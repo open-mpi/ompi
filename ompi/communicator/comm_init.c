@@ -465,6 +465,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         opal_pointer_array_set_item ( &ompi_comm_f_to_c_table,
                                       comm->c_f_to_c_index, NULL);
     }
+
+    OBJ_DESTRUCT(&comm->c_lock);
 }
 
 #define OMPI_COMM_SET_INFO_FN(name, flag)       \
