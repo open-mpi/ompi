@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
+ * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -686,8 +688,8 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     msg.desc = NULL;
     msg.iov_count = 1;
     msg.addr = 0;
-    msg.tag = 0;
-    msg.ignore = 0;
+    msg.tag = ofi_req->match_bits;
+    msg.ignore = ofi_req->mask_bits;
     msg.context = (void *)&ofi_req->ctx;
     msg.data = 0;
 
@@ -868,6 +870,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     ofi_req->error_callback = ompi_mtl_ofi_probe_error_callback;
     ofi_req->completion_count = 1;
     ofi_req->match_state = 0;
+    ofi_req->mask_bits = mask_bits;
 
     MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
     if (-FI_ENOMSG == ret) {
