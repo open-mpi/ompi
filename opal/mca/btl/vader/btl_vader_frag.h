@@ -67,8 +67,6 @@ struct mca_btl_vader_frag_t {
     mca_btl_base_segment_t segments[2];
     /** endpoint this fragment is active on */
     struct mca_btl_base_endpoint_t *endpoint;
-    /** fast box in use (or NULL) */
-    unsigned char * restrict fbox;
     /** fragment header (in the shared memory region) */
     mca_btl_vader_hdr_t *hdr;
     /** free list this fragment was allocated within */
@@ -95,7 +93,6 @@ static inline void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag)
 
     frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
     frag->base.des_segment_count = 1;
-    frag->fbox = NULL;
 
     opal_free_list_return (frag->my_list, (opal_free_list_item_t *)frag);
 }
