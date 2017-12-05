@@ -201,7 +201,7 @@ static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *add
                           : "r" (addr), "r" (*oldval), "r" (newval)
                           : "cc", "memory");
 
-    ret = (prev == oldval);
+    ret = (prev == *oldval);
     *oldval = prev;
     return ret;
 }
@@ -242,7 +242,7 @@ static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t 
                           : "r" (addr), "r" (*oldval), "r" (newval)
                           : "cc", "memory");
 
-    ret = (prev == oldval);
+    ret = (prev == *oldval);
     *oldval = prev;
     return ret;
 }
@@ -264,7 +264,7 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t 
                           : "r" (addr), "r" (*oldval), "r" (newval)
                           : "cc", "memory");
 
-    ret = (prev == oldval);
+    ret = (prev == *oldval);
     *oldval = prev;
     return ret;
 }
