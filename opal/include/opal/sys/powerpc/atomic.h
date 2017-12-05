@@ -83,7 +83,7 @@ void opal_atomic_rmb(void)
 static inline
 void opal_atomic_wmb(void)
 {
-    RMB();
+    WMB();
 }
 
 static inline
@@ -109,7 +109,7 @@ void opal_atomic_isync(void)
 #pragma mc_func opal_atomic_rmb { "7c2004ac" }         /* lwsync  */
 #pragma reg_killed_by opal_atomic_rmb                  /* none */
 
-#pragma mc_func opal_atomic_wmb { "7c0006ac" }         /* eieio */
+#pragma mc_func opal_atomic_wmb { "7c2004ac" }         /* lwsync */
 #pragma reg_killed_by opal_atomic_wmb                  /* none */
 
 #endif
