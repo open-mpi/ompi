@@ -134,7 +134,7 @@ static inline bool opal_atomic_compare_exchange_strong_128 (volatile opal_int128
                                   "sete     %0      \n\t"
                           : "=qm" (ret), "+a" (((int64_t *)oldval)[0]), "+d" (((int64_t *)oldval)[1])
                           : "S" (addr), "b" (((int64_t *)&newval)[0]), "c" (((int64_t *)&newval)[1])
-                          : "memory", "cc", "eax", "edx");
+                          : "memory", "cc");
 
     return (bool) ret;
 }
