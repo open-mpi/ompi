@@ -440,7 +440,6 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 {
     const size_t total_size = reserve + *size;
     mca_btl_vader_frag_t *frag;
-    unsigned char *fbox;
     void *data_ptr;
     int rc;
 
@@ -506,19 +505,6 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
             frag->base.des_segment_count = 2;
         } else {
 #endif
-
-            /* inline send */
-            if (OPAL_LIKELY(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP & flags)) {
-                /* try to reserve a fast box for this transfer only if the
-                 * fragment does not belong to the caller */
-                fbox = mca_btl_vader_reserve_fbox (endpoint, total_size);
-                if (OPAL_LIKELY(fbox)) {
-                    frag->segments[0].seg_addr.pval = fbox;
-                }
-
-                frag->fbox = fbox;
-            }
-
             /* NTH: the covertor adds some latency so we bypass it here */
             memcpy ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + reserve), data_ptr, *size);
             frag->segments[0].seg_len = total_size;
