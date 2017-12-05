@@ -192,6 +192,7 @@ OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, -, sub)
         case 4:                                                         \
             return opal_atomic_compare_exchange_strong_32 ((volatile int32_t *) addr, \
                                                            (int32_t *) oldval, (int32_t) newval); \
+        }                                                               \
         abort();                                                        \
     }
 #else
