@@ -74,7 +74,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
 
     mpool = mca_mpool_base_module_lookup (hints);
     if (NULL != mpool) {
-        mem = mpool->mpool_alloc (mpool, size, 0, 0);
+        mem = mpool->mpool_alloc (mpool, size, sizeof(void *), 0);
     }
 
     if (NULL == mem) {
