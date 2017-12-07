@@ -173,6 +173,8 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     if (orte_display_allocation) {
         orte_ras_base_display_alloc();
     }
+    /* ensure we update the routing plan */
+    orte_routed.update_routing_plan(NULL);
 
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
@@ -1346,8 +1348,9 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         } else {
             jdatorted->num_reported++;
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                 "%s plm:base:orted_report_launch recvd %d of %d reported daemons",
+                                 "%s plm:base:orted_report_launch job %s recvd %d of %d reported daemons",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(jdatorted->jobid),
                                  jdatorted->num_reported, jdatorted->num_procs));
             if (jdatorted->num_procs == jdatorted->num_reported) {
                 bool dvm = true;
