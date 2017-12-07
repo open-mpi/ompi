@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (C) 2015      Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
-# Copyright (c) 2015-2016 Research Organization for Information Science
+# Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -30,21 +30,20 @@ AC_DEFUN([OMPI_CHECK_UCX],[
     ompi_check_ucx_$1_save_LIBS="$LIBS"
 
     AS_IF([test "$with_ucx" != "no"],
-          [AS_IF([test ! -z "$with_ucx" && test "$with_ucx" != "yes"],
-                 [
-                    ompi_check_ucx_dir="$with_ucx"
-                    ompi_check_ucx_libdir="$with_ucx/lib"
-                 ])
-           AS_IF([test ! -z "$with_ucx_libdir" && test "$with_ucx_libdir" != "yes"],
+          [AS_IF([test -n "$with_ucx" && test "$with_ucx" != "yes"],
+                 [ompi_check_ucx_dir="$with_ucx"
+                  files=`ls $ompi_check_ucx_dir/lib64/libucp.* 2> /dev/null | wc -l`
+                  AS_IF([test "$files" -gt 0],
+                        [ompi_check_ucx_libdir=$ompi_check_ucx_dir/lib64],
+                        [ompi_check_ucx_libdir=$ompi_check_ucx_dir/lib])])
+           AS_IF([test -n "$with_ucx_libdir" && test "$with_ucx_libdir" != "yes"],
                  [ompi_check_ucx_libdir="$with_ucx_libdir"])
-
-           ompi_check_ucx_extra_libs="-L$ompi_check_ucx_libdir"
 
            OPAL_CHECK_PACKAGE([$1],
                               [ucp/api/ucp.h],
                               [ucp],
                               [ucp_cleanup],
-                              [$ompi_check_ucx_extra_libs],
+                              [],
                               [$ompi_check_ucx_dir],
                               [$ompi_check_ucx_libdir],
                               [ompi_check_ucx_happy="yes"],
@@ -60,7 +59,8 @@ AC_DEFUN([OMPI_CHECK_UCX],[
     AC_MSG_CHECKING(for UCX version compatibility)
     AC_REQUIRE_CPP
     old_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS -I$ompi_check_ucx_dir/include"
+    AS_IF([test -n "$ompi_check_ucx_dir"],
+          [CPPFLAGS="$CPPFLAGS -I$ompi_check_ucx_dir/include"])
     AC_COMPILE_IFELSE(
             [AC_LANG_PROGRAM([[#include <uct/api/version.h>]],
                 [[
