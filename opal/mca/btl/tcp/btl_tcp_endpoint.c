@@ -734,7 +734,9 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
-                        "btl: tcp: attempting to connect() to %s address %s on port %d",
+                        "btl: tcp: %s on address %s is attempting to connect() to %s address %s on port %d",
+                        OPAL_NAME_PRINT(opal_proc_local_get()->proc_name),
+                        opal_net_get_hostname((struct sockaddr_storage*) &btl_endpoint->endpoint_btl->tcp_ifaddr),
                         OPAL_NAME_PRINT(btl_endpoint->endpoint_proc->proc_opal->proc_name),
                         opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                         ntohs(btl_endpoint->endpoint_addr->addr_port));

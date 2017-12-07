@@ -1480,6 +1480,11 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
         return;
     }
 
+    opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                        "btl: tcp: incoming connection from %s on address %s",
+                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                        opal_net_get_hostname((struct sockaddr*) &addr));
+
     /* are there any existing peer instances willing to accept this connection */
     (void)mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd);
 
