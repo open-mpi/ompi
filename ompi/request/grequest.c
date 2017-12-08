@@ -219,6 +219,7 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
             g->greq_query.f_query((MPI_Aint*)g->greq_state, fstatus, &ierr);
             MPI_Status_f2c(fstatus, status);
             rc = OMPI_FINT_2_INT(ierr);
+            status->MPI_ERROR = rc;
         }
     }
 
