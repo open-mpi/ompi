@@ -1291,6 +1291,10 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
             if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
                 continue;
             }
+            if (0 == child->pid || !ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_ALIVE)) {
+                /* skip this one as the child isn't alive */
+                continue;
+            }
             if (ORTE_SUCCESS != (rc = signal_local(child->pid, (int)signal))) {
                 ORTE_ERROR_LOG(rc);
             }
