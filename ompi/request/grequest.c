@@ -204,21 +204,25 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
 
     /* MPI-2:8.2 does not say what to do with the return value from
        the query function (i.e., the int return value from the C
-       function or the ierr argument from the Fortran function).
-       Making the command decision here to ignore it.  If the handler
-       wants to pass an error back, it should set it in the MPI_ERROR
-       field in the status (which is always kept, regardless if the
-       top-level function was invoked with MPI_STATUS[ES]_IGNORE or
-       not).  */
+       function or the ierr argument from the Fortran function).*/
     if (NULL != g->greq_query.c_query) {
         if (g->greq_funcs_are_c) {
+            /* In the case of C, Making the command decision here to ignore the return value.  
+               If the handler wants to pass an error back, it should set it in 
+               the MPI_ERROR field in the status (which is always kept, regardless 
+               if the top-level function was invoked with MPI_STATUS[ES]_IGNORE or
+               not).  */
             rc = g->greq_query.c_query(g->greq_state, status);
         } else {
+            /* In the case of Fortran, status doesn't have a MPI_ERROR field so the 
+               return error from the Fortran query function is copied into the C status
+               to avoid passing garbage value */
             MPI_Fint ierr;
             MPI_Fint fstatus[sizeof(MPI_Status) / sizeof(int)];
             g->greq_query.f_query((MPI_Aint*)g->greq_state, fstatus, &ierr);
             MPI_Status_f2c(fstatus, status);
             rc = OMPI_FINT_2_INT(ierr);
+            status->MPI_ERROR = rc;
         }
     }
 
