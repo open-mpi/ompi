@@ -513,6 +513,10 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 
         opal_ifkindextoaddr(if_kindex, (struct sockaddr*) &btl->tcp_ifaddr,
                                         sizeof (btl->tcp_ifaddr));
+
+        opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                           "btl: tcp: btl_component adding %s address at %d index",
+                            opal_net_get_hostname((struct sockaddr*) &btl->tcp_ifaddr), if_kindex);
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
@@ -1185,7 +1189,9 @@ static int mca_btl_tcp_component_exchange(void)
                          opal_ifindextokindex (index);
                      current_addr++;
                      opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                         "btl:tcp: using ipv6 interface %s", ifn);
+                             "btl:tcp: using ipv4 interface %s with address %s at kindex %d", ifn,
+                                          opal_net_get_hostname((struct sock_addr_in*) &my_ss),
+                                          opal_ifindextokindex (index));
                  }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
