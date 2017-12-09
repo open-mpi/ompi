@@ -40,6 +40,7 @@ it is possible for items to appear more than once in the list.
 Bug fixes/minor improvements:
 
 - Plug a memory leak in MPI_Mem_free().  Thanks to Philip Blakely for reporting.
+- Fix the tree spawn operation when the number of nodes is larger than the radix.  Thanks to Carlos Eduardo de Andrade for reporting.
 
 3.0.1 -- October, 2017
 ----------------------
