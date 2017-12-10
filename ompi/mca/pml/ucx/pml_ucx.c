@@ -145,7 +145,11 @@ int mca_pml_ucx_open(void)
     params.tag_sender_mask = PML_UCX_SPECIFIC_SOURCE_MASK;
     params.mt_workers_shared = 0; /* we do not need mt support for context
                                      since it will be protected by worker */
-    params.estimated_num_eps = ompi_proc_world_size();
+    if (ompi_pml_ucx.num_eps <= 0) {
+        params.estimated_num_eps = ompi_proc_world_size();
+    } else {
+        params.estimated_num_eps = ompi_pml_ucx.num_eps;
+    }
 
     status = ucp_init(&params, config, &ompi_pml_ucx.ucp_context);
     ucp_config_release(config);
