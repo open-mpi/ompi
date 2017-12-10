@@ -49,6 +49,8 @@ struct mca_pml_ucx_module {
     int                       priority;
     int                       verbose;
     int                       output;
+    /* estimation of the number of ucx endpoints */
+    int                       num_eps;
 };
 
 extern mca_pml_base_component_2_0_0_t mca_pml_ucx_component;
