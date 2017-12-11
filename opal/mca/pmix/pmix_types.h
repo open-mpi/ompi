@@ -118,6 +118,7 @@ BEGIN_C_DECLS
 
 
 /* information about relative ranks as assigned by the RM */
+#define OPAL_PMIX_CLUSTER_ID                    "pmix.clid"             // (char*) a string name for the cluster this proc is executing on
 #define OPAL_PMIX_PROCID                        "pmix.procid"           // (opal_process_name_t) process identifier
 #define OPAL_PMIX_NSPACE                        "pmix.nspace"           // (char*) nspace of a job
 #define OPAL_PMIX_JOBID                         "pmix.jobid"            // (uint32_t) jobid assigned by scheduler
@@ -189,6 +190,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_NOTIFY_COMPLETION             "pmix.notecomp"         // (bool) notify parent process upon termination of child job
 #define OPAL_PMIX_RANGE                         "pmix.range"            // (int) opal_pmix_data_range_t value for calls to publish/lookup/unpublish
 #define OPAL_PMIX_PERSISTENCE                   "pmix.persist"          // (int) opal_pmix_persistence_t value for calls to publish
+#define OPAL_PMIX_DATA_SCOPE                    "pmix.scope"            // (pmix_scope_t) scope of the data to be found in a PMIx_Get call
 #define OPAL_PMIX_OPTIONAL                      "pmix.optional"         // (bool) look only in the immediate data store for the requested value - do
                                                                         //        not request data from the server if not found
 #define OPAL_PMIX_EMBED_BARRIER                 "pmix.embed.barrier"    // (bool) execute a blocking fence operation before executing the
@@ -364,6 +366,16 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_JOB_CTRL_PROVISION_IMAGE      "pmix.jctrl.pvnimg"     // (char*) name of the image that is to be provisioned
 #define OPAL_PMIX_JOB_CTRL_PREEMPTIBLE          "pmix.jctrl.preempt"    // (bool) job can be pre-empted
 #define OPAL_PMIX_JOB_CTRL_TERMINATE            "pmix.jctrl.term"       // (bool) politely terminate the specified procs
+#define OPAL_PMIX_REGISTER_CLEANUP              "pmix.reg.cleanup"      // (char*) comma-delimited list of files/directories to
+                                                                        //         be removed upon process termination
+#define OPAL_PMIX_CLEANUP_RECURSIVE             "pmix.clnup.recurse"    // (bool) recursively cleanup all subdirectories under the
+                                                                        //        specified one(s)
+#define OPAL_PMIX_CLEANUP_EMPTY                 "pmix.clnup.empty"      // (bool) only remove empty subdirectories
+#define OPAL_PMIX_CLEANUP_IGNORE                "pmix.clnup.ignore"     // (char*) comma-delimited list of filenames that are not
+                                                                        //         to be removed
+#define OPAL_PMIX_CLEANUP_LEAVE_TOPDIR          "pmix.clnup.lvtop"      // (bool) when recursively cleaning subdirs, do not remove
+                                                                        //        the top-level directory (the one given in the
+                                                                        //        cleanup request)
 
 
 /* monitoring attributes */

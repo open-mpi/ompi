@@ -2015,6 +2015,10 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
     pmix_status_t rc;
     pmix_query_caddy_t *cd;
     pmix_proc_t proc;
+    size_t n;
+    bool epilog;
+    pmix_info_caddy_t *epi;
+    pmix_info_t *cache, *mods[4];
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
                         "recvd job control request from client");
@@ -2060,6 +2064,56 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto exit;
+        }
+    }
+
+    /* if this includes a request for post-termination cleanup, we handle
+     * that request ourselves */
+    cnt = 0;
+    epilog = false;
+    for (n=0; n < cd->ninfo; n++) {
+        if (0 == strncmp(cd->info[n].key, PMIX_REGISTER_CLEANUP, PMIX_MAX_KEYLEN)) {
+            cache = &cd->info[n];
+            epilog = true;
+        } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_RECURSIVE, PMIX_MAX_KEYLEN)) {
+            mods[cnt] = &cd->info[n];
+            ++cnt;
+        } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_EMPTY, PMIX_MAX_KEYLEN)) {
+            mods[cnt] = &cd->info[n];
+            ++cnt;
+        } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_IGNORE, PMIX_MAX_KEYLEN)) {
+            mods[cnt] = &cd->info[n];
+            ++cnt;
+        } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_LEAVE_TOPDIR, PMIX_MAX_KEYLEN)) {
+            mods[cnt] = &cd->info[n];
+            ++cnt;
+        }
+    }
+    if (epilog) {
+        epi = PMIX_NEW(pmix_info_caddy_t);
+        if (NULL == epi) {
+            rc = PMIX_ERR_NOMEM;
+            goto exit;
+        }
+        PMIX_INFO_CREATE(epi->info, cnt+1);
+        if (NULL == epi->info) {
+            PMIX_RELEASE(epi);
+            rc = PMIX_ERR_NOMEM;
+            goto exit;
+        }
+        epi->ninfo = cnt+1;
+        PMIX_INFO_XFER(&epi->info[0], cache);
+        for (n=0; n < (size_t)cnt; n++) {
+            PMIX_INFO_XFER(&epi->info[n+1], mods[n]);
+        }
+        pmix_list_append(&peer->epilogs, &epi->super);
+        /* see if this is all there was */
+        if (epi->ninfo == cd->ninfo) {
+            /* yes, so there is nothing that the host RM need do */
+            if (NULL != cbfunc) {
+                cbfunc(PMIX_SUCCESS, NULL, 0, cd, NULL, NULL);
+            }
+            return PMIX_SUCCESS;
         }
     }
 
