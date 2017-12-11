@@ -20,6 +20,8 @@ Copyright (c) 2012-2017 Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2017      Research Organization for Information Science
+                        and Technology (RIST). All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -34,6 +36,8 @@ it is possible for items to appear more than once in the list.
 
 3.0.1 -- October, 2017
 ----------------------
+
+- Fix Fortran 2008 macro in MPI extensions.  Thanks to Nathan T. Weeks for reporting.
 
 - Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
   MPI processes on the same node where mpirun is executing using a separate
