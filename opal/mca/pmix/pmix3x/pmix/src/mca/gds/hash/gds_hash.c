@@ -426,6 +426,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
             /* an array of data pertaining to a specific proc */
             if (PMIX_DATA_ARRAY != info[n].value.type) {
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+                rc = PMIX_ERR_TYPE_MISMATCH;
                 goto release;
             }
             size = info[n].value.data.darray->size;
@@ -433,6 +434,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
             /* first element of the array must be the rank */
             if (0 != strcmp(iptr[0].key, PMIX_RANK) ||
                 PMIX_PROC_RANK != iptr[0].value.type) {
+                rc = PMIX_ERR_TYPE_MISMATCH;
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
                 goto release;
             }
@@ -458,7 +460,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
                         if (NULL == tmp) {
                             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                             rc = PMIX_ERR_NOMEM;
-                            return rc;
+                            goto release;
                         }
                         kp2->value->type = PMIX_COMPRESSED_STRING;
                         free(kp2->value->data.string);
@@ -493,10 +495,10 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
             if (PMIX_STRING_SIZE_CHECK(kp2->value)) {
                 if (pmix_util_compress_string(kp2->value->data.string, &tmp, &len)) {
                     if (NULL == tmp) {
-                        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
-                        PMIX_RELEASE(kp2);
                         rc = PMIX_ERR_NOMEM;
-                        return rc;
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(kp2);
+                        goto release;
                     }
                     kp2->value->type = PMIX_COMPRESSED_STRING;
                     free(kp2->value->data.string);

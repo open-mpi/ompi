@@ -601,6 +601,11 @@ static void connection_handler(int sd, short args, void *cbdata)
     psave->nptr = nptr;
     PMIX_RETAIN(info);
     psave->info = info;
+    /* save the epilog info */
+    psave->epilog.uid = info->uid;
+    psave->epilog.gid = info->gid;
+    nptr->epilog.uid = info->uid;
+    nptr->epilog.gid = info->gid;
     info->proc_cnt++; /* increase number of processes on this rank */
     psave->sd = pnd->sd;
     if (0 > (psave->index = pmix_pointer_array_add(&pmix_server_globals.clients, psave))) {

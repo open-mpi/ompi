@@ -1161,6 +1161,12 @@ static void connection_handler(int sd, short args, void *cbdata)
     peer->nptr = nptr;
     PMIX_RETAIN(info);
     peer->info = info;
+    /* update the epilog fields */
+    peer->epilog.uid = info->uid;
+    peer->epilog.gid = info->gid;
+    /* ensure the nspace epilog is updated too */
+    nptr->epilog.uid = info->uid;
+    nptr->epilog.gid = info->gid;
     info->proc_cnt++; /* increase number of processes on this rank */
     peer->sd = pnd->sd;
     if (0 > (peer->index = pmix_pointer_array_add(&pmix_server_globals.clients, peer))) {
@@ -1399,6 +1405,11 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     peer->nptr = nptr;
     PMIX_RETAIN(info);
     peer->info = info;
+    /* save the uid/gid */
+    peer->epilog.uid = info->uid;
+    peer->epilog.gid = info->gid;
+    nptr->epilog.uid = info->uid;
+    nptr->epilog.gid = info->gid;
     peer->proc_cnt = 1;
     peer->sd = pnd->sd;
 

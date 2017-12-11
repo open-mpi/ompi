@@ -65,6 +65,7 @@ typedef struct {
     opal_mutex_t mutex;
     opal_pmix_condition_t cond;
     volatile bool active;
+    int status;
 } opal_pmix_lock_t;
 
 

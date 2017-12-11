@@ -171,6 +171,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "PMIX MODEL DECLARED";
     case PMIX_ERR_TEMP_UNAVAILABLE:
         return "PMIX TEMPORARILY UNAVAILABLE";
+    case PMIX_ERR_CONFLICTING_CLEANUP_DIRECTIVES:
+        return "PMIX CONFLICTING CLEANUP DIRECTIVES";
     case PMIX_SUCCESS:
         return "SUCCESS";
     default:
