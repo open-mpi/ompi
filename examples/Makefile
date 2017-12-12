@@ -22,15 +22,12 @@
 # $HEADER$
 #
 
-# Use the Open MPI-provided wrapper compilers.  Note that gmake
-# requires the CXX macro, while other versions of make (such as Sun's
-# make) require the CCC macro.
+# Use the Open MPI-provided wrapper compilers.
 
-CC = mpicc
-CXX = mpic++
-CCC = mpic++
-FC = mpifort
-JAVAC = mpijavac
+MPICC = mpicc
+MPICXX = mpic++
+MPIFC = mpifort
+MPIJAVAC = mpijavac
 SHMEMCC = shmemcc
 SHMEMCXX = shmemc++
 SHMEMFC = shmemfort
@@ -40,10 +37,10 @@ SHMEMFC = shmemfort
 # gmake requires the CXXFLAGS macro, while other versions of make
 # (such as Sun's make) require the CCFLAGS macro.
 
-CFLAGS = -g
-CXXFLAGS = -g
-CCFLAGS = -g
-FCFLAGS = -g
+CFLAGS += -g
+CXXFLAGS += -g
+CCFLAGS += -g
+FCFLAGS += -g
 
 # Example programs to build
 
@@ -129,49 +126,61 @@ clean:
 
 # Don't rely on default rules for the Fortran and Java examples
 
+hello_c: hello_c.c
+	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
+ring_c: ring_c.c
+	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
+connectivity_c: connectivity_c.c
+	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
+
+hello_cxx: hello_cxx.cc
+	$(MPICXX) $(CXXFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
+ring_cxx: ring_cxx.cc
+	$(MPICXX) $(CXXFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
+
 hello_mpifh: hello_mpifh.f
-	$(FC) $(FCFLAGS) $? -o $@
+	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 ring_mpifh: ring_mpifh.f
-	$(FC) $(FCFLAGS) $? -o $@
+	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 hello_usempi: hello_usempi.f90
-	$(FC) $(FCFLAGS) $? -o $@
+	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 ring_usempi: ring_usempi.f90
-	$(FC) $(FCFLAGS) $? -o $@
+	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 hello_usempif08: hello_usempif08.f90
-	$(FC) $(FCFLAGS) $? -o $@
+	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 ring_usempif08: ring_usempif08.f90
-	$(FC) $(FCFLAGS) $? -o $@
+	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 Hello.class: Hello.java
-	$(JAVAC) Hello.java
+	$(MPIJAVAC) Hello.java
 Ring.class: Ring.java
-	$(JAVAC) Ring.java
+	$(MPIJAVAC) Ring.java
 
 hello_oshmem: hello_oshmem_c.c
-	$(SHMEMCC) $(CFLAGS) $? -o $@
+	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 hello_oshmemcxx: hello_oshmem_cxx.cc
-	$(SHMEMCXX) $(CXXFLAGS) $? -o $@
+	$(SHMEMCXX) $(CXXFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 hello_oshmemfh: hello_oshmemfh.f90
-	$(SHMEMFC) $(FCFLAGS) $? -o $@
+	$(SHMEMFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 ring_oshmem: ring_oshmem_c.c
-	$(SHMEMCC) $(CFLAGS) $? -o $@
+	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 ring_oshmemfh: ring_oshmemfh.f90
-	$(SHMEMFC) $(FCFLAGS) $? -o $@
+	$(SHMEMFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 oshmem_shmalloc: oshmem_shmalloc.c
-	$(SHMEMCC) $(CCFLAGS) $? -o $@
+	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 oshmem_circular_shift: oshmem_circular_shift.c
-	$(SHMEMCC) $(CFLAGS) $? -o $@
+	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 oshmem_max_reduction: oshmem_max_reduction.c
-	$(SHMEMCC) $(CFLAGS) $? -o $@
+	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 oshmem_strided_puts: oshmem_strided_puts.c
-	$(SHMEMCC) $(CFLAGS) $? -o $@
+	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 oshmem_symmetric_data: oshmem_symmetric_data.c
-	$(SHMEMCC) $(CFLAGS) $? -o $@
+	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
