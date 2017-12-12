@@ -34,37 +34,38 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
-3.0.2 -- To be released
-------------------------
-
-Bug fixes/minor improvements:
+3.0.1 -- December, 2017
+-----------------------
 
 - Plug a memory leak in MPI_Mem_free().  Thanks to Philip Blakely for reporting.
-- Fix the tree spawn operation when the number of nodes is larger than the radix.  Thanks to Carlos Eduardo de Andrade for reporting.
-
-3.0.1 -- October, 2017
-----------------------
-
-- Fix Fortran 2008 macro in MPI extensions.  Thanks to Nathan T. Weeks for reporting.
-
+- Fix the tree spawn operation when the number of nodes is larger than the radix.
+  Thanks to Carlos Eduardo de Andrade for reporting.
+- Fix Fortran 2008 macro in MPI extensions.  Thanks to Nathan T. Weeks for
+  reporting.
+- Add UCX to list of interfaces that OpenSHMEM will use by default.
+- Add --{enable|disable}-show-load-errors-by-default to control
+  default behavior of the load errors option.
+- OFI MTL improvements: handle empty completion queues properly, fix
+  incorrect error message around fi_getinfo(), use default progress
+  option for provider by default.
+- PSM2 MTL improvements: Allow use of GPU buffers, thread fixes.
+- Numerous corrections to memchecker behavior.
 - Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
   MPI processes on the same node where mpirun is executing using a separate
   orte daemon, rather than the mpirun process.   This may be useful to set to
   true when using SLURM, as it improves interoperability with SLURM's signal
   propagation tools.  By default it is set to false, except for Cray XC systems.
-
-- Fix a problem reported on the mailing separately by Kevin McGrattan and Stephen Guzik about
-  consistency issues on NFS file systems when using OMPIO. This fix also introduces a new
-  mca parameter fs_ufs_lock_algorithm which allows to control the locking algorithm used
-  by ompio for read/write operations. By default, ompio does not perfom locking on local UNIX
-  file systems, locks the entire file per operation on NFS file systems, and selective byte-range
+- Fix a problem reported on the mailing separately by Kevin McGrattan and Stephen
+  Guzik about consistency issues on NFS file systems when using OMPIO. This fix
+  also introduces a new mca parameter fs_ufs_lock_algorithm which allows to
+  control the locking algorithm used by ompio for read/write operations. By
+  default, ompio does not perfom locking on local UNIX file systems, locks the
+  entire file per operation on NFS file systems, and selective byte-range
   locking on other distributed file systems.
-
 - Add an mca parameter pmix_server_usock_connections to allow mpirun to
   support applications statically built against the Open MPI v2.x release,
   or installed in a container along with the Open MPI v2.x libraries. It is
   set to false by default.
-
 
 3.0.0 -- September, 2017
 ------------------------
