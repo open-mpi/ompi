@@ -137,43 +137,47 @@ static int init(void)
     if (OPAL_SUCCESS != (rc = enough_space(shmemfile, shmemsize,
                                            &amount_space_avail,
                                            &space_available))) {
-        opal_output(0, "%s an error occurred while determining "
-                    "whether or not %s could be created.",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), shmemfile);
+        opal_output_verbose(2, orte_rtc_base_framework.framework_output,
+                            "%s an error occurred while determining "
+                            "whether or not %s could be created for topo shmem.",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), shmemfile);
         free(shmemfile);
         shmemfile = NULL;
-        return rc;
+        return ORTE_SUCCESS;
     }
     if (!space_available) {
-        rc = OPAL_ERR_OUT_OF_RESOURCE;
-        orte_show_help("help-orte-rtc-hwloc.txt", "target full", true,
-                       shmemfile, orte_process_info.nodename,
-                       (unsigned long)shmemsize,
-                       (unsigned long long)amount_space_avail);
+        if (1 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
+            orte_show_help("help-orte-rtc-hwloc.txt", "target full", true,
+                           shmemfile, orte_process_info.nodename,
+                           (unsigned long)shmemsize,
+                           (unsigned long long)amount_space_avail);
+        }
         free(shmemfile);
         shmemfile = NULL;
-        return rc;
+        return ORTE_SUCCESS;
     }
     /* enough space is available, so create the segment */
     if (-1 == (shmemfd = open(shmemfile, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
-        orte_show_help("help-orte-rtc-hwloc.txt", "sys call fail", true,
-                       orte_process_info.nodename,
-                       "open(2)", "", strerror(err), err);
-        rc = OPAL_ERROR;
+        if (1 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
+            orte_show_help("help-orte-rtc-hwloc.txt", "sys call fail", true,
+                           orte_process_info.nodename,
+                           "open(2)", "", strerror(err), err);
+        }
         free(shmemfile);
         shmemfile = NULL;
-        return rc;
+        return ORTE_SUCCESS;
     }
     /* populate the shmem segment with the topology */
     if (0 != (rc = hwloc_shmem_topology_write(opal_hwloc_topology, shmemfd, 0,
                                               (void*)shmemaddr, shmemsize, 0))) {
-        opal_output(0, "WRITE FAILED %d", rc);
-        ORTE_ERROR_LOG(ORTE_ERROR);
+        opal_output_verbose(2, orte_rtc_base_framework.framework_output,
+                            "%s an error occurred while writing topology to %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), shmemfile);
         unlink(shmemfile);
         free(shmemfile);
         shmemfile = NULL;
-        return OPAL_ERROR;
+        return ORTE_SUCCESS;
     }
 #endif
 
