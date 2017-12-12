@@ -260,6 +260,7 @@ void NBC_SchedCache_args_delete_key_dummy(void *k);
 
 
 int NBC_Start(NBC_Handle *handle);
+int NBC_Persist(NBC_Handle *handle);
 int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf);
 void NBC_Return_handle(ompi_coll_libnbc_request_t *request);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);

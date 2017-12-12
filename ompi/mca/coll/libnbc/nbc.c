@@ -17,6 +17,8 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
+ *                         rights reserved.
  *
  */
 #include "nbc_internal.h"
@@ -383,7 +385,9 @@ int NBC_Progress(NBC_Handle *handle) {
       /* this was the last round - we're done */
       NBC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
 
-      NBC_Free(handle);
+      if (!handle->super.req_persistent) {
+          NBC_Free(handle);
+      }
 
       return NBC_OK;
     }
@@ -650,6 +654,7 @@ int NBC_Start(NBC_Handle *handle) {
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
+  handle->super.req_state = OMPI_REQUEST_ACTIVE;
   OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
   opal_list_append(&mca_coll_libnbc_component.active_requests, &(handle->super.super.super));
   OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
@@ -725,3 +730,74 @@ void NBC_SchedCache_args_delete(void *entry) {
   free(entry);
 }
 #endif
+
+int NBC_Persist(NBC_Handle *handle) {
+
+  handle->super.req_complete = REQUEST_PENDING;
+  handle->super.req_start = ompi_coll_libnbc_start;
+  handle->super.req_persistent = true;
+
+  return OMPI_SUCCESS;
+}
+
+static int NBC_Start_internal(NBC_Handle *handle) {
+
+  /* kick off first round */
+  int res = NBC_Start_round(handle);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    return res;
+  }
+
+  /*
+   * FIXME - The request may already be complete/inactive now
+   *         if so, it should not be added to the active list
+   *         Must add param to provide the status of request,
+   *         because the user could have already freed it and
+   *         it could already be in use by another operation!
+   */
+
+  OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
+  opal_list_append(&mca_coll_libnbc_component.active_requests, &(handle->super.super.super));
+  OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
+
+  return OMPI_SUCCESS;
+
+}
+
+int ompi_coll_libnbc_start(size_t count, ompi_request_t ** request) {
+
+    NBC_DEBUG(5, " ** ompi_coll_libnbc_start **\n");
+
+    /* FIXME */
+    assert (1 == count);
+
+    NBC_Handle *handle;
+    NBC_Schedule *schedule;
+
+    int res;
+
+    handle = (NBC_Handle *) *request;
+
+    NBC_DEBUG(5, "--------------------------------\n");
+    NBC_DEBUG(5, "schedule %p size %u\n", &schedule, sizeof(schedule));
+    NBC_DEBUG(5, "handle %p size %u\n", &handle, sizeof(handle));
+    NBC_DEBUG(5, "data %p size %u\n", &schedule->data, sizeof(schedule->data));
+    NBC_DEBUG(5, "req_array %p size %u\n", &handle->req_array, sizeof(handle->req_array));
+    NBC_DEBUG(5, "row_offset=%u address=%p size=%u\n", handle->row_offset, &handle->row_offset, sizeof(handle->row_offset));
+    NBC_DEBUG(5, "req_count=%u address=%p size=%u\n", handle->req_count, &handle->req_count, sizeof(handle->req_count));
+    NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
+    NBC_DEBUG(5, "--------------------------------\n");
+
+    handle->super.req_state = OMPI_REQUEST_ACTIVE;
+    res = NBC_Start_internal(handle);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_DEBUG(5, " ** bad result from NBC_Start_internal **\n");
+        NBC_Return_handle (handle);
+        return res;
+    }
+
+    NBC_DEBUG(5, " ** LEAVING ompi_coll_libnbc_start **\n");
+
+    return OMPI_SUCCESS;
+
+}

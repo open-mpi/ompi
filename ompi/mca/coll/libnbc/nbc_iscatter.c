@@ -261,3 +261,41 @@ int ompi_coll_libnbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Dat
 
     return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_scatter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                                  void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+                                  struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                  struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_scatter_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                                        void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+                                        struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                        struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_iscatter_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}

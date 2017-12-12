@@ -384,3 +384,43 @@ static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
 
   return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
+                                    MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
+                                    MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                    struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ialltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype,
+                             comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_alltoallv_inter_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
+                                          MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
+                                          MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                          struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ialltoallv_inter(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype,
+                                   comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}

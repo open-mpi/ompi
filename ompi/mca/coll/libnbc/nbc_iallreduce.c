@@ -725,3 +725,40 @@ static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, 
 
   return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                    struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                    struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                          struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                          struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_iallreduce_inter(sendbuf, recvbuf, count, datatype, op, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+

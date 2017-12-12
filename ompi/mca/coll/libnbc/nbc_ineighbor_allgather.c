@@ -329,3 +329,21 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
 
   return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_neighbor_allgather_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+                                             int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+                                             MPI_Info info, ompi_request_t ** request, struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ineighbor_allgather(sbuf, scount, stype, rbuf, rcount, rtype, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}

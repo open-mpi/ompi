@@ -187,3 +187,22 @@ int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, c
 
     return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
+                                             void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
+                                             struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                             struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ineighbor_alltoallv(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}

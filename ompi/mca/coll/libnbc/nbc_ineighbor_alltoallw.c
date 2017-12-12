@@ -172,3 +172,22 @@ int ompi_coll_libnbc_ineighbor_alltoallw(const void *sbuf, const int *scounts, c
 
     return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_neighbor_alltoallw_init(const void *sbuf, const int *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
+                                             void *rbuf, const int *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
+                                             struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                             struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ineighbor_alltoallw(sbuf, scounts, sdisps, stypes, rbuf, rcounts, rdisps, rtypes, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}

@@ -410,3 +410,39 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
 
     return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
+                                struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ibcast(buffer, count, datatype, root, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, int root,
+                                      struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                      struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ibcast_inter(buffer, count, datatype, root, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
