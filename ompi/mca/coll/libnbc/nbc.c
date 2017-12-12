@@ -641,6 +641,10 @@ int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
 int NBC_Start(NBC_Handle *handle) {
   int res;
 
+  /* bozo case */
+  if ((ompi_request_t *)handle == &ompi_request_empty) {
+    return OMPI_SUCCESS;
+  }
   /* kick off first round */
   res = NBC_Start_round(handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -654,7 +658,6 @@ int NBC_Start(NBC_Handle *handle) {
 }
 
 int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf) {
-  int res;
   int tmp_tag;
   bool need_register = false;
   ompi_coll_libnbc_request_t *handle;
@@ -705,14 +708,8 @@ int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi
 
   handle->tmpbuf = tmpbuf;
   handle->schedule = schedule;
-
-  res = NBC_Start (handle);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    NBC_Return_handle (handle);
-    return res;
-  }
-
   *request = (ompi_request_t *) handle;
+
   return OMPI_SUCCESS;
 }
 

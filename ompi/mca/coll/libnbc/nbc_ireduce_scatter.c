@@ -41,9 +41,9 @@
  *
  */
 
-int ompi_coll_libnbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
-                                     MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                     struct mca_coll_base_module_2_2_0_t *module) {
+static int nbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+                               MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                               struct mca_coll_base_module_2_2_0_t *module) {
   int peer, rank, maxr, p, res, count;
   MPI_Aint ext;
   ptrdiff_t gap, span, span_align;
@@ -203,9 +203,25 @@ int ompi_coll_libnbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const i
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
-                                            MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                            struct mca_coll_base_module_2_2_0_t *module) {
+int ompi_coll_libnbc_ireduce_scatter (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                      struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ireduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm, request, module);
+    if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+static int nbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                      struct mca_coll_base_module_2_2_0_t *module) {
   int rank, res, count, lsize, rsize;
   MPI_Aint ext;
   ptrdiff_t gap, span, span_align;
@@ -326,4 +342,21 @@ int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, 
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+                                            MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                            struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ireduce_scatter_inter(sendbuf, recvbuf, recvcounts, datatype, op, comm, request, module);
+    if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }

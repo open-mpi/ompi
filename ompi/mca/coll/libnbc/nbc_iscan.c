@@ -45,9 +45,9 @@ int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
  * 3. all but rank p-1 do sends to it's right neighbor and exits
  *
  */
-int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                           struct ompi_communicator_t *comm, ompi_request_t ** request,
-                           struct mca_coll_base_module_2_2_0_t *module) {
+static int nbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                     struct ompi_communicator_t *comm, ompi_request_t ** request,
+                     struct mca_coll_base_module_2_2_0_t *module) {
   int rank, p, res;
   ptrdiff_t gap, span;
   NBC_Schedule *schedule;
@@ -167,4 +167,21 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                           struct ompi_communicator_t *comm, ompi_request_t ** request,
+                           struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_iscan(sendbuf, recvbuf, count, datatype, op, comm, request, module);
+    if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }

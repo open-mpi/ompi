@@ -53,9 +53,9 @@ int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *
 #endif
 
 /* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
-int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
-                               MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_2_0_t *module)
+static int nbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                         MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                         struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, datasize;
   size_t a2asize, sndsize;
@@ -274,9 +274,28 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
-				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				      struct mca_coll_base_module_2_2_0_t *module)
+int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                               MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                               struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ialltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+                            comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int nbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;
   MPI_Aint sndext, rcvext;
@@ -337,6 +356,25 @@ int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Da
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				      struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ialltoall_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+                                  comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }
 
 static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,

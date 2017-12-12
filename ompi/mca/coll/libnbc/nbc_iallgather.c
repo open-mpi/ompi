@@ -43,9 +43,9 @@ int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, voi
  * the algorithm uses p-1 rounds
  * each node sends the packet it received last round (or has in round 0) to it's right neighbor (modulo p)
  * each node receives from it's left (modulo p) neighbor */
-int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
-                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_2_0_t *module)
+static int nbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                          MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                          struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res;
   MPI_Aint rcvext;
@@ -163,9 +163,29 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
-				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				      struct mca_coll_base_module_2_2_0_t *module)
+int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                struct mca_coll_base_module_2_2_0_t *module)
+{
+    int res = nbc_iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+                             comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int nbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;
   MPI_Aint rcvext;
@@ -219,3 +239,23 @@ int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Da
 
   return OMPI_SUCCESS;
 }
+
+int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				      struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_iallgather_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+                                   comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+    

@@ -44,9 +44,9 @@ int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param) {
 }
 #endif
 
-int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
-                            struct ompi_communicator_t *comm, ompi_request_t ** request,
-                            struct mca_coll_base_module_2_2_0_t *module)
+static int nbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+                      struct ompi_communicator_t *comm, ompi_request_t ** request,
+                      struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res, segsize;
   size_t size;
@@ -169,6 +169,24 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+                            struct ompi_communicator_t *comm, ompi_request_t ** request,
+                            struct mca_coll_base_module_2_2_0_t *module)
+{
+    int res = nbc_ibcast(buffer, count, datatype, root, comm, request, module);
+    if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }
 
 /* better binomial bcast
@@ -323,9 +341,9 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
-                                  struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                  struct mca_coll_base_module_2_2_0_t *module) {
+static int nbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
+                            struct ompi_communicator_t *comm, ompi_request_t ** request,
+                            struct mca_coll_base_module_2_2_0_t *module) {
   int res;
   NBC_Schedule *schedule;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -373,4 +391,22 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
+                                  struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                  struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ibcast_inter(buffer, count, datatype, root, comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }

@@ -40,10 +40,10 @@ static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallw */
-int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
-                                struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
-                                struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				struct mca_coll_base_module_2_2_0_t *module)
+static int nbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
+                          struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+                          struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                          struct mca_coll_base_module_2_2_0_t *module)
 {
   int rank, p, res;
   NBC_Schedule *schedule;
@@ -123,11 +123,32 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
   return OMPI_SUCCESS;
 } 
 
+int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
+                                struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+                                struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ialltoallw(sendbuf, sendcounts, sdispls, sendtypes,
+                             recvbuf, recvcounts, rdispls, recvtypes,
+                             comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
 /* simple linear Alltoallw */
-int ompi_coll_libnbc_ialltoallw_inter (const void* sendbuf, const int *sendcounts, const int *sdispls,
-				       struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
-				       struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				       struct mca_coll_base_module_2_2_0_t *module)
+static int nbc_ialltoallw_inter (const void* sendbuf, const int *sendcounts, const int *sdispls,
+                                 struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+                                 struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                 struct mca_coll_base_module_2_2_0_t *module)
 {
   int res, rsize;
   NBC_Schedule *schedule;
@@ -175,6 +196,27 @@ int ompi_coll_libnbc_ialltoallw_inter (const void* sendbuf, const int *sendcount
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_ialltoallw_inter(const void* sendbuf, const int *sendcounts, const int *sdispls,
+                                      struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+                                      struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				      struct mca_coll_base_module_2_2_0_t *module) {
+    int res = nbc_ialltoallw_inter(sendbuf, sendcounts, sdispls, sendtypes,
+                                   recvbuf, recvcounts, rdispls, recvtypes,
+                                   comm, request, module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }
 
 static inline int a2aw_sched_linear(int rank, int p, NBC_Schedule *schedule,
