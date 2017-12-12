@@ -581,60 +581,6 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   return OMPI_SUCCESS;
 }
 
-int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *comminfo)
-{
-  int tmp_tag;
-  bool need_register = false;
-  ompi_coll_libnbc_request_t *handle;
-
-  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, handle);
-  if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
-  *request = handle;
-
-  handle->tmpbuf = NULL;
-  handle->req_count = 0;
-  handle->req_array = NULL;
-  handle->comm = comm;
-  handle->schedule = NULL;
-  handle->row_offset = 0;
-
-  /******************** Do the tag and shadow comm administration ...  ***************/
-
-  OPAL_THREAD_LOCK(&comminfo->mutex);
-  tmp_tag = comminfo->tag--;
-  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-      tmp_tag = comminfo->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-      NBC_DEBUG(2,"resetting tags ...\n");
-  }
-
-  if (true != comminfo->comm_registered) {
-      comminfo->comm_registered = true;
-      need_register = true;
-  }
-  OPAL_THREAD_UNLOCK(&comminfo->mutex);
-
-  handle->tag = tmp_tag;
-
-  /* register progress */
-  if (need_register) {
-      int32_t tmp =
-          OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, 1);
-      if (tmp == 1) {
-          opal_progress_register(ompi_coll_libnbc_progress);
-      }
-  }
-
-  handle->comm=comm;
-  /*printf("got comminfo: %lu tag: %i\n", comminfo, comminfo->tag);*/
-
-  /******************** end of tag and shadow comm administration ...  ***************/
-  handle->comminfo = comminfo;
-
-  NBC_DEBUG(3, "got tag %i\n", handle->tag);
-
-  return OMPI_SUCCESS;
-}
-
 void NBC_Return_handle(ompi_coll_libnbc_request_t *request) {
   NBC_Free (request);
   OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
@@ -692,10 +638,8 @@ int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
   return OMPI_SUCCESS;
 }
 
-int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
+int NBC_Start(NBC_Handle *handle) {
   int res;
-
-  handle->schedule = schedule;
 
   /* kick off first round */
   res = NBC_Start_round(handle);
@@ -711,14 +655,58 @@ int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
 
 int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf) {
   int res;
-  NBC_Handle *handle;
-  res = NBC_Init_handle (comm, &handle, module);
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    return res;
-  }
-  handle->tmpbuf = tmpbuf;
+  int tmp_tag;
+  bool need_register = false;
+  ompi_coll_libnbc_request_t *handle;
 
-  res = NBC_Start (handle, schedule);
+  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, handle);
+  if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
+
+  handle->tmpbuf = NULL;
+  handle->req_count = 0;
+  handle->req_array = NULL;
+  handle->comm = comm;
+  handle->schedule = NULL;
+  handle->row_offset = 0;
+
+  /******************** Do the tag and shadow comm administration ...  ***************/
+
+  OPAL_THREAD_LOCK(&module->mutex);
+  tmp_tag = module->tag--;
+  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
+      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
+      NBC_DEBUG(2,"resetting tags ...\n");
+  }
+
+  if (true != module->comm_registered) {
+      module->comm_registered = true;
+      need_register = true;
+  }
+  OPAL_THREAD_UNLOCK(&module->mutex);
+
+  handle->tag = tmp_tag;
+
+  /* register progress */
+  if (need_register) {
+      int32_t tmp =
+          OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, 1);
+      if (tmp == 1) {
+          opal_progress_register(ompi_coll_libnbc_progress);
+      }
+  }
+
+  handle->comm=comm;
+  /*printf("got module: %lu tag: %i\n", module, module->tag);*/
+
+  /******************** end of tag and shadow comm administration ...  ***************/
+  handle->comminfo = module;
+
+  NBC_DEBUG(3, "got tag %i\n", handle->tag);
+
+  handle->tmpbuf = tmpbuf;
+  handle->schedule = schedule;
+
+  res = NBC_Start (handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     NBC_Return_handle (handle);
     return res;
