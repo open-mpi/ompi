@@ -683,6 +683,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
 #endif
     assert( btl_endpoint->endpoint_sd < 0 );
     btl_endpoint->endpoint_sd = socket(af_family, SOCK_STREAM, 0);
+    BTL_ERROR(("socket: %d addr family: %d", btl_endpoint->endpoint_sd, af_family));
     if (btl_endpoint->endpoint_sd < 0) {
         btl_endpoint->endpoint_retries++;
         return OPAL_ERR_UNREACH;
@@ -722,8 +723,9 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
      * might do something unexpected with routing */
     opal_socklen_t sockaddr_addrlen = sizeof(struct sockaddr_storage);
     if (NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr) {
+      BTL_ERROR(("bind(%d, %d)", btl_endpoint->endpoint_sd, btl_endpoint->endpoint_btl->tcp_ifaddr.ss_family));
         if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr, sockaddr_addrlen) < 0) {
-            BTL_ERROR(("bind() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
+	  BTL_ERROR(("bind(%d, ...) failed: %s (%d)", btl_endpoint->endpoint_sd, strerror(opal_socket_errno), opal_socket_errno));
 
             CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
             return OPAL_ERROR;

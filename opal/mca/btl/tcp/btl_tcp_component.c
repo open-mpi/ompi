@@ -557,10 +557,9 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
             }
         }
 
-#if 0 && OPAL_ENABLE_DEBUG
-        BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
-                    btl->super.btl_bandwidth, btl->super.btl_latency));
-#endif
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
+                            btl->super.btl_bandwidth, btl->super.btl_latency);
     }
     return OPAL_SUCCESS;
 }

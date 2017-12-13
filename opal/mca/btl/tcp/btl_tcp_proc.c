@@ -809,6 +809,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
  */
 void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
 {
+    char tmp[2][INET6_ADDRSTRLEN];
+
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
     for( size_t i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
@@ -816,7 +818,23 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
          * and what is not, we simply check two conditions to see if connection
          * is acceptable: 1. It is the correct address family (IPv4 vs IPv6)
          * and 2. A connection is not open on that endpoint*/
-        if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family || btl_endpoint->endpoint_state != MCA_BTL_TCP_CLOSED ) {
+        if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                "btl: tcp: Match incoming connection from %s %s failed: endpoint mismatch\n",
+                                OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                                inet_ntop(addr->sa_family, (void*)&((struct sockaddr_in*)addr)->sin_addr,
+                                          tmp[0], 16));
+            continue;
+        }
+        if (btl_endpoint->endpoint_state != MCA_BTL_TCP_CLOSED ) {
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                "btl: tcp: Match incoming connection from %s %s to %s failed: endpoint in use (%d)\n",
+                                OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                                inet_ntop(AF_INET, (void*)&((struct sockaddr_in*)addr)->sin_addr,
+                                          tmp[0], 16),
+                                inet_ntop(AF_INET, (void*)(struct in_addr*)&btl_endpoint->endpoint_addr->addr_inet,
+                                          tmp[1], 16),
+                                btl_endpoint->endpoint_state);
             continue;
         }
         switch (addr->sa_family) {
@@ -824,7 +842,6 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
                         &(((struct sockaddr_in*)addr)->sin_addr),
                         sizeof(struct in_addr) ) ) {
-                char tmp[2][16];
                 opal_output_verbose(20, opal_btl_base_framework.framework_output,
                                     "btl: tcp: Match incoming connection from %s %s with locally known IP %s failed (iface %d/%d)!\n",
                                     OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
@@ -841,7 +858,6 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
                         &(((struct sockaddr_in6*)addr)->sin6_addr),
                         sizeof(struct in6_addr) ) ) {
-                char tmp[2][INET6_ADDRSTRLEN];
                 opal_output_verbose(20, opal_btl_base_framework.framework_output,
                                     "btl: tcp: Match incoming connection from %s %s with locally known IP %s failed (iface %d/%d)!\n",
                                     OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
@@ -858,6 +874,14 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             ;
         }
 
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "btl: tcp: Match incoming connection from %s %s with locally known IP %s succeeded (iface %d/%d)!\n",
+                            OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                            inet_ntop(AF_INET, (void*)&((struct sockaddr_in*)addr)->sin_addr,
+                                      tmp[0], 16),
+                            inet_ntop(AF_INET, (void*)(struct in_addr*)&btl_endpoint->endpoint_addr->addr_inet,
+                                      tmp[1], 16),
+                            (int)i, (int)btl_proc->proc_endpoint_count);
         /* Set state to CONNECTING to ensure that subsequent conenctions do not attempt to re-use endpoint in the num_links > 1 case*/
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
         (void)mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);
@@ -882,6 +906,9 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             }
             addr_str = tmp;
         }
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "dropped inbound connection");
+
         opal_show_help("help-mpi-btl-tcp.txt", "dropped inbound connection",
                        true, opal_process_info.nodename,
                        getpid(),
