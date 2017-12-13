@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  *
@@ -135,6 +135,8 @@ struct mca_btl_vader_component_t {
 
     opal_list_t pending_endpoints;          /**< list of endpoints with pending fragments */
     opal_list_t pending_fragments;          /**< fragments pending remote completion */
+
+    char *backing_directory;                /**< directory to place shared memory backing files */
 
     /* knem stuff */
 #if OPAL_BTL_VADER_HAVE_KNEM

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
@@ -210,6 +210,19 @@ static int mca_btl_vader_component_register (void)
                                            MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP, &mca_btl_vader_component.single_copy_mechanism);
     OBJ_RELEASE(new_enum);
+
+    if (0 == access ("/dev/shm", W_OK)) {
+        mca_btl_vader_component.backing_directory = "/dev/shm";
+    } else {
+        mca_btl_vader_component.backing_directory = opal_process_info.proc_session_dir;
+    }
+    (void) mca_base_component_var_register (&mca_btl_vader_component.super.btl_version, "backing_directory",
+                                            "Directory to place backing files for shared memory communication. "
+                                            "This directory should be on a local filesystem such as /tmp or "
+                                            "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_vader_component.backing_directory);
+
 
 #if OPAL_BTL_VADER_HAVE_KNEM
     /* Currently disabling DMA mode by default; it's not clear that this is useful in all applications and architectures. */
@@ -491,7 +504,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
         char *sm_file;
 
-        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%d", opal_process_info.proc_session_dir,
+        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%d", mca_btl_vader_component.backing_directory,
                       opal_process_info.nodename, MCA_BTL_VADER_LOCAL_RANK);
         if (0 > rc) {
             free (btls);
