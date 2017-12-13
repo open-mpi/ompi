@@ -35,6 +35,7 @@
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix_types.h"
 #include "opal/util/argv.h"
+#include "opal/util/fd.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 
@@ -168,6 +169,8 @@ static int init(void)
         shmemfile = NULL;
         return ORTE_SUCCESS;
     }
+    /* ensure nobody inherits this fd */
+    opal_fd_set_cloexec(shmemfd);
     /* populate the shmem segment with the topology */
     if (0 != (rc = hwloc_shmem_topology_write(opal_hwloc_topology, shmemfd, 0,
                                               (void*)shmemaddr, shmemsize, 0))) {
@@ -177,6 +180,8 @@ static int init(void)
         unlink(shmemfile);
         free(shmemfile);
         shmemfile = NULL;
+        close(shmemfd);
+        shmemfd = -1;
         return ORTE_SUCCESS;
     }
 #endif
@@ -190,6 +195,9 @@ static void finalize(void)
     if (NULL != shmemfile) {
         unlink(shmemfile);
         free(shmemfile);
+    }
+    if (0 <= shmemfd) {
+        close(shmemfd);
     }
 #endif
     return;
