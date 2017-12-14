@@ -29,15 +29,6 @@ BEGIN_C_DECLS
 
 #define PMIX_DSTORE_ESH_BASE_PATH "PMIX_DSTORE_ESH_BASE_PATH"
 
-#define ESH_REGION_EXTENSION        "EXTENSION_SLOT"
-#define ESH_REGION_INVALIDATED      "INVALIDATED"
-#define ESH_ENV_INITIAL_SEG_SIZE    "INITIAL_SEG_SIZE"
-#define ESH_ENV_NS_META_SEG_SIZE    "NS_META_SEG_SIZE"
-#define ESH_ENV_NS_DATA_SEG_SIZE    "NS_DATA_SEG_SIZE"
-#define ESH_ENV_LINEAR              "SM_USE_LINEAR_SEARCH"
-
-#define ESH_MIN_KEY_LEN             (sizeof(ESH_REGION_INVALIDATED))
-
 #ifdef HAVE_PTHREAD_SHARED
 #define ESH_PTHREAD_LOCK
 #elif defined HAVE_FCNTL_FLOCK
@@ -69,7 +60,6 @@ struct seg_desc_t {
 typedef struct ns_map_data_s ns_map_data_t;
 typedef struct session_s session_t;
 typedef struct ns_map_s ns_map_t;
-typedef struct dstore_mod_s dstore_mod_t;
 
 struct session_s {
     int in_use;
@@ -84,7 +74,6 @@ struct session_s {
     int lockfd;
     seg_desc_t *sm_seg_first;
     seg_desc_t *sm_seg_last;
-    dstore_mod_t *dstor;
 };
 
 struct ns_map_data_s {
@@ -130,32 +119,6 @@ typedef struct {
     seg_desc_t *data_seg;
     bool in_use;
 } ns_track_elem_t;
-
-/* functions of dstore operations */
-typedef size_t (*pmix_gds_ds_base_kv_size_fn_t)(uint8_t *addr);
-typedef size_t (*pmix_gds_ds_base_key_size_fn_t)(const char *key, size_t data_size);
-typedef char* (*pmix_gds_ds_base_key_name_ptr_fn_t)(uint8_t *addr);
-typedef size_t (*pmix_gds_ds_base_key_len_fn_t)(const char *key);
-typedef uint8_t* (*pmix_gds_ds_base_data_ptr_fn_t)(uint8_t *addr);
-typedef size_t (*pmix_gds_ds_base_data_size_fn_t)(uint8_t *addr, uint8_t *data_ptr);
-typedef size_t (*pmix_gds_ds_base_slot_size_fn_t)(void);
-typedef void (*pmix_gds_ds_base_put_key_fn_t)(uint8_t *data, char *key, void *buf, size_t size);
-
-/* structure for dstore operations */
-struct dstore_mod_s {
-    const char                         *name;
-    pmix_gds_ds_base_kv_size_fn_t      kv_size;
-    pmix_gds_ds_base_key_size_fn_t     key_size;
-    pmix_gds_ds_base_key_name_ptr_fn_t key_ptr;
-    pmix_gds_ds_base_key_len_fn_t      key_len;
-    pmix_gds_ds_base_data_ptr_fn_t     data_ptr;
-    pmix_gds_ds_base_data_size_fn_t    data_size;
-    pmix_gds_ds_base_slot_size_fn_t    slot_size;
-    pmix_gds_ds_base_put_key_fn_t      put_key;
-};
-
-extern dstore_mod_t dstore_v12_module;
-extern dstore_mod_t dstore_v20_module;
 
 /* the component must be visible data for the linker to find it */
 PMIX_EXPORT extern pmix_gds_base_component_t mca_gds_ds12_component;

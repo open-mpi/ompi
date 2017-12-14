@@ -337,6 +337,12 @@
 #    define __pmix_attribute_destructor__
 #endif
 
+#if PMIX_HAVE_ATTRIBUTE_EXTENSION
+#    define __pmix_attribute_extension__    __attribute__((__extension__))
+#else
+#    define __pmix_attribute_extension__
+#endif
+
 /*
  * Do we have <stdint.h>?
  */
