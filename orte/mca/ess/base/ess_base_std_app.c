@@ -147,6 +147,19 @@ int orte_ess_base_app_setup(bool db_restrict_local)
            proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
+        /* register the directory for cleanup */
+        if (NULL != opal_pmix.register_cleanup) {
+            if (orte_standalone_operation) {
+                error = orte_process_info.top_session_dir;
+            } else {
+                error = orte_process_info.jobfam_session_dir;
+            }
+            if (OPAL_SUCCESS != (ret = opal_pmix.register_cleanup(error))) {
+                ORTE_ERROR_LOG(ret);
+                error = "register cleanup";
+                goto error;
+            }
+        }
     }
     /* Setup the communication infrastructure */
     /* Routed system */
@@ -357,7 +370,9 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
 
-    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    if (NULL == opal_pmix.register_cleanup) {
+        orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    }
     /* cleanup the process info */
     orte_proc_info_finalize();
 

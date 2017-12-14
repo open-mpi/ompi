@@ -382,6 +382,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     }
     if (PMIX_ERR_NOT_FOUND != rc || NULL == lcd) {
         /* we have a problem - e.g., out of memory */
+        cbfunc(PMIX_ERR_NOT_FOUND, NULL, 0, cbdata, NULL, NULL);
         PMIX_INFO_FREE(info, ninfo);
         return rc;
     }
