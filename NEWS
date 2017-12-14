@@ -70,23 +70,98 @@ Master (not on release branches yet)
 - Remove support for big endian PowerPC.
 - Remove support for XL compilers older than v13.1
 
-3.0.0 -- July, 2017
--------------------
+3.0.0 -- September, 2017
+------------------------
 
 Major new features:
 
 - Use UCX allocator for OSHMEM symmetric heap allocations to optimize intra-node
   data transfers.  UCX SPML only.
 - Use UCX multi-threaded API in the UCX PML.  Requires UCX 1.0 or later.
+- Added support for Flux PMI
+- Update embedded PMIx to version 2.1.0
+- Update embedded hwloc to version 1.11.7
 
 Changes in behavior compared to prior versions:
 
-Removed legacy support:
-- "yoda" SPML component is removed from the Open SHMEM codebase. It was utilizing
-  Open MPI BTL components for supported networks. Please see README for the currently
-  available options.
+- Per Open MPI's versioning scheme (see the README), increasing the
+  major version number to 3 indicates that this version is not
+  ABI-compatible with prior versions of Open MPI. In addition, there may
+  be differences in MCA parameter names and defaults from previous releases.
+  Command line options for mpirun and other commands may also differ from
+  previous versions. You will need to recompile MPI and OpenSHMEM applications
+  to work with this version of Open MPI.
+- With this release, Open MPI supports MPI_THREAD_MULTIPLE by default.
+- New configure options have been added to specify the locations of libnl
+  and zlib.
+- A new configure option has been added to request Flux PMI support.
+- The help menu for mpirun and related commands is now context based.
+  "mpirun --help compatibility" generates the help menu in the same format
+  as previous releases.
 
-Known issues (to be addressed in v3.0.1):
+Removed legacy support:
+- AIX is no longer supported.
+- Loadlever is no longer supported.
+- OpenSHMEM currently supports the UCX and MXM transports via the ucx and ikrit
+  SPMLs respectively.
+- Remove IB XRC support from the OpenIB BTL due to lack of support.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1
+
+Known issues:
+
+- MPI_Connect/accept between applications started by different mpirun
+  commands will fail, even if ompi-server is running.
+
+2.1.2 -- September, 2017
+------------------------
+
+Bug fixes/minor improvements:
+- Update internal PMIx version to 1.2.3.
+- Fix some problems when using the NAG Fortran compiler to build Open MPI
+  and when using the compiler wrappers.  Thanks to Neil Carlson for reporting.
+- Fix a compilation problem with the SM BTL.  Thanks to Paul Hargrove for
+  reporting.
+- Fix a problem with MPI_IALLTOALLW when using zero-length messages.
+  Thanks to Dahai Guo for reporting.
+- Fix a problem with C11 generic type interface for SHMEM_G.  Thanks
+  to Nick Park for reporting.
+- Switch to using the lustreapi.h include file when building Open MPI
+  with Lustre support.
+- Fix a problem in the OB1 PML that led to hangs with OSU collective tests.
+- Fix a progression issue with MPI_WIN_FLUSH_LOCAL.  Thanks to
+  Joseph Schuchart for reporting.
+- Fix an issue with recent versions of PBSPro requiring libcrypto.
+  Thanks to Petr Hanousek for reporting.
+- Fix a problem when using MPI_ANY_SOURCE with MPI_SENDRECV.
+- Fix an issue that prevented signals from being propagated to ORTE
+  daemons.
+- Ensure that signals are forwarded from ORTE daemons to all processes
+  in the process group created by the daemons.  Thanks to Ted Sussman
+  for reporting.
+- Fix a problem with launching a job under a debugger. Thanks to
+  Greg Lee for reporting.
+- Fix a problem with Open MPI native I/O MPI_FILE_OPEN when using
+  a communicator having an associated topology.  Thanks to
+  Wei-keng Liao for reporting.
+- Fix an issue when using MPI_ACCUMULATE with derived datatypes.
+- Fix a problem with Fortran bindings that led to compilation errors
+  for user defined reduction operations.  Thanks to Nathan Weeks for
+  reporting.
+- Fix ROMIO issues with large writes/reads when using NFS file systems.
+- Fix definition of Fortran MPI_ARGV_NULL and MPI_ARGVS_NULL.
+- Enable use of the head node of a SLURM allocation on Cray XC systems.
+- Fix a problem with synchronous sends when using the UCX PML.
+- Use default socket buffer size to improve TCP BTL performance.
+- Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
+  MPI processes on the same node where mpirun is executing using a separate
+  orte daemon, rather than the mpirun process.   This may be useful to set to
+  true when using SLURM, as it improves interoperability with SLURM's signal
+  propagation tools.  By default it is set to false, except for Cray XC systems.
+- Fix --without-lsf when lsf is installed in the default search path.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1
+- Remove IB XRC support from the OpenIB BTL due to loss of maintainer.
 
 2.1.1 -- April, 2017
 --------------------
@@ -277,10 +352,103 @@ Known issues (to be addressed in v2.1.1):
 - See the list of fixes slated for v2.1.1 here:
   https://github.com/open-mpi/ompi/milestone/26
 
+2.0.4 -- November, 2017
+-----------------------
+
+Bug fixes/minor improvements:
+- Fix an issue with visibility of functions defined in the built-in PMIx.
+  Thanks to Siegmar Gross for reporting this issue.
+- Add configure check to prevent trying to build this release of
+  Open MPI with an external hwloc 2.0 or newer release.
+- Add ability to specify layered providers for OFI MTL.
+- Fix a correctness issue with Open MPI's memory manager code
+  that could result in corrupted message data.  Thanks to
+  Valentin Petrov for reporting.
+- Fix issues encountered when using newer versions of PBS Pro.
+  Thanks to Petr Hanousek for reporting.
+- Fix a problem with MPI_GET when using the vader BTL.  Thanks
+  to Dahai Guo for reporting.
+- Fix a problem when using MPI_ANY_SOURCE with MPI_SENDRECV_REPLACE.
+  Thanks to Dahai Guo for reporting.
+- Fix a problem using MPI_FILE_OPEN with a communicator with an
+  attached cartesian topology.  Thanks to Wei-keng Liao for reporting.
+- Remove IB XRC support from the OpenIB BTL due to lack of support.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1
+
 2.0.3 -- June 2017
 ------------------
 
 Bug fixes/minor improvements:
+
+ - Fix a problem with MPI_IALLTOALLW when zero size messages are present.
+   Thanks to @mathbird for reporting.
+ - Add missing MPI_USER_FUNCTION definition to the mpi_f08 module.
+   Thanks to Nathan Weeks for reporting this issue.
+ - Fix a problem with MPI_WIN_LOCK not returning an error code when
+   a negative rank is supplied.  Thanks to Jeff Hammond for reporting and
+   providing a fix.
+ - Fix a problem with make check that could lead to hangs.  Thanks to
+   Nicolas Morey-Chaisemartin for reporting.
+ - Resolve a symbol conflict problem with PMI-1 and PMI-2 PMIx components.
+   Thanks to Kilian Cavalotti for reporting this issue.
+ - Insure that memory allocations returned from MPI_WIN_ALLOCATE_SHARED are
+   64 byte aligned.  Thanks to Joseph Schuchart for reporting this issue.
+ - Make use of DOUBLE_COMPLEX, if available, for Fortran bindings.  Thanks
+   to Alexander Klein for reporting this issue.
+ - Add missing MPI_T_PVAR_SESSION_NULL definition to Open MPI mpi.h include
+   file.  Thanks to Omri Mor for reporting and fixing.
+ - Fix a problem with use of MPI shared file pointers when accessing
+   a file from independent jobs.  Thanks to Nicolas Joly for reporting
+   this issue.
+ - Optimize zero size MPI_IALLTOALL{V,W} with MPI_IN_PLACE.  Thanks to
+   Lisandro Dalcin for the report.
+ - Fix a ROMIO buffer overflow problem for large transfers when using NFS
+   filesystems.
+ - Fix type of MPI_ARGV[S]_NULL which prevented it from being used
+   properly with MPI_COMM_SPAWN[_MULTIPLE] in the mpi_f08 module.
+ - Ensure to add proper linker flags to the wrapper compilers for
+   dynamic libraries on platforms that need it (e.g., RHEL 7.3 and
+   later).
+ - Get better performance on TCP-based networks 10Gbps and higher by
+   using OS defaults for buffer sizing.
+ - Fix a bug with MPI_[R][GET_]ACCUMULATE when using DARRAY datatypes.
+ - Fix handling of --with-lustre configure command line argument.
+   Thanks to Prentice Bisbal and Tim Mattox for reporting the issue.
+ - Added MPI_AINT_ADD and MPI_AINT_DIFF declarations to mpif.h.  Thanks
+   to Aboorva Devarajan (@AboorvaDevarajan) for the bug report.
+ - Fix a problem in the TCP BTL when Open MPI is initialized with
+   MPI_THREAD_MULTIPLE support.  Thanks to Evgueni Petro for analyzing and
+   reporting this issue.
+ - Fix yalla PML to properly handle underflow errors, and fixed a
+   memory leak with blocking non-contiguous sends.
+ - Restored ability to run autogen.pl on official distribution tarballs
+   (although this is still not recommended for most users!).
+ - Fix accuracy problems with MPI_WTIME on some systems by always using
+   either clock_gettime(3) or gettimeofday(3).
+ - Fix a problem where MPI_WTICK was not returning a higher time resolution
+   when available.  Thanks to Mark Dixon for reporting this issue.
+ - Restore SGE functionality.  Thanks to Kevin Buckley for the initial
+   report.
+ - Fix external hwloc compilation issues, and extend support to allow
+   using external hwloc installations as far back as v1.5.0.  Thanks to
+   Orion Poplawski for raising the issue.
+ - Added latest Mellanox Connect-X and Chelsio T-6 adapter part IDs to
+   the openib list of default values.
+ - Do a better job of cleaning up session directories (e.g., in /tmp).
+ - Update a help message to indicate how to suppress a warning about
+   no high performance networks being detected by Open MPI.  Thanks to
+   Susan Schwarz for reporting this issue.
+ - Fix a problem with mangling of custom CFLAGS when configuring Open MPI.
+   Thanks to Phil Tooley for reporting.
+ - Fix some minor memory leaks and remove some unused variables.
+   Thanks to Joshua Gerrard for reporting.
+ - Fix MPI_ALLGATHERV bug with MPI_IN_PLACE.
+
+Known issues (to be addressed in v2.0.4):
+
+- See the list of fixes slated for v2.0.4 here:
+  https://github.com/open-mpi/ompi/milestone/29
 
 2.0.2 -- 26 January 2017
 -------------------------
