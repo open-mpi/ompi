@@ -28,6 +28,7 @@ headers = \
 
 sources = \
         gds_dstore_v20.c \
+        gds_dstore_v12.c \
         gds_dstore.c \
         gds_dstore_component.c
 
