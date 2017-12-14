@@ -52,9 +52,9 @@
 #include "src/mca/pshmem/base/base.h"
 
 #ifdef ESH_PTHREAD_LOCK
-static int inline _esh_pthread_lock(pthread_rwlock_t *rwlock, int rwlock_func(pthread_rwlock_t *rwlock));
+static int _esh_pthread_lock(pthread_rwlock_t *rwlock, int rwlock_func(pthread_rwlock_t *rwlock));
 
-static int inline _esh_pthread_lock(pthread_rwlock_t *rwlock, int rwlock_func(pthread_rwlock_t *rwlock)) {
+static int _esh_pthread_lock(pthread_rwlock_t *rwlock, int rwlock_func(pthread_rwlock_t *rwlock)) {
     pmix_status_t ret = PMIX_SUCCESS;
     int rc;
     rc = rwlock_func(rwlock);
@@ -81,9 +81,9 @@ static int inline _esh_pthread_lock(pthread_rwlock_t *rwlock, int rwlock_func(pt
 #endif
 
 #ifdef ESH_FCNTL_LOCK
-static int inline _esh_fcntl_lock(int lockfd, int operation);
+static int _esh_fcntl_lock(int lockfd, int operation);
 
-static int inline _esh_fcntl_lock(int lockfd, int operation) {
+static int _esh_fcntl_lock(int lockfd, int operation) {
     pmix_status_t ret = PMIX_SUCCESS;
     int i;
     struct flock fl = {0};
@@ -140,24 +140,24 @@ static void _update_initial_segment_info(const ns_map_data_t *ns_map);
 static void _set_constants_from_env(void);
 static void _delete_sm_desc(seg_desc_t *desc);
 static int _pmix_getpagesize(void);
-static inline ssize_t _get_univ_size(const char *nspace);
+static ssize_t _get_univ_size(const char *nspace);
 
-static inline ns_map_data_t * _esh_session_map_search_server(const char *nspace);
-static inline ns_map_data_t * _esh_session_map_search_client(const char *nspace);
-static inline ns_map_data_t * _esh_session_map(const char *nspace, size_t tbl_idx);
-static inline void _esh_session_map_clean(ns_map_t *m);
-static inline int _esh_jobuid_tbl_search(uid_t jobuid, size_t *tbl_idx);
-static inline int _esh_session_tbl_add(size_t *tbl_idx);
-static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid, int setjobuid);
-static inline void _esh_session_release(session_t *s);
-static inline void _esh_ns_track_cleanup(void);
-static inline void _esh_sessions_cleanup(void);
-static inline void _esh_ns_map_cleanup(void);
-static inline int _esh_dir_del(const char *dirname);
-static inline void _client_compat_save(pmix_peer_t *peer);
-static inline pmix_peer_t * _client_peer(void);
+static ns_map_data_t * _esh_session_map_search_server(const char *nspace);
+static ns_map_data_t * _esh_session_map_search_client(const char *nspace);
+static ns_map_data_t * _esh_session_map(const char *nspace, size_t tbl_idx);
+static void _esh_session_map_clean(ns_map_t *m);
+static int _esh_jobuid_tbl_search(uid_t jobuid, size_t *tbl_idx);
+static int _esh_session_tbl_add(size_t *tbl_idx);
+static int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid, int setjobuid);
+static void _esh_session_release(session_t *s);
+static void _esh_ns_track_cleanup(void);
+static void _esh_sessions_cleanup(void);
+static void _esh_ns_map_cleanup(void);
+static int _esh_dir_del(const char *dirname);
+static void _client_compat_save(pmix_peer_t *peer);
+static pmix_peer_t * _client_peer(void);
 
-static inline int _my_client(const char *nspace, pmix_rank_t rank);
+static int _my_client(const char *nspace, pmix_rank_t rank);
 
 static pmix_status_t dstore_init(pmix_info_t info[], size_t ninfo);
 
@@ -303,13 +303,13 @@ PMIX_CLASS_INSTANCE(ns_track_elem_t,
                     pmix_value_array_t,
                     ncon, ndes);
 
-static inline void _esh_session_map_clean(ns_map_t *m) {
+static void _esh_session_map_clean(ns_map_t *m) {
     memset(m, 0, sizeof(*m));
     m->data.track_idx = -1;
 }
 
 #ifdef ESH_FCNTL_LOCK
-static inline int _flock_init(size_t idx) {
+static int _flock_init(size_t idx) {
     pmix_status_t rc = PMIX_SUCCESS;
 
     if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
@@ -352,7 +352,7 @@ static inline int _flock_init(size_t idx) {
 #endif
 
 #ifdef ESH_PTHREAD_LOCK
-static inline int _rwlock_init(size_t idx) {
+static int _rwlock_init(size_t idx) {
     pmix_status_t rc = PMIX_SUCCESS;
     size_t size = _lock_segment_size;
     pthread_rwlockattr_t attr;
@@ -429,7 +429,7 @@ static inline int _rwlock_init(size_t idx) {
     return rc;
 }
 
-static inline void _rwlock_release(session_t *s) {
+static void _rwlock_release(session_t *s) {
     pmix_status_t rc;
 
     if (0 != pthread_rwlock_destroy(s->rwlock)) {
@@ -450,7 +450,7 @@ static inline void _rwlock_release(session_t *s) {
 }
 #endif
 
-static inline int _esh_dir_del(const char *path)
+static int _esh_dir_del(const char *path)
 {
     DIR *dir;
     struct dirent *d_ptr;
@@ -505,7 +505,7 @@ static inline int _esh_dir_del(const char *path)
     return rc;
 }
 
-static inline int _esh_tbls_init(void)
+static int _esh_tbls_init(void)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     size_t idx;
@@ -577,7 +577,7 @@ err_exit:
     return rc;
 }
 
-static inline void _esh_ns_map_cleanup(void)
+static void _esh_ns_map_cleanup(void)
 {
     size_t idx;
     size_t size;
@@ -599,7 +599,7 @@ static inline void _esh_ns_map_cleanup(void)
     _ns_map_array = NULL;
 }
 
-static inline void _esh_sessions_cleanup(void)
+static void _esh_sessions_cleanup(void)
 {
     size_t idx;
     size_t size;
@@ -621,7 +621,7 @@ static inline void _esh_sessions_cleanup(void)
     _session_array = NULL;
 }
 
-static inline void _esh_ns_track_cleanup(void)
+static void _esh_ns_track_cleanup(void)
 {
     int size;
     ns_track_elem_t *ns_trk;
@@ -644,7 +644,7 @@ static inline void _esh_ns_track_cleanup(void)
     _ns_track_array = NULL;
 }
 
-static inline ns_map_data_t * _esh_session_map(const char *nspace, size_t tbl_idx)
+static ns_map_data_t * _esh_session_map(const char *nspace, size_t tbl_idx)
 {
     size_t map_idx;
     size_t size = pmix_value_array_get_size(_ns_map_array);;
@@ -678,7 +678,7 @@ static inline ns_map_data_t * _esh_session_map(const char *nspace, size_t tbl_id
     return  &new_map->data;
 }
 
-static inline int _esh_jobuid_tbl_search(uid_t jobuid, size_t *tbl_idx)
+static int _esh_jobuid_tbl_search(uid_t jobuid, size_t *tbl_idx)
 {
     size_t idx, size;
     session_t *session_tbl = NULL;
@@ -696,7 +696,7 @@ static inline int _esh_jobuid_tbl_search(uid_t jobuid, size_t *tbl_idx)
     return PMIX_ERR_NOT_FOUND;
 }
 
-static inline int _esh_session_tbl_add(size_t *tbl_idx)
+static int _esh_session_tbl_add(size_t *tbl_idx)
 {
     size_t idx;
     size_t size = pmix_value_array_get_size(_session_array);
@@ -723,7 +723,7 @@ static inline int _esh_session_tbl_add(size_t *tbl_idx)
     return PMIX_SUCCESS;
 }
 
-static inline ns_map_data_t * _esh_session_map_search_server(const char *nspace)
+static ns_map_data_t * _esh_session_map_search_server(const char *nspace)
 {
     size_t idx, size = pmix_value_array_get_size(_ns_map_array);
     ns_map_t *ns_map = PMIX_VALUE_ARRAY_GET_BASE(_ns_map_array, ns_map_t);
@@ -740,7 +740,7 @@ static inline ns_map_data_t * _esh_session_map_search_server(const char *nspace)
     return NULL;
 }
 
-static inline ns_map_data_t * _esh_session_map_search_client(const char *nspace)
+static ns_map_data_t * _esh_session_map_search_client(const char *nspace)
 {
     size_t idx, size = pmix_value_array_get_size(_ns_map_array);
     ns_map_t *ns_map = PMIX_VALUE_ARRAY_GET_BASE(_ns_map_array, ns_map_t);
@@ -758,7 +758,7 @@ static inline ns_map_data_t * _esh_session_map_search_client(const char *nspace)
     return _esh_session_map(nspace, 0);
 }
 
-static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid, int setjobuid)
+static int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid, int setjobuid)
 {
     seg_desc_t *seg = NULL;
     session_t *s = &(PMIX_VALUE_ARRAY_GET_ITEM(_session_array, session_t, idx));
@@ -828,7 +828,7 @@ static inline int _esh_session_init(size_t idx, ns_map_data_t *m, size_t jobuid,
     return PMIX_SUCCESS;
 }
 
-static inline void _esh_session_release(session_t *s)
+static void _esh_session_release(session_t *s)
 {
     if (!s->in_use) {
         return;
@@ -1849,7 +1849,7 @@ static int _store_data_for_rank(ns_track_elem_t *ns_info, pmix_rank_t rank, pmix
     return rc;
 }
 
-static inline ssize_t _get_univ_size(const char *nspace)
+static ssize_t _get_univ_size(const char *nspace)
 {
     ssize_t nprocs = 0;
     pmix_value_t *val;
@@ -2763,7 +2763,7 @@ static pmix_status_t dstore_assign_module(pmix_info_t *info, size_t ninfo,
     return PMIX_SUCCESS;
 }
 
-static inline int _my_client(const char *nspace, pmix_rank_t rank)
+static int _my_client(const char *nspace, pmix_rank_t rank)
 {
     pmix_peer_t *peer;
     int i;
@@ -3046,7 +3046,7 @@ static void _client_compat_save(pmix_peer_t *peer)
     _clients_peer->proc_type = peer->proc_type;
 }
 
-static inline pmix_peer_t * _client_peer(void)
+static pmix_peer_t * _client_peer(void)
 {
     if (NULL == _clients_peer) {
         return pmix_globals.mypeer;
