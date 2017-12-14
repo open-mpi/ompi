@@ -154,7 +154,6 @@ struct dstore_mod_s {
     pmix_gds_ds_base_put_key_fn_t      put_key;
 };
 
-extern dstore_mod_t dstore_v12_module;
 extern dstore_mod_t dstore_v20_module;
 
 /* the component must be visible data for the linker to find it */
