@@ -16,6 +16,7 @@ dnl Copyright (c) 2013      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2017      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -221,6 +222,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
     opal_cv___attribute__warn_unused_result=0
     opal_cv___attribute__weak_alias=0
     opal_cv___attribute__destructor=0
+    opal_cv___attribute__optnone=0
   else
     AC_MSG_RESULT([yes])
 
@@ -556,6 +558,15 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         ],
         [],
         [])
+
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([optnone],
+        [
+        void foo(void) __attribute__ ((__optnone__));
+        void foo(void) { return ; }
+        ],
+        [],
+        [])
+
   fi
 
   # Now that all the values are set, define them
@@ -608,4 +619,6 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ weak alias or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DESTRUCTOR, [$opal_cv___attribute__destructor],
                      [Whether your compiler has __attribute__ destructor or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_OPTNONE, [$opal_cv___attribute__optnone],
+                     [Whether your compiler has __attribute__ optnone or not])
 ])
