@@ -270,22 +270,15 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
             }
         }
         node = nptr->name;
-        /* determine this node's prefix by looking for first non-alpha char */
+        /* determine this node's prefix by looking for first digit char */
         fullname = false;
         len = strlen(node);
         startnum = -1;
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
         numdigits = 0;
         for (i=0, j=0; i < len; i++) {
-            if (!isalpha(node[i])) {
-                /* found a non-alpha char */
-                if (!isdigit(node[i])) {
-                    /* if it is anything but a digit, we just use
-                     * the entire name
-                     */
-                    fullname = true;
-                    break;
-                }
+            /* valid hostname characters are ascii letters, digits and the '-' character. */
+            if (isdigit(node[i])) {
                 /* count the size of the numeric field - but don't
                  * add the digits to the prefix
                  */
@@ -296,6 +289,13 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
                 }
                 continue;
             }
+            if ('.' == node[i]) {
+                /* just use the entire name */
+                fullname = true;
+                break;
+            }
+            /* this is either an alpha or '-' */
+            assert(isalpha(node[i]) || '-' == node[i]);
             if (startnum < 0) {
                 prefix[j++] = node[i];
             }
