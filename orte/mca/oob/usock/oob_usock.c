@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -283,7 +283,7 @@ static void process_send(int fd, short args, void *cbdata)
             /* try this again after a delay for N times */
             op->reps++;
             if (20 < op->reps) {
-            /* we don't know how to talk to this proc,
+                /* we don't know how to talk to this proc,
                  * so send this back up to the OOB base so it
                  * can try another transport
                  */
@@ -325,6 +325,11 @@ static void process_send(int fd, short args, void *cbdata)
      * connection is formed
      */
     MCA_OOB_USOCK_QUEUE_PENDING(op->msg, peer);
+
+    /* if we are the HNP or daemon, we NEVER initiate connections */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        return;
+    }
 
     if (MCA_OOB_USOCK_CONNECTING != peer->state &&
         MCA_OOB_USOCK_CONNECT_ACK != peer->state) {
