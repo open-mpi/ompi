@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -305,7 +305,6 @@
  */
 #define shmem_broadcast32            pshmem_broadcast32
 #define shmem_broadcast64            pshmem_broadcast64
-#define shmem_broadcast              pshmem_broadcast
 #define shmem_collect32              pshmem_collect32
 #define shmem_collect64              pshmem_collect64
 #define shmem_fcollect32             pshmem_fcollect32
