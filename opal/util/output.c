@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +45,7 @@
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
 #include "opal/constants.h"
+#include "opal/mca/pmix/pmix.h"
 
 /*
  * Private data
@@ -505,10 +507,10 @@ void opal_output_finalize(void)
         output_dir = NULL;
 
         if(NULL != temp_str) {
-	    free(temp_str);
-	    temp_str = NULL;
-	    temp_str_len = 0;
-	}
+            free(temp_str);
+            temp_str = NULL;
+            temp_str_len = 0;
+        }
         OBJ_DESTRUCT(&verbose);
         OBJ_DESTRUCT(&mutex);
     }
@@ -785,18 +787,24 @@ static int open_file(int i)
 
         /* Actually open the file */
         info[i].ldi_fd = open(filename, flags, 0644);
-        free(filename);  /* release the filename in all cases */
         if (-1 == info[i].ldi_fd) {
             info[i].ldi_used = false;
+            free(filename);  /* release the filename in all cases */
             return OPAL_ERR_IN_ERRNO;
         }
 
         /* Make the file be close-on-exec to prevent child inheritance
          * problems */
         if (-1 == fcntl(info[i].ldi_fd, F_SETFD, 1)) {
-           return OPAL_ERR_IN_ERRNO;
+            free(filename);  /* release the filename in all cases */
+            return OPAL_ERR_IN_ERRNO;
         }
 
+        /* register it to be ignored */
+        if (NULL != opal_pmix.register_cleanup) {
+            opal_pmix.register_cleanup(filename, true, false);
+        }
+        free(filename);  /* release the filename in all cases */
     }
 
     /* Return successfully even if the session dir did not exist yet;
@@ -814,20 +822,20 @@ static void free_descriptor(int output_id)
     output_desc_t *ldi;
 
     if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
-	info[output_id].ldi_used && info[output_id].ldi_enabled) {
-	ldi = &info[output_id];
+        info[output_id].ldi_used && info[output_id].ldi_enabled) {
+        ldi = &info[output_id];
 
-	if (-1 != ldi->ldi_fd) {
-	    close(ldi->ldi_fd);
-	}
-	ldi->ldi_used = false;
+        if (-1 != ldi->ldi_fd) {
+            close(ldi->ldi_fd);
+        }
+        ldi->ldi_used = false;
 
-	/* If we strduped a prefix, suffix, or syslog ident, free it */
+        /* If we strduped a prefix, suffix, or syslog ident, free it */
 
-	if (NULL != ldi->ldi_prefix) {
-	    free(ldi->ldi_prefix);
-	}
-	ldi->ldi_prefix = NULL;
+        if (NULL != ldi->ldi_prefix) {
+            free(ldi->ldi_prefix);
+        }
+        ldi->ldi_prefix = NULL;
 
     if (NULL != ldi->ldi_suffix) {
         free(ldi->ldi_suffix);
@@ -835,14 +843,14 @@ static void free_descriptor(int output_id)
     ldi->ldi_suffix = NULL;
 
     if (NULL != ldi->ldi_file_suffix) {
-	    free(ldi->ldi_file_suffix);
-	}
-	ldi->ldi_file_suffix = NULL;
+            free(ldi->ldi_file_suffix);
+        }
+        ldi->ldi_file_suffix = NULL;
 
-	if (NULL != ldi->ldi_syslog_ident) {
-	    free(ldi->ldi_syslog_ident);
-	}
-	ldi->ldi_syslog_ident = NULL;
+        if (NULL != ldi->ldi_syslog_ident) {
+            free(ldi->ldi_syslog_ident);
+        }
+        ldi->ldi_syslog_ident = NULL;
     }
 }
 

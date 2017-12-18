@@ -84,7 +84,7 @@ void pmix_atomic_rmb(void)
 static inline
 void pmix_atomic_wmb(void)
 {
-    PMIXRMB();
+    PMIXWMB();
 }
 
 static inline
@@ -110,7 +110,7 @@ void pmix_atomic_isync(void)
 #pragma mc_func pmix_atomic_rmb { "7c2004ac" }         /* lwsync  */
 #pragma reg_killed_by pmix_atomic_rmb                  /* none */
 
-#pragma mc_func pmix_atomic_wmb { "7c0006ac" }         /* eieio */
+#pragma mc_func pmix_atomic_wmb { "7c2004ac" }         /* lwsync */
 #pragma reg_killed_by pmix_atomic_wmb                  /* none */
 
 #endif

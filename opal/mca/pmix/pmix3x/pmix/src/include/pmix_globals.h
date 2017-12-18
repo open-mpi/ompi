@@ -119,6 +119,29 @@ typedef struct pmix_personality_t {
     pmix_gds_base_module_t *gds;
 } pmix_personality_t;
 
+/* define a set of structs for tracking post-termination cleanup */
+typedef struct pmix_epilog_t {
+    uid_t uid;
+    gid_t gid;
+    pmix_list_t cleanup_dirs;
+    pmix_list_t cleanup_files;
+    pmix_list_t ignores;
+} pmix_epilog_t;
+
+typedef struct {
+    pmix_list_item_t super;
+    char *path;
+} pmix_cleanup_file_t;
+PMIX_CLASS_DECLARATION(pmix_cleanup_file_t);
+
+typedef struct {
+    pmix_list_item_t super;
+    char *path;
+    bool recurse;
+    bool leave_topdir;
+} pmix_cleanup_dir_t;
+PMIX_CLASS_DECLARATION(pmix_cleanup_dir_t);
+
 /* objects used by servers for tracking active nspaces */
 typedef struct {
     pmix_list_item_t super;
@@ -133,6 +156,8 @@ typedef struct {
      * Since servers may support clients from multiple nspaces,
      * track their respective compatibility modules here */
     pmix_personality_t compat;
+    pmix_epilog_t epilog;       // things to do upon termination of all local clients
+                                // from this nspace
 } pmix_nspace_t;
 PMIX_CLASS_DECLARATION(pmix_nspace_t);
 
@@ -156,6 +181,17 @@ typedef struct pmix_rank_info_t {
 } pmix_rank_info_t;
 PMIX_CLASS_DECLARATION(pmix_rank_info_t);
 
+
+/* define a very simple caddy for dealing with pmix_info_t
+ * objects when transferring portions of arrays */
+typedef struct {
+    pmix_list_item_t super;
+    pmix_info_t *info;
+    size_t ninfo;
+} pmix_info_caddy_t;
+PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
+
+
 /* object for tracking peers - each peer can have multiple
  * connections. This can occur if the initial app executes
  * a fork/exec, and the child initiates its own connection
@@ -177,6 +213,8 @@ typedef struct pmix_peer_t {
     pmix_list_t send_queue;         /**< list of messages to send */
     pmix_ptl_send_t *send_msg;      /**< current send in progress */
     pmix_ptl_recv_t *recv_msg;      /**< current recv in progress */
+    pmix_epilog_t epilog;           /**< things to be performed upon
+                                         termination of this peer */
 } pmix_peer_t;
 PMIX_CLASS_DECLARATION(pmix_peer_t);
 
@@ -304,14 +342,6 @@ typedef struct {
     bool timer_running;
 } pmix_cb_t;
 PMIX_CLASS_DECLARATION(pmix_cb_t);
-
-/* define a very simple caddy for dealing with pmix_info_t
- * objects when transferring portions of arrays */
-typedef struct {
-    pmix_list_item_t super;
-    pmix_info_t *info;
-} pmix_info_caddy_t;
-PMIX_CLASS_DECLARATION(pmix_info_caddy_t);
 
 #define PMIX_THREADSHIFT(r, c)                              \
  do {                                                       \

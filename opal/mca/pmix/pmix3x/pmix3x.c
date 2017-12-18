@@ -25,6 +25,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
@@ -71,6 +74,8 @@ static void pmix3x_query(opal_list_t *queries,
 static void pmix3x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+static int pmix3x_register_cleanup(char *path, bool ignore, bool jobscope);
+
 const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     /* client APIs */
     .init = pmix3x_client_init,
@@ -101,6 +106,7 @@ const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     .log = pmix3x_log,
     .allocate = pmix3x_allocate,
     .job_control = pmix3x_job_control,
+    .register_cleanup = pmix3x_register_cleanup,
     /* server APIs */
     .server_init = pmix3x_server_init,
     .server_finalize = pmix3x_server_finalize,
@@ -331,6 +337,78 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
     OPAL_LIST_RELEASE(cd->info);
     OBJ_RELEASE(cd);
     return;
+}
+
+static void cleanup_cbfunc(pmix_status_t status,
+                           pmix_info_t *info, size_t ninfo,
+                           void *cbdata,
+                           pmix_release_cbfunc_t release_fn,
+                           void *release_cbdata)
+{
+    opal_pmix_lock_t *lk = (opal_pmix_lock_t*)cbdata;
+
+    OPAL_POST_OBJECT(lk);
+
+    /* let the library release the data and cleanup from
+     * the operation */
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+
+    /* release the block */
+    lk->status = pmix3x_convert_rc(status);
+    OPAL_PMIX_WAKEUP_THREAD(lk);
+}
+
+static int pmix3x_register_cleanup(char *path, bool ignore, bool jobscope)
+{
+    opal_pmix_lock_t lk;
+    pmix_info_t pinfo[3];
+    size_t n, ninfo=0;
+    pmix_status_t rc;
+    int ret;
+    struct stat statbuf;
+
+    OPAL_PMIX_CONSTRUCT_LOCK(&lk);
+
+    if (ignore) {
+        /* they want this path ignored */
+        PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_CLEANUP_IGNORE, path, PMIX_STRING);
+        ++ninfo;
+    } else {
+        /* order cleanup of the provided path */
+        PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_REGISTER_CLEANUP, path, PMIX_STRING);
+        ++ninfo;
+        /* if the path is a directory, then we need to tell the server
+         * to recursively clean up */
+        if (stat(path, &statbuf) != 0) {
+            return OPAL_ERR_NOT_FOUND;
+        }
+        if (S_ISDIR(statbuf.st_mode)) {
+            /* recursively cleanup directories */
+            PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_CLEANUP_RECURSIVE, NULL, PMIX_BOOL);
+            ++ninfo;
+        }
+    }
+
+    /* if they want this applied to the job, then indicate so */
+    if (jobscope) {
+        rc = PMIx_Job_control_nb(NULL, 0, pinfo, ninfo, cleanup_cbfunc, (void*)&lk);
+    } else {
+        /* only applies to us */
+        rc = PMIx_Job_control_nb(&mca_pmix_pmix3x_component.myproc, 1, pinfo, ninfo, cleanup_cbfunc, (void*)&lk);
+    }
+    if (PMIX_SUCCESS != rc) {
+        ret = pmix3x_convert_rc(rc);
+    } else {
+        OPAL_PMIX_WAIT_THREAD(&lk);
+        ret = lk.status;
+    }
+    OPAL_PMIX_DESTRUCT_LOCK(&lk);
+    for (n=0; n < ninfo; n++) {
+        PMIX_INFO_DESTRUCT(&pinfo[n]);
+    }
+    return ret;
 }
 
 opal_vpid_t pmix3x_convert_rank(pmix_rank_t rank)

@@ -867,6 +867,9 @@ typedef int (*opal_pmix_base_process_monitor_fn_t)(opal_list_t *monitor,
                                                    opal_list_t *directives,
                                                    opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
 
+/* register cleanup */
+typedef int (*opal_pmix_base_register_cleanup_fn_t)(char *path, bool ignore, bool jobscope);
+
 /*
  * the standard public API data structure
  */
@@ -901,6 +904,7 @@ typedef struct {
     opal_pmix_base_alloc_fn_t                               allocate;
     opal_pmix_base_job_control_fn_t                         job_control;
     opal_pmix_base_process_monitor_fn_t                     monitor;
+    opal_pmix_base_register_cleanup_fn_t                    register_cleanup;
     /* server APIs */
     opal_pmix_base_module_server_init_fn_t                  server_init;
     opal_pmix_base_module_server_finalize_fn_t              server_finalize;

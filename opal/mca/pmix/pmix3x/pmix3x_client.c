@@ -5,7 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -38,7 +38,6 @@
 #include "pmix.h"
 #include "pmix_tool.h"
 
-static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
 
 static void errreg_cbfunc (pmix_status_t status,
@@ -105,7 +104,7 @@ int pmix3x_client_init(opal_list_t *ilist)
     }
 
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-    rc = PMIx_Init(&my_proc, pinfo, ninfo);
+    rc = PMIx_Init(&mca_pmix_pmix3x_component.myproc, pinfo, ninfo);
     if (NULL != pinfo) {
         PMIX_INFO_FREE(pinfo, ninfo);
     }
@@ -127,20 +126,20 @@ int pmix3x_client_init(opal_list_t *ilist)
         /* if we were launched by the OMPI RTE, then
          * the jobid is in a special format - so get it */
         mca_pmix_pmix3x_component.native_launch = true;
-        opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
+        opal_convert_string_to_jobid(&pname.jobid, mca_pmix_pmix3x_component.myproc.nspace);
     } else {
         /* we were launched by someone else, so make the
          * jobid just be the hash of the nspace */
-        OPAL_HASH_JOBID(my_proc.nspace, pname.jobid);
+        OPAL_HASH_JOBID(mca_pmix_pmix3x_component.myproc.nspace, pname.jobid);
     }
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
     job = OBJ_NEW(opal_pmix3x_jobid_trkr_t);
-    (void)strncpy(job->nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+    (void)strncpy(job->nspace, mca_pmix_pmix3x_component.myproc.nspace, PMIX_MAX_NSLEN);
     job->jobid = pname.jobid;
     opal_list_append(&mca_pmix_pmix3x_component.jobids, &job->super);
 
-    pname.vpid = pmix3x_convert_rank(my_proc.rank);
+    pname.vpid = pmix3x_convert_rank(mca_pmix_pmix3x_component.myproc.rank);
     opal_proc_set_name(&pname);
 
     /* release the thread in case the event handler fires when
@@ -221,10 +220,10 @@ int pmix3x_tool_init(opal_list_t *info)
             /* check to see if our name is being given from above */
             if (0 == strcmp(val->key, OPAL_PMIX_TOOL_NSPACE)) {
                 opal_convert_string_to_jobid(&pname.jobid, val->data.string);
-                (void)strncpy(my_proc.nspace, val->data.string, PMIX_MAX_NSLEN);
+                (void)strncpy(mca_pmix_pmix3x_component.myproc.nspace, val->data.string, PMIX_MAX_NSLEN);
             } else if (0 == strcmp(val->key, OPAL_PMIX_TOOL_RANK)) {
                 pname.vpid = val->data.name.vpid;
-                my_proc.rank = pname.vpid;
+                mca_pmix_pmix3x_component.myproc.rank = pname.vpid;
             }
         }
     } else {
@@ -236,7 +235,7 @@ int pmix3x_tool_init(opal_list_t *info)
     mca_pmix_pmix3x_component.native_launch = true;
 
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-    rc = PMIx_tool_init(&my_proc, pinfo, ninfo);
+    rc = PMIx_tool_init(&mca_pmix_pmix3x_component.myproc, pinfo, ninfo);
     if (NULL != pinfo) {
         PMIX_INFO_FREE(pinfo, ninfo);
     }
@@ -254,13 +253,13 @@ int pmix3x_tool_init(opal_list_t *info)
     }
 
     /* store our jobid and rank */
-    opal_convert_string_to_jobid(&pname.jobid, my_proc.nspace);
-    pname.vpid = pmix3x_convert_rank(my_proc.rank);
+    opal_convert_string_to_jobid(&pname.jobid, mca_pmix_pmix3x_component.myproc.nspace);
+    pname.vpid = pmix3x_convert_rank(mca_pmix_pmix3x_component.myproc.rank);
 
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
     job = OBJ_NEW(opal_pmix3x_jobid_trkr_t);
-    (void)strncpy(job->nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+    (void)strncpy(job->nspace, mca_pmix_pmix3x_component.myproc.nspace, PMIX_MAX_NSLEN);
     job->jobid = pname.jobid;
     opal_list_append(&mca_pmix_pmix3x_component.jobids, &job->super);
 
@@ -399,7 +398,7 @@ int pmix3x_store_local(const opal_process_name_t *proc, opal_value_t *val)
         p.rank = pmix3x_convert_opalrank(proc->vpid);
     } else {
         /* use our name */
-        (void)strncpy(p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+        (void)strncpy(p.nspace, mca_pmix_pmix3x_component.myproc.nspace, PMIX_MAX_NSLEN);
         p.rank = pmix3x_convert_opalrank(OPAL_PROC_MY_NAME.vpid);
     }
 
@@ -614,7 +613,7 @@ int pmix3x_get(const opal_process_name_t *proc, const char *key,
         if (0 == strcmp(key, OPAL_PMIX_RANK)) {
             (*val) = OBJ_NEW(opal_value_t);
             (*val)->type = OPAL_INT;
-            (*val)->data.integer = pmix3x_convert_rank(my_proc.rank);
+            (*val)->data.integer = pmix3x_convert_rank(mca_pmix_pmix3x_component.myproc.rank);
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_SUCCESS;
         }
@@ -622,7 +621,7 @@ int pmix3x_get(const opal_process_name_t *proc, const char *key,
     *val = NULL;
 
     if (NULL == proc) {
-        (void)strncpy(p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+        (void)strncpy(p.nspace, mca_pmix_pmix3x_component.myproc.nspace, PMIX_MAX_NSLEN);
         p.rank = pmix3x_convert_rank(PMIX_RANK_WILDCARD);
     } else {
         if (NULL == (nsptr = pmix3x_convert_jobid(proc->jobid))) {
@@ -719,7 +718,7 @@ int pmix3x_getnb(const opal_process_name_t *proc, const char *key,
             if (NULL != cbfunc) {
                 val = OBJ_NEW(opal_value_t);
                 val->type = OPAL_INT;
-                val->data.integer = pmix3x_convert_rank(my_proc.rank);
+                val->data.integer = pmix3x_convert_rank(mca_pmix_pmix3x_component.myproc.rank);
                 cbfunc(OPAL_SUCCESS, val, cbdata);
             }
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -733,7 +732,7 @@ int pmix3x_getnb(const opal_process_name_t *proc, const char *key,
     op->cbdata = cbdata;
 
     if (NULL == proc) {
-        (void)strncpy(op->p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+        (void)strncpy(op->p.nspace, mca_pmix_pmix3x_component.myproc.nspace, PMIX_MAX_NSLEN);
         op->p.rank = pmix3x_convert_rank(PMIX_RANK_WILDCARD);
     } else {
         if (NULL == (nsptr = pmix3x_convert_jobid(proc->jobid))) {
