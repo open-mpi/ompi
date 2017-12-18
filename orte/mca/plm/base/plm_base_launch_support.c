@@ -1383,14 +1383,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
         ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
-    } else if (NULL != orte_tree_launch_cmd) {
-        /* if a tree-launch is underway, send the cmd back */
-        relay = OBJ_NEW(opal_buffer_t);
-        opal_dss.copy_payload(relay, orte_tree_launch_cmd);
-        orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                sender, relay,
-                                ORTE_RML_TAG_DAEMON,
-                                orte_rml_send_callback, NULL);
     }
 }
 

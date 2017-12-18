@@ -88,6 +88,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -605,7 +606,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
          (mca_plm_rsh_component.using_qrsh && mca_plm_rsh_component.daemonize_qrsh)) &&
         ((!mca_plm_rsh_component.using_llspawn) ||
          (mca_plm_rsh_component.using_llspawn && mca_plm_rsh_component.daemonize_llspawn))) {
-        opal_argv_append(&argc, &argv, "--daemonize");
     }
 
     /*
@@ -617,9 +617,20 @@ static int setup_launch(int *argcptr, char ***argvptr,
                                           proc_vpid_index);
 
     /* ensure that only the ssh plm is selected on the remote daemon */
-    opal_argv_append_nosize(&argv, "-"OPAL_MCA_CMD_LINE_ID);
-    opal_argv_append_nosize(&argv, "plm");
-    opal_argv_append_nosize(&argv, "rsh");
+    opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
+    opal_argv_append(&argc, &argv, "plm");
+    opal_argv_append(&argc, &argv, "rsh");
+
+    /* if we are tree-spawning, tell our child daemons the
+     * uri of their parent (me) */
+    if (!mca_plm_rsh_component.no_tree_spawn) {
+        opal_argv_append(&argc, &argv, "--tree-spawn");
+        orte_oob_base_get_addr(&param);
+        opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
+        opal_argv_append(&argc, &argv, "orte_parent_uri");
+        opal_argv_append(&argc, &argv, param);
+        free(param);
+    }
 
     /* unless told otherwise... */
     if (mca_plm_rsh_component.pass_environ_mca_params) {
@@ -795,11 +806,22 @@ static int remote_spawn(opal_buffer_t *launch)
     /* if we hit any errors, tell the HNP it was us */
     target.vpid = ORTE_PROC_MY_NAME->vpid;
 
-    /* extract the prefix from the launch buffer */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
+    if (NULL != launch) {
+        /* extract the prefix from the launch buffer */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    } else {
+        /* check to see if enable-orterun-prefix-by-default was given - if
+         * this is being done by a singleton, then orterun will not be there
+         * to put the prefix in the app. So make sure we check to find it */
+        if ((bool)ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT) {
+            prefix = strdup(opal_install_dirs.prefix);
+        } else {
+            prefix = NULL;
+        }
     }
 
     /* get the updated routing list */
