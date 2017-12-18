@@ -61,43 +61,132 @@
 #define ESH_MIN_KEY_LEN             (sizeof(ESH_REGION_INVALIDATED))
 
 #define ESH_KV_SIZE(addr)                                   \
-__extension__ ({                                            \
+__pmix_attribute_extension__ ({                                            \
+    size_t sz;                                              \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        sz = ESH_KV_SIZE_V12(addr);                         \
+    } else {                                                \
+        sz = ESH_KV_SIZE_V20(addr);                         \
+    }                                                       \
+    sz;                                                     \
+})
+
+#define ESH_KNAME_PTR(addr)                                 \
+__pmix_attribute_extension__ ({                                            \
+    char *name_ptr;                                         \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        name_ptr = ESH_KNAME_PTR_V12(addr);                 \
+    } else {                                                \
+        name_ptr = ESH_KNAME_PTR_V20(addr);                 \
+    }                                                       \
+    name_ptr;                                               \
+})
+
+#define ESH_KNAME_LEN(key)                                  \
+__pmix_attribute_extension__ ({                                            \
+    size_t len;                                             \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        len = ESH_KNAME_LEN_V12(key);                       \
+    } else {                                                \
+        len = ESH_KNAME_LEN_V20(key);                       \
+    }                                                       \
+    len;                                                    \
+})
+
+#define ESH_DATA_PTR(addr)                                  \
+__pmix_attribute_extension__ ({                                            \
+    uint8_t *data_ptr;                                      \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        data_ptr = ESH_DATA_PTR_V12(addr);                  \
+    } else {                                                \
+        data_ptr = ESH_DATA_PTR_V20(addr);                  \
+    }                                                       \
+    data_ptr;                                               \
+})
+
+#define ESH_DATA_SIZE(addr, data_ptr)                       \
+__pmix_attribute_extension__ ({                                            \
+    size_t sz;                                              \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        sz = ESH_DATA_SIZE_V12(addr);                       \
+    } else {                                                \
+        sz = ESH_DATA_SIZE_V20(addr, data_ptr);             \
+    }                                                       \
+    sz;                                                     \
+})
+
+#define ESH_KEY_SIZE(key, size)                             \
+__pmix_attribute_extension__ ({                                            \
+    size_t len;                                             \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        len = ESH_KEY_SIZE_V12(key, size);                  \
+    } else {                                                \
+        len = ESH_KEY_SIZE_V20(key, size);                  \
+    }                                                       \
+    len;                                                    \
+})
+
+#define EXT_SLOT_SIZE()                                     \
+__pmix_attribute_extension__ ({                                            \
+    size_t sz;                                              \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        sz = EXT_SLOT_SIZE_V12();                           \
+    } else {                                                \
+        sz = EXT_SLOT_SIZE_V20();                           \
+    }                                                       \
+    sz;                                                     \
+})
+
+#define ESH_PUT_KEY(addr, key, buffer, size)                \
+__pmix_attribute_extension__ ({                                            \
+    if (PMIX_PROC_IS_V1(_client_peer())) {                  \
+        ESH_PUT_KEY_V12(addr, key, buffer, size);           \
+    } else {                                                \
+        ESH_PUT_KEY_V20(addr, key, buffer, size);           \
+    }                                                       \
+})
+
+/* PMIx v2.x dstore specific macro */
+#define ESH_KV_SIZE_V20(addr)                               \
+__pmix_attribute_extension__ ({                                            \
     size_t sz;                                              \
     memcpy(&sz, addr, sizeof(size_t));                      \
     sz;                                                     \
 })
 
-#define ESH_KNAME_PTR(addr)                                 \
-__extension__ ({                                            \
+#define ESH_KNAME_PTR_V20(addr)                             \
+__pmix_attribute_extension__ ({                                            \
     char *name_ptr = (char *)addr + sizeof(size_t);         \
     name_ptr;                                               \
 })
 
-#define ESH_KNAME_LEN(key)                                  \
-__extension__ ({                                            \
+#define ESH_KNAME_LEN_V20(key)                              \
+__pmix_attribute_extension__ ({                                            \
     size_t kname_len = strlen(key) + 1;                     \
     size_t len = (kname_len < ESH_MIN_KEY_LEN) ?            \
     ESH_MIN_KEY_LEN : kname_len;                            \
     len;                                                    \
 })
 
-#define ESH_DATA_PTR(addr)                                  \
-__extension__ ({                                            \
-    size_t kname_len = ESH_KNAME_LEN(ESH_KNAME_PTR(addr));  \
+#define ESH_DATA_PTR_V20(addr)                              \
+__pmix_attribute_extension__ ({                                            \
+    size_t kname_len =                                      \
+        ESH_KNAME_LEN_V20(ESH_KNAME_PTR_V20(addr));         \
     uint8_t *data_ptr = addr + sizeof(size_t) + kname_len;  \
     data_ptr;                                               \
 })
 
-#define ESH_DATA_SIZE(addr, data_ptr)                       \
-__extension__ ({                                            \
-    size_t sz = ESH_KV_SIZE(addr);                          \
+#define ESH_DATA_SIZE_V20(addr, data_ptr)                   \
+__pmix_attribute_extension__ ({                                            \
+    size_t sz = ESH_KV_SIZE_V20(addr);                      \
     size_t data_size = sz - (data_ptr - addr);              \
     data_size;                                              \
 })
 
-#define ESH_KEY_SIZE(key, size)                             \
-__extension__ ({                                            \
-    size_t len = sizeof(size_t) + ESH_KNAME_LEN(key) + size;\
+#define ESH_KEY_SIZE_V20(key, size)                         \
+__pmix_attribute_extension__ ({                                            \
+    size_t len =                                            \
+        sizeof(size_t) + ESH_KNAME_LEN_V20(key) + size;     \
     len;                                                    \
 })
 
@@ -105,24 +194,91 @@ __extension__ ({                                            \
  * new data were added for the same process during
  * next commit
  */
-#define EXT_SLOT_SIZE()                                     \
-    (ESH_KEY_SIZE(ESH_REGION_EXTENSION, sizeof(size_t)))
+#define EXT_SLOT_SIZE_V20()                                 \
+    (ESH_KEY_SIZE_V20(ESH_REGION_EXTENSION, sizeof(size_t)))
 
 
-#define ESH_PUT_KEY(addr, key, buffer, size)                \
-__extension__ ({                                            \
-    size_t sz = ESH_KEY_SIZE(key, size);                    \
+#define ESH_PUT_KEY_V20(addr, key, buffer, size)            \
+__pmix_attribute_extension__ ({                                            \
+    size_t sz = ESH_KEY_SIZE_V20(key, size);                \
     memcpy(addr, &sz, sizeof(size_t));                      \
-    memset(addr + sizeof(size_t), 0, ESH_KNAME_LEN(key));   \
+    memset(addr + sizeof(size_t), 0,                        \
+        ESH_KNAME_LEN_V20(key));                            \
     strncpy((char *)addr + sizeof(size_t),                  \
-            key, ESH_KNAME_LEN(key));                       \
-    memcpy(addr + sizeof(size_t) + ESH_KNAME_LEN(key),      \
+            key, ESH_KNAME_LEN_V20(key));                   \
+    memcpy(addr + sizeof(size_t) + ESH_KNAME_LEN_V20(key),  \
+            buffer, size);                                  \
+})
+
+/* PMIx v1.2 dstore specific macro */
+#define ESH_KEY_SIZE_V12(key, size)                         \
+__pmix_attribute_extension__ ({                                            \
+    size_t len = strlen(key) + 1 + sizeof(size_t) + size;   \
+    len;                                                    \
+})
+
+/* in ext slot new offset will be stored in case if
+ * new data were added for the same process during
+ * next commit
+ */
+#define EXT_SLOT_SIZE_V12()                                 \
+    (ESH_KEY_SIZE_V12(ESH_REGION_EXTENSION, sizeof(size_t)))
+
+#define ESH_KV_SIZE_V12(addr)                               \
+__pmix_attribute_extension__ ({                                            \
+    size_t sz;                                              \
+    memcpy(&sz, addr +                                      \
+        ESH_KNAME_LEN_V12(ESH_KNAME_PTR_V12(addr)),         \
+        sizeof(size_t));                                    \
+    sz += ESH_KNAME_LEN_V12(ESH_KNAME_PTR_V12(addr)) +      \
+        sizeof(size_t);                                     \
+    sz;                                                     \
+})
+
+#define ESH_KNAME_PTR_V12(addr)                             \
+__pmix_attribute_extension__ ({                                            \
+    char *name_ptr = (char *)addr;                          \
+    name_ptr;                                               \
+})
+
+#define ESH_KNAME_LEN_V12(key)                              \
+__pmix_attribute_extension__ ({                                            \
+    size_t len = strlen((char*)key) + 1;                    \
+    len;                                                    \
+})
+
+#define ESH_DATA_PTR_V12(addr)                              \
+__pmix_attribute_extension__ ({                                            \
+    uint8_t *data_ptr =                                     \
+        addr +                                              \
+        sizeof(size_t) +                                    \
+        ESH_KNAME_LEN_V12(ESH_KNAME_PTR_V12(addr));         \
+    data_ptr;                                               \
+})
+
+#define ESH_DATA_SIZE_V12(addr)                             \
+__pmix_attribute_extension__ ({                                            \
+    size_t data_size;                                       \
+    memcpy(&data_size,                                      \
+        addr + ESH_KNAME_LEN_V12(ESH_KNAME_PTR_V12(addr)),  \
+        sizeof(size_t));                                    \
+    data_size;                                              \
+})
+
+#define ESH_PUT_KEY_V12(addr, key, buffer, size)            \
+__pmix_attribute_extension__ ({                                            \
+    size_t sz = size;                                       \
+    memset(addr, 0, ESH_KNAME_LEN_V12(key));                \
+    strncpy((char *)addr, key, ESH_KNAME_LEN_V12(key));     \
+    memcpy(addr + ESH_KNAME_LEN_V12(key), &sz,              \
+        sizeof(size_t));                                    \
+    memcpy(addr + ESH_KNAME_LEN_V12(key) + sizeof(size_t),  \
             buffer, size);                                  \
 })
 
 #ifdef ESH_PTHREAD_LOCK
 #define _ESH_LOCK(rwlock, func)                             \
-__extension__ ({                                            \
+__pmix_attribute_extension__ ({                                            \
     pmix_status_t ret = PMIX_SUCCESS;                       \
     int rc;                                                 \
     rc = pthread_rwlock_##func(rwlock);                     \
@@ -150,7 +306,7 @@ __extension__ ({                                            \
 
 #ifdef ESH_FCNTL_LOCK
 #define _ESH_LOCK(lockfd, operation)                        \
-__extension__ ({                                            \
+__pmix_attribute_extension__ ({                                            \
     pmix_status_t ret = PMIX_SUCCESS;                       \
     int i;                                                  \
     struct flock fl = {0};                                  \
@@ -3086,7 +3242,7 @@ static void _client_compat_save(pmix_peer_t *peer)
 static inline pmix_peer_t * _client_peer(void)
 {
     if (NULL == _clients_peer) {
-        return pmix_client_globals.myserver;
+        return pmix_globals.mypeer;
     }
     return _clients_peer;
 }

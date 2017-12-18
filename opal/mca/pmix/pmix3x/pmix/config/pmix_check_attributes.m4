@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 # PMIx copyrights:
-# Copyright (c) 2013      Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 #
 #########################
 #
@@ -170,6 +170,7 @@ AC_DEFUN([PMIX_CHECK_ATTRIBUTES], [
     pmix_cv___attribute__visibility=0
     pmix_cv___attribute__warn_unused_result=0
     pmix_cv___attribute__destructor=0
+    pmix_cv___attribute__extension=0
   else
     AC_MSG_RESULT([yes])
 
@@ -486,6 +487,15 @@ AC_DEFUN([PMIX_CHECK_ATTRIBUTES], [
         ],
         [],
         [])
+
+    _PMIX_CHECK_SPECIFIC_ATTRIBUTE([extension],
+        [
+        void foo(void) __attribute__ ((__extension__));
+        void foo(void) { return ; }
+        ],
+        [],
+        [])
+
   fi
 
   # Now that all the values are set, define them
@@ -536,4 +546,6 @@ AC_DEFUN([PMIX_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ weak alias or not])
   AC_DEFINE_UNQUOTED(PMIX_HAVE_ATTRIBUTE_DESTRUCTOR, [$pmix_cv___attribute__destructor],
                      [Whether your compiler has __attribute__ destructor or not])
+  AC_DEFINE_UNQUOTED(PMIX_HAVE_ATTRIBUTE_EXTENSION, [$pmix_cv___attribute__extension],
+                     [Whether your compiler has __attribute__ extension or not])
 ])
