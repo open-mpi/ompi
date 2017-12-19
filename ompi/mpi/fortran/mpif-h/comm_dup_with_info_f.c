@@ -78,7 +78,7 @@ void ompi_comm_dup_with_info_f(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm
 
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_dup_with_info)(c_comm, c_info, &c_newcomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

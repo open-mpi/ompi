@@ -74,6 +74,6 @@ void ompi_win_call_errhandler_f(MPI_Fint *win, MPI_Fint *errorcode,
 
     c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = PMPI_Win_call_errhandler(c_win, OMPI_FINT_2_INT(*errorcode));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_call_errhandler)(c_win, OMPI_FINT_2_INT(*errorcode));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

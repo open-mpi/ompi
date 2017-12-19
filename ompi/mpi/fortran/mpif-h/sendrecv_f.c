@@ -81,7 +81,7 @@ void ompi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
 
    c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = PMPI_Sendrecv(OMPI_F2C_BOTTOM(sendbuf), OMPI_FINT_2_INT(*sendcount),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_Sendrecv)(OMPI_F2C_BOTTOM(sendbuf), OMPI_FINT_2_INT(*sendcount),
                          c_sendtype,
                          OMPI_FINT_2_INT(*dest),
                          OMPI_FINT_2_INT(*sendtag),

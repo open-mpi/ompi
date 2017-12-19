@@ -80,7 +80,7 @@ void ompi_file_read_at_f(MPI_Fint *fh, MPI_Offset *offset, char *buf,
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = PMPI_File_read_at(c_fh,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_read_at)(c_fh,
                               (MPI_Offset) *offset,
                               buf,
                               OMPI_FINT_2_INT(*count),

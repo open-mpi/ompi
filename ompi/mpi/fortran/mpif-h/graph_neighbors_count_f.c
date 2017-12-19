@@ -75,7 +75,7 @@ void ompi_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *rank,
 
     c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = PMPI_Graph_neighbors_count(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Graph_neighbors_count)(c_comm,
                                        OMPI_FINT_2_INT(*rank),
                                        OMPI_SINGLE_NAME_CONVERT(nneighbors));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -78,7 +78,7 @@ void ompi_type_create_indexed_block_f(MPI_Fint *count, MPI_Fint *blocklength,
 
     OMPI_ARRAY_FINT_2_INT(array_of_displacements, *count);
 
-    c_ierr = PMPI_Type_create_indexed_block(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_indexed_block)(OMPI_FINT_2_INT(*count),
 			OMPI_FINT_2_INT(*blocklength),
 			OMPI_ARRAY_NAME_CONVERT(array_of_displacements),
                         c_old, &c_new);

@@ -80,7 +80,7 @@ void ompi_imrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
    c_message = PMPI_Message_f2c(*message);
 
-   c_ierr = OMPI_INT_2_FINT(PMPI_Imrecv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+   c_ierr = OMPI_INT_2_FINT(OMPI_FORTRAN_FPTR(MPI_Imrecv)(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
                                         c_type, &c_message, &c_req));
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

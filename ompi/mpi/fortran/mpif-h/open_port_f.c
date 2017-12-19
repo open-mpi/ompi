@@ -75,7 +75,7 @@ void ompi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_
 
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Open_port(c_info, c_port_name);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Open_port)(c_info, c_port_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if ( MPI_SUCCESS == c_ierr ) {

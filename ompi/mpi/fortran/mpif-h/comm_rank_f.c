@@ -72,7 +72,7 @@ void ompi_comm_rank_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *ierr)
     MPI_Comm c_comm = PMPI_Comm_f2c( *comm );
     OMPI_SINGLE_NAME_DECL(rank);
 
-    c_ierr = PMPI_Comm_rank( c_comm, OMPI_SINGLE_NAME_CONVERT(rank));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_rank)( c_comm, OMPI_SINGLE_NAME_CONVERT(rank));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

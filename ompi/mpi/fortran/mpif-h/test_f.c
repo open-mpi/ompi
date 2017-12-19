@@ -75,7 +75,7 @@ void ompi_test_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
     MPI_Status c_status;
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = PMPI_Test(&c_req,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Test)(&c_req,
                       OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                       &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

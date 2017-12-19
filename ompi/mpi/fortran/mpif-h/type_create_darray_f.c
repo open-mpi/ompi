@@ -86,7 +86,7 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
     OMPI_ARRAY_FINT_2_INT(darg_array, *ndims);
     OMPI_ARRAY_FINT_2_INT(psize_array, *ndims);
 
-    c_ierr = PMPI_Type_create_darray(OMPI_FINT_2_INT(*size),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_darray)(OMPI_FINT_2_INT(*size),
                                     OMPI_FINT_2_INT(*rank),
                                     OMPI_FINT_2_INT(*ndims),
                                     OMPI_ARRAY_NAME_CONVERT(gsize_array),

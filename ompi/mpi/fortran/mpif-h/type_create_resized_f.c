@@ -74,7 +74,7 @@ void ompi_type_create_resized_f(MPI_Fint *oldtype, MPI_Aint *lb,
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    c_ierr = PMPI_Type_create_resized(c_old, *lb, *extent, &c_new);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_resized)(c_old, *lb, *extent, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

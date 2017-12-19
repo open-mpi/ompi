@@ -76,7 +76,7 @@ void ompi_group_size_f(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr)
   /* Make the fortran to c representation conversion */
   c_group = PMPI_Group_f2c(*group);
 
-  c_ierr = PMPI_Group_size(c_group, OMPI_SINGLE_NAME_CONVERT(size));
+  c_ierr = OMPI_FORTRAN_FPTR(MPI_Group_size)(c_group, OMPI_SINGLE_NAME_CONVERT(size));
   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
   if (MPI_SUCCESS == c_ierr) {

@@ -71,7 +71,7 @@ void ompi_comm_join_f(MPI_Fint *fd, MPI_Fint *intercomm, MPI_Fint *ierr)
     int c_ierr;
     MPI_Comm c_intercomm;
 
-    c_ierr = PMPI_Comm_join(OMPI_FINT_2_INT(*fd), &c_intercomm);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_join)(OMPI_FINT_2_INT(*fd), &c_intercomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

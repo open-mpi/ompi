@@ -73,7 +73,7 @@ void ompi_op_free_f(MPI_Fint *op, MPI_Fint *ierr)
 
     c_op = PMPI_Op_f2c(*op);
 
-    c_ierr = PMPI_Op_free(&c_op);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Op_free)(&c_op);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

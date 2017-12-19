@@ -74,7 +74,7 @@ void ompi_op_commutative_f(MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr)
 
     c_op = PMPI_Op_f2c(*op);
 
-    c_ierr = PMPI_Op_commutative(c_op, OMPI_SINGLE_NAME_CONVERT(commute));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Op_commutative)(c_op, OMPI_SINGLE_NAME_CONVERT(commute));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

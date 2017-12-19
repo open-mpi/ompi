@@ -91,7 +91,7 @@ void ompi_iallgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    ierr_c = PMPI_Iallgatherv(sendbuf,
+    ierr_c = OMPI_FORTRAN_FPTR(MPI_Iallgatherv)(sendbuf,
                               OMPI_FINT_2_INT(*sendcount),
                               c_sendtype,
                               recvbuf,

@@ -83,7 +83,7 @@ void ompi_add_error_string_f(MPI_Fint *errorcode, char *string,
     }
 
     ompi_fortran_string_f2c(string, len, &c_string);
-    ierr_c = PMPI_Add_error_string(OMPI_FINT_2_INT(*errorcode), c_string);
+    ierr_c = OMPI_FORTRAN_FPTR(MPI_Add_error_string)(OMPI_FINT_2_INT(*errorcode), c_string);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
     free(c_string);
 }

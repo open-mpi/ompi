@@ -101,7 +101,7 @@ void ompi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
         c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = PMPI_Waitall(OMPI_FINT_2_INT(*count), c_req, c_status);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Waitall)(OMPI_FINT_2_INT(*count), c_req, c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

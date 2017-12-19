@@ -72,7 +72,7 @@ void ompi_type_size_f(MPI_Fint *type, MPI_Fint *size, MPI_Fint *ierr)
     MPI_Datatype c_type = PMPI_Type_f2c(*type);
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_ierr = PMPI_Type_size(c_type, OMPI_SINGLE_NAME_CONVERT(size));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_size)(c_type, OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

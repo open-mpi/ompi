@@ -80,7 +80,7 @@ void ompi_reduce_local_f(char *inbuf, char *inoutbuf, MPI_Fint *count,
     inbuf = (char *) OMPI_F2C_BOTTOM(inbuf);
     inoutbuf = (char *) OMPI_F2C_BOTTOM(inoutbuf);
 
-    c_ierr = PMPI_Reduce_local(inbuf, inoutbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Reduce_local)(inbuf, inoutbuf,
                               OMPI_FINT_2_INT(*count),
                               c_type, c_op);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

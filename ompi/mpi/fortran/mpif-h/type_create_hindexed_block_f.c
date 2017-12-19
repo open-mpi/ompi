@@ -68,7 +68,7 @@ void ompi_type_create_hindexed_block_f(MPI_Fint *count, MPI_Fint *blocklength,
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    c_ierr = PMPI_Type_create_hindexed_block(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_hindexed_block)(OMPI_FINT_2_INT(*count),
 			OMPI_FINT_2_INT(*blocklength),
 			array_of_displacements,
                         c_old, &c_new);

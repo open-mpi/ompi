@@ -79,7 +79,7 @@ void ompi_status_set_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag,
     } else {
         PMPI_Status_f2c( status, &c_status );
 
-        c_ierr = PMPI_Status_set_cancelled(&c_status,
+        c_ierr = OMPI_FORTRAN_FPTR(MPI_Status_set_cancelled)(&c_status,
                                           OMPI_LOGICAL_2_INT(*flag));
         if (MPI_SUCCESS == c_ierr) {
             PMPI_Status_c2f(&c_status, status);

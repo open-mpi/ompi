@@ -72,7 +72,7 @@ void ompi_file_get_group_f(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr)
     MPI_File c_fh = PMPI_File_f2c(*fh);
     MPI_Group c_grp;
 
-    c_ierr = PMPI_File_get_group(c_fh, &c_grp);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_group)(c_fh, &c_grp);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

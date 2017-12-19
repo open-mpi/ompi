@@ -91,7 +91,7 @@ void ompi_ireduce_scatter_f(char *sendbuf, char *recvbuf,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Ireduce_scatter(sendbuf, recvbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Ireduce_scatter)(sendbuf, recvbuf,
                                  OMPI_ARRAY_NAME_CONVERT(recvcounts),
                                  c_type, c_op, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -73,7 +73,7 @@ void ompi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
     MPI_Request c_req = PMPI_Request_f2c(*request);
     MPI_Status  c_status;
 
-    c_ierr = PMPI_Wait(&c_req, &c_status);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Wait)(&c_req, &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

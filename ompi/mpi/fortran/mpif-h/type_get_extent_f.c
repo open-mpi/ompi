@@ -72,6 +72,6 @@ void ompi_type_get_extent_f(MPI_Fint *type, MPI_Aint *lb,
     int c_ierr;
     MPI_Datatype c_type = PMPI_Type_f2c(*type);
 
-    c_ierr = PMPI_Type_get_extent(c_type, lb, extent);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_get_extent)(c_type, lb, extent);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

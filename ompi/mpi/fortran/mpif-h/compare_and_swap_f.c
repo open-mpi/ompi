@@ -79,7 +79,7 @@ void ompi_compare_and_swap_f(char *origin_addr, char *compare_addr, char *result
     MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = PMPI_Compare_and_swap(OMPI_F2C_BOTTOM(origin_addr),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Compare_and_swap)(OMPI_F2C_BOTTOM(origin_addr),
                                   OMPI_F2C_BOTTOM(compare_addr),
                                   OMPI_F2C_BOTTOM(result_addr),
                                   c_datatype,

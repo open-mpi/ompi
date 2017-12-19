@@ -71,7 +71,7 @@ void ompi_win_free_f(MPI_Fint *win, MPI_Fint *ierr)
     int c_ierr;
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = PMPI_Win_free(&c_win);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_free)(&c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

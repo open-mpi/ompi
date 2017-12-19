@@ -85,7 +85,7 @@ void ompi_igather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Igather(sendbuf, OMPI_FINT_2_INT(*sendcount),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Igather)(sendbuf, OMPI_FINT_2_INT(*sendcount),
                          c_sendtype, recvbuf,
                          OMPI_FINT_2_INT(*recvcount),
                          c_recvtype,

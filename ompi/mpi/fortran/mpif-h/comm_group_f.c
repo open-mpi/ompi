@@ -72,7 +72,7 @@ void ompi_comm_group_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr)
     MPI_Group c_group;
     MPI_Comm c_comm = PMPI_Comm_f2c( *comm );
 
-    c_ierr = PMPI_Comm_group( c_comm, &c_group);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_group)( c_comm, &c_group);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

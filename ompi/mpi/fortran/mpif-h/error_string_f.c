@@ -83,7 +83,7 @@ void ompi_error_string_f(MPI_Fint *errorcode, char *string,
     char c_string[MPI_MAX_ERROR_STRING + 1];
     OMPI_SINGLE_NAME_DECL(resultlen);
 
-    c_ierr = PMPI_Error_string(OMPI_FINT_2_INT(*errorcode),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Error_string)(OMPI_FINT_2_INT(*errorcode),
                               c_string,
                               OMPI_SINGLE_NAME_CONVERT(resultlen)
                               );

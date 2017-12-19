@@ -85,7 +85,7 @@ void ompi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key,
 
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Info_get_nthkey(c_info,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Info_get_nthkey)(c_info,
                                  OMPI_FINT_2_INT(*n),
                                  c_key);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

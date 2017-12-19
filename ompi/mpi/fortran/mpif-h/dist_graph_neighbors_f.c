@@ -86,7 +86,7 @@ void ompi_dist_graph_neighbors_f(MPI_Fint* comm, MPI_Fint* maxindegree,
         OMPI_ARRAY_FINT_2_INT_ALLOC(destweights, *maxoutdegree);
     }
 
-    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_neighbors(c_comm, OMPI_FINT_2_INT(*maxindegree),
+    *ierr = OMPI_INT_2_FINT(OMPI_FORTRAN_FPTR(MPI_Dist_graph_neighbors)(c_comm, OMPI_FINT_2_INT(*maxindegree),
                                                       OMPI_ARRAY_NAME_CONVERT(sources),
                                                       OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(sourceweights),
                                                       OMPI_FINT_2_INT(*maxoutdegree), OMPI_ARRAY_NAME_CONVERT(destinations),

@@ -105,7 +105,7 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
         c_destweights = OMPI_ARRAY_NAME_CONVERT(destweights);
     }
 
-    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_create_adjacent(c_comm_old, OMPI_FINT_2_INT(*indegree),
+    *ierr = OMPI_INT_2_FINT(OMPI_FORTRAN_FPTR(MPI_Dist_graph_create_adjacent)(c_comm_old, OMPI_FINT_2_INT(*indegree),
                                                             OMPI_ARRAY_NAME_CONVERT(sources),
                                                             c_sourceweights,
                                                             OMPI_FINT_2_INT(*outdegree),

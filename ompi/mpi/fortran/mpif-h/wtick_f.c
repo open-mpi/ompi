@@ -70,5 +70,5 @@ double mpi_wtick__(void) { return ompi_wtick_f(); }
 
 double ompi_wtick_f(void)
 {
-    return PMPI_Wtick();
+    return OMPI_FORTRAN_FPTR(MPI_Wtick)();
 }

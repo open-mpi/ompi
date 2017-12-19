@@ -84,7 +84,7 @@ void ompi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr, int file
         return;
     }
 
-    c_ierr = PMPI_File_delete(c_filename, c_info);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_delete)(c_filename, c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_filename);

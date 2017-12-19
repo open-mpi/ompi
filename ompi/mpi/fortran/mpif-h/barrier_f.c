@@ -73,6 +73,6 @@ void ompi_barrier_f(MPI_Fint *comm, MPI_Fint *ierr)
 
     c_comm = PMPI_Comm_f2c(*comm);
 
-    ierr_c = PMPI_Barrier(c_comm);
+    ierr_c = OMPI_FORTRAN_FPTR(MPI_Barrier)(c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 }

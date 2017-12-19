@@ -76,7 +76,7 @@ void ompi_rsend_f(char *ibuf, MPI_Fint *count, MPI_Fint *datatype,
 
    c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = PMPI_Rsend(OMPI_F2C_BOTTOM(ibuf), OMPI_FINT_2_INT(*count),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_Rsend)(OMPI_F2C_BOTTOM(ibuf), OMPI_FINT_2_INT(*count),
                       c_type, OMPI_FINT_2_INT(*dest),
                       OMPI_FINT_2_INT(*tag), c_comm);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

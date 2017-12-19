@@ -74,7 +74,7 @@ void ompi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset,
 
     c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = PMPI_File_get_byte_offset(c_fh,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_byte_offset)(c_fh,
                                       (MPI_Offset) *offset,
                                       disp);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

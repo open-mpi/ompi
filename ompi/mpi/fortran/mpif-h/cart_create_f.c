@@ -81,7 +81,7 @@ void ompi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims,
     OMPI_ARRAY_FINT_2_INT(dims, size);
     OMPI_ARRAY_LOGICAL_2_INT(periods, size);
 
-    c_ierr = PMPI_Cart_create(c_comm1, size,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Cart_create)(c_comm1, size,
                              OMPI_ARRAY_NAME_CONVERT(dims),
                              OMPI_LOGICAL_ARRAY_NAME_CONVERT(periods),
                              OMPI_LOGICAL_2_INT(*reorder),

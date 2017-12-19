@@ -73,7 +73,7 @@ void ompi_intercomm_merge_f(MPI_Fint *intercomm, ompi_fortran_logical_t *high,
     MPI_Comm c_newcomm;
     MPI_Comm c_intercomm = PMPI_Comm_f2c(*intercomm);
 
-    c_ierr = PMPI_Intercomm_merge(c_intercomm, OMPI_LOGICAL_2_INT(*high),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Intercomm_merge)(c_intercomm, OMPI_LOGICAL_2_INT(*high),
                                   &c_newcomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

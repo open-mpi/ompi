@@ -78,7 +78,7 @@ void ompi_recv_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
    c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = PMPI_Recv_init(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_Recv_init)(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
                           c_type, OMPI_FINT_2_INT(*source),
                           OMPI_INT_2_FINT(*tag), c_comm,
                           &c_req);

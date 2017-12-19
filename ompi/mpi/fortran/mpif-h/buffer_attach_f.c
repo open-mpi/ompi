@@ -68,6 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_ATTACH,
 
 void ompi_buffer_attach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
-   int c_ierr = PMPI_Buffer_attach(buffer, OMPI_FINT_2_INT(*size));
+   int c_ierr = OMPI_FORTRAN_FPTR(MPI_Buffer_attach)(buffer, OMPI_FINT_2_INT(*size));
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

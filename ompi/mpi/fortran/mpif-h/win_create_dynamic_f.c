@@ -66,7 +66,7 @@ void ompi_win_create_dynamic_f(MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win,
     c_comm = PMPI_Comm_f2c(*comm);
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Win_create_dynamic(c_info, c_comm, &c_win);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_create_dynamic)(c_info, c_comm, &c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

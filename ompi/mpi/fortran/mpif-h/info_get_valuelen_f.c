@@ -92,7 +92,7 @@ void ompi_info_get_valuelen_f(MPI_Fint *info, char *key,
         return;
     }
     c_info = PMPI_Info_f2c(*info);
-    c_ierr = PMPI_Info_get_valuelen(c_info, c_key,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Info_get_valuelen)(c_info, c_key,
                                    OMPI_SINGLE_NAME_CONVERT(valuelen),
                                    OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -76,7 +76,7 @@ void ompi_comm_idup_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
 
-    c_ierr = PMPI_Comm_idup(c_comm, &c_newcomm, &c_req);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_idup)(c_comm, &c_newcomm, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

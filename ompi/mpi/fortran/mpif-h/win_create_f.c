@@ -78,7 +78,7 @@ void ompi_win_create_f(char *base, MPI_Aint *size, MPI_Fint *disp_unit,
     c_comm = PMPI_Comm_f2c(*comm);
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Win_create(base, *size,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_create)(base, *size,
                             OMPI_FINT_2_INT(*disp_unit),
                             c_info, c_comm, &c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -73,7 +73,7 @@ void ompi_comm_disconnect_f(MPI_Fint *comm, MPI_Fint *ierr)
 
     c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = PMPI_Comm_disconnect(&c_comm);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_disconnect)(&c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

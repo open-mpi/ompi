@@ -83,7 +83,7 @@ void ompi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n,
   OMPI_ARRAY_FINT_2_INT(ranks1, *n);
   OMPI_ARRAY_FINT_2_INT_ALLOC(ranks2, *n);
 
-  c_ierr = PMPI_Group_translate_ranks(c_group1,
+  c_ierr = OMPI_FORTRAN_FPTR(MPI_Group_translate_ranks)(c_group1,
                                      OMPI_FINT_2_INT(*n),
                                      OMPI_ARRAY_NAME_CONVERT(ranks1),
                                      c_group2,

@@ -72,7 +72,7 @@ void ompi_type_lb_f(MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr)
     MPI_Datatype c_type = PMPI_Type_f2c(*type);
     MPI_Aint c_lb;
 
-    c_ierr = PMPI_Type_lb(c_type, &c_lb);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_lb)(c_type, &c_lb);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

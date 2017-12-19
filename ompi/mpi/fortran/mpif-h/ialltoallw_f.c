@@ -103,7 +103,7 @@ void ompi_ialltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Ialltoallw(sendbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Ialltoallw)(sendbuf,
                             OMPI_ARRAY_NAME_CONVERT(sendcounts),
                             OMPI_ARRAY_NAME_CONVERT(sdispls),
                             c_sendtypes,

@@ -77,7 +77,7 @@ void ompi_group_range_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3],
   c_group = PMPI_Group_f2c(*group);
 
   OMPI_2_DIM_ARRAY_FINT_2_INT(ranges, *n, 3);
-  c_ierr = PMPI_Group_range_incl(c_group,
+  c_ierr = OMPI_FORTRAN_FPTR(MPI_Group_range_incl)(c_group,
                                 OMPI_FINT_2_INT(*n),
                                 OMPI_ARRAY_NAME_CONVERT(ranges),
                                 &c_newgroup);

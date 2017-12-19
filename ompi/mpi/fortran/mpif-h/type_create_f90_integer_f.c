@@ -72,7 +72,7 @@ void ompi_type_create_f90_integer_f(MPI_Fint *r, MPI_Fint *newtype,
     int c_ierr;
     MPI_Datatype c_new = PMPI_Type_f2c(*newtype);
 
-    c_ierr = PMPI_Type_create_f90_integer(OMPI_FINT_2_INT(*r), &c_new);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_f90_integer)(OMPI_FINT_2_INT(*r), &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

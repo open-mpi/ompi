@@ -74,7 +74,7 @@ void ompi_get_library_version_f(char *version, MPI_Fint *resultlen,
     char c_version[MPI_MAX_LIBRARY_VERSION_STRING];
 
     ompi_fptr_init(0);
-    c_ierr = PMPI_Get_library_version(c_version, &c_resultlen);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Get_library_version)(c_version, &c_resultlen);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

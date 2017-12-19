@@ -91,7 +91,7 @@ void ompi_type_set_name_f(MPI_Fint *type, char *type_name, MPI_Fint *ierr,
 
     /* Call the C function */
 
-    c_ierr = PMPI_Type_set_name(c_type, c_name);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_set_name)(c_type, c_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     /* Free the C name */

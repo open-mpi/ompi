@@ -98,7 +98,7 @@ void ompi_dist_graph_create_f(MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources
     }
 
 
-    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_create(c_comm_old, OMPI_FINT_2_INT(*n), OMPI_ARRAY_NAME_CONVERT(sources),
+    *ierr = OMPI_INT_2_FINT(OMPI_FORTRAN_FPTR(MPI_Dist_graph_create)(c_comm_old, OMPI_FINT_2_INT(*n), OMPI_ARRAY_NAME_CONVERT(sources),
                                                    OMPI_ARRAY_NAME_CONVERT(degrees), OMPI_ARRAY_NAME_CONVERT(destinations),
                                                    c_weights, c_info, OMPI_LOGICAL_2_INT(*reorder), &c_comm_graph));
     if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {

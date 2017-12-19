@@ -72,7 +72,7 @@ void ompi_win_lock_f(MPI_Fint *lock_type, MPI_Fint *rank,
     int c_ierr;
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = PMPI_Win_lock(OMPI_FINT_2_INT(*lock_type),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_lock)(OMPI_FINT_2_INT(*lock_type),
                           OMPI_FINT_2_INT(*rank),
                           OMPI_FINT_2_INT(*assert),
                           c_win);

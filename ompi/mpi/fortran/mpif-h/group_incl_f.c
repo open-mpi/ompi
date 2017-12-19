@@ -78,7 +78,7 @@ void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *
     c_group = PMPI_Group_f2c(*group);
 
     OMPI_ARRAY_FINT_2_INT(ranks, *n);
-    c_ierr = PMPI_Group_incl(c_group,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Group_incl)(c_group,
                             OMPI_FINT_2_INT(*n),
                             OMPI_ARRAY_NAME_CONVERT(ranks),
                             &c_newgroup);

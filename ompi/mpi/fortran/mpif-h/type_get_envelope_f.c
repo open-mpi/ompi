@@ -78,7 +78,7 @@ void ompi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
     OMPI_SINGLE_NAME_DECL(num_datatypes);
     OMPI_SINGLE_NAME_DECL(combiner);
 
-    c_ierr = PMPI_Type_get_envelope(c_type,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_get_envelope)(c_type,
                                    OMPI_SINGLE_NAME_CONVERT(num_integers),
                                    OMPI_SINGLE_NAME_CONVERT(num_addresses),
                                    OMPI_SINGLE_NAME_CONVERT(num_datatypes),

@@ -100,7 +100,7 @@ void ompi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_l
         c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = PMPI_Testall(OMPI_FINT_2_INT(*count), c_req,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Testall)(OMPI_FINT_2_INT(*count), c_req,
                          OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                          c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

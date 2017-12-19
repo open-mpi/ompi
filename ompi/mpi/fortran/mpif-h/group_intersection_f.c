@@ -76,7 +76,7 @@ void ompi_group_intersection_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *new
   c_group1 = PMPI_Group_f2c(*group1);
   c_group2 = PMPI_Group_f2c(*group2);
 
-  c_ierr = PMPI_Group_intersection(c_group1, c_group2, &c_newgroup);
+  c_ierr = OMPI_FORTRAN_FPTR(MPI_Group_intersection)(c_group1, c_group2, &c_newgroup);
   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
   /* translate the results from c to fortran */

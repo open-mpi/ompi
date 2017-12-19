@@ -75,7 +75,7 @@ void ompi_file_write_all_begin_f(MPI_Fint *fh, char *buf,
    MPI_File c_fh = PMPI_File_f2c(*fh);
    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
 
-   c_ierr = PMPI_File_write_all_begin(c_fh, OMPI_F2C_BOTTOM(buf),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_File_write_all_begin)(c_fh, OMPI_F2C_BOTTOM(buf),
                                      OMPI_FINT_2_INT(*count),
                                      c_type);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

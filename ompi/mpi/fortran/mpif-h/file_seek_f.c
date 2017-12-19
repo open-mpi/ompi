@@ -72,7 +72,7 @@ void ompi_file_seek_f(MPI_Fint *fh, MPI_Offset *offset,
     int c_ierr;
     MPI_File c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = PMPI_File_seek(c_fh, (MPI_Offset) *offset,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_seek)(c_fh, (MPI_Offset) *offset,
                            OMPI_FINT_2_INT(*whence));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

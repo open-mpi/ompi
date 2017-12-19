@@ -98,7 +98,7 @@ void ompi_ineighbor_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *s
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Ineighbor_alltoallv(sendbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Ineighbor_alltoallv)(sendbuf,
                                      OMPI_ARRAY_NAME_CONVERT(sendcounts),
                                      OMPI_ARRAY_NAME_CONVERT(sdispls),
                                      c_sendtype,

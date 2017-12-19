@@ -80,7 +80,7 @@ void ompi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position,
    c_type = PMPI_Type_f2c(*datatype);
    OMPI_SINGLE_FINT_2_INT(position);
 
-   c_ierr = PMPI_Unpack(inbuf, OMPI_FINT_2_INT(*insize),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_Unpack)(inbuf, OMPI_FINT_2_INT(*insize),
                        OMPI_SINGLE_NAME_CONVERT(position),
                        OMPI_F2C_BOTTOM(outbuf), OMPI_FINT_2_INT(*outcount),
                        c_type, c_comm);

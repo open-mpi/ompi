@@ -89,7 +89,7 @@ void ompi_info_delete_f(MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len)
     }
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Info_delete(c_info, c_key);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Info_delete)(c_info, c_key);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_key);

@@ -90,7 +90,7 @@ void ompi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr,
 
     /* Call the C function */
 
-    c_ierr = PMPI_Win_set_name(c_win, c_name);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_set_name)(c_win, c_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     /* Free the C name */

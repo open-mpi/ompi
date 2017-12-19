@@ -71,7 +71,7 @@ void ompi_initialized_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
     int c_ierr;
     OMPI_LOGICAL_NAME_DECL(flag);
     ompi_fptr_init(0);
-    c_ierr = PMPI_Initialized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Initialized)(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

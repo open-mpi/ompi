@@ -64,6 +64,6 @@ void ompi_comm_set_info_f(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *ierr)
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Info c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = PMPI_Comm_set_info(c_comm, c_info);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_set_info)(c_comm, c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

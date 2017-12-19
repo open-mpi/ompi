@@ -86,7 +86,7 @@ void ompi_mprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = OMPI_INT_2_FINT(PMPI_Mprobe(OMPI_FINT_2_INT(*source),
+    c_ierr = OMPI_INT_2_FINT(OMPI_FORTRAN_FPTR(MPI_Mprobe)(OMPI_FINT_2_INT(*source),
                                          OMPI_FINT_2_INT(*tag),
                                          c_comm, &c_message,
                                          c_status));

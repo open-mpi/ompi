@@ -91,7 +91,7 @@ void ompi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts,
     recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Scatterv(sendbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Scatterv)(sendbuf,
                           OMPI_ARRAY_NAME_CONVERT(sendcounts),
                           OMPI_ARRAY_NAME_CONVERT(displs),
                           c_sendtype, recvbuf,

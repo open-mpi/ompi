@@ -74,6 +74,6 @@ void ompi_type_size_x_f(MPI_Fint *type, MPI_Count *size, MPI_Fint *ierr)
     MPI_Datatype c_type = PMPI_Type_f2c(*type);
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_ierr = PMPI_Type_size_x(c_type, size);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_size_x)(c_type, size);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

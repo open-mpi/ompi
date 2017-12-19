@@ -85,7 +85,7 @@ void ompi_get_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
     MPI_Win c_win = PMPI_Win_f2c(*win);
     MPI_Op c_op = PMPI_Op_f2c(*op);
 
-    c_ierr = PMPI_Get_accumulate(OMPI_F2C_BOTTOM(origin_addr),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Get_accumulate)(OMPI_F2C_BOTTOM(origin_addr),
                                 OMPI_FINT_2_INT(*origin_count),
                                 c_origin_datatype,
                                 OMPI_F2C_BOTTOM(result_addr),

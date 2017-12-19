@@ -79,7 +79,7 @@ void ompi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex,
     OMPI_ARRAY_FINT_2_INT_ALLOC(indx, *maxindex);
     OMPI_ARRAY_FINT_2_INT_ALLOC(edges, *maxedges);
 
-    c_ierr = PMPI_Graph_get(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Graph_get)(c_comm,
                            OMPI_FINT_2_INT(*maxindex),
                            OMPI_FINT_2_INT(*maxedges),
                            OMPI_ARRAY_NAME_CONVERT(indx),

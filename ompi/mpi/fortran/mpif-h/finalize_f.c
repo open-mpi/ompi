@@ -68,6 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
 
 void ompi_finalize_f(MPI_Fint *ierr)
 {
-    int c_ierr = PMPI_Finalize();
+    int c_ierr = OMPI_FORTRAN_FPTR(MPI_Finalize)();
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

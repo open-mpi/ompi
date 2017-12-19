@@ -71,7 +71,7 @@ void ompi_win_lock_all_f(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr)
     int c_ierr;
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = PMPI_Win_lock_all(OMPI_FINT_2_INT(*assert),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_lock_all)(OMPI_FINT_2_INT(*assert),
                               c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -103,7 +103,7 @@ void ompi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx
         c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = PMPI_Testany(OMPI_FINT_2_INT(*count), c_req,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Testany)(OMPI_FINT_2_INT(*count), c_req,
                          OMPI_SINGLE_NAME_CONVERT(indx),
                          OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                          &c_status);

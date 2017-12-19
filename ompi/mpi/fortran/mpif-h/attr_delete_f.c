@@ -72,6 +72,6 @@ void ompi_attr_delete_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *ierr)
     MPI_Comm c_comm;
     c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = PMPI_Attr_delete(c_comm, OMPI_FINT_2_INT(*keyval));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Attr_delete)(c_comm, OMPI_FINT_2_INT(*keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -76,7 +76,7 @@ void ompi_file_iwrite_shared_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    MPI_Request c_request;
 
-   c_ierr = PMPI_File_iwrite_shared(c_fh,
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_File_iwrite_shared)(c_fh,
                                    OMPI_F2C_BOTTOM(buf),
                                    OMPI_FINT_2_INT(*count),
                                    c_type,

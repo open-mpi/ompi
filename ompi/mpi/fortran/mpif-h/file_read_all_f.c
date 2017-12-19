@@ -79,7 +79,7 @@ void ompi_file_read_all_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-   c_ierr = PMPI_File_read_all(c_fh, OMPI_F2C_BOTTOM(buf),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_File_read_all)(c_fh, OMPI_F2C_BOTTOM(buf),
                               OMPI_FINT_2_INT(*count),
                               c_type, c_status);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -72,7 +72,7 @@ void ompi_type_dup_f(MPI_Fint *type, MPI_Fint *newtype, MPI_Fint *ierr)
     MPI_Datatype c_type = PMPI_Type_f2c(*type);
     MPI_Datatype c_new;
 
-    c_ierr = PMPI_Type_dup(c_type, &c_new);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_dup)(c_type, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

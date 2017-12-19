@@ -74,7 +74,7 @@ void ompi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,
 {
     int c_ierr;
     MPI_Request c_req;
-    c_ierr = PMPI_Grequest_start(
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Grequest_start)(
                                 (MPI_Grequest_query_function *) query_fn,
                                 (MPI_Grequest_free_function *) free_fn,
                                 (MPI_Grequest_cancel_function *) cancel_fn,

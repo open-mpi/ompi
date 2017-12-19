@@ -81,7 +81,7 @@ void ompi_request_get_status_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
         *flag = OMPI_INT_2_LOGICAL(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = PMPI_Request_get_status(c_req,
+        c_ierr = OMPI_FORTRAN_FPTR(MPI_Request_get_status)(c_req,
                                         OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                                         &c_status);
         OMPI_SINGLE_INT_2_LOGICAL(flag);

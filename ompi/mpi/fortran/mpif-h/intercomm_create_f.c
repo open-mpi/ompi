@@ -77,7 +77,7 @@ void ompi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader,
     MPI_Comm c_local_comm = PMPI_Comm_f2c (*local_comm );
     MPI_Comm c_bridge_comm = PMPI_Comm_f2c (*bridge_comm);
 
-    c_ierr = PMPI_Intercomm_create(c_local_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Intercomm_create)(c_local_comm,
                                   OMPI_FINT_2_INT(*local_leader),
                                   c_bridge_comm,
                                   OMPI_FINT_2_INT(*remote_leader),

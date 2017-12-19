@@ -79,7 +79,7 @@ void ompi_type_indexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
     OMPI_ARRAY_FINT_2_INT(array_of_displacements, *count);
 
-    c_ierr = PMPI_Type_indexed(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_indexed)(OMPI_FINT_2_INT(*count),
                               OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                               OMPI_ARRAY_NAME_CONVERT(array_of_displacements),
                               c_old, &c_new);

@@ -80,7 +80,7 @@ void ompi_type_create_hindexed_f(MPI_Fint *count,
 
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
-    c_ierr = PMPI_Type_create_hindexed(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_hindexed)(OMPI_FINT_2_INT(*count),
                                 OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                                 array_of_displacements, c_old,
                                 &c_new);

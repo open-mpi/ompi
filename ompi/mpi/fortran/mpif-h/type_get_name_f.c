@@ -74,7 +74,7 @@ void ompi_type_get_name_f(MPI_Fint *type, char *type_name, MPI_Fint *resultlen, 
     MPI_Datatype c_type = PMPI_Type_f2c(*type);
     char c_name[MPI_MAX_OBJECT_NAME];
 
-    c_ierr = PMPI_Type_get_name(c_type, c_name, &c_len);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_get_name)(c_type, c_name, &c_len);
     if (MPI_SUCCESS == c_ierr) {
         ompi_fortran_string_c2f(c_name, type_name, name_len);
         *resultlen = OMPI_INT_2_FINT(c_len);

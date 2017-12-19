@@ -76,7 +76,7 @@ void ompi_type_vector_f(MPI_Fint *count, MPI_Fint *blocklength,
 
     c_old = PMPI_Type_f2c(*oldtype);
 
-    c_ierr = PMPI_Type_vector(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_vector)(OMPI_FINT_2_INT(*count),
                              OMPI_FINT_2_INT(*blocklength),
                              OMPI_FINT_2_INT(*stride),
                              c_old, &c_new);

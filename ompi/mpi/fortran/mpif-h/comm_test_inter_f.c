@@ -72,7 +72,7 @@ void ompi_comm_test_inter_f(MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fi
     MPI_Comm c_comm = PMPI_Comm_f2c (*comm);
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = PMPI_Comm_test_inter(c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_test_inter)(c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

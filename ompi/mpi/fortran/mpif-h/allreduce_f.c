@@ -84,7 +84,7 @@ void ompi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    ierr_c = PMPI_Allreduce(sendbuf, recvbuf,
+    ierr_c = OMPI_FORTRAN_FPTR(MPI_Allreduce)(sendbuf, recvbuf,
                             OMPI_FINT_2_INT(*count),
                             c_type, c_op, c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);

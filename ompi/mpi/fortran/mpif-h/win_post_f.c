@@ -73,7 +73,7 @@ void ompi_win_post_f(MPI_Fint *group, MPI_Fint *assert,
     MPI_Win c_win = PMPI_Win_f2c(*win);
     MPI_Group c_grp = PMPI_Group_f2c(*group);
 
-    c_ierr = PMPI_Win_post(c_grp,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_post)(c_grp,
                           OMPI_FINT_2_INT(*assert),
                           c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -83,7 +83,7 @@ void ompi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
     /* Number of edges is equal to the last entry in the index array */
     OMPI_ARRAY_FINT_2_INT(edges, indx[*nnodes - 1]);
 
-    c_ierr = PMPI_Graph_create(c_comm_old,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Graph_create)(c_comm_old,
                               OMPI_FINT_2_INT(*nnodes),
                               OMPI_ARRAY_NAME_CONVERT(indx),
                               OMPI_ARRAY_NAME_CONVERT(edges),

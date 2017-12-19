@@ -72,7 +72,7 @@ void ompi_file_get_info_f(MPI_Fint *fh, MPI_Fint *info_used, MPI_Fint *ierr)
     MPI_File c_fh = PMPI_File_f2c(*fh);
     MPI_Info c_info;
 
-    c_ierr = PMPI_File_get_info(c_fh, &c_info);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_info)(c_fh, &c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
