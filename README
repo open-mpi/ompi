@@ -148,6 +148,10 @@ Platform Notes
   can build hwloc 1.11.6 externally and tell Open MPI's configure to
   use the external hwloc with the --with-hwloc=external (if in default
   search path) or --with-hwloc=<path>.
+- ARM and POWER users may experience intermittent hangs when Open MPI
+  is compiled with low optimization settings, due to an issue with our
+  atomic list implementation.  We recommend compiling with -O3
+  optimization, both for performance reasons and to avoid this hang.
 
 Compiler Notes
 --------------
