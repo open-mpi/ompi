@@ -240,6 +240,12 @@
 #    define __opal_attribute_optnone__
 #endif
 
+#if OPAL_HAVE_ATTRIBUTE_EXTENSION
+#    define __opal_attribute_extension__    __extension__
+#else
+#    define __opal_attribute_extension__
+#endif
+
 #  if OPAL_C_HAVE_VISIBILITY
 #    define OPAL_DECLSPEC           __opal_attribute_visibility__("default")
 #    define OPAL_MODULE_DECLSPEC    __opal_attribute_visibility__("default")

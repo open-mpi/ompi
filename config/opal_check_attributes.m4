@@ -561,12 +561,18 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
 
     _OPAL_CHECK_SPECIFIC_ATTRIBUTE([optnone],
         [
-        void foo(void) __attribute__ ((__optnone__));
+        void __attribute__ ((__optnone__)) foo(void);
         void foo(void) { return ; }
         ],
         [],
         [])
 
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([extension],
+        [
+         #define FOO __extension__ ({size_t bar; bar = 3;})
+        ],
+        [],
+        [])
   fi
 
   # Now that all the values are set, define them
@@ -621,4 +627,6 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ destructor or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_OPTNONE, [$opal_cv___attribute__optnone],
                      [Whether your compiler has __attribute__ optnone or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_EXTENSION, [$opal_cv___attribute__extension],
+                     [Whether your compiler has __attribute__ extension or not])
 ])
