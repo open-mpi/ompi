@@ -209,7 +209,7 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
     char *node;
     char prefix[ORTE_MAX_NODE_PREFIX];
     int i, j, n, len, startnum, nodenum, numdigits;
-    bool found, fullname;
+    bool found;
     char *suffix, *sfx, *nodenames;
     orte_regex_node_t *ndreg;
     orte_regex_range_t *range, *rng;
@@ -271,7 +271,6 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
         }
         node = nptr->name;
         /* determine this node's prefix by looking for first digit char */
-        fullname = false;
         len = strlen(node);
         startnum = -1;
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
@@ -289,18 +288,16 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
                 }
                 continue;
             }
-            if ('.' == node[i]) {
-                /* just use the entire name */
-                fullname = true;
-                break;
+            /* this must be either an alpha, a '.', or '-' */
+            if (!isalpha(node[i]) && '-' != node[i] && '.' != node[i]) {
+                orte_show_help("help-regex.txt", "regex:invalid-name", true, node);
+                return ORTE_ERR_SILENT;
             }
-            /* this is either an alpha or '-' */
-            assert(isalpha(node[i]) || '-' == node[i]);
             if (startnum < 0) {
                 prefix[j++] = node[i];
             }
         }
-        if (fullname || startnum < 0) {
+        if (startnum < 0) {
             /* can't compress this name - just add it to the list */
             ndreg = OBJ_NEW(orte_regex_node_t);
             ndreg->prefix = strdup(node);
