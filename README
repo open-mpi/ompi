@@ -140,6 +140,14 @@ General notes
     using the clang-4.0 system compiler. A workaround is to build
     Open MPI using the GNU compiler.
 
+Platform Notes
+--------------
+
+- ARM and POWER users may experience intermittent hangs when Open MPI
+  is compiled with low optimization settings, due to an issue with our
+  atomic list implementation.  We recommend compiling with -O3
+  optimization, both for performance reasons and to avoid this hang.
+
 Compiler Notes
 --------------
 
