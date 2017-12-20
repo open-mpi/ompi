@@ -117,7 +117,7 @@ ompi_mtl_ofi_progress(void)
                 exit(1);
             }
         } else {
-            if (ret == -FI_EAGAIN) {
+            if (ret == -FI_EAGAIN || ret == -EINTR) {
                 break;
             } else {
                 opal_output(0, "%s:%d: Error returned from fi_cq_read: %s(%zd).\n"
