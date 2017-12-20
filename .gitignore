@@ -634,6 +634,7 @@ test/datatype/ddt_raw
 test/datatype/opal_datatype_test
 test/datatype/position_noncontig
 test/datatype/unpack_ooo
+test/datatype/unpack_hetero
 
 test/dss/dss_buffer
 test/dss/dss_copy

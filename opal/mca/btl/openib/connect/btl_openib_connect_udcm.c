@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  *
@@ -1980,7 +1980,9 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
     udcm_msg_t *message = NULL;
     udcm_message_recv_t *item;
     struct ibv_wc wc[20];
+#if OPAL_ENABLE_DEBUG
     struct ibv_grh *grh;
+#endif
     udcm_endpoint_t *udep;
     uint64_t dir;
 
@@ -2000,7 +2002,9 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
 
         msg_num = (int)(wc[i].wr_id & (~UDCM_WR_DIR_MASK));
 
+#if OPAL_ENABLE_DEBUG
         grh = (wc[i].wc_flags & IBV_WC_GRH) ? (struct ibv_grh *) udcm_module_get_recv_buffer (m, msg_num, false) : NULL;
+#endif
 
         BTL_VERBOSE(("WC: wr_id: 0x%016" PRIu64 ", status: %d, opcode: 0x%x, byte_len: %x, imm_data: 0x%08x, "
                      "qp_num: 0x%08x, src_qp: 0x%08x, wc_flags: 0x%x, slid: 0x%04x grh_present: %s",
