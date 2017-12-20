@@ -403,7 +403,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             if (opal_hwloc_use_hwthreads_as_cpus) {
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
             } else {
-                opal_output(0, "SETTING BINDING TO CORE");
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
             }
         }
