@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -68,3 +69,18 @@ digits in the names:
    regexp: %s
 
 Please contact the Open MPI help list for assistance.
+#
+[regex:invalid-name]
+While trying to create a regular expression of the node names
+used in this application, the regex parser has detected the
+presence of an illegal character in the following node name:
+
+  node:  %s
+
+Node names must be composed of a combination of ascii letters,
+digits, dots, and the hyphen ('-') character. See the following
+for an explanation:
+
+  https://en.wikipedia.org/wiki/Hostname
+
+Please correct the error and try again.
