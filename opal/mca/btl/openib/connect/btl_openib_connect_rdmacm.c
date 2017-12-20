@@ -7,7 +7,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -1133,7 +1133,9 @@ out:
 static void *call_disconnect_callback(int fd, int flags, void *v)
 {
     rdmacm_contents_t *contents = (rdmacm_contents_t *) v;
+#if OPAL_ENABLE_DEBUG
     void *tmp = NULL;
+#endif
     id_context_t *context;
     opal_list_item_t *item;
 
@@ -1145,7 +1147,9 @@ static void *call_disconnect_callback(int fd, int flags, void *v)
                      (void*) context->id));
 
         if (!context->already_disconnected) {
+#if OPAL_ENABLE_DEBUG
             tmp = context->id;
+#endif
             rdma_disconnect(context->id);
             context->already_disconnected = true;
         }
@@ -1214,8 +1218,8 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
                             call_disconnect_callback, contents);
             opal_event_active (&event, OPAL_EV_READ, 1);
 
-	    /* remove_item returns the item before the item removed,
-	       meaning that the for list is still safe */
+            /* remove_item returns the item before the item removed,
+               meaning that the for list is still safe */
             break;
         }
     }
@@ -1260,9 +1264,12 @@ static int rdmacm_connect_endpoint(id_context_t *context,
 {
     rdmacm_contents_t *contents = context->contents;
     rdmacm_endpoint_local_cpc_data_t *data;
+
     mca_btl_openib_endpoint_t *endpoint;
+#if OPAL_ENABLE_DEBUG
 #if !BTL_OPENIB_RDMACM_IB_ADDR
     modex_message_t *message;
+#endif
 #endif
 
     if (contents->server) {
@@ -1295,13 +1302,14 @@ static int rdmacm_connect_endpoint(id_context_t *context,
     /* Only notify the upper layers after the last QP has been
        connected */
     if (++data->rdmacm_counter < mca_btl_openib_component.num_qps) {
-	BTL_VERBOSE(("%s to peer %s, count == %d", contents->server?"server":"client",
+        BTL_VERBOSE(("%s to peer %s, count == %d", contents->server?"server":"client",
                      opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal), data->rdmacm_counter));
         OPAL_OUTPUT((-1, "%s to peer %s, count == %d", contents->server?"server":"client",
                      opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal), data->rdmacm_counter));
         return OPAL_SUCCESS;
     }
 
+#if OPAL_ENABLE_DEBUG
 #if !BTL_OPENIB_RDMACM_IB_ADDR
     message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     BTL_VERBOSE(("%s connected!!! local %x remote %x state = %d",
@@ -1309,6 +1317,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
                  contents->ipaddr,
                  message->ipaddr,
                  endpoint->endpoint_state));
+#endif
 #endif
 
     /* Ensure that all the writes back to the endpoint and associated
@@ -1343,7 +1352,7 @@ static int rdmacm_destroy_dummy_qp(id_context_t *context)
        Maybe the reject was already done. */
 
     if (NULL != context->id) {
-	    if (NULL != context->id->qp) {
+            if (NULL != context->id->qp) {
            ibv_destroy_qp(context->id->qp);
            context->id->qp = NULL;
         }
@@ -1489,17 +1498,21 @@ static int finish_connect(id_context_t *context)
     struct rdma_conn_param conn_param;
     private_data_t msg;
     int rc;
+#if OPAL_ENABLE_DEBUG
 #if !BTL_OPENIB_RDMACM_IB_ADDR
     struct sockaddr *peeraddr;
     uint32_t remoteipaddr;
     uint16_t remoteport;
 #endif
+#endif
     modex_message_t *message;
 
+#if OPAL_ENABLE_DEBUG
 #if !BTL_OPENIB_RDMACM_IB_ADDR
-    remoteport = rdma_get_dst_port(context->id);
     peeraddr = rdma_get_peer_addr(context->id);
+    remoteport = rdma_get_dst_port(context->id);
     remoteipaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
+#endif
 #endif
 
     message = (modex_message_t *)
@@ -1661,8 +1674,12 @@ static int event_handler(struct rdma_cm_event *event)
     id_context_t *context = (id_context_t*) event->id->context;
 #if !BTL_OPENIB_RDMACM_IB_ADDR
     rdmacm_contents_t *contents;
-    struct sockaddr *peeraddr, *localaddr;
-    uint32_t peeripaddr, localipaddr;
+    struct sockaddr *localaddr;
+    uint32_t localipaddr;
+#if OPAL_ENABLE_DEBUG
+    struct sockaddr *peeraddr;
+    uint32_t peeripaddr;
+#endif
 #endif
     int rc = -1;
     opal_btl_openib_ini_values_t ini;
@@ -1676,9 +1693,11 @@ static int event_handler(struct rdma_cm_event *event)
     contents = context->contents;
 
     localaddr = rdma_get_local_addr(event->id);
-    peeraddr = rdma_get_peer_addr(event->id);
     localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
+#if OPAL_ENABLE_DEBUG
+    peeraddr = rdma_get_peer_addr(event->id);
     peeripaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
+#endif
 
     BTL_VERBOSE(("%s event_handler -- %s, status = %d to %x",
                 contents->server?"server":"client",
@@ -1769,11 +1788,11 @@ static int event_handler(struct rdma_cm_event *event)
            longer handle incoming requests.  The rdma connection
            manager and lower level code doesn't handle retries, so we
            have to. */
-	if (context->route_retry_count < rdmacm_resolve_max_retry_count) {
-		context->route_retry_count++;
-		rc = resolve_route(context);
-		break;
-	}
+        if (context->route_retry_count < rdmacm_resolve_max_retry_count) {
+                context->route_retry_count++;
+                rc = resolve_route(context);
+                break;
+        }
         show_help_rdmacm_event_error (event);
         rc = OPAL_ERROR;
         break;
@@ -1999,11 +2018,11 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
 
     /* RDMACM is not supported for MPI_THREAD_MULTIPLE */
     if (opal_using_threads()) {
-	BTL_VERBOSE(("rdmacm CPC is not supported with MPI_THREAD_MULTIPLE; skipped on %s:%d",
-		     ibv_get_device_name(openib_btl->device->ib_dev),
-		     openib_btl->port_num));
-	rc = OPAL_ERR_NOT_SUPPORTED;
-	goto out;
+        BTL_VERBOSE(("rdmacm CPC is not supported with MPI_THREAD_MULTIPLE; skipped on %s:%d",
+                     ibv_get_device_name(openib_btl->device->ib_dev),
+                     openib_btl->port_num));
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        goto out;
     }
 
     /* RDMACM is not supported if we have any XRC QPs */

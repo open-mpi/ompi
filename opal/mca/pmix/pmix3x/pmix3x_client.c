@@ -1406,7 +1406,7 @@ int pmix3x_disconnect(opal_list_t *procs)
 {
     size_t nprocs;
     opal_namelist_t *ptr;
-    pmix_status_t ret;
+    pmix_status_t ret=PMIX_SUCCESS;
     char *nsptr;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
@@ -1443,7 +1443,7 @@ int pmix3x_disconnectnb(opal_list_t *procs,
                         void *cbdata)
 {
     opal_namelist_t *ptr;
-    pmix_status_t ret;
+    pmix_status_t ret=PMIX_SUCCESS;
     char *nsptr;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
