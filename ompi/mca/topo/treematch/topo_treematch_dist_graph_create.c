@@ -665,8 +665,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 comm_tree = tm_build_tree_from_topology(tm_topology,aff_mat, NULL, NULL);
                 sol = tm_compute_mapping(tm_topology, comm_tree);
 
-                assert((int)sol->k_length == size);
-
                 k = (int *)calloc(sol->k_length, sizeof(int));
                 for(idx = 0 ; idx < (int)sol->k_length ; idx++)
                     k[idx] = sol->k[idx][0];
@@ -853,7 +851,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             comm_tree = tm_build_tree_from_topology(tm_topology,aff_mat, NULL, NULL);
             sol = tm_compute_mapping(tm_topology, comm_tree);
 
-            assert((int)sol->k_length == num_procs_in_node);
+            assert((int)sol->k_length == num_objs_in_node);
 
             k = (int *)calloc(sol->k_length, sizeof(int));
             for(idx = 0 ; idx < (int)sol->k_length ; idx++)
