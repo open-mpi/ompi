@@ -528,12 +528,13 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
     if (!mkeys[0].spml_context) 
         return OSHMEM_SUCCESS;
 
-    mem_seg = memheap_find_va(mkeys[0].va_base);
+    mem_seg  = memheap_find_va(mkeys[0].va_base);
+    ucx_mkey = (spml_ucx_mkey_t*)mkeys[0].spml_context;
     
     if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
-        ucx_mkey = (spml_ucx_mkey_t *)mkeys[0].spml_context;
         ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
     }
+    ucp_rkey_destroy(ucx_mkey->rkey);
 
     if (0 < mkeys[0].len) {
         ucp_rkey_buffer_release(mkeys[0].u.data);
