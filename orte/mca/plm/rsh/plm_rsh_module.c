@@ -825,7 +825,6 @@ static int remote_spawn(opal_buffer_t *launch)
             prefix = NULL;
         }
     }
-
     /* get the updated routing list */
     rtmod = orte_rml.get_routed(orte_coll_conduit);
     OBJ_CONSTRUCT(&coll, opal_list_t);

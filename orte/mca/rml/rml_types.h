@@ -13,6 +13,8 @@
  *                         reserved.
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -174,6 +176,9 @@ BEGIN_C_DECLS
 
 /* warmup connection - simply establishes the connection */
 #define ORTE_RML_TAG_WARMUP_CONNECTION      63
+
+/* node regex report */
+#define ORTE_RML_TAG_NODE_REGEX_REPORT      64
 
 #define ORTE_RML_TAG_MAX                   100
 
