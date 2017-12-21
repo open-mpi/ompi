@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +65,7 @@ typedef int (*orte_plm_base_module_spawn_fn_t)(orte_job_t *jdata);
 /*
  * Remote spawn - spawn called by a daemon to launch a process on its own
  */
-typedef int (*orte_plm_base_module_remote_spawn_fn_t)(opal_buffer_t *launch);
+typedef int (*orte_plm_base_module_remote_spawn_fn_t)(void);
 
 /*
  * Entry point to set the HNP name

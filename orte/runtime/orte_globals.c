@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -135,8 +135,6 @@ int orte_startup_timeout = -1;
 int orte_timeout_usec_per_proc = -1;
 float orte_max_timeout = -1.0;
 orte_timer_t *orte_mpiexec_timeout = NULL;
-
-opal_buffer_t *orte_tree_launch_cmd = NULL;
 
 int orte_stack_trace_wait_timeout = 30;
 

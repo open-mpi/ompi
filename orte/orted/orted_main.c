@@ -982,7 +982,7 @@ int orte_daemon(int argc, char *argv[])
         }
         if (NULL != orte_node_regex) {
             /* now launch any child daemons of ours */
-            orte_plm.remote_spawn(orte_tree_launch_cmd);
+            orte_plm.remote_spawn();
         }
     }
 
@@ -1159,7 +1159,7 @@ static void node_regex_report(int status, orte_process_name_t* sender,
     *active = false;
 
     /* now launch any child daemons of ours */
-    orte_plm.remote_spawn(orte_tree_launch_cmd);
+    orte_plm.remote_spawn();
 
     report_orted();
 }

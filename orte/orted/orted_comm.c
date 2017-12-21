@@ -341,22 +341,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
 
         break;
 
-        /****    TREE_SPAWN   ****/
-    case ORTE_DAEMON_TREE_SPAWN:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_cmd: received tree_spawn",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-        /* if the PLM supports remote spawn, pass it all along */
-        if (NULL != orte_plm.remote_spawn) {
-            if (ORTE_SUCCESS != (ret = orte_plm.remote_spawn(buffer))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        } else {
-            opal_output(0, "%s remote spawn is NULL!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-        break;
-
         /****    EXIT COMMAND    ****/
     case ORTE_DAEMON_EXIT_CMD:
         if (orte_debug_daemons_flag) {
@@ -1400,8 +1384,6 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_SIGNAL_LOCAL_PROCS");
     case ORTE_DAEMON_ADD_LOCAL_PROCS:
         return strdup("ORTE_DAEMON_ADD_LOCAL_PROCS");
-    case ORTE_DAEMON_TREE_SPAWN:
-        return strdup("ORTE_DAEMON_TREE_SPAWN");
 
     case ORTE_DAEMON_HEARTBEAT_CMD:
         return strdup("ORTE_DAEMON_HEARTBEAT_CMD");
