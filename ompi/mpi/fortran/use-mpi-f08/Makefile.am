@@ -10,6 +10,7 @@
 # Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -533,9 +534,13 @@ pmpi_api_files = \
         profile/pfile_get_view_f08.F90 \
         profile/pfile_iread_at_f08.F90 \
         profile/pfile_iread_f08.F90 \
+        profile/pfile_iread_at_all_f08.F90 \
+        profile/pfile_iread_all_f08.F90 \
         profile/pfile_iread_shared_f08.F90 \
         profile/pfile_iwrite_at_f08.F90 \
         profile/pfile_iwrite_f08.F90 \
+        profile/pfile_iwrite_at_all_f08.F90 \
+        profile/pfile_iwrite_all_f08.F90 \
         profile/pfile_iwrite_shared_f08.F90 \
         profile/pfile_open_f08.F90 \
         profile/pfile_preallocate_f08.F90 \
