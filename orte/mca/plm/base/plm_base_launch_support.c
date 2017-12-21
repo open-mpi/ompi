@@ -1567,7 +1567,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     /* if this is too long, then we'll have to do it with
      * a phone home operation instead */
-    if (strlen(param) < ORTE_MAX_REGEX_CMD_LENGTH) {
+    if (strlen(param) < orte_plm_globals.node_regex_threshold) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_node_regex");
         opal_argv_append(argc, argv, param);

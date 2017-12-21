@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,8 +38,6 @@
 #include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
-
-#define ORTE_MAX_REGEX_CMD_LENGTH   1024
 
 #define ORTE_MAX_NODE_PREFIX        50
 #define ORTE_CONTIG_NODE_CMD        0x01
