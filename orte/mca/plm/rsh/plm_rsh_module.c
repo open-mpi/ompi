@@ -263,7 +263,8 @@ static int rsh_init(void)
 static void rsh_wait_daemon(int sd, short flags, void *cbdata)
 {
     orte_job_t *jdata;
-    orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)cbdata;
+    orte_wait_tracker_t *t2 = (orte_wait_tracker_t*)cbdata;
+    orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)t2->cbdata;
     orte_proc_t *daemon = caddy->daemon;
     char *rtmod;
 
@@ -272,6 +273,7 @@ static void rsh_wait_daemon(int sd, short flags, void *cbdata)
          * session attached, e.g., while debugging
          */
         OBJ_RELEASE(caddy);
+        OBJ_RELEASE(t2);
         return;
     }
 
@@ -325,7 +327,7 @@ static void rsh_wait_daemon(int sd, short flags, void *cbdata)
         opal_event_active(&launch_event, EV_WRITE, 1);
     }
     /* cleanup */
-    OBJ_RELEASE(caddy);
+    OBJ_RELEASE(t2);
 }
 
 static int setup_launch(int *argcptr, char ***argvptr,
