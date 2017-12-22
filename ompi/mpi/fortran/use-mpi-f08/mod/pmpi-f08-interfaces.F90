@@ -9,6 +9,7 @@
 ! Copyright (c) 2012      Inria.  All rights reserved.
 ! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -2105,6 +2106,36 @@ subroutine PMPI_Type_set_name_f08(datatype,type_name,ierror)
 end subroutine PMPI_Type_set_name_f08
 end interface  PMPI_Type_set_name
 
+interface PMPI_Win_allocate
+subroutine PMPI_Win_allocate_f08(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+  use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
+  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
+  INTEGER, INTENT(IN) ::  disp_unit
+  TYPE(MPI_Info), INTENT(IN) ::  info
+  TYPE(MPI_Comm), INTENT(IN) ::  comm
+  TYPE(C_PTR), INTENT(OUT) ::  baseptr
+  TYPE(MPI_Win), INTENT(OUT) ::  win
+  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
+end subroutine PMPI_Win_allocate_f08
+end interface PMPI_Win_allocate
+
+interface PMPI_Win_allocate_shared
+subroutine PMPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+  use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
+  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
+  INTEGER, INTENT(IN) ::  disp_unit
+  TYPE(MPI_Info), INTENT(IN) ::  info
+  TYPE(MPI_Comm), INTENT(IN) ::  comm
+  TYPE(C_PTR), INTENT(OUT) ::  baseptr
+  TYPE(MPI_Win), INTENT(OUT) ::  win
+  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
+end subroutine PMPI_Win_allocate_shared_f08
+end interface PMPI_Win_allocate_shared
+
 interface  PMPI_Win_create_keyval
 subroutine PMPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,win_keyval, &
                                      extra_state,ierror)
@@ -2150,6 +2181,16 @@ subroutine PMPI_Win_get_attr_f08(win,win_keyval,attribute_val,flag,ierror)
 end subroutine PMPI_Win_get_attr_f08
 end interface  PMPI_Win_get_attr
 
+interface  PMPI_Win_get_info
+subroutine PMPI_Win_get_info_f08(win,info,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_Info
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Info), INTENT(OUT) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_get_info_f08
+end interface  PMPI_Win_get_info
+
 interface  PMPI_Win_get_name
 subroutine PMPI_Win_get_name_f08(win,win_name,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_MAX_OBJECT_NAME
@@ -2171,6 +2212,16 @@ subroutine PMPI_Win_set_attr_f08(win,win_keyval,attribute_val,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Win_set_attr_f08
 end interface  PMPI_Win_set_attr
+
+interface  PMPI_Win_set_info
+subroutine PMPI_Win_set_info_f08(win,info,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_Info
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Info), INTENT(IN) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_set_info_f08
+end interface  PMPI_Win_set_info
 
 interface  PMPI_Win_set_name
 subroutine PMPI_Win_set_name_f08(win,win_name,ierror)
@@ -3187,6 +3238,48 @@ subroutine PMPI_Win_create_f08(base,size,disp_unit,info,comm,win,ierror)
 end subroutine PMPI_Win_create_f08
 end interface  PMPI_Win_create
 
+interface  PMPI_Win_create_dynamic
+subroutine PMPI_Win_create_dynamic_f08(info,comm,win,ierror)
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win
+   implicit none
+   TYPE(MPI_Info), INTENT(IN) :: info
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Win), INTENT(OUT) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_create_dynamic_f08
+end interface  PMPI_Win_create_dynamic
+
+interface  PMPI_Win_attach
+subroutine PMPI_Win_attach_f08(win,base,size,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !$PRAGMA IGNORE_TKR base
+   !DIR$ IGNORE_TKR base
+   !IBM* IGNORE_TKR base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_attach_f08
+end interface  PMPI_Win_attach
+
+interface  PMPI_Win_detach
+subroutine PMPI_Win_detach_f08(win,base,ierror)
+   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !$PRAGMA IGNORE_TKR base
+   !DIR$ IGNORE_TKR base
+   !IBM* IGNORE_TKR base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_detach_f08
+end interface  PMPI_Win_detach
+
 interface  PMPI_Win_fence
 subroutine PMPI_Win_fence_f08(assert,win,ierror)
    use :: mpi_f08_types, only : MPI_Win
@@ -3246,6 +3339,20 @@ subroutine PMPI_Win_post_f08(group,assert,win,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Win_post_f08
 end interface  PMPI_Win_post
+
+interface PMPI_Win_shared_query
+subroutine PMPI_Win_shared_query_f08(win, rank, size, disp_unit, baseptr,&
+      ierror)
+  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+  use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
+  TYPE(MPI_Win), INTENT(IN) ::  win
+  INTEGER, INTENT(IN) ::  rank
+  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
+  INTEGER, INTENT(OUT) ::  disp_unit
+  TYPE(C_PTR), INTENT(OUT) ::  baseptr
+  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
+end subroutine PMPI_Win_shared_query_f08
+end interface PMPI_Win_shared_query
 
 interface  PMPI_Win_start
 subroutine PMPI_Win_start_f08(group,assert,win,ierror)
