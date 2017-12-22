@@ -416,7 +416,11 @@ static int mca_rcache_grdma_deregister (mca_rcache_base_module_t *rcache,
         return OPAL_SUCCESS;
     }
 
-    rc = dereg_mem (reg);
+    if (!(reg->flags & MCA_RCACHE_FLAGS_INVALID)) {
+        /* only call dereg mem if this registration is not in the GC lifo */
+        rc = dereg_mem (reg);
+    }
+
     opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
 
     return rc;
@@ -451,7 +455,7 @@ static int gc_add (mca_rcache_base_registration_t *grdma_reg, void *ctx)
     /* This may be called from free() so avoid recursively calling into free by just
      * shifting this registration into the garbage collection list. The cleanup will
      * be done on the next registration attempt. */
-    if (registration_is_cacheable (grdma_reg)) {
+    if (registration_is_cacheable (grdma_reg) && !grdma_reg->ref_count) {
         opal_list_remove_item (&rcache_grdma->cache->lru_list, (opal_list_item_t *) grdma_reg);
     }
 
