@@ -39,6 +39,39 @@
  *********************************************************************/
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
 
+#if !defined(OPAL_HAVE_ATOMIC_MIN_32)
+static inline int32_t opal_atomic_fetch_min_32 (volatile int32_t *addr, int32_t value)
+{
+    int32_t old = *addr;
+    do {
+        if (old <= value) {
+            break;
+        }
+    } while (!opal_atomic_compare_exchange_strong_32 (addr, &old, value));
+
+    return old;
+}
+
+#define OPAL_HAVE_ATOMIC_MIN_32 1
+
+#endif /* OPAL_HAVE_ATOMIC_MIN_32 */
+
+#if !defined(OPAL_HAVE_ATOMIC_MAX_32)
+static inline int32_t opal_atomic_fetch_max_32 (volatile int32_t *addr, int32_t value)
+{
+    int32_t old = *addr;
+    do {
+        if (old >= value) {
+            break;
+        }
+    } while (!opal_atomic_compare_exchange_strong_32 (addr, &old, value));
+
+    return old;
+}
+
+#define OPAL_HAVE_ATOMIC_MAX_32 1
+#endif /* OPAL_HAVE_ATOMIC_MAX_32 */
+
 #define OPAL_ATOMIC_DEFINE_CMPXCG_OP(type, bits, operation, name)  \
     static inline type opal_atomic_fetch_ ## name ## _ ## bits (volatile type *addr, type value) \
     {                                                                   \
@@ -104,6 +137,39 @@ OPAL_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, -, sub)
 
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
 
+#if !defined(OPAL_HAVE_ATOMIC_MIN_64)
+static inline int64_t opal_atomic_fetch_min_64 (volatile int64_t *addr, int64_t value)
+{
+    int64_t old = *addr;
+    do {
+        if (old <= value) {
+            break;
+        }
+    } while (!opal_atomic_compare_exchange_strong_64 (addr, &old, value));
+
+    return old;
+}
+
+#define OPAL_HAVE_ATOMIC_MIN_64 1
+
+#endif /* OPAL_HAVE_ATOMIC_MIN_64 */
+
+#if !defined(OPAL_HAVE_ATOMIC_MAX_64)
+static inline int64_t opal_atomic_fetch_max_64 (volatile int64_t *addr, int64_t value)
+{
+    int64_t old = *addr;
+    do {
+        if (old >= value) {
+            break;
+        }
+    } while (!opal_atomic_compare_exchange_strong_64 (addr, &old, value));
+
+    return old;
+}
+
+#define OPAL_HAVE_ATOMIC_MAX_64 1
+#endif /* OPAL_HAVE_ATOMIC_MAX_64 */
+
 #if !defined(OPAL_HAVE_ATOMIC_SWAP_64)
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 static inline int64_t opal_atomic_swap_64(volatile int64_t *addr,
@@ -115,7 +181,7 @@ static inline int64_t opal_atomic_swap_64(volatile int64_t *addr,
 
     return old;
 }
-#endif /* OPAL_HAVE_ATOMIC_SWAP_32 */
+#endif /* OPAL_HAVE_ATOMIC_SWAP_64 */
 
 #if !defined(OPAL_HAVE_ATOMIC_ADD_64)
 #define OPAL_HAVE_ATOMIC_ADD_64 1
@@ -321,12 +387,37 @@ OPAL_ATOMIC_DEFINE_OP_FETCH(or, |, int32_t, int32_t, 32)
 OPAL_ATOMIC_DEFINE_OP_FETCH(xor, ^, int32_t, int32_t, 32)
 OPAL_ATOMIC_DEFINE_OP_FETCH(sub, -, int32_t, int32_t, 32)
 
+static inline int32_t opal_atomic_min_fetch_32 (volatile int32_t *addr, int32_t value)
+{
+    int32_t old = opal_atomic_fetch_min_32 (addr, value);
+    return old <= value ? old : value;
+}
+
+static inline int32_t opal_atomic_max_fetch_32 (volatile int32_t *addr, int32_t value)
+{
+    int32_t old = opal_atomic_fetch_max_32 (addr, value);
+    return old >= value ? old : value;
+}
+
 #if OPAL_HAVE_ATOMIC_MATH_64
 OPAL_ATOMIC_DEFINE_OP_FETCH(add, +, int64_t, int64_t, 64)
 OPAL_ATOMIC_DEFINE_OP_FETCH(and, &, int64_t, int64_t, 64)
 OPAL_ATOMIC_DEFINE_OP_FETCH(or, |, int64_t, int64_t, 64)
 OPAL_ATOMIC_DEFINE_OP_FETCH(xor, ^, int64_t, int64_t, 64)
 OPAL_ATOMIC_DEFINE_OP_FETCH(sub, -, int64_t, int64_t, 64)
+
+static inline int64_t opal_atomic_min_fetch_64 (volatile int64_t *addr, int64_t value)
+{
+    int64_t old = opal_atomic_fetch_min_64 (addr, value);
+    return old <= value ? old : value;
+}
+
+static inline int64_t opal_atomic_max_fetch_64 (volatile int64_t *addr, int64_t value)
+{
+    int64_t old = opal_atomic_fetch_max_64 (addr, value);
+    return old >= value ? old : value;
+}
+
 #endif
 
 static inline intptr_t opal_atomic_fetch_add_ptr( volatile void* addr,

@@ -409,6 +409,10 @@ static inline int32_t opal_atomic_xor_fetch_32(volatile int32_t *addr, int32_t v
 static inline int32_t opal_atomic_fetch_xor_32(volatile int32_t *addr, int32_t value);
 static inline int32_t opal_atomic_sub_fetch_32(volatile int32_t *addr, int delta);
 static inline int32_t opal_atomic_fetch_sub_32(volatile int32_t *addr, int delta);
+static inline int32_t opal_atomic_min_fetch_32 (volatile int32_t *addr, int32_t value);
+static inline int32_t opal_atomic_fetch_min_32 (volatile int32_t *addr, int32_t value);
+static inline int32_t opal_atomic_max_fetch_32 (volatile int32_t *addr, int32_t value);
+static inline int32_t opal_atomic_fetch_max_32 (volatile int32_t *addr, int32_t value);
 
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 */
 
@@ -434,8 +438,12 @@ static inline int64_t opal_atomic_fetch_or_64(volatile int64_t *addr, int64_t va
 static inline int64_t opal_atomic_fetch_xor_64(volatile int64_t *addr, int64_t value);
 static inline int64_t opal_atomic_sub_fetch_64(volatile int64_t *addr, int64_t delta);
 static inline int64_t opal_atomic_fetch_sub_64(volatile int64_t *addr, int64_t delta);
+static inline int64_t opal_atomic_min_fetch_64 (volatile int64_t *addr, int64_t value);
+static inline int64_t opal_atomic_fetch_min_64 (volatile int64_t *addr, int64_t value);
+static inline int64_t opal_atomic_max_fetch_64 (volatile int64_t *addr, int64_t value);
+static inline int64_t opal_atomic_fetch_max_64 (volatile int64_t *addr, int64_t value);
 
-#endif /* OPAL_HAVE_ATOMIC_MATH_32 */
+#endif /* OPAL_HAVE_ATOMIC_MATH_64 */
 
 #if ! OPAL_HAVE_ATOMIC_MATH_64
 /* fix up the value of opal_have_atomic_math_64 to allow for C versions */
