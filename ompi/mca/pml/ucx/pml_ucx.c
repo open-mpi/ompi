@@ -530,7 +530,6 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
                               mca_pml_ucx_get_datatype(datatype),
                               ucp_tag, ucp_tag_mask, req);
 
-    ucp_worker_progress(ompi_pml_ucx.ucp_worker);
     for (;;) {
         status = ucp_request_test(req, &info);
         if (status != UCS_INPROGRESS) {
