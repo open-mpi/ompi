@@ -2484,21 +2484,23 @@ end function  PMPI_Wtime_f08
 end interface PMPI_Wtime
 
 interface PMPI_Aint_add
-subroutine PMPI_Aint_add_f08(base,diff)
+function  PMPI_Aint_add_f08(base,diff)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    INTEGER(MPI_ADDRESS_KIND) :: base
    INTEGER(MPI_ADDRESS_KIND) :: diff
-end subroutine PMPI_Aint_add_f08
+   INTEGER(MPI_ADDRESS_KIND) :: PMPI_Aint_add_f08
+end function PMPI_Aint_add_f08
 end interface PMPI_Aint_add
 
 interface PMPI_Aint_diff
-subroutine PMPI_Aint_diff_f08(addr1,addr2)
+function  PMPI_Aint_diff_f08(addr1,addr2)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    INTEGER(MPI_ADDRESS_KIND) :: addr1
    INTEGER(MPI_ADDRESS_KIND) :: addr2
-end subroutine PMPI_Aint_diff_f08
+   INTEGER(MPI_ADDRESS_KIND) :: PMPI_Aint_diff_f08
+end function PMPI_Aint_diff_f08
 end interface PMPI_Aint_diff
 
 interface  PMPI_Abort
