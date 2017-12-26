@@ -1759,7 +1759,7 @@ subroutine PMPI_Comm_get_info_f08(comm,info_used,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Info
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Comm), INTENT(OUT) :: info_used
+   TYPE(MPI_Info), INTENT(OUT) :: info_used
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Comm_get_info_f08
 end interface  PMPI_Comm_get_info
