@@ -2102,7 +2102,7 @@ subroutine PMPI_Type_set_name_f08(datatype,type_name,ierror)
 end subroutine PMPI_Type_set_name_f08
 end interface  PMPI_Type_set_name
 
-interface PMPI_Win_allocate
+interface  PMPI_Win_allocate
 subroutine PMPI_Win_allocate_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
@@ -2115,9 +2115,9 @@ subroutine PMPI_Win_allocate_f08(size, disp_unit, info, comm, &
   TYPE(MPI_Win), INTENT(OUT) ::  win
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine PMPI_Win_allocate_f08
-end interface PMPI_Win_allocate
+end interface  PMPI_Win_allocate
 
-interface PMPI_Win_allocate_shared
+interface  PMPI_Win_allocate_shared
 subroutine PMPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
@@ -2130,7 +2130,7 @@ subroutine PMPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
   TYPE(MPI_Win), INTENT(OUT) ::  win
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine PMPI_Win_allocate_shared_f08
-end interface PMPI_Win_allocate_shared
+end interface  PMPI_Win_allocate_shared
 
 interface  PMPI_Win_create_keyval
 subroutine PMPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,win_keyval, &
@@ -2486,7 +2486,7 @@ function  PMPI_Aint_add_f08(base,diff)
    INTEGER(MPI_ADDRESS_KIND) :: base
    INTEGER(MPI_ADDRESS_KIND) :: diff
    INTEGER(MPI_ADDRESS_KIND) :: PMPI_Aint_add_f08
-end function PMPI_Aint_add_f08
+end function  PMPI_Aint_add_f08
 end interface PMPI_Aint_add
 
 interface PMPI_Aint_diff
@@ -2496,7 +2496,7 @@ function  PMPI_Aint_diff_f08(addr1,addr2)
    INTEGER(MPI_ADDRESS_KIND) :: addr1
    INTEGER(MPI_ADDRESS_KIND) :: addr2
    INTEGER(MPI_ADDRESS_KIND) :: PMPI_Aint_diff_f08
-end function PMPI_Aint_diff_f08
+end function  PMPI_Aint_diff_f08
 end interface PMPI_Aint_diff
 
 interface  PMPI_Abort
@@ -2676,7 +2676,6 @@ end interface  PMPI_Finalized
 ! ASYNCHRONOUS had to removed from the base argument because
 ! the dummy argument is not an assumed-shape array.  This will
 ! be okay once the Interop TR is implemented.
-!
 interface  PMPI_Free_mem
 subroutine PMPI_Free_mem_f08(base,ierror)
    implicit none
@@ -3338,7 +3337,7 @@ subroutine PMPI_Win_post_f08(group,assert,win,ierror)
 end subroutine PMPI_Win_post_f08
 end interface  PMPI_Win_post
 
-interface PMPI_Win_shared_query
+interface  PMPI_Win_shared_query
 subroutine PMPI_Win_shared_query_f08(win, rank, size, disp_unit, baseptr,&
       ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
@@ -3350,7 +3349,7 @@ subroutine PMPI_Win_shared_query_f08(win, rank, size, disp_unit, baseptr,&
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine PMPI_Win_shared_query_f08
-end interface PMPI_Win_shared_query
+end interface  PMPI_Win_shared_query
 
 interface  PMPI_Win_start
 subroutine PMPI_Win_start_f08(group,assert,win,ierror)

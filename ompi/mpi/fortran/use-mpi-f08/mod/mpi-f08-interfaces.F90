@@ -9,6 +9,7 @@
 ! Copyright (c) 2012      Inria.  All rights reserved.
 ! Copyright (c) 2015-2017 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -2101,7 +2102,7 @@ subroutine MPI_Type_set_name_f08(datatype,type_name,ierror)
 end subroutine MPI_Type_set_name_f08
 end interface  MPI_Type_set_name
 
-interface MPI_Win_allocate
+interface  MPI_Win_allocate
 subroutine MPI_Win_allocate_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
@@ -2114,9 +2115,9 @@ subroutine MPI_Win_allocate_f08(size, disp_unit, info, comm, &
   TYPE(MPI_Win), INTENT(OUT) ::  win
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine MPI_Win_allocate_f08
-end interface MPI_Win_allocate
+end interface  MPI_Win_allocate
 
-interface MPI_Win_allocate_shared
+interface  MPI_Win_allocate_shared
 subroutine MPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
@@ -2129,7 +2130,7 @@ subroutine MPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
   TYPE(MPI_Win), INTENT(OUT) ::  win
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine MPI_Win_allocate_shared_f08
-end interface MPI_Win_allocate_shared
+end interface  MPI_Win_allocate_shared
 
 interface  MPI_Win_create_keyval
 subroutine MPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,win_keyval, &
@@ -2465,7 +2466,7 @@ function  MPI_Wtick_f08( ) BIND(C,name="MPI_Wtick")
    use, intrinsic :: ISO_C_BINDING
    implicit none
    DOUBLE PRECISION :: MPI_Wtick_f08
-end function MPI_Wtick_f08
+end function  MPI_Wtick_f08
 end interface MPI_Wtick
 
 ! MPI_Wtime is not a wrapper function
@@ -2475,7 +2476,7 @@ function  MPI_Wtime_f08( ) BIND(C,name="MPI_Wtime")
    use, intrinsic :: ISO_C_BINDING
    implicit none
    DOUBLE PRECISION :: MPI_Wtime_f08
-end function MPI_Wtime_f08
+end function  MPI_Wtime_f08
 end interface MPI_Wtime
 
 interface MPI_Aint_add
@@ -2485,7 +2486,7 @@ function  MPI_Aint_add_f08(base,diff)
    INTEGER(MPI_ADDRESS_KIND) :: base
    INTEGER(MPI_ADDRESS_KIND) :: diff
    INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_add_f08
-end function MPI_Aint_add_f08
+end function  MPI_Aint_add_f08
 end interface MPI_Aint_add
 
 interface MPI_Aint_diff
@@ -2495,7 +2496,7 @@ function  MPI_Aint_diff_f08(addr1,addr2)
    INTEGER(MPI_ADDRESS_KIND) :: addr1
    INTEGER(MPI_ADDRESS_KIND) :: addr2
    INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_diff_f08
-end function MPI_Aint_diff_f08
+end function  MPI_Aint_diff_f08
 end interface MPI_Aint_diff
 
 interface  MPI_Abort
@@ -3336,7 +3337,7 @@ subroutine MPI_Win_post_f08(group,assert,win,ierror)
 end subroutine MPI_Win_post_f08
 end interface  MPI_Win_post
 
-interface MPI_Win_shared_query
+interface  MPI_Win_shared_query
 subroutine MPI_Win_shared_query_f08(win, rank, size, disp_unit, baseptr,&
       ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
@@ -3348,7 +3349,7 @@ subroutine MPI_Win_shared_query_f08(win, rank, size, disp_unit, baseptr,&
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine MPI_Win_shared_query_f08
-end interface
+end interface  MPI_Win_shared_query
 
 interface  MPI_Win_start
 subroutine MPI_Win_start_f08(group,assert,win,ierror)
