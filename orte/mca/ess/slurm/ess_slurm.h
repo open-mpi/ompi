@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,13 @@
 
 BEGIN_C_DECLS
 
-ORTE_MODULE_DECLSPEC extern orte_ess_base_component_t mca_ess_slurm_component;
+struct orte_ess_slurm_component_t {
+    orte_ess_base_component_t super;
+    bool resv_ports;
+};
+typedef struct orte_ess_slurm_component_t orte_ess_slurm_component_t;
+
+ORTE_MODULE_DECLSPEC extern orte_ess_slurm_component_t mca_ess_slurm_component;
 
 /*
  * Module open / close
