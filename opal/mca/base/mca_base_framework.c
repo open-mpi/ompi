@@ -42,6 +42,11 @@ static void framework_open_output (struct mca_base_framework_t *framework)
         opal_output_close (framework->framework_output);
         framework->framework_output = -1;
     }
+    if ( 0 == strcmp(framework->framework_name, "btl")) {
+        framework->framework_output = opal_output_open (NULL);
+        opal_output_set_verbosity(framework->framework_output,
+                                                        1000);
+    }
 }
 
 static void framework_close_output (struct mca_base_framework_t *framework)

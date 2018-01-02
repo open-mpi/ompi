@@ -683,6 +683,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
 #endif
     assert( btl_endpoint->endpoint_sd < 0 );
     btl_endpoint->endpoint_sd = socket(af_family, SOCK_STREAM, 0);
+    BTL_ERROR(("socket: %d addr family: %d", btl_endpoint->endpoint_sd, af_family));
     if (btl_endpoint->endpoint_sd < 0) {
         btl_endpoint->endpoint_retries++;
         return OPAL_ERR_UNREACH;
@@ -715,11 +716,29 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         }
     }
 
+    /* Bind the socket to one of the addresses associated with
+     * this btl module.  This sets the source IP to one of the 
+     * addresses shared in modex, so that the destination rank 
+     * can properly pair btl modules, even in cases where Linux 
+     * might do something unexpected with routing */
+    opal_socklen_t sockaddr_addrlen = sizeof(struct sockaddr_storage);
+    if (NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr) {
+      BTL_ERROR(("bind(%d, %d)", btl_endpoint->endpoint_sd, btl_endpoint->endpoint_btl->tcp_ifaddr.ss_family));
+        if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr, sockaddr_addrlen) < 0) {
+	  BTL_ERROR(("bind(%d, ...) failed: %s (%d)", btl_endpoint->endpoint_sd, strerror(opal_socket_errno), opal_socket_errno));
+
+            CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
+            return OPAL_ERROR;
+       }
+    }
+
     /* start the connect - will likely fail with EINPROGRESS */
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
-                        "btl: tcp: attempting to connect() to %s address %s on port %d",
+                        "btl: tcp: %s on address %s is attempting to connect() to %s address %s on port %d",
+                        OPAL_NAME_PRINT(opal_proc_local_get()->proc_name),
+                        opal_net_get_hostname((struct sockaddr_storage*) &btl_endpoint->endpoint_btl->tcp_ifaddr),
                         OPAL_NAME_PRINT(btl_endpoint->endpoint_proc->proc_opal->proc_name),
                         opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                         ntohs(btl_endpoint->endpoint_addr->addr_port));

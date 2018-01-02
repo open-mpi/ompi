@@ -511,6 +511,12 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
         btl->tcp_send_handler = 0;
 #endif
 
+        opal_ifkindextoaddr(if_kindex, (struct sockaddr*) &btl->tcp_ifaddr,
+                                        sizeof (btl->tcp_ifaddr));
+
+        opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                           "btl: tcp: btl_component adding %s address at %d index",
+                            opal_net_get_hostname((struct sockaddr*) &btl->tcp_ifaddr), if_kindex);
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
@@ -551,10 +557,9 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
             }
         }
 
-#if 0 && OPAL_ENABLE_DEBUG
-        BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
-                    btl->super.btl_bandwidth, btl->super.btl_latency));
-#endif
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                            "interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
+                            btl->super.btl_bandwidth, btl->super.btl_latency);
     }
     return OPAL_SUCCESS;
 }
@@ -1183,7 +1188,9 @@ static int mca_btl_tcp_component_exchange(void)
                          opal_ifindextokindex (index);
                      current_addr++;
                      opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                         "btl:tcp: using ipv6 interface %s", ifn);
+                             "btl:tcp: using ipv4 interface %s with address %s at kindex %d", ifn,
+                                          opal_net_get_hostname((struct sock_addr_in*) &my_ss),
+                                          opal_ifindextokindex (index));
                  }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
@@ -1477,6 +1484,11 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
         CLOSE_THE_SOCKET(sd);
         return;
     }
+
+    opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                        "btl: tcp: incoming connection from %s on address %s",
+                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                        opal_net_get_hostname((struct sockaddr*) &addr));
 
     /* are there any existing peer instances willing to accept this connection */
     (void)mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr*)&addr, sd);
