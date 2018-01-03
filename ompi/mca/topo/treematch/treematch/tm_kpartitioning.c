@@ -223,10 +223,10 @@ int *kpartition(int k, com_mat_t *com_mat, int n, int *constraints, int nb_const
 
 
 #if HAVE_LIBSCOTCH
-  printf("Using Scotch\n");
+  /*printf("Using Scotch\n");*/
   res = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
 #else
-  printf("Using default\n");
+  /*printf("Using default\n");*/
   res = kpartition_greedy(k, com_mat, n, constraints, nb_constraints);
 #endif
   return res;
