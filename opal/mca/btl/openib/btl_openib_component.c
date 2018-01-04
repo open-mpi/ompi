@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -1524,7 +1524,11 @@ static uint64_t calculate_total_mem (void)
         if (NULL == machine) {
             return 0;
         }
+#if HWLOC_API_VERSION < 0x20000
         return machine->memory.total_memory;
+#else
+        return machine->total_memory;
+#endif
     }
 
     /* couldn't find it */
