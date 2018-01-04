@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2017-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -47,6 +47,11 @@
 
 #include "orte/mca/rtc/base/base.h"
 #include "rtc_hwloc.h"
+
+#if HWLOC_API_VERSION >= 0x20000
+// JMS Is this right?
+#include "hwloc/shmem.h"
+#endif
 
 static int init(void);
 static void finalize(void);

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
@@ -53,6 +53,11 @@
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
+
+#if HWLOC_API_VERSION >= 0x20000
+// JMS Is this right?
+#include "hwloc/shmem.h"
+#endif
 
 static bool topo_in_shmem = false;
 
@@ -149,7 +154,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
             avail = hwloc_bitmap_alloc();
             hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
         #else
-            avail = hwloc_bitmap_dup(root->allowed_cpuset);
+            avail = hwloc_bitmap_dup(root->cpuset);
         #endif
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base: no cpus specified - using root available cpuset"));
@@ -173,7 +178,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                         hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
                     #else
                         hwloc_bitmap_free(pucpus);
-                        pucpus = hwloc_bitmap_dup(pu->allowed_cpuset);
+                        pucpus = hwloc_bitmap_dup(pu->cpuset);
                     #endif
                     hwloc_bitmap_or(res, avail, pucpus);
                     hwloc_bitmap_copy(avail, res);
@@ -195,7 +200,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                             hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
                         #else
                             hwloc_bitmap_free(pucpus);
-                            pucpus = hwloc_bitmap_dup(pu->allowed_cpuset);
+                            pucpus = hwloc_bitmap_dup(pu->cpuset);
                         #endif
                         hwloc_bitmap_or(res, avail, pucpus);
                         hwloc_bitmap_copy(avail, res);
