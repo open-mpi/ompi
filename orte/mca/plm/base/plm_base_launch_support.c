@@ -1565,16 +1565,19 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    if (NULL != orte_node_regex) {
+        free(orte_node_regex);
+    }
+    orte_node_regex = param;
     /* if this is too long, then we'll have to do it with
      * a phone home operation instead */
-    if (strlen(param) < ORTE_MAX_REGEX_CMD_LENGTH) {
+    if (strlen(param) < orte_plm_globals.node_regex_threshold) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_node_regex");
-        opal_argv_append(argc, argv, param);
+        opal_argv_append(argc, argv, orte_node_regex);
         /* mark that the nidmap has been communicated */
         orte_nidmap_communicated = true;
     }
-    free(param);
 
     if (!orte_static_ports && !orte_fwd_mpirun_port) {
         /* if we are using static ports, or we are forwarding

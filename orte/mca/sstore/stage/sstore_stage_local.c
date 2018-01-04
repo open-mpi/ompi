@@ -1,9 +1,11 @@
 /*
- * Copyright (c)      2010 The Trustees of Indiana University.
+ * Copyright (c) 2010      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1550,8 +1552,9 @@ static int start_compression(orte_sstore_stage_local_snapshot_info_t *handle_inf
 static void sstore_stage_local_compress_waitpid_cb(orte_proc_t *proc, void* cbdata)
 {
     orte_sstore_stage_local_app_snapshot_info_t *app_info = NULL;
+    orte_wait_tracker_t *t2 = (orte_wait_tracker_t *)cbdata;
 
-    app_info = (orte_sstore_stage_local_app_snapshot_info_t*)cbdata;
+    app_info = (orte_sstore_stage_local_app_snapshot_info_t*)t2->cbdata;
 
     OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                          "sstore:stage:(local): waitpid(%6d) Compression finished for Process %s",
@@ -1560,6 +1563,7 @@ static void sstore_stage_local_compress_waitpid_cb(orte_proc_t *proc, void* cbda
 
     app_info->compress_pid = 0;
     OBJ_RELEASE(proc);
+    OBJ_RELEASE(t2);
 }
 
 static int wait_all_compressed(orte_sstore_stage_local_snapshot_info_t *handle_info)

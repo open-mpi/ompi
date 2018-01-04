@@ -101,7 +101,7 @@
 
 static int rsh_init(void);
 static int rsh_launch(orte_job_t *jdata);
-static int remote_spawn(opal_buffer_t *launch);
+static int remote_spawn(void);
 static int rsh_terminate_orteds(void);
 static int rsh_finalize(void);
 
@@ -263,7 +263,8 @@ static int rsh_init(void)
 static void rsh_wait_daemon(int sd, short flags, void *cbdata)
 {
     orte_job_t *jdata;
-    orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)cbdata;
+    orte_wait_tracker_t *t2 = (orte_wait_tracker_t*)cbdata;
+    orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)t2->cbdata;
     orte_proc_t *daemon = caddy->daemon;
     char *rtmod;
 
@@ -272,6 +273,7 @@ static void rsh_wait_daemon(int sd, short flags, void *cbdata)
          * session attached, e.g., while debugging
          */
         OBJ_RELEASE(caddy);
+        OBJ_RELEASE(t2);
         return;
     }
 
@@ -325,7 +327,7 @@ static void rsh_wait_daemon(int sd, short flags, void *cbdata)
         opal_event_active(&launch_event, EV_WRITE, 1);
     }
     /* cleanup */
-    OBJ_RELEASE(caddy);
+    OBJ_RELEASE(t2);
 }
 
 static int setup_launch(int *argcptr, char ***argvptr,
@@ -782,7 +784,7 @@ static void ssh_child(int argc, char **argv)
 /*
  * launch a set of daemons from a remote daemon
  */
-static int remote_spawn(opal_buffer_t *launch)
+static int remote_spawn()
 {
     int node_name_index1;
     int proc_vpid_index;
@@ -791,7 +793,6 @@ static int remote_spawn(opal_buffer_t *launch)
     int argc;
     int rc=ORTE_SUCCESS;
     bool failed_launch = true;
-    orte_std_cntr_t n;
     orte_process_name_t target;
     orte_plm_rsh_caddy_t *caddy;
     orte_job_t *daemons;
@@ -806,22 +807,13 @@ static int remote_spawn(opal_buffer_t *launch)
     /* if we hit any errors, tell the HNP it was us */
     target.vpid = ORTE_PROC_MY_NAME->vpid;
 
-    if (NULL != launch) {
-        /* extract the prefix from the launch buffer */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
+    /* check to see if enable-orterun-prefix-by-default was given - if
+     * this is being done by a singleton, then orterun will not be there
+     * to put the prefix in the app. So make sure we check to find it */
+    if ((bool)ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT) {
+        prefix = strdup(opal_install_dirs.prefix);
     } else {
-        /* check to see if enable-orterun-prefix-by-default was given - if
-         * this is being done by a singleton, then orterun will not be there
-         * to put the prefix in the app. So make sure we check to find it */
-        if ((bool)ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT) {
-            prefix = strdup(opal_install_dirs.prefix);
-        } else {
-            prefix = NULL;
-        }
+        prefix = NULL;
     }
 
     /* get the updated routing list */
@@ -1179,23 +1171,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* if we are tree launching, find our children and create the launch cmd */
     if (!mca_plm_rsh_component.no_tree_spawn) {
-        orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;
         orte_job_t *jdatorted;
-
-        /* get the tree spawn buffer */
-        orte_tree_launch_cmd = OBJ_NEW(opal_buffer_t);
-        /* insert the tree_spawn cmd */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(orte_tree_launch_cmd, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(orte_tree_launch_cmd);
-            goto cleanup;
-        }
-        /* pack the prefix since this will be needed by the next wave */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(orte_tree_launch_cmd, &prefix_dir, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(orte_tree_launch_cmd);
-            goto cleanup;
-        }
 
         /* get the orted job data object */
         if (NULL == (jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {

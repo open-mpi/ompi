@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -52,6 +52,19 @@ orte_plm_globals_t orte_plm_globals = {0};
 orte_plm_base_module_t orte_plm = {0};
 
 
+static int mca_plm_base_register(mca_base_register_flag_t flags)
+{
+    orte_plm_globals.node_regex_threshold = 1024;
+    (void) mca_base_var_register("orte", "pml", "base", "node_regex_threshold",
+                                 "Only pass the node regex on the orted command line if smaller than this threshold",
+                                 MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_INTERNAL,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_plm_globals.node_regex_threshold);
+    return ORTE_SUCCESS;
+}
+
 static int orte_plm_base_close(void)
 {
     int rc;
@@ -88,5 +101,5 @@ static int orte_plm_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&orte_plm_base_framework, flags);
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(orte, plm, NULL, NULL, orte_plm_base_open, orte_plm_base_close,
+MCA_BASE_FRAMEWORK_DECLARE(orte, plm, NULL, mca_plm_base_register, orte_plm_base_open, orte_plm_base_close,
                            mca_plm_base_static_components, 0);

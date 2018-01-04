@@ -117,8 +117,14 @@ static void pipe_closed(int fd, short flags, void *arg);
 static void rollup(int status, orte_process_name_t* sender,
                    opal_buffer_t *buffer,
                    orte_rml_tag_t tag, void *cbdata);
+static void node_regex_report(int status, orte_process_name_t* sender,
+                              opal_buffer_t *buffer,
+                              orte_rml_tag_t tag, void *cbdata);
+static void report_orted(void);
+
 static opal_buffer_t *bucket, *mybucket = NULL;
 static int ncollected = 0;
+static bool node_regex_waiting = false;
 
 static char *orte_parent_uri = NULL;
 
@@ -734,6 +740,11 @@ int orte_daemon(int argc, char *argv[])
              * a little time in the launch phase by "warming up" the
              * connection to our parent while we wait for our children */
             buffer = OBJ_NEW(opal_buffer_t);  // zero-byte message
+            if (NULL == orte_node_regex) {
+                orte_rml.recv_buffer_nb(ORTE_PROC_MY_PARENT, ORTE_RML_TAG_NODE_REGEX_REPORT,
+                                        ORTE_RML_PERSISTENT, node_regex_report, &node_regex_waiting);
+                node_regex_waiting = true;
+            }
             if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
                                                    ORTE_PROC_MY_PARENT, buffer,
                                                    ORTE_RML_TAG_WARMUP_CONNECTION,
@@ -969,8 +980,10 @@ int orte_daemon(int argc, char *argv[])
                 i += 2;
             }
         }
-        /* now launch any child daemons of ours */
-        orte_plm.remote_spawn(orte_tree_launch_cmd);
+        if (NULL != orte_node_regex) {
+            /* now launch any child daemons of ours */
+            orte_plm.remote_spawn();
+        }
     }
 
     if (orte_debug_daemons_flag) {
@@ -1052,8 +1065,6 @@ static void rollup(int status, orte_process_name_t* sender,
                    opal_buffer_t *buffer,
                    orte_rml_tag_t tag, void *cbdata)
 {
-    int nreqd;
-    char *rtmod;
     int ret;
     orte_process_name_t child;
     int32_t i, flag, cnt;
@@ -1095,10 +1106,17 @@ static void rollup(int status, orte_process_name_t* sender,
     }
 
   report:
+    report_orted();
+}
+
+static void report_orted() {
+    char *rtmod;
+    int nreqd, ret;
+
     /* get the number of children */
     rtmod = orte_rml.get_routed(orte_mgmt_conduit);
     nreqd = orte_routed.num_routes(rtmod) + 1;
-    if (nreqd == ncollected && NULL != mybucket) {
+    if (nreqd == ncollected && NULL != mybucket && !node_regex_waiting) {
         /* add the collection of our children's buckets to ours */
         opal_dss.copy_payload(mybucket, bucket);
         OBJ_RELEASE(bucket);
@@ -1111,4 +1129,37 @@ static void rollup(int status, orte_process_name_t* sender,
             OBJ_RELEASE(mybucket);
         }
     }
+}
+
+static void node_regex_report(int status, orte_process_name_t* sender,
+                              opal_buffer_t *buffer,
+                              orte_rml_tag_t tag, void *cbdata) {
+    int rc, n=1;
+    char * regex;
+    assert(NULL == orte_node_regex);
+    bool * active = (bool *)cbdata;
+
+    /* extract the node regex if needed, and update the routing tree */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &regex, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    orte_node_regex = regex;
+
+    if (ORTE_SUCCESS != (rc = orte_util_nidmap_parse(orte_node_regex))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* update the routing tree so any tree spawn operation
+     * properly gets the number of children underneath us */
+    orte_routed.update_routing_plan(NULL);
+
+    *active = false;
+
+    /* now launch any child daemons of ours */
+    orte_plm.remote_spawn();
+
+    report_orted();
 }
