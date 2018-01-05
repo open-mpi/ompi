@@ -15,7 +15,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -887,6 +887,10 @@ static int remote_spawn(void)
         opal_list_append(&launch_list, &caddy->super);
     }
     OPAL_LIST_DESTRUCT(&coll);
+    /* we NEVER use tree-spawn for secondary launches - e.g.,
+     * due to a dynamic launch requesting add_hosts - so be
+     * sure to turn it off here */
+    mca_plm_rsh_component.no_tree_spawn = true;
 
     /* trigger the event to start processing the launch list */
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
@@ -1280,6 +1284,10 @@ static void launch_daemons(int fd, short args, void *cbdata)
         OBJ_RETAIN(caddy->daemon);
         opal_list_append(&launch_list, &caddy->super);
     }
+    /* we NEVER use tree-spawn for secondary launches - e.g.,
+     * due to a dynamic launch requesting add_hosts - so be
+     * sure to turn it off here */
+    mca_plm_rsh_component.no_tree_spawn = true;
 
     /* set the job state to indicate the daemons are launched */
     state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;

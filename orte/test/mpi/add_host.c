@@ -47,6 +47,21 @@ int main(int argc, char* argv[])
         }
         MPI_Comm_disconnect(&child);
         printf("Parent disconnected\n");
+        /* do it again */
+        MPI_Info_set(info, "add-host", "rhc003:24");
+        if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, info,
+                                                0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
+            printf("Child failed to spawn\n");
+            return rc;
+        }
+        printf("Parent done with second spawn\n");
+        if (0 == rank) {
+            msg = 38;
+            printf("Parent sending message to second children\n");
+            MPI_Send(&msg, 1, MPI_INT, 0, 1, child);
+        }
+        MPI_Comm_disconnect(&child);
+        printf("Parent disconnected again\n");
     }
     /* Otherwise, we're the child */
     else {

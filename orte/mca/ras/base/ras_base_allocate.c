@@ -11,7 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -456,9 +458,9 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
 {
     int rc;
     opal_list_t nodes;
-    int i;
+    int i, n;
     orte_app_context_t *app;
-    orte_node_t *node;
+    orte_node_t *node, *next, *nptr;
     char *hosts;
 
     /* construct a list to hold the results */
@@ -532,19 +534,35 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
 
     /* if something was found, we add that to our global pool */
     if (!opal_list_is_empty(&nodes)) {
-        /* mark all the nodes as "added" */
-        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+        /* the node insert code doesn't check for uniqueness, so we will
+         * do so here - yes, this is an ugly, non-scalable loop, but this
+         * is the exception case and so we can do it here */
+        OPAL_LIST_FOREACH_SAFE(node, next, &nodes, orte_node_t) {
             node->state = ORTE_NODE_STATE_ADDED;
+            for (n=0; n < orte_node_pool->size; n++) {
+                if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
+                    continue;
+                }
+                if (0 == strcmp(node->name, nptr->name)) {
+                    opal_list_remove_item(&nodes, &node->super);
+                    OBJ_RELEASE(node);
+                    break;
+                }
+            }
         }
-        /* store the results in the global resource pool - this removes the
-         * list items
-         */
-        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
-            ORTE_ERROR_LOG(rc);
+        if (!opal_list_is_empty(&nodes)) {
+            /* store the results in the global resource pool - this removes the
+             * list items
+             */
+            if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            /* mark that an updated nidmap must be communicated to existing daemons */
+            orte_nidmap_communicated = false;
         }
-        /* cleanup */
-        OBJ_DESTRUCT(&nodes);
     }
+    /* cleanup */
+    OPAL_LIST_DESTRUCT(&nodes);
 
     /* shall we display the results? */
     if (0 < opal_output_get_verbosity(orte_ras_base_framework.framework_output)) {
