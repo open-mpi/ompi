@@ -48,6 +48,11 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                     int *provided)
 {
     int err;
+    char *env;
+
+    if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL")))  {
+        required = atoi(env);
+    }
 
     ompi_hook_base_mpi_init_thread_top(argc, argv, required, provided);
 
