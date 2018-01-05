@@ -48,6 +48,7 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                     int *provided)
 {
     int err, safe_required = MPI_THREAD_SERIALIZED;
+    char *env;
 
     ompi_hook_base_mpi_init_thread_top(argc, argv, required, provided);
 
@@ -56,7 +57,13 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
      */
     if( (MPI_THREAD_SINGLE == required) || (MPI_THREAD_SERIALIZED == required) ||
         (MPI_THREAD_FUNNELED == required) || (MPI_THREAD_MULTIPLE == required) ) {
-        safe_required = required;
+
+        if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL")))  {
+            safe_required = atoi(env);
+        }
+        else {
+            safe_required = required;
+        }
     }
 
     *provided = safe_required;
