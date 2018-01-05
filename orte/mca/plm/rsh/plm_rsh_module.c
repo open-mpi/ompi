@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -784,7 +784,7 @@ static void ssh_child(int argc, char **argv)
 /*
  * launch a set of daemons from a remote daemon
  */
-static int remote_spawn()
+static int remote_spawn(void)
 {
     int node_name_index1;
     int proc_vpid_index;
