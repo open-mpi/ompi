@@ -90,7 +90,7 @@ $fortran->{argvs_null} = {
 $fortran->{errcodes_ignore} = {
     c_type => "int *",
     c_name => "mpi_fortran_errcodes_ignore",
-    f_type => "integer",
+    f_type => "integer, dimension(1)",
     f_name => "MPI_ERRCODES_IGNORE",
 };
 $fortran->{status_ignore} = {
