@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -52,7 +52,7 @@
 
 static int isolated_init(void);
 static int isolated_launch(orte_job_t *jdata);
-static int remote_spawn();
+static int remote_spawn(void);
 static int isolated_terminate_orteds(void);
 static int isolated_finalize(void);
 
@@ -95,7 +95,7 @@ static int isolated_init(void)
 /*
  * launch a set of daemons from a remote daemon
  */
-static int remote_spawn()
+static int remote_spawn(void)
 {
     /* unused function in this mode */
     return ORTE_SUCCESS;
