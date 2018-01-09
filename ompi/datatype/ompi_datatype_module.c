@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -414,7 +414,9 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ompi_datatype_commit( &ptype );                                              \
         COPY_DATA_DESC( PDATA, ptype );                                              \
         (PDATA)->super.flags &= ~OPAL_DATATYPE_FLAG_PREDEFINED;                      \
-        (PDATA)->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;                       \
+        (PDATA)->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED |                      \
+                                OMPI_DATATYPE_FLAG_ANALYZED   |                      \
+                                OMPI_DATATYPE_FLAG_MONOTONIC;                        \
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
@@ -430,7 +432,9 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ompi_datatype_commit( &ptype );                                              \
         COPY_DATA_DESC( (PDATA), ptype );                                            \
         (PDATA)->super.flags &= ~OPAL_DATATYPE_FLAG_PREDEFINED;                      \
-        (PDATA)->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;                       \
+        (PDATA)->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED |                      \
+                                OMPI_DATATYPE_FLAG_ANALYZED   |                      \
+                                OMPI_DATATYPE_FLAG_MONOTONIC;                        \
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
@@ -445,7 +449,9 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         /* forget the language flag */                                               \
         (PDATA)->super.flags &= ~OMPI_DATATYPE_FLAG_DATA_LANGUAGE;                   \
         (PDATA)->super.flags &= ~OPAL_DATATYPE_FLAG_PREDEFINED;                      \
-        (PDATA)->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;                       \
+        (PDATA)->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED |                      \
+                                OMPI_DATATYPE_FLAG_ANALYZED   |                      \
+                                OMPI_DATATYPE_FLAG_MONOTONIC;                        \
     } while(0)
 
 

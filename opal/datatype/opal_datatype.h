@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -186,6 +186,7 @@ OPAL_DECLSPEC opal_datatype_t* opal_datatype_create( int32_t expectedSize );
 OPAL_DECLSPEC int32_t opal_datatype_create_desc( opal_datatype_t * datatype, int32_t expectedSize );
 OPAL_DECLSPEC int32_t opal_datatype_commit( opal_datatype_t * pData );
 OPAL_DECLSPEC int32_t opal_datatype_destroy( opal_datatype_t** );
+OPAL_DECLSPEC int32_t opal_datatype_is_monotonic( opal_datatype_t* type);
 
 static inline int32_t
 opal_datatype_is_committed( const opal_datatype_t* type )

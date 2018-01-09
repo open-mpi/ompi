@@ -15,6 +15,8 @@
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -59,6 +61,7 @@ libdatatype_la_SOURCES = \
         opal_datatype_fake_stack.c \
         opal_datatype_get_count.c \
         opal_datatype_module.c \
+        opal_datatype_monotonic.c \
         opal_datatype_optimize.c \
         opal_datatype_pack.c \
         opal_datatype_position.c \

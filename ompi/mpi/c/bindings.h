@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,6 +72,17 @@ BEGIN_C_DECLS
         else if( opal_datatype_is_overlapped(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE; \
         else if( !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;     \
     } while(0)
+
+#define OMPI_CHECK_DATATYPE_FOR_VIEW( RC, DDT, COUNT )                  \
+    do {                                                                \
+        /* (RC) = MPI_SUCCESS; */                                        \
+        if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
+        else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                    \
+        else if( !opal_datatype_is_committed(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;   \
+        /* XXX Fix flags else if( ompi_datatype_is_overlapped((DDT)) ) (RC) = MPI_ERR_TYPE; */ \
+        else if( !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;       \
+        else if( !ompi_datatype_is_monotonic((DDT)) ) (RC) = MPI_ERR_TYPE;       \
+    } while (0)
 
 
 /* This macro has to be used to check the correctness of the user buffer depending on the datatype.
