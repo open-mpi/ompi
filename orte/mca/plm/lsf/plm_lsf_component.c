@@ -104,8 +104,8 @@ static int plm_lsf_close(void)
 static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priority)
 {
 
-    /* check if lsf is running here */
-    if (NULL == getenv("LSB_JOBID") || lsb_init("ORTE launcher") < 0) {
+    /* check if lsf is running here and make sure IBM CSM is NOT enabled */
+    if (NULL == getenv("LSB_JOBID") || getenv("CSM_ALLOCATION_ID") || lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
         opal_output_verbose(10, orte_plm_base_framework.framework_output,
                             "plm:lsf: NOT available for selection");
