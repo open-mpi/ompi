@@ -13,7 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -59,9 +59,9 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
             rc = MPI_ERR_FILE;
             fh = MPI_FILE_NULL;
         } else {
-           OMPI_CHECK_DATATYPE_FOR_RECV(rc, etype, 0);
+           OMPI_CHECK_DATATYPE_FOR_VIEW(rc, etype, 0);
            if (MPI_SUCCESS == rc) {
-               OMPI_CHECK_DATATYPE_FOR_RECV(rc, filetype, 0);
+               OMPI_CHECK_DATATYPE_FOR_VIEW(rc, filetype, 0);
            }
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);

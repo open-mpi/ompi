@@ -7,7 +7,7 @@
  * Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -44,6 +44,8 @@ BEGIN_C_DECLS
 /* These flags are on top of the flags in opal_datatype.h */
 /* Is the datatype predefined as MPI type (not necessarily as OPAL type, e.g. struct/block types) */
 #define OMPI_DATATYPE_FLAG_PREDEFINED    0x0200
+#define OMPI_DATATYPE_FLAG_ANALYZED      0x0400
+#define OMPI_DATATYPE_FLAG_MONOTONIC     0x0800
 /* Keep trace of the type of the predefined datatypes */
 #define OMPI_DATATYPE_FLAG_DATA_INT      0x1000
 #define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x2000
@@ -153,11 +155,21 @@ ompi_datatype_is_contiguous_memory_layout( const ompi_datatype_t* type, int32_t 
 }
 
 static inline int32_t
+ompi_datatype_is_monotonic( ompi_datatype_t * type ) {
+    if (!(type->super.flags & OMPI_DATATYPE_FLAG_ANALYZED)) {
+        if (opal_datatype_is_monotonic(&type->super)) {
+            type->super.flags |= OMPI_DATATYPE_FLAG_MONOTONIC;
+        }
+        type->super.flags |= OMPI_DATATYPE_FLAG_ANALYZED;
+    }
+    return type->super.flags & OMPI_DATATYPE_FLAG_MONOTONIC;
+}
+
+static inline int32_t
 ompi_datatype_commit( ompi_datatype_t ** type )
 {
     return opal_datatype_commit ( (opal_datatype_t*)*type );
 }
-
 
 OMPI_DECLSPEC int32_t ompi_datatype_destroy( ompi_datatype_t** type);
 

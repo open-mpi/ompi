@@ -7,7 +7,7 @@
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
@@ -416,6 +416,8 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     { /*ompi_predefined_datatype_t*/                                                 \
         { /* ompi_datatype_t */                                                      \
             OMPI_DATATYPE_INITIALIZER_ ## TYPE (OMPI_DATATYPE_FLAG_PREDEFINED |      \
+                                                OMPI_DATATYPE_FLAG_ANALYZED   |      \
+                                                OMPI_DATATYPE_FLAG_MONOTONIC  |      \
                                                 (FLAGS)) /*super*/,                  \
             OMPI_DATATYPE_EMPTY_DATA(NAME) /*id,d_f_to_c_index,d_keyhash,args,packed_description,name*/ \
         },                                                                           \
@@ -457,6 +459,8 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
         .super = OPAL_OBJ_STATIC_INIT(opal_datatype_t),                              \
         .flags = OPAL_DATATYPE_FLAG_BASIC |                                          \
             OMPI_DATATYPE_FLAG_PREDEFINED |                                          \
+            OMPI_DATATYPE_FLAG_ANALYZED   |                                          \
+            OMPI_DATATYPE_FLAG_MONOTONIC  |                                          \
             OMPI_DATATYPE_FLAG_DATA_FORTRAN | (FLAGS),                               \
         .id = OPAL_DATATYPE_ ## TYPE ## SIZE,                                        \
         .bdt_used = (((uint32_t)1)<<(OPAL_DATATYPE_ ## TYPE ## SIZE)),               \
