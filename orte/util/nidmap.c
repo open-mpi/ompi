@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -209,7 +210,7 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
     char *node;
     char prefix[ORTE_MAX_NODE_PREFIX];
     int i, j, n, len, startnum, nodenum, numdigits;
-    bool found;
+    bool found, tryreverse;
     char *suffix, *sfx, *nodenames;
     orte_regex_node_t *ndreg;
     orte_regex_range_t *range, *rng;
@@ -270,11 +271,17 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
             }
         }
         node = nptr->name;
+        opal_output_verbose(5, orte_nidmap_output,
+                            "%s PROCESS NODE <%s>",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            node);
         /* determine this node's prefix by looking for first digit char */
+        tryreverse = false;
         len = strlen(node);
         startnum = -1;
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
         numdigits = 0;
+
         for (i=0, j=0; i < len; i++) {
             /* valid hostname characters are ascii letters, digits and the '-' character. */
             if (isdigit(node[i])) {
@@ -296,7 +303,46 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
             if (startnum < 0) {
                 prefix[j++] = node[i];
             }
+            else {
+                // We have a hostname with multiple sets of integers separated
+                // by letters (e.g., c712f6n01) so try to get the prefix backward.
+                tryreverse = true;
+                break;
+            }
         }
+
+        if( tryreverse ) {
+            /* Valid hostname characters are:
+             * - ascii letters, digits, and the '-' character.
+             * Determine the prefix in reverse to better support hostnames like:
+             * c712f6n01, c699c086 where there are sets of digits, and the lowest
+             * set changes most frequently.
+             */
+            startnum = -1;
+            memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
+            numdigits = 0;
+            for (i=len-1; i >= 0; i--) {
+                // Count all of the digits
+                if( isdigit(node[i]) ) {
+                    numdigits++;
+                    continue;
+                }
+                else {
+                    // At this point everything at and above position 'i' is prefix.
+                    for( j = 0; j <= i; ++j) {
+                        prefix[j] = node[j];
+                    }
+                    startnum = j;
+                    break;
+                }
+            }
+        }
+
+        opal_output_verbose(5, orte_nidmap_output,
+                            "%s PROCESS NODE <%s> : rev %c / prefix \"%s\" / numdigits %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            node, (tryreverse ? 'T' : 'F'), prefix, numdigits);
+
         if (startnum < 0) {
             /* can't compress this name - just add it to the list */
             ndreg = OBJ_NEW(orte_regex_node_t);
