@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -58,6 +58,7 @@
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
+#include "orte/mca/regx/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -68,8 +69,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
-#include "orte/util/regex.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/state/base/base.h"
@@ -519,9 +518,20 @@ int orte_ess_base_orted_setup(void)
     }
     if (ORTE_SUCCESS != (ret = orte_rmaps_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_rmaps_base_find_available";
+        error = "orte_rmaps_base_select";
         goto error;
     }
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_regx_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_regx_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_regx_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_regx_base_select";
+        goto error;
+    }
+
 
     /* if a topology file was given, then the rmaps framework open
      * will have reset our topology. Ensure we always get the right
@@ -545,7 +555,7 @@ int orte_ess_base_orted_setup(void)
      * own port, which we need in order to construct the nidmap
      */
     if (NULL != orte_node_regex) {
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_parse(orte_node_regex))) {
+        if (ORTE_SUCCESS != (ret = orte_regx.nidmap_parse(orte_node_regex))) {
             ORTE_ERROR_LOG(ret);
             error = "construct nidmap";
             goto error;
@@ -565,7 +575,7 @@ int orte_ess_base_orted_setup(void)
          * build a nidmap from it - this will update the
          * routing plan as well
          */
-        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap())) {
+        if (ORTE_SUCCESS != (ret = orte_regx.build_daemon_nidmap())) {
             ORTE_ERROR_LOG(ret);
             error = "construct daemon map from static ports";
             goto error;
