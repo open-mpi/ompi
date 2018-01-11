@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -868,7 +868,7 @@ typedef int (*opal_pmix_base_process_monitor_fn_t)(opal_list_t *monitor,
                                                    opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* register cleanup */
-typedef int (*opal_pmix_base_register_cleanup_fn_t)(char *path, bool ignore, bool jobscope);
+typedef int (*opal_pmix_base_register_cleanup_fn_t)(char *path, bool directory, bool ignore, bool jobscope);
 
 /*
  * the standard public API data structure

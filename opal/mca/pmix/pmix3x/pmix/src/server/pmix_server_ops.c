@@ -2106,30 +2106,36 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
                 rc = PMIX_ERR_BAD_PARAM;
                 goto exit;
             }
-            if (0 != stat(cd->info[n].value.data.string, &statbuf)) {
+            cf = PMIX_NEW(pmix_cleanup_file_t);
+            if (NULL == cf) {
+                /* return an error */
+                rc = PMIX_ERR_NOMEM;
+                goto exit;
+            }
+            cf->path = strdup(cd->info[n].value.data.string);
+            pmix_list_append(&cachefiles, &cf->super);
+        } else if (0 == strncmp(cd->info[n].key, PMIX_REGISTER_CLEANUP_DIR, PMIX_MAX_KEYLEN)) {
+            ++cnt;
+            /* see if we allow epilog requests */
+            if (NULL == epi) {
                 /* return an error */
                 rc = PMIX_ERR_BAD_PARAM;
                 goto exit;
             }
-            if (S_ISDIR(statbuf.st_mode)) {
-                cdir = PMIX_NEW(pmix_cleanup_dir_t);
-                if (NULL == cdir) {
-                    /* return an error */
-                    rc = PMIX_ERR_NOMEM;
-                    goto exit;
-                }
-                cdir->path = strdup(cd->info[n].value.data.string);
-                pmix_list_append(&cachedirs, &cdir->super);
-            } else {
-                cf = PMIX_NEW(pmix_cleanup_file_t);
-                if (NULL == cf) {
-                    /* return an error */
-                    rc = PMIX_ERR_NOMEM;
-                    goto exit;
-                }
-                cf->path = strdup(cd->info[n].value.data.string);
-                pmix_list_append(&cachefiles, &cf->super);
+            if (PMIX_STRING != cd->info[n].value.type ||
+                NULL == cd->info[n].value.data.string) {
+                /* return an error */
+                rc = PMIX_ERR_BAD_PARAM;
+                goto exit;
             }
+            cdir = PMIX_NEW(pmix_cleanup_dir_t);
+            if (NULL == cdir) {
+                /* return an error */
+                rc = PMIX_ERR_NOMEM;
+                goto exit;
+            }
+            cdir->path = strdup(cd->info[n].value.data.string);
+            pmix_list_append(&cachedirs, &cdir->super);
         } else if (0 == strncmp(cd->info[n].key, PMIX_CLEANUP_RECURSIVE, PMIX_MAX_KEYLEN)) {
             /* see if we allow epilog requests */
             if (NULL == epi) {

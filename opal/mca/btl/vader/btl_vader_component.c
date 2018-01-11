@@ -15,7 +15,7 @@
  * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -510,9 +510,8 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
             free (btls);
             return NULL;
         }
-
         if (NULL != opal_pmix.register_cleanup) {
-            opal_pmix.register_cleanup (sm_file, false, false);
+            opal_pmix.register_cleanup (sm_file, false, false, false);
         }
 
         rc = opal_shmem_segment_create (&component->seg_ds, sm_file, component->segment_size);
