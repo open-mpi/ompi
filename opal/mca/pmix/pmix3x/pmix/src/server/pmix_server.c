@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -346,6 +346,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 {
     int i;
     pmix_peer_t *peer;
+    pmix_nspace_t *ns;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
@@ -359,7 +360,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
         return PMIX_SUCCESS;
     }
     pmix_globals.init_cntr = 0;
-    PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
                         "pmix:server finalize called");
@@ -376,6 +376,10 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 
     for (i=0; i < pmix_server_globals.clients.size; i++) {
         if (NULL != (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, i))) {
+            /* ensure that we do the specified cleanup - if this is an
+             * abnormal termination, then the peer object may not be
+             * at zero refcount */
+            pmix_execute_epilog(&peer->epilog);
             PMIX_RELEASE(peer);
         }
     }
@@ -385,6 +389,12 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     PMIX_LIST_DESTRUCT(&pmix_server_globals.local_reqs);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.gdata);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.events);
+    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_nspace_t) {
+        /* ensure that we do the specified cleanup - if this is an
+         * abnormal termination, then the nspace object may not be
+         * at zero refcount */
+        pmix_execute_epilog(&ns->epilog);
+    }
     PMIX_LIST_DESTRUCT(&pmix_server_globals.nspaces);
 
     if (NULL != security_mode) {
@@ -406,6 +416,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 
     pmix_output_verbose(2, pmix_server_globals.base_output,
                         "pmix:server finalize complete");
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+    PMIX_DESTRUCT_LOCK(&pmix_global_lock);
 
     return PMIX_SUCCESS;
 }

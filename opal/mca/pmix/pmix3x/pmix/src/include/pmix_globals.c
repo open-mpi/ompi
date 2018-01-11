@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  *                         and Technology (RIST). All rights reserved.
@@ -53,7 +53,6 @@
 #include "src/util/error.h"
 #include "src/util/os_path.h"
 
-static void cleanup(pmix_epilog_t *epi);
 static void dirpath_destroy(char *path, pmix_cleanup_dir_t *cd,
                             pmix_epilog_t *epi);
 static bool dirpath_is_empty(const char *path);
@@ -121,7 +120,7 @@ static void nsdes(pmix_nspace_t *p)
     }
     PMIX_LIST_DESTRUCT(&p->ranks);
     /* perform any epilog */
-    cleanup(&p->epilog);
+    pmix_execute_epilog(&p->epilog);
     /* cleanup the epilog */
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_dirs);
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_files);
@@ -208,7 +207,7 @@ static void pdes(pmix_peer_t *p)
         PMIX_RELEASE(p->recv_msg);
     }
     /* perform any epilog */
-    cleanup(&p->epilog);
+    pmix_execute_epilog(&p->epilog);
     /* cleanup the epilog */
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_dirs);
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_files);
@@ -318,15 +317,15 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
                                 pmix_object_t,
                                 qcon, qdes);
 
-static void cleanup(pmix_epilog_t *epi)
+void pmix_execute_epilog(pmix_epilog_t *epi)
 {
-    pmix_cleanup_file_t *cf;
-    pmix_cleanup_dir_t *cd;
+    pmix_cleanup_file_t *cf, *cfnext;
+    pmix_cleanup_dir_t *cd, *cdnext;
     struct stat statbuf;
     int rc;
 
     /* start with any specified files */
-    PMIX_LIST_FOREACH(cf, &epi->cleanup_files, pmix_cleanup_file_t) {
+    PMIX_LIST_FOREACH_SAFE(cf, cfnext, &epi->cleanup_files, pmix_cleanup_file_t) {
         /* check the effective uid/gid of the file and ensure it
          * matches that of the peer - we do this to provide at least
          * some minimum level of protection */
@@ -350,10 +349,12 @@ static void cleanup(pmix_epilog_t *epi)
             pmix_output_verbose(10, pmix_globals.debug_output,
                                 "File %s failed to unlink: %s", cf->path, strerror(rc));
         }
+        pmix_list_remove_item(&epi->cleanup_files, &cf->super);
+        PMIX_RELEASE(cf);
     }
 
     /* now cleanup the directories */
-    PMIX_LIST_FOREACH(cd, &epi->cleanup_dirs, pmix_cleanup_dir_t) {
+    PMIX_LIST_FOREACH_SAFE(cd, cdnext, &epi->cleanup_dirs, pmix_cleanup_dir_t) {
         /* check the effective uid/gid of the file and ensure it
          * matches that of the peer - we do this to provide at least
          * some minimum level of protection */
@@ -378,6 +379,8 @@ static void cleanup(pmix_epilog_t *epi)
             pmix_output_verbose(10, pmix_globals.debug_output,
                                 "Directory %s lacks permissions", cd->path);
         }
+        pmix_list_remove_item(&epi->cleanup_dirs, &cd->super);
+        PMIX_RELEASE(cd);
     }
 }
 
