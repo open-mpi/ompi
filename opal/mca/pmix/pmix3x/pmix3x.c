@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -74,7 +74,7 @@ static void pmix3x_query(opal_list_t *queries,
 static void pmix3x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-static int pmix3x_register_cleanup(char *path, bool ignore, bool jobscope);
+static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope);
 
 const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     /* client APIs */
@@ -360,14 +360,13 @@ static void cleanup_cbfunc(pmix_status_t status,
     OPAL_PMIX_WAKEUP_THREAD(lk);
 }
 
-static int pmix3x_register_cleanup(char *path, bool ignore, bool jobscope)
+static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope)
 {
     opal_pmix_lock_t lk;
     pmix_info_t pinfo[3];
     size_t n, ninfo=0;
     pmix_status_t rc;
     int ret;
-    struct stat statbuf;
 
     OPAL_PMIX_CONSTRUCT_LOCK(&lk);
 
@@ -376,17 +375,15 @@ static int pmix3x_register_cleanup(char *path, bool ignore, bool jobscope)
         PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_CLEANUP_IGNORE, path, PMIX_STRING);
         ++ninfo;
     } else {
-        /* order cleanup of the provided path */
-        PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_REGISTER_CLEANUP, path, PMIX_STRING);
-        ++ninfo;
-        /* if the path is a directory, then we need to tell the server
-         * to recursively clean up */
-        if (stat(path, &statbuf) != 0) {
-            return OPAL_ERR_NOT_FOUND;
-        }
-        if (S_ISDIR(statbuf.st_mode)) {
+        if (directory) {
+            PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_REGISTER_CLEANUP_DIR, path, PMIX_STRING);
+            ++ninfo;
             /* recursively cleanup directories */
             PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_CLEANUP_RECURSIVE, NULL, PMIX_BOOL);
+            ++ninfo;
+        } else {
+            /* order cleanup of the provided path */
+            PMIX_INFO_LOAD(&pinfo[ninfo], PMIX_REGISTER_CLEANUP, path, PMIX_STRING);
             ++ninfo;
         }
     }

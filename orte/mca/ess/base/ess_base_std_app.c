@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
@@ -149,13 +149,13 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         /* register the directory for cleanup */
         if (NULL != opal_pmix.register_cleanup) {
             if (orte_standalone_operation) {
-                if (OPAL_SUCCESS != (ret = opal_pmix.register_cleanup(orte_process_info.top_session_dir, false, true))) {
+                if (OPAL_SUCCESS != (ret = opal_pmix.register_cleanup(orte_process_info.top_session_dir, true, false, true))) {
                     ORTE_ERROR_LOG(ret);
                     error = "register cleanup";
                     goto error;
                 }
             } else {
-                if (OPAL_SUCCESS != (ret = opal_pmix.register_cleanup(orte_process_info.jobfam_session_dir, false, false))) {
+                if (OPAL_SUCCESS != (ret = opal_pmix.register_cleanup(orte_process_info.jobfam_session_dir, true, false, false))) {
                     ORTE_ERROR_LOG(ret);
                     error = "register cleanup";
                     goto error;

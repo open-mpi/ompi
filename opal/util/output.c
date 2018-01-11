@@ -16,7 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -802,7 +802,7 @@ static int open_file(int i)
 
         /* register it to be ignored */
         if (NULL != opal_pmix.register_cleanup) {
-            opal_pmix.register_cleanup(filename, true, false);
+            opal_pmix.register_cleanup(filename, false, true, false);
         }
         free(filename);  /* release the filename in all cases */
     }
