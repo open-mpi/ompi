@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -51,6 +51,7 @@
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/ras/base/base.h"
+#include "orte/mca/regx/regx.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rml/rml.h"
@@ -71,10 +72,8 @@
 #include "orte/runtime/orte_quit.h"
 #include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/regex.h"
 #include "orte/util/threads.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
@@ -1561,7 +1560,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* convert the nodes with daemons to a regex */
     param = NULL;
-    if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, &param))) {
+    if (ORTE_SUCCESS != (rc = orte_regx.nidmap_create(orte_node_pool, &param))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
