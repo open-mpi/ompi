@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,11 +25,11 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/ras/base/base.h"
+#include "orte/mca/regx/regx.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/threads.h"
 #include "orte/runtime/orte_quit.h"
@@ -265,7 +265,7 @@ static void vm_ready(int fd, short args, void *cbdata)
         /* if we couldn't provide the allocation regex on the orted
          * cmd line, then we need to provide all the info here */
         if (!orte_nidmap_communicated) {
-            if (ORTE_SUCCESS != (rc = orte_util_nidmap_create(orte_node_pool, &nidmap))) {
+            if (ORTE_SUCCESS != (rc = orte_regx.nidmap_create(orte_node_pool, &nidmap))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
                 return;
@@ -282,7 +282,7 @@ static void vm_ready(int fd, short args, void *cbdata)
         if (!orte_node_info_communicated) {
             flag = 1;
             opal_dss.pack(buf, &flag, 1, OPAL_INT8);
-            if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(buf))) {
+            if (ORTE_SUCCESS != (rc = orte_regx.encode_nodemap(buf))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
                 return;
