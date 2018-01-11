@@ -52,6 +52,15 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
 
     AS_IF([test "$opal_check_package_header_happy" = "no"],
           [AS_IF([test "$dir_prefix" != ""],
+                 [$1_CPPFLAGS="$$1_CPPFLAGS -I$dir_prefix"
+                  CPPFLAGS="$CPPFLAGS -I$dir_prefix"])
+          AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
+          AS_IF([test "$opal_check_package_header_happy" = "no"],
+                [# no go on the as is - reset the cache and try again
+                 unset opal_Header])])
+
+    AS_IF([test "$opal_check_package_header_happy" = "no"],
+          [AS_IF([test "$dir_prefix" != ""],
                  [$1_CPPFLAGS="$$1_CPPFLAGS -I$dir_prefix/include"
                   CPPFLAGS="$CPPFLAGS -I$dir_prefix/include"])
           AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
