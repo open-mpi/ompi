@@ -34,8 +34,8 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
-3.0.1 -- December, 2017
------------------------
+3.0.1 -- January, 2018
+----------------------
 
 - Disable the LSF launcher if CSM is detected.
 - Plug a memory leak in MPI_Mem_free().  Thanks to Philip Blakely for reporting.
