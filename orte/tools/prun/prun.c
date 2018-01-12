@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -98,6 +98,7 @@ static struct {
 
 static opal_list_t job_info;
 static volatile bool active = false;
+static orte_jobid_t myjobid = ORTE_JOBID_INVALID;
 
 static int create_app(int argc, char* argv[],
                       opal_list_t *jdata,
@@ -177,7 +178,9 @@ static void evhandler(int status,
     int jobstatus=0;
     orte_jobid_t jobid = ORTE_JOBID_INVALID;
 
-    if (orte_cmd_options.verbose && NULL != info) {
+    /* we should always have info returned to us - if not, there is
+     * nothing we can do */
+    if (NULL != info) {
         OPAL_LIST_FOREACH(val, info, opal_value_t) {
             if (0 == strcmp(val->key, OPAL_PMIX_JOB_TERM_STATUS)) {
                 jobstatus = val->data.integer;
@@ -185,13 +188,21 @@ static void evhandler(int status,
                 jobid = val->data.name.jobid;
             }
         }
-        opal_output(0, "JOB %s COMPLETED WITH STATUS %d",
-                    ORTE_JOBID_PRINT(jobid), jobstatus);
+        if (orte_cmd_options.verbose && (myjobid != ORTE_JOBID_INVALID && jobid == myjobid)) {
+            opal_output(0, "JOB %s COMPLETED WITH STATUS %d",
+                        ORTE_JOBID_PRINT(jobid), jobstatus);
+        }
     }
+
+    /* we _always_ have to execute the evhandler callback or
+     * else the event progress engine will hang */
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, NULL, NULL, NULL, cbdata);
     }
-    if (!fired) {
+    /* only terminate if this was our job - keep in mind that we
+     * can get notifications of job termination prior to our spawn
+     * having completed! */
+    if (!fired && (myjobid != ORTE_JOBID_INVALID && jobid == myjobid)) {
         fired = true;
         active = false;
     }
@@ -207,7 +218,6 @@ int prun(int argc, char *argv[])
     opal_pmix_app_t *app;
     opal_value_t *val;
     opal_list_t info;
-    opal_jobid_t jobid;
     struct timespec tp = {0, 100000};
 
     /* init the globals */
@@ -622,7 +632,7 @@ int prun(int argc, char *argv[])
         opal_list_append(&job_info, &val->super);
     }
 
-    if (OPAL_SUCCESS != (rc = opal_pmix.spawn(&job_info, &apps, &jobid))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix.spawn(&job_info, &apps, &myjobid))) {
         opal_output(0, "Job failed to spawn: %s", opal_strerror(rc));
         goto DONE;
     }
@@ -630,7 +640,7 @@ int prun(int argc, char *argv[])
     OPAL_LIST_DESTRUCT(&apps);
 
     if (orte_cmd_options.verbose) {
-        opal_output(0, "JOB %s EXECUTING", OPAL_JOBID_PRINT(jobid));
+        opal_output(0, "JOB %s EXECUTING", OPAL_JOBID_PRINT(myjobid));
     }
 
     while (active) {
