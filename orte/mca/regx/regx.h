@@ -3,6 +3,8 @@
  * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,6 +61,7 @@ typedef int (*orte_regx_base_module_init_fn_t)(void);
 
 typedef int (*orte_regx_base_module_nidmap_create_fn_t)(opal_pointer_array_t *pool, char **regex);
 typedef int (*orte_regx_base_module_nidmap_parse_fn_t)(char *regex);
+typedef int (*orte_regx_base_module_extract_node_names_fn_t)(char *regexp, char ***names);
 
 /* create a regular expression describing the nodes in the
  * allocation */
@@ -87,6 +90,7 @@ typedef struct {
     orte_regx_base_module_init_fn_t                   init;
     orte_regx_base_module_nidmap_create_fn_t          nidmap_create;
     orte_regx_base_module_nidmap_parse_fn_t           nidmap_parse;
+    orte_regx_base_module_extract_node_names_fn_t     extract_node_names;
     orte_regx_base_module_encode_nodemap_fn_t         encode_nodemap;
     orte_regx_base_module_decode_daemon_nodemap_fn_t  decode_daemon_nodemap;
     orte_regx_base_module_build_daemon_nidmap_fn_t    build_daemon_nidmap;

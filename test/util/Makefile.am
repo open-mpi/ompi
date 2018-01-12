@@ -12,6 +12,8 @@
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,7 +32,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 #        opal_os_create_dirpath \
 #        opal_argv \
 #        opal_basename \
-#        opal_path_nfs
+#        opal_path_nfs \
+#        orte_nidmap
 
 
 check_PROGRAMS = \
@@ -118,6 +121,12 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 #        $(top_builddir)/orte/libopen-rte.la \
 #        $(top_builddir)/test/support/libsupport.a
 #orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
+
+#orte_nidmap_SOURCES = orte_nidmap.c
+#orte_nidmap_LDADD = \
+#        $(top_builddir)/orte/libopen-rte.la \
+#        $(top_builddir)/test/support/libsupport.a
+#orte_nidmap_DEPENDENCIES = $(orte_nidmap_LDADD)
 
 bipartite_graph_SOURCES = bipartite_graph.c
 bipartite_graph_LDADD = \
