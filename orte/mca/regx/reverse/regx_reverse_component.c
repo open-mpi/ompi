@@ -42,4 +42,3 @@ static int component_query(mca_base_module_t **module, int *priority)
     *priority = 1;
     return ORTE_SUCCESS;
 }
-
