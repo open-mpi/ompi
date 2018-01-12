@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +35,7 @@
 
 static int nidmap_create(opal_pointer_array_t *pool, char **regex);
 static int nidmap_parse(char *regex);
+static int extract_node_names(char *regex, char ***node_names);
 static int encode_nodemap(opal_buffer_t *buffer);
 static int decode_daemon_nodemap(opal_buffer_t *buffer);
 static int generate_ppn(orte_job_t *jdata, char **ppn);
@@ -41,6 +44,7 @@ static int parse_ppn(orte_job_t *jdata, char *ppn);
 orte_regx_base_module_t orte_regx_fwd_module = {
     .nidmap_create = nidmap_create,
     .nidmap_parse = nidmap_parse,
+    .extract_node_names = extract_node_names,
     .encode_nodemap = encode_nodemap,
     .decode_daemon_nodemap = decode_daemon_nodemap,
     .generate_ppn = generate_ppn,
@@ -98,7 +102,6 @@ OBJ_CLASS_INSTANCE(orte_regex_node_t,
                    opal_list_item_t,
                    orte_regex_node_construct,
                    orte_regex_node_destruct);
-static int extract_node_names(char *regexp, char ***names);
 
 static int nidmap_create(opal_pointer_array_t *pool, char **regex)
 {
