@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -268,14 +269,12 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
         len = strlen(node);
         startnum = -1;
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
-        numdigits = 0;
         for (i=0, j=0; i < len; i++) {
             /* valid hostname characters are ascii letters, digits and the '-' character. */
             if (isdigit(node[i])) {
                 /* count the size of the numeric field - but don't
                  * add the digits to the prefix
                  */
-                numdigits++;
                 if (startnum < 0) {
                     /* okay, this defines end of the prefix */
                     startnum = i;
@@ -302,8 +301,10 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
         nodenum = strtol(&node[startnum], &sfx, 10);
         if (NULL != sfx) {
             suffix = strdup(sfx);
+            numdigits = (int)(sfx - &node[startnum]);
         } else {
             suffix = NULL;
+            numdigits = (int)strlen(&node[startnum]);
         }
         /* is this node name already on our list? */
         found = false;
