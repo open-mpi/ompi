@@ -34,4 +34,3 @@ mca_regx_fwd_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_regx_fwd_la_SOURCES = $(sources)
 libmca_regx_fwd_la_LDFLAGS = -module -avoid-version
-

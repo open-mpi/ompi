@@ -26,4 +26,3 @@ extern orte_regx_base_module_t orte_regx_reverse_module;
 END_C_DECLS
 
 #endif /* MCA_REGX_ORTE_H_ */
-

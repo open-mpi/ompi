@@ -26,4 +26,3 @@ extern orte_regx_base_module_t orte_regx_fwd_module;
 END_C_DECLS
 
 #endif /* MCA_REGX_FwD_H_ */
-
