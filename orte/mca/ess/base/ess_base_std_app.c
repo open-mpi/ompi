@@ -155,7 +155,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
                     goto error;
                 }
             } else {
-                if (OPAL_SUCCESS != (ret = opal_pmix.register_cleanup(orte_process_info.jobfam_session_dir, true, false, false))) {
+                if (OPAL_SUCCESS != (ret = opal_pmix.register_cleanup(orte_process_info.job_session_dir, true, false, false))) {
                     ORTE_ERROR_LOG(ret);
                     error = "register cleanup";
                     goto error;
