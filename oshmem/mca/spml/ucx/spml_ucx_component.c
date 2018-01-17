@@ -93,7 +93,7 @@ static inline void  mca_spml_ucx_param_register_string(const char* param_name,
 
 static int mca_spml_ucx_component_register(void)
 {
-    mca_spml_ucx_param_register_int("priority", 5,
+    mca_spml_ucx_param_register_int("priority", 21,
                                       "[integer] ucx priority",
                                       &mca_spml_ucx.priority);
 
