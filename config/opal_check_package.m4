@@ -42,7 +42,9 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
     dir_prefix=$(echo $3 | sed -e 'sX/*$XXg')
     opal_check_package_header_happy="no"
     AS_IF([test "$dir_prefix" = "/usr" || \
-           test "$dir_prefix" = "/usr/local"],
+           test "$dir_prefix" = "/usr/local" || \
+           test "$dir_prefix" = "/usr/include" || \
+           test "$dir_prefix" = "/usr/local/include"],
            [ # try as is...
             AC_VERBOSE([looking for header without includes])
             AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [])
