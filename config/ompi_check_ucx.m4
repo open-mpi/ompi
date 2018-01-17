@@ -100,6 +100,15 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                 AC_MSG_RESULT([$ompi_check_ucx_happy])
                                 CPPFLAGS=$old_CPPFLAGS])])
 
+                  old_CPPFLAGS="$CPPFLAGS"
+                  AS_IF([test -n "$ompi_check_ucx_dir"],
+                        [CPPFLAGS="$CPPFLAGS -I$ompi_check_ucx_dir/include"])
+                  AC_CHECK_DECLS([ucp_tag_send_nbr],
+                                 [AC_DEFINE([HAVE_UCP_TAG_SEND_NBR],[1],
+                                            [have ucp_tag_send_nbr()])], [],
+                                 [#include <ucp/api/ucp.h>])
+                  CPPFLAGS=$old_CPPFLAGS
+
                   OPAL_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])])])
 
     AS_IF([test "$ompi_check_ucx_happy" = "yes"],
