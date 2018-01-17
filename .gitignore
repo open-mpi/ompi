@@ -435,6 +435,7 @@ orte/test/mpi/badcoll
 orte/test/mpi/iof
 orte/test/mpi/no-disconnect
 orte/test/mpi/nonzero
+orte/test/mpi/add_host
 
 orte/test/system/radix
 orte/test/system/sigusr_trap
