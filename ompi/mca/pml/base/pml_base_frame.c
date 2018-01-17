@@ -213,6 +213,7 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
              0 == strlen(default_pml[0])) || (default_pml[0][0] == '^') ) {
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("yalla"));
+            opal_pointer_array_add(&mca_pml_base_pml, strdup("ucx"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else {
             opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml[0]));

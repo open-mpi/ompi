@@ -55,7 +55,7 @@ static int mca_pml_ucx_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_ucx.verbose);
 
-    ompi_pml_ucx.priority = 5;
+    ompi_pml_ucx.priority = 51;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "priority",
                                            "Priority of the UCX component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
