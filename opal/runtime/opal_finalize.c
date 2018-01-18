@@ -36,6 +36,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/show_help.h"
+#include "opal/util/vmtracker.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -162,6 +163,9 @@ opal_finalize(void)
 
     /* cleanup the main thread specific stuff */
     opal_tsd_keys_destruct();
+
+    /* finalize the vmtracker */
+    opal_vmtracker_finalize();
 
     /* finalize util code */
     opal_finalize_util();

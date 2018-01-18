@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-# Copyright (c) 2013      Intel, Inc. All rights reserved
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2016      Research Organization for Information Science
@@ -75,7 +75,8 @@ headers = \
         timings.h \
         uri.h \
         info_subscriber.h \
-	info.h
+	info.h \
+        vmtracker.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
@@ -113,7 +114,8 @@ libopalutil_la_SOURCES = \
         sys_limits.c \
         uri.c \
  	info_subscriber.c \
- 	info.c
+        info.c \
+        vmtracker.c
 
 if OPAL_COMPILE_TIMING
 libopalutil_la_SOURCES += timings.c
