@@ -23,8 +23,11 @@ typedef struct ucx_iovec {
 
 static inline int check_sync_state(ompi_osc_ucx_module_t *module, int target,
                                    bool is_req_ops) {
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (is_req_ops == false) {
         if (module->epoch_type.access == NONE_EPOCH) {
+            OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERR_RMA_SYNC;
         } else if (module->epoch_type.access == START_COMPLETE_EPOCH) {
             int i, size = ompi_group_size(module->start_group);
@@ -34,27 +37,34 @@ static inline int check_sync_state(ompi_osc_ucx_module_t *module, int target,
                 }
             }
             if (i == size) {
+                OPAL_THREAD_UNLOCK(&module->lock);
                 return OMPI_ERR_RMA_SYNC;
             }
         } else if (module->epoch_type.access == PASSIVE_EPOCH) {
             ompi_osc_ucx_lock_t *item = NULL;
             opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target, (void **) &item);
             if (item == NULL) {
+                OPAL_THREAD_UNLOCK(&module->lock);
                 return OMPI_ERR_RMA_SYNC;
             }
         }
     } else {
         if (module->epoch_type.access != PASSIVE_EPOCH &&
             module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+            OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERR_RMA_SYNC;
         } else if (module->epoch_type.access == PASSIVE_EPOCH) {
             ompi_osc_ucx_lock_t *item = NULL;
             opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target, (void **) &item);
             if (item == NULL) {
+                OPAL_THREAD_UNLOCK(&module->lock);
                 return OMPI_ERR_RMA_SYNC;
             }
         }
     }
+
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     return OMPI_SUCCESS;
 }
 
@@ -62,9 +72,14 @@ static inline int incr_and_check_ops_num(ompi_osc_ucx_module_t *module, int targ
                                          ucp_ep_h ep) {
     ucs_status_t status;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     module->global_ops_num++;
     module->per_target_ops_nums[target]++;
     if (module->global_ops_num >= OSC_UCX_OPS_THRESHOLD) {
+
+        OPAL_THREAD_UNLOCK(&module->lock);
+
         /* TODO: ucp_ep_flush needs to be replaced with its non-blocking counterpart
          * when it is implemented in UCX */
         status = ucp_ep_flush(ep);
@@ -74,9 +89,15 @@ static inline int incr_and_check_ops_num(ompi_osc_ucx_module_t *module, int targ
                                 __FILE__, __LINE__, status);
             return OMPI_ERROR;
         }
+
+        OPAL_THREAD_LOCK(&module->lock);
+
         module->global_ops_num -= module->per_target_ops_nums[target];
         module->per_target_ops_nums[target] = 0;
     }
+
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     return OMPI_SUCCESS;
 }
 
@@ -820,7 +841,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     }
 
     internal_req = ucp_atomic_fetch_nb(ep, UCP_ATOMIC_FETCH_OP_FADD, 0,
-                                       &(module->req_result), sizeof(uint64_t),
+                                       &(ucx_req->req_result), sizeof(uint64_t),
                                        remote_addr, rkey, req_completion);
 
     if (UCS_PTR_IS_PTR(internal_req)) {
@@ -874,7 +895,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     }
 
     internal_req = ucp_atomic_fetch_nb(ep, UCP_ATOMIC_FETCH_OP_FADD, 0,
-                                       &(module->req_result), sizeof(uint64_t),
+                                       &(ucx_req->req_result), sizeof(uint64_t),
                                        remote_addr, rkey, req_completion);
 
     if (UCS_PTR_IS_PTR(internal_req)) {

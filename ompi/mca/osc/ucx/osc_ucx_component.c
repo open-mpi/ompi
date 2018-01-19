@@ -319,6 +319,8 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
+    OPAL_THREAD_LOCK(&mca_osc_ucx_component.lock);
+
     /* if UCP worker has never been initialized before, init it first */
     if (mca_osc_ucx_component.ucp_worker == NULL) {
         ucp_worker_params_t worker_params;
@@ -591,6 +593,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     module->post_group = NULL;
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
     OBJ_CONSTRUCT(&module->pending_posts, opal_list_t);
+    OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
     module->global_ops_num = 0;
     module->per_target_ops_nums = calloc(comm_size, sizeof(int));
     module->start_grp_ranks = NULL;
@@ -610,6 +613,8 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     if (ret != OMPI_SUCCESS) {
         goto error;
     }
+
+    OPAL_THREAD_UNLOCK(&mca_osc_ucx_component.lock);
 
     return ret;
 
@@ -640,6 +645,9 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     }
     if (worker_created) ucp_worker_destroy(mca_osc_ucx_component.ucp_worker);
     if (module) free(module);
+
+    OPAL_THREAD_UNLOCK(&mca_osc_ucx_component.lock);
+
     return ret;
 }
 
@@ -669,6 +677,7 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     assert(opal_list_is_empty(&module->pending_posts) == true);
     OBJ_DESTRUCT(&module->outstanding_locks);
     OBJ_DESTRUCT(&module->pending_posts);
+    OBJ_DESTRUCT(&module->lock);
 
     while (module->state.lock != TARGET_LOCK_UNLOCKED) {
         /* not sure if this is required */

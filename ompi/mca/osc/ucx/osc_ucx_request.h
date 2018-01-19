@@ -18,6 +18,7 @@
 
 typedef struct ompi_osc_ucx_request {
     ompi_request_t super;
+    uint64_t req_result;
 } ompi_osc_ucx_request_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_ucx_request_t);
@@ -29,15 +30,19 @@ typedef struct ompi_osc_ucx_internal_request {
 #define OMPI_OSC_UCX_REQUEST_ALLOC(win, req)                            \
     do {                                                                \
         opal_free_list_item_t *item;                                    \
+        OPAL_THREAD_LOCK(&mca_osc_ucx_component.lock);                  \
         do {                                                            \
             item = opal_free_list_get(&mca_osc_ucx_component.requests); \
             if (item == NULL) {                                         \
                 if (mca_osc_ucx_component.ucp_worker != NULL &&         \
                     mca_osc_ucx_component.num_incomplete_req_ops > 0) { \
+                    OPAL_THREAD_UNLOCK(&mca_osc_ucx_component.lock);    \
                     ucp_worker_progress(mca_osc_ucx_component.ucp_worker); \
+                    OPAL_THREAD_LOCK(&mca_osc_ucx_component.lock);      \
                 }                                                       \
             }                                                           \
         } while (item == NULL);                                         \
+        OPAL_THREAD_UNLOCK(&mca_osc_ucx_component.lock);                \
         req = (ompi_osc_ucx_request_t*) item;                           \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.win = win;                            \

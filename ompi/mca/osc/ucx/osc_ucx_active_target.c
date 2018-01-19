@@ -61,8 +61,11 @@ int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucs_status_t status;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != NONE_EPOCH &&
         module->epoch_type.access != FENCE_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -71,6 +74,8 @@ int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
     } else {
         module->epoch_type.access = FENCE_EPOCH;
     }
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     if (!(assert & MPI_MODE_NOPRECEDE)) {
         status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
@@ -82,9 +87,13 @@ int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
         }
     }
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     module->global_ops_num = 0;
     memset(module->per_target_ops_nums, 0,
            sizeof(int) * ompi_comm_size(module->comm));
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     return module->comm->c_coll->coll_barrier(module->comm,
                                               module->comm->c_coll->coll_barrier_module);
@@ -96,8 +105,11 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int assert, struct ompi_win_t
     ompi_group_t *win_group = NULL;
     int ret = OMPI_SUCCESS;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != NONE_EPOCH &&
         module->epoch_type.access != FENCE_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -116,17 +128,23 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int assert, struct ompi_win_t
 
     ret = ompi_comm_group(module->comm, &win_group);
     if (ret != OMPI_SUCCESS) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERROR;
     }
 
     ret = ompi_group_translate_ranks(module->start_group, size, ranks_in_grp,
                                      win_group, ranks_in_win_grp);
     if (ret != OMPI_SUCCESS) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERROR;
     }
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     if ((assert & MPI_MODE_NOCHECK) == 0) {
         ompi_osc_ucx_pending_post_t *pending_post, *next;
+
+        OPAL_THREAD_LOCK(&module->lock);
 
         /* first look through the pending list */
         OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_ucx_pending_post_t) {
@@ -153,12 +171,18 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int assert, struct ompi_win_t
         }
 
         module->post_count = 0;
+
+        OPAL_THREAD_UNLOCK(&module->lock);
     }
 
     free(ranks_in_grp);
     ompi_group_free(&win_group);
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     module->start_grp_ranks = ranks_in_win_grp;
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -169,11 +193,16 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
     int i, size;
     int ret = OMPI_SUCCESS;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != START_COMPLETE_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     module->epoch_type.access = NONE_EPOCH;
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
@@ -182,11 +211,17 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
                             __FILE__, __LINE__, status);
         return OMPI_ERROR;
     }
+
+    OPAL_THREAD_LOCK(&module->lock);
+
     module->global_ops_num = 0;
     memset(module->per_target_ops_nums, 0,
            sizeof(int) * ompi_comm_size(module->comm));
 
     size = ompi_group_size(module->start_group);
+
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     for (i = 0; i < size; i++) {
         uint64_t remote_addr = (module->state_info_array)[module->start_grp_ranks[i]].addr + OSC_UCX_STATE_COMPLETE_COUNT_OFFSET; /* write to state.complete_count on remote side */
         ucp_rkey_h rkey = (module->state_info_array)[module->start_grp_ranks[i]].rkey;
@@ -208,9 +243,13 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
         }
     }
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     OBJ_RELEASE(module->start_group);
     module->start_group = NULL;
     free(module->start_grp_ranks);
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -219,12 +258,17 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.exposure != NONE_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     OBJ_RETAIN(group);
     module->post_group = group;
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     if ((assert & MPI_MODE_NOCHECK) == 0) {
         int i, j, size;
@@ -232,6 +276,8 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
         int *ranks_in_grp = NULL, *ranks_in_win_grp = NULL;
         int myrank = ompi_comm_rank(module->comm);
         ucs_status_t status;
+
+        OPAL_THREAD_LOCK(&module->lock);
 
         size = ompi_group_size(module->post_group);
         ranks_in_grp = malloc(sizeof(int) * size);
@@ -243,14 +289,18 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
 
         ret = ompi_comm_group(module->comm, &win_group);
         if (ret != OMPI_SUCCESS) {
+            OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERROR;
         }
 
         ret = ompi_group_translate_ranks(module->post_group, size, ranks_in_grp,
                                          win_group, ranks_in_win_grp);
         if (ret != OMPI_SUCCESS) {
+            OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERROR;
         }
+
+        OPAL_THREAD_UNLOCK(&module->lock);
 
         for (i = 0; i < size; i++) {
             uint64_t remote_addr = (module->state_info_array)[ranks_in_win_grp[i]].addr + OSC_UCX_STATE_POST_INDEX_OFFSET; /* write to state.post_index on remote side */
@@ -283,6 +333,8 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
                 if (result == 0)
                     break;
 
+                OPAL_THREAD_LOCK(&module->lock);
+
                 /* prevent circular wait by checking for post messages received */
                 for (j = 0; j < OMPI_OSC_UCX_POST_PEER_MAX; j++) {
                     /* no post at this index (yet) */
@@ -293,6 +345,8 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
                     ompi_osc_ucx_handle_incoming_post(module, &(module->state.post_state[j]), NULL, 0);
                 }
 
+                OPAL_THREAD_UNLOCK(&module->lock);
+
                 usleep(100);
             } while (1);
         }
@@ -302,7 +356,11 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
         ompi_group_free(&win_group);
     }
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     module->epoch_type.exposure = POST_WAIT_EPOCH;
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
 }
@@ -311,16 +369,23 @@ int ompi_osc_ucx_wait(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int size;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.exposure != POST_WAIT_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     size = ompi_group_size(module->post_group);
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     while (module->state.complete_count != (uint64_t)size) {
         /* not sure if this is required */
         ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
     }
+
+    OPAL_THREAD_LOCK(&module->lock);
 
     module->state.complete_count = 0;
 
@@ -329,6 +394,8 @@ int ompi_osc_ucx_wait(struct ompi_win_t *win) {
 
     module->epoch_type.exposure = NONE_EPOCH;
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     return OMPI_SUCCESS;
 }
 
@@ -336,13 +403,20 @@ int ompi_osc_ucx_test(struct ompi_win_t *win, int *flag) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int size;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.exposure != POST_WAIT_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     size = ompi_group_size(module->post_group);
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     opal_progress();
+
+    OPAL_THREAD_LOCK(&module->lock);
 
     if (module->state.complete_count == (uint64_t)size) {
         OBJ_RELEASE(module->post_group);
@@ -355,6 +429,8 @@ int ompi_osc_ucx_test(struct ompi_win_t *win, int *flag) {
     } else {
         *flag = 0;
     }
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     return OMPI_SUCCESS;
 }

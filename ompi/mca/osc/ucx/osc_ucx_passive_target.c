@@ -112,12 +112,16 @@ static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
 int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     ompi_osc_ucx_lock_t *lock = NULL;
-    ompi_osc_ucx_epoch_t original_epoch = module->epoch_type.access;
+    ompi_osc_ucx_epoch_t original_epoch;
     int ret = OMPI_SUCCESS;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
+    original_epoch = module->epoch_type.access;
     if (module->lock_count == 0) {
         if (module->epoch_type.access != NONE_EPOCH &&
             module->epoch_type.access != FENCE_EPOCH) {
+            OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERR_RMA_SYNC;
         }
     } else {
@@ -125,6 +129,7 @@ int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *
         assert(module->epoch_type.access == PASSIVE_EPOCH);
         opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target, (void **) &item);
         if (item != NULL) {
+            OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERR_RMA_SYNC;
         }
     }
@@ -156,6 +161,8 @@ int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *
         module->epoch_type.access = original_epoch;
     }
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     return ret;
 }
 
@@ -166,12 +173,16 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
     int ret = OMPI_SUCCESS;
     ucp_ep_h ep;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != PASSIVE_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target, (void **) &lock);
     if (lock == NULL) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -179,6 +190,9 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
                                         (uint32_t)target);
 
     ep = OSC_UCX_GET_EP(module->comm, target);
+
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     status = ucp_ep_flush(ep);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -186,6 +200,8 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
                             __FILE__, __LINE__, status);
         return OMPI_ERROR;
     }
+
+    OPAL_THREAD_LOCK(&module->lock);
 
     module->global_ops_num -= module->per_target_ops_nums[target];
     module->per_target_ops_nums[target] = 0;
@@ -207,6 +223,8 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
         assert(module->global_ops_num == 0);
     }
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     return ret;
 }
 
@@ -214,8 +232,11 @@ int ompi_osc_ucx_lock_all(int assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != NONE_EPOCH &&
         module->epoch_type.access != FENCE_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -243,20 +264,27 @@ int ompi_osc_ucx_lock_all(int assert, struct ompi_win_t *win) {
         module->epoch_type.access = NONE_EPOCH;
     }
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     return ret;
 }
 
 int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*)win->w_osc_module;
-    int comm_size = ompi_comm_size(module->comm);
+    int comm_size;
     ucs_status_t status;
     int ret = OMPI_SUCCESS;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     assert(module->lock_count == 0);
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
@@ -266,6 +294,9 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
         return OMPI_ERROR;
     }
 
+    OPAL_THREAD_LOCK(&module->lock);
+
+    comm_size = ompi_comm_size(module->comm);
     module->global_ops_num = 0;
     memset(module->per_target_ops_nums, 0, sizeof(int) * comm_size);
 
@@ -278,6 +309,8 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
 
     module->epoch_type.access = NONE_EPOCH;
 
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     return ret;
 }
 
@@ -285,10 +318,15 @@ int ompi_osc_ucx_sync(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     ucs_status_t status;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != PASSIVE_EPOCH &&
         module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     opal_atomic_mb();
 
@@ -308,12 +346,18 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
     ucp_ep_h ep;
     ucs_status_t status;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != PASSIVE_EPOCH &&
         module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
     ep = OSC_UCX_GET_EP(module->comm, target);
+
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     status = ucp_ep_flush(ep);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -322,8 +366,12 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
         return OMPI_ERROR;
     }
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     module->global_ops_num -= module->per_target_ops_nums[target];
     module->per_target_ops_nums[target] = 0;
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     return OMPI_SUCCESS;
 }
@@ -332,10 +380,15 @@ int ompi_osc_ucx_flush_all(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     ucs_status_t status;
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     if (module->epoch_type.access != PASSIVE_EPOCH &&
         module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
@@ -345,9 +398,13 @@ int ompi_osc_ucx_flush_all(struct ompi_win_t *win) {
         return OMPI_ERROR;
     }
 
+    OPAL_THREAD_LOCK(&module->lock);
+
     module->global_ops_num = 0;
     memset(module->per_target_ops_nums, 0,
            sizeof(int) * ompi_comm_size(module->comm));
+
+    OPAL_THREAD_UNLOCK(&module->lock);
 
     return OMPI_SUCCESS;
 }

@@ -56,8 +56,10 @@ void req_completion(void *request, ucs_status_t status) {
     if(req->external_req != NULL) {
         ompi_request_complete(&(req->external_req->super), true);
         ucp_request_release(req);
+        OPAL_THREAD_LOCK(&mca_osc_ucx_component.lock);
         mca_osc_ucx_component.num_incomplete_req_ops--;
         assert(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
+        OPAL_THREAD_UNLOCK(&mca_osc_ucx_component.lock);
     }
 }
 
