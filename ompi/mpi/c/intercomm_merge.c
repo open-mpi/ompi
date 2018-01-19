@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -31,6 +31,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/cid/cid.h"
+#include "ompi/mca/cid/base/base.h"
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
 
@@ -117,14 +119,14 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     new_group_pointer = MPI_GROUP_NULL;
 
     /* Determine context id */
-    rc = ompi_comm_nextcid (newcomp, intercomm, NULL, NULL, NULL, false,
+    rc = ompi_cid->nextcid (newcomp, intercomm, NULL, NULL, NULL, false,
                             OMPI_COMM_CID_INTER);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate (&newcomp, intercomm, NULL, NULL, NULL, false,
+    rc = ompi_cid->activate (&newcomp, intercomm, NULL, NULL, NULL, false,
                              OMPI_COMM_CID_INTER);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;

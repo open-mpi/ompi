@@ -18,7 +18,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -538,50 +538,6 @@ ompi_communicator_t* ompi_comm_allocate (int local_group_size,
                                          int remote_group_size);
 
 /**
- * allocate new communicator ID
- * @param newcomm:    pointer to the new communicator
- * @param oldcomm:    original comm
- * @param bridgecomm: bridge comm for intercomm_create
- * @param mode: combination of input
- *              OMPI_COMM_CID_INTRA:        intra-comm
- *              OMPI_COMM_CID_INTER:        inter-comm
- *              OMPI_COMM_CID_GROUP:        only decide CID within the ompi_group_t
- *                                          associated with the communicator. arg0
- *                                          must point to an int which will be used
- *                                          as the pml tag for communication.
- *              OMPI_COMM_CID_INTRA_BRIDGE: 2 intracomms connected by
- *                                          a bridge comm. arg0 and arg1 must point
- *                                          to integers representing the local and
- *                                          remote leader ranks. the remote leader rank
- *                                          is a rank in the bridgecomm.
- *              OMPI_COMM_CID_INTRA_PMIX:   2 intracomms, leaders talk
- *                                          through PMIx. arg0 must point to an integer
- *                                          representing the local leader rank. arg1
- *                                          must point to a string representing the
- *                                          port of the remote leader.
- * @param send_first: to avoid a potential deadlock for
- *                    the OOB version.
- * This routine has to be thread safe in the final version.
- */
-OMPI_DECLSPEC int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
-                                     ompi_communicator_t *bridgecomm, const void *arg0, const void *arg1,
-                                     bool send_first, int mode);
-
-/**
- * allocate new communicator ID (non-blocking)
- * @param newcomm:    pointer to the new communicator
- * @param oldcomm:    original comm
- * @param bridgecomm: bridge comm for intercomm_create
- * @param mode: combination of input
- *              OMPI_COMM_CID_INTRA:        intra-comm
- *              OMPI_COMM_CID_INTER:        inter-comm
- * This routine has to be thread safe in the final version.
- */
-OMPI_DECLSPEC int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
-                                        ompi_communicator_t *bridgecomm, const void *arg0, const void *arg1,
-                                        bool send_first, int mode, ompi_request_t **req);
-
-/**
  * shut down the communicator infrastructure.
  */
 int ompi_comm_finalize (void);
@@ -672,26 +628,6 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
 
-OMPI_DECLSPEC int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
-                                      ompi_communicator_t *bridgecomm, const void *arg0,
-                                      const void *arg1, bool send_first, int mode);
-
-/**
- * Non-blocking variant of comm_activate.
- *
- * @param[inout] newcomm    New communicator
- * @param[in]    comm       Parent communicator
- * @param[in]    bridgecomm Bridge communicator (used for PMIX and bridge modes)
- * @param[in]    arg0       Mode argument 0
- * @param[in]    arg1       Mode argument 1
- * @param[in]    send_first Send first from this process (PMIX mode only)
- * @param[in]    mode       Collective mode
- * @param[out]   req        New request object to track this operation
- */
-OMPI_DECLSPEC int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
-                                         ompi_communicator_t *bridgecomm, const void *arg0,
-                                         const void *arg1, bool send_first, int mode, ompi_request_t **req);
-
 /**
  * a simple function to dump the structure
  */
@@ -702,14 +638,6 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name );
 
 /* global variable to save the number od dynamic communicators */
 extern int ompi_comm_num_dyncomm;
-
-
-/* check whether any of the processes has requested support for
-   MPI_THREAD_MULTIPLE. Note, that this produces global
-   information across MPI_COMM_WORLD, in contrary to the local
-   flag ompi_mpi_thread_provided
-*/
-OMPI_DECLSPEC int ompi_comm_cid_init ( void );
 
 
 void ompi_comm_assert_subscribe (ompi_communicator_t *comm, int32_t assert_flag);

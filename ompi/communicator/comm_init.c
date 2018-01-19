@@ -18,7 +18,7 @@
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -45,6 +45,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
+#include "ompi/mca/cid/cid.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion
@@ -335,7 +336,7 @@ int ompi_comm_finalize(void)
                      * the reference count by one more than other communicators, on order to
                      * allow for deallocation with the parent communicator. Note, that
                      * this only occurs if the cid of the local_comm is lower than of its
-                     * parent communicator. Read the comment in comm_activate for
+                     * parent communicator. Read the comment in ompi_cid_base_comm_activate() for
                      * a full explanation.
                      */
                     if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
@@ -456,6 +457,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
                                              comm->c_contextid)) {
         opal_pointer_array_set_item ( &ompi_mpi_communicators,
                                       comm->c_contextid, NULL);
+        ompi_cid->release(comm->c_contextid);
     }
 
     /* reset the ompi_comm_f_to_c_table entry */

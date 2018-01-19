@@ -18,7 +18,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
  *
@@ -89,6 +89,7 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/mca/rte/base/base.h"
+#include "ompi/mca/cid/base/base.h"
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
@@ -602,6 +603,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Open up MPI-related MCA components */
 
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_cid_base_framework, 0))) {
+        error = "mca_cid_base_open() failed";
+        goto error;
+    }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_allocator_base_framework, 0))) {
         error = "mca_allocator_base_open() failed";
         goto error;
@@ -921,8 +926,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        e.g. hierarch, might create subcommunicators. The threadlevel
        requested by all processes is required in order to know
        which cid allocation algorithm can be used. */
-    if (OMPI_SUCCESS != ( ret = ompi_comm_cid_init ())) {
-        error = "ompi_mpi_init: ompi_comm_cid_init failed";
+    if (OMPI_SUCCESS != ( ret = ompi_cid_base_select (ompi_mpi_thread_multiple))) {
+        error = "ompi_mpi_init: ompi_cid_base_select failed";
         goto error;
     }
 

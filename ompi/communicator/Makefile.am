@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2013-2017 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -31,6 +31,5 @@ headers += \
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         communicator/comm_init.c \
 	communicator/comm.c \
-	communicator/comm_cid.c \
 	communicator/comm_request.c
 

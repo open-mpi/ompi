@@ -18,7 +18,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
@@ -49,6 +49,8 @@
 
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/cid/cid.h"
+#include "ompi/mca/cid/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 
@@ -358,7 +360,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
+    rc = ompi_cid->nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -368,7 +370,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
              newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
-    rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
+    rc = ompi_cid->activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -593,7 +595,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     }
 
     /* set the rank to MPI_UNDEFINED. This prevents this process from interfering
-     * in ompi_comm_nextcid() and the collective module selection in ompi_comm_activate()
+     * in ompi_comm_nextcid() and the collective module selection in ompi_cid->activate()
      * for a communicator that will be freed anyway.
      */
     if ( MPI_UNDEFINED == color || (inter && my_rsize==0)) {
@@ -601,7 +603,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
+    rc = ompi_cid->nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -613,7 +615,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
 
 
     /* Activate the communicator and init coll-component */
-    rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
+    rc = ompi_cid->activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
 
  exit:
     free ( results );
@@ -909,7 +911,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         }
 
         /* Determine context id. It is identical to f_2_c_handle */
-        rc = ompi_comm_nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
+        rc = ompi_cid->nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             break;
         }
@@ -921,7 +923,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         }
 
         /* Activate the communicator and init coll-component */
-        rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
+        rc = ompi_cid->activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             break;
         }
@@ -1004,7 +1006,7 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
+    rc = ompi_cid->nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1020,7 +1022,7 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
     }
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
+    rc = ompi_cid->activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1134,7 +1136,7 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, NULL,
+    rc = ompi_cid->nextcid_nb (context->newcomp, context->comm, NULL, NULL,
                                NULL, false, mode, subreq);
     if (OMPI_SUCCESS != rc) {
         ompi_comm_request_return (request);
@@ -1164,7 +1166,7 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
              context->newcomp->c_contextid, context->comm->c_contextid );
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, NULL, NULL, false, mode, subreq);
+    rc = ompi_cid->activate_nb (&context->newcomp, context->comm, NULL, NULL, NULL, false, mode, subreq);
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1206,7 +1208,7 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid (newcomp, comm, NULL, &tag, NULL, false, mode);
+    rc = ompi_cid->nextcid (newcomp, comm, NULL, &tag, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1216,7 +1218,7 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
              newcomp->c_contextid, comm->c_contextid );
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate (&newcomp, comm, NULL, &tag, NULL, false, mode);
+    rc = ompi_cid->activate (&newcomp, comm, NULL, &tag, NULL, false, mode);
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1885,7 +1887,7 @@ int ompi_comm_enable(ompi_communicator_t *old_comm,
     int ret = OMPI_SUCCESS;
 
     /* Determine context id. It is identical to f_2_c_handle */
-    ret = ompi_comm_nextcid (new_comm, old_comm, NULL, NULL, NULL, false,
+    ret = ompi_cid->nextcid (new_comm, old_comm, NULL, NULL, NULL, false,
                              OMPI_COMM_CID_INTRA);
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened while setting the communicator */
@@ -1909,7 +1911,7 @@ int ompi_comm_enable(ompi_communicator_t *old_comm,
         goto complete_and_return;
     }
 
-    ret = ompi_comm_activate (&new_comm, old_comm, NULL, NULL, NULL, false,
+    ret = ompi_cid->activate (&new_comm, old_comm, NULL, NULL, NULL, false,
                               OMPI_COMM_CID_INTRA);
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened while setting the communicator */
