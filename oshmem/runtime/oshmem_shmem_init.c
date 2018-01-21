@@ -51,6 +51,8 @@
 #include "opal/mca/allocator/base/base.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/request/request.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/runtime/runtime.h"
@@ -152,6 +154,74 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
             return ret;
         }
 
+        {
+            int world_rank, world_size;
+            int *prank, *ranks;
+            ompi_request_t **reqs, *req;
+            ompi_status_public_t status, *statuses;
+            PMPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+            PMPI_Comm_size(MPI_COMM_WORLD, &world_size);
+            prank = (int *)malloc(sizeof(int));
+            *prank = world_rank;
+            if (0 == world_rank) {
+                ranks = (int *)calloc(world_size-1, sizeof(int));
+                reqs = (ompi_request_t **)calloc(world_size-1, sizeof(ompi_request_t *));
+                statuses = (ompi_status_public_t *)calloc(world_size-1, sizeof(ompi_status_public_t));
+                fprintf (stderr, "oshmem_shmem_init: isend/irecv\n");
+                for (int i=0; i<world_size-1; i++)
+                    MCA_PML_CALL(irecv(ranks+i, 1, MPI_INT, i+1, -6667, MPI_COMM_WORLD, reqs+i));
+                ompi_request_wait_all(world_size-1, reqs, statuses); 
+                fprintf(stderr, "all irecv completed\n");
+                for (int i=0; i<world_size-1; i++) {
+                    if (MPI_SUCCESS != statuses[i].MPI_ERROR)
+                        fprintf(stderr, "rank %d: irecv failed with status error %d\n", i+1, statuses[i].MPI_ERROR);
+                    if (MPI_SUCCESS != reqs[i]->req_status.MPI_ERROR)
+                        fprintf(stderr, "rank %d: irecv failed with request error %d\n", i+1, reqs[i]->req_status.MPI_ERROR);
+                    if (i+1 != ranks[i]) fprintf(stderr, "irecv(): expected %d got %d\n", i+1, ranks[i]);
+                }
+                fprintf(stderr, "isend/irecv done\n");
+            } else {
+                MCA_PML_CALL(isend(prank, 1, MPI_INT, 0, -6667, MCA_PML_BASE_SEND_STANDARD, MPI_COMM_WORLD, &req));
+                ompi_request_wait(&req, &status);
+                if (MPI_SUCCESS != status.MPI_ERROR)
+                    fprintf(stderr, "rank %d: isend failed with status error %d\n", world_rank, status.MPI_ERROR);
+                if (MPI_SUCCESS != req->req_status.MPI_ERROR) 
+                    fprintf(stderr, "rank %d: isend failed with request error %d\n", world_rank, status.MPI_ERROR);
+            }
+        }
+
+        {
+            int world_rank, world_size;
+            int *prank, *ranks;
+            MPI_Request req, *reqs;
+            MPI_Status status;
+            PMPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+            PMPI_Comm_size(MPI_COMM_WORLD, &world_size);
+            prank = (int *)malloc(sizeof(int));
+            *prank = world_rank + 1;
+            if (0 == world_rank) ranks = (int *)calloc(world_size, sizeof(int));
+            if (0 == world_rank) reqs = (MPI_Request *)calloc(world_size, sizeof(MPI_Request));
+            if (0 == world_rank) fprintf (stderr, "oshmem_shmem_init: PMPI_Gather\n");
+            if (0 == world_rank) fprintf (stderr, "oshmem_shmem_init: PMPI_Gather\n");
+            PMPI_Gather(prank, 1, MPI_INT, ranks, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            if (0 == world_rank)
+                for (int i=0; i<world_size; i++)
+                    if (i+1 != ranks[i]) fprintf(stderr, "PMPI_Gather: at %d expected %d got %d\n", i, i+1, ranks[i]);
+            if (0 == world_rank) fprintf (stderr, "oshmem_shmem_init: PMPI_Igather\n");
+            *prank = world_rank + 2;
+            if (0 == world_rank) memset(ranks, 0, world_size*sizeof(int));
+            PMPI_Igather(prank, 1, MPI_INT, ranks, 1, MPI_INT, 0, MPI_COMM_WORLD, &req);
+            PMPI_Wait(&req, &status);
+            if (MPI_SUCCESS != status.MPI_ERROR)
+                fprintf(stderr, "PMPI_Igather failed with error %d on rank %d\n", status.MPI_ERROR, world_rank);
+            if (0 == world_rank)
+                for (int i=0; i<world_size; i++)
+                    if (i+2 != ranks[i]) fprintf(stderr, "PMPI_Igather: at %d expected %d got %d\n", i, i+2, ranks[i]);
+            free(prank);
+            if (0 == world_rank) free(ranks);
+        }
+           
+  
         PMPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
         ret = _shmem_init(argc, argv, requested, provided);
 
