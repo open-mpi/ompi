@@ -152,6 +152,36 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
             return ret;
         }
 
+        {
+            int world_rank, world_size;
+            int *prank, *ranks;
+            MPI_Request req;
+            MPI_Status status;
+            PMPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+            PMPI_Comm_size(MPI_COMM_WORLD, &world_size);
+            prank = (int *)malloc(sizeof(int));
+            *prank = world_rank + 1;
+            if (0 == world_rank) ranks = (int *)calloc(world_size, sizeof(int));
+            if (0 == world_rank) fprintf (stderr, "oshmem_shmem_init: PMPI_Gather\n");
+            PMPI_Gather(prank, 1, MPI_INT, ranks, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            if (0 == world_rank)
+                for (int i=0; i<world_size; i++)
+                    if (i+1 != ranks[i]) fprintf(stderr, "PMPI_Gather: at %d expected %d got %d\n", i, i+1, ranks[i]);
+            if (0 == world_rank) fprintf (stderr, "oshmem_shmem_init: PMPI_Igather\n");
+            *prank = world_rank + 2;
+            memset(ranks, 0, world_size*sizeof(int));
+            PMPI_Igather(prank, 1, MPI_INT, ranks, 1, MPI_INT, 0, MPI_COMM_WORLD, &req);
+            PMPI_Wait(&req, &status);
+            if (MPI_SUCCESS != status.MPI_ERR)
+                fprintf(stderr, "PMPI_Igather failed with error %d on rank %d\n", status.MPI_ERROR, world_rank);
+            if (0 == world_rank)
+                for (int i=0; i<world_size; i++)
+                    if (i+2 != ranks[i]) fprintf(stderr, "PMPI_Igather: at %d expected %d got %d\n", i, i+2, ranks[i]);
+            free(prank);
+            if (0 == world_rank) free(ranks);
+        }
+           
+  
         PMPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
         ret = _shmem_init(argc, argv, requested, provided);
 
