@@ -31,6 +31,7 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([PMIX_VERSION opal_pmix_pmix3x_save_CPPFLAGS opal_pmix_pmix2_save_CFLAGS opal_pmix_pmix3x_save_LDFLAGS opal_pmix_pmix3x_save_LIBS opal_pmix_pmix3x_basedir opal_pmix_pmix3x_args opal_pmix_pmix3x_happy  pmix_pmix3x_status_filename])
 
     opal_pmix_pmix3x_basedir=opal/mca/pmix/pmix3x
+    opal_pmix_pmix3x_rename=OPAL_MCA_PMIX3X_
 
     opal_pmix_pmix3x_save_CFLAGS=$CFLAGS
     opal_pmix_pmix3x_save_CPPFLAGS=$CPPFLAGS
@@ -63,7 +64,10 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     AS_IF([test "$enable_install_libpmix" == "yes"],
           [AC_MSG_RESULT([yes])],
           [AC_MSG_RESULT([no])
-           opal_pmix_pmix3x_args="--with-pmix-symbol-rename=OPAL_MCA_PMIX3X_ --enable-embedded-mode $opal_pmix_pmix3x_args"])
+           opal_pmix_pmix3x_args="--with-pmix-symbol-rename=$opal_pmix_pmix3x_rename --enable-embedded-mode $opal_pmix_pmix3x_args"])
+    AC_DEFINE_UNQUOTED([OPAL_PMIX_RENAME_PREFIX],
+                       ["$opal_pmix_pmix3x_rename"],
+                       [MCA prefix string for PMIx rename])
     AS_IF([test "$with_devel_headers" = "yes"],
           [opal_pmix_pmix3x_args="--with-devel-headers  $opal_pmix_pmix3x_args"])
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"

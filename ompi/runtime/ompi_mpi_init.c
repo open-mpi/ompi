@@ -660,6 +660,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     OMPI_TIMING_IMPORT_OPAL("orte_init");
     OMPI_TIMING_IMPORT_OPAL("opal_init_util");
+    OMPI_TIMING_IMPORT_PMIX("PMIx_Init");
     OMPI_TIMING_NEXT("rte_init-commit");
 
 
@@ -1023,10 +1024,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Finish last measurement, output results
      * and clear timing structure */
     OMPI_TIMING_NEXT("barrier-finish");
-    OMPI_TIMING_OUT;
-    OMPI_TIMING_FINALIZE;
 
     opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+
+    /* Import PMIx fence timings at the end to avoid the race of get/setenv 
+     * PMIx timings when used the not blocking fence */
+    OMPI_TIMING_IMPORT_PMIX("PMIx_Fence_nb");
+    OMPI_TIMING_OUT;
+    OMPI_TIMING_FINALIZE;
 
     ompi_hook_base_mpi_init_bottom(argc, argv, requested, provided);
 

@@ -67,6 +67,7 @@ static const char pmix_version_string[] = PMIX_VERSION;
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
+#include "src/util/timings.h"
 #include "src/runtime/pmix_progress_threads.h"
 #include "src/runtime/pmix_rte.h"
 #include "src/threads/threads.h"
@@ -79,6 +80,8 @@ static const char pmix_version_string[] = PMIX_VERSION;
 #include "pmix_client_ops.h"
 
 #define PMIX_MAX_RETRIES 10
+
+PMIX_TIMING_ENV_DEF(pmix_tmng);
 
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
@@ -227,6 +230,7 @@ static void job_data(struct pmix_peer_t *pr,
     int32_t cnt = 1;
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
+    PMIX_TIMING_ENV_NEXT(pmix_tmng, "job_data-recv");
     /* unpack the nspace - should be same as our own */
     PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
                        buf, &nspace, &cnt, PMIX_STRING);
@@ -242,6 +246,8 @@ static void job_data(struct pmix_peer_t *pr,
     PMIX_GDS_STORE_JOB_INFO(cb->status,
                             pmix_client_globals.myserver,
                             nspace, buf);
+    PMIX_TIMING_ENV_NEXT(pmix_tmng, "job_data-store");
+
     cb->status = PMIX_SUCCESS;
     PMIX_POST_OBJECT(cb);
     PMIX_WAKEUP_THREAD(&cb->lock);
@@ -380,6 +386,9 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         }
         return PMIX_SUCCESS;
     }
+
+    PMIX_TIMING_ENV_START(pmix_tmng);
+
     /* if we don't see the required info, then we cannot init */
     if (NULL == getenv("PMIX_NAMESPACE")) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -556,6 +565,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         return rc;
     }
     /* send to the server */
+    PMIX_TIMING_ENV_NEXT(pmix_tmng, "job_data-req");
     PMIX_CONSTRUCT(&cb, pmix_cb_t);
     PMIX_PTL_SEND_RECV(rc, pmix_client_globals.myserver,
                        req, job_data, (void*)&cb);
@@ -597,6 +607,8 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     if (NULL != info) {
         _check_for_notify(info, ninfo);
     }
+
+    PMIX_TIMING_ENV_NEXT(pmix_tmng, "init");
 
     return PMIX_SUCCESS;
 }
