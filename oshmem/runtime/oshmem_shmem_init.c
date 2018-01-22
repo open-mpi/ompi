@@ -51,6 +51,8 @@
 #include "opal/mca/allocator/base/base.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/request/request.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/runtime/runtime.h"
@@ -150,6 +152,42 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
 
         if (OSHMEM_SUCCESS != ret) {
             return ret;
+        }
+
+        {
+            int world_rank, world_size;
+            PMPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+            PMPI_Comm_rank(MPI_COMM_WORLD, &world_size);
+            if (0 == world_rank) {
+                int res, flag;
+                int *ranks;
+                ompi_request_t **reqs;
+                PMPI_Comm_size(MPI_COMM_WORLD, &world_size);
+                ranks = (int *)calloc(world_size-1, sizeof(int));
+                reqs = (ompi_request_t **)calloc(world_size-1, sizeof(ompi_request_t *));
+                fprintf (stderr, "oshmem_shmem_init: isend/irecv\n");
+                for (int i=0; i<world_size-1; i++)
+                    MCA_PML_CALL(irecv(ranks+i, 1, MPI_BYTE, i+1, -6667, MPI_COMM_WORLD, reqs+i));
+                do {
+                    res = ompi_request_test_all(world_size-1, reqs, &flag, MPI_STATUSES_IGNORE);
+                } while (OMPI_SUCCESS == res && !flag);
+
+                fprintf(stderr, "all irecv completed with %d\n", res);
+                for (int i=0; i<world_size-1; i++) {
+                    if (MPI_SUCCESS != reqs[i]->req_status.MPI_ERROR)
+                        fprintf(stderr, "rank %d: irecv failed with request error %d\n", i+1, reqs[i]->req_status.MPI_ERROR);
+                    if (i+1 != ranks[i]) fprintf(stderr, "irecv(): expected %d got %d\n", i+1, ranks[i]);
+                }
+                fprintf(stderr, "isend/irecv done\n");
+            } else {
+                ompi_status_public_t status;
+                ompi_request_t *req;
+                int misc = 1;
+                MCA_PML_CALL(isend(&misc, 1, MPI_INT, 0, -6667, MCA_PML_BASE_SEND_STANDARD, MPI_COMM_WORLD, &req));
+                ompi_request_wait(&req, &status);
+                if (MPI_SUCCESS != req->req_status.MPI_ERROR) 
+                    fprintf(stderr, "rank %d: isend failed with request error %d\n", world_rank, status.MPI_ERROR);
+            }
         }
 
         PMPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
