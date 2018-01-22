@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -319,8 +319,6 @@ error2:
         free(wk_rsizes);
     if (wk_roffs)
         free(wk_roffs);
-    if (mca_spml_ucx.ucp_peers)
-        free(mca_spml_ucx.ucp_peers);
 error:
     rc = OSHMEM_ERR_OUT_OF_RESOURCE;
     SPML_ERROR("add procs FAILED rc=%d", rc);
