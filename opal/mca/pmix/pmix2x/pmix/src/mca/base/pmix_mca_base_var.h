@@ -95,7 +95,7 @@ typedef enum {
     PMIX_MCA_BASE_VAR_TYPE_MAX
 } pmix_mca_base_var_type_t;
 
-extern const char *pmix_var_type_names[];
+PMIX_EXPORT extern const char *pmix_var_type_names[];
 
 /**
  * Source of an MCA variable's value
@@ -298,7 +298,7 @@ BEGIN_C_DECLS
 /**
  * Object declarayion for pmix_mca_base_var_t
  */
-PMIX_CLASS_DECLARATION(pmix_mca_base_var_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_mca_base_var_t);
 
 /**
  * Initialize the MCA variable system.
@@ -309,7 +309,7 @@ PMIX_CLASS_DECLARATION(pmix_mca_base_var_t);
  * invoked internally (by pmix_mca_base_open()) and is only documented
  * here for completeness.
  */
-int pmix_mca_base_var_init(void);
+PMIX_EXPORT int pmix_mca_base_var_init(void);
 
 /**
  * Register an MCA variable
@@ -489,7 +489,7 @@ PMIX_EXPORT int pmix_mca_base_var_register_synonym (int synonym_for, const char 
  *
  * If an enumerator is associated with this variable it will be dereferenced.
  */
-int pmix_mca_base_var_deregister(int vari);
+PMIX_EXPORT int pmix_mca_base_var_deregister(int vari);
 
 
 /**
@@ -512,9 +512,9 @@ int pmix_mca_base_var_deregister(int vari);
  * Note: The value can be changed by the registering code without using
  * the pmix_mca_base_var_* interface so the source may be incorrect.
  */
-int pmix_mca_base_var_get_value (int vari, void *value,
-                                 pmix_mca_base_var_source_t *source,
-                                 const char **source_file);
+PMIX_EXPORT int pmix_mca_base_var_get_value (int vari, void *value,
+                                             pmix_mca_base_var_source_t *source,
+                                             const char **source_file);
 
 /**
  * Sets an "override" value for an integer MCA variable.
@@ -537,9 +537,9 @@ int pmix_mca_base_var_get_value (int vari, void *value,
  * a synonym the variable the synonym represents) if the value is
  * settable.
  */
-int pmix_mca_base_var_set_value (int vari, const void *value, size_t size,
-                                 pmix_mca_base_var_source_t source,
-                                 const char *source_file);
+PMIX_EXPORT int pmix_mca_base_var_set_value (int vari, const void *value, size_t size,
+                                             pmix_mca_base_var_source_t source,
+                                             const char *source_file);
 
 /**
  * Get the string name corresponding to the MCA variable
@@ -554,8 +554,8 @@ int pmix_mca_base_var_set_value (int vari, const void *value, size_t size,
  * The string that is returned is owned by the caller; if
  * appropriate, it must be eventually freed by the caller.
  */
-int pmix_mca_base_var_env_name(const char *param_name,
-                               char **env_name);
+PMIX_EXPORT int pmix_mca_base_var_env_name(const char *param_name,
+                                           char **env_name);
 
 /**
  * Find the index for an MCA variable based on its names.
@@ -574,10 +574,10 @@ int pmix_mca_base_var_env_name(const char *param_name,
  * of any registered variable.  The returned index can be used with
  * pmix_mca_base_var_get() and pmix_mca_base_var_get_value().
  */
-int pmix_mca_base_var_find (const char *project_name,
-                            const char *type_name,
-                            const char *component_name,
-                            const char *param_name);
+PMIX_EXPORT int pmix_mca_base_var_find (const char *project_name,
+                                        const char *type_name,
+                                        const char *component_name,
+                                        const char *param_name);
 
 /**
  * Find the index for a variable based on its full name
@@ -587,7 +587,7 @@ int pmix_mca_base_var_find (const char *project_name,
  *
  * See pmix_mca_base_var_find().
  */
-int pmix_mca_base_var_find_by_name (const char *full_name, int *vari);
+PMIX_EXPORT int pmix_mca_base_var_find_by_name (const char *full_name, int *vari);
 
 /**
  * Check that two MCA variables were not both set to non-default
@@ -617,13 +617,13 @@ int pmix_mca_base_var_find_by_name (const char *full_name, int *vari);
  * are not MCA_BASE_VAR_SOURCE_DEFAULT.
  * @returns PMIX_SUCCESS otherwise.
  */
-int pmix_mca_base_var_check_exclusive (const char *project,
-                                       const char *type_a,
-                                       const char *component_a,
-                                       const char *param_a,
-                                       const char *type_b,
-                                       const char *component_b,
-                                       const char *param_b);
+PMIX_EXPORT int pmix_mca_base_var_check_exclusive (const char *project,
+                                                   const char *type_a,
+                                                   const char *component_a,
+                                                   const char *param_a,
+                                                   const char *type_b,
+                                                   const char *component_b,
+                                                   const char *param_b);
 
 /**
  * Set or unset a flag on a variable.
@@ -636,8 +636,8 @@ int pmix_mca_base_var_check_exclusive (const char *project,
  * @returns PMIX_ERR_BAD_PARAM If the variable is not registered.
  * @returns PMIX_ERROR Otherwise
  */
-int pmix_mca_base_var_set_flag(int vari, pmix_mca_base_var_flag_t flag,
-                               bool set);
+PMIX_EXPORT int pmix_mca_base_var_set_flag(int vari, pmix_mca_base_var_flag_t flag,
+                                           bool set);
 
 /**
  * Obtain basic info on a single variable (name, help message, etc)
@@ -651,7 +651,7 @@ int pmix_mca_base_var_set_flag(int vari, pmix_mca_base_var_flag_t flag,
  * The returned pointer belongs to the MCA variable system. Do not
  * modify/free/retain the pointer.
  */
-int pmix_mca_base_var_get (int vari, const pmix_mca_base_var_t **var);
+PMIX_EXPORT int pmix_mca_base_var_get (int vari, const pmix_mca_base_var_t **var);
 
 /**
  * Obtain the number of variables that have been registered.
@@ -664,7 +664,7 @@ int pmix_mca_base_var_get (int vari, const pmix_mca_base_var_t **var);
  * returned is equal to the number of calls to pmix_mca_base_var_register with
  * unique names. ie. two calls with the same name will not affect the count.
  */
-int pmix_mca_base_var_get_count (void);
+PMIX_EXPORT int pmix_mca_base_var_get_count (void);
 
 /**
  * Obtain a list of enironment variables describing the all
@@ -683,8 +683,8 @@ int pmix_mca_base_var_get_count (void);
  * its output is in terms of an argv-style array of key=value
  * strings, suitable for using in an environment.
  */
-int pmix_mca_base_var_build_env(char ***env, int *num_env,
-                                bool internal);
+PMIX_EXPORT int pmix_mca_base_var_build_env(char ***env, int *num_env,
+                                            bool internal);
 
 /**
  * Shut down the MCA variable system (normally only invoked by the
@@ -700,7 +700,7 @@ int pmix_mca_base_var_build_env(char ***env, int *num_env,
  * when the process is shutting down (e.g., during MPI_FINALIZE).  It
  * is only documented here for completeness.
  */
-int pmix_mca_base_var_finalize(void);
+PMIX_EXPORT int pmix_mca_base_var_finalize(void);
 
 typedef enum {
     /* Dump human-readable strings */
@@ -721,19 +721,19 @@ typedef enum {
  * This function returns an array of strings describing the variable. All strings
  * and the array must be freed by the caller.
  */
-int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t output_type);
+PMIX_EXPORT int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t output_type);
 
 #define MCA_COMPILETIME_VER "print_compiletime_version"
 #define MCA_RUNTIME_VER "print_runtime_version"
 
-int pmix_mca_base_var_cache_files (bool rel_path_search);
+PMIX_EXPORT int pmix_mca_base_var_cache_files (bool rel_path_search);
 
 /*
  * Parse a provided list of envars and add their local value, or
  * their assigned value, to the provided argv
  */
-int pmix_mca_base_var_process_env_list(char ***argv);
-int pmix_mca_base_var_process_env_list_from_file(char ***argv);
+PMIX_EXPORT int pmix_mca_base_var_process_env_list(char ***argv);
+PMIX_EXPORT int pmix_mca_base_var_process_env_list_from_file(char ***argv);
 
 END_C_DECLS
 

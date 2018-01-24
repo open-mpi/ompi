@@ -528,10 +528,16 @@ static pmix_status_t parse_uri_file(char *filename,
         pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V20;
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "V20 SERVER DETECTED");
-    } else if (0 == strncmp(p2, "v2.1", strlen("v2.1"))) {
+    } else if (0 == strncmp(p2, "v2.1", strlen("v2.1")) ||
+               0 == strncmp(p2, "2.1", strlen("2.1"))) {
         pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V21;
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "V21 SERVER DETECTED");
+    } else if (0 == strncmp(p2, "3", strlen("3")) ||
+               0 == strncmp(p2, "v3", strlen("v3"))) {
+        pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V3;
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "V3 SERVER DETECTED");
     } else {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "UNKNOWN SERVER VERSION DETECTED: %s", p2);

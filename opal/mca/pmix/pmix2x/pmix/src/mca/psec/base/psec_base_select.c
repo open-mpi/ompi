@@ -74,12 +74,21 @@ int pmix_psec_base_select(void)
         if (PMIX_SUCCESS != rc || NULL == module) {
             pmix_output_verbose(5, pmix_psec_base_framework.framework_output,
                                 "mca:psec:select: Skipping component [%s]. Query failed to return a module",
-                                component->pmix_mca_component_name );
+                                component->pmix_mca_component_name);
+            continue;
+        }
+        nmodule = (pmix_psec_module_t*) module;
+
+        /* give the module a chance to init */
+        if (NULL != nmodule->init && PMIX_SUCCESS != nmodule->init()) {
+            /* failed to init, so skip it */
+            pmix_output_verbose(5, pmix_psec_base_framework.framework_output,
+                                "mca:psec:select: Skipping component [%s]. Failed to init",
+                                component->pmix_mca_component_name);
             continue;
         }
 
         /* If we got a module, keep it */
-        nmodule = (pmix_psec_module_t*) module;
         /* add to the list of selected modules */
         newmodule = PMIX_NEW(pmix_psec_base_active_module_t);
         newmodule->pri = priority;

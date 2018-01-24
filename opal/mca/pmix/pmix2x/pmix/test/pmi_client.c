@@ -27,17 +27,17 @@ static int _verbose = 1;
 static void log_fatal(const char *format, ...)
 {
     va_list arglist;
-    char **output = NULL;
+    char *output = NULL;
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist) ||
-            NULL == output || NULL == *output) {
+        if (0 > vasprintf(&output, format, arglist) ||
+            NULL == output) {
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "FATAL: %s", *output);
-        free(*output);
+        fprintf(stderr, "FATAL: %s", output);
+        free(output);
     }
     va_end(arglist);
 }
@@ -45,17 +45,17 @@ static void log_fatal(const char *format, ...)
 static void log_error(const char *format, ...)
 {
     va_list arglist;
-    char **output = NULL;
+    char *output = NULL;
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist) ||
-            NULL == output || NULL == *output) {
+        if (0 > vasprintf(&output, format, arglist) ||
+            NULL == output) {
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "ERROR: %s", *output);
-        free(*output);
+        fprintf(stderr, "ERROR: %s", output);
+        free(output);
     }
     va_end(arglist);
 }
@@ -63,17 +63,17 @@ static void log_error(const char *format, ...)
 static void log_info(const char *format, ...)
 {
     va_list arglist;
-    char **output = NULL;
+    char *output = NULL;
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist) ||
-            NULL == output || NULL == *output) {
+        if (0 > vasprintf(&output, format, arglist) ||
+            NULL == output) {
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "INFO: %s", *output);
-        free(*output);
+        fprintf(stderr, "INFO: %s", output);
+        free(output);
     }
     va_end(arglist);
 }

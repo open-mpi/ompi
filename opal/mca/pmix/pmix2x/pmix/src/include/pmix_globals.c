@@ -124,6 +124,7 @@ static void pcon(pmix_peer_t *p)
     PMIX_CONSTRUCT(&p->send_queue, pmix_list_t);
     p->send_msg = NULL;
     p->recv_msg = NULL;
+    p->commit_cnt = 0;
 }
 static void pdes(pmix_peer_t *p)
 {

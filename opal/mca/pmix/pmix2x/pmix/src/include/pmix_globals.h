@@ -177,6 +177,7 @@ typedef struct pmix_peer_t {
     pmix_list_t send_queue;         /**< list of messages to send */
     pmix_ptl_send_t *send_msg;      /**< current send in progress */
     pmix_ptl_recv_t *recv_msg;      /**< current recv in progress */
+    int commit_cnt;
 } pmix_peer_t;
 PMIX_CLASS_DECLARATION(pmix_peer_t);
 
