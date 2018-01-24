@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2013      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
@@ -569,7 +569,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
 
     _OPAL_CHECK_SPECIFIC_ATTRIBUTE([extension],
         [
-         #define FOO __extension__ ({size_t bar; bar = 3;})
+        int i = __extension__ 3;
         ],
         [],
         [])
