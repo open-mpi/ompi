@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -192,7 +192,6 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                 ret = MPI_ERR_OTHER;
             }
         }
-        return ret;
     }
 
 
