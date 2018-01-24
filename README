@@ -1,25 +1,25 @@
-Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
-Copyright (c) 2004-2007 The University of Tennessee and The University
+Copyright (c) 2004-2018 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
-Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
+Copyright (c) 2004-2010 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
-Copyright (c) 2004-2007 The Regents of the University of California.
+Copyright (c) 2004-2008 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
+Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2018 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
-Copyright (c) 2008-2017 IBM Corporation.  All rights reserved.
+Copyright (c) 2008-2018 IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
-Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013-2015 Intel, Inc. All rights reserved
-Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
+Copyright (c) 2006-2018 University of Houston. All rights reserved.
+Copyright (c) 2013-2018 Intel, Inc. All rights reserved
+Copyright (c) 2011-2017 NVIDIA Corporation.  All rights reserved.
+Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
                         reserved.
-Copyright (c) 2017      Research Organization for Information Science
+Copyright (c) 2013-2018 Research Organization for Information Science
                         and Technology (RIST). All rights reserved.
 
 $COPYRIGHT$
@@ -68,7 +68,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (August 2017):
+base as of this writing (January 2018):
 
 General notes
 -------------
