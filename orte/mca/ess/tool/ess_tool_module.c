@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +40,6 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
-#include "orte/runtime/orte_cr.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -125,7 +124,6 @@ static int rte_init(void)
         opal_list_append(&flags, &val->super);
     }
 
-
     /* do the standard tool init */
     if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup(&flags))) {
         ORTE_ERROR_LOG(ret);
@@ -137,7 +135,7 @@ static int rte_init(void)
 
     return ORTE_SUCCESS;
 
- error:
+  error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
@@ -175,9 +173,6 @@ static void rte_abort(int status, bool report)
      * clean environment. Taken from orte_finalize():
      * - Assume errmgr cleans up child processes before we exit.
      */
-
-    /* CRS cleanup since it may have a named pipe and thread active */
-    orte_cr_finalize();
 
     /* - Clean out the global structures
      * (not really necessary, but good practice)
