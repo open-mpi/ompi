@@ -19,6 +19,8 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS = $(psec_munge_CPPFLAGS)
+
 headers = psec_munge.h
 sources = \
         psec_munge_component.c \
@@ -43,8 +45,10 @@ endif
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_psec_munge_la_SOURCES = $(component_sources)
-mca_psec_munge_la_LDFLAGS = -module -avoid-version
+mca_psec_munge_la_LDFLAGS = -module -avoid-version $(psec_munge_LDFLAGS)
+mca_psec_munge_la_LIBADD = $(psec_munge_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_psec_munge_la_SOURCES = $(lib_sources)
-libmca_psec_munge_la_LDFLAGS = -module -avoid-version
+libmca_psec_munge_la_LDFLAGS = -module -avoid-version $(psec_munge_LDFLAGS)
+libmca_psec_munge_la_LIBADD = $(psec_munge_LIBS)

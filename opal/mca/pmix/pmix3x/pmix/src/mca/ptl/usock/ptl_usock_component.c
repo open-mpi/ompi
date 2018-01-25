@@ -337,7 +337,7 @@ static void listener_cb(int incoming_sd, void *cbdata)
 static void connection_handler(int sd, short args, void *cbdata)
 {
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cbdata;
-    char *msg, *ptr, *nspace, *version, *cred, *sec, *bfrops, *gds;
+    char *msg, *ptr, *nspace, *version, *sec, *bfrops, *gds;
     pmix_status_t rc;
     unsigned int rank;
     pmix_usock_hdr_t hdr;
@@ -352,7 +352,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     int major, minor, rel;
     unsigned int msglen;
     pmix_info_t ginfo;
-    size_t credlen;
+    pmix_byte_object_t cred;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(pnd);
@@ -452,11 +452,13 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* get any provided credential */
     if (1 == major) {
+        /* credential is always a string */
         PMIX_STRNLEN(msglen, ptr, len);
         if (msglen < len) {
-            cred = ptr;
-            ptr += strlen(cred) + 1;
-            len -= strlen(cred) + 1;
+            cred.bytes = ptr;
+            cred.size = strlen(ptr);
+            ptr += cred.size + 1;
+            len -= cred.size + 1;
         } else {
             free(msg);
             CLOSE_THE_SOCKET(pnd->sd);
@@ -464,8 +466,9 @@ static void connection_handler(int sd, short args, void *cbdata)
             return;
         }
     } else {
+        /* credential could be something else */
         if (sizeof(size_t) < len) {
-            memcpy(&credlen, ptr, sizeof(size_t));
+            memcpy(&cred.size, ptr, sizeof(size_t));
             ptr += sizeof(size_t);
             len -= sizeof(size_t);
         } else {
@@ -474,10 +477,10 @@ static void connection_handler(int sd, short args, void *cbdata)
             PMIX_RELEASE(pnd);
             return;
         }
-        if (0 < credlen) {
-            cred = ptr;
-            ptr += credlen;
-            len -= credlen;
+        if (0 < cred.size) {
+            cred.bytes = ptr;
+            ptr += cred.size;
+            len -= cred.size;
         }
     }
 
@@ -596,6 +599,8 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
+    /* save the protocol */
+    psave->protocol = pnd->protocol;
     /* add the nspace tracker */
     PMIX_RETAIN(nptr);
     psave->nptr = nptr;
@@ -669,13 +674,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     nptr->compat.ptl = &pmix_ptl_usock_module;
 
     /* validate the connection */
-    if (NULL == cred) {
-        len = 0;
-    } else {
-        len = strlen(cred);
-    }
-    PMIX_PSEC_VALIDATE_CONNECTION(rc, psave,
-                                  PMIX_PROTOCOL_V1, cred, len);
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, psave, NULL, 0, NULL, 0, &cred);
     /* now done with the msg */
     free(msg);
 
@@ -738,9 +737,6 @@ static void connection_handler(int sd, short args, void *cbdata)
     return;
 
   error:
-    if (NULL != cred) {
-        free(cred);
-    }
     /* send an error reply to the client */
     if (PMIX_SUCCESS != pmix_ptl_base_send_blocking(pnd->sd, (char*)&rc, sizeof(int))) {
         PMIX_ERROR_LOG(rc);

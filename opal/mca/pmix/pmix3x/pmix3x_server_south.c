@@ -86,6 +86,7 @@ static void lkcbfunc(pmix_status_t status, void *cbdata)
     opal_pmix_lock_t *lk = (opal_pmix_lock_t*)cbdata;
 
     OPAL_POST_OBJECT(lk);
+    lk->status = pmix3x_convert_rc(status);
     OPAL_PMIX_WAKEUP_THREAD(lk);
 }
 
@@ -566,4 +567,71 @@ int pmix3x_server_notify_event(int status,
         OBJ_RELEASE(op);
     }
     return pmix3x_convert_rc(rc);
+}
+
+int pmix3x_server_iof_push(const opal_process_name_t *source,
+                           opal_pmix_iof_channel_t channel,
+                           unsigned char *data, size_t nbytes)
+{
+    pmix3x_opcaddy_t *op;
+    pmix_byte_object_t bo;
+    pmix_iof_channel_t pchan;
+    opal_pmix_lock_t lock;
+    pmix_status_t rc;
+    int ret;
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s IOF push from %s with %d bytes",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        OPAL_NAME_PRINT(*source), (int)nbytes);
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    if (0 >= opal_pmix_base.initialized) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+        return OPAL_ERR_NOT_INITIALIZED;
+    }
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+
+    /* setup the caddy */
+    op = OBJ_NEW(pmix3x_opcaddy_t);
+    /* convert the source */
+    (void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, source->jobid);
+    op->p.rank = pmix3x_convert_opalrank(source->vpid);
+    /* convert the channel */
+    pchan = 0;
+    if (OPAL_PMIX_FWD_STDIN_CHANNEL & channel) {
+        pchan |= PMIX_FWD_STDIN_CHANNEL;
+    }
+    if (OPAL_PMIX_FWD_STDOUT_CHANNEL & channel) {
+        pchan |= PMIX_FWD_STDOUT_CHANNEL;
+    }
+    if (OPAL_PMIX_FWD_STDERR_CHANNEL & channel) {
+        pchan |= PMIX_FWD_STDERR_CHANNEL;
+    }
+    if (OPAL_PMIX_FWD_STDDIAG_CHANNEL & channel) {
+        pchan |= PMIX_FWD_STDDIAG_CHANNEL;
+    }
+
+    /* setup the byte object */
+    PMIX_BYTE_OBJECT_CONSTRUCT(&bo);
+    if (0 < nbytes) {
+        bo.bytes = (char*)data;
+    }
+    bo.size = nbytes;
+
+    /* push the IO */
+    OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+    rc = PMIx_IOF_push(&op->p, pchan, &bo, NULL, 0, lkcbfunc, (void*)&lock);
+    if (PMIX_SUCCESS != rc) {
+        ret = pmix3x_convert_rc(rc);
+    } else {
+        /* wait for completion */
+        OPAL_PMIX_WAIT_THREAD(&lock);
+        ret = lock.status;
+        OPAL_PMIX_DESTRUCT_LOCK(&lock);
+    }
+    /* cleanup */
+    OBJ_RELEASE(op);
+
+    return ret;
 }

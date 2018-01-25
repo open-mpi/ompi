@@ -231,7 +231,9 @@ void pmix_mca_base_cmd_line_wrap_args(char **args)
                 return;
             }
             i += 2;
-            asprintf(&tstr, "\"%s\"", args[i]);
+            if (0 > asprintf(&tstr, "\"%s\"", args[i])) {
+                return;
+            }
             free(args[i]);
             args[i] = tstr;
         }

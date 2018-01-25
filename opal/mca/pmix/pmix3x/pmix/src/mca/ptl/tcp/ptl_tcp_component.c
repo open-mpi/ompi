@@ -823,6 +823,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_proc_t proc;
     pmix_info_t ginfo;
     pmix_proc_type_t proc_type;
+    pmix_byte_object_t cred;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(pnd);
@@ -1156,6 +1157,8 @@ static void connection_handler(int sd, short args, void *cbdata)
     }
     /* mark that this peer is a client of the given type */
     peer->proc_type = PMIX_PROC_CLIENT | proc_type;
+    /* save the protocol */
+    peer->protocol = pnd->protocol;
     /* add in the nspace pointer */
     PMIX_RETAIN(nptr);
     peer->nptr = nptr;
@@ -1225,9 +1228,9 @@ static void connection_handler(int sd, short args, void *cbdata)
     peer->nptr->compat.ptl = &pmix_ptl_tcp_module;
 
     /* validate the connection */
-    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer,
-                                  PMIX_PROTOCOL_V2,
-                                  pnd->cred, pnd->len);
+    cred.bytes = pnd->cred;
+    cred.size = pnd->len;
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer, NULL, 0, NULL, NULL, &cred);
     if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client connection failed");
@@ -1313,6 +1316,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     int rc;
     uint32_t u32;
     pmix_info_t ginfo;
+    pmix_byte_object_t cred;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(cd);
@@ -1400,6 +1404,8 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     }
     /* mark the peer proc type */
     peer->proc_type = PMIX_PROC_TOOL | pnd->proc_type;
+    /* save the protocol */
+    peer->protocol = pnd->protocol;
     /* add in the nspace pointer */
     PMIX_RETAIN(nptr);
     peer->nptr = nptr;
@@ -1450,9 +1456,9 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     }
 
     /* validate the connection */
-    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer,
-                                  PMIX_PROTOCOL_V2,
-                                  pnd->cred, pnd->len);
+    cred.bytes = pnd->cred;
+    cred.size = pnd->len;
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer, NULL, 0, NULL, NULL, &cred);
     if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of tool credentials failed: %s",

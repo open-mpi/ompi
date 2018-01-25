@@ -132,6 +132,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     }
     /* the server will be using the same bfrops as us */
     pmix_client_globals.myserver->nptr->compat.bfrops = pmix_globals.mypeer->nptr->compat.bfrops;
+    /* mark that we are using the V1 protocol */
+    pmix_globals.mypeer->protocol = PMIX_PROTOCOL_V1;
 
     uri = pmix_argv_split(evar, ':');
     if (3 != pmix_argv_count(uri)) {
@@ -273,8 +275,8 @@ static pmix_status_t send_connect_ack(int sd)
 {
     char *msg;
     pmix_usock_hdr_t hdr;
-    size_t sdsize=0, csize=0, len;
-    char *cred = NULL;
+    size_t sdsize=0, csize=0;
+    pmix_byte_object_t cred;
     pmix_status_t rc;
     char *sec, *bfrops, *gds;
     pmix_bfrop_buffer_type_t bftype;
@@ -292,8 +294,9 @@ static pmix_status_t send_connect_ack(int sd)
 
     /* get a credential, if the security system provides one. Not
      * every SPC will do so, thus we must first check */
-    PMIX_PSEC_CREATE_CRED(rc, pmix_client_globals.myserver,
-                          PMIX_PROTOCOL_V1, &cred, &len);
+    PMIX_BYTE_OBJECT_CONSTRUCT(&cred);
+    PMIX_PSEC_CREATE_CRED(rc, pmix_globals.mypeer,
+                          NULL, 0, NULL, 0, &cred);
     if (PMIX_SUCCESS != rc) {
         return rc;
     }
@@ -312,7 +315,7 @@ static pmix_status_t send_connect_ack(int sd)
 
     /* set the number of bytes to be read beyond the header */
     hdr.nbytes = sdsize + (strlen(PMIX_VERSION) + 1) + \
-                (sizeof(size_t) + len) + \
+                (sizeof(size_t) + cred.size) + \
                 (strlen(sec) + 1) + \
                 (strlen(bfrops) + 1) + sizeof(bftype) + \
                 (strlen(gds) + 1);  // must NULL terminate the strings!
@@ -320,9 +323,7 @@ static pmix_status_t send_connect_ack(int sd)
     /* create a space for our message */
     sdsize = (sizeof(hdr) + hdr.nbytes);
     if (NULL == (msg = (char*)malloc(sdsize))) {
-        if (NULL != cred) {
-            free(cred);
-        }
+        PMIX_BYTE_OBJECT_DESTRUCT(&cred);
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
     memset(msg, 0, sdsize);
@@ -343,12 +344,13 @@ static pmix_status_t send_connect_ack(int sd)
     csize += strlen(PMIX_VERSION)+1;
 
     /* pass the size of the credential */
-    memcpy(msg+csize, &len, sizeof(size_t));
+    memcpy(msg+csize, &cred.size, sizeof(size_t));
     csize += sizeof(size_t);
-    if (0 < len) {
-        memcpy(msg+csize, cred, len);
-        csize += len;
+    if (0 < cred.size) {
+        memcpy(msg+csize, cred.bytes, cred.size);
+        csize += cred.size;
     }
+    PMIX_BYTE_OBJECT_DESTRUCT(&cred);
 
     /* pass our active sec module */
     memcpy(msg+csize, sec, strlen(sec));
@@ -368,15 +370,9 @@ static pmix_status_t send_connect_ack(int sd)
     /* send the entire msg across */
     if (PMIX_SUCCESS != pmix_ptl_base_send_blocking(sd, msg, sdsize)) {
         free(msg);
-        if (NULL != cred) {
-            free(cred);
-        }
         return PMIX_ERR_UNREACH;
     }
     free(msg);
-    if (NULL != cred) {
-        free(cred);
-    }
     return PMIX_SUCCESS;
 }
 

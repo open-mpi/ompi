@@ -43,6 +43,10 @@ nodist_headers =
 EXTRA_DIST =
 dist_pmixdata_DATA =
 
+# place to capture sources for backward compatibility libs
+pmi1_sources =
+pmi2_sources =
+
 libpmix_la_LIBADD = \
 	mca/base/libpmix_mca_base.la \
 	$(MCA_pmix_FRAMEWORK_LIBS) \
@@ -73,10 +77,15 @@ libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
 
 if WANT_PMI_BACKWARD
 lib_LTLIBRARIES += libpmi.la libpmi2.la
-libpmi_la_SOURCES = $(headers) $(sources)
+libpmi_la_SOURCES = $(headers) $(sources) $(pmi1_sources)
 libpmi_la_LDFLAGS = -version-info $(libpmi_so_version)
-libpmi2_la_SOURCES = $(headers) $(sources)
+libpmi_la_LIBADD = $(libpmix_la_LIBADD)
+libpmi_la_DEPENDENCIES = $(libpmi_la_LIBADD)
+
+libpmi2_la_SOURCES = $(headers) $(sources) $(pmi2_sources)
 libpmi2_la_LDFLAGS = -version-info $(libpmi2_so_version)
+libpmi2_la_LIBADD = $(libpmix_la_LIBADD)
+libpmi2_la_DEPENDENCIES = $(libpmi2_la_LIBADD)
 endif
 
 endif !PMIX_EMBEDDED_MODE

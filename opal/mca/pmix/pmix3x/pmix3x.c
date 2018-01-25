@@ -53,7 +53,7 @@
 
 /* These are functions used by both client and server to
  * access common functions in the embedded PMIx library */
-
+static bool legacy_get(void);
 static const char *pmix3x_get_nspace(opal_jobid_t jobid);
 static void pmix3x_register_jobid(opal_jobid_t jobid, const char *nspace);
 static void register_handler(opal_list_t *event_codes,
@@ -77,6 +77,7 @@ static void pmix3x_log(opal_list_t *info,
 static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope);
 
 const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
+    .legacy_get = legacy_get,
     /* client APIs */
     .init = pmix3x_client_init,
     .finalize = pmix3x_client_finalize,
@@ -119,6 +120,7 @@ const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     .server_setup_fork = pmix3x_server_setup_fork,
     .server_dmodex_request = pmix3x_server_dmodex,
     .server_notify_event = pmix3x_server_notify_event,
+    .server_iof_push = pmix3x_server_iof_push,
     /* tool APIs */
     .tool_init = pmix3x_tool_init,
     .tool_finalize = pmix3x_tool_fini,
@@ -131,6 +133,11 @@ const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     .get_nspace = pmix3x_get_nspace,
     .register_jobid = pmix3x_register_jobid
 };
+
+static bool legacy_get(void)
+{
+    return false;
+}
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {

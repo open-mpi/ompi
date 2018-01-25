@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +29,7 @@
 #include <src/include/pmix_config.h>
 #include "pmix_common.h"
 
-
+#include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/psec/psec.h"
 #include "psec_none.h"
 
@@ -68,7 +68,21 @@ pmix_psec_base_component_t mca_psec_none_component = {
 
 static int component_open(void)
 {
-    return PMIX_SUCCESS;
+    int index;
+    const pmix_mca_base_var_storage_t *value=NULL;
+
+    /* we only allow ourselves to be considered IF the user
+     * specifically requested so */
+    if (0 > (index = pmix_mca_base_var_find("pmix", "psec", NULL, NULL))) {
+        return PMIX_ERROR;
+    }
+    pmix_mca_base_var_get_value (index, &value, NULL, NULL);
+    if (NULL != value && NULL != value->stringval && '\0' != value->stringval[0]) {
+        if (NULL != strstr(value->stringval, "none")) {
+            return PMIX_SUCCESS;
+        }
+    }
+    return PMIX_ERROR;
 }
 
 
