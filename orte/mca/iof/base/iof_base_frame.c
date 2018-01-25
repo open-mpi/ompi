@@ -12,7 +12,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
@@ -71,15 +71,6 @@ static int orte_iof_base_register(mca_base_register_flag_t flags)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_iof_base.output_limit);
-
-    /* check for files to be sent to stdin of procs */
-    orte_iof_base.input_files = NULL;
-    (void) mca_base_var_register("orte", "iof","base", "input_files",
-                                 "Comma-separated list of input files to be read and sent to stdin of procs (default: NULL)",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &orte_iof_base.input_files);
 
     /* Redirect application stderr to stdout (at source) */
     orte_iof_base.redirect_app_stderr_to_stdout = false;
