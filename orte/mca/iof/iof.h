@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -119,9 +119,6 @@
 #include "orte/types.h"
 
 #include "orte/mca/mca.h"
-
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 
 #include "orte/runtime/orte_globals.h"
 

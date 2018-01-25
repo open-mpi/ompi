@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -161,6 +161,7 @@ PMIX_CLASS_INSTANCE(myxfer_t,
 
 typedef struct {
     pmix_list_item_t super;
+    int exit_code;
     pid_t pid;
 } wait_tracker_t;
 PMIX_CLASS_INSTANCE(wait_tracker_t,
@@ -168,9 +169,11 @@ PMIX_CLASS_INSTANCE(wait_tracker_t,
                     NULL, NULL);
 
 static volatile int wakeup;
+static int exit_code = 0;
 static pmix_list_t pubdata;
 static pmix_event_t handler;
 static pmix_list_t children;
+static bool istimeouttest = false;
 
 static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x);
@@ -283,6 +286,10 @@ int main(int argc, char **argv)
         } else if (0 == strcmp("-e", argv[n]) &&
                    NULL != argv[n+1]) {
             executable = strdup(argv[n+1]);
+            /* check for timeout test */
+            if (NULL != strstr(executable, "simptimeout")) {
+                istimeouttest = true;
+            }
             for (k=n+2; NULL != argv[k]; k++) {
                 pmix_argv_append_nosize(&client_argv, argv[k]);
             }
@@ -407,6 +414,9 @@ int main(int argc, char **argv)
             } else {
                 pmix_setenv("PMIX_MCA_ptl", "usock", true, &client_env);
             }
+        } else if (!usock) {
+            /* don't disable usock => enable it on client */
+            pmix_setenv("PMIX_MCA_ptl", "usock", true, &client_env);
         }
         x = PMIX_NEW(myxfer_t);
         if (PMIX_SUCCESS != (rc = PMIx_server_register_client(&proc, myuid, mygid,
@@ -447,6 +457,15 @@ int main(int argc, char **argv)
         nanosleep(&ts, NULL);
     }
 
+    /* see if anyone exited with non-zero status */
+    n=0;
+    PMIX_LIST_FOREACH(child, &children, wait_tracker_t) {
+        if (0 != child->exit_code) {
+            fprintf(stderr, "Child %d exited with status %d - test FAILED\n", n, child->exit_code);
+            goto done;
+        }
+        ++n;
+    }
     /* try notifying ourselves */
     ninfo = 3;
     PMIX_INFO_CREATE(info, ninfo);
@@ -463,20 +482,29 @@ int main(int argc, char **argv)
     }
     PMIX_INFO_FREE(info, ninfo);
 
+  done:
     /* deregister the event handlers */
     PMIx_Deregister_event_handler(0, NULL, NULL);
 
     /* release any pub data */
     PMIX_LIST_DESTRUCT(&pubdata);
 
+    /* release the child tracker */
+    PMIX_LIST_DESTRUCT(&children);
+
     /* finalize the server library */
     if (PMIX_SUCCESS != (rc = PMIx_server_finalize())) {
         fprintf(stderr, "Finalize failed with error %d\n", rc);
+        exit_code = rc;
     }
 
-    fprintf(stderr, "Test finished OK!\n");
+    if (0 == exit_code) {
+        fprintf(stderr, "Test finished OK!\n");
+    } else {
+        fprintf(stderr, "TEST FAILED WITH ERROR %d\n", exit_code);
+    }
 
-    return rc;
+    return exit_code;
 }
 
 static void set_namespace(int nprocs, char *ranks, char *nspace,
@@ -640,6 +668,11 @@ static pmix_status_t dmodex_fn(const pmix_proc_t *proc,
                      pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_output(0, "SERVER: DMODEX");
+
+    /* if this is a timeout test, then do nothing */
+    if (istimeouttest) {
+        return PMIX_SUCCESS;
+    }
 
     /* we don't have any data for remote procs as this
      * test only runs one server - so report accordingly */
@@ -936,7 +969,11 @@ static void wait_signal_callback(int fd, short event, void *arg)
         /* we are already in an event, so it is safe to access the list */
         PMIX_LIST_FOREACH(t2, &children, wait_tracker_t) {
             if (pid == t2->pid) {
+                t2->exit_code = status;
                 /* found it! */
+                if (0 != status && 0 == exit_code) {
+                    exit_code = status;
+                }
                 --wakeup;
                 break;
             }

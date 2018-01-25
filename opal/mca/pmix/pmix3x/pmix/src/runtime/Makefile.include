@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.
 #                         All rights reserved.
-# Copyright (c) 2014-2016 Intel, Inc. All rights reserved
+# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -29,7 +29,7 @@ headers += \
         runtime/pmix_rte.h \
         runtime/pmix_progress_threads.h
 
-libpmix_la_SOURCES += \
+sources += \
         runtime/pmix_finalize.c \
         runtime/pmix_init.c \
         runtime/pmix_params.c \

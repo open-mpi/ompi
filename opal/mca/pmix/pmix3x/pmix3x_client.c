@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
@@ -604,6 +604,7 @@ int pmix3x_get(const opal_process_name_t *proc, const char *key,
         /* if they are asking for our jobid, then return it */
         if (0 == strcmp(key, OPAL_PMIX_JOBID)) {
             (*val) = OBJ_NEW(opal_value_t);
+            (*val)->key = strdup(key);
             (*val)->type = OPAL_UINT32;
             (*val)->data.uint32 = OPAL_PROC_MY_NAME.jobid;
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -612,6 +613,7 @@ int pmix3x_get(const opal_process_name_t *proc, const char *key,
         /* if they are asking for our rank, return it */
         if (0 == strcmp(key, OPAL_PMIX_RANK)) {
             (*val) = OBJ_NEW(opal_value_t);
+            (*val)->key = strdup(key);
             (*val)->type = OPAL_INT;
             (*val)->data.integer = pmix3x_convert_rank(mca_pmix_pmix3x_component.myproc.rank);
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -646,6 +648,9 @@ int pmix3x_get(const opal_process_name_t *proc, const char *key,
     rc = PMIx_Get(&p, key, pinfo, sz, &pval);
     if (PMIX_SUCCESS == rc) {
         ival = OBJ_NEW(opal_value_t);
+        if (NULL != key) {
+            ival->key = strdup(key);
+        }
         if (OPAL_SUCCESS != (ret = pmix3x_value_unload(ival, pval))) {
             rc = pmix3x_convert_opalrc(ret);
         } else {
@@ -667,6 +672,9 @@ static void val_cbfunc(pmix_status_t status,
 
     OPAL_ACQUIRE_OBJECT(op);
     OBJ_CONSTRUCT(&val, opal_value_t);
+    if (NULL != op->nspace) {
+        val.key = strdup(op->nspace);
+    }
     rc = pmix3x_convert_opalrc(status);
     if (PMIX_SUCCESS == status && NULL != kv) {
         rc = pmix3x_value_unload(&val, kv);
@@ -706,6 +714,7 @@ int pmix3x_getnb(const opal_process_name_t *proc, const char *key,
         if (0 == strcmp(key, OPAL_PMIX_JOBID)) {
             if (NULL != cbfunc) {
                 val = OBJ_NEW(opal_value_t);
+                val->key = strdup(key);
                 val->type = OPAL_UINT32;
                 val->data.uint32 = OPAL_PROC_MY_NAME.jobid;
                 cbfunc(OPAL_SUCCESS, val, cbdata);
@@ -717,6 +726,7 @@ int pmix3x_getnb(const opal_process_name_t *proc, const char *key,
         if (0 == strcmp(key, OPAL_PMIX_RANK)) {
             if (NULL != cbfunc) {
                 val = OBJ_NEW(opal_value_t);
+                val->key = strdup(key);
                 val->type = OPAL_INT;
                 val->data.integer = pmix3x_convert_rank(mca_pmix_pmix3x_component.myproc.rank);
                 cbfunc(OPAL_SUCCESS, val, cbdata);
@@ -730,7 +740,9 @@ int pmix3x_getnb(const opal_process_name_t *proc, const char *key,
     op = OBJ_NEW(pmix3x_opcaddy_t);
     op->valcbfunc = cbfunc;
     op->cbdata = cbdata;
-
+    if (NULL != key) {
+        op->nspace = strdup(key);
+    }
     if (NULL == proc) {
         (void)strncpy(op->p.nspace, mca_pmix_pmix3x_component.myproc.nspace, PMIX_MAX_NSLEN);
         op->p.rank = pmix3x_convert_rank(PMIX_RANK_WILDCARD);

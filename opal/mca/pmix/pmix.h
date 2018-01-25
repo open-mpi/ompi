@@ -733,6 +733,10 @@ typedef int (*opal_pmix_base_module_server_notify_event_fn_t)(int status,
                                                               opal_list_t *info,
                                                               opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+/* push IO to local clients */
+typedef int (*opal_pmix_base_module_server_push_io_fn_t)(const opal_process_name_t *source,
+                                                         opal_pmix_iof_channel_t channel,
+                                                         unsigned char *data, size_t nbytes);
 
 /************************************************************
  *                         TOOL APIs                        *
@@ -870,10 +874,13 @@ typedef int (*opal_pmix_base_process_monitor_fn_t)(opal_list_t *monitor,
 /* register cleanup */
 typedef int (*opal_pmix_base_register_cleanup_fn_t)(char *path, bool directory, bool ignore, bool jobscope);
 
+typedef bool (*opal_pmix_base_legacy_get_fn_t)(void);
+
 /*
  * the standard public API data structure
  */
 typedef struct {
+    opal_pmix_base_legacy_get_fn_t                          legacy_get;
     /* client APIs */
     opal_pmix_base_module_init_fn_t                         init;
     opal_pmix_base_module_fini_fn_t                         finalize;
@@ -917,6 +924,7 @@ typedef struct {
     opal_pmix_base_module_server_setup_fork_fn_t            server_setup_fork;
     opal_pmix_base_module_server_dmodex_request_fn_t        server_dmodex_request;
     opal_pmix_base_module_server_notify_event_fn_t          server_notify_event;
+    opal_pmix_base_module_server_push_io_fn_t               server_iof_push;
     /* tool APIs */
     opal_pmix_base_module_tool_init_fn_t                    tool_init;
     opal_pmix_base_module_tool_fini_fn_t                    tool_finalize;

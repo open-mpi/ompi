@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -9,8 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2017      IBM Corporation.  All rights reserved.
-# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,29 +19,32 @@
 # $HEADER$
 #
 
+headers = bfrop_pmix3.h
 sources = \
-        ess_slurm.h \
-        ess_slurm_component.c \
-        ess_slurm_module.c
+        bfrop_pmix3_component.c \
+        bfrop_pmix3.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_orte_ess_slurm_DSO
-component_noinst =
-component_install = mca_ess_slurm.la
+if MCA_BUILD_pmix_bfrops_v3_DSO
+lib =
+lib_sources =
+component = mca_bfrops_v3.la
+component_sources = $(headers) $(sources)
 else
-component_noinst = libmca_ess_slurm.la
-component_install =
+lib = libmca_bfrops_v3.la
+lib_sources = $(headers) $(sources)
+component =
+component_sources =
 endif
 
-mcacomponentdir = $(ortelibdir)
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_ess_slurm_la_SOURCES = $(sources)
-mca_ess_slurm_la_LDFLAGS = -module -avoid-version
-mca_ess_slurm_la_LIBADD = $(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la
+mcacomponentdir = $(pmixlibdir)
+mcacomponent_LTLIBRARIES = $(component)
+mca_bfrops_v3_la_SOURCES = $(component_sources)
+mca_bfrops_v3_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_ess_slurm_la_SOURCES =$(sources)
-libmca_ess_slurm_la_LDFLAGS = -module -avoid-version
+noinst_LTLIBRARIES = $(lib)
+libmca_bfrops_v3_la_SOURCES = $(lib_sources)
+libmca_bfrops_v3_la_LDFLAGS = -module -avoid-version

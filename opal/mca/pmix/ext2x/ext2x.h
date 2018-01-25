@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -45,6 +45,7 @@ BEGIN_C_DECLS
 
 typedef struct {
   opal_pmix_base_component_t super;
+  bool legacy_get;
   opal_list_t jobids;
   bool native_launch;
   size_t evindex;

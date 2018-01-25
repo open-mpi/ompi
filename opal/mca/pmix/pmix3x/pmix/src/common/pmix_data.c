@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,18 +37,19 @@
 #include "src/mca/bfrops/bfrops.h"
 #include "src/include/pmix_globals.h"
 
-#define PMIX_EMBED_DATA_BUFFER(b, db)                   \
-    do {                                                \
-        (b)->base_ptr = (db)->base_ptr;                 \
-        (b)->pack_ptr = (db)->pack_ptr;                 \
-        (b)->unpack_ptr = (db)->unpack_ptr;             \
-        (b)->bytes_allocated = (db)->bytes_allocated;   \
-        (b)->bytes_used = (db)->bytes_used;             \
-        (db)->base_ptr = NULL;                          \
-        (db)->pack_ptr = NULL;                          \
-        (db)->unpack_ptr = NULL;                        \
-        (db)->bytes_allocated = 0;                      \
-        (db)->bytes_used = 0;                           \
+#define PMIX_EMBED_DATA_BUFFER(b, db)                       \
+    do {                                                    \
+        (b)->type = pmix_globals.mypeer->nptr->compat.type; \
+        (b)->base_ptr = (db)->base_ptr;                     \
+        (b)->pack_ptr = (db)->pack_ptr;                     \
+        (b)->unpack_ptr = (db)->unpack_ptr;                 \
+        (b)->bytes_allocated = (db)->bytes_allocated;       \
+        (b)->bytes_used = (db)->bytes_used;                 \
+        (db)->base_ptr = NULL;                              \
+        (db)->pack_ptr = NULL;                              \
+        (db)->unpack_ptr = NULL;                            \
+        (db)->bytes_allocated = 0;                          \
+        (db)->bytes_used = 0;                               \
     } while (0)
 
 #define PMIX_EXTRACT_DATA_BUFFER(b, db)                 \

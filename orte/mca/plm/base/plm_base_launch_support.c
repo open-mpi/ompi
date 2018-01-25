@@ -38,6 +38,7 @@
 
 #include "opal/hash_string.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
@@ -681,18 +682,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
                              ORTE_JOBID_PRINT(jdata->jobid)));
         goto cleanup;
     }
-    /* if it was a dynamic spawn, and it isn't an MPI job, then
-     * it won't register and we need to send the response now.
-     * Otherwise, it is an MPI job and we should wait for it
-     * to register */
-    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL) &&
-        !orte_get_attribute(&jdata->attributes, ORTE_JOB_DVM_JOB, NULL, OPAL_BOOL)) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                             "%s plm:base:launch job %s is MPI",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid)));
-        goto cleanup;
-    }
+
     /* prep the response */
     rc = ORTE_SUCCESS;
     answer = OBJ_NEW(opal_buffer_t);
@@ -743,10 +733,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
 
 void orte_plm_base_registered(int fd, short args, void *cbdata)
 {
-    int ret, room, *rmptr;
-    int32_t rc;
     orte_job_t *jdata;
-    opal_buffer_t *answer;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
     ORTE_ACQUIRE_OBJECT(caddy);
@@ -770,61 +757,8 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
         return;
     }
     /* update job state */
-    caddy->jdata->state = caddy->job_state;
+    jdata->state = caddy->job_state;
 
-    /* if this isn't a dynamic spawn, just cleanup */
-    if (ORTE_JOBID_INVALID == jdata->originator.jobid ||
-        orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL) ||
-        orte_get_attribute(&jdata->attributes, ORTE_JOB_DVM_JOB, NULL, OPAL_BOOL)) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                             "%s plm:base:launch job %s is not a dynamic spawn",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid)));
-        goto cleanup;
-    }
-
-    /* if it was a dynamic spawn, send the response */
-    rc = ORTE_SUCCESS;
-    answer = OBJ_NEW(opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &rc, 1, OPAL_INT32))) {
-        ORTE_ERROR_LOG(ret);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        OBJ_RELEASE(caddy);
-        return;
-    }
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jdata->jobid, 1, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(ret);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        OBJ_RELEASE(caddy);
-        return;
-    }
-    /* pack the room number */
-    rmptr = &room;
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&rmptr, OPAL_INT)) {
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &room, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(ret);
-            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            OBJ_RELEASE(caddy);
-            return;
-        }
-    }
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                         "%s plm:base:launch sending dyn release of job %s to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid),
-                         ORTE_NAME_PRINT(&jdata->originator)));
-    if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                           &jdata->originator, answer,
-                                           ORTE_RML_TAG_LAUNCH_RESP,
-                                           orte_rml_send_callback, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(answer);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        OBJ_RELEASE(caddy);
-        return;
-    }
-
-  cleanup:
    /* if this wasn't a debugger job, then need to init_after_spawn for debuggers */
     if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);

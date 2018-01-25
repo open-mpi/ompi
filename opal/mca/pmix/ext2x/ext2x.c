@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -50,7 +50,7 @@
 
 /* These are functions used by both client and server to
  * access common functions in the embedded PMIx library */
-
+static bool legacy_get(void);
 static const char *ext2x_get_nspace(opal_jobid_t jobid);
 static void ext2x_register_jobid(opal_jobid_t jobid, const char *nspace);
 static void register_handler(opal_list_t *event_codes,
@@ -72,6 +72,7 @@ static void ext2x_log(opal_list_t *info,
                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 const opal_pmix_base_module_t opal_pmix_ext2x_module = {
+    .legacy_get = legacy_get,
     /* client APIs */
     .init = ext2x_client_init,
     .finalize = ext2x_client_finalize,
@@ -125,6 +126,11 @@ const opal_pmix_base_module_t opal_pmix_ext2x_module = {
     .get_nspace = ext2x_get_nspace,
     .register_jobid = ext2x_register_jobid
 };
+
+static bool legacy_get(void)
+{
+    return mca_pmix_ext2x_component.legacy_get;
+}
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {

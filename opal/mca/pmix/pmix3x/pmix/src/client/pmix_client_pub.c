@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -564,14 +564,18 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr,
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc, ret;
     int32_t cnt;
-    pmix_pdata_t *pdata = NULL;
-    size_t ndata = 0;
+    pmix_pdata_t *pdata;
+    size_t ndata;
 
     PMIX_ACQUIRE_OBJECT(cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client recv callback activated with %d bytes",
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
+
+    /* set the defaults */
+    pdata = NULL;
+    ndata = 0;
 
     if (NULL == cb->cbfunc.lookupfn) {
         /* nothing we can do with this */
@@ -588,10 +592,6 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr,
         rc = PMIX_ERR_UNREACH;
         goto report;
     }
-
-    /* set the defaults */
-    pdata = NULL;
-    ndata = 0;
 
     /* unpack the returned status */
     cnt = 1;

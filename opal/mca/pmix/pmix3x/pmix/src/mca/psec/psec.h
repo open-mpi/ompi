@@ -37,6 +37,9 @@
 
 BEGIN_C_DECLS
 
+/* forward declaration */
+struct pmix_peer_t;
+
 /******    MODULE DEFINITION    ******/
 
 /**
@@ -55,10 +58,16 @@ typedef void (*pmix_psec_base_module_fini_fn_t)(void);
 /**
  * Create and return a credential for this client - this
  * could be a string or a byte array, which is why we must
- * also return the length
+ * also return the length. The directives contain info on
+ * desired credential type, or other directives used by
+ * the credential agent. The returned info array typically
+ * contains the name of the agent issuing the credential,
+ * plus any other info the agent chooses to return.
  */
-typedef pmix_status_t (*pmix_psec_base_module_create_cred_fn_t)(pmix_listener_protocol_t protocol,
-                                                                char **cred, size_t *len);
+typedef pmix_status_t (*pmix_psec_base_module_create_cred_fn_t)(struct pmix_peer_t *peer,
+                                                                const pmix_info_t directives[], size_t ndirs,
+                                                                pmix_info_t **info, size_t *ninfo,
+                                                                pmix_byte_object_t *cred);
 
 /**
  * Perform the client-side handshake. Note that it is not required
@@ -71,11 +80,18 @@ typedef pmix_status_t (*pmix_psec_base_module_client_hndshk_fn_t)(int sd);
 /****    SERVER-SIDE FUNCTIONS    ****/
 /**
  * Validate a client's credential - the credential could be a string
- * or an array of bytes, which is why we include the length
+ * or an array of bytes, which is why we include the length. The directives
+ * contain information provided by the requestor to aid in the validation
+ * process - e.g., the uid/gid of the process seeking validation, or
+ * the name of the agent being asked to perform the validation. The
+ * returned info array typically contains the name of the agent that
+ * actually performed the validation, plus any other info the agent
+ * chooses to return (e.g., the uid/gid contained in the credential)
  */
-typedef pmix_status_t (*pmix_psec_base_module_validate_cred_fn_t)(int sd, uid_t uid, gid_t gid,
-                                                                  pmix_listener_protocol_t protocol,
-                                                                  char *cred, size_t len);
+typedef pmix_status_t (*pmix_psec_base_module_validate_cred_fn_t)(struct pmix_peer_t *peer,
+                                                                  const pmix_info_t directives[], size_t ndirs,
+                                                                  pmix_info_t **info, size_t *ninfo,
+                                                                  const pmix_byte_object_t *cred);
 
 /**
  * Perform the server-side handshake. Note that it is not required
@@ -112,21 +128,25 @@ PMIX_EXPORT pmix_psec_module_t* pmix_psec_base_assign_module(const char *options
 
 /* MACROS FOR EXECUTING PSEC FUNCTIONS */
 
-#define PMIX_PSEC_CREATE_CRED(r, p, pr, c, l)       \
-    (r) = (p)->nptr->compat.psec->create_cred(pr, c, l)
+#define PMIX_PSEC_CREATE_CRED(r, p, d, nd, in, nin, c)                      \
+    (r) = (p)->nptr->compat.psec->create_cred((struct pmix_peer_t*)(p),     \
+                                              (d), (nd), (in), (nin), c)
 
 #define PMIX_PSEC_CLIENT_HANDSHAKE(r, p, sd) \
     (r) = (p)->nptr->compat.psec->client_handshake(sd)
 
-#define PMIX_PSEC_VALIDATE_CRED(r, p, pr, c, l)     \
-    (r) = (p)->nptr->compat.psec->validate_cred((p)->sd, (p)->info->uid, (p)->info->gid, pr, c, l)
+#define PMIX_PSEC_VALIDATE_CRED(r, p, d, nd, in, nin, c)                    \
+    (r) = (p)->nptr->compat.psec->validate_cred((struct pmix_peer_t*)(p),   \
+                                                (d), (nd),                  \
+                                                (in), (nin), c)
 
-#define PMIX_PSEC_VALIDATE_CONNECTION(r, p, pr, c, l)                                                       \
+#define PMIX_PSEC_VALIDATE_CONNECTION(r, p, d, nd, in, nin, c)                                              \
     do {                                                                                                    \
         int _r;                                                                                             \
         /* if a credential is available, then check it */                                                   \
         if (NULL != (p)->nptr->compat.psec->validate_cred) {                                                \
-            _r = (p)->nptr->compat.psec->validate_cred((p)->sd, (p)->info->uid, (p)->info->gid, pr, c, l);  \
+            _r = (p)->nptr->compat.psec->validate_cred((struct pmix_peer_t*)(p),                            \
+                                                       (d), (nd), (in), (nin), c);                          \
             if (PMIX_SUCCESS != _r) {                                                                       \
                 pmix_output_verbose(2, pmix_globals.debug_output,                                           \
                                     "validation of credential failed: %s",                                  \

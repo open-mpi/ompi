@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
@@ -38,6 +38,7 @@
 #endif
 
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -248,7 +249,14 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
                  ORTE_VPID_WILDCARD == origin.vpid ||
                  sink->name.vpid == origin.vpid)) {
                 /* send the data to the tool */
-                orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &origin, stream, data, numbytes);
+                if (NULL != opal_pmix.server_iof_push) {
+                    rc = opal_pmix.server_iof_push(&proct->name, stream, data, numbytes);
+                    if (ORTE_SUCCESS != rc) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                } else {
+                    orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &origin, stream, data, numbytes);
+                }
                 if (sink->exclusive) {
                     exclusive = true;
                 }

@@ -3,8 +3,8 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
+ * Copyright (c) 2004-2005 The University of Tennbfropsee and The University
+ *                         of Tennbfropsee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,30 +27,33 @@
  */
 
 #include <src/include/pmix_config.h>
-#include "pmix_common.h"
+#include <pmix_common.h>
+#include "src/include/types.h"
+#include "src/include/pmix_globals.h"
 
-#include "src/mca/base/pmix_mca_base_var.h"
-#include "src/mca/psec/psec.h"
-#include "psec_none.h"
+#include "src/util/error.h"
+#include "src/server/pmix_server_ops.h"
+#include "src/mca/bfrops/base/base.h"
+#include "bfrop_pmix3.h"
+
+extern pmix_bfrops_module_t pmix_bfrops_pmix3_module;
 
 static pmix_status_t component_open(void);
-static pmix_status_t component_close(void);
 static pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority);
-static pmix_psec_module_t* assign_module(void);
+static pmix_status_t component_close(void);
+static pmix_bfrops_module_t* assign_module(void);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-pmix_psec_base_component_t mca_psec_none_component = {
+pmix_bfrops_base_component_t mca_bfrops_v3_component = {
     .base = {
-        PMIX_PSEC_BASE_VERSION_1_0_0,
+        PMIX_BFROPS_BASE_VERSION_1_0_0,
 
         /* Component name and version */
-        .pmix_mca_component_name = "none",
-        PMIX_MCA_BASE_MAKE_VERSION(component,
-                                   PMIX_MAJOR_VERSION,
-                                   PMIX_MINOR_VERSION,
+        .pmix_mca_component_name = "v3",
+        PMIX_MCA_BASE_MAKE_VERSION(component, PMIX_MAJOR_VERSION, PMIX_MINOR_VERSION,
                                    PMIX_RELEASE_VERSION),
 
         /* Component open and close functions */
@@ -58,48 +61,39 @@ pmix_psec_base_component_t mca_psec_none_component = {
         .pmix_mca_close_component = component_close,
         .pmix_mca_query_component = component_query,
     },
-    .data = {
-        /* The component is checkpoint ready */
-        PMIX_MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+    .priority = 40,
     .assign_module = assign_module
 };
 
 
-static int component_open(void)
+pmix_status_t component_open(void)
 {
-    int index;
-    const pmix_mca_base_var_storage_t *value=NULL;
+    /* setup the types array */
+    PMIX_CONSTRUCT(&mca_bfrops_v3_component.types, pmix_pointer_array_t);
+    pmix_pointer_array_init(&mca_bfrops_v3_component.types, 32, INT_MAX, 16);
 
-    /* we only allow ourselves to be considered IF the user
-     * specifically requested so */
-    if (0 > (index = pmix_mca_base_var_find("pmix", "psec", NULL, NULL))) {
-        return PMIX_ERROR;
-    }
-    pmix_mca_base_var_get_value (index, &value, NULL, NULL);
-    if (NULL != value && NULL != value->stringval && '\0' != value->stringval[0]) {
-        if (NULL != strstr(value->stringval, "none")) {
-            return PMIX_SUCCESS;
-        }
-    }
-    return PMIX_ERROR;
-}
-
-
-static int component_query(pmix_mca_base_module_t **module, int *priority)
-{
-    *priority = 0;
-    *module = (pmix_mca_base_module_t *)&pmix_none_module;
     return PMIX_SUCCESS;
 }
 
 
-static int component_close(void)
+pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority)
 {
+
+    *priority = mca_bfrops_v3_component.priority;
+    *module = (pmix_mca_base_module_t *)&pmix_bfrops_pmix3_module;
     return PMIX_SUCCESS;
 }
 
-static pmix_psec_module_t* assign_module(void)
+
+pmix_status_t component_close(void)
 {
-    return &pmix_none_module;
+    PMIX_DESTRUCT(&mca_bfrops_v3_component.types);
+    return PMIX_SUCCESS;
+}
+
+static pmix_bfrops_module_t* assign_module(void)
+{
+    pmix_output_verbose(10, pmix_bfrops_base_framework.framework_output,
+                        "bfrops:pmix3x assigning module");
+    return &pmix_bfrops_pmix3_module;
 }

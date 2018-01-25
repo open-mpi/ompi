@@ -51,13 +51,13 @@ pmi_client_SOURCES = $(headers) \
         pmi_client.c
 pmi_client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmi_client_LDADD = \
-    $(top_builddir)/src/libpmix.la
+    $(top_builddir)/src/libpmi.la
 
 pmi2_client_SOURCES = $(headers) \
         pmi2_client.c
 pmi2_client_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pmi2_client_LDADD = \
-    $(top_builddir)/src/libpmix.la
+    $(top_builddir)/src/libpmi2.la
 endif
 
 pmix_client_SOURCES = $(headers) \

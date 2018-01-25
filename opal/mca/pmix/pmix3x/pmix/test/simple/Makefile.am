@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/include -I$(top_builddir)/include/pmix
 
-noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex test_pmix simptool simpdie simplegacy
+noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex test_pmix simptool simpdie simplegacy simptimeout
 
 simptest_SOURCES = \
         simptest.c
@@ -81,4 +81,10 @@ simplegacy_SOURCES = \
         simplegacy.c
 simplegacy_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simplegacy_LDADD = \
+    $(top_builddir)/src/libpmix.la
+
+simptimeout_SOURCES = \
+        simptimeout.c
+simptimeout_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+simptimeout_LDADD = \
     $(top_builddir)/src/libpmix.la

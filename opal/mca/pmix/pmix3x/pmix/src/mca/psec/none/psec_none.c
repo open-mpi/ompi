@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -29,14 +31,20 @@
 
 static pmix_status_t none_init(void);
 static void none_finalize(void);
-static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
-                                   pmix_listener_protocol_t protocol,
-                                   char *cred, size_t len);
+static pmix_status_t create_cred(struct pmix_peer_t *peer,
+                                 const pmix_info_t directives[], size_t ndirs,
+                                 pmix_info_t **info, size_t *ninfo,
+                                 pmix_byte_object_t *cred);
+static pmix_status_t validate_cred(struct pmix_peer_t *peer,
+                                   const pmix_info_t directives[], size_t ndirs,
+                                   pmix_info_t **info, size_t *ninfo,
+                                   const pmix_byte_object_t *cred);
 
 pmix_psec_module_t pmix_none_module = {
     .name = "none",
     .init = none_init,
     .finalize = none_finalize,
+    .create_cred = create_cred,
     .validate_cred = validate_cred
 };
 
@@ -53,11 +61,61 @@ static void none_finalize(void)
                         "psec: none finalize");
 }
 
-static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
-                                   pmix_listener_protocol_t protocol,
-                                   char *cred, size_t len)
+static pmix_status_t create_cred(struct pmix_peer_t *peer,
+                                 const pmix_info_t directives[], size_t ndirs,
+                                 pmix_info_t **info, size_t *ninfo,
+                                 pmix_byte_object_t *cred)
 {
+    /* ensure initialization */
+    PMIX_BYTE_OBJECT_CONSTRUCT(cred);
+
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t validate_cred(struct pmix_peer_t *peer,
+                                   const pmix_info_t directives[], size_t ndirs,
+                                   pmix_info_t **info, size_t *ninfo,
+                                   const pmix_byte_object_t *cred)
+{
+    size_t n, m;
+    char **types;
+    bool takeus;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "psec: none always reports valid");
+
+    /* if we are responding to a local request to validate a credential,
+     * then see if they specified a mechanism */
+    if (NULL != directives && 0 < ndirs) {
+        for (n=0; n < ndirs; n++) {
+            if (0 == strncmp(directives[n].key, PMIX_CRED_TYPE, PMIX_MAX_KEYLEN)) {
+                /* split the specified string */
+                types = pmix_argv_split(directives[n].value.data.string, ',');
+                takeus = false;
+                for (m=0; NULL != types[m]; m++) {
+                    if (0 == strcmp(types[m], "none")) {
+                        /* it's us! */
+                        takeus = true;
+                        break;
+                    }
+                }
+                pmix_argv_free(types);
+                if (!takeus) {
+                    return PMIX_ERR_NOT_SUPPORTED;
+                }
+            }
+        }
+    }
+
+    /* mark that this came from us */
+    if (NULL != info) {
+        /* mark that this came from us */
+        PMIX_INFO_CREATE(*info, 1);
+        if (NULL == *info) {
+            return PMIX_ERR_NOMEM;
+        }
+        *ninfo = 1;
+        PMIX_INFO_LOAD(info[0], PMIX_CRED_TYPE, "none", PMIX_STRING);
+    }
     return PMIX_SUCCESS;
 }
