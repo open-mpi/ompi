@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
@@ -400,7 +400,6 @@ int ext2x_store_local(const opal_process_name_t *proc, opal_value_t *val)
 
     PMIX_VALUE_CONSTRUCT(&kv);
     ext2x_value_load(&kv, val);
-
     /* call the library - this is a blocking call */
     rc = PMIx_Store_internal(&p, val->key, &kv);
     PMIX_VALUE_DESTRUCT(&kv);
@@ -596,10 +595,11 @@ int ext2x_get(const opal_process_name_t *proc, const char *key,
         return OPAL_ERR_NOT_INITIALIZED;
     }
 
-    if (NULL == proc) {
+    if (NULL == proc && NULL != key) {
         /* if they are asking for our jobid, then return it */
         if (0 == strcmp(key, OPAL_PMIX_JOBID)) {
             (*val) = OBJ_NEW(opal_value_t);
+            (*val)->key = strdup(key);
             (*val)->type = OPAL_UINT32;
             (*val)->data.uint32 = OPAL_PROC_MY_NAME.jobid;
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -608,6 +608,7 @@ int ext2x_get(const opal_process_name_t *proc, const char *key,
         /* if they are asking for our rank, return it */
         if (0 == strcmp(key, OPAL_PMIX_RANK)) {
             (*val) = OBJ_NEW(opal_value_t);
+            (*val)->key = strdup(key);
             (*val)->type = OPAL_INT;
             (*val)->data.integer = ext2x_convert_rank(my_proc.rank);
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -642,6 +643,9 @@ int ext2x_get(const opal_process_name_t *proc, const char *key,
     rc = PMIx_Get(&p, key, pinfo, sz, &pval);
     if (PMIX_SUCCESS == rc) {
         ival = OBJ_NEW(opal_value_t);
+        if (NULL != key) {
+            ival->key = strdup(key);
+        }
         if (OPAL_SUCCESS != (ret = ext2x_value_unload(ival, pval))) {
             rc = ext2x_convert_opalrc(ret);
         } else {
@@ -663,6 +667,9 @@ static void val_cbfunc(pmix_status_t status,
 
     OPAL_ACQUIRE_OBJECT(op);
     OBJ_CONSTRUCT(&val, opal_value_t);
+    if (NULL != op->nspace) {
+        val.key = strdup(op->nspace);
+    }
     rc = ext2x_convert_opalrc(status);
     if (PMIX_SUCCESS == status && NULL != kv) {
         rc = ext2x_value_unload(&val, kv);
@@ -702,6 +709,7 @@ int ext2x_getnb(const opal_process_name_t *proc, const char *key,
         if (0 == strcmp(key, OPAL_PMIX_JOBID)) {
             if (NULL != cbfunc) {
                 val = OBJ_NEW(opal_value_t);
+                val->key = strdup(key);
                 val->type = OPAL_UINT32;
                 val->data.uint32 = OPAL_PROC_MY_NAME.jobid;
                 cbfunc(OPAL_SUCCESS, val, cbdata);
@@ -713,6 +721,7 @@ int ext2x_getnb(const opal_process_name_t *proc, const char *key,
         if (0 == strcmp(key, OPAL_PMIX_RANK)) {
             if (NULL != cbfunc) {
                 val = OBJ_NEW(opal_value_t);
+                val->key = strdup(key);
                 val->type = OPAL_INT;
                 val->data.integer = ext2x_convert_rank(my_proc.rank);
                 cbfunc(OPAL_SUCCESS, val, cbdata);
@@ -726,7 +735,9 @@ int ext2x_getnb(const opal_process_name_t *proc, const char *key,
     op = OBJ_NEW(ext2x_opcaddy_t);
     op->valcbfunc = cbfunc;
     op->cbdata = cbdata;
-
+    if (NULL != key) {
+        op->nspace = strdup(key);
+    }
     if (NULL == proc) {
         (void)strncpy(op->p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
         op->p.rank = ext2x_convert_rank(PMIX_RANK_WILDCARD);
