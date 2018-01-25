@@ -262,7 +262,6 @@ static void notification_fn(size_t evhdlr_registration_id,
 {
     pmix_lock_t *reglock = (pmix_lock_t*)cbdata;
 
-pmix_output(0, "RELEASE RECVD");
     if (NULL != cbfunc) {
         cbfunc(PMIX_EVENT_ACTION_COMPLETE, NULL, 0, NULL, NULL, cbdata);
     }
@@ -632,7 +631,6 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         PMIX_POST_OBJECT(&reglock);
         PMIx_Register_event_handler(&code, 1, NULL, 0,
                                     notification_fn, NULL, (void*)&reglock);
-        pmix_output(0, "WAITING FOR RELEASE");
         /* wait for it to arrive */
         PMIX_WAIT_THREAD(&reglock);
         PMIX_DESTRUCT_LOCK(&reglock);

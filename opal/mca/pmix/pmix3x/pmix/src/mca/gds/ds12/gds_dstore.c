@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -2995,7 +2995,6 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
                                       pmix_byte_object_t *bo)
 {
     pmix_nspace_t *ns = (pmix_nspace_t*)nspace;
-    pmix_server_caddy_t *scd;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;
     pmix_buffer_t pbkt;
