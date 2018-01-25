@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,4 +98,3 @@ static int orte_iof_tool_query(mca_base_module_t **module, int *priority)
 
     return ORTE_SUCCESS;
 }
-

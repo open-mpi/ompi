@@ -240,6 +240,7 @@ int orte_daemon(int argc, char *argv[])
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
 #endif
+    opal_value_t val;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -470,6 +471,20 @@ int orte_daemon(int argc, char *argv[])
     }
     ORTE_PROC_MY_DAEMON->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
+    OBJ_CONSTRUCT(&val, opal_value_t);
+    val.key = OPAL_PMIX_PROC_URI;
+    val.type = OPAL_STRING;
+    val.data.string = orte_process_info.my_daemon_uri;
+    if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, &val))) {
+        ORTE_ERROR_LOG(ret);
+        val.key = NULL;
+        val.data.string = NULL;
+        OBJ_DESTRUCT(&val);
+        goto DONE;
+    }
+    val.key = NULL;
+    val.data.string = NULL;
+    OBJ_DESTRUCT(&val);
 
     /* if I am also the hnp, then update that contact info field too */
     if (ORTE_PROC_IS_HNP) {
@@ -677,8 +692,6 @@ int orte_daemon(int argc, char *argv[])
                                   MCA_BASE_VAR_SCOPE_CONSTANT,
                                   &orte_parent_uri);
     if (NULL != orte_parent_uri) {
-        opal_value_t val;
-
         /* set the contact info into our local database */
         ret = orte_rml_base_parse_uris(orte_parent_uri, ORTE_PROC_MY_PARENT, NULL);
         if (ORTE_SUCCESS != ret) {
@@ -691,6 +704,8 @@ int orte_daemon(int argc, char *argv[])
         val.data.string = orte_parent_uri;
         if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_PARENT, &val))) {
             ORTE_ERROR_LOG(ret);
+            val.key = NULL;
+            val.data.string = NULL;
             OBJ_DESTRUCT(&val);
             goto DONE;
         }
@@ -774,51 +789,76 @@ int orte_daemon(int argc, char *argv[])
 
         /* get any connection info we may have pushed */
         {
-            opal_value_t *val = NULL, *kv;
+            opal_value_t *vptr = NULL, *kv;
             opal_list_t *modex;
             int32_t flag;
 
-            if (OPAL_SUCCESS != (ret = opal_pmix.get(ORTE_PROC_MY_NAME, NULL, NULL, &val)) || NULL == val) {
-                /* just pack a marker indicating we don't have any to share */
-                flag = 0;
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
-                    ORTE_ERROR_LOG(ret);
-                    OBJ_RELEASE(buffer);
-                    goto DONE;
-                }
-            } else {
-                /* the data is returned as a list of key-value pairs in the opal_value_t */
-                if (OPAL_PTR == val->type) {
-                    modex = (opal_list_t*)val->data.ptr;
-                    flag = (int32_t)opal_list_get_size(modex);
+            if (opal_pmix.legacy_get()) {
+                if (OPAL_SUCCESS != (ret = opal_pmix.get(ORTE_PROC_MY_NAME, OPAL_PMIX_PROC_URI, NULL, &vptr)) || NULL == vptr) {
+                    /* just pack a marker indicating we don't have any to share */
+                    flag = 0;
                     if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
                         ORTE_ERROR_LOG(ret);
                         OBJ_RELEASE(buffer);
                         goto DONE;
                     }
-                    OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
-                        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &kv, 1, OPAL_VALUE))) {
-                            ORTE_ERROR_LOG(ret);
-                            OBJ_RELEASE(buffer);
-                            goto DONE;
-                        }
-                    }
-                    OPAL_LIST_RELEASE(modex);
                 } else {
-                    /* single value */
                     flag = 1;
                     if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
                         ORTE_ERROR_LOG(ret);
                         OBJ_RELEASE(buffer);
                         goto DONE;
                     }
-                    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &val, 1, OPAL_VALUE))) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &vptr, 1, OPAL_VALUE))) {
                         ORTE_ERROR_LOG(ret);
                         OBJ_RELEASE(buffer);
                         goto DONE;
                     }
+                    OBJ_RELEASE(vptr);
                 }
-                OBJ_RELEASE(val);
+            } else {
+                if (OPAL_SUCCESS != (ret = opal_pmix.get(ORTE_PROC_MY_NAME, NULL, NULL, &vptr)) || NULL == vptr) {
+                    /* just pack a marker indicating we don't have any to share */
+                    flag = 0;
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(buffer);
+                        goto DONE;
+                    }
+                } else {
+                    /* the data is returned as a list of key-value pairs in the opal_value_t */
+                    if (OPAL_PTR == vptr->type) {
+                        modex = (opal_list_t*)vptr->data.ptr;
+                        flag = (int32_t)opal_list_get_size(modex);
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
+                            ORTE_ERROR_LOG(ret);
+                            OBJ_RELEASE(buffer);
+                            goto DONE;
+                        }
+                        OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
+                            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &kv, 1, OPAL_VALUE))) {
+                                ORTE_ERROR_LOG(ret);
+                                OBJ_RELEASE(buffer);
+                                goto DONE;
+                            }
+                        }
+                        OPAL_LIST_RELEASE(modex);
+                    } else {
+                        /* single value */
+                        flag = 1;
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &flag, 1, OPAL_INT32))) {
+                            ORTE_ERROR_LOG(ret);
+                            OBJ_RELEASE(buffer);
+                            goto DONE;
+                        }
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &vptr, 1, OPAL_VALUE))) {
+                            ORTE_ERROR_LOG(ret);
+                            OBJ_RELEASE(buffer);
+                            goto DONE;
+                        }
+                        OBJ_RELEASE(vptr);
+                    }
+                }
             }
         }
 

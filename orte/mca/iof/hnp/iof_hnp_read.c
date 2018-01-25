@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -114,6 +115,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     fd = rev->fd;
 
     /* read up to the fragment size */
+    memset(data, 0, ORTE_IOF_BASE_MSG_MAX);
     numbytes = read(fd, data, sizeof(data));
 
     if (NULL == proct) {
@@ -239,11 +241,22 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                  * In this case, we pass rev->name to indicate who the
                  * data came from.
                  */
-                OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
-                                     "%s sending data to tool %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&sink->daemon)));
-                orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &proct->name, rev->tag, data, numbytes);
+                if (NULL != opal_pmix.server_iof_push) {
+                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                                         "%s sending data of size %d via PMIx to tool %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)numbytes,
+                                         ORTE_NAME_PRINT(&sink->daemon));
+                    rc = opal_pmix.server_iof_push(&proct->name, rev->tag, data, numbytes));
+                    if (ORTE_SUCCESS != rc) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                } else {
+                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                                         "%s sending data to tool %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&sink->daemon));
+                    orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &proct->name, rev->tag, data, numbytes));
+                }
                 if (sink->exclusive) {
                     exclusive = true;
                 }

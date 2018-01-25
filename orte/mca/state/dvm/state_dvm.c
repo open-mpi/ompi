@@ -257,119 +257,156 @@ static void vm_ready(int fd, short args, void *cbdata)
 
     /* if this is my job, then we are done */
     if (ORTE_PROC_MY_NAME->jobid == caddy->jdata->jobid) {
-        /* send the daemon map to every daemon in this DVM - we
-         * do this here so we don't have to do it for every
-         * job we are going to launch */
-        buf = OBJ_NEW(opal_buffer_t);
-        opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD);
-        /* if we couldn't provide the allocation regex on the orted
-         * cmd line, then we need to provide all the info here */
-        if (!orte_nidmap_communicated) {
-            if (ORTE_SUCCESS != (rc = orte_regx.nidmap_create(orte_node_pool, &nidmap))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buf);
-                return;
-            }
-            orte_nidmap_communicated = true;
-        } else {
-            nidmap = NULL;
-        }
-        opal_dss.pack(buf, &nidmap, 1, OPAL_STRING);
-        if (NULL != nidmap) {
-            free(nidmap);
-        }
-        /* provide the info on the capabilities of each node */
-        if (!orte_node_info_communicated) {
-            flag = 1;
-            opal_dss.pack(buf, &flag, 1, OPAL_INT8);
-            if (ORTE_SUCCESS != (rc = orte_regx.encode_nodemap(buf))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buf);
-                return;
-            }
-            orte_node_info_communicated = true;
-            /* get wireup info for daemons */
-            jptr = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-            wireup = OBJ_NEW(opal_buffer_t);
-            for (v=0; v < jptr->procs->size; v++) {
-                if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(jptr->procs, v))) {
-                    continue;
+        /* if there is only one daemon in the job, then there
+         * is just a little bit to do */
+        if (1 == orte_process_info.num_procs) {
+            if (!orte_nidmap_communicated) {
+                if (ORTE_SUCCESS != (rc = orte_regx.nidmap_create(orte_node_pool, &orte_node_regex))) {
+                    ORTE_ERROR_LOG(rc);
+                    return;
                 }
-                val = NULL;
-                if (OPAL_SUCCESS != (rc = opal_pmix.get(&dmn->name, NULL, NULL, &val)) || NULL == val) {
+                orte_nidmap_communicated = true;
+            }
+        } else {
+            /* send the daemon map to every daemon in this DVM - we
+             * do this here so we don't have to do it for every
+             * job we are going to launch */
+            buf = OBJ_NEW(opal_buffer_t);
+            opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD);
+            /* if we couldn't provide the allocation regex on the orted
+             * cmd line, then we need to provide all the info here */
+            if (!orte_nidmap_communicated) {
+                if (ORTE_SUCCESS != (rc = orte_regx.nidmap_create(orte_node_pool, &nidmap))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(buf);
-                    OBJ_RELEASE(wireup);
                     return;
-                } else {
-                    /* pack the name of the daemon */
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &dmn->name, 1, ORTE_NAME))) {
-                        ORTE_ERROR_LOG(rc);
-                        OBJ_RELEASE(buf);
-                        OBJ_RELEASE(wireup);
-                        return;
+                }
+                orte_nidmap_communicated = true;
+            } else {
+                nidmap = NULL;
+            }
+            opal_dss.pack(buf, &nidmap, 1, OPAL_STRING);
+            if (NULL != nidmap) {
+                free(nidmap);
+            }
+            /* provide the info on the capabilities of each node */
+            if (!orte_node_info_communicated) {
+                flag = 1;
+                opal_dss.pack(buf, &flag, 1, OPAL_INT8);
+                if (ORTE_SUCCESS != (rc = orte_regx.encode_nodemap(buf))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(buf);
+                    return;
+                }
+                orte_node_info_communicated = true;
+                /* get wireup info for daemons */
+                jptr = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+                wireup = OBJ_NEW(opal_buffer_t);
+                for (v=0; v < jptr->procs->size; v++) {
+                    if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(jptr->procs, v))) {
+                        continue;
                     }
-                    /* the data is returned as a list of key-value pairs in the opal_value_t */
-                    if (OPAL_PTR != val->type) {
-                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                        OBJ_RELEASE(buf);
-                        OBJ_RELEASE(wireup);
-                        return;
-                    }
-                    modex = (opal_list_t*)val->data.ptr;
-                    numbytes = (int32_t)opal_list_get_size(modex);
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        OBJ_RELEASE(buf);
-                        OBJ_RELEASE(wireup);
-                        return;
-                    }
-                    OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
-                        if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+                    val = NULL;
+                    if (opal_pmix.legacy_get()) {
+                        if (OPAL_SUCCESS != (rc = opal_pmix.get(&dmn->name, OPAL_PMIX_PROC_URI, NULL, &val)) || NULL == val) {
                             ORTE_ERROR_LOG(rc);
                             OBJ_RELEASE(buf);
                             OBJ_RELEASE(wireup);
                             return;
+                        } else {
+                            /* pack the name of the daemon */
+                            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &dmn->name, 1, ORTE_NAME))) {
+                                ORTE_ERROR_LOG(rc);
+                                OBJ_RELEASE(buf);
+                                OBJ_RELEASE(wireup);
+                                return;
+                            }
+                            /* pack the URI */
+                           if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &val->data.string, 1, OPAL_STRING))) {
+                                ORTE_ERROR_LOG(rc);
+                                OBJ_RELEASE(buf);
+                                OBJ_RELEASE(wireup);
+                                return;
+                            }
+                            OBJ_RELEASE(val);
+                        }
+                    } else {
+                        if (OPAL_SUCCESS != (rc = opal_pmix.get(&dmn->name, NULL, NULL, &val)) || NULL == val) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(buf);
+                            OBJ_RELEASE(wireup);
+                            return;
+                        } else {
+                            /* pack the name of the daemon */
+                            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &dmn->name, 1, ORTE_NAME))) {
+                                ORTE_ERROR_LOG(rc);
+                                OBJ_RELEASE(buf);
+                                OBJ_RELEASE(wireup);
+                                return;
+                            }
+                            /* the data is returned as a list of key-value pairs in the opal_value_t */
+                            if (OPAL_PTR != val->type) {
+                                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                                OBJ_RELEASE(buf);
+                                OBJ_RELEASE(wireup);
+                                return;
+                            }
+                            modex = (opal_list_t*)val->data.ptr;
+                            numbytes = (int32_t)opal_list_get_size(modex);
+                            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
+                                ORTE_ERROR_LOG(rc);
+                                OBJ_RELEASE(buf);
+                                OBJ_RELEASE(wireup);
+                                return;
+                            }
+                            OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
+                                if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+                                    ORTE_ERROR_LOG(rc);
+                                    OBJ_RELEASE(buf);
+                                    OBJ_RELEASE(wireup);
+                                    return;
+                                }
+                            }
+                            OPAL_LIST_RELEASE(modex);
+                            OBJ_RELEASE(val);
                         }
                     }
-                    OPAL_LIST_RELEASE(modex);
-                    OBJ_RELEASE(val);
                 }
-            }
-            /* put it in a byte object for xmission */
-            opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
-            /* pack the byte object - zero-byte objects are fine */
-            bo.size = numbytes;
-            boptr = &bo;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
-                ORTE_ERROR_LOG(rc);
+                /* put it in a byte object for xmission */
+                opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+                /* pack the byte object - zero-byte objects are fine */
+                bo.size = numbytes;
+                boptr = &bo;
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(wireup);
+                    OBJ_RELEASE(buf);
+                    return;
+                }
+                /* release the data since it has now been copied into our buffer */
+                if (NULL != bo.bytes) {
+                    free(bo.bytes);
+                }
                 OBJ_RELEASE(wireup);
+            } else {
+                flag = 0;
+                opal_dss.pack(buf, &flag, 1, OPAL_INT8);
+            }
+
+            /* goes to all daemons */
+            sig = OBJ_NEW(orte_grpcomm_signature_t);
+            sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+            sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
+            sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+            if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, buf))) {
+                ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
+                OBJ_RELEASE(sig);
+                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 return;
             }
-            /* release the data since it has now been copied into our buffer */
-            if (NULL != bo.bytes) {
-                free(bo.bytes);
-            }
-            OBJ_RELEASE(wireup);
-        } else {
-            flag = 0;
-            opal_dss.pack(buf, &flag, 1, OPAL_INT8);
-        }
-
-        /* goes to all daemons */
-        sig = OBJ_NEW(orte_grpcomm_signature_t);
-        sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
-        sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
-        sig->signature[0].vpid = ORTE_VPID_WILDCARD;
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, buf))) {
-            ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
-            OBJ_RELEASE(sig);
-            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            return;
         }
-        OBJ_RELEASE(buf);
         /* notify that the vm is ready */
         fprintf(stdout, "DVM ready\n");
         OBJ_RELEASE(caddy);
@@ -550,7 +587,7 @@ static void dvm_notify(int sd, short args, void *cbdata)
     bool notify = true;
     opal_list_t *info;
     opal_value_t *val;
-    opal_process_name_t pname, *proc;
+    opal_process_name_t pname, *proc, pnotify;
     mycaddy_t *mycaddy;
 
     /* see if there was any problem */
@@ -567,9 +604,9 @@ static void dvm_notify(int sd, short args, void *cbdata)
         notify = false;
     }
     /* if the jobid matches that of the requestor, then don't notify */
-    proc = &pname;
+    proc = &pnotify;
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, (void**)&proc, OPAL_NAME)) {
-        if (pname.jobid == jdata->jobid) {
+        if (pnotify.jobid == jdata->jobid) {
             notify = false;
         }
     }
@@ -609,6 +646,13 @@ static void dvm_notify(int sd, short args, void *cbdata)
         } else {
             val->data.name.vpid = ORTE_VPID_WILDCARD;
         }
+        opal_list_append(info, &val->super);
+        /* pass along the proc to be notified */
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
+        val->type = OPAL_NAME;
+        val->data.name.jobid = pnotify.jobid;
+        val->data.name.vpid = pnotify.vpid;
         opal_list_append(info, &val->super);
         /* setup the caddy */
         mycaddy = (mycaddy_t*)malloc(sizeof(mycaddy_t));
