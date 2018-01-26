@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -1585,17 +1585,31 @@ static void infocbfunc(pmix_status_t status,
                        void *release_cbdata)
 {
     pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+    opal_list_t results;
     int rc;
 
     if (NULL != release_fn) {
         release_fn(release_cbdata);
     }
     rc = pmix3x_convert_rc(status);
+    OBJ_CONSTRUCT(&results, opal_list_t);
+    if (PMIX_SUCCESS == status) {
+        for (size_t n=0; n<ninfo; n++) {
+            opal_value_t *val = OBJ_NEW(opal_value_t);
+            val->key = strdup(info[n].key);
+            status = pmix3x_value_unload(val, &info[n].value);
+            if (PMIX_SUCCESS == status) {
+                opal_list_append(&results, &val->super);
+            }
+        }
+        PMIX_INFO_FREE(info, ninfo);
+    }
     if (NULL != op->qcbfunc) {
-        op->qcbfunc(rc, NULL, op->cbdata, relcbfunc, op);
+        op->qcbfunc(rc, &results, op->cbdata, relcbfunc, op);
     } else {
         OBJ_RELEASE(op);
     }
+    OPAL_LIST_DESTRUCT(&results);
 }
 
 int pmix3x_allocate(opal_pmix_alloc_directive_t directive,
