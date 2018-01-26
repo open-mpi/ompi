@@ -23,6 +23,7 @@
  * $HEADER$
  */
 
+#define OPAL_HWLOC_WANT_SHMEM 1
 
 #include "opal_config.h"
 
@@ -53,11 +54,6 @@
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
-
-#if HWLOC_API_VERSION >= 0x20000
-// JMS Is this right?
-#include "hwloc/shmem.h"
-#endif
 
 static bool topo_in_shmem = false;
 

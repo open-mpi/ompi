@@ -43,6 +43,14 @@ BEGIN_C_DECLS
 #    endif
 #endif
 
+#if defined(OPAL_HWLOC_WANT_SHMEM) && OPAL_HWLOC_WANT_SHMEM
+#    if HWLOC_API_VERSION >= 0x20000
+#        include MCA_hwloc_external_shmem_header
+#    else
+#        error Tried to include hwloc shmem header, but hwloc < 2.0 found
+#    endif
+#endif
+
 #if HWLOC_API_VERSION < 0x00010b00
 #define HWLOC_OBJ_NUMANODE HWLOC_OBJ_NODE
 #define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET

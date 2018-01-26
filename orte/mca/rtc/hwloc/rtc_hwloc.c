@@ -9,6 +9,8 @@
  * $HEADER$
  */
 
+#define OPAL_HWLOC_WANT_SHMEM 1
+
 #include "orte_config.h"
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -47,11 +49,6 @@
 
 #include "orte/mca/rtc/base/base.h"
 #include "rtc_hwloc.h"
-
-#if HWLOC_API_VERSION >= 0x20000
-// JMS Is this right?
-#include "hwloc/shmem.h"
-#endif
 
 static int init(void);
 static void finalize(void);
