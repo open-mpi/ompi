@@ -160,6 +160,7 @@ int ompi_errhandler_request_invoke(int count,
     /* Invoke the exception */
     switch (type) {
     case OMPI_REQUEST_PML:
+    case OMPI_REQUEST_COLL:
         return ompi_errhandler_invoke(mpi_object.comm->error_handler,
                                       mpi_object.comm,
                                       mpi_object.comm->errhandler_type,
