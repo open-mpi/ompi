@@ -393,6 +393,7 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
     if (0 < total_reqs) {
         reqs = ompi_coll_base_comm_get_reqs(module->base_data, 2 * total_reqs);
         if (NULL == reqs) { error = -1; line = __LINE__; goto error_hndl; }
+        reqs[0] = reqs[1] = MPI_REQUEST_NULL;
     }
 
     prcv = (char *) rbuf;
@@ -468,6 +469,15 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
     return MPI_SUCCESS;
 
  error_hndl:
+    /* find a real error code */
+    if (MPI_ERR_IN_STATUS == error) {
+        for( ri = 0; ri < nreqs; ri++ ) {
+            if (MPI_REQUEST_NULL == reqs[ri]) continue;
+            if (MPI_ERR_PENDING == reqs[ri]->req_status.MPI_ERROR) continue;
+            error = reqs[ri]->req_status.MPI_ERROR;
+            break;
+        }
+    }
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, error,
                  rank));
@@ -661,7 +671,16 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
  err_hndl:
-    if( MPI_SUCCESS != err ) {
+    if (MPI_SUCCESS != err) {
+        /* find a real error code */
+        if (MPI_ERR_IN_STATUS == err) {
+            for( i = 0; i < nreqs; i++ ) {
+                if (MPI_REQUEST_NULL == req[i]) continue;
+                if (MPI_ERR_PENDING == req[i]->req_status.MPI_ERROR) continue;
+                err = req[i]->req_status.MPI_ERROR;
+                break;
+            }
+        }
         OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                       __FILE__, line, err, rank) );
         (void)line;  // silence compiler warning
