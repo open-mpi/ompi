@@ -3,6 +3,8 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -876,6 +878,10 @@ typedef int (*opal_pmix_base_register_cleanup_fn_t)(char *path, bool directory, 
 
 typedef bool (*opal_pmix_base_legacy_get_fn_t)(void);
 
+/* cid */
+typedef int (*opal_pmix_base_cid_fn_t)(opal_list_t *procs, int start, int release,
+                                       opal_pmix_cid_cbfunc_t cbfunc, void *cbdata);
+
 /*
  * the standard public API data structure
  */
@@ -912,6 +918,7 @@ typedef struct {
     opal_pmix_base_job_control_fn_t                         job_control;
     opal_pmix_base_process_monitor_fn_t                     monitor;
     opal_pmix_base_register_cleanup_fn_t                    register_cleanup;
+    opal_pmix_base_cid_fn_t                                 cid_nb;
     /* server APIs */
     opal_pmix_base_module_server_init_fn_t                  server_init;
     opal_pmix_base_module_server_finalize_fn_t              server_finalize;

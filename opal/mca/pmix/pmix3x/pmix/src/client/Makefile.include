@@ -4,6 +4,8 @@
 # Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
 #                         All rights reserved.
 # Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -16,6 +18,7 @@ headers += \
 
 sources += \
         client/pmix_client.c \
+        client/pmix_client_cid.c \
         client/pmix_client_fence.c \
         client/pmix_client_get.c \
         client/pmix_client_pub.c \

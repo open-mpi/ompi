@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +19,7 @@
  */
 
 /**
- * Enum inidicating the type of the request
+ * Enum indicating the type of the request
  */
 typedef enum {
     OMPI_REQUEST_PML,      /**< MPI point-to-point request */
@@ -28,6 +30,7 @@ typedef enum {
     OMPI_REQUEST_NULL,     /**< NULL request */
     OMPI_REQUEST_NOOP,     /**< A request that does nothing (e.g., to PROC_NULL) */
     OMPI_REQUEST_COMM,     /**< MPI-3 non-blocking communicator duplication */
+    OMPI_REQUEST_PMIX,     /**< A PMIx CID request */
     OMPI_REQUEST_MAX       /**< Maximum request type */
 } ompi_request_type_t;
 

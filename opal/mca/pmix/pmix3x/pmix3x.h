@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -109,6 +109,7 @@ typedef struct {
     opal_pmix_spawn_cbfunc_t spcbfunc;
     opal_pmix_evhandler_reg_cbfunc_t evregcbfunc;
     opal_pmix_info_cbfunc_t qcbfunc;
+    opal_pmix_cid_cbfunc_t cidcbfunc;
     void *cbdata;
 } pmix3x_opcaddy_t;
 OBJ_CLASS_DECLARATION(pmix3x_opcaddy_t);
@@ -258,6 +259,8 @@ OPAL_MODULE_DECLSPEC int pmix3x_allocate(opal_pmix_alloc_directive_t directive,
 OPAL_MODULE_DECLSPEC int pmix3x_job_control(opal_list_t *targets,
                                             opal_list_t *directives,
                                             opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
+OPAL_MODULE_DECLSPEC int pmix3x_cidnb(opal_list_t *procs, int start, int release,
+                                      opal_pmix_cid_cbfunc_t cbfunc, void *cbdata);
 
 /****  TOOL FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int pmix3x_tool_init(opal_list_t *info);

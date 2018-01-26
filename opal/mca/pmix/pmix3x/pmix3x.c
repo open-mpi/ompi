@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -108,6 +108,7 @@ const opal_pmix_base_module_t opal_pmix_pmix3x_module = {
     .allocate = pmix3x_allocate,
     .job_control = pmix3x_job_control,
     .register_cleanup = pmix3x_register_cleanup,
+    .cid_nb = pmix3x_cidnb,
     /* server APIs */
     .server_init = pmix3x_server_init,
     .server_finalize = pmix3x_server_finalize,

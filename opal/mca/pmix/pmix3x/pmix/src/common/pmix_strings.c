@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -218,6 +220,8 @@ PMIX_EXPORT const char* pmix_command_string(pmix_cmd_t cmd)
             return "MONITOR";
         case PMIX_IOF_CMD:
             return "IOF";
+        case PMIX_CIDNB_CMD:
+            return "CID";
         default:
             return "UNKNOWN";
     }

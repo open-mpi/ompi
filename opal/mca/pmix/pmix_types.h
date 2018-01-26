@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -626,7 +626,8 @@ typedef void (*opal_pmix_tool_connection_cbfunc_t)(int status,
                                                    opal_process_name_t proc,
                                                    void *cbdata);
 
-
+typedef void (*opal_pmix_cid_cbfunc_t)(int status,
+                                       int cid, void *cbdata);
 END_C_DECLS
 
 #endif

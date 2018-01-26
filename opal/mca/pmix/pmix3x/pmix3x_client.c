@@ -1676,3 +1676,82 @@ int pmix3x_job_control(opal_list_t *targets,
     }
     return pmix3x_convert_rc(rc);
 }
+
+static void cid_cbfunc(pmix_status_t status,
+                       int cid, void *cbdata)
+{
+    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
+    int rc;
+
+    OPAL_ACQUIRE_OBJECT(op);
+    rc = pmix3x_convert_opalrc(status);
+
+    if (NULL != op->cidcbfunc) {
+        op->cidcbfunc(rc, cid, op->cbdata);
+    }
+    OBJ_RELEASE(op);
+}
+
+int pmix3x_cidnb(opal_list_t *procs, int start, int release,
+                 opal_pmix_cid_cbfunc_t cbfunc, void *cbdata)
+{
+    pmix_status_t rc;
+    pmix_proc_t *parray=NULL;
+    size_t n, cnt=0;
+    opal_namelist_t *ptr;
+    pmix3x_opcaddy_t *op;
+    char *nsptr;
+
+    opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+                        "PMIx_client cidnb");
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+    if (0 >= opal_pmix_base.initialized) {
+        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+        return OPAL_ERR_NOT_INITIALIZED;
+    }
+
+    /* convert the list of procs to an array of pmix_proc_t */
+    if (NULL != procs && 0 < (cnt = opal_list_get_size(procs))) {
+        PMIX_PROC_CREATE(parray, cnt);
+        n=0;
+        OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
+            if (NULL == (nsptr = pmix3x_convert_jobid(ptr->name.jobid))) {
+                PMIX_PROC_FREE(parray, cnt);
+                OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+                return OPAL_ERR_NOT_FOUND;
+            }
+            (void)strncpy(parray[n].nspace, nsptr, PMIX_MAX_NSLEN);
+            parray[n].rank = pmix3x_convert_opalrank(ptr->name.vpid);
+            ++n;
+        }
+    }
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+
+    /* create the caddy */
+    op = OBJ_NEW(pmix3x_opcaddy_t);
+    op->cidcbfunc = cbfunc;
+    op->cbdata = cbdata;
+    op->procs = parray;
+    op->nprocs = cnt;
+
+    op->ninfo = 0;
+    if (0 < start) {
+        op->ninfo++;
+    }
+    if (0 < release) {
+        op->ninfo++;
+    }
+    PMIX_INFO_CREATE(op->info, op->ninfo);
+    if (0 < start) {
+        PMIX_INFO_LOAD(&op->info[0], PMIX_START_CID, &start, PMIX_INT);
+    }
+    if (0 < release) {
+        PMIX_INFO_LOAD(&op->info[op->ninfo-1], PMIX_RELEASE_CID, &release, PMIX_INT);
+    }
+
+    /* call the library function */
+    rc = PMIx_CID_nb(op->procs, op->nprocs, op->info, op->ninfo, cid_cbfunc, op);
+    return pmix3x_convert_rc(rc);
+}
+

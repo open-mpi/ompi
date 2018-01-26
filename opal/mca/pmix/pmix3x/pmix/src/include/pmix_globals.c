@@ -1,8 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -152,12 +151,14 @@ static void info_con(pmix_rank_info_t *info)
     info->modex_recvd = false;
     info->proc_cnt = 0;
     info->server_object = NULL;
+    PMIX_CONSTRUCT(&info->cids, pmix_bitmap_t);
 }
 static void info_des(pmix_rank_info_t *info)
 {
     if (NULL != info->pname.nspace) {
         free(info->pname.nspace);
     }
+    PMIX_DESTRUCT(&info->cids);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_rank_info_t,
                                 pmix_list_item_t,

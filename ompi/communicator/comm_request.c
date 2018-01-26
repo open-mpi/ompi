@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reseved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -29,7 +29,8 @@ bool ompi_comm_request_initialized = false;
 typedef struct ompi_comm_request_item_t {
     opal_list_item_t super;
     ompi_comm_request_callback_fn_t callback;
-    ompi_request_t *subreqs[OMPI_COMM_REQUEST_MAX_SUBREQ];
+    ompi_request_t *static_subreqs[OMPI_COMM_REQUEST_MAX_SUBREQ];
+    ompi_request_t **subreqs;
     int subreq_count;
 } ompi_comm_request_item_t;
 OBJ_CLASS_DECLARATION(ompi_comm_request_item_t);
@@ -74,13 +75,18 @@ int ompi_comm_request_schedule_append (ompi_comm_request_t *request, ompi_comm_r
     ompi_comm_request_item_t *request_item;
     int i;
 
-    if (subreq_count > OMPI_COMM_REQUEST_MAX_SUBREQ) {
-        return OMPI_ERR_BAD_PARAM;
-    }
-
     request_item = OBJ_NEW(ompi_comm_request_item_t);
     if (NULL == request_item) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (subreq_count > OMPI_COMM_REQUEST_MAX_SUBREQ) {
+        ompi_request_t ** reqs = (ompi_request_t **)malloc(subreq_count * sizeof(ompi_request_t *));
+        if (NULL == reqs) {
+            OBJ_RELEASE(request_item);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        request_item->subreqs = reqs;
     }
 
     request_item->callback = callback;
@@ -241,7 +247,19 @@ OBJ_CLASS_INSTANCE(ompi_comm_request_t, ompi_request_t,
                    ompi_comm_request_construct,
                    ompi_comm_request_destruct);
 
-OBJ_CLASS_INSTANCE(ompi_comm_request_item_t, opal_list_item_t, NULL, NULL);
+static void ompi_comm_request_item_construct (ompi_comm_request_item_t *request) {
+    request->subreqs = request->static_subreqs;
+}
+
+static void ompi_comm_request_item_destruct (ompi_comm_request_item_t *request) {
+    if (request->static_subreqs != request->subreqs) {
+        free(request->subreqs);
+    }
+}
+
+OBJ_CLASS_INSTANCE(ompi_comm_request_item_t, opal_list_item_t,
+                   ompi_comm_request_item_construct,
+                   ompi_comm_request_item_destruct);
 
 ompi_comm_request_t *ompi_comm_request_get (void)
 {

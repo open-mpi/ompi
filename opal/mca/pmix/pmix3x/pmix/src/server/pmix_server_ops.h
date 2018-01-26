@@ -6,7 +6,7 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  */
@@ -272,6 +272,10 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_op_cbfunc_t cbfunc,
                                                   void *cbdata);
 void pmix_server_execute_collective(int sd, short args, void *cbdata);
+
+pmix_status_t pmix_server_cid(pmix_peer_t *peer,
+                              pmix_buffer_t *buf,
+                              pmix_server_caddy_t *cd);
 
 PMIX_EXPORT extern pmix_server_module_t pmix_host_server;
 PMIX_EXPORT extern pmix_server_globals_t pmix_server_globals;

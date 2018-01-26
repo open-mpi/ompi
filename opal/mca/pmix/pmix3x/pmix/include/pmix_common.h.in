@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2016-2017 Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
@@ -275,6 +275,8 @@ typedef uint32_t pmix_rank_t;
                                                                     //        specified operation
 #define PMIX_JOB_TERM_STATUS                "pmix.job.term.status"  // (pmix_status_t) status returned upon job termination
 #define PMIX_PROC_STATE_STATUS              "pmix.proc.state"       // (pmix_proc_state_t) process state
+#define PMIX_START_CID                      "pmix.cid.start"        // (int) where to start the search for the next available CID
+#define PMIX_RELEASE_CID                    "pmix.cid.release"      // (int) the CID to be released
 
 
 /* attributes used by host server to pass data to the server convenience library - the
@@ -1744,6 +1746,8 @@ typedef void (*pmix_validation_cbfunc_t)(pmix_status_t status,
                                          pmix_info_t info[], size_t ninfo,
                                          void *cbdata);
 
+typedef void (*pmix_cid_cbfunc_t)(pmix_status_t status,
+                                  int cid, void *cbdata);
 
 /****    COMMON SUPPORT FUNCTIONS    ****/
 /* Register an event handler to report events. Three types of events

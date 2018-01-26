@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -556,6 +556,12 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
 PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pmix_status_t error,
                                                   const pmix_info_t directives[], size_t ndirs,
                                                   pmix_info_cbfunc_t cbfunc, void *cbdata);
+
+/* Non-blocking version of PMIx_Fence. Note that the function will return
+ * an error if a _NULL_ callback function is given. */
+PMIX_EXPORT pmix_status_t PMIx_CID_nb(const pmix_proc_t procs[], size_t nprocs,
+                                      const pmix_info_t info[], size_t ninfo,
+                                      pmix_cid_cbfunc_t cbfunc, void *cbdata);
 
 /* define a special macro to simplify sending of a heartbeat */
 #define PMIx_Heartbeat()                                                    \

@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +39,7 @@
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
 #include "src/class/pmix_ring_buffer.h"
+#include "src/class/pmix_bitmap.h"
 #include "src/event/pmix_event.h"
 #include "src/threads/threads.h"
 
@@ -95,6 +98,7 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_GET_CREDENTIAL_CMD     20
 #define PMIX_VALIDATE_CRED_CMD      21
 #define PMIX_IOF_CMD                22
+#define PMIX_CIDNB_CMD              23
 
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
@@ -182,6 +186,7 @@ typedef struct pmix_rank_info_t {
     bool modex_recvd;
     int proc_cnt;              // #clones of this rank we know about
     void *server_object;       // pointer to rank-specific object provided by server
+    pmix_bitmap_t cids;
 } pmix_rank_info_t;
 PMIX_CLASS_DECLARATION(pmix_rank_info_t);
 
@@ -349,6 +354,7 @@ typedef struct {
         pmix_spawn_cbfunc_t spawnfn;
         pmix_connect_cbfunc_t cnctfn;
         pmix_hdlr_reg_cbfunc_t hdlrregfn;
+        pmix_cid_cbfunc_t cidfn;
     } cbfunc;
     size_t errhandler_ref;
     void *cbdata;

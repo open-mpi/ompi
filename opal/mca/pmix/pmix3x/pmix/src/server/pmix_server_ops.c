@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -49,6 +49,7 @@
 #include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
+#include "src/class/pmix_bitmap.h"
 #include "src/mca/bfrops/bfrops.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
@@ -2719,6 +2720,169 @@ pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
 
   exit:
     PMIX_RELEASE(cd);
+    return rc;
+}
+
+pmix_status_t pmix_server_cid(pmix_peer_t *peer,
+                              pmix_buffer_t *buf,
+                              pmix_server_caddy_t *cd)
+{
+    int32_t cnt;
+    pmix_status_t rc;
+    size_t nprocs, n, ninfo=0;
+    pmix_proc_t *procs=NULL;
+    pmix_buffer_t *reply;
+    pmix_info_t *info = NULL;
+    int start, release;
+    bool alloc=false, dealloc=false;
+    pmix_bitmap_t cids;
+    int cid = 0;
+    pmix_rank_info_t *rank, **ranks = NULL;
+
+    pmix_output_verbose(2, pmix_server_globals.fence_output,
+                        "recvd CID");
+
+    /* unpack the number of procs */
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, cd->peer, buf, &nprocs, &cnt, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
+        return rc;
+    }
+    pmix_output_verbose(2, pmix_server_globals.fence_output,
+                        "recvd cid from %s:%u with %d procs",
+                        cd->peer->info->pname.nspace, cd->peer->info->pname.rank, (int)nprocs);
+    /* there must be at least one */
+    if (nprocs < 1) {
+        return PMIX_ERR_BAD_PARAM;
+    }
+
+    /* create space for the procs */
+    PMIX_PROC_CREATE(procs, nprocs);
+    if (NULL == procs) {
+        return PMIX_ERR_NOMEM;
+    }
+    /* unpack the procs */
+    cnt = nprocs;
+    PMIX_BFROPS_UNPACK(rc, cd->peer, buf, procs, &cnt, PMIX_PROC);
+    if (PMIX_SUCCESS != rc) {
+        goto cleanup;
+    }
+
+    /* unpack the number of provided info structs */
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, cd->peer, buf, &ninfo, &cnt, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
+        return rc;
+    }
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE(info, ninfo);
+        if (NULL == info) {
+            PMIX_PROC_FREE(procs, nprocs);
+            return PMIX_ERR_NOMEM;
+        }
+        /* unpack the info */
+        cnt = ninfo;
+        PMIX_BFROPS_UNPACK(rc, cd->peer, buf, info, &cnt, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
+            goto cleanup;
+        }
+        for (n=0; n < ninfo; n++) {
+            if (0 == strcmp(info[n].key, PMIX_START_CID)){
+                start = info[n].value.data.integer;
+                alloc = true;
+            } else if (0 == strcmp(info[n].key, PMIX_RELEASE_CID)) {
+                release = info[n].value.data.integer;
+                dealloc = true;
+            }
+        }
+        PMIX_INFO_FREE(info, ninfo);
+    }
+
+    ranks = malloc(nprocs * sizeof(pmix_rank_info_t *));
+    /* see if we know this nspace */
+    for (n=0; n<nprocs; n++) {
+        bool found;
+        pmix_nspace_t *tmp, *nptr = NULL;
+        PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
+            if (0 == strcmp(tmp->nspace, procs[n].nspace)) {
+                nptr = tmp;
+                break;
+            }
+        }
+        if (NULL == nptr) {
+            /* send an error reply to the client */
+            rc = PMIX_ERR_NOT_FOUND;
+            goto cleanup;
+        }
+
+        /* see if we have this peer in our list */
+        found = false;
+        PMIX_LIST_FOREACH(rank, &nptr->ranks, pmix_rank_info_t) {
+            if (rank->pname.rank == procs[n].rank) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            /* send an error reply to the client */
+            rc = PMIX_ERR_NOT_FOUND;
+            goto cleanup;
+        }
+        ranks[n] = rank;
+    }
+
+
+    if (alloc) {
+        PMIX_CONSTRUCT(&cids, pmix_bitmap_t);
+        int size = 0;
+        for (n=0; n<nprocs; n++) {
+            int sze = pmix_bitmap_size(&ranks[n]->cids);
+            if (sze > size) size = sze;
+        }
+        if (0 < size) {
+            pmix_bitmap_init(&cids, size);
+        }
+        for (n=0; n<nprocs; n++) {
+            pmix_bitmap_bitwise_or_inplace(&cids, &ranks[n]->cids);
+        }
+        for (n=0; n<start; n++) {
+            pmix_bitmap_set_bit(&cids, n);
+        }
+        pmix_bitmap_find_and_set_first_unset_bit(&cids, &cid);
+        PMIX_DESTRUCT(&cids);
+    }
+    for (n=0; n<nprocs; n++) {
+        if (alloc) {
+            pmix_bitmap_set_bit(&ranks[n]->cids, cid);
+        }
+        if (dealloc) {
+            pmix_bitmap_clear_bit(&ranks[n]->cids, release);
+        }
+    }
+
+  cleanup:
+    PMIX_PROC_FREE(procs, nprocs);
+    if (NULL != ranks) {
+        free(ranks);
+    }
+    reply = PMIX_NEW(pmix_buffer_t);
+    if (NULL == reply) {
+        return PMIX_ERR_NOMEM;
+    }
+    PMIX_BFROPS_PACK(rc, peer, reply, &rc, 1, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(reply);
+        return rc;
+    }
+    PMIX_BFROPS_PACK(rc, peer, reply, &cid, 1, PMIX_INT);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(reply);
+        return rc;
+    }
+    PMIX_PTL_SEND_ONEWAY(rc, cd->peer, reply, cd->hdr.tag);
+
     return rc;
 }
 
