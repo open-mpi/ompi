@@ -241,6 +241,7 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
     ptr->wev = OBJ_NEW(orte_iof_write_event_t);
     ptr->xoff = false;
     ptr->exclusive = false;
+    ptr->closed = false;
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {

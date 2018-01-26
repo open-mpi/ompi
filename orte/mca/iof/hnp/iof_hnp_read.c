@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -204,8 +206,13 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
         /* if num_bytes was zero, or we read the last piece of the file, then we need to terminate the event */
         if (0 == numbytes) {
-            /* this will also close our stdin file descriptor */
-            OBJ_RELEASE(proct->stdinev);
+            if (0 != opal_list_get_size(&proct->stdinev->wev->outputs)) {
+                /* some stuff has yet to be written, so delay the release of proct->stdinev */
+                proct->stdinev->closed = true;
+            } else {
+                /* this will also close our stdin file descriptor */
+                OBJ_RELEASE(proct->stdinev);
+            }
         } else {
             /* if we are looking at a tty, then we just go ahead and restart the
              * read event assuming we are not backgrounded
