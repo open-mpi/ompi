@@ -38,11 +38,11 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
-#include "opal/runtime/opal_cr.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/arch.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
 #include "opal/util/proc.h"
 
@@ -61,10 +61,6 @@
 #include "orte/mca/regx/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/base/base.h"
-#include "orte/mca/sstore/base/base.h"
-#endif
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -73,7 +69,6 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/state.h"
-#include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_quit.h"
@@ -626,46 +621,6 @@ int orte_ess_base_orted_setup(void)
         goto error;
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Setup the SnapC
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_snapc_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sstore_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(!ORTE_PROC_IS_HNP, ORTE_PROC_IS_DAEMON))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_select";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sstore_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_select";
-        goto error;
-    }
-
-    /* For daemons, ORTE doesn't need the OPAL CR stuff */
-    opal_cr_set_enabled(false);
-#else
-    opal_cr_set_enabled(false);
-#endif
-    /*
-     * Initalize the CR setup
-     * Note: Always do this, even in non-FT builds.
-     * If we don't some user level tools may hang.
-     */
-    if (ORTE_SUCCESS != (ret = orte_cr_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_cr_init";
-        goto error;
-    }
     /* setup the DFS framework */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -680,7 +635,7 @@ int orte_ess_base_orted_setup(void)
 
     return ORTE_SUCCESS;
 
- error:
+  error:
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);

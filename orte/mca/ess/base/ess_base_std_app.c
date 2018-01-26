@@ -45,7 +45,6 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/runtime/opal.h"
-#include "opal/runtime/opal_cr.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -58,17 +57,12 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/base/base.h"
-#include "orte/mca/sstore/base/base.h"
-#endif
 #include "orte/mca/state/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 
-#include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -285,44 +279,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Setup the SnapC
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_snapc_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sstore_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, ORTE_PROC_IS_APP))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_select";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sstore_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_select";
-        goto error;
-    }
-    /* apps need the OPAL CR stuff */
-    opal_cr_set_enabled(true);
-#else
-    opal_cr_set_enabled(false);
-#endif
-    /* Initalize the CR setup
-     * Note: Always do this, even in non-FT builds.
-     * If we don't some user level tools may hang.
-     */
-    if (ORTE_SUCCESS != (ret = orte_cr_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_cr_init";
-        goto error;
-    }
     /* open the distributed file system */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -344,13 +300,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 
 int orte_ess_base_app_finalize(void)
 {
-    orte_cr_finalize();
-
-#if OPAL_ENABLE_FT_CR == 1
-    (void) mca_base_framework_close(&orte_snapc_base_framework);
-    (void) mca_base_framework_close(&orte_sstore_base_framework);
-#endif
-
     /* release the conduits */
     orte_rml.close_conduit(orte_mgmt_conduit);
     orte_rml.close_conduit(orte_coll_conduit);
@@ -414,8 +363,7 @@ void orte_ess_base_app_abort(int status, bool report)
      * clean environment. Taken from orte_finalize():
      * - Assume errmgr cleans up child processes before we exit.
      */
-    /* CRS cleanup since it may have a named pipe and thread active */
-    orte_cr_finalize();
+
     /* If we were asked to report this termination, do so.
      * Since singletons don't start an HNP unless necessary, and
      * direct-launched procs don't have daemons at all, only send

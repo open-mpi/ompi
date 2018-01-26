@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -21,6 +21,7 @@
 #include "opal/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/pmix/pmix.h"
 #include "pmix1x.h"
 
@@ -45,39 +46,48 @@ static int external_component_query(mca_base_module_t **module, int *priority);
 
 mca_pmix_ext1x_component_t mca_pmix_ext1x_component = {
     {
-    /* First, the mca_component_t struct containing meta information
-       about the component itself */
+        /* First, the mca_component_t struct containing meta information
+         * about the component itself */
 
-	.base_version = {
-	/* Indicate that we are a pmix v1.1.0 component (which also
-	   implies a specific MCA version) */
+        .base_version = {
+           /* Indicate that we are a pmix v1.1.0 component (which also
+            * implies a specific MCA version) */
 
-	    OPAL_PMIX_BASE_VERSION_2_0_0,
+            OPAL_PMIX_BASE_VERSION_2_0_0,
 
-	/* Component name and version */
+            /* Component name and version */
 
-	    .mca_component_name = "ext1x",
-	    MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-				  OPAL_RELEASE_VERSION),
+            .mca_component_name = "ext1x",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
 
-	/* Component open and close functions */
+            /* Component open and close functions */
 
-	    .mca_open_component = external_open,
-	    .mca_close_component = external_close,
-	    .mca_query_component = external_component_query,
-	},
-	/* Next the MCA v1.0.0 component meta data */
-	.base_data = {
-	/* The component is checkpoint ready */
-	    MCA_BASE_METADATA_PARAM_CHECKPOINT
-	}
+           .mca_open_component = external_open,
+           .mca_close_component = external_close,
+           .mca_query_component = external_component_query,
+        },
+        /* Next the MCA v1.0.0 component meta data */
+        .base_data = {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
     },
     .native_launch = false
 };
 
 static int external_open(void)
 {
+    const char *version;
+
     OBJ_CONSTRUCT(&mca_pmix_ext1x_component.jobids, opal_list_t);
+
+    version = PMIx_Get_version();
+    if (0 != strncmp(version, "1.2", 3)) {
+        opal_show_help("help-pmix-base.txt",
+                       "old-pmix", true, version, "v1.2");
+        return OPAL_ERROR;
+    }
     return OPAL_SUCCESS;
 }
 
@@ -94,12 +104,12 @@ static int external_component_query(mca_base_module_t **module, int *priority)
 
     /* see if a PMIx server is present */
     if (NULL != (t = getenv("PMIX_SERVER_URI")) ||
-	NULL != (id = getenv("PMIX_ID"))) {
-	/* if PMIx is present, then we are a client and need to use it */
-	*priority = 100;
+        NULL != (id = getenv("PMIX_ID"))) {
+        /* if PMIx is present, then we are a client and need to use it */
+        *priority = 100;
     } else {
-	/* we could be a server, so we still need to be considered */
-	*priority = 5;
+        /* we could be a server, so we still need to be considered */
+        *priority = 5;
     }
     *module = (mca_base_module_t *)&opal_pmix_ext1x_module;
     return OPAL_SUCCESS;

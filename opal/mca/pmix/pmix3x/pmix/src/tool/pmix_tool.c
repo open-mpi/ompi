@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -69,7 +69,7 @@ extern pmix_client_globals_t pmix_client_globals;
 #include "src/runtime/pmix_rte.h"
 #include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/base/base.h"
-#include "src/mca/ptl/ptl.h"
+#include "src/mca/ptl/base/base.h"
 #include "src/mca/psec/psec.h"
 #include "src/include/pmix_globals.h"
 
@@ -189,6 +189,53 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
 }
 
 
+static void tool_iof_handler(struct pmix_peer_t *pr,
+                             pmix_ptl_hdr_t *hdr,
+                             pmix_buffer_t *buf, void *cbdata)
+{
+    pmix_peer_t *peer = (pmix_peer_t*)pr;
+    pmix_proc_t source;
+    pmix_iof_channel_t channel;
+    pmix_byte_object_t bo;
+    int32_t cnt;
+    pmix_status_t rc;
+
+    pmix_output_verbose(2, pmix_client_globals.iof_output,
+                        "recvd IOF");
+
+    /* if the buffer is empty, they are simply closing the channel */
+    if (0 == buf->bytes_used) {
+        return;
+    }
+
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &source, &cnt, PMIX_PROC);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &channel, &cnt, PMIX_IOF_CHANNEL);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    if (NULL != bo.bytes && 0 < bo.size) {
+        if (channel & PMIX_FWD_STDOUT_CHANNEL) {
+            write(fileno(stdout), bo.bytes, bo.size);
+        } else {
+            fprintf(stderr, "%s", bo.bytes);
+        }
+    }
+    PMIX_BYTE_OBJECT_DESTRUCT(&bo);
+}
+
 PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                                pmix_info_t info[], size_t ninfo)
 {
@@ -200,6 +247,8 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     bool rank_given = false;
     pmix_info_t ginfo;
     size_t n;
+    pmix_ptl_posted_recv_t *rcv;
+    pmix_proc_t wildcard;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -237,6 +286,13 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
+    /* setup the IO Forwarding recv */
+    rcv = PMIX_NEW(pmix_ptl_posted_recv_t);
+    rcv->tag = PMIX_PTL_TAG_IOF;
+    rcv->cbfunc = tool_iof_handler;
+    /* add it to the end of the list of recvs */
+    pmix_list_append(&pmix_ptl_globals.posted_recvs, &rcv->super);
+
 
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     pmix_client_globals.myserver = PMIX_NEW(pmix_peer_t);
@@ -323,9 +379,15 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             return rc;
         }
     }
-    /* Success, so copy the nspace and rank */
+    /* Success, so copy the nspace and rank to the proc struct they gave us */
     (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     proc->rank = pmix_globals.myid.rank;
+    /* and into our own peer object */
+    if (NULL == pmix_globals.mypeer->nptr->nspace) {
+        pmix_globals.mypeer->nptr->nspace = strdup(proc->nspace);
+    }
+    (void)strncpy(pmix_globals.mypeer->info->pname.nspace, proc->nspace, PMIX_MAX_NSLEN);
+    pmix_globals.mypeer->info->pname.rank = proc->rank;
 
     /* increment our init reference counter */
     pmix_globals.init_cntr++;
@@ -335,6 +397,8 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
      * datastore with typical job-related info. No point
      * in having the server generate these as we are
      * obviously a singleton, and so the values are well-known */
+    (void)strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+    wildcard.rank = pmix_globals.myid.rank;
 
     /* the jobid is just our nspace */
     kptr = PMIX_NEW(pmix_kval_t);
@@ -343,7 +407,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_STRING;
     kptr->value->data.string = strdup(pmix_globals.myid.nspace);
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -375,7 +439,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_UINT32;
     kptr->value->data.uint32 = 0;
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -391,7 +455,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_UINT32;
     kptr->value->data.uint32 = 1;
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -407,7 +471,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_STRING;
     kptr->value->data.string = strdup("0");
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -423,7 +487,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_UINT32;
     kptr->value->data.uint32 = 0;
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -439,7 +503,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_UINT32;
     kptr->value->data.uint32 = 1;
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -455,7 +519,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_UINT32;
     kptr->value->data.uint32 = 1;
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -471,7 +535,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_UINT32;
     kptr->value->data.uint32 = 1;
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -488,7 +552,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_UINT32;
     kptr->value->data.uint32 = 1;
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -611,7 +675,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
      kptr->value->type = PMIX_STRING;
      kptr->value->data.string = strdup(hostname);
      PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                       &pmix_globals.myid,
+                       &wildcard,
                        PMIX_INTERNAL, kptr);
      if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
@@ -628,7 +692,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     kptr->value->type = PMIX_STRING;
     kptr->value->data.string = strdup("0");
     PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer,
-                      &pmix_globals.myid,
+                      &wildcard,
                       PMIX_INTERNAL, kptr);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);

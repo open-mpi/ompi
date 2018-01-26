@@ -337,6 +337,18 @@
 #    define __pmix_attribute_destructor__
 #endif
 
+#if PMIX_HAVE_ATTRIBUTE_OPTNONE
+#    define __pmix_attribute_optnone__    __attribute__((__optnone__))
+#else
+#    define __pmix_attribute_optnone__
+#endif
+
+#if PMIX_HAVE_ATTRIBUTE_EXTENSION
+#    define __pmix_attribute_extension__    __extension__
+#else
+#    define __pmix_attribute_extension__
+#endif
+
 /*
  * Do we have <stdint.h>?
  */

@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -558,7 +558,7 @@ int pmix_mca_base_var_cache_files(bool rel_path_search)
     if (NULL != pmix_mca_base_var_file_prefix) {
        resolve_relative_paths(&pmix_mca_base_var_file_prefix, pmix_mca_base_param_file_path, rel_path_search, &pmix_mca_base_var_files, PMIX_ENV_SEP);
     }
-    read_files (pmix_mca_base_var_files, &pmix_mca_base_var_file_values, PMIX_ENV_SEP);
+    read_files (pmix_mca_base_var_files, &pmix_mca_base_var_file_values, ',');
 
     if (NULL != pmix_mca_base_envar_file_prefix) {
        resolve_relative_paths(&pmix_mca_base_envar_file_prefix, pmix_mca_base_param_file_path, rel_path_search, &pmix_mca_base_envar_files, ',');

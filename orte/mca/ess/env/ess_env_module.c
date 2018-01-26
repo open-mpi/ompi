@@ -56,9 +56,6 @@
 #include "orte/mca/plm/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/base/base.h"
-#endif
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -68,7 +65,6 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "orte/runtime/orte_cr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/env/ess_env.h"
@@ -78,19 +74,11 @@ static int env_set_name(void);
 static int rte_init(void);
 static int rte_finalize(void);
 
-#if OPAL_ENABLE_FT_CR == 1
-static int rte_ft_event(int state);
-#endif
-
 orte_ess_base_module_t orte_ess_env_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
-#if OPAL_ENABLE_FT_CR == 1
-    rte_ft_event
-#else
     NULL
-#endif
 };
 
 static int rte_init(void)
@@ -175,201 +163,3 @@ static int env_set_name(void)
 
     return ORTE_SUCCESS;
 }
-
-#if OPAL_ENABLE_FT_CR == 1
-static int rte_ft_event(int state)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    orte_proc_type_t svtype;
-
-    /******** Checkpoint Prep ********/
-    if(OPAL_CRS_CHECKPOINT == state) {
-        /*
-         * Notify SnapC
-         */
-        if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CHECKPOINT))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Notify Routed
-         */
-        if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CHECKPOINT))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Notify RML -> OOB
-         */
-        if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CHECKPOINT))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-    }
-    /******** Continue Recovery ********/
-    else if (OPAL_CRS_CONTINUE == state ) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
-                             "ess:env ft_event(%2d) - %s is Continuing",
-                             state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-        /*
-         * Notify RML -> OOB
-         */
-        if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CONTINUE))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Notify Routed
-         */
-        if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CONTINUE))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Notify SnapC
-         */
-        if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CONTINUE))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        if (opal_cr_continue_like_restart) {
-            /*
-             * Barrier to make all processes have been successfully restarted before
-             * we try to remove some restart only files.
-             */
-            opal_pmix.fence(NULL, 0);
-
-            if( orte_cr_flush_restart_files ) {
-                OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
-                                     "ess:env ft_event(%2d): %s "
-                                     "Cleanup restart files...",
-                                     state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                opal_crs_base_cleanup_flush();
-            }
-        }
-    }
-    /******** Restart Recovery ********/
-    else if (OPAL_CRS_RESTART == state ) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
-                             "ess:env ft_event(%2d) - %s is Restarting",
-                             state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-        /*
-         * This should follow the ess init() function
-         */
-
-        /*
-         * - Reset Contact information
-         */
-        if( ORTE_SUCCESS != (ret = env_set_name() ) ) {
-            exit_status = ret;
-        }
-
-        /*
-         * Notify RML -> OOB
-         */
-        if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Restart the routed framework
-         * JJH: Lie to the finalize function so it does not try to contact the daemon.
-         */
-        svtype = orte_process_info.proc_type;
-        orte_process_info.proc_type = ORTE_PROC_TOOL;
-        if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        orte_process_info.proc_type = svtype;
-        if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Restart the PLM - Does nothing at the moment, but included for completeness
-         */
-        if (ORTE_SUCCESS != (ret = orte_plm.finalize())) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        if (ORTE_SUCCESS != (ret = orte_plm.init())) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * RML - Enable communications
-         */
-        if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Notify Routed
-         */
-        if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_RESTART))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-
-        /*
-         * Barrier to make all processes have been successfully restarted before
-         * we try to remove some restart only files.
-         */
-        opal_pmix.fence(NULL, 0);
-
-        if( orte_cr_flush_restart_files ) {
-            OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
-                                 "ess:env ft_event(%2d): %s "
-                                 "Cleanup restart files...",
-                                 state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-            opal_crs_base_cleanup_flush();
-        }
-
-        /*
-         * Session directory re-init
-         */
-        if (orte_create_session_dirs) {
-            if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                        orte_process_info.tmpdir_base,
-                                                        orte_process_info.nodename,
-                                                        NULL, /* Batch ID -- Not used */
-                                                        ORTE_PROC_MY_NAME))) {
-                exit_status = ret;
-            }
-
-            opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                             "output-", NULL, NULL);
-        }
-
-        /*
-         * Notify SnapC
-         */
-        if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_RESTART))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-    }
-    else if (OPAL_CRS_TERM == state ) {
-        /* Nothing */
-    }
-    else {
-        /* Error state = Nothing */
-    }
-
-    return exit_status;
-}
-#endif

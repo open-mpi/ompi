@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +21,7 @@
 #include "opal/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/pmix/pmix.h"
 #include "pmix3x.h"
 
@@ -94,11 +95,19 @@ static int external_register(void)
 
 static int external_open(void)
 {
+    const char *version;
+
     mca_pmix_pmix3x_component.evindex = 0;
     OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.jobids, opal_list_t);
     OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.events, opal_list_t);
     OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.dmdx, opal_list_t);
 
+    version = PMIx_Get_version();
+    if ('3' != version[0]) {
+        opal_show_help("help-pmix-base.txt",
+                       "incorrect-pmix", true, version, "v3.x");
+        return OPAL_ERROR;
+    }
     return OPAL_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -242,6 +242,11 @@ typedef int (*opal_pmix_server_job_control_fn_t)(const opal_process_name_t *requ
                                                  opal_pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 /* we do not provide a monitoring capability */
+
+/* Entry point for pushing forwarded IO to clients/tools */
+typedef int (*opal_pmix_server_iof_fn_t)(const opal_process_name_t *source,
+                                         opal_pmix_iof_channel_t channel,
+                                         unsigned char *data, size_t nbytes);
 
 typedef struct opal_pmix_server_module_1_0_0_t {
     opal_pmix_server_client_connected_fn_t      client_connected;

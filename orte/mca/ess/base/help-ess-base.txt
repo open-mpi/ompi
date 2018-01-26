@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -89,3 +89,9 @@ when OMPI was not configured --with-alps and we weren't able
 to discover an ALPS installation in the usual places.
 
 Please configure as appropriate and try again.
+#
+[legacy-tool]
+We no longer support non-PMIx-based tools, and require a
+minimum level of PMIx v2.0.
+
+Please update the tool and/or the PMIx version you are using.

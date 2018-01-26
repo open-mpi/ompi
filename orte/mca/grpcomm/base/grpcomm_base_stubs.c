@@ -382,7 +382,7 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             }
             if (NULL == node->daemon) {
                 /* should never happen */
-                ORTE_ERROR_LOG(ORTE_ERROR);
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 free(dns);
                 ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
                 *ndmns = 0;

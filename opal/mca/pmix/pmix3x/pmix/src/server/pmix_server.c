@@ -170,6 +170,12 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         pmix_output_set_verbosity(pmix_server_globals.event_output,
                                   pmix_server_globals.event_verbose);
     }
+    if (0 < pmix_server_globals.iof_verbose) {
+        /* set default output */
+        pmix_server_globals.iof_output = pmix_output_open(NULL);
+        pmix_output_set_verbosity(pmix_server_globals.iof_output,
+                                  pmix_server_globals.iof_verbose);
+    }
     /* setup the base verbosity */
     if (0 < pmix_server_globals.base_verbose) {
         /* set default output */
@@ -1437,6 +1443,99 @@ pmix_status_t PMIx_server_setup_local_support(const char nspace[],
     return PMIX_SUCCESS;
 }
 
+static void _iofpush(int sd, short args, void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+    pmix_iof_req_t *req;
+    pmix_status_t rc;
+    pmix_buffer_t *msg;
+
+    pmix_output_verbose(2, pmix_server_globals.iof_output,
+                        "PMIX:SERVER pushing IOF");
+
+    /* cycle across our list of IOF requestors and see who wants
+     * this channel from this source */
+    PMIX_LIST_FOREACH(req, &pmix_globals.iof_requests, pmix_iof_req_t) {
+        /* if the channel wasn't included, then ignore it */
+        if (!(cd->channels & req->channels)) {
+            continue;
+        }
+        /* if the source matches the request, then forward this along */
+        if (0 != strncmp(cd->procs->nspace, req->pname.nspace, PMIX_MAX_NSLEN) ||
+            (PMIX_RANK_WILDCARD != req->pname.rank && cd->procs->rank != req->pname.rank)) {
+            continue;
+        }
+        /* setup the msg */
+        if (NULL == (msg = PMIX_NEW(pmix_buffer_t))) {
+            PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);
+            rc = PMIX_ERR_OUT_OF_RESOURCE;
+            break;
+        }
+        /* provide the source */
+        PMIX_BFROPS_PACK(rc, req->peer, msg, cd->procs, 1, PMIX_PROC);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(msg);
+            break;
+        }
+        /* provide the channel */
+        PMIX_BFROPS_PACK(rc, req->peer, msg, &cd->channels, 1, PMIX_IOF_CHANNEL);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(msg);
+            break;
+        }
+        /* pack the data */
+        PMIX_BFROPS_PACK(rc, req->peer, msg, cd->bo, 1, PMIX_BYTE_OBJECT);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(msg);
+            break;
+        }
+        /* send it to the requestor */
+        PMIX_PTL_SEND_ONEWAY(rc, req->peer, msg, PMIX_PTL_TAG_IOF);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_RELEASE(msg);
+        }
+    }
+
+    if (NULL != cd->opcbfunc) {
+        cd->opcbfunc(rc, cd->cbdata);
+    }
+    PMIX_RELEASE(cd);
+}
+
+pmix_status_t PMIx_IOF_push(const pmix_proc_t *source, pmix_iof_channel_t channel,
+                            const pmix_byte_object_t *bo,
+                            const pmix_info_t info[], size_t ninfo,
+                            pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    pmix_setup_caddy_t *cd;
+
+    PMIX_ACQUIRE_THREAD(&pmix_global_lock);
+    if (pmix_globals.init_cntr <= 0) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_INIT;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+
+    /* need to threadshift this request */
+    cd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == cd) {
+        return PMIX_ERR_NOMEM;
+    }
+    cd->procs = (pmix_proc_t*)source;
+    cd->channels = channel;
+    cd->bo = (pmix_byte_object_t*)bo;
+    cd->info = (pmix_info_t*)info;
+    cd->ninfo = ninfo;
+    cd->opcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+    PMIX_THREADSHIFT(cd, _iofpush);
+
+    return PMIX_SUCCESS;
+}
 
 /****    THE FOLLOWING CALLBACK FUNCTIONS ARE USED BY THE HOST SERVER    ****
  ****    THEY THEREFORE CAN OCCUR IN EITHER THE HOST SERVER'S THREAD     ****
@@ -2240,6 +2339,177 @@ static void query_cbfunc(pmix_status_t status,
     PMIX_RELEASE(cd);
 }
 
+static void cred_cbfunc(pmix_status_t status,
+                        pmix_byte_object_t *credential,
+                        pmix_info_t info[], size_t ninfo,
+                        void *cbdata)
+{
+    pmix_query_caddy_t *qcd = (pmix_query_caddy_t*)cbdata;
+    pmix_server_caddy_t *cd = (pmix_server_caddy_t*)qcd->cbdata;
+    pmix_buffer_t *reply;
+    pmix_status_t rc;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:get credential callback with status %d", status);
+
+    reply = PMIX_NEW(pmix_buffer_t);
+    if (NULL == reply) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        PMIX_RELEASE(cd);
+        return;
+    }
+
+    /* pack the status */
+    PMIX_BFROPS_PACK(rc, cd->peer, reply, &status, 1, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        goto complete;
+    }
+
+    if (PMIX_SUCCESS == status) {
+        /* pack the returned credential */
+        PMIX_BFROPS_PACK(rc, cd->peer, reply, credential, 1, PMIX_BYTE_OBJECT);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            goto complete;
+        }
+
+        /* pack any returned data */
+        PMIX_BFROPS_PACK(rc, cd->peer, reply, &ninfo, 1, PMIX_SIZE);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            goto complete;
+        }
+        if (0 < ninfo) {
+            PMIX_BFROPS_PACK(rc, cd->peer, reply, info, ninfo, PMIX_INFO);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+            }
+        }
+    }
+
+  complete:
+    // send reply
+    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    // cleanup
+    if (NULL != qcd->info) {
+        PMIX_INFO_FREE(qcd->info, qcd->ninfo);
+    }
+    PMIX_RELEASE(qcd);
+    PMIX_RELEASE(cd);
+}
+
+static void validate_cbfunc(pmix_status_t status,
+                            pmix_info_t info[], size_t ninfo,
+                            void *cbdata)
+{
+    pmix_query_caddy_t *qcd = (pmix_query_caddy_t*)cbdata;
+    pmix_server_caddy_t *cd = (pmix_server_caddy_t*)qcd->cbdata;
+    pmix_buffer_t *reply;
+    pmix_status_t rc;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:validate credential callback with status %d", status);
+
+    reply = PMIX_NEW(pmix_buffer_t);
+    if (NULL == reply) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        PMIX_RELEASE(cd);
+        return;
+    }
+    PMIX_BFROPS_PACK(rc, cd->peer, reply, &status, 1, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        goto complete;
+    }
+    /* pack any returned data */
+    PMIX_BFROPS_PACK(rc, cd->peer, reply, &ninfo, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        goto complete;
+    }
+    if (0 < ninfo) {
+        PMIX_BFROPS_PACK(rc, cd->peer, reply, info, ninfo, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+        }
+    }
+
+  complete:
+    // send reply
+    PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
+    // cleanup
+    if (NULL != qcd->info) {
+        PMIX_INFO_FREE(qcd->info, qcd->ninfo);
+    }
+    PMIX_RELEASE(qcd);
+    PMIX_RELEASE(cd);
+}
+
+
+static void _iofreg(int sd, short args, void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+    pmix_server_caddy_t *scd = (pmix_server_caddy_t*)cd->cbdata;
+    pmix_buffer_t *reply;
+    pmix_status_t rc;
+
+    PMIX_ACQUIRE_OBJECT(cd);
+
+    /* setup the reply to the requestor */
+    reply = PMIX_NEW(pmix_buffer_t);
+    if (NULL == reply) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        rc = PMIX_ERR_NOMEM;
+        goto cleanup;
+    }
+    /* start with the status */
+    PMIX_BFROPS_PACK(rc, scd->peer, reply, &cd->status, 1, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(reply);
+        goto cleanup;
+    }
+
+    /* was the request a success? */
+    if (PMIX_SUCCESS != cd->status) {
+        /* find and remove the tracker(s) */
+    }
+
+    pmix_output_verbose(2, pmix_server_globals.iof_output,
+                        "server:_iofreg reply being sent to %s:%u",
+                        scd->peer->info->pname.nspace, scd->peer->info->pname.rank);
+    PMIX_SERVER_QUEUE_REPLY(scd->peer, scd->hdr.tag, reply);
+
+  cleanup:
+    /* release the cached info */
+    if (NULL != cd->procs) {
+        PMIX_PROC_FREE(cd->procs, cd->nprocs);
+    }
+    PMIX_INFO_FREE(cd->info, cd->ninfo);
+    /* we are done */
+    PMIX_RELEASE(cd);
+}
+
+static void iof_cbfunc(pmix_status_t status,
+                       void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+
+    pmix_output_verbose(2, pmix_server_globals.iof_output,
+                        "server:iof_cbfunc called with status %d",
+                        status);
+
+    if (NULL == cd) {
+        /* nothing to do */
+        return;
+    }
+    cd->status = status;
+
+    /* need to thread-shift this callback as it accesses global data */
+    PMIX_THREADSHIFT(cd, _iofreg);
+}
+
 /* the switchyard is the primary message handling function. It's purpose
  * is to take incoming commands (packed into a buffer), unpack them,
  * and then call the corresponding host server's function to execute
@@ -2476,6 +2746,24 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
     if (PMIX_MONITOR_CMD == cmd) {
         PMIX_GDS_CADDY(cd, peer, tag);
         rc = pmix_server_monitor(peer, buf, query_cbfunc, cd);
+        return rc;
+    }
+
+    if (PMIX_GET_CREDENTIAL_CMD == cmd) {
+        PMIX_GDS_CADDY(cd, peer, tag);
+        rc = pmix_server_get_credential(peer, buf, cred_cbfunc, cd);
+        return rc;
+    }
+
+    if (PMIX_VALIDATE_CRED_CMD == cmd) {
+        PMIX_GDS_CADDY(cd, peer, tag);
+        rc = pmix_server_validate_credential(peer, buf, validate_cbfunc, cd);
+        return rc;
+    }
+
+    if (PMIX_IOF_CMD == cmd) {
+        PMIX_GDS_CADDY(cd, peer, tag);
+        rc = pmix_server_iofreg(peer, buf, iof_cbfunc, cd);
         return rc;
     }
 
