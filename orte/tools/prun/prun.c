@@ -194,17 +194,18 @@ static void evhandler(int status,
         }
     }
 
-    /* we _always_ have to execute the evhandler callback or
-     * else the event progress engine will hang */
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_SUCCESS, NULL, NULL, NULL, cbdata);
-    }
     /* only terminate if this was our job - keep in mind that we
      * can get notifications of job termination prior to our spawn
      * having completed! */
     if (!fired && (myjobid != ORTE_JOBID_INVALID && jobid == myjobid)) {
         fired = true;
         active = false;
+    }
+
+    /* we _always_ have to execute the evhandler callback or
+     * else the event progress engine will hang */
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, NULL, NULL, NULL, cbdata);
     }
 }
 
