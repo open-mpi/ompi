@@ -940,7 +940,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
      * to this place as our default directory
      */
     getcwd(basedir, sizeof(basedir));
-
     /* find the jobdat for this job */
     if (NULL == (jobdat = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -1144,6 +1143,17 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             opal_argv_free(argvptr);
         }
         if (ORTE_SUCCESS != rc) {
+            /* cycle through children to find those for this jobid */
+            for (idx=0; idx < orte_local_children->size; idx++) {
+                if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, idx))) {
+                    continue;
+                }
+                if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name.jobid), ORTE_JOBID) &&
+                    j == (int)child->app_idx) {
+                    child->exit_code = rc;
+                    ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
+                }
+            }
             goto GETOUT;
         }
 
