@@ -338,16 +338,34 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
     return OMPI_SUCCESS;
 
  error_hndl:  /* error handler */
+    /* find a real error code */
+    if (MPI_ERR_IN_STATUS == ret) {
+        for( i = 0; i < 2; i++ ) {
+            if (MPI_REQUEST_NULL == reqs[i]) continue;
+            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+            ret = reqs[i]->req_status.MPI_ERROR;
+            break;
+        }
+    }
+    ompi_coll_base_free_reqs(reqs, 2);
+    if( NULL != sreq ) {
+        if (MPI_ERR_IN_STATUS == ret) {
+            for( i = 0; i < max_outstanding_reqs; i++ ) {
+                if (MPI_REQUEST_NULL == sreq[i]) continue;
+                if (MPI_ERR_PENDING == sreq[i]->req_status.MPI_ERROR) continue;
+                ret = sreq[i]->req_status.MPI_ERROR;
+                break;
+            }
+        }
+        ompi_coll_base_free_reqs(sreq, max_outstanding_reqs);
+    }
+    if( inbuf_free[0] != NULL ) free(inbuf_free[0]);
+    if( inbuf_free[1] != NULL ) free(inbuf_free[1]);
+    if( accumbuf_free != NULL ) free(accumbuf);
     OPAL_OUTPUT (( ompi_coll_base_framework.framework_output,
                    "ERROR_HNDL: node %d file %s line %d error %d\n",
                    rank, __FILE__, line, ret ));
     (void)line;  // silence compiler warning
-    if( inbuf_free[0] != NULL ) free(inbuf_free[0]);
-    if( inbuf_free[1] != NULL ) free(inbuf_free[1]);
-    if( accumbuf_free != NULL ) free(accumbuf);
-    if( NULL != sreq ) {
-        ompi_coll_base_free_reqs(sreq, max_outstanding_reqs);
-    }
     return ret;
 }
 
