@@ -209,9 +209,9 @@ static void job_errors(int fd, short args, void *cbdata)
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
     if (0 > (ret = orte_rml.send_buffer_nb(orte_mgmt_conduit,
-                                                   &jdata->originator, answer,
-                                                   ORTE_RML_TAG_LAUNCH_RESP,
-                                                   orte_rml_send_callback, NULL))) {
+                                           &jdata->originator, answer,
+                                           ORTE_RML_TAG_LAUNCH_RESP,
+                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(answer);
     }
