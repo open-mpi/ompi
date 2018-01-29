@@ -395,7 +395,7 @@ static int mca_rcache_grdma_deregister (mca_rcache_base_module_t *rcache,
 {
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) rcache;
     int32_t ref_count;
-    int rc;
+    int rc = OPAL_SUCCESS;
 
     opal_mutex_lock (&rcache_grdma->cache->vma_module->vma_lock);
     ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
