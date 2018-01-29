@@ -180,6 +180,7 @@ static inline void mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
     } else if (ucp_status == UCS_ERR_MESSAGE_TRUNCATED) {
         mpi_status->MPI_ERROR = MPI_ERR_TRUNCATE;
     } else if (ucp_status == UCS_ERR_CANCELED) {
+        mpi_status->MPI_ERROR  = MPI_SUCCESS;
         mpi_status->_cancelled = true;
     } else {
         mpi_status->MPI_ERROR = MPI_ERR_INTERN;
