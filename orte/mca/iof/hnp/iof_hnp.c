@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
@@ -628,6 +628,10 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                                  "restarting read event"));
             ORTE_IOF_READ_ACTIVATE(mca_iof_hnp_component.stdinev);
         }
+    }
+    if (sink->closed && 0 == opal_list_get_size(&wev->outputs)) {
+        /* the sink has already been closed and everything was written, time to release it */
+        OBJ_RELEASE(sink);
     }
     return;
   finish:
