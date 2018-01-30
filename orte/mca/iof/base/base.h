@@ -105,6 +105,7 @@ typedef struct {
     orte_iof_write_event_t *wev;
     bool xoff;
     bool exclusive;
+    bool closed;
 } orte_iof_sink_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_sink_t);
 
