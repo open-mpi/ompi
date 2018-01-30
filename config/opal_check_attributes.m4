@@ -11,11 +11,12 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2013      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2017      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -221,6 +222,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
     opal_cv___attribute__warn_unused_result=0
     opal_cv___attribute__weak_alias=0
     opal_cv___attribute__destructor=0
+    opal_cv___attribute__optnone=0
   else
     AC_MSG_RESULT([yes])
 
@@ -556,6 +558,21 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         ],
         [],
         [])
+
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([optnone],
+        [
+        void __attribute__ ((__optnone__)) foo(void);
+        void foo(void) { return ; }
+        ],
+        [],
+        [])
+
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([extension],
+        [
+        int i = __extension__ 3;
+        ],
+        [],
+        [])
   fi
 
   # Now that all the values are set, define them
@@ -608,4 +625,8 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ weak alias or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DESTRUCTOR, [$opal_cv___attribute__destructor],
                      [Whether your compiler has __attribute__ destructor or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_OPTNONE, [$opal_cv___attribute__optnone],
+                     [Whether your compiler has __attribute__ optnone or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_EXTENSION, [$opal_cv___attribute__extension],
+                     [Whether your compiler has __attribute__ extension or not])
 ])
