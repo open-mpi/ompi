@@ -15,8 +15,8 @@
  * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -214,7 +214,7 @@ static int mca_btl_vader_component_register (void)
     if (0 == access ("/dev/shm", W_OK)) {
         mca_btl_vader_component.backing_directory = "/dev/shm";
     } else {
-        mca_btl_vader_component.backing_directory = opal_process_info.proc_session_dir;
+        mca_btl_vader_component.backing_directory = opal_process_info.job_session_dir;
     }
     (void) mca_base_component_var_register (&mca_btl_vader_component.super.btl_version, "backing_directory",
                                             "Directory to place backing files for shared memory communication. "
@@ -504,8 +504,8 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
         char *sm_file;
 
-        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%d", mca_btl_vader_component.backing_directory,
-                      opal_process_info.nodename, MCA_BTL_VADER_LOCAL_RANK);
+        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%x.%d", mca_btl_vader_component.backing_directory,
+                      opal_process_info.nodename, OPAL_PROC_MY_NAME.jobid, MCA_BTL_VADER_LOCAL_RANK);
         if (0 > rc) {
             free (btls);
             return NULL;
