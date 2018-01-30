@@ -15,7 +15,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -55,6 +55,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/base/mca_base_pvar.h"
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/mca/mtl/base/base.h"
 
 static int ompi_osc_rdma_component_register (void);
 static int ompi_osc_rdma_component_init (bool enable_progress_threads, bool enable_mpi_threads);
@@ -70,10 +71,12 @@ static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct opal_info_t *i
 static int ompi_osc_rdma_get_info (struct ompi_win_t *win, struct opal_info_t **info_used);
 
 static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_base_module_t **btl);
+static int ompi_osc_rdma_query_mtls (void);
 
 static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *key, char *value);
 
 static char *ompi_osc_rdma_btl_names;
+static char *ompi_osc_rdma_mtl_names;
 
 ompi_osc_rdma_component_t mca_osc_rdma_component = {
     .super = {
@@ -167,62 +170,88 @@ static int ompi_osc_rdma_pvar_read (const struct mca_base_pvar_t *pvar, void *va
 
 static int ompi_osc_rdma_component_register (void)
 {
+    char *description_str;
     mca_osc_rdma_component.no_locks = false;
+    asprintf(&description_str, "Enable optimizations available only if MPI_LOCK is "
+                                "not used. Info key of same name overrides this value (default: %s)",
+                                 mca_osc_rdma_component.no_locks  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
-                                           "no_locks", "Enable optimizations available only if MPI_LOCK is "
-                                           "not used. Info key of same name overrides this value (default: false)",
+                                           "no_locks", description_str,
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.no_locks);
+    free(description_str);
 
     mca_osc_rdma_component.acc_single_intrinsic = false;
+    asprintf(&description_str, "Enable optimizations for MPI_Fetch_and_op, MPI_Accumulate, etc for codes "
+                                "that will not use anything more than a single predefined datatype (default: %s)",
+                                 mca_osc_rdma_component.acc_single_intrinsic  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "acc_single_intrinsic",
-                                           "Enable optimizations for MPI_Fetch_and_op, MPI_Accumulate, etc for codes "
-                                           "that will not use anything more than a single predefined datatype (default: false)",
+                                           description_str,
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.acc_single_intrinsic);
+    free(description_str);
 
     mca_osc_rdma_component.acc_use_amo = true;
+    asprintf(&description_str, "Enable the use of network atomic memory operations when using single "
+                                "intrinsic optimizations. If not set network compare-and-swap will be "
+                                "used instread (default: %s)", mca_osc_rdma_component.acc_use_amo ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "acc_use_amo",
-                                           "Enable the use of network atomic memory operations when using single "
-                                           "intrinsic optimizations. If not set network compare-and-swap will be "
-                                           "used instread (default: true)", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.acc_use_amo);
+    free(description_str);
 
     mca_osc_rdma_component.buffer_size = 32768;
+    asprintf(&description_str, "Size of temporary buffers (default: %d)", mca_osc_rdma_component.buffer_size);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "buffer_size",
-                                            "Size of temporary buffers (default: 32k)", MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+                                            description_str, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
                                             NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                             &mca_osc_rdma_component.buffer_size);
+    free(description_str);
 
     mca_osc_rdma_component.max_attach = 32;
+    asprintf(&description_str, "Maximum number of buffers that can be attached to a dynamic window. "
+                                "Keep in mind that each attached buffer will use a potentially limited "
+                                "resource (default: %d)", mca_osc_rdma_component.max_attach);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "max_attach",
-                                            "Maximum number of buffers that can be attached to a dynamic window. "
-                                            "Keep in mind that each attached buffer will use a potentially limited "
-                                            "resource (default: 32)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                            description_str , MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
                                             OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.max_attach);
+    free(description_str);
 
     mca_osc_rdma_component.aggregation_limit = 1024;
+    asprintf(&description_str, "Maximum size of an aggregated put/get. Messages are aggregated for consecutive"
+                                "put and get operations. In some cases this may lead to higher latency but "
+                                "should also lead to higher bandwidth utilization. Set to 0 to disable (default: %d)",
+                                mca_osc_rdma_component.aggregation_limit);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "aggregation_limit",
-                                            "Maximum size of an aggregated put/get. Messages are aggregated for consecutive"
-                                            "put and get operations. In some cases this may lead to higher latency but "
-                                            "should also lead to higher bandwidth utilization. Set to 0 to disable (default:"
-                                            " 1k)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            description_str, MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.aggregation_limit);
+    free(description_str);
 
     mca_osc_rdma_component.priority = 90;
+    asprintf(&description_str, "Priority of the osc/rdma component (default: %d)",
+                                     mca_osc_rdma_component.priority);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "priority",
-                                            "Priority of the osc/rdma component (default: 90)",
-                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            description_str, MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.priority);
+    free(description_str);
 
     ompi_osc_rdma_btl_names = "openib,ugni";
+    asprintf(&description_str, "Comma-delimited list of BTL component names to allow without verifying "
+                                "connectivity. Do not add a BTL to to this list unless it can reach all "
+                                "processes in any communicator used with an MPI window (default: %s)",
+                                ompi_osc_rdma_btl_names);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "btls",
-                                            "Comma-delimited list of BTL component names to allow without verifying "
-                                            "connectivity. Do not add a BTL to to this list unless it can reach all "
-                                            "processes in any communicator used with an MPI window (default: openib,ugni)",
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            description_str, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_names);
+    free(description_str);
 
+    ompi_osc_rdma_mtl_names = "psm2";
+    asprintf(&description_str, "Comma-delimited list of MTL component names to lower the priority of rdma "
+                                "osc component favoring pt2pt osc (default: %s)", ompi_osc_rdma_mtl_names);
+    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "mtls",
+                                            description_str, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_mtl_names);
+    free(description_str);
 
     /* register performance variables */
 
@@ -339,6 +368,10 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         }
     }
 #endif /* OPAL_CUDA_SUPPORT */
+
+    if (OMPI_SUCCESS == ompi_osc_rdma_query_mtls ()) {
+        return 5; /* this has to be lower that osc pt2pt default priority */
+    }
 
     if (OMPI_SUCCESS != ompi_osc_rdma_query_btls (comm, NULL)) {
         return -1;
@@ -707,6 +740,25 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     free (temp);
 
     return ret;
+}
+
+static int ompi_osc_rdma_query_mtls (void)
+{
+    char **mtls_to_use;
+    bool mtl_match = false;
+
+    mtls_to_use = opal_argv_split (ompi_osc_rdma_mtl_names, ',');
+    if (mtls_to_use && ompi_mtl_base_selected_component) {
+        for (int i = 0 ; mtls_to_use[i] ; ++i) {
+            if (0 == strcmp (mtls_to_use[i], ompi_mtl_base_selected_component->mtl_version.mca_component_name)) {
+                mtl_match = true;
+                break;
+            }
+        }
+    }
+
+    opal_argv_free (mtls_to_use);
+    return mtl_match ? OMPI_SUCCESS : OMPI_ERR_NOT_FOUND;
 }
 
 static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_base_module_t **btl)
