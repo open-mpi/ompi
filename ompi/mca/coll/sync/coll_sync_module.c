@@ -12,6 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,8 +31,8 @@
 
 #include "mpi.h"
 
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
+#include "opal/util/show_help.h"
+#include "ompi/mca/rte/rte.h"
 
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
@@ -173,8 +174,8 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
     if (good) {
         return OMPI_SUCCESS;
     }
-    orte_show_help("help-coll-sync.txt", "missing collective", true,
-                   orte_process_info.nodename,
+    opal_show_help("help-coll-sync.txt", "missing collective", true,
+                   ompi_process_info.nodename,
                    mca_coll_sync_component.priority, msg);
     return OMPI_ERR_NOT_FOUND;
 }
