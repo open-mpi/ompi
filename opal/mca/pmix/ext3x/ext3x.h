@@ -303,6 +303,10 @@ OPAL_MODULE_DECLSPEC int ext3x_server_notify_event(int status,
                                                     opal_list_t *info,
                                                     opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+OPAL_MODULE_DECLSPEC int ext3x_server_iof_push(const opal_process_name_t *source,
+                                               opal_pmix_iof_channel_t channel,
+                                               unsigned char *data, size_t nbytes);
+
 
 /****  COMPONENT UTILITY FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int opal_pmix_ext3x_check_evars(void);
