@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -485,7 +485,9 @@ ompi_osc_sm_free(struct ompi_win_t *win)
     } else {
         free(module->node_states);
         free(module->global_state);
-        free(module->bases[0]);
+        if (NULL != module->bases) {
+            free(module->bases[0]);
+        }
     }
     free(module->disp_units);
     free(module->outstanding_locks);
