@@ -337,6 +337,7 @@ opal/mca/pmix/pmix*/pmix/examples/server
 opal/mca/pmix/pmix*/pmix/examples/tool
 
 opal/mca/pmix/ext3x/ext3x.c
+opal/mca/pmix/ext3x/ext3x.h
 opal/mca/pmix/ext3x/ext3x_client.c
 opal/mca/pmix/ext3x/ext3x_component.c
 opal/mca/pmix/ext3x/ext3x_server_north.c
