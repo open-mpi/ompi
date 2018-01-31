@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -44,15 +44,16 @@ BEGIN_C_DECLS
 #endif
 
 typedef struct {
-  opal_pmix_base_component_t super;
-  opal_list_t jobids;
-  bool native_launch;
-  size_t evindex;
-  opal_list_t events;
-  int cache_size;
-  opal_list_t cache;
-  opal_list_t dmdx;
-  bool silence_warning;
+    opal_pmix_base_component_t super;
+    pmix_proc_t myproc;
+    opal_list_t jobids;
+    bool native_launch;
+    size_t evindex;
+    opal_list_t events;
+    int cache_size;
+    opal_list_t cache;
+    opal_list_t dmdx;
+    bool silence_warning;
 } mca_pmix_ext3x_component_t;
 
 OPAL_DECLSPEC extern mca_pmix_ext3x_component_t mca_pmix_ext3x_component;
