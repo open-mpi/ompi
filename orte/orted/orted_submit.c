@@ -173,7 +173,7 @@ char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH] = {0};
 int MPIR_force_to_main = 0;
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 
-ORTE_DECLSPEC void* MPIR_Breakpoint(void);
+ORTE_DECLSPEC void* __opal_attribute_optnone__ MPIR_Breakpoint(void);
 
 /*
  * Breakpoint function for parallel debuggers

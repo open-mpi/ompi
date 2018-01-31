@@ -15,7 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -234,6 +234,18 @@
 #    define __opal_attribute_destructor__
 #endif
 
+#if OPAL_HAVE_ATTRIBUTE_OPTNONE
+#    define __opal_attribute_optnone__    __attribute__((__optnone__))
+#else
+#    define __opal_attribute_optnone__
+#endif
+
+#if OPAL_HAVE_ATTRIBUTE_EXTENSION
+#    define __opal_attribute_extension__    __extension__
+#else
+#    define __opal_attribute_extension__
+#endif
+
 #  if OPAL_C_HAVE_VISIBILITY
 #    define OPAL_DECLSPEC           __opal_attribute_visibility__("default")
 #    define OPAL_MODULE_DECLSPEC    __opal_attribute_visibility__("default")
@@ -268,11 +280,11 @@
 #include <sys/param.h>
 #endif
 #if defined(PATH_MAX)
-#define OPAL_PATH_MAX	(PATH_MAX + 1)
+#define OPAL_PATH_MAX   (PATH_MAX + 1)
 #elif defined(_POSIX_PATH_MAX)
-#define OPAL_PATH_MAX	(_POSIX_PATH_MAX + 1)
+#define OPAL_PATH_MAX   (_POSIX_PATH_MAX + 1)
 #else
-#define OPAL_PATH_MAX	256
+#define OPAL_PATH_MAX   256
 #endif
 
 /*
