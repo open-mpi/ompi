@@ -253,13 +253,12 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         /* find the nodes in our node array and assemble them
          * in daemon order if the vm was launched
          */
-        while (NULL != (item = opal_list_remove_first(&nodes))) {
-            nptr = (orte_node_t*)item;
+        for (i=0; i < orte_node_pool->size; i++) {
             nd = NULL;
-            for (i=0; i < orte_node_pool->size; i++) {
-                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                    continue;
-                }
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            OPAL_LIST_FOREACH_SAFE(nptr, next, &nodes, orte_node_t) {
                 if (0 != strcmp(node->name, nptr->name)) {
                     OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s DOESNT MATCH NODE %s",
@@ -332,8 +331,9 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     /* reset us back to the end for the next node */
                     nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
                 }
+                opal_list_remove_item(&nodes, (opal_list_item_t*)nptr);
+                OBJ_RELEASE(nptr);
             }
-            OBJ_RELEASE(nptr);
         }
         OBJ_DESTRUCT(&nodes);
         /* now prune for usage and compute total slots */
