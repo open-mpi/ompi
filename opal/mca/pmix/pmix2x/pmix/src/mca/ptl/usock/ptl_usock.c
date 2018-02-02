@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +49,7 @@
 
 #include "src/util/argv.h"
 #include "src/util/error.h"
+#include "src/util/show_help.h"
 #include "src/client/pmix_client_ops.h"
 #include "src/include/pmix_globals.h"
 #include "src/include/pmix_socket_errno.h"
@@ -751,6 +752,12 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
                 pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                     "usock:recv:handler allocate data region of size %lu",
                                     (unsigned long)peer->recv_msg->hdr.nbytes);
+                if (pmix_ptl_globals.max_msg_size < peer->recv_msg->hdr.nbytes) {
+                    pmix_show_help("help-pmix-runtime.txt", "ptl:msg_size", true,
+                                   (unsigned long)peer->recv_msg->hdr.nbytes,
+                                   (unsigned long)pmix_ptl_globals.max_msg_size);
+                    goto err_close;
+                }
                 /* allocate the data region */
                 peer->recv_msg->data = (char*)malloc(peer->recv_msg->hdr.nbytes);
                 memset(peer->recv_msg->data, 0, peer->recv_msg->hdr.nbytes);

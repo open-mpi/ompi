@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -58,3 +58,13 @@ by any of the following:
   that includes at least one usable plugin for this framework.
 
 Please check your installation and environment.
+#
+[ptl:message-too-large]
+A message has been received that exceeds the size limit:
+
+  Message size:  %lu
+  Size limit:    %lu
+
+The limit is enforced to protect against bad actors. If you believe that
+the message was likely legitimate, then adjust the message size by
+setting the ptl_base_max_msg_size MCA parameter.

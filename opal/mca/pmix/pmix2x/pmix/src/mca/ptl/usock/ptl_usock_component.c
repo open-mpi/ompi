@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -656,6 +656,15 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(psave);
         /* send an error reply to the client */
         goto error;
+    }
+
+    /* if we haven't previously stored the version for this
+     * nspace, do so now */
+    if (!nptr->version_stored) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_BFROPS_MODULE, nptr->compat.bfrops->version, PMIX_STRING);
+        PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, nptr, &ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+        nptr->version_stored = true;
     }
 
     /* the choice of PTL module was obviously made by the connecting

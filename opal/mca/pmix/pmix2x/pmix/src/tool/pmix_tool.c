@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -239,6 +239,8 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     }
 
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
+    PMIX_CONSTRUCT(&pmix_client_globals.peers, pmix_pointer_array_t);
+    pmix_pointer_array_init(&pmix_client_globals.peers, 1, INT_MAX, 1);
     pmix_client_globals.myserver = PMIX_NEW(pmix_peer_t);
     pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_nspace_t);
 
@@ -684,6 +686,8 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
     pmix_status_t rc;
     pmix_tool_timeout_t tev;
     struct timeval tv = {2, 0};
+    int n;
+    pmix_peer_t *peer;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (1 != pmix_globals.init_cntr) {
@@ -754,6 +758,11 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
 
     PMIX_RELEASE(pmix_client_globals.myserver);
     PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);
+    for (n=0; n < pmix_client_globals.peers.size; n++) {
+        if (NULL != (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_client_globals.peers, n))) {
+            PMIX_RELEASE(peer);
+        }
+    }
 
     /* shutdown services */
     pmix_rte_finalize();

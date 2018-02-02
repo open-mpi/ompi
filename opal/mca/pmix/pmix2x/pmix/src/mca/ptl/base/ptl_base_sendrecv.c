@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -44,6 +44,7 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
+#include "src/util/show_help.h"
 
 #include "src/mca/ptl/base/base.h"
 
@@ -458,6 +459,12 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
                 pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                     "ptl:base:recv:handler allocate data region of size %lu",
                                     (unsigned long)peer->recv_msg->hdr.nbytes);
+                if (pmix_ptl_globals.max_msg_size < peer->recv_msg->hdr.nbytes) {
+                    pmix_show_help("help-pmix-runtime.txt", "ptl:msg_size", true,
+                                   (unsigned long)peer->recv_msg->hdr.nbytes,
+                                   (unsigned long)pmix_ptl_globals.max_msg_size);
+                    goto err_close;
+                }
                 /* allocate the data region */
                 peer->recv_msg->data = (char*)malloc(peer->recv_msg->hdr.nbytes);
                 memset(peer->recv_msg->data, 0, peer->recv_msg->hdr.nbytes);
