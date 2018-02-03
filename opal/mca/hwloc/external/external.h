@@ -48,6 +48,15 @@ BEGIN_C_DECLS
 #define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET
 #endif
 
+#if defined(OPAL_HWLOC_WANT_SHMEM) && OPAL_HWLOC_WANT_SHMEM
+#    if HWLOC_API_VERSION >= 0x20000
+#        include MCA_hwloc_external_shmem_header
+#    else
+// JMS This isn't going to work - it will be an error if we use hwloc >= 2.0
+#        error Tried to include hwloc shmem header, but hwloc < 2.0 found
+#    endif
+#endif
+
 END_C_DECLS
 
 #endif /* MCA_OPAL_HWLOC_EXTERNAL_H */

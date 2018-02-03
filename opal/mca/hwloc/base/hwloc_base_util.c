@@ -24,6 +24,10 @@
  */
 
 
+// Need to tell hwloc (>=v2.0) that we need hwloc/shmem.h.  Must do
+// this before including opal_config.h.
+#define OPAL_HWLOC_WANT_SHMEM 1
+
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
@@ -53,11 +57,6 @@
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
-
-#if HWLOC_API_VERSION >= 0x20000
-// JMS Is this right?
-#include "hwloc/shmem.h"
-#endif
 
 static bool topo_in_shmem = false;
 
