@@ -16,6 +16,10 @@
 
 #if (OPAL_ENABLE_TIMING)
 
+#if !defined(OPAL_PMIX_RENAME_PREFIX)
+#define OPAL_PMIX_RENAME_PREFIX ""
+#endif
+
 typedef struct {
     char desc[OPAL_TIMING_STR_LEN];
     double ts;
@@ -220,6 +224,112 @@ typedef struct ompi_timing_t {
         }                                                                         \
     } while(0)
 
+/* PMIx timings OMPI side */
+#define PMIX_TIMING_ENV_CNT_PREFIX(prefix, func, _cnt)                            \
+    do {                                                                          \
+        char ename[OPAL_TIMING_STR_LEN];                                          \
+        char *ptr = NULL;                                                         \
+        int n = snprintf(ename, OPAL_TIMING_STR_LEN, "PMIX_TIMING_%s%s%s_CNT", prefix, OPAL_PMIX_RENAME_PREFIX, func);    \
+        (_cnt) = 0;                                                               \
+        if ( n <= OPAL_TIMING_STR_LEN ){                                          \
+            ptr = getenv(ename);                                                  \
+            if (NULL == ptr) {                                                    \
+                n = snprintf(ename, OPAL_TIMING_STR_LEN, "PMIX_TIMING_%s%s_CNT", prefix, func); \
+                if ( n <= OPAL_TIMING_STR_LEN ){ ptr = getenv(ename); };          \
+            }                                                                     \
+            if( NULL != ptr ){ (_cnt) = atoi(ptr); };                             \
+        }                                                                         \
+    } while(0)
+
+#define PMIX_TIMING_ENV_CNT(func, _cnt)                                           \
+    PMIX_TIMING_ENV_CNT_PREFIX("", func, _cnt)
+
+#define PMIX_TIMING_ENV_GETDESC_PREFIX(prefix, filename, func, i, desc, funcname, _t)       \
+    do {                                                                          \
+        char vname[OPAL_TIMING_STR_LEN];                                          \
+        (_t) = 0.0;                                                               \
+        sprintf(vname, "PMIX_TIMING_%s%s%s_FILE_%d", prefix, OPAL_PMIX_RENAME_PREFIX, func, i); \
+        *filename = getenv(vname);                                                \
+        if (NULL == *filename) {                                                  \
+            sprintf(vname, "PMIX_TIMING_%s%s_FILE_%d", prefix, func, i);          \
+            *filename = getenv(vname);                                            \
+        };                                                                        \
+        sprintf(vname, "PMIX_TIMING_%s%s%s_DESC_%d", prefix, OPAL_PMIX_RENAME_PREFIX, func, i); \
+        *desc = getenv(vname);                                                    \
+        if (NULL == *desc) {                                                      \
+            sprintf(vname, "PMIX_TIMING_%s%s_DESC_%d", prefix, func, i);          \
+            *desc = getenv(vname);                                                \
+        };                                                                        \
+        sprintf(vname, "PMIX_TIMING_%s%s%s_VAL_%d", prefix, OPAL_PMIX_RENAME_PREFIX, func, i); \
+        char *ptr = getenv(vname);                                                \
+        if (NULL == ptr) {                                                        \
+            sprintf(vname, "PMIX_TIMING_%s%s_VAL_%d", prefix, func, i);           \
+            ptr = getenv(vname);                                                  \
+        };                                                                        \
+        sprintf(vname, "PMIX_TIMING_%s%s%s_FUNC_%d", prefix, OPAL_PMIX_RENAME_PREFIX, func, i); \
+        *funcname = getenv(vname);                                                \
+        if (NULL == *funcname) {                                                  \
+            sprintf(vname, "PMIX_TIMING_%s%s_FUNC_%d", prefix, func, i);          \
+            *funcname = getenv(vname);                                            \
+        };                                                                        \
+        if ( NULL != ptr ) {                                                      \
+            sscanf(ptr,"%lf", &(_t));                                             \
+        }                                                                         \
+    } while(0)
+
+#define PMIX_TIMING_ENV_ERROR_PREFIX(prefix, func, _err)                          \
+    do {                                                                          \
+        char ename[OPAL_TIMING_STR_LEN];                                          \
+        (_err) = 0;                                                               \
+        char *ptr = NULL;                                                         \
+        int n = snprintf(ename, OPAL_TIMING_STR_LEN, "PMIX_TIMING_%s%s%s_ERROR", prefix, OPAL_PMIX_RENAME_PREFIX, func);  \
+        if ( n <= OPAL_TIMING_STR_LEN ){                                          \
+            ptr = getenv(ename);                                                  \
+            if (NULL == ptr) {                                                    \
+                n = snprintf(ename, OPAL_TIMING_STR_LEN, "PMIX_TIMING_%s%s_ERROR", prefix, func);  \
+                if ( n <= OPAL_TIMING_STR_LEN ){                                  \
+                    ptr = getenv(ename);                                          \
+                }                                                                 \
+            }                                                                     \
+            if( NULL != ptr ){ (_err) = atoi(ptr); };                             \
+        }                                                                         \
+    } while(0)
+
+#define PMIX_TIMING_RESET_CNTR_PREFIX(_prefix, func)                              \
+    do {                                                                          \
+        char vname[OPAL_TIMING_STR_LEN];                                          \
+        int n = snprintf(vname, OPAL_TIMING_STR_LEN, "PMIX_TIMING_%s%s%s_CNT", _prefix, OPAL_PMIX_RENAME_PREFIX, func); \
+        if ( n <= OPAL_TIMING_STR_LEN ){                                          \
+            setenv(vname, "0", 1);                                                \
+        }                                                                         \
+        n = snprintf(vname, OPAL_TIMING_STR_LEN, "PMIX_TIMING_%s%s_CNT", _prefix, func); \
+        if ( n <= OPAL_TIMING_STR_LEN ){                                          \
+            setenv(vname, "0", 1);                                                \
+        }                                                                         \
+    } while(0)
+
+#define OMPI_TIMING_IMPORT_PMIX_PREFIX(_prefix, func)                             \
+    do {                                                                          \
+        if (!OMPI_TIMING.error && OMPI_TIMING.enabled) {                          \
+            int cnt;                                                              \
+            int i;                                                                \
+            double ts;                                                            \
+            PMIX_TIMING_ENV_CNT(func, cnt);                                       \
+            PMIX_TIMING_ENV_ERROR_PREFIX(_prefix, func, OMPI_TIMING.error);       \
+            for(i = 0; i < cnt; i++){                                             \
+                char *desc, *filename, *funcname;                                 \
+                PMIX_TIMING_ENV_GETDESC_PREFIX(_prefix, &filename, func, i, &desc, &funcname, ts);  \
+                if (NULL != strstr(funcname, OPAL_PMIX_RENAME_PREFIX)) {          \
+                    funcname += strlen(OPAL_PMIX_RENAME_PREFIX);                  \
+                }                                                                 \
+                OMPI_TIMING_APPEND(filename, funcname, desc, ts);                 \
+            }                                                                     \
+            PMIX_TIMING_RESET_CNTR_PREFIX(_prefix, func);                         \
+        }                                                                         \
+    } while(0)
+
+#define OMPI_TIMING_IMPORT_PMIX(func)                                             \
+        OMPI_TIMING_IMPORT_PMIX_PREFIX("", func);
 #else
 #define OMPI_TIMING_INIT(size)
 
@@ -230,6 +340,8 @@ typedef struct ompi_timing_t {
 #define OMPI_TIMING_OUT
 
 #define OMPI_TIMING_IMPORT_OPAL(func)
+
+#define OMPI_TIMING_IMPORT_PMIX(func)
 
 #define OMPI_TIMING_FINALIZE
 

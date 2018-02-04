@@ -52,9 +52,12 @@
 #include "src/util/error.h"
 #include "src/util/hash.h"
 #include "src/util/output.h"
+#include "src/util/timings.h"
 #include "src/mca/ptl/ptl.h"
 
 #include "pmix_client_ops.h"
+
+PMIX_TIMING_ENV_DEF(pmix_fence_tmng);
 
 static pmix_status_t unpack_return(pmix_buffer_t *data);
 static pmix_status_t pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
@@ -122,6 +125,8 @@ PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs
     pmix_cb_t *cb;
     pmix_proc_t rg, *rgs;
     size_t nrg;
+
+    PMIX_TIMING_ENV_START(pmix_fence_tmng);
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -274,6 +279,9 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_ptl_hdr_t *hdr,
     if (NULL != cb->cbfunc.opfn) {
         cb->cbfunc.opfn(rc, cb->cbdata);
     }
+
+    PMIX_TIMING_ENV_NEXT(pmix_fence_tmng, "fence");
+
     PMIX_RELEASE(cb);
 }
 
