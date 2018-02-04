@@ -561,30 +561,6 @@ int opal_hwloc_base_report_bind_failure(const char *file,
     return OPAL_SUCCESS;
 }
 
-static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
-{
-    unsigned k;
-    opal_hwloc_obj_data_t *data;
-
-    if (HWLOC_OBJ_CORE == obj->type) {
-        data = (opal_hwloc_obj_data_t*)obj->userdata;
-        if (NULL == data) {
-            data = OBJ_NEW(opal_hwloc_obj_data_t);
-            obj->userdata = (void*)data;
-        }
-        if (NULL == opal_hwloc_base_cpu_list) {
-            data->npus = 1;
-        }
-        *cnt += data->npus;
-        return;
-    }
-
-    for (k=0; k < obj->arity; k++) {
-        df_search_cores(obj->children[k], cnt);
-    }
-    return;
-}
-
 /* determine if there is a single cpu in a bitmap */
 bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset)
 {
@@ -629,18 +605,8 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
              * count bits in this case as there may be more than
              * one hwthread/core. Instead, find the number of cores
              * in the system
-             *
-             * NOTE: remember, hwloc can't find "cores" in all
-             * environments. So first check to see if it found
-             * "core" at all.
              */
-            if (NULL != hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0)) {
-                /* starting at the incoming obj, do a down-first search
-                 * and count the number of cores under it
-                 */
-                cnt = 0;
-                df_search_cores(obj, &cnt);
-            }
+            cnt = hwloc_get_nbobjs_inside_cpuset_by_type(topo, obj->cpuset, HWLOC_OBJ_CORE);
         } else {
             hwloc_cpuset_t cpuset;
 
