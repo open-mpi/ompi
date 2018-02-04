@@ -394,6 +394,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     }
 
     if (0 != flag) {
+        opal_output(0, "UNPACKING PRIOR JOBS");
         /* unpack the buffer containing the info */
         cnt=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &bptr, &cnt, OPAL_BUFFER))) {
@@ -418,6 +419,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 /* nope - add it */
                 opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
             } else {
+                opal_output(0, "DROPPING COPY");
                 /* yep - so we can drop this copy */
                 jdata->jobid = ORTE_JOBID_INVALID;
                 OBJ_RELEASE(jdata);
@@ -508,6 +510,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
      * and sent us the complete array of procs in the orte_job_t, so we
      * don't need to do anything more here */
     if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+        opal_output(0, "JOB NOT FULLY DESCRIBED");
         if (!ORTE_PROC_IS_HNP) {
             /* extract the ppn regex */
             cnt = 1;
@@ -524,11 +527,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
             }
             free(ppn);
             /* now assign locations to the procs */
+            opal_output(0, "ASSIGN LOCS");
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
                 ORTE_ERROR_LOG(rc);
                 goto REPORT_ERROR;
             }
         }
+        opal_output(0, "COMPUTE VPIDS");
         /* compute the ranks and add the proc objects
          * to the jdata->procs array */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {

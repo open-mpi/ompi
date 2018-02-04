@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -106,7 +108,6 @@ static pmix_status_t generate_node_regex(const char *input,
         len = strlen(vptr);
         startnum = -1;
         memset(prefix, 0, PMIX_MAX_NODE_PREFIX);
-        numdigits = 0;
         for (i=0, j=0; i < len; i++) {
             if (!isalpha(vptr[i])) {
                 /* found a non-alpha char */
@@ -120,7 +121,6 @@ static pmix_status_t generate_node_regex(const char *input,
                 /* count the size of the numeric field - but don't
                  * add the digits to the prefix
                  */
-                numdigits++;
                 if (startnum < 0) {
                     /* okay, this defines end of the prefix */
                     startnum = i;
@@ -147,8 +147,10 @@ static pmix_status_t generate_node_regex(const char *input,
         vnum = strtol(&vptr[startnum], &sfx, 10);
         if (NULL != sfx) {
             suffix = strdup(sfx);
+            numdigits = (int)(sfx - &vptr[startnum]);
         } else {
             suffix = NULL;
+            numdigits = (int)strlen(&vptr[startnum]);
         }
         /* is this value already on our list? */
         found = false;

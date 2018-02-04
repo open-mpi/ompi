@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -53,19 +53,23 @@
 
 #include "src/mca/ptl/base/static-components.h"
 
+#define PMIX_MAX_MSG_SIZE   16
+
 /* Instantiate the global vars */
 pmix_ptl_globals_t pmix_ptl_globals = {{{0}}};
 int pmix_ptl_base_output = -1;
 
+static size_t max_msg_size = PMIX_MAX_MSG_SIZE;
+
 static int pmix_ptl_register(pmix_mca_base_register_flag_t flags)
 {
-    pmix_ptl_globals.max_msg_size = 8000000;
     pmix_mca_base_var_register("pmix", "ptl", "base", "max_msg_size",
-                               "Max size (in bytes) of a client/server msg",
+                               "Max size (in Mbytes) of a client/server msg",
                                PMIX_MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
                                PMIX_INFO_LVL_2,
                                PMIX_MCA_BASE_VAR_SCOPE_READONLY,
-                               &pmix_ptl_globals.max_msg_size);
+                               &max_msg_size);
+    pmix_ptl_globals.max_msg_size = max_msg_size * 1024 * 1024;
     return PMIX_SUCCESS;
 }
 

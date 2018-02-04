@@ -101,6 +101,7 @@ static void nscon(pmix_nspace_t *p)
     p->nspace = NULL;
     p->nlocalprocs = 0;
     p->all_registered = false;
+    p->version_stored = false;
     p->jobbkt = NULL;
     p->ndelivered = 0;
     PMIX_CONSTRUCT(&p->ranks, pmix_list_t);

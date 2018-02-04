@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 # PMIx copyrights:
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 #
 #########################
 #
@@ -15,7 +15,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
@@ -499,7 +499,7 @@ AC_DEFUN([PMIX_CHECK_ATTRIBUTES], [
 
     _PMIX_CHECK_SPECIFIC_ATTRIBUTE([extension],
         [
-         #define FOO __extension__ ({size_t bar; bar = 3;})
+        int i = __extension__ 3;
         ],
         [],
         [])

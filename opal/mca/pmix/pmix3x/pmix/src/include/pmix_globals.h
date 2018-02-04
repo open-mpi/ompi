@@ -51,6 +51,8 @@ BEGIN_C_DECLS
 #define PMIX_MAX_CRED_SIZE      131072              // set max at 128kbytes
 #define PMIX_MAX_ERR_CONSTANT   INT_MIN
 
+/* internal-only attributes */
+#define PMIX_BFROPS_MODULE                  "pmix.bfrops.mod"       // (char*) name of bfrops plugin in-use by a given nspace
 
 /* define an internal-only process name that has
  * a dynamically-sized nspace field to save memory */
@@ -152,6 +154,7 @@ typedef struct {
     char *nspace;
     size_t nlocalprocs;
     bool all_registered;         // all local ranks have been defined
+    bool version_stored;         // the version string used by this nspace has been stored
     pmix_buffer_t *jobbkt;       // packed version of jobinfo
     size_t ndelivered;           // count of #local clients that have received the jobinfo
     pmix_list_t ranks;           // list of pmix_rank_info_t for connection support of my clients
