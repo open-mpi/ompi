@@ -46,9 +46,10 @@ BEGIN_C_DECLS
 #if defined(OPAL_HWLOC_WANT_SHMEM) && OPAL_HWLOC_WANT_SHMEM
 #    if HWLOC_API_VERSION >= 0x20000
 #        include MCA_hwloc_external_shmem_header
-#    else
-#        error Tried to include hwloc shmem header, but hwloc < 2.0 found
 #    endif
+/* Do nothing in the 1.x case because the caller doesn't know HWLOC_API_VERSION when it sets OPAL_HWLOC_WANT_SHMEM.
+ * Calls to hwloc/shmem.h are protected by HWLOC_API_VERSION >= 0x20000 in the actual code.
+ */
 #endif
 
 #if HWLOC_API_VERSION < 0x00010b00
