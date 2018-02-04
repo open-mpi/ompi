@@ -60,7 +60,6 @@ headers += \
         hwloc/include/hwloc/helper.h \
         hwloc/include/hwloc/inlines.h \
         hwloc/include/hwloc/intel-mic.h \
-        hwloc/include/hwloc/myriexpress.h \
         hwloc/include/hwloc/nvml.h \
         hwloc/include/hwloc/opencl.h \
         hwloc/include/hwloc/openfabrics-verbs.h \
