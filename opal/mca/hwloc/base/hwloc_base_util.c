@@ -699,14 +699,6 @@ unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
  * there is a single cache object type, and the level is encoded
  * in an attribute union. So looking for cache objects involves
  * a multi-step test :-(
- *
- * And, of course, we make things even worse because we don't
- * always care about what is physically or logically present,
- * but rather what is available to us. For example, we don't
- * want to map or bind to a cpu that is offline, or one that
- * we aren't allowed by use by the OS. So we have to also filter
- * the search to avoid those objects that don't have any cpus
- * we can use :-((
  */
 static hwloc_obj_t df_search(hwloc_topology_t topo,
                              hwloc_obj_t start,
