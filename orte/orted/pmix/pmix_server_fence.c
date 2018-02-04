@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
@@ -44,6 +44,7 @@
 #include "orte/mca/rml/rml.h"
 
 #include "pmix_server_internal.h"
+#include "pmix_server.h"
 
 static void relcb(void *cbdata)
 {
@@ -193,6 +194,24 @@ static void dmodex_req(int sd, short args, void *cbdata)
         }
         return;
     }
+    /* if this is a request for rank=WILDCARD, then they want the job-level data
+     * for this job. It was probably not stored locally because we aren't hosting
+     * any local procs. There is no need to request the data as we already have
+     * it - so just register the nspace so the local PMIx server gets it */
+    if (ORTE_VPID_WILDCARD == req->target.vpid) {
+        rc = orte_pmix_server_register_nspace(jdata, true);
+        if (ORTE_SUCCESS != rc) {
+            goto callback;
+        }
+        /* let the server know that the data is now available */
+        if (NULL != req->mdxcbfunc) {
+            req->mdxcbfunc(rc, NULL, 0, req->cbdata, NULL, NULL);
+        }
+        OBJ_RELEASE(req);
+        return;
+    }
+
+    /* if they are asking about a specific proc, then fetch it */
     if (NULL == (proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, req->target.vpid))) {
         /* if we find the job, but not the process, then that is an error */
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);

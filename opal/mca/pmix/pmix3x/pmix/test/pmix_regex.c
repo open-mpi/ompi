@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +39,9 @@
 
 #define TEST_NODES "odin001,odin002,odin003,odin010,odin011,odin075"
 #define TEST_PROCS "1,2,3,4;5-8;9,11-12;17-20;21-24;100"
+#define TEST_NODES2 "c712f6n01,c712f6n02,c712f6n03"
+
+bool spawn_wait = false;
 
 int main(int argc, char **argv)
 {
@@ -51,6 +56,8 @@ int main(int argc, char **argv)
     }
 
     TEST_VERBOSE(("Testing version %s", PMIx_Get_version()));
+
+    PMIx_server_init(&mymodule, NULL, 0);
 
     TEST_VERBOSE(("Start PMIx regex smoke test"));
 
@@ -86,5 +93,20 @@ int main(int argc, char **argv)
         fprintf(stderr, "PPN reverse failed: %d\n", rc);
     }
 
+    fprintf(stderr, "NODES: %s\n", TEST_NODES2);
+    PMIx_generate_regex(TEST_NODES2, &regex);
+    fprintf(stderr, "REGEX: %s\n\n", regex);
+    /* test reverse parsing */
+    rc = pmix_preg.parse_nodes(regex, &nodes);
+    free(regex);
+    if (PMIX_SUCCESS == rc) {
+        regex = pmix_argv_join(nodes, ',');
+        pmix_argv_free(nodes);
+        fprintf(stderr, "NODES: %s\n", TEST_NODES2);
+        fprintf(stderr, "RSULT: %s\n\n\n", regex);
+        free(regex);
+    } else {
+        fprintf(stderr, "Node reverse failed: %d\n\n\n", rc);
+    }
     return 0;
 }

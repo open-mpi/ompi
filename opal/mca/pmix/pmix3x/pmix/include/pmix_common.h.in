@@ -1862,7 +1862,6 @@ PMIX_EXPORT const char* PMIx_Get_version(void);
 PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
                                               const char *key, pmix_value_t *val);
 
-
 /**
  * Top-level interface function to pack one or more values into a
  * buffer.
@@ -1880,6 +1879,17 @@ PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
  * cases. Sending a number larger than can be handled by the recipient
  * will return an error code (generated upon unpacking) -
  * the error cannot be detected during packing.
+ *
+ * The identity of the intended recipient of the packed buffer (i.e., the
+ * process that will be unpacking it) is used solely to resolve any data type
+ * differences between PMIx versions. The recipient must, therefore, be
+ * known to the user prior to calling the pack function so that the
+ * PMIx library is aware of the version the recipient is using.
+ *
+ * @param *target Pointer to a pmix_proc_t structure containing the
+ * nspace/rank of the process that will be unpacking the final buffer.
+ * A NULL value may be used to indicate that the target is based on
+ * the same PMIx version as the caller.
  *
  * @param *buffer A pointer to the buffer into which the value is to
  * be packed.
@@ -1914,7 +1924,8 @@ PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
  * status_code = PMIx_Data_pack(buffer, &src, 1, PMIX_INT32);
  * @endcode
  */
-PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
+PMIX_EXPORT pmix_status_t PMIx_Data_pack(const pmix_proc_t *target,
+                                         pmix_data_buffer_t *buffer,
                                          void *src, int32_t num_vals,
                                          pmix_data_type_t type);
 
@@ -1960,6 +1971,17 @@ PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
  * cases. Sending a number larger than can be handled by the recipient
  * will return an error code generated upon unpacking - these errors
  * cannot be detected during packing.
+ *
+ * The identity of the source of the packed buffer (i.e., the
+ * process that packed it) is used solely to resolve any data type
+ * differences between PMIx versions. The source must, therefore, be
+ * known to the user prior to calling the unpack function so that the
+ * PMIx library is aware of the version the source used.
+ *
+ * @param *source Pointer to a pmix_proc_t structure containing the
+ * nspace/rank of the process that packed the provided buffer.
+ * A NULL value may be used to indicate that the source is based on
+ * the same PMIx version as the caller.
  *
  * @param *buffer A pointer to the buffer from which the value will be
  * extracted.
@@ -2010,7 +2032,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
  *
  * @endcode
  */
-PMIX_EXPORT pmix_status_t PMIx_Data_unpack(pmix_data_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t PMIx_Data_unpack(const pmix_proc_t *source,
+                                           pmix_data_buffer_t *buffer, void *dest,
                                            int32_t *max_num_values,
                                            pmix_data_type_t type);
 

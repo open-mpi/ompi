@@ -1,4 +1,4 @@
-Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
 Copyright (c) 2017      IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
@@ -25,7 +25,7 @@ Master (not on release branches yet)
 ------------------------------------
 
 
-2.1.0 -- 26 Oct 2017
+2.1.0 -- 1 Feb 2018
 ----------------------
 **** NOTE: This release contains the first implementation of cross-version
 **** support. Servers using v2.1.0 are capable of supporting clients using
@@ -36,6 +36,30 @@ Master (not on release branches yet)
 - Enable support for remote tool connections (PR #540, #542)
 - Cleanup libevent configure logi to support default install paths (PR #541)
 - Debounce "unreachable" notifications for tools when they disconnect (PR #544)
+- Enable the regex generator to support node names that include multiple
+  sets of numbers
+
+
+2.0.3 -- TBD
+----------------------
+- Fix event notification so all sides of multi-library get notified
+  of other library's existence
+- Update syslog protection to support Mac High Sierra OS
+- Remove usock component - unable to support v1.x clients due
+  to datatype differences
+- Cleanup security handshake
+- Cleanup separation of PMI-1/2 libraries and PMIx symbols
+- Protect against overly-large messages
+- Update data buffer APIs to support cross-version operations
+- Protect receive callbacks from NULL and/or empty buffers as this
+  can occur when the peer on a connection disappears.
+- Fix tool connection search so it properly descends into the directory
+  tree while searching for the server's contact file.
+- Fix store_local so it doesn't reject a new nspace as that can happen
+  when working with tools
+- Ensure we always complete PMIx_Finalize - don't return if something
+  goes wrong in the middle of the procedure
+- Fix several tool connection issues
 
 
 2.0.2 -- 19 Oct 2017
@@ -117,6 +141,14 @@ Master (not on release branches yet)
 - Fix a number of race condition issues that arose at scale
 - Enable PMIx servers to generate notifications to the host RM
   and to themselves
+
+
+1.2.5 -- TBD
+----------------------
+- Fix cross-version issue when v1.2 client interacts with v2.1 server (PR #564)
+- Update client connection for cross-version support (PR #591)
+- Fix write memory barrier ASM for PowerPC (PR #606)
+- Add protection from overly-large messages
 
 
 1.2.4 -- 13 Oct. 2017

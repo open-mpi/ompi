@@ -871,7 +871,12 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
      * store the data first so we can immediately satisfy any future
      * requests. Then, rather than duplicate the resolve code here, we
      * will let the pmix_pending_resolve function go ahead and retrieve
-     * it from the GDS */
+     * it from the GDS
+     *
+     * NOTE: if the data returned is NULL, then it has already been
+     * stored (e.g., via a register_nspace call in response to a request
+     * for job-level data). For now, we will retrieve it so it can
+     * be stored for each peer */
     if (PMIX_SUCCESS == caddy->status) {
         /* cycle across all outstanding local requests and collect their
          * unique nspaces so we can store this for each one */
@@ -906,8 +911,11 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
                 peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, rinfo->peerid);
             }
             PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-
-            PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, caddy->data, caddy->ndata);
+            if (NULL == caddy->data) {
+                PMIX_GDS_REGISTER_JOB_INFO(rc, pmix_globals.mypeer, &pbkt);
+            } else {
+                PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, caddy->data, caddy->ndata);
+            }
             /* unpack and store it*/
             kv = PMIX_NEW(pmix_kval_t);
             cnt = 1;

@@ -30,7 +30,7 @@ greek=
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=gitdb5d380
+repo_rev=git3bd2b2d
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in
@@ -44,7 +44,7 @@ tarball_version=
 
 # The date when this release was created
 
-date="Jan 25, 2018"
+date="Feb 03, 2018"
 
 # The shared library version of each of PMIx's public libraries.
 # These versions are maintained in accordance with the "Library
