@@ -594,6 +594,14 @@ static void proc_errors(int fd, short args, void *cbdata)
          * so that we send a consolidated error report
          * back to the HNP
          */
+        if (jdata->num_local_procs == jdata->num_terminated) {
+            /* let the state machine know */
+            if (ORTE_PROC_STATE_FAILED_TO_START == state) {
+                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
+            } else {
+                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_LAUNCH);
+            }
+        }
         goto cleanup;
     }
 
