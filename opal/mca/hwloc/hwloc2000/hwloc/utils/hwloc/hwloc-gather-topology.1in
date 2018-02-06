@@ -1,0 +1,140 @@
+.\" -*- nroff -*-
+.\" Copyright © 2010 Jirka Hladky
+.\" Copyright © 2010-2017 Inria.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-GATHER-TOPOLOGY "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-gather-topology \- Saves the relevant Linux topology files
+and the lstopo textual and XML outputs for later (possibly offline) usage
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-gather-topology [\fIoptions\fR] \fI<path>\fR
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP
+\fB\-\-io\fR
+Also gather I/O related files.
+The gathering may be much slower, and the generated archive may be much bigger.
+\fB\-\-dmi\fR
+Also gather DMI/SMBIOS related files.
+The gathering requires root access, and the dmi-sysfs kernel module should be loaded.
+.TP
+\fB\-h\fR \fB\-\-help\fR
+Display help message and exit
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+\fBhwloc-gather-topology\fR saves all the relevant topology files into an
+archive (\fB<path>.tar.bz2\fR), the lstopo output (\fB<path>.output\fR),
+and the lstopo XML (\fB<path>.xml\fR).
+The utility for example stores the \fB/proc/cpuinfo\fR file and the entire
+\fB/sys/devices/system/node/\fR directory tree.
+.
+.PP
+These files can be used later to explore the machine topology offline.
+Once the tarball has been extracted, it may for instance be given to
+some hwloc command-line utilities through their \fB\-\-input\fR option.
+It is also possible to override the default topology that the hwloc
+library will read by setting the extracted path in the \fBHWLOC_FSROOT\fR
+environment variable.
+.
+.PP
+The archive and the lstopo textual and XML outputs may also be submitted to hwloc developers
+to debug issues remotely.
+.
+.PP
+\fBhwloc-gather-topology\fR is a Linux specific tool, it is not installed
+on other operating systems.
+.
+.PP
+.B NOTE:
+\fBhwloc-gather-topology\fR gathers many hardware details about the platform.
+The outputs and tarball should not be posted on public lists or websites
+unless it is clear that they contain no sensitive information.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+To store topology information to be used later (possibly on
+a different host) please run:
+
+	hwloc-gather-topology /tmp/myhost
+
+It will store all relevant topology files in the \fB/tmp/myhost.tar.bz2\fR
+archive, the lstopo output in the \fB/tmp/myhost.output\fR file,
+and the lstopo XML in the \fB/tmp/myhost.xml\fR file.
+.
+These files can be transferred on another host for later/offline
+analysis and/or as the input to various hwloc utilities.
+.PP
+To use these data with hwloc utilities you have to unpack
+\fBmyhost.tar.bz2\fR archive first:
+
+	tar jxvf /tmp/myhost.tar.bz2
+
+A new directory named \fBmyhost\fR now contains all topology files.
+Then you ask various hwloc utilities to use this topology instead
+of the one of the real machine by passing \fB\-\-input myhost\fR.
+To display the topology just run:
+
+	lstopo --input ./myhost
+
+It is not necessary that the topology is extracted in the current
+directory, absolute or relative paths are also supported:
+
+	lstopo --input /path/to/remote/host/extracted/topology/
+
+To see how hwloc would distribute 8 parallel jobs on the original host:
+
+	hwloc-distrib --input myhost --single 8
+
+To get the corresponding physical indexes in the previous command:
+
+	hwloc-calc --input myhost --po --li --proclist $(hwloc-distrib --input myhost --single 8)
+
+Any program may actually override the default topology with a given
+archived one even if it does not have a \fB\-\-input\fR option.
+The \fBHWLOC_FSROOT\fR environment variable should be used to do so:
+
+	HWLOC_FSROOT=myhost hwloc-calc --po --li --proclist $(hwloc-distrib --single 8)
+
+All these commands will produce the same output as if executed
+directly on the host on which the topology information was
+originally gathered by the \fBhwloc-gather-topology\fR script.
+.
+.\" **************************
+.\"    Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, \fBhwloc-gather-topology\fR will exit with the code 0.
+.
+.PP
+\fBhwloc-gather-topology\fR will return nonzero exit status if any kind of error occurs,
+such as (but not limited to) failure to create the archive or output files.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-calc(1), hwloc-distrib(1)
+.sp

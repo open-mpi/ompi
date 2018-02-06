@@ -1,0 +1,21 @@
+#
+# Copyright © 2015-2016 Intel, Inc.  All rights reserved.
+# Copyright © 2016 Inria.  All rights reserved.
+# See COPYING in top-level directory.
+#
+# #RUNSTATEDIR#/hwloc was specified at configure time.
+# It may be changed by passing configure options such as --runstatedir,
+# --localstatedir or --prefix.
+# It may also be manually changed before installing this file in systemd directories.
+#
+
+[Unit]
+Description=Dump hardware topology and locality information to #RUNSTATEDIR#/hwloc
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=#SBINDIR#/hwloc-dump-hwdata -o #RUNSTATEDIR#/hwloc
+
+[Install]
+WantedBy=multi-user.target

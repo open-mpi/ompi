@@ -1,0 +1,69 @@
+.TH "hwloc_backend" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_backend
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <plugins\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned long \fBflags\fP"
+.br
+.ti -1c
+.RI "int \fBis_thissystem\fP"
+.br
+.ti -1c
+.RI "void * \fBprivate_data\fP"
+.br
+.ti -1c
+.RI "void(* \fBdisable\fP )(struct \fBhwloc_backend\fP *backend)"
+.br
+.ti -1c
+.RI "int(* \fBdiscover\fP )(struct \fBhwloc_backend\fP *backend)"
+.br
+.ti -1c
+.RI "int(* \fBget_pci_busid_cpuset\fP )(struct \fBhwloc_backend\fP *backend, struct hwloc_pcidev_attr_s *busid, \fBhwloc_bitmap_t\fP cpuset)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Discovery backend structure\&. 
+
+A backend is the instantiation of a discovery component\&. When a component gets enabled for a topology, its instantiate() callback creates a backend\&.
+.PP
+\fBhwloc_backend_alloc()\fP initializes all fields to default values that the component may change (except 'component' and 'next') before enabling the backend with \fBhwloc_backend_enable()\fP\&. 
+.SH "Field Documentation"
+.PP 
+.SS "void(* hwloc_backend::disable) (struct \fBhwloc_backend\fP *backend)"
+
+.PP
+Callback for freeing the private_data\&. May be NULL\&. 
+.SS "int(* hwloc_backend::discover) (struct \fBhwloc_backend\fP *backend)"
+
+.PP
+Main discovery callback\&. returns -1 on error, either because it couldn't add its objects ot the existing topology, or because of an actual discovery/gathering failure\&. May be NULL\&. 
+.SS "unsigned long hwloc_backend::flags"
+
+.PP
+Backend flags, currently always 0\&. 
+.SS "int(* hwloc_backend::get_pci_busid_cpuset) (struct \fBhwloc_backend\fP *backend, struct hwloc_pcidev_attr_s *busid, \fBhwloc_bitmap_t\fP cpuset)"
+
+.PP
+Callback used by the PCI backend to retrieve the locality of a PCI object from the OS/cpu backend\&. May be NULL\&. 
+.SS "int hwloc_backend::is_thissystem"
+
+.PP
+Backend-specific 'is_thissystem' property\&. Set to 0 or 1 if the backend should enforce the thissystem flag when it gets enabled\&. Set to -1 if the backend doesn't care (default)\&. 
+.SS "void* hwloc_backend::private_data"
+
+.PP
+Backend private data, or NULL if none\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

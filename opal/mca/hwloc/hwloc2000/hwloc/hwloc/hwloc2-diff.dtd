@@ -1,0 +1,21 @@
+<!--
+  Copyright © 2009      CNRS
+  Copyright © 2009-2017 Inria.  All rights reserved.
+  Copyright © 2009-2011 Université Bordeaux.
+  See COPYING in top-level directory.
+
+  This is the DTD for hwloc v2.x diff XMLs.
+ -->
+
+<!ELEMENT topologydiff (diff)*>
+<!ATTLIST topologydiff refname CDATA "">
+
+<!ELEMENT diff EMPTY>
+<!ATTLIST diff type CDATA #REQUIRED>
+<!ATTLIST diff obj_depth CDATA "-1" >
+<!ATTLIST diff obj_index CDATA "-1" >
+<!ATTLIST diff obj_attr_type CDATA "-1" >
+<!ATTLIST diff obj_attr_index CDATA "-1" >
+<!ATTLIST diff obj_attr_name CDATA "" >
+<!ATTLIST diff obj_attr_newvalue CDATA "" >
+<!ATTLIST diff obj_attr_oldvalue CDATA "" >

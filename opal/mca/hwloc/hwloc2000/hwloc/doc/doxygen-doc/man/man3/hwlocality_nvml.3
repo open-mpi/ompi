@@ -1,0 +1,65 @@
+.TH "hwlocality_nvml" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_nvml
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBhwloc_nvml_get_device_cpuset\fP (\fBhwloc_topology_t\fP topology, nvmlDevice_t device, \fBhwloc_cpuset_t\fP set)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_nvml_get_device_osdev_by_index\fP (\fBhwloc_topology_t\fP topology, unsigned idx)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_nvml_get_device_osdev\fP (\fBhwloc_topology_t\fP topology, nvmlDevice_t device)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This interface offers ways to retrieve topology information about devices managed by the NVIDIA Management Library (NVML)\&. 
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_nvml_get_device_cpuset (\fBhwloc_topology_t\fP topology, nvmlDevice_t device, \fBhwloc_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the CPU set of logical processors that are physically close to NVML device \fCdevice\fP\&. Return the CPU set describing the locality of the NVML device \fCdevice\fP\&.
+.PP
+Topology \fCtopology\fP and device \fCdevice\fP must match the local machine\&. I/O devices detection and the NVML component are not needed in the topology\&.
+.PP
+The function only returns the locality of the device\&. If more information about the device is needed, OS objects should be used instead, see \fBhwloc_nvml_get_device_osdev()\fP and \fBhwloc_nvml_get_device_osdev_by_index()\fP\&.
+.PP
+This function is currently only implemented in a meaningful way for Linux; other systems will simply get a full cpuset\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_nvml_get_device_osdev (\fBhwloc_topology_t\fP topology, nvmlDevice_t device)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc OS device object corresponding to NVML device \fCdevice\fP\&. Return the hwloc OS device object that describes the given NVML device \fCdevice\fP\&. Return NULL if there is none\&.
+.PP
+Topology \fCtopology\fP and device \fCdevice\fP must match the local machine\&. I/O devices detection and the NVML component must be enabled in the topology\&. If not, the locality of the object may still be found using \fBhwloc_nvml_get_device_cpuset()\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+The corresponding hwloc PCI device may be found by looking at the result parent pointer (unless PCI devices are filtered out)\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_nvml_get_device_osdev_by_index (\fBhwloc_topology_t\fP topology, unsigned idx)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc OS device object corresponding to the NVML device whose index is \fCidx\fP\&. Return the OS device object describing the NVML device whose index is \fCidx\fP\&. Returns NULL if there is none\&.
+.PP
+The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection and the NVML component must be enabled in the topology\&.
+.PP
+\fBNote:\fP
+.RS 4
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

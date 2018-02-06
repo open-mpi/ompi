@@ -1,0 +1,49 @@
+.TH "hwlocality_intel_mic" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_intel_mic
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBhwloc_intel_mic_get_device_cpuset\fP (\fBhwloc_topology_t\fP topology, int idx, \fBhwloc_cpuset_t\fP set)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_intel_mic_get_device_osdev_by_index\fP (\fBhwloc_topology_t\fP topology, unsigned idx)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This interface offers ways to retrieve topology information about Intel Xeon Phi (MIC) devices\&. 
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_intel_mic_get_device_cpuset (\fBhwloc_topology_t\fP topology, int idx, \fBhwloc_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the CPU set of logical processors that are physically close to MIC device whose index is \fCidx\fP\&. Return the CPU set describing the locality of the MIC device whose index is \fCidx\fP\&.
+.PP
+Topology \fCtopology\fP and device index \fCidx\fP must match the local machine\&. I/O devices detection is not needed in the topology\&.
+.PP
+The function only returns the locality of the device\&. If more information about the device is needed, OS objects should be used instead, see \fBhwloc_intel_mic_get_device_osdev_by_index()\fP\&.
+.PP
+This function is currently only implemented in a meaningful way for Linux; other systems will simply get a full cpuset\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_intel_mic_get_device_osdev_by_index (\fBhwloc_topology_t\fP topology, unsigned idx)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc OS device object corresponding to the MIC device for the given index\&. Return the OS device object describing the MIC device whose index is \fCidx\fP\&. Return NULL if there is none\&.
+.PP
+The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection must be enabled in the topology\&.
+.PP
+\fBNote:\fP
+.RS 4
+The corresponding PCI device object can be obtained by looking at the OS device parent object\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

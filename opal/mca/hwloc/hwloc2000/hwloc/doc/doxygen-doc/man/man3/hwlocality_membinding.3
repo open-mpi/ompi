@@ -1,0 +1,322 @@
+.TH "hwlocality_membinding" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_membinding
+.SH SYNOPSIS
+.br
+.PP
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_membind_policy_t\fP { \fBHWLOC_MEMBIND_DEFAULT\fP, \fBHWLOC_MEMBIND_FIRSTTOUCH\fP, \fBHWLOC_MEMBIND_BIND\fP, \fBHWLOC_MEMBIND_INTERLEAVE\fP, \fBHWLOC_MEMBIND_NEXTTOUCH\fP, \fBHWLOC_MEMBIND_MIXED\fP }"
+.br
+.ti -1c
+.RI "enum \fBhwloc_membind_flags_t\fP { \fBHWLOC_MEMBIND_PROCESS\fP, \fBHWLOC_MEMBIND_THREAD\fP, \fBHWLOC_MEMBIND_STRICT\fP, \fBHWLOC_MEMBIND_MIGRATE\fP, \fBHWLOC_MEMBIND_NOCPUBIND\fP, \fBHWLOC_MEMBIND_BYNODESET\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_set_membind\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_get_membind\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP *policy, int flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_set_proc_membind\fP (\fBhwloc_topology_t\fP topology, hwloc_pid_t pid, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_get_proc_membind\fP (\fBhwloc_topology_t\fP topology, hwloc_pid_t pid, \fBhwloc_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP *policy, int flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_set_area_membind\fP (\fBhwloc_topology_t\fP topology, const void *addr, size_t len, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_get_area_membind\fP (\fBhwloc_topology_t\fP topology, const void *addr, size_t len, \fBhwloc_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP *policy, int flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_get_area_memlocation\fP (\fBhwloc_topology_t\fP topology, const void *addr, size_t len, \fBhwloc_bitmap_t\fP set, int flags)"
+.br
+.ti -1c
+.RI "void * \fBhwloc_alloc\fP (\fBhwloc_topology_t\fP topology, size_t len)"
+.br
+.ti -1c
+.RI "void * \fBhwloc_alloc_membind\fP (\fBhwloc_topology_t\fP topology, size_t len, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+.br
+.ti -1c
+.RI "static void * \fBhwloc_alloc_membind_policy\fP (\fBhwloc_topology_t\fP topology, size_t len, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_free\fP (\fBhwloc_topology_t\fP topology, void *addr, size_t len)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Memory binding can be done three ways:
+.PP
+.IP "\(bu" 2
+explicit memory allocation thanks to \fBhwloc_alloc_membind()\fP and friends: the binding will have effect on the memory allocated by these functions\&.
+.IP "\(bu" 2
+implicit memory binding through binding policy: \fBhwloc_set_membind()\fP and friends only define the current policy of the process, which will be applied to the subsequent calls to malloc() and friends\&.
+.IP "\(bu" 2
+migration of existing memory ranges, thanks to \fBhwloc_set_area_membind()\fP and friends, which move already-allocated data\&.
+.PP
+.PP
+Not all operating systems support all three ways\&. \fBhwloc_topology_get_support()\fP may be used to query about the actual memory binding support in the currently used operating system\&.
+.PP
+When the requested binding operation is not available and the \fBHWLOC_MEMBIND_STRICT\fP flag was passed, the function returns -1\&. \fCerrno\fP will be set to \fCENOSYS\fP when the system does support the specified action or policy (e\&.g\&., some systems only allow binding memory on a per-thread basis, whereas other systems only allow binding memory for all threads in a process)\&. \fCerrno\fP will be set to EXDEV when the requested set can not be enforced (e\&.g\&., some systems only allow binding memory to a single NUMA node)\&.
+.PP
+If \fBHWLOC_MEMBIND_STRICT\fP was not passed, the function may fail as well, or the operating system may use a slightly different operation (with side-effects, smaller binding set, etc\&.) when the requested operation is not exactly supported\&.
+.PP
+The most portable form that should be preferred over the others whenever possible is as follows\&. It allocates some memory hopefully bound to the specified set\&. To do so, hwloc will possibly have to change the current memory binding policy in order to actually get the memory bound, if the OS does not provide any other way to simply allocate bound memory without changing the policy for all allocations\&. That is the difference with \fBhwloc_alloc_membind()\fP, which will never change the current memory binding policy\&.
+.PP
+.PP
+.nf
+hwloc_alloc_membind_policy(topology, size, set,
+                           HWLOC_MEMBIND_BIND, 0);
+.fi
+.PP
+.PP
+Each hwloc memory binding function takes a bitmap argument that is a CPU set by default, or a NUMA memory node set if the flag \fBHWLOC_MEMBIND_BYNODESET\fP is specified\&. See \fBObject Sets (hwloc_cpuset_t and hwloc_nodeset_t)\fP and \fBThe bitmap API\fP for a discussion of CPU sets and NUMA memory node sets\&. It is also possible to convert between CPU set and node set using \fBhwloc_cpuset_to_nodeset()\fP or \fBhwloc_cpuset_from_nodeset()\fP\&.
+.PP
+Memory binding by CPU set cannot work for CPU-less NUMA memory nodes\&. Binding by nodeset should therefore be preferred whenever possible\&.
+.PP
+\fBSee also:\fP
+.RS 4
+Some example codes are available under doc/examples/ in the source tree\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+On some operating systems, memory binding affects the CPU binding; see \fBHWLOC_MEMBIND_NOCPUBIND\fP 
+.RE
+.PP
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_membind_flags_t\fP"
+
+.PP
+Memory binding flags\&. These flags can be used to refine the binding policy\&. All flags can be logically OR'ed together with the exception of \fBHWLOC_MEMBIND_PROCESS\fP and \fBHWLOC_MEMBIND_THREAD\fP; these two flags are mutually exclusive\&.
+.PP
+Not all systems support all kinds of binding\&. \fBhwloc_topology_get_support()\fP may be used to query about the actual memory binding support in the currently used operating system\&. See the 'Detailed Description' section of \fBMemory binding\fP for a description of errors that can occur\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_MEMBIND_PROCESS \fP\fP
+Set policy for all threads of the specified (possibly multithreaded) process\&. This flag is mutually exclusive with \fBHWLOC_MEMBIND_THREAD\fP\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_THREAD \fP\fP
+Set policy for a specific thread of the current process\&. This flag is mutually exclusive with \fBHWLOC_MEMBIND_PROCESS\fP\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_STRICT \fP\fP
+Request strict binding from the OS\&. The function will fail if the binding can not be guaranteed / completely enforced\&.
+.PP
+This flag has slightly different meanings depending on which function it is used with\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_MIGRATE \fP\fP
+Migrate existing allocated memory\&. If the memory cannot be migrated and the \fBHWLOC_MEMBIND_STRICT\fP flag is passed, an error will be returned\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_NOCPUBIND \fP\fP
+Avoid any effect on CPU binding\&. On some operating systems, some underlying memory binding functions also bind the application to the corresponding CPU(s)\&. Using this flag will cause hwloc to avoid using OS functions that could potentially affect CPU bindings\&. Note, however, that using NOCPUBIND may reduce hwloc's overall memory binding support\&. Specifically: some of hwloc's memory binding functions may fail with errno set to ENOSYS when used with NOCPUBIND\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_BYNODESET \fP\fP
+Consider the bitmap argument as a nodeset\&. The bitmap argument is considered a nodeset if this flag is given, or a cpuset otherwise by default\&.
+.PP
+Memory binding by CPU set cannot work for CPU-less NUMA memory nodes\&. Binding by nodeset should therefore be preferred whenever possible\&. 
+.SS "enum \fBhwloc_membind_policy_t\fP"
+
+.PP
+Memory binding policy\&. These constants can be used to choose the binding policy\&. Only one policy can be used at a time (i\&.e\&., the values cannot be OR'ed together)\&.
+.PP
+Not all systems support all kinds of binding\&. \fBhwloc_topology_get_support()\fP may be used to query about the actual memory binding policy support in the currently used operating system\&. See the 'Detailed Description' section of \fBMemory binding\fP for a description of errors that can occur\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_MEMBIND_DEFAULT \fP\fP
+Reset the memory allocation policy to the system default\&. Depending on the operating system, this may correspond to \fBHWLOC_MEMBIND_FIRSTTOUCH\fP (Linux), or \fBHWLOC_MEMBIND_BIND\fP (AIX, HP-UX, Solaris, Windows)\&. This policy is never returned by get membind functions\&. The nodeset argument is ignored\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_FIRSTTOUCH \fP\fP
+Allocate each memory page individually on the local NUMA node of the thread that touches it\&. The given nodeset should usually be \fBhwloc_topology_get_topology_nodeset()\fP so that the touching thread may run and allocate on any node in the system\&.
+.PP
+On AIX, if the nodeset is smaller, pages are allocated locally (if the local node is in the nodeset) or from a random non-local node (otherwise)\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_BIND \fP\fP
+Allocate memory on the specified nodes\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_INTERLEAVE \fP\fP
+Allocate memory on the given nodes in an interleaved / round-robin manner\&. The precise layout of the memory across multiple NUMA nodes is OS/system specific\&. Interleaving can be useful when threads distributed across the specified NUMA nodes will all be accessing the whole memory range concurrently, since the interleave will then balance the memory references\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_NEXTTOUCH \fP\fP
+For each page bound with this policy, by next time it is touched (and next time only), it is moved from its current location to the local NUMA node of the thread where the memory reference occurred (if it needs to be moved at all)\&. 
+.TP
+\fB\fIHWLOC_MEMBIND_MIXED \fP\fP
+Returned by get_membind() functions when multiple threads or parts of a memory area have differing memory binding policies\&. Also returned when binding is unknown because binding hooks are empty when the topology is loaded from XML without HWLOC_THISSYSTEM=1, etc\&. 
+.SH "Function Documentation"
+.PP 
+.SS "void* hwloc_alloc (\fBhwloc_topology_t\fP topology, size_t len)"
+
+.PP
+Allocate some memory\&. This is equivalent to malloc(), except that it tries to allocate page-aligned memory from the OS\&.
+.PP
+\fBNote:\fP
+.RS 4
+The allocated memory should be freed with \fBhwloc_free()\fP\&. 
+.RE
+.PP
+
+.SS "void* hwloc_alloc_membind (\fBhwloc_topology_t\fP topology, size_t len, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+
+.PP
+Allocate some memory on NUMA memory nodes specified by \fCset\fP\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+NULL with errno set to ENOSYS if the action is not supported and \fBHWLOC_MEMBIND_STRICT\fP is given 
+.PP
+NULL with errno set to EXDEV if the binding cannot be enforced and \fBHWLOC_MEMBIND_STRICT\fP is given 
+.PP
+NULL with errno set to ENOMEM if the memory allocation failed even before trying to bind\&.
+.RE
+.PP
+If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+\fBNote:\fP
+.RS 4
+The allocated memory should be freed with \fBhwloc_free()\fP\&. 
+.RE
+.PP
+
+.SS "static void* hwloc_alloc_membind_policy (\fBhwloc_topology_t\fP topology, size_t len, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Allocate some memory on NUMA memory nodes specified by \fCset\fP\&. This is similar to hwloc_alloc_membind_nodeset() except that it is allowed to change the current memory binding policy, thus providing more binding support, at the expense of changing the current state\&.
+.PP
+If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&. 
+.SS "int hwloc_free (\fBhwloc_topology_t\fP topology, void * addr, size_t len)"
+
+.PP
+Free memory that was previously allocated by \fBhwloc_alloc()\fP or \fBhwloc_alloc_membind()\fP\&. 
+.SS "int hwloc_get_area_membind (\fBhwloc_topology_t\fP topology, const void * addr, size_t len, \fBhwloc_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP * policy, int flags)"
+
+.PP
+Query the CPUs near the physical NUMA node(s) and binding policy of the memory identified by (\fCaddr\fP, \fClen\fP )\&. This function has two output parameters: \fCset\fP and \fCpolicy\fP\&. The values returned in these parameters depend on both the \fCflags\fP passed in and the memory binding policies and nodesets of the pages in the address range\&.
+.PP
+If \fBHWLOC_MEMBIND_STRICT\fP is specified, the target pages are first checked to see if they all have the same memory binding policy and nodeset\&. If they do not, -1 is returned and errno is set to EXDEV\&. If they are identical across all pages, the set and policy are returned in \fCset\fP and \fCpolicy\fP, respectively\&.
+.PP
+If \fBHWLOC_MEMBIND_STRICT\fP is not specified, the union of all NUMA node(s) containing pages in the address range is calculated\&. If all pages in the target have the same policy, it is returned in \fCpolicy\fP\&. Otherwise, \fCpolicy\fP is set to \fBHWLOC_MEMBIND_MIXED\fP\&.
+.PP
+If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+If any other flags are specified, -1 is returned and errno is set to EINVAL\&.
+.PP
+If \fClen\fP is 0, -1 is returned and errno is set to EINVAL\&. 
+.SS "int hwloc_get_area_memlocation (\fBhwloc_topology_t\fP topology, const void * addr, size_t len, \fBhwloc_bitmap_t\fP set, int flags)"
+
+.PP
+Get the NUMA nodes where memory identified by (\fCaddr\fP, \fClen\fP ) is physically allocated\&. Fills \fCset\fP according to the NUMA nodes where the memory area pages are physically allocated\&. If no page is actually allocated yet, \fCset\fP may be empty\&.
+.PP
+If pages spread to multiple nodes, it is not specified whether they spread equitably, or whether most of them are on a single node, etc\&.
+.PP
+The operating system may move memory pages from one processor to another at any time according to their binding, so this function may return something that is already outdated\&.
+.PP
+If \fBHWLOC_MEMBIND_BYNODESET\fP is specified in \fCflags\fP, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+If \fClen\fP is 0, \fCset\fP is emptied\&. 
+.SS "int hwloc_get_membind (\fBhwloc_topology_t\fP topology, \fBhwloc_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP * policy, int flags)"
+
+.PP
+Query the default memory binding policy and physical locality of the current process or thread\&. This function has two output parameters: \fCset\fP and \fCpolicy\fP\&. The values returned in these parameters depend on both the \fCflags\fP passed in and the current memory binding policies and nodesets in the queried target\&.
+.PP
+Passing the \fBHWLOC_MEMBIND_PROCESS\fP flag specifies that the query target is the current policies and nodesets for all the threads in the current process\&. Passing \fBHWLOC_MEMBIND_THREAD\fP specifies that the query target is the current policy and nodeset for only the thread invoking this function\&.
+.PP
+If neither of these flags are passed (which is the most portable method), the process is assumed to be single threaded\&. This allows hwloc to use either process-based OS functions or thread-based OS functions, depending on which are available\&.
+.PP
+\fBHWLOC_MEMBIND_STRICT\fP is only meaningful when \fBHWLOC_MEMBIND_PROCESS\fP is also specified\&. In this case, hwloc will check the default memory policies and nodesets for all threads in the process\&. If they are not identical, -1 is returned and errno is set to EXDEV\&. If they are identical, the values are returned in \fCset\fP and \fCpolicy\fP\&.
+.PP
+Otherwise, if \fBHWLOC_MEMBIND_PROCESS\fP is specified (and \fBHWLOC_MEMBIND_STRICT\fP is \fInot\fP specified), the default set from each thread is logically OR'ed together\&. If all threads' default policies are the same, \fCpolicy\fP is set to that policy\&. If they are different, \fCpolicy\fP is set to \fBHWLOC_MEMBIND_MIXED\fP\&.
+.PP
+In the \fBHWLOC_MEMBIND_THREAD\fP case (or when neither \fBHWLOC_MEMBIND_PROCESS\fP or \fBHWLOC_MEMBIND_THREAD\fP is specified), there is only one set and policy; they are returned in \fCset\fP and \fCpolicy\fP, respectively\&.
+.PP
+If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+If any other flags are specified, -1 is returned and errno is set to EINVAL\&. 
+.SS "int hwloc_get_proc_membind (\fBhwloc_topology_t\fP topology, hwloc_pid_t pid, \fBhwloc_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP * policy, int flags)"
+
+.PP
+Query the default memory binding policy and physical locality of the specified process\&. This function has two output parameters: \fCset\fP and \fCpolicy\fP\&. The values returned in these parameters depend on both the \fCflags\fP passed in and the current memory binding policies and nodesets in the queried target\&.
+.PP
+Passing the \fBHWLOC_MEMBIND_PROCESS\fP flag specifies that the query target is the current policies and nodesets for all the threads in the specified process\&. If \fBHWLOC_MEMBIND_PROCESS\fP is not specified (which is the most portable method), the process is assumed to be single threaded\&. This allows hwloc to use either process-based OS functions or thread-based OS functions, depending on which are available\&.
+.PP
+Note that it does not make sense to pass \fBHWLOC_MEMBIND_THREAD\fP to this function\&.
+.PP
+If \fBHWLOC_MEMBIND_STRICT\fP is specified, hwloc will check the default memory policies and nodesets for all threads in the specified process\&. If they are not identical, -1 is returned and errno is set to EXDEV\&. If they are identical, the values are returned in \fCset\fP and \fCpolicy\fP\&.
+.PP
+Otherwise, \fCset\fP is set to the logical OR of all threads' default set\&. If all threads' default policies are the same, \fCpolicy\fP is set to that policy\&. If they are different, \fCpolicy\fP is set to \fBHWLOC_MEMBIND_MIXED\fP\&.
+.PP
+If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+If any other flags are specified, -1 is returned and errno is set to EINVAL\&.
+.PP
+\fBNote:\fP
+.RS 4
+\fChwloc_pid_t\fP is \fCpid_t\fP on Unix platforms, and \fCHANDLE\fP on native Windows platforms\&. 
+.RE
+.PP
+
+.SS "int hwloc_set_area_membind (\fBhwloc_topology_t\fP topology, const void * addr, size_t len, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+
+.PP
+Bind the already-allocated memory identified by (addr, len) to the NUMA node(s) specified by \fCset\fP\&. If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+\fBReturns:\fP
+.RS 4
+0 if \fClen\fP is 0\&. 
+.PP
+-1 with errno set to ENOSYS if the action is not supported 
+.PP
+-1 with errno set to EXDEV if the binding cannot be enforced 
+.RE
+.PP
+
+.SS "int hwloc_set_membind (\fBhwloc_topology_t\fP topology, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+
+.PP
+Set the default memory binding policy of the current process or thread to prefer the NUMA node(s) specified by \fCset\fP\&. If neither \fBHWLOC_MEMBIND_PROCESS\fP nor \fBHWLOC_MEMBIND_THREAD\fP is specified, the current process is assumed to be single-threaded\&. This is the most portable form as it permits hwloc to use either process-based OS functions or thread-based OS functions, depending on which are available\&.
+.PP
+If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+\fBReturns:\fP
+.RS 4
+-1 with errno set to ENOSYS if the action is not supported 
+.PP
+-1 with errno set to EXDEV if the binding cannot be enforced 
+.RE
+.PP
+
+.SS "int hwloc_set_proc_membind (\fBhwloc_topology_t\fP topology, hwloc_pid_t pid, \fBhwloc_const_bitmap_t\fP set, \fBhwloc_membind_policy_t\fP policy, int flags)"
+
+.PP
+Set the default memory binding policy of the specified process to prefer the NUMA node(s) specified by \fCset\fP\&. If \fBHWLOC_MEMBIND_BYNODESET\fP is specified, set is considered a nodeset\&. Otherwise it's a cpuset\&.
+.PP
+\fBReturns:\fP
+.RS 4
+-1 with errno set to ENOSYS if the action is not supported 
+.PP
+-1 with errno set to EXDEV if the binding cannot be enforced
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+\fChwloc_pid_t\fP is \fCpid_t\fP on Unix platforms, and \fCHANDLE\fP on native Windows platforms\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

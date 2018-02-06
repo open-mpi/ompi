@@ -1,0 +1,174 @@
+.TH "hwlocality_xmlexport" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_xmlexport
+.SH SYNOPSIS
+.br
+.PP
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_topology_export_xml_flags_e\fP { \fBHWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_topology_export_xml\fP (\fBhwloc_topology_t\fP topology, const char *xmlpath, unsigned long flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_export_xmlbuffer\fP (\fBhwloc_topology_t\fP topology, char **xmlbuffer, int *buflen, unsigned long flags)"
+.br
+.ti -1c
+.RI "void \fBhwloc_free_xmlbuffer\fP (\fBhwloc_topology_t\fP topology, char *xmlbuffer)"
+.br
+.ti -1c
+.RI "void \fBhwloc_topology_set_userdata_export_callback\fP (\fBhwloc_topology_t\fP topology, void(*export_cb)(void *reserved, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj))"
+.br
+.ti -1c
+.RI "int \fBhwloc_export_obj_userdata\fP (void *reserved, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char *name, const void *buffer, size_t length)"
+.br
+.ti -1c
+.RI "int \fBhwloc_export_obj_userdata_base64\fP (void *reserved, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char *name, const void *buffer, size_t length)"
+.br
+.ti -1c
+.RI "void \fBhwloc_topology_set_userdata_import_callback\fP (\fBhwloc_topology_t\fP topology, void(*import_cb)(\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char *name, const void *buffer, size_t length))"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_topology_export_xml_flags_e\fP"
+
+.PP
+Flags for exporting XML topologies\&. Flags to be given as a OR'ed set to \fBhwloc_topology_export_xml()\fP\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1 \fP\fP
+Export XML that is loadable by hwloc v1\&.x\&. However, the export may miss some details about the topology\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_export_obj_userdata (void * reserved, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char * name, const void * buffer, size_t length)"
+
+.PP
+Export some object userdata to XML\&. This function may only be called from within the export() callback passed to \fBhwloc_topology_set_userdata_export_callback()\fP\&. It may be invoked one of multiple times to export some userdata to XML\&. The \fCbuffer\fP content of length \fClength\fP is stored with optional name \fCname\fP\&.
+.PP
+When importing this XML file, the import() callback (if set) will be called exactly as many times as \fBhwloc_export_obj_userdata()\fP was called during export()\&. It will receive the corresponding \fCname\fP, \fCbuffer\fP and \fClength\fP arguments\&.
+.PP
+\fCreserved\fP, \fCtopology\fP and \fCobj\fP must be the first three parameters that were given to the export callback\&.
+.PP
+Only printable characters may be exported to XML string attributes\&. If a non-printable character is passed in \fCname\fP or \fCbuffer\fP, the function returns -1 with errno set to EINVAL\&.
+.PP
+If exporting binary data, the application should first encode into printable characters only (or use \fBhwloc_export_obj_userdata_base64()\fP)\&. It should also take care of portability issues if the export may be reimported on a different architecture\&. 
+.SS "int hwloc_export_obj_userdata_base64 (void * reserved, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char * name, const void * buffer, size_t length)"
+
+.PP
+Encode and export some object userdata to XML\&. This function is similar to \fBhwloc_export_obj_userdata()\fP but it encodes the input buffer into printable characters before exporting\&. On import, decoding is automatically performed before the data is given to the import() callback if any\&.
+.PP
+This function may only be called from within the export() callback passed to \fBhwloc_topology_set_userdata_export_callback()\fP\&.
+.PP
+The function does not take care of portability issues if the export may be reimported on a different architecture\&. 
+.SS "void hwloc_free_xmlbuffer (\fBhwloc_topology_t\fP topology, char * xmlbuffer)"
+
+.PP
+Free a buffer allocated by \fBhwloc_topology_export_xmlbuffer()\fP 
+.SS "int hwloc_topology_export_xml (\fBhwloc_topology_t\fP topology, const char * xmlpath, unsigned long flags)"
+
+.PP
+Export the topology into an XML file\&. This file may be loaded later through \fBhwloc_topology_set_xml()\fP\&.
+.PP
+By default, the latest export format is used, which means older hwloc releases (e\&.g\&. v1\&.x) will not be able to import it\&. Exporting to v1\&.x specific XML format is possible using flag \fBHWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1\fP but it may miss some details about the topology\&. If there is any chance that the exported file may ever be imported back by a process using hwloc 1\&.x, one should consider detecting it at runtime and using the corresponding export format\&.
+.PP
+\fCflags\fP is a OR'ed set of \fBhwloc_topology_export_xml_flags_e\fP\&.
+.PP
+\fBReturns:\fP
+.RS 4
+-1 if a failure occured\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+See also \fBhwloc_topology_set_userdata_export_callback()\fP for exporting application-specific object userdata\&.
+.PP
+The topology-specific userdata pointer is ignored when exporting to XML\&.
+.PP
+Only printable characters may be exported to XML string attributes\&. Any other character, especially any non-ASCII character, will be silently dropped\&.
+.PP
+If \fCname\fP is '-', the XML output is sent to the standard output\&. 
+.RE
+.PP
+
+.SS "int hwloc_topology_export_xmlbuffer (\fBhwloc_topology_t\fP topology, char ** xmlbuffer, int * buflen, unsigned long flags)"
+
+.PP
+Export the topology into a newly-allocated XML memory buffer\&. \fCxmlbuffer\fP is allocated by the callee and should be freed with \fBhwloc_free_xmlbuffer()\fP later in the caller\&.
+.PP
+This memory buffer may be loaded later through \fBhwloc_topology_set_xmlbuffer()\fP\&.
+.PP
+By default, the latest export format is used, which means older hwloc releases (e\&.g\&. v1\&.x) will not be able to import it\&. Exporting to v1\&.x specific XML format is possible using flag \fBHWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1\fP but it may miss some details about the topology\&. If there is any chance that the exported buffer may ever be imported back by a process using hwloc 1\&.x, one should consider detecting it at runtime and using the corresponding export format\&.
+.PP
+\fCflags\fP is a OR'ed set of \fBhwloc_topology_export_xml_flags_e\fP\&.
+.PP
+\fBReturns:\fP
+.RS 4
+-1 if a failure occured\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+See also \fBhwloc_topology_set_userdata_export_callback()\fP for exporting application-specific object userdata\&.
+.PP
+The topology-specific userdata pointer is ignored when exporting to XML\&.
+.PP
+Only printable characters may be exported to XML string attributes\&. Any other character, especially any non-ASCII character, will be silently dropped\&. 
+.RE
+.PP
+
+.SS "void hwloc_topology_set_userdata_export_callback (\fBhwloc_topology_t\fP topology, void(*)(void *reserved, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj) export_cb)"
+
+.PP
+Set the application-specific callback for exporting object userdata\&. The object userdata pointer is not exported to XML by default because hwloc does not know what it contains\&.
+.PP
+This function lets applications set \fCexport_cb\fP to a callback function that converts this opaque userdata into an exportable string\&.
+.PP
+\fCexport_cb\fP is invoked during XML export for each object whose \fCuserdata\fP pointer is not \fCNULL\fP\&. The callback should use \fBhwloc_export_obj_userdata()\fP or \fBhwloc_export_obj_userdata_base64()\fP to actually export something to XML (possibly multiple times per object)\&.
+.PP
+\fCexport_cb\fP may be set to \fCNULL\fP if userdata should not be exported to XML\&.
+.PP
+\fBNote:\fP
+.RS 4
+The topology-specific userdata pointer is ignored when exporting to XML\&. 
+.RE
+.PP
+
+.SS "void hwloc_topology_set_userdata_import_callback (\fBhwloc_topology_t\fP topology, void(*)(\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char *name, const void *buffer, size_t length) import_cb)"
+
+.PP
+Set the application-specific callback for importing userdata\&. On XML import, userdata is ignored by default because hwloc does not know how to store it in memory\&.
+.PP
+This function lets applications set \fCimport_cb\fP to a callback function that will get the XML-stored userdata and store it in the object as expected by the application\&.
+.PP
+\fCimport_cb\fP is called during \fBhwloc_topology_load()\fP as many times as \fBhwloc_export_obj_userdata()\fP was called during export\&. The topology is not entirely setup yet\&. Object attributes are ready to consult, but links between objects are not\&.
+.PP
+\fCimport_cb\fP may be \fCNULL\fP if userdata should be ignored during import\&.
+.PP
+\fBNote:\fP
+.RS 4
+\fCbuffer\fP contains \fClength\fP characters followed by a null byte ('\\0')\&.
+.PP
+This function should be called before \fBhwloc_topology_load()\fP\&.
+.PP
+The topology-specific userdata pointer is ignored when importing from XML\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

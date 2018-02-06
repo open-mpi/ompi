@@ -1,0 +1,161 @@
+#!/bin/sh
+#-*-sh-*-
+
+#
+# Copyright © 2013 Inria.  All rights reserved.
+# See COPYING in top-level directory.
+#
+
+HWLOC_top_builddir="@HWLOC_top_builddir@"
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+bindir="@bindir@"
+# this will be changed into $bindir/... during make install
+localhwlocdiff="$HWLOC_top_builddir/utils/hwloc/hwloc-diff"
+localhwlocpatch="$HWLOC_top_builddir/utils/hwloc/hwloc-patch"
+
+verbose=0
+reverse=0
+
+error()
+{
+	echo $@ 2>&1
+}
+
+usage()
+{
+	echo "$0 [options] <inputdir> <outputdir>"
+	echo "  Compress topologies from <inputdir> into <outputdir>"
+	echo "Options:"
+	echo "  -R --reverse        Uncompress instead of compressing"
+	echo "  -v --verbose        Display verbose messages"
+}
+
+while test $# -gt 2 ; do
+	case "$1" in
+	-R|--reverse)
+		reverse=1
+		;;
+	-v|--verbose)
+		verbose=1
+		;;
+	-h)
+		usage
+		exit 0
+		;;
+	-*)
+		error "Unrecognized option: $1"
+		usage
+		exit 1
+		;;
+	esac
+	shift
+done
+
+if test $# -lt 2 ; then
+    usage
+    exit 1
+fi
+
+inputdir="$1"
+test x`echo $inputdir | sed -e 's/^\///'` = x$inputdir && inputdir="$PWD/$inputdir"
+outputdir="$2"
+test x`echo $outputdir | sed -e 's/^\///'` = x$outputdir && outputdir="$PWD/$outputdir"
+
+if ! cd "$outputdir" ; then
+    echo "Cannot enter output directory $outputdir"
+    exit 1
+fi
+
+if test x$reverse = x0; then
+    # compress
+
+    alreadycompressed=0
+    alreadynoncompressed=0
+    newlycompressed=0
+    newlynoncompressed=0
+
+    inputs=`ls -1 "$inputdir"`
+    for input in $inputs ; do
+	name=`echo $input | sed -e 's/.xml$//'`
+
+	if test "x${name}.xml" != "x$input"; then
+	    test x$verbose = x1 && echo "Ignoring non-XML file $input"
+	    continue
+	fi
+	if test -f "$outputdir/${name}.xml" ; then
+	    test x$verbose = x1 && echo "$name already non-compressed, skipping"
+	    alreadynoncompressed=`expr $alreadynoncompressed + 1`
+	    continue
+	fi
+	if test -f  "$outputdir/${name}.diff.xml" ; then
+	    test x$verbose = x1 && echo "$name already compressed, skipping"
+	    alreadycompressed=`expr $alreadycompressed + 1`
+	    continue
+	fi
+
+	found=
+	outputs=`ls -1 "$outputdir"`
+	for output in $outputs ; do
+	    outputname=`echo $output | sed -e 's/.xml$//' | sed -e 's/.diff$//'`
+	    test -f "${outputdir}/${outputname}.diff.xml" && continue
+
+	    if $localhwlocdiff "$outputdir/${outputname}.xml" "$inputdir/${name}.xml" "$outputdir/${name}.diff.xml" >/dev/null 2>/dev/null; then
+		echo "Compressed $name on top of $outputname"
+		newlycompressed=`expr $newlycompressed + 1`
+		found=1
+		break
+	    fi
+	done
+
+	if test x$found = x ; then
+	    echo "Could not compress $name, keeping non-compressed"
+	    newlynoncompressed=`expr $newlynoncompressed + 1`
+	    cp "$inputdir/${name}.xml" "$outputdir/${name}.xml"
+	fi
+    done
+
+    echo "Compressed $newlycompressed new topologies ($alreadycompressed were already compressed)"
+    echo "Kept $newlynoncompressed new topologies non-compressed ($alreadynoncompressed were already non-compressed)"
+
+else
+    # uncompress
+
+    newlyuncompressed=0
+    newlynoncompressed=0
+    alreadyuncompressed=0
+
+    inputs=`ls -1 "$inputdir"`
+    for input in $inputs ; do
+
+	name=`echo $input | sed -e 's/.xml$//' | sed -e 's/.diff$//'`
+
+	if test "x${name}.xml" != "x$input" -a "x${name}.diff.xml" != "x$input"; then
+	    test x$verbose = x1 && echo "Ignoring non-XML and non-diff-XML file $input"
+	    continue
+	fi
+	if test -f "$outputdir/${name}.xml" ; then
+	    test x$verbose = x1 && echo "$name already uncompressed, skipping"
+	    alreadyuncompressed=`expr $alreadyuncompressed + 1`
+	    continue
+	fi
+
+	if test "x${name}.xml" = "x$input"; then
+	    # non-compressed
+	    cp "$inputdir/${name}.xml" "$outputdir/${name}.xml"
+	    echo "Copied $name, wasn't compressed"
+	    newlynoncompressed=`expr $newlynoncompressed + 1`
+	else
+	    # compressed
+	    if (cd $outputdir && $localhwlocpatch refname "$inputdir/${name}.diff.xml" "${name}.xml"); then
+		echo "Uncompressed $name"
+		newlyuncompressed=`expr $newlyuncompressed + 1`
+	    else
+		echo "Failed to uncompress $inputdir/${name}.diff.xml" 1>&2
+	    fi
+	fi
+    done
+
+    echo "Uncompressed $newlyuncompressed new topologies, copied $newlynoncompressed non-compressed topologies ($alreadyuncompressed were already uncompressed)"
+
+fi

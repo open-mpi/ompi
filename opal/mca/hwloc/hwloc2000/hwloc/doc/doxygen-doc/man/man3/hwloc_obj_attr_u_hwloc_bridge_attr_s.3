@@ -1,0 +1,82 @@
+.TH "hwloc_obj_attr_u::hwloc_bridge_attr_s" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_obj_attr_u::hwloc_bridge_attr_s
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "union {"
+.br
+.ti -1c
+.RI "   struct \fBhwloc_pcidev_attr_s\fP \fBpci\fP"
+.br
+.ti -1c
+.RI "} \fBupstream\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_obj_bridge_type_t\fP \fBupstream_type\fP"
+.br
+.ti -1c
+.RI "union {"
+.br
+.ti -1c
+.RI "   struct {"
+.br
+.ti -1c
+.RI "      unsigned short \fBdomain\fP"
+.br
+.ti -1c
+.RI "      unsigned char \fBsecondary_bus\fP"
+.br
+.ti -1c
+.RI "      unsigned char \fBsubordinate_bus\fP"
+.br
+.ti -1c
+.RI "   } \fBpci\fP"
+.br
+.ti -1c
+.RI "} \fBdownstream\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_obj_bridge_type_t\fP \fBdownstream_type\fP"
+.br
+.ti -1c
+.RI "unsigned \fBdepth\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Bridge specific Object Attribues\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned hwloc_obj_attr_u::hwloc_bridge_attr_s::depth"
+
+.SS "unsigned short hwloc_obj_attr_u::hwloc_bridge_attr_s::domain"
+
+.SS "union { \&.\&.\&. }   hwloc_obj_attr_u::hwloc_bridge_attr_s::downstream"
+
+.SS "\fBhwloc_obj_bridge_type_t\fP hwloc_obj_attr_u::hwloc_bridge_attr_s::downstream_type"
+
+.SS "struct { \&.\&.\&. }   hwloc_obj_attr_u::hwloc_bridge_attr_s::pci"
+
+.SS "struct \fBhwloc_pcidev_attr_s\fP hwloc_obj_attr_u::hwloc_bridge_attr_s::pci"
+
+.SS "unsigned char hwloc_obj_attr_u::hwloc_bridge_attr_s::secondary_bus"
+
+.SS "unsigned char hwloc_obj_attr_u::hwloc_bridge_attr_s::subordinate_bus"
+
+.SS "union { \&.\&.\&. }   hwloc_obj_attr_u::hwloc_bridge_attr_s::upstream"
+
+.SS "\fBhwloc_obj_bridge_type_t\fP hwloc_obj_attr_u::hwloc_bridge_attr_s::upstream_type"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

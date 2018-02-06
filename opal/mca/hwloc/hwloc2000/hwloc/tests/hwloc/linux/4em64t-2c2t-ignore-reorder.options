@@ -1,0 +1,1 @@
+- -p --ignore Core --no-caches --filter package:none --no-io

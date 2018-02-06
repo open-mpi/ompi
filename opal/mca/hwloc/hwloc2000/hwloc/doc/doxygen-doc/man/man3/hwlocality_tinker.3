@@ -1,0 +1,151 @@
+.TH "hwlocality_tinker" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_tinker
+.SH SYNOPSIS
+.br
+.PP
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_restrict_flags_e\fP { \fBHWLOC_RESTRICT_FLAG_REMOVE_CPULESS\fP, \fBHWLOC_RESTRICT_FLAG_ADAPT_MISC\fP, \fBHWLOC_RESTRICT_FLAG_ADAPT_IO\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_topology_restrict\fP (\fBhwloc_topology_t\fP restrict topology, \fBhwloc_const_cpuset_t\fP cpuset, unsigned long flags)"
+.br
+.ti -1c
+.RI "\fBhwloc_obj_t\fP \fBhwloc_topology_insert_misc_object\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP parent, const char *name)"
+.br
+.ti -1c
+.RI "\fBhwloc_obj_t\fP \fBhwloc_topology_alloc_group_object\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.ti -1c
+.RI "\fBhwloc_obj_t\fP \fBhwloc_topology_insert_group_object\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP group)"
+.br
+.ti -1c
+.RI "int \fBhwloc_obj_add_other_obj_sets\fP (\fBhwloc_obj_t\fP dst, \fBhwloc_obj_t\fP src)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_restrict_flags_e\fP"
+
+.PP
+Flags to be given to \fBhwloc_topology_restrict()\fP\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_RESTRICT_FLAG_REMOVE_CPULESS \fP\fP
+Remove all objects that became CPU-less\&. By default, only objects that contain no PU and no memory are removed\&. 
+.TP
+\fB\fIHWLOC_RESTRICT_FLAG_ADAPT_MISC \fP\fP
+Move Misc objects to ancestors if their parents are removed during restriction\&. If this flag is not set, Misc objects are removed when their parents are removed\&. 
+.TP
+\fB\fIHWLOC_RESTRICT_FLAG_ADAPT_IO \fP\fP
+Move I/O objects to ancestors if their parents are removed during restriction\&. If this flag is not set, I/O devices and bridges are removed when their parents are removed\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_obj_add_other_obj_sets (\fBhwloc_obj_t\fP dst, \fBhwloc_obj_t\fP src)"
+
+.PP
+Setup object cpusets/nodesets by OR'ing another object's sets\&. For each defined cpuset or nodeset in \fCsrc\fP, allocate the corresponding set in \fCdst\fP and add \fCsrc\fP to it by OR'ing sets\&.
+.PP
+This function is convenient between \fBhwloc_topology_alloc_group_object()\fP and \fBhwloc_topology_insert_group_object()\fP\&. It builds the sets of the new Group that will be inserted as a new intermediate parent of several objects\&. 
+.SS "\fBhwloc_obj_t\fP hwloc_topology_alloc_group_object (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Allocate a Group object to insert later with \fBhwloc_topology_insert_group_object()\fP\&. This function returns a new Group object\&. The caller should (at least) initialize its sets before inserting the object\&. See \fBhwloc_topology_insert_group_object()\fP\&.
+.PP
+The \fCsubtype\fP object attribute may be set to display something else than 'Group' as the type name for this object in lstopo\&. Custom name/value info pairs may be added with \fBhwloc_obj_add_info()\fP after insertion\&.
+.PP
+The \fCkind\fP group attribute should be 0\&. The \fCsubkind\fP group attribute may be set to identify multiple Groups of the same level\&.
+.PP
+It is recommended not to set any other object attribute before insertion, since the Group may get discarded during insertion\&.
+.PP
+The object will be destroyed if passed to \fBhwloc_topology_insert_group_object()\fP without any set defined\&. 
+.SS "\fBhwloc_obj_t\fP hwloc_topology_insert_group_object (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP group)"
+
+.PP
+Add more structure to the topology by adding an intermediate Group\&. The caller should first allocate a new Group object with \fBhwloc_topology_alloc_group_object()\fP\&. Then it must setup at least one of its CPU or node sets to specify the final location of the Group in the topology\&. Then the object can be passed to this function for actual insertion in the topology\&.
+.PP
+Either the cpuset or nodeset field (or both, if compatible) must be set to a non-empty bitmap\&. The complete_cpuset or complete_nodeset may be set instead if inserting with respect to the complete topology (including disallowed, offline or unknown objects)\&.
+.PP
+It grouping several objects, \fBhwloc_obj_add_other_obj_sets()\fP is an easy way to build the Group sets iteratively\&.
+.PP
+These sets cannot be larger than the current topology, or they would get restricted silently\&.
+.PP
+The core will setup the other sets after actual insertion\&.
+.PP
+\fBReturns:\fP
+.RS 4
+The inserted object if it was properly inserted\&.
+.PP
+An existing object if the Group was discarded because the topology already contained an object at the same location (the Group did not add any locality information)\&. Any name/info key pair set before inserting is appended to the existing object\&.
+.PP
+\fCNULL\fP if the insertion failed because of conflicting sets in topology tree\&.
+.PP
+\fCNULL\fP if Group objects are filtered-out of the topology (\fBHWLOC_TYPE_FILTER_KEEP_NONE\fP)\&.
+.PP
+\fCNULL\fP if the object was discarded because no set was initialized in the Group before insert, or all of them were empty\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_obj_t\fP hwloc_topology_insert_misc_object (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP parent, const char * name)"
+
+.PP
+Add a MISC object as a leaf of the topology\&. A new MISC object will be created and inserted into the topology at the position given by parent\&. It is appended to the list of existing Misc children, without ever adding any intermediate hierarchy level\&. This is useful for annotating the topology without actually changing the hierarchy\&.
+.PP
+\fCname\fP is supposed to be unique across all Misc objects in the topology\&. It will be duplicated to setup the new object attributes\&.
+.PP
+The new leaf object will not have any \fCcpuset\fP\&.
+.PP
+\fBReturns:\fP
+.RS 4
+the newly-created object
+.PP
+\fCNULL\fP on error\&.
+.PP
+\fCNULL\fP if Misc objects are filtered-out of the topology (\fBHWLOC_TYPE_FILTER_KEEP_NONE\fP)\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+If \fCname\fP contains some non-printable characters, they will be dropped when exporting to XML, see \fBhwloc_topology_export_xml()\fP in \fBhwloc/export\&.h\fP\&. 
+.RE
+.PP
+
+.SS "int hwloc_topology_restrict (\fBhwloc_topology_t\fP restrict topology, \fBhwloc_const_cpuset_t\fP cpuset, unsigned long flags)"
+
+.PP
+Restrict the topology to the given CPU set\&. Topology \fCtopology\fP is modified so as to remove all objects that are not included (or partially included) in the CPU set \fCcpuset\fP\&. All objects CPU and node sets are restricted accordingly\&.
+.PP
+\fCflags\fP is a OR'ed set of \fBhwloc_restrict_flags_e\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+This call may not be reverted by restricting back to a larger cpuset\&. Once dropped during restriction, objects may not be brought back, except by loading another topology with \fBhwloc_topology_load()\fP\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success\&.
+.PP
+-1 with errno set to EINVAL if the input cpuset is invalid\&. The topology is not modified in this case\&.
+.PP
+-1 with errno set to ENOMEM on failure to allocate internal data\&. The topology is reinitialized in this case\&. It should be either destroyed with \fBhwloc_topology_destroy()\fP or configured and loaded again\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

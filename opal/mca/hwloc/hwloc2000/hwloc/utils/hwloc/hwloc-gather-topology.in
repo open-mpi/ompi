@@ -1,0 +1,247 @@
+#!/bin/sh
+#-*-sh-*-
+
+#
+# Copyright © 2009 CNRS
+# Copyright © 2009-2017 Inria.  All rights reserved.
+# Copyright © 2009-2012 Université Bordeaux
+# Copyright © 2014 Cisco Systems, Inc.  All rights reserved.
+# See COPYING in top-level directory.
+#
+
+HWLOC_top_builddir="@HWLOC_top_builddir@"
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+bindir="@bindir@"
+localstatedir="@localstatedir@"
+runstatedir="@HWLOC_runstatedir@"
+# this will be changed into $bindir/lstopo during make install
+lstopo="$HWLOC_top_builddir/utils/lstopo/lstopo-no-graphics"
+
+# make sure we use default numeric formats
+LANG=C
+LC_ALL=C
+export LANG LC_ALL
+
+# don't let ls append special chars after symlinks etc
+unalias -a ls
+
+gatherio=0
+gatherdmi=0
+
+if [ ! -x "$lstopo" ]
+then
+    error "Could not find lstopo executable in the install or build dir."
+    exit 1
+fi
+
+error()
+{
+    echo $@ 2>&1
+}
+
+usage()
+{
+   echo "$0 [options] <savepath>"
+   echo "  Saves the Linux topology files (/sys, /proc, ...) under <savepath>.tar.bz2"
+   echo "  and the corresponding lstopo verbose output under <savepath>.output"
+   echo "Options:"
+   echo "  --io   Gather I/O files (takes much longer and generates much larger tarball)"
+   echo "  --dmi  Gather SMBIOS files. Works only when run as root. Requires dmi-sysfs kernel module"
+   echo "Example:"
+   echo "  $0 /tmp/\$(uname -n)"
+}
+
+while [ x`echo "$1" | cut -c1` = x- ] ; do
+  case $1 in
+  --io) gatherio=1;;
+  --dmi) gatherdmi=1;;
+  *) echo "Unrecognized option: $1"; usage; exit 1;;
+  esac
+  shift
+done
+
+if test $# -lt 1 -o x$1 = x; then
+  usage
+  exit 1
+fi
+name="$1"
+basename=`basename "$name"`
+dirname=`dirname "$name"`
+
+
+if [ x$gatherio = x0 ]; then
+  echo "I/O files won't be saved (--io not given)."
+fi
+if [ x$gatherdmi = x0 ]; then
+  echo "DMI files won't be saved (--dmi not given)."
+fi
+echo
+
+if ! mkdir -p "$dirname" ; then
+    error "Failed to create directory $dirname."
+    exit 1
+fi
+
+if [ ! -w  "$dirname" ] ; then
+    echo "$dirname is not writable."
+    exit 1
+fi
+
+destdir=`mktemp -d`
+
+# Use cat so that we properly get proc/sys files even if their
+# file length is wrong
+savefile() {
+  local dest="$1"
+  local file="$2"
+  if test -r "$file"; then
+    dir=`dirname "$file"`
+    mkdir -p "$dest/$dir" 2>/dev/null
+    cat "$file" > "$dest/$file" 2>/dev/null
+  fi
+}
+
+savelink() {
+  local dest="$1"
+  local file="$2"
+  dir=`dirname "$file"`
+  mkdir -p "$dest/$dir" 2>/dev/null
+  cp -P "$file" "$dest/$file"
+}
+
+# Gather the following list of files
+savefile "$destdir/$basename" /proc/cmdline
+savefile "$destdir/$basename" /proc/cpuinfo
+savefile "$destdir/$basename" /proc/meminfo
+savefile "$destdir/$basename" /proc/mounts
+savefile "$destdir/$basename" /proc/stat
+savefile "$destdir/$basename" /proc/version
+savefile "$destdir/$basename" /proc/self/cpuset
+savefile "$destdir/$basename" /proc/self/cgroup
+
+# Get all files from the given directory
+# Ignore errors since some files may be missing, and some may be
+# restricted to root (but we don't need them).
+savedir() {
+  local dest="$1"
+  local path="$2"
+  # gather all directories, including empty ones
+  find "$path" -type d 2>/dev/null | while read -r dir ; do
+    mkdir -p "$dest/$dir" 2>/dev/null
+  done
+  # gather all files now
+  find "$path" -type f 2>/dev/null | while read -r file ; do
+    savefile "$dest" "$file"
+  done
+  # gather symlinks
+  find "$path" -type l 2>/dev/null | while read -r link ; do
+    savelink "$dest" "$link"
+  done
+}
+
+# Gather the following list of directories
+savedir "$destdir/$basename" /sys/devices/system/cpu/
+savedir "$destdir/$basename" /sys/devices/system/node/
+savedir "$destdir/$basename" /sys/bus/cpu/devices/
+savedir "$destdir/$basename" /sys/bus/node/devices/
+savedir "$destdir/$basename" /sys/class/dmi/id/
+savedir "$destdir/$basename" /sys/devices/virtual/dmi/id/ # we currently scan this one and the above
+savedir "$destdir/$basename" /sys/kernel/mm/hugepages/
+savedir "$destdir/$basename" /proc/device-tree/cpus/
+
+# Gather the default /var/run/hwloc (in case it was created by a system-wide hwloc-dump-hwdata)
+if test -d /var/run/hwloc; then
+  savedir "$destdir/$basename" /var/run/hwloc
+fi
+# Then, gather what the current hwloc installation could have created in a different $runstatedir
+if test "$runstatedir" != "/var/run" -a -d "$runstatedir/hwloc"; then
+  savedir "$destdir/$basename" "$runstatedir/hwloc/"
+  mkdir -p "$destdir/$basename/var/run"
+  ln -sr "$destdir/$basename/$runstatedir/hwloc" "$destdir/$basename/var/run/hwloc.runstatedir"
+fi
+# And gather what custom $HWLOC_DUMPED_HWDATA_DIR
+if test "x$HWLOC_DUMPED_HWDATA_DIR" != x -a -d "$HWLOC_DUMPED_HWDATA_DIR"; then
+  savedir "$destdir/$basename" "$HWLOC_DUMPED_HWDATA_DIR"
+  mkdir -p "$destdir/$basename/var/run"
+  ln -sr "$destdir/$basename/$HWLOC_DUMPED_HWDATA_DIR" "$destdir/$basename/var/run/hwloc.HWLOC_DUMPED_HWDATA_DIR"
+fi
+# Now link to /var/run/hwloc (used by default in lstopo -i) to something sane if needed
+if ! test -d "$destdir/$basename/var/run/hwloc"; then
+  if test -e "$destdir/$basename/var/run/hwloc.HWLOC_DUMPED_HWDATA_DIR"; then
+    ln -sr "$destdir/$basename/var/run/hwloc.HWLOC_DUMPED_HWDATA_DIR" "$destdir/$basename/var/run/hwloc"
+  else if test -e "$destdir/$basename/$runstatedir/hwloc"; then
+    ln -sr "$destdir/$basename/var/run/hwloc.runstatedir" "$destdir/$basename/var/run/hwloc"
+  fi fi
+fi
+
+# Optionally gather I/O directories too
+if [ x$gatherio = x1 ]; then
+  savedir "$destdir/$basename" /sys/bus/pci/devices/
+  savedir "$destdir/$basename" /sys/bus/pci/slots/
+  # gather class links, we'll parse that the target path for PCI busids
+  savedir "$destdir/$basename" /sys/class/block/
+  savedir "$destdir/$basename" /sys/class/dma/
+  savedir "$destdir/$basename" /sys/class/drm/
+  savedir "$destdir/$basename" /sys/class/infiniband/
+  savedir "$destdir/$basename" /sys/class/net/
+  savedir "$destdir/$basename" /sys/class/mic/
+  # gather all PCI stuff, lots of links (/sys/bus/pci/devices/* and /sys/class/foo/*) point there
+  ls -d /sys/devices/pci* 2>/dev/null | while read -r path ; do savedir "$destdir/$basename" "$path" ; done
+  # gather what non-PCI class links point
+  readlink /sys/class/block/* 2>/dev/null | grep -v /devices/pci | while read -r path ; do savedir "$destdir/$basename" "/sys/class/block/$path" ; done
+  readlink /sys/class/dma/* 2>/dev/null | grep -v /devices/pci | while read -r path ; do savedir "$destdir/$basename" "/sys/class/dma/$path" ; done
+  readlink /sys/class/drm/* 2>/dev/null | grep -v /devices/pci | while read -r path ; do savedir "$destdir/$basename" "/sys/class/drm/$path" ; done
+  readlink /sys/class/infiniband/* 2>/dev/null | grep -v /devices/pci | while read -r path ; do savedir "$destdir/$basename" "/sys/class/infiniband/$path" ; done
+  readlink /sys/class/net/* 2>/dev/null | grep -v /devices/pci | while read -r path ; do savedir "$destdir/$basename" "/sys/class/net/$path" ; done
+  readlink /sys/class/mic/* 2>/dev/null | grep -v /devices/pci | while read -r path ; do savedir "$destdir/$basename" "/sys/class/mic/$path" ; done
+  # udev block data
+  ls -d /run/udev/data/b* 2>/dev/null | while read -r path ; do savefile "$destdir/$basename" "$path" ; done
+fi
+
+if [ x$gatherdmi = x1 ]; then
+  savedir "$destdir/$basename" /sys/firmware/dmi/
+fi
+
+# Get an entire mount point, after decoding its path
+# we don't support path with \n since it would break in 'find ... | while read ..." above
+savemntpnt() {
+  local encodedpath=$1
+  if echo "$1" | grep "\\012" ; then
+    echo "Ignoring mount point whose filename contains an end of line."
+    return
+  fi
+  local path=$(echo "$1" | sed -e 's@\\134@\\@g' -e 's@\\040@ @g' -e 's@\\011@	@g')
+  savedir "$destdir/$basename" "${path}/"
+}
+
+# Gather cgroup/cpuset mntpnts
+cat /proc/mounts | while read -r dummy1 mntpath mnttype mntopts dummy2 ; do
+  [ x$mnttype = xcpuset ] && savemntpnt "$mntpath"
+  [ x$mnttype = xcgroup ] && echo $mntopts | grep -w cpuset >/dev/null && savemntpnt "$mntpath"
+done
+
+# export /proc/hwloc-nofile-info during lstopo (needs HWLOC_DUMP_NOFILE_INFO with HWLOC_THISSYSTEM=1)
+export HWLOC_DUMP_NOFILE_INFO="$destdir/$basename/proc/hwloc-nofile-info"
+"$lstopo" - >/dev/null
+# disable HWLOC_DUMP_NOFILE_INFO for next lstopo invocation
+export HWLOC_DUMP_NOFILE_INFO=
+
+# Create the archive and keep the tree in /tmp for testing
+( cd "$destdir/" && tar cfj "$basename.tar.bz2" "$basename" )
+mv "$destdir/$basename.tar.bz2" "$dirname/$basename.tar.bz2"
+echo "Topology files gathered in $dirname/$basename.tar.bz2 and kept in $destdir/$basename/"
+
+# Generate the output as well
+# we need "Topology not from this system" in the output so as to make test-topology.sh happy
+export HWLOC_THISSYSTEM=0
+"$lstopo" - -v > "$dirname/$basename.output"
+echo "Expected topology output stored in $dirname/$basename.output"
+"$lstopo" -.xml --whole-system > "$dirname/$basename.xml"
+echo "XML topology stored in in $dirname/$basename.xml"
+
+echo
+echo "WARNING: Do not post these files on a public list or website unless you"
+echo "WARNING: are sure that no information about this platform is sensitive."
+
+exit 0

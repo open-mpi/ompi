@@ -1,0 +1,38 @@
+# Copyright © 2010-2017 Inria.  All rights reserved.
+# Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+# See COPYING in top-level directory.
+
+# See big comments in doxygen.cfg about the purpose of this file.
+
+PROJECT_NUMBER = @PACKAGE_VERSION@
+
+# no need to input hwloc.doxy and netloc.doxy, those are included from main.doxy
+INPUT          = \
+		@top_srcdir@/doc/main.doxy \
+		@top_srcdir@/doc/hwloc.doxy \
+		@top_srcdir@/include/hwloc.h \
+		@top_srcdir@/include/hwloc/helper.h \
+		@top_srcdir@/include/hwloc/bitmap.h \
+		@top_srcdir@/include/hwloc/export.h \
+		@top_srcdir@/include/hwloc/distances.h \
+		@top_srcdir@/include/hwloc/linux.h \
+		@top_srcdir@/include/hwloc/linux-libnuma.h \
+		@top_srcdir@/include/hwloc/glibc-sched.h \
+		@top_srcdir@/include/hwloc/opencl.h \
+		@top_srcdir@/include/hwloc/cuda.h \
+		@top_srcdir@/include/hwloc/cudart.h \
+		@top_srcdir@/include/hwloc/nvml.h \
+		@top_srcdir@/include/hwloc/gl.h \
+		@top_srcdir@/include/hwloc/intel-mic.h \
+		@top_srcdir@/include/hwloc/openfabrics-verbs.h \
+		@top_srcdir@/include/hwloc/diff.h \
+		@top_srcdir@/include/hwloc/shmem.h \
+		@top_srcdir@/include/hwloc/plugins.h \
+		@top_srcdir@/doc/netloc.doxy \
+		@top_srcdir@/include/netloc.h
+
+EXAMPLE_PATH   = @top_srcdir@/doc @top_srcdir@/tests/netloc
+
+IMAGE_PATH     = @top_srcdir@/doc/images images
+
+INCLUDE_PATH   = @top_srcdir@/doc

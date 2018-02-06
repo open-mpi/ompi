@@ -1,0 +1,221 @@
+.\" -*- nroff -*-
+.\" Copyright © 2009-2018 Inria.  All rights reserved.
+.\" Copyright © 2009-2010 Université of Bordeaux
+.\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-INFO "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-info \- Show some information about some objects or about a topology or about support features
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.PP
+.B hwloc-info
+[ \fIoptions \fR]...
+\fI<object>\fR...
+.PP
+.B hwloc-info
+[ \fIoptions \fR]...
+.
+.PP
+Note that hwloc(7) provides a detailed explanation of the hwloc system
+and of valid <object> formats;
+it should be read before reading this man page.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP
+\fB\-\-objects\fR
+Report information specific objects.
+This is the default if some objects are given on the command-line.
+.TP
+\fB\-\-topology\fR
+Report a summary of the topology instead of about some specific objects.
+This is the default if no object is given on the command-line.
+.TP
+\fB\-\-support\fR
+Report the features that are supported by hwloc on the topology.
+The features are those available through the \fBhwloc_topology_get_support()\fR function.
+This is useful for verifying which CPU or memory binding options are supported
+by the current hwloc installation.
+.TP
+\fB\-i\fR <file>, \fB\-\-input\fR <file>
+Read topology from XML file <file> (instead of discovering the
+topology on the local machine).  If <file> is "\-", the standard input
+is used.  XML support must have been compiled in to hwloc for this
+option to be usable.
+.TP
+\fB\-i\fR <directory>, \fB\-\-input\fR <directory>
+Read topology from <directory> instead of discovering the topology
+of the local machine.
+On Linux, the directory may contain the topology files
+gathered from another machine topology with hwloc-gather-topology.
+On x86, the directory may contain a cpuid dump gathered
+with hwloc-gather-cpuid.
+.TP
+\fB\-i\fR <specification>, \fB\-\-input\fR <specification>
+Simulate a fake hierarchy (instead of discovering the topology on the
+local machine). If <specification> is "node:2 pu:3", the topology will
+contain two NUMA nodes with 3 processing units in each of them.
+The <specification> string must end with a number of PUs.
+.TP
+\fB\-\-if\fR <format>, \fB\-\-input\-format\fR <format>
+Enforce the input in the given format, among \fBxml\fR, \fBfsroot\fR,
+\fBcpuid\fR and \fBsynthetic\fR.
+.TP
+\fB\-v\fR \fB\-\-verbose\fR
+Include additional detail.
+.TP
+\fB\-s\fR \fB\-\-silent\fR
+Reduce the amount of details to show.
+A single summary line per object is displayed.
+.TP
+\fB\-\-ancestors\fR
+Display information about the object as well as
+about all its ancestors up to the root of the topology.
+.TP
+\fB\-\-ancestor\fR <type>
+Only display the object ancestors that match the given type.
+.TP
+\fB\-\-children\fR
+Display information about the object children.
+.TP
+\fB\-\-descendants\fR <type>
+Display information about the object descendants that match the given type.
+.TP
+\fB\-n\fR
+When outputting object information, prefix each line with the index
+of the considered object within the input.
+For instance, if three cores were given in input, the output
+lines will be prefixed with "0: ", "1: " or "2: ".
+If \fB\-\-ancestor\fR is also used, the prefix will be "X.Y: "
+where X is the index of the considered object within the input,
+and Y is the parent index (0 for the object itself, increasing
+towards the root of the topology).
+.TP
+\fB\-\-whole\-system\fR
+Do not consider administration limitations.
+.TP
+\fB\-\-restrict\fR <cpuset>
+Restrict the topology to the given cpuset.
+.TP
+\fB\-\-restrict\fR binding
+Restrict the topology to the current process binding.
+This option requires the use of the actual current machine topology
+(or any other topology with \fB\-\-thissystem\fR or with
+HWLOC_THISSYSTEM set to 1 in the environment).
+.TP
+\fB\-\-filter\fR <type>:<kind>, \fB\-\-filter\fR <type>
+Filter objects of type <type>, or of any type if <type> is "all".
+"io", "cache" and "icache" are also supported.
+
+<kind> specifies the filtering behavior.
+If "none" or not specified, all objects of the given type are removed.
+If "all", all objects are kept as usual.
+If "structure", objects are kept when they bring structure to the topology.
+If "important" (only applicable to I/O and Misc), only important objects are kept.
+See hwloc_topology_set_type_filter() for more details.
+.TP
+\fB\-\-no\-icaches\fR
+Do not show Instruction caches, only Data and Unified caches are considered.
+This is identical to \fB-\-filter icache:none\fR.
+.TP
+\fB\-\-no\-io\fB
+Do not show any I/O device or bridge.
+This is identical to \fB\-\-filter io:none\fR.
+By default, common devices (GPUs, NICs, block devices, ...) and
+interesting bridges are shown.
+.TP
+\fB\-\-no\-bridges\fB
+Do not show any I/O bridge except hostbridges.
+This is identical to \fB\-\-filter bridge:none\fR.
+By default, common devices (GPUs, NICs, block devices, ...) and
+interesting bridges are shown.
+.TP
+\fB\-\-whole\-io\fB
+Show all I/O devices and bridges.
+This is identical to \fB\-\-filter io:all\fR.
+By default, only common devices (GPUs, NICs, block devices, ...) and
+interesting bridges are shown.
+.TP
+\fB\-\-thissystem\fR
+Assume that the selected backend provides the topology for the
+system on which we are running.
+This is useful when using \fB\-\-restrict\fR binding and loading
+a custom topology such as an XML file.
+.TP
+\fB\-\-pid\fR <pid>
+Detect topology as seen by process <pid>, i.e. as if process <pid> did the
+discovery itself.
+Note that this can for instance change the set of allowed processors.
+Also show this process current CPU binding by marking the corresponding
+PUs (in Green in the graphical output, see the COLORS section below,
+or by appending \fI(binding)\fR to the verbose text output).
+If 0 is given as pid, the current binding for the lstopo process will be shown.
+.TP
+\fB\-p\fR \fB\-\-physical\fR
+Use OS/physical indexes instead of logical indexes for input.
+.TP
+\fB\-l\fR \fB\-\-logical\fR
+Use logical indexes instead of physical/OS indexes for input (default).
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-info displays information about the specified object.
+It is intended to be used with tools such as grep for filtering
+certain attribute lines.
+When no object is specified, or when \fB\-\-topology\fR is passed,
+hwloc-info prints a summary of the topology.
+When \fB\-\-support\fR is passed, hwloc-info lists the supported
+features for the topology.
+.
+.PP
+Objects may be specified as location tuples, as explained in hwloc(7).
+However hexadecimal bitmasks are not accepted since they may correspond
+to multiple objects.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-calc utility.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+To display information about each package:
+
+    $ hwloc-info package:all
+    Package L#0
+     logical index = 0
+    ...
+
+To display information about the core whose physical index is 2:
+
+    $ utils/hwloc-info -p core:2
+    Core L#1
+     logical index = 1
+     os index = 2
+   ...
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-calc(1), hwloc-bind(1), hwloc-ps(1)
+.sp

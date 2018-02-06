@@ -1,0 +1,22 @@
+Machine (P#0 total=16777216KB DMIProductName=H8QM8 DMIProductVersion=1234567890 DMIBoardVendor=Supermicro DMIBoardName=H8QM8 DMIBoardVersion=1234567890 DMIBoardAssetTag="To Be Filled By O.E.M." DMIChassisVendor="To Be Filled By O.E.M." DMIChassisType=3 DMIChassisVersion="To Be Filled By O.E.M." DMIChassisAssetTag="To Be Filled By O.E.M." DMIBIOSVendor="American Megatrends Inc." DMIBIOSVersion="080014 " DMIBIOSDate=12/20/2008 DMISysVendor=Supermicro Backend=Linux LinuxCgroup=/prout)
+  Package L#0 (P#0 CPUModel="Quad-Core AMD Opteron(tm) Processor 8347 HE")
+    L3Cache L#0 (size=2048KB linesize=64 ways=32)
+      PU L#0 (P#0)
+      PU L#1 (P#1)
+      PU L#2 (P#2)
+      PU L#3 (P#3)
+  Package L#1 (P#2 total=8388608KB CPUModel="Quad-Core AMD Opteron(tm) Processor 8347 HE")
+    NUMANode L#0 (P#2 local=8388608KB total=8388608KB)
+  Package L#2 (P#3 total=8388608KB CPUModel="Quad-Core AMD Opteron(tm) Processor 8347 HE")
+    NUMANode L#1 (P#3 local=8388608KB total=8388608KB)
+depth 0:           1 Machine (type #0)
+ depth 1:          3 Package (type #1)
+  depth 2:         1 L3Cache (type #6)
+   depth 3:        4 PU (type #3)
+Special depth -3:  2 NUMANode (type #13)
+Relative latency matrix (kind 5) between 2 NUMANodes (depth -3) by logical indexes:
+  index     0     1
+      0    10    20
+      1    20    10
+12 processors not represented in topology: 0x0000fff0
+Topology not from this system

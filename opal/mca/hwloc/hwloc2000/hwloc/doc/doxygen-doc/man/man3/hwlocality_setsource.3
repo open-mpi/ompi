@@ -1,0 +1,112 @@
+.TH "hwlocality_setsource" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_setsource
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_topology_set_pid\fP (\fBhwloc_topology_t\fP restrict topology, hwloc_pid_t pid)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_synthetic\fP (\fBhwloc_topology_t\fP restrict topology, const char *restrict description)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_xml\fP (\fBhwloc_topology_t\fP restrict topology, const char *restrict xmlpath)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_xmlbuffer\fP (\fBhwloc_topology_t\fP restrict topology, const char *restrict buffer, int size)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+If none of the functions below is called, the default is to detect all the objects of the machine that the caller is allowed to access\&.
+.PP
+This default behavior may also be modified through environment variables if the application did not modify it already\&. Setting HWLOC_XMLFILE in the environment enforces the discovery from a XML file as if \fBhwloc_topology_set_xml()\fP had been called\&. Setting HWLOC_SYNTHETIC enforces a synthetic topology as if \fBhwloc_topology_set_synthetic()\fP had been called\&.
+.PP
+Finally, HWLOC_THISSYSTEM enforces the return value of \fBhwloc_topology_is_thissystem()\fP\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_topology_set_pid (\fBhwloc_topology_t\fP restrict topology, hwloc_pid_t pid)"
+
+.PP
+Change which process the topology is viewed from\&. On some systems, processes may have different views of the machine, for instance the set of allowed CPUs\&. By default, hwloc exposes the view from the current process\&. Calling \fBhwloc_topology_set_pid()\fP permits to make it expose the topology of the machine from the point of view of another process\&.
+.PP
+\fBNote:\fP
+.RS 4
+\fChwloc_pid_t\fP is \fCpid_t\fP on Unix platforms, and \fCHANDLE\fP on native Windows platforms\&.
+.PP
+-1 is returned and errno is set to ENOSYS on platforms that do not support this feature\&. 
+.RE
+.PP
+
+.SS "int hwloc_topology_set_synthetic (\fBhwloc_topology_t\fP restrict topology, const char *restrict description)"
+
+.PP
+Enable synthetic topology\&. Gather topology information from the given \fCdescription\fP, a space-separated string of <type:number> describing the object type and arity at each level\&. All types may be omitted (space-separated string of numbers) so that hwloc chooses all types according to usual topologies\&. See also the \fBSynthetic topologies\fP\&.
+.PP
+Setting the environment variable HWLOC_SYNTHETIC may also result in this behavior\&.
+.PP
+If \fCdescription\fP was properly parsed and describes a valid topology configuration, this function returns 0\&. Otherwise -1 is returned and errno is set to EINVAL\&.
+.PP
+Note that this function does not actually load topology information; it just tells hwloc where to load it from\&. You'll still need to invoke \fBhwloc_topology_load()\fP to actually load the topology information\&.
+.PP
+\fBNote:\fP
+.RS 4
+For convenience, this backend provides empty binding hooks which just return success\&.
+.PP
+On success, the synthetic component replaces the previously enabled component (if any), but the topology is not actually modified until \fBhwloc_topology_load()\fP\&. 
+.RE
+.PP
+
+.SS "int hwloc_topology_set_xml (\fBhwloc_topology_t\fP restrict topology, const char *restrict xmlpath)"
+
+.PP
+Enable XML-file based topology\&. Gather topology information from the XML file given at \fCxmlpath\fP\&. Setting the environment variable HWLOC_XMLFILE may also result in this behavior\&. This file may have been generated earlier with \fBhwloc_topology_export_xml()\fP in \fBhwloc/export\&.h\fP, or lstopo file\&.xml\&.
+.PP
+Note that this function does not actually load topology information; it just tells hwloc where to load it from\&. You'll still need to invoke \fBhwloc_topology_load()\fP to actually load the topology information\&.
+.PP
+\fBReturns:\fP
+.RS 4
+-1 with errno set to EINVAL on failure to read the XML file\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+See also \fBhwloc_topology_set_userdata_import_callback()\fP for importing application-specific object userdata\&.
+.PP
+For convenience, this backend provides empty binding hooks which just return success\&. To have hwloc still actually call OS-specific hooks, the \fBHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM\fP has to be set to assert that the loaded file is really the underlying system\&.
+.PP
+On success, the XML component replaces the previously enabled component (if any), but the topology is not actually modified until \fBhwloc_topology_load()\fP\&. 
+.RE
+.PP
+
+.SS "int hwloc_topology_set_xmlbuffer (\fBhwloc_topology_t\fP restrict topology, const char *restrict buffer, int size)"
+
+.PP
+Enable XML based topology using a memory buffer (instead of a file, as with \fBhwloc_topology_set_xml()\fP)\&. Gather topology information from the XML memory buffer given at \fCbuffer\fP and of length \fCsize\fP\&. This buffer may have been filled earlier with \fBhwloc_topology_export_xmlbuffer()\fP in \fBhwloc/export\&.h\fP\&.
+.PP
+Note that this function does not actually load topology information; it just tells hwloc where to load it from\&. You'll still need to invoke \fBhwloc_topology_load()\fP to actually load the topology information\&.
+.PP
+\fBReturns:\fP
+.RS 4
+-1 with errno set to EINVAL on failure to read the XML buffer\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+See also \fBhwloc_topology_set_userdata_import_callback()\fP for importing application-specific object userdata\&.
+.PP
+For convenience, this backend provides empty binding hooks which just return success\&. To have hwloc still actually call OS-specific hooks, the \fBHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM\fP has to be set to assert that the loaded file is really the underlying system\&.
+.PP
+On success, the XML component replaces the previously enabled component (if any), but the topology is not actually modified until \fBhwloc_topology_load()\fP\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -1,0 +1,69 @@
+.TH "hwloc_disc_component" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_disc_component
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <plugins\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "\fBhwloc_disc_component_type_t\fP \fBtype\fP"
+.br
+.ti -1c
+.RI "const char * \fBname\fP"
+.br
+.ti -1c
+.RI "unsigned \fBexcludes\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_backend\fP *(* \fBinstantiate\fP )(struct \fBhwloc_disc_component\fP *component, const void *data1, const void *data2, const void *data3)"
+.br
+.ti -1c
+.RI "unsigned \fBpriority\fP"
+.br
+.ti -1c
+.RI "unsigned \fBenabled_by_default\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Discovery component structure\&. 
+
+This is the major kind of components, taking care of the discovery\&. They are registered by generic components, either statically-built or as plugins\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned hwloc_disc_component::enabled_by_default"
+
+.PP
+Enabled by default\&. If unset, if will be disabled unless explicitly requested\&. 
+.SS "unsigned hwloc_disc_component::excludes"
+
+.PP
+Component types to exclude, as an OR'ed set of \fBhwloc_disc_component_type_e\fP\&. For a GLOBAL component, this usually includes all other types (~0)\&.
+.PP
+Other components only exclude types that may bring conflicting topology information\&. MISC components should likely not be excluded since they usually bring non-primary additional information\&. 
+.SS "struct \fBhwloc_backend\fP*(* hwloc_disc_component::instantiate) (struct \fBhwloc_disc_component\fP *component, const void *data1, const void *data2, const void *data3)"
+
+.PP
+Instantiate callback to create a backend from the component\&. Parameters data1, data2, data3 are NULL except for components that have special enabling routines such as \fBhwloc_topology_set_xml()\fP\&. 
+.SS "const char* hwloc_disc_component::name"
+
+.PP
+Name\&. If this component is built as a plugin, this name does not have to match the plugin filename\&. 
+.SS "unsigned hwloc_disc_component::priority"
+
+.PP
+Component priority\&. Used to sort topology->components, higher priority first\&. Also used to decide between two components with the same name\&. Usual values are 50 for native OS (or platform) components, 45 for x86, 40 for no-OS fallback, 30 for global components (xml, synthetic), 20 for pci, 10 for other misc components (opencl etc\&.)\&. 
+.SS "\fBhwloc_disc_component_type_t\fP hwloc_disc_component::type"
+
+.PP
+Discovery component type\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

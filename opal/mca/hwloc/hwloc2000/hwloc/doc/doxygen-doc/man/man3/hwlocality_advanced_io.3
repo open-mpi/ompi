@@ -1,0 +1,88 @@
+.TH "hwlocality_advanced_io" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_advanced_io
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_non_io_ancestor_obj\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP ioobj)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_next_pcidev\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_pcidev_by_busid\fP (\fBhwloc_topology_t\fP topology, unsigned domain, unsigned bus, unsigned dev, unsigned func)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_pcidev_by_busidstring\fP (\fBhwloc_topology_t\fP topology, const char *busid)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_next_osdev\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_next_bridge\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)"
+.br
+.ti -1c
+.RI "static int \fBhwloc_bridge_covers_pcibus\fP (\fBhwloc_obj_t\fP bridge, unsigned domain, unsigned bus)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_bridge_covers_pcibus (\fBhwloc_obj_t\fP bridge, unsigned domain, unsigned bus)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_next_bridge (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the next bridge in the system\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the first bridge if \fCprev\fP is \fCNULL\fP\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_next_osdev (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the next OS device in the system\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the first OS device if \fCprev\fP is \fCNULL\fP\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_next_pcidev (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the next PCI device in the system\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the first PCI device if \fCprev\fP is \fCNULL\fP\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_non_io_ancestor_obj (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP ioobj)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the first non-I/O ancestor object\&. Given the I/O object \fCioobj\fP, find the smallest non-I/O ancestor object\&. This regular object may then be used for binding because its locality is the same as \fCioobj\fP\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_get_pcidev_by_busid (\fBhwloc_topology_t\fP topology, unsigned domain, unsigned bus, unsigned dev, unsigned func)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Find the PCI device object matching the PCI bus id given domain, bus device and function PCI bus id\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_get_pcidev_by_busidstring (\fBhwloc_topology_t\fP topology, const char * busid)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Find the PCI device object matching the PCI bus id given as a string xxxx:yy:zz\&.t or yy:zz\&.t\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

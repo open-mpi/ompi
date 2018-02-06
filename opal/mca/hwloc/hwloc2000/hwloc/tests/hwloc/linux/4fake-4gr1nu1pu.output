@@ -1,0 +1,16 @@
+Machine (P#0 total=2097152KB Backend=Linux LinuxCgroup=/dummy)
+  Package L#0 (P#0 total=2097152KB)
+    Group0 L#0 (total=1048576KB)
+      NUMANode L#0 (P#0 local=1048576KB total=1048576KB)
+      PU L#0 (P#0)
+    Group0 L#1
+      PU L#1 (P#1)
+    Group0 L#2 (total=1048576KB)
+      NUMANode L#1 (P#2 local=1048576KB total=1048576KB)
+depth 0:           1 Machine (type #0)
+ depth 1:          1 Package (type #1)
+  depth 2:         3 Group0 (type #12)
+   depth 3:        2 PU (type #3)
+Special depth -3:  2 NUMANode (type #13)
+2 processors not represented in topology: 0x0000000c
+Topology not from this system

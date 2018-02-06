@@ -1,0 +1,44 @@
+.TH "hwloc_topology_discovery_support" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_topology_discovery_support
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned char \fBpu\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBnuma\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBnuma_memory\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Flags describing actual discovery support for this topology\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned char hwloc_topology_discovery_support::numa"
+
+.PP
+Detecting the number of NUMA nodes is supported\&. 
+.SS "unsigned char hwloc_topology_discovery_support::numa_memory"
+
+.PP
+Detecting the amount of memory in NUMA nodes is supported\&. 
+.SS "unsigned char hwloc_topology_discovery_support::pu"
+
+.PP
+Detecting the number of PU objects is supported\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

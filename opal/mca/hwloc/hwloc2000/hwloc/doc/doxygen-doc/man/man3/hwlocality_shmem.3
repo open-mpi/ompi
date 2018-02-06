@@ -1,0 +1,104 @@
+.TH "hwlocality_shmem" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_shmem
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_shmem_topology_get_length\fP (\fBhwloc_topology_t\fP topology, size_t *lengthp, unsigned long flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_shmem_topology_write\fP (\fBhwloc_topology_t\fP topology, int fd, hwloc_uint64_t fileoffset, void *mmap_address, size_t length, unsigned long flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_shmem_topology_adopt\fP (\fBhwloc_topology_t\fP *topologyp, int fd, hwloc_uint64_t fileoffset, void *mmap_address, size_t length, unsigned long flags)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+These functions are used to share a topology between processes by duplicating it into a file-backed shared-memory buffer\&.
+.PP
+The master process must first get the required shared-memory size for storing this topology with \fBhwloc_shmem_topology_get_length()\fP\&.
+.PP
+Then it must find a virtual memory area of that size that is available in all processes (identical virtual addresses in all processes)\&. On Linux, this can be done by comparing holes found in /proc/<pid>/maps for each process\&.
+.PP
+Once found, it must open a destination file for storing the buffer, and pass it to \fBhwloc_shmem_topology_write()\fP together with virtual memory address and length obtained above\&.
+.PP
+Other processes may then adopt this shared topology by opening the same file and passing it to \fBhwloc_shmem_topology_adopt()\fP with the exact same virtual memory address and length\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_shmem_topology_adopt (\fBhwloc_topology_t\fP * topologyp, int fd, hwloc_uint64_t fileoffset, void * mmap_address, size_t length, unsigned long flags)"
+
+.PP
+Adopt a shared memory topology stored in a file\&. Map a file in virtual memory and adopt the topology that was previously stored there with \fBhwloc_shmem_topology_write()\fP\&.
+.PP
+The returned adopted topology in \fCtopologyp\fP can be used just like any topology\&. And it must be destroyed with \fBhwloc_topology_destroy()\fP as usual\&.
+.PP
+However the topology is read-only\&. For instance, it cannot be modified with \fBhwloc_topology_restrict()\fP and object userdata pointers cannot be changed\&.
+.PP
+The segment of the file pointed by descriptor \fCfd\fP, starting at offset \fCfileoffset\fP, and of length \fClength\fP (in bytes), will be mapped at virtual address \fCmmap_address\fP\&.
+.PP
+The file pointed by descriptor \fCfd\fP, the offset \fCfileoffset\fP, the requested mapping virtual address \fCmmap_address\fP and the length \fClength\fP must be identical to what was given to \fBhwloc_shmem_topology_write()\fP earlier\&.
+.PP
+\fBNote:\fP
+.RS 4
+Flags \fCflags\fP are currently unused, must be 0\&.
+.PP
+The object userdata pointer should not be used unless the process that created the shared topology also placed userdata-pointed buffers in shared memory\&.
+.PP
+This function takes care of calling \fBhwloc_topology_abi_check()\fP\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 with errno set to EBUSY if the virtual memory mapping defined by \fCmmap_address\fP and \fClength\fP isn't available in the process\&.
+.PP
+-1 with errno set to EINVAL if \fCfileoffset\fP, \fCmmap_address\fP or \fClength\fP aren't page-aligned, or do not match what was given to \fBhwloc_shmem_topology_write()\fP earlier\&.
+.PP
+-1 with errno set to EINVAL if the layout of the topology structure is different between the writer process and the adopter process\&. 
+.RE
+.PP
+
+.SS "int hwloc_shmem_topology_get_length (\fBhwloc_topology_t\fP topology, size_t * lengthp, unsigned long flags)"
+
+.PP
+Get the required shared memory length for storing a topology\&. This length (in bytes) must be used in \fBhwloc_shmem_topology_write()\fP and \fBhwloc_shmem_topology_adopt()\fP later\&.
+.PP
+\fBNote:\fP
+.RS 4
+Flags \fCflags\fP are currently unused, must be 0\&. 
+.RE
+.PP
+
+.SS "int hwloc_shmem_topology_write (\fBhwloc_topology_t\fP topology, int fd, hwloc_uint64_t fileoffset, void * mmap_address, size_t length, unsigned long flags)"
+
+.PP
+Duplicate a topology to a shared memory file\&. Temporarily map a file in virtual memory and duplicate the topology \fCtopology\fP by allocating duplicates in there\&.
+.PP
+The segment of the file pointed by descriptor \fCfd\fP, starting at offset \fCfileoffset\fP, and of length \fClength\fP (in bytes), will be temporarily mapped at virtual address \fCmmap_address\fP during the duplication\&.
+.PP
+The mapping length \fClength\fP must have been previously obtained with \fBhwloc_shmem_topology_get_length()\fP and the topology must not have been modified in the meantime\&.
+.PP
+\fBNote:\fP
+.RS 4
+Flags \fCflags\fP are currently unused, must be 0\&.
+.PP
+The object userdata pointer is duplicated but the pointed buffer is not\&. However the caller may also allocate it manually in shared memory to share it as well\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 with errno set to EBUSY if the virtual memory mapping defined by \fCmmap_address\fP and \fClength\fP isn't available in the process\&. 
+.PP
+-1 with errno set to EINVAL if \fCfileoffset\fP, \fCmmap_address\fP or \fClength\fP aren't page-aligned\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

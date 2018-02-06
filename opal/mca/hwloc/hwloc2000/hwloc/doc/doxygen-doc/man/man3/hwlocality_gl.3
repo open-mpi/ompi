@@ -1,0 +1,63 @@
+.TH "hwlocality_gl" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_gl
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_gl_get_display_osdev_by_port_device\fP (\fBhwloc_topology_t\fP topology, unsigned port, unsigned device)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_gl_get_display_osdev_by_name\fP (\fBhwloc_topology_t\fP topology, const char *name)"
+.br
+.ti -1c
+.RI "static int \fBhwloc_gl_get_display_by_osdev\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP osdev, unsigned *port, unsigned *device)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This interface offers ways to retrieve topology information about OpenGL displays\&.
+.PP
+Only the NVIDIA display locality information is currently available, using the NV-CONTROL X11 extension and the NVCtrl library\&. 
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_gl_get_display_by_osdev (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP osdev, unsigned * port, unsigned * device)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the OpenGL display port and device corresponding to the given hwloc OS object\&. Return the OpenGL display port (server) in \fCport\fP and device (screen) in \fCscreen\fP that correspond to the given hwloc OS device object\&. Return \fC-1\fP if there is none\&.
+.PP
+The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection and the GL component must be enabled in the topology\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_gl_get_display_osdev_by_name (\fBhwloc_topology_t\fP topology, const char * name)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc OS device object corresponding to the OpenGL display given by name\&. Return the OS device object describing the OpenGL display whose name is \fCname\fP, built as ':port\&.device' such as ':0\&.0' \&. Return NULL if there is none\&.
+.PP
+The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection and the GL component must be enabled in the topology\&.
+.PP
+\fBNote:\fP
+.RS 4
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_gl_get_display_osdev_by_port_device (\fBhwloc_topology_t\fP topology, unsigned port, unsigned device)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc OS device object corresponding to the OpenGL display given by port and device index\&. Return the OS device object describing the OpenGL display whose port (server) is \fCport\fP and device (screen) is \fCdevice\fP\&. Return NULL if there is none\&.
+.PP
+The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection and the GL component must be enabled in the topology\&.
+.PP
+\fBNote:\fP
+.RS 4
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

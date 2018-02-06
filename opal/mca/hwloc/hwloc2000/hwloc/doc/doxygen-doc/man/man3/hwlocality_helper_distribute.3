@@ -1,0 +1,63 @@
+.TH "hwlocality_helper_distribute" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_helper_distribute
+.SH SYNOPSIS
+.br
+.PP
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_distrib_flags_e\fP { \fBHWLOC_DISTRIB_FLAG_REVERSE\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBhwloc_distrib\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP *roots, unsigned n_roots, \fBhwloc_cpuset_t\fP *set, unsigned n, int until, unsigned long flags)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_distrib_flags_e\fP"
+
+.PP
+Flags to be given to \fBhwloc_distrib()\fP\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_DISTRIB_FLAG_REVERSE \fP\fP
+Distrib in reverse order, starting from the last objects\&. 
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_distrib (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP * roots, unsigned n_roots, \fBhwloc_cpuset_t\fP * set, unsigned n, int until, unsigned long flags)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Distribute \fCn\fP items over the topology under \fCroots\fP\&. Array \fCset\fP will be filled with \fCn\fP cpusets recursively distributed linearly over the topology under objects \fCroots\fP, down to depth \fCuntil\fP (which can be INT_MAX to distribute down to the finest level)\&.
+.PP
+\fCn_roots\fP is usually 1 and \fCroots\fP only contains the topology root object so as to distribute over the entire topology\&.
+.PP
+This is typically useful when an application wants to distribute \fCn\fP threads over a machine, giving each of them as much private cache as possible and keeping them locally in number order\&.
+.PP
+The caller may typically want to also call \fBhwloc_bitmap_singlify()\fP before binding a thread so that it does not move at all\&.
+.PP
+\fCflags\fP should be 0 or a OR'ed set of \fBhwloc_distrib_flags_e\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+This function requires the \fCroots\fP objects to have a CPU set\&.
+.PP
+This function replaces the now deprecated hwloc_distribute() and hwloc_distributev() functions\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -1,0 +1,10 @@
+# should only be used when lstopo is built with Cairo/X11 support
+# so that no terminal is required
+[Desktop Entry]
+Name=Hardware Locality lstopo
+Comment=Show hardware topology
+Exec=lstopo
+Terminal=false
+Type=Application
+Categories=System;
+Keywords=System;Utility;

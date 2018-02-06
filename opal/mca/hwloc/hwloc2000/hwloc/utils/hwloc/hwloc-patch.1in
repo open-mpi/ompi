@@ -1,0 +1,120 @@
+.\" -*- nroff -*-
+.\" Copyright © 2013-2016 Inria.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-PATCH "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-patch \- Apply a topology difference to an existing XML topology
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.PP
+.B hwloc-patch
+[\fIoptions\fR]
+\fI[<topology.xml> | refname]\fR
+\fI[<diff.xml> | -]\fR
+\fI<output.xml>\fR
+.PP
+.B hwloc-patch
+[\fIoptions\fR]
+\fI[<topology.xml> | refname]\fR
+\fI[<diff.xml> | -]\fR
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-R \-\-reverse\fR
+Reverse the sense the difference file.
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-patch loads the difference between two topologies from a XML file
+(or from the standard input) and applies it to an
+existing topology, generating a new, modified one.
+.
+.PP
+The XML difference may have been computed earlier with hwloc-diff
+or hwloc-compress-dir.
+.
+.PP
+If <output.xml> is given, the new, modified topology is stored in that
+new file. Otherwise, <topology.xml> is modified in place.
+.
+.PP
+If \fBrefname\fR is given instead of <topology.xml>, the input topology filename
+is automatically guessed by reading the refname field of the XML diff file.
+By default hwloc-diff generates XML diffs with the right reference topology
+filename (without any path prefix).
+.
+.PP
+If \fB-\fR is given instead of <diff.xml>, the topology difference is read from
+the standard input.
+.
+.PP
+.B NOTE:
+If some application-specific userdata were been exported to the input XMLs,
+they will be ignored and discarded from the output because hwloc has no way
+to understand and patch them.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-patch utility.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-patch's operation is best described through several examples.
+.
+.PP
+Apply a XML topology difference file to an existing topology:
+
+    $ hwloc-patch fourmi023.xml diff.xml fourmi023-new.xml
+
+Apply a XML topology difference file whole refname field contains the right input topology:
+
+    $ hwloc-patch refname diff.xml fourmi023-new.xml
+
+Apply a XML topology from the standard intput:
+
+    $ cat diff.xml | hwloc-patch fourmi023.xml - fourmi023-new.xml
+
+Directly compute the difference between two topologies and apply it
+to another one, in place:
+
+    $ hwloc-diff fourmi023.xml fourmi024.xml | hwloc-patch fourmi025.xml -
+
+.
+.\" **************************
+.\" Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-patch outputs the modified topology.
+The return value is 0.
+.
+.PP
+hwloc-patch also returns nonzero if any kind of error occurs, such as
+(but not limited to) failure to parse the command line.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-diff(1), hwloc-compress-dir(1)
+.sp

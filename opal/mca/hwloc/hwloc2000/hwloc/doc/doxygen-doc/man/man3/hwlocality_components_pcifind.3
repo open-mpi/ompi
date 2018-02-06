@@ -1,0 +1,47 @@
+.TH "hwlocality_components_pcifind" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_components_pcifind
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBhwloc_pcidisc_find_by_busid\fP (struct hwloc_topology *topology, unsigned domain, unsigned bus, unsigned dev, unsigned func)"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBhwloc_pcidisc_find_busid_parent\fP (struct hwloc_topology *topology, unsigned domain, unsigned bus, unsigned dev, unsigned func)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "struct \fBhwloc_obj\fP* hwloc_pcidisc_find_busid_parent (struct hwloc_topology * topology, unsigned domain, unsigned bus, unsigned dev, unsigned func)"
+
+.PP
+Find the normal parent of a PCI bus ID\&. Look at PCI affinity to find out where the given PCI bus ID should be attached\&.
+.PP
+This function should be used to attach an I/O device directly under a normal (non-I/O) object, instead of below a PCI object\&. It is usually used by backends when \fBhwloc_pcidisc_find_by_busid()\fP failed to find the hwloc object corresponding to this bus ID, for instance because PCI discovery is not supported on this platform\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_pcidisc_find_by_busid (struct hwloc_topology * topology, unsigned domain, unsigned bus, unsigned dev, unsigned func)"
+
+.PP
+Find the PCI object that matches the bus ID\&. To be used after a PCI backend added PCI devices with \fBhwloc_pcidisc_tree_attach()\fP and before the core moves them to their actual location with hwloc_pci_belowroot_apply_locality()\&.
+.PP
+If no exactly matching object is found, return the container bridge if any, or NULL\&.
+.PP
+On failure, it may be possible to find the PCI locality (instead of the PCI device) by calling \fBhwloc_pcidisc_find_busid_parent()\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+This is semantically identical to \fBhwloc_get_pcidev_by_busid()\fP which only works after the topology is fully loaded\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -1,0 +1,8 @@
+draw:
+  testset: avakas plafrim plafrim2
+  copy: %=txz
+  needed: %/netloc %/hwloc
+  excluded: $NETLOC_TEST/netloc/*json
+  command: $NETLOC_UTIL_PATH/draw/netloc_draw_to_json %/netloc
+  checkfiles: $NETLOC_TEST/netloc/*json
+

@@ -1,0 +1,106 @@
+.TH "hwlocality_helper_types" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_helper_types
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_obj_type_is_normal\fP (\fBhwloc_obj_type_t\fP type)"
+.br
+.ti -1c
+.RI "int \fBhwloc_obj_type_is_io\fP (\fBhwloc_obj_type_t\fP type)"
+.br
+.ti -1c
+.RI "int \fBhwloc_obj_type_is_memory\fP (\fBhwloc_obj_type_t\fP type)"
+.br
+.ti -1c
+.RI "int \fBhwloc_obj_type_is_cache\fP (\fBhwloc_obj_type_t\fP type)"
+.br
+.ti -1c
+.RI "int \fBhwloc_obj_type_is_dcache\fP (\fBhwloc_obj_type_t\fP type)"
+.br
+.ti -1c
+.RI "int \fBhwloc_obj_type_is_icache\fP (\fBhwloc_obj_type_t\fP type)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Each object type is either Normal (i\&.e\&. \fBhwloc_obj_type_is_normal()\fP returns 1), or Memory (i\&.e\&. \fBhwloc_obj_type_is_memory()\fP returns 1) or I/O (i\&.e\&. \fBhwloc_obj_type_is_io()\fP returns 1) or Misc (i\&.e\&. equal to \fBHWLOC_OBJ_MISC\fP)\&. It cannot be of more than one of these kinds\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_obj_type_is_cache (\fBhwloc_obj_type_t\fP type)"
+
+.PP
+Check whether an object type is a Cache (Data, Unified or Instruction)\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+1 if an object of type \fCtype\fP is a Cache, 0 otherwise\&. 
+.RE
+.PP
+
+.SS "int hwloc_obj_type_is_dcache (\fBhwloc_obj_type_t\fP type)"
+
+.PP
+Check whether an object type is a Data or Unified Cache\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+1 if an object of type \fCtype\fP is a Data or Unified Cache, 0 otherwise\&. 
+.RE
+.PP
+
+.SS "int hwloc_obj_type_is_icache (\fBhwloc_obj_type_t\fP type)"
+
+.PP
+Check whether an object type is a Instruction Cache,\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+1 if an object of type \fCtype\fP is a Instruction Cache, 0 otherwise\&. 
+.RE
+.PP
+
+.SS "int hwloc_obj_type_is_io (\fBhwloc_obj_type_t\fP type)"
+
+.PP
+Check whether an object type is Memory\&. Memory objects are objects attached to their parents in the Memory children list\&. This current only includes NUMA nodes\&.
+.PP
+\fBReturns:\fP
+.RS 4
+1 if an object of type \fCtype\fP is a Memory object, 0 otherwise\&. 
+.RE
+.PP
+
+.SS "int hwloc_obj_type_is_memory (\fBhwloc_obj_type_t\fP type)"
+
+.PP
+Check whether an object type is I/O\&. I/O objects are objects attached to their parents in the I/O children list\&. This current includes Bridges, PCI and OS devices\&.
+.PP
+\fBReturns:\fP
+.RS 4
+1 if an object of type \fCtype\fP is a I/O object, 0 otherwise\&. 
+.RE
+.PP
+
+.SS "int hwloc_obj_type_is_normal (\fBhwloc_obj_type_t\fP type)"
+
+.PP
+Check whether an object type is Normal\&. Normal objects are objects of the main CPU hierarchy (Machine, Package, Core, PU, CPU caches, etc\&.), but they are not NUMA nodes, I/O devices or Misc objects\&.
+.PP
+They are attached to parent as Normal children, not as Memory, I/O or Misc children\&.
+.PP
+\fBReturns:\fP
+.RS 4
+1 if an object of type \fCtype\fP is a Normal object, 0 otherwise\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

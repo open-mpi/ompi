@@ -1,0 +1,148 @@
+.\" -*- nroff -*-
+.\" Copyright © 2013-2017 Inria.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-ANNOTATE "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-annotate \- Add info attributes to a XML topology
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.B hwloc-annotate
+[\fIoptions\fR]
+\fI<input.xml>\fR
+\fI<output.xml>\fR
+\fI<location>\fR
+\fI<mode>\fR
+\fI<annotation>\fR
+.
+.PP
+Note that hwloc(7) provides a detailed explanation of the hwloc system
+and of valid <location> formats;
+it should be read before reading this man page.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-\-ri\fR
+Remove all info attributes that exist with the same name before adding the new one.
+This option is only accepted in "info" mode.
+If the info value is omitted, existing infos are replaced with nothing.
+.TP
+\fB\-\-ci\fR
+Clear the existing info attributes in the target objects before annotating.
+If no new annotation has to be added after clearing, \fImode\fR should be
+set to \fInone\fR.
+.TP
+\fB\-\-cu\fR
+Clear the existing userdata from the target objects.
+If nothing else has to be performed after clearing, \fImode\fR should be
+set to \fInone\fR.
+.
+.TP
+\fB\-\-cd\fR
+Clear the existing distances from the topology.
+If nothing else has to be performed after clearing, \fImode\fR should be
+set to \fInone\fR.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-annotate loads a topology from a XML file, adds some annotations,
+and export the resulting topology to another XML file.
+The input and output files may be the same.
+.
+.PP
+The annotation may be string info attributes.
+This is specified by the \fImode\fR:
+.
+.TP
+.B info <name> <value>
+Specifies a new string info attribute whose name is \fIname\fR and
+value is \fIvalue\fR.
+.TP
+.B misc <name>
+Specifies a new Misc object name.
+.TP
+.B distances <filename> [<flags>]
+Specifies new distances to be added to the topology using specifications in \fI<filename>\fR.
+The optional \fIflags\fR (0 unless specified) corresponds to the flags
+given to the function \fBhwloc_distances_set()\fR.
+\fIlocation\fR is ignored in this mode.
+
+The first line of the pointed file must be a integer representing
+a distances \fBkind\fR as defined in \fBhwloc/distances.h\fR.
+The second line is the number of objects involved in the distances.
+The next lines contain one object each.
+The next lines contain one distance value each,
+or a single line may be given with a integer combination of format \fBx*y\fR or \fBx*y*z\fR.
+.TP
+.B none
+No new annotation is added. This is useful when clearing existing attributes.
+.
+.PP
+Annotations may be added to one specific object in the topology,
+all of them, or all of a given type.
+This is specified by the \fIlocation\fR (see also EXAMPLES below).
+Objects may be specified as location tuples, as explained in hwloc(7).
+However hexadecimal bitmasks are not accepted since they may correspond to multiple objects.
+.
+.PP
+.B NOTE:
+The existing annotations may be listed with hwloc-info.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-annotate utility.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-annotate's operation is best described through several examples.
+.
+.PP
+Add an info attribute to all Core objects:
+
+    $ hwloc-annotate input.xml output.xml Core:all info infoname infovalue
+
+Add a Misc object named "foobar" under the root object of the topology
+and modify the input XML directly:
+
+    $ hwloc-annotate file.xml file.xml root misc foobar
+
+Add an info attribute to OS device #2 and #3:
+
+    $ hwloc-annotate input.xml output.xml os:2-3 info infoname infovalue
+
+Change package objects to green with red text in the lstopo graphical output:
+
+    $ hwloc-annotate topo.xml topo.xml package:all info lstopoStyle "Background=#00ff00;Text=#ff0000"
+    $ lstopo -i topo.xml
+.
+.\" **************************
+.\" Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-annotate generates the output topology.
+The return value is 0.
+.
+.PP
+hwloc-annotate will return nonzero if any kind of error occurs, such as
+(but not limited to) failure to parse the command line.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-info(1)
+.sp

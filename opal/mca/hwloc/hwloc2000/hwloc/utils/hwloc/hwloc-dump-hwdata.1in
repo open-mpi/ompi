@@ -1,0 +1,68 @@
+.\" -*- nroff -*-
+.\" Copyright © 2015-2016 Inria.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-DUMP-HWDATA "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-dump-hwdata \- Dump topology and locality information from hardware tables
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-dump-hwdata
+[\fIoptions\fR]
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-o <dir>\fR
+save output files to directory <dir> instead of the default
+\fI#RUNSTATEDIR#/hwloc/\fR that was specified at configure time.
+
+You may want to set the HWLOC_DUMPED_HWDATA_DIR environment variable
+as well so that the hwloc library looks for dumped files in that same
+directory.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc may benefit from some locality and topology information from
+SMBIOS or ACPI tables.
+They are accessible from raw hardware files under directories such
+/sys/firmware/dmi/ or /sys/firmware/acpi/ on Linux.
+These files are usually only accessible to root.
+.
+.PP
+The hwloc-dump-hwdata tool dumps the useful contents of such files into
+human-readable and world-accessible files. The intent is to run the tool
+once during boot and have the main (non-privileged) hwloc library gather
+information from these human-readable files.
+.
+.PP
+\fBhwloc-dump-hwdata is currently only useful on Intel Knights Landing
+Xeon Phi platforms\fR.
+.
+.PP
+The current list of dumped information is:
+.
+.TP 5
+\fBIntel Knights Landing memory, cache and clustering configuration\fR
+gathered from specific SMBIOS entries such as
+\fI/sys/firmware/dmi/entries/14-*\fR and
+\fI/sys/firmware/dmi/entries/160-*\fR,
+and saved in file \fIknl_memoryside_cache\fR.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1)
+.sp

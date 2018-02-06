@@ -1,0 +1,28 @@
+Machine (P#0 total=4192952KB Backend=Linux)
+  Package L#0 (P#0 total=2095800KB)
+    NUMANode L#0 (P#0 local=2095800KB total=2095800KB)
+    L2Cache L#0 (size=1024KB linesize=64 ways=16)
+      L1dCache L#0 (size=64KB linesize=64 ways=2)
+        L1iCache L#0 (size=64KB linesize=64 ways=2)
+          Core L#0 (P#0)
+            PU L#0 (P#0)
+  Package L#1 (P#1 total=2097152KB)
+    NUMANode L#1 (P#1 local=2097152KB total=2097152KB)
+    L2Cache L#1 (size=1024KB linesize=64 ways=16)
+      L1dCache L#1 (size=64KB linesize=64 ways=2)
+        L1iCache L#1 (size=64KB linesize=64 ways=2)
+          Core L#1 (P#0)
+            PU L#1 (P#1)
+depth 0:           1 Machine (type #0)
+ depth 1:          2 Package (type #1)
+  depth 2:         2 L2Cache (type #5)
+   depth 3:        2 L1dCache (type #4)
+    depth 4:       2 L1iCache (type #9)
+     depth 5:      2 Core (type #2)
+      depth 6:     2 PU (type #3)
+Special depth -3:  2 NUMANode (type #13)
+Relative latency matrix (kind 5) between 2 NUMANodes (depth -3) by logical indexes:
+  index     0     1
+      0    10    20
+      1    20    10
+Topology not from this system

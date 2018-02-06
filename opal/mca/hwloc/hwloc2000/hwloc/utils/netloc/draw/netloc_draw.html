@@ -1,0 +1,72 @@
+<!--
+    Copyright © 2016-2018 Inria.  All rights reserved.
+    $COPYRIGHT$
+
+    Additional copyrights may follow
+    See COPYING in top-level directory.
+
+    $HEADER$
+ -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="visdist/vis.min.js"></script>
+    <link href="visdist/vis.min.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        #mynetwork {
+            width: auto;
+            height: 800px;
+            border: 1px solid lightgray;
+        }
+    </style>
+
+    <title>Network topology</title>
+  </head>
+  <body>
+    <input type="file" id="files" name="files[]"/>
+    <select id="selectPartition">
+      <option value="" disabled="disabled">Choose a partition</option>
+    </select>
+    <select id="selectColors">
+      <option value="" disabled="disabled">Choose a color mode</option>
+    </select>
+    <input id="reload" type="button" value="Reload"/>
+    <input id="searchValue" type="text" name="searchValue"/>
+    <select id="selectSearch">
+      <option value="" disabled="disabled">Choose a search field</option>
+      <option value="hostname"      >Hostname</option>
+      <option value="id"            >Id</option>
+      <option value="type"          >Type</option>
+      <option value="part"          >Partition</option>
+      <option value="topo"          >Hwloc topologies</option>
+      <option value="title"         >Description</option>
+    </select>
+    <input id="search" type="button" value="Search"/>
+    <input id="fit" type="button" value="Fit"/>
+    <input id="imageCreate" type="button" value="Generate image link"/>
+    <span id="imageLink"></span>
+    <input id="removeSel" type="button" value="Remove selected"/>
+    <input id="expandSel" type="button" value="Expand selected"/>
+
+    <div id="mynetwork"></div>
+    <span id="removeButton"></span>
+    <pre id="description"></pre>
+
+    <script type="text/javascript" src="netloc_draw.js"></script>
+    <script type="text/javascript">
+/* Add Event Listeners */
+document.getElementById("files").addEventListener("change", handleFileSelect);
+document.getElementById("selectPartition").addEventListener("change", draw);
+document.getElementById("selectColors").addEventListener("change", nodeColors);
+document.getElementById("reload").addEventListener("click", draw);
+document.getElementById("searchValue").addEventListener("keydown", function(event){if(event.keyCode==13)search();});
+document.getElementById("search").addEventListener("click", search);
+document.getElementById("fit").addEventListener("click", function(){network.fit({animation:true});});
+document.getElementById("imageCreate").addEventListener("click", prepareImage);
+document.getElementById("removeSel").addEventListener("click", function(){network.deleteSelected();});
+document.getElementById("expandSel").addEventListener("click", expandSelected);
+    </script>
+  </body>
+</html>

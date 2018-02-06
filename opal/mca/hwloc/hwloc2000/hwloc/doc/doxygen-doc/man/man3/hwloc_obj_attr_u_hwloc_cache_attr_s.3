@@ -1,0 +1,58 @@
+.TH "hwloc_obj_attr_u::hwloc_cache_attr_s" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_obj_attr_u::hwloc_cache_attr_s
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "hwloc_uint64_t \fBsize\fP"
+.br
+.ti -1c
+.RI "unsigned \fBdepth\fP"
+.br
+.ti -1c
+.RI "unsigned \fBlinesize\fP"
+.br
+.ti -1c
+.RI "int \fBassociativity\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_obj_cache_type_t\fP \fBtype\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Cache-specific Object Attributes\&. 
+.SH "Field Documentation"
+.PP 
+.SS "int hwloc_obj_attr_u::hwloc_cache_attr_s::associativity"
+
+.PP
+Ways of associativity, -1 if fully associative, 0 if unknown\&. 
+.SS "unsigned hwloc_obj_attr_u::hwloc_cache_attr_s::depth"
+
+.PP
+Depth of cache (e\&.g\&., L1, L2, \&.\&.\&.etc\&.) 
+.SS "unsigned hwloc_obj_attr_u::hwloc_cache_attr_s::linesize"
+
+.PP
+Cache-line size in bytes\&. 0 if unknown\&. 
+.SS "hwloc_uint64_t hwloc_obj_attr_u::hwloc_cache_attr_s::size"
+
+.PP
+Size of cache in bytes\&. 
+.SS "\fBhwloc_obj_cache_type_t\fP hwloc_obj_attr_u::hwloc_cache_attr_s::type"
+
+.PP
+Cache type\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

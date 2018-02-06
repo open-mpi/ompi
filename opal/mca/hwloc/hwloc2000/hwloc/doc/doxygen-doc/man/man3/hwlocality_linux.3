@@ -1,0 +1,76 @@
+.TH "hwlocality_linux" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_linux
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_linux_set_tid_cpubind\fP (\fBhwloc_topology_t\fP topology, pid_t tid, \fBhwloc_const_cpuset_t\fP set)"
+.br
+.ti -1c
+.RI "int \fBhwloc_linux_get_tid_cpubind\fP (\fBhwloc_topology_t\fP topology, pid_t tid, \fBhwloc_cpuset_t\fP set)"
+.br
+.ti -1c
+.RI "int \fBhwloc_linux_get_tid_last_cpu_location\fP (\fBhwloc_topology_t\fP topology, pid_t tid, \fBhwloc_bitmap_t\fP set)"
+.br
+.ti -1c
+.RI "int \fBhwloc_linux_read_path_as_cpumask\fP (const char *path, \fBhwloc_bitmap_t\fP set)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This includes helpers for manipulating Linux kernel cpumap files, and hwloc equivalents of the Linux sched_setaffinity and sched_getaffinity system calls\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_linux_get_tid_cpubind (\fBhwloc_topology_t\fP topology, pid_t tid, \fBhwloc_cpuset_t\fP set)"
+
+.PP
+Get the current binding of thread \fCtid\fP\&. The behavior is exactly the same as the Linux sched_getaffinity system call, but uses a hwloc cpuset\&.
+.PP
+\fBNote:\fP
+.RS 4
+This is equivalent to calling \fBhwloc_get_proc_cpubind()\fP with \fBHWLOC_CPUBIND_THREAD\fP as flags\&. 
+.RE
+.PP
+
+.SS "int hwloc_linux_get_tid_last_cpu_location (\fBhwloc_topology_t\fP topology, pid_t tid, \fBhwloc_bitmap_t\fP set)"
+
+.PP
+Get the last physical CPU where thread \fCtid\fP ran\&. 
+.PP
+\fBNote:\fP
+.RS 4
+This is equivalent to calling \fBhwloc_get_proc_last_cpu_location()\fP with \fBHWLOC_CPUBIND_THREAD\fP as flags\&. 
+.RE
+.PP
+
+.SS "int hwloc_linux_read_path_as_cpumask (const char * path, \fBhwloc_bitmap_t\fP set)"
+
+.PP
+Convert a linux kernel cpumask file \fCpath\fP into a hwloc bitmap \fCset\fP\&. Might be used when reading CPU set from sysfs attributes such as topology and caches for processors, or local_cpus for devices\&.
+.PP
+\fBNote:\fP
+.RS 4
+This function ignores the HWLOC_FSROOT environment variable\&. 
+.RE
+.PP
+
+.SS "int hwloc_linux_set_tid_cpubind (\fBhwloc_topology_t\fP topology, pid_t tid, \fBhwloc_const_cpuset_t\fP set)"
+
+.PP
+Bind a thread \fCtid\fP on cpus given in cpuset \fCset\fP\&. The behavior is exactly the same as the Linux sched_setaffinity system call, but uses a hwloc cpuset\&.
+.PP
+\fBNote:\fP
+.RS 4
+This is equivalent to calling \fBhwloc_set_proc_cpubind()\fP with HWLOC_CPUBIND_THREAD as flags\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -1,0 +1,150 @@
+.TH "hwlocality_helper_topology_sets" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_helper_topology_sets
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBhwloc_const_cpuset_t\fP \fBhwloc_topology_get_complete_cpuset\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.ti -1c
+.RI "\fBhwloc_const_cpuset_t\fP \fBhwloc_topology_get_topology_cpuset\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.ti -1c
+.RI "\fBhwloc_const_cpuset_t\fP \fBhwloc_topology_get_allowed_cpuset\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.ti -1c
+.RI "\fBhwloc_const_nodeset_t\fP \fBhwloc_topology_get_complete_nodeset\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.ti -1c
+.RI "\fBhwloc_const_nodeset_t\fP \fBhwloc_topology_get_topology_nodeset\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.ti -1c
+.RI "\fBhwloc_const_nodeset_t\fP \fBhwloc_topology_get_allowed_nodeset\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "\fBhwloc_const_cpuset_t\fP hwloc_topology_get_allowed_cpuset (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Get allowed CPU set\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the CPU set of allowed logical processors of the system\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+If the topology flag \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP was not set, this is identical to \fBhwloc_topology_get_topology_cpuset()\fP, which means all PUs are allowed\&.
+.PP
+If \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP was set, applying \fBhwloc_bitmap_intersects()\fP on the result of this function and on an object cpuset checks whether there are allowed PUs inside that object\&. Applying \fBhwloc_bitmap_and()\fP returns the list of these allowed PUs\&.
+.PP
+The returned cpuset is not newly allocated and should thus not be changed or freed, \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_const_nodeset_t\fP hwloc_topology_get_allowed_nodeset (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Get allowed node set\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the node set of allowed memory of the system\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+If the topology flag \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP was not set, this is identical to \fBhwloc_topology_get_topology_nodeset()\fP, which means all NUMA nodes are allowed\&.
+.PP
+If \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP was set, applying \fBhwloc_bitmap_intersects()\fP on the result of this function and on an object nodeset checks whether there are allowed NUMA nodes inside that object\&. Applying \fBhwloc_bitmap_and()\fP returns the list of these allowed NUMA nodes\&.
+.PP
+The returned nodeset is not newly allocated and should thus not be changed or freed, \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_const_cpuset_t\fP hwloc_topology_get_complete_cpuset (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Get complete CPU set\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the complete CPU set of logical processors of the system\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+The returned cpuset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
+.PP
+This is equivalent to retrieving the root object complete CPU-set\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_const_nodeset_t\fP hwloc_topology_get_complete_nodeset (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Get complete node set\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the complete node set of memory of the system\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+The returned nodeset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
+.PP
+This is equivalent to retrieving the root object complete CPU-set\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_const_cpuset_t\fP hwloc_topology_get_topology_cpuset (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Get topology CPU set\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the CPU set of logical processors of the system for which hwloc provides topology information\&. This is equivalent to the cpuset of the system object\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+The returned cpuset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
+.PP
+This is equivalent to retrieving the root object complete CPU-set\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_const_nodeset_t\fP hwloc_topology_get_topology_nodeset (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Get topology node set\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+the node set of memory of the system for which hwloc provides topology information\&. This is equivalent to the nodeset of the system object\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+The returned nodeset is not newly allocated and should thus not be changed or freed; \fBhwloc_bitmap_dup()\fP must be used to obtain a local copy\&.
+.PP
+This is equivalent to retrieving the root object complete CPU-set\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

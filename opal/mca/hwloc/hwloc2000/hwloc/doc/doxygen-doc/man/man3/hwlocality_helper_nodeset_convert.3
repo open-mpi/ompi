@@ -1,0 +1,36 @@
+.TH "hwlocality_helper_nodeset_convert" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_helper_nodeset_convert
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBhwloc_cpuset_to_nodeset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP _cpuset, \fBhwloc_nodeset_t\fP nodeset)"
+.br
+.ti -1c
+.RI "static int \fBhwloc_cpuset_from_nodeset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP _cpuset, \fBhwloc_const_nodeset_t\fP nodeset)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_cpuset_from_nodeset (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP _cpuset, \fBhwloc_const_nodeset_t\fP nodeset)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Convert a NUMA node set into a CPU set and handle non-NUMA cases\&. If the topology contains no NUMA nodes, the machine is considered as a single memory node, and the following behavior is used: If \fCnodeset\fP is empty, \fCcpuset\fP will be emptied as well\&. Otherwise \fCcpuset\fP will be entirely filled\&. This is useful for manipulating memory binding sets\&. 
+.SS "static int hwloc_cpuset_to_nodeset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP _cpuset, \fBhwloc_nodeset_t\fP nodeset)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Convert a CPU set into a NUMA node set and handle non-NUMA cases\&. If some NUMA nodes have no CPUs at all, this function never sets their indexes in the output node set, even if a full CPU set is given in input\&.
+.PP
+If the topology contains no NUMA nodes, the machine is considered as a single memory node, and the following behavior is used: If \fCcpuset\fP is empty, \fCnodeset\fP will be emptied as well\&. Otherwise \fCnodeset\fP will be entirely filled\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.
