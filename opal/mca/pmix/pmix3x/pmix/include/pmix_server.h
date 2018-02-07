@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -414,64 +414,6 @@ typedef pmix_status_t (*pmix_server_validate_cred_fn_t)(const pmix_proc_t *proc,
                                                         const pmix_info_t directives[], size_t ndirs,
                                                         pmix_validation_cbfunc_t cbfunc, void *cbdata);
 
-/* Request the specified IO channels be forwarded from the given array of procs.
- * The function shall return PMIX_SUCCESS once the host RM accepts the request for
- * processing, or a PMIx error code if the request itself isn't correct or supported.
- * The callback function shall be called when the request has been processed,
- * returning either PMIX_SUCCESS to indicate that IO shall be forwarded as requested,
- * or some appropriate error code if the request has been denied.
- *
- * procs - array of process identifiers whose IO is being requested.
- *
- * nprocs - size of the procs array
- *
- * directives - array of key-value attributes further defining the request. This
- *              might include directives on buffering and security credentials for
- *              access to protected channels
- *
- * ndirs - size of the directives array
- *
- * channels - bitmask identifying the channels to be forwarded
- *
- * cbfunc - callback function when the IO forwarding has been setup
- *
- * cbdata - object to be returned in cbfunc
- *
- * This call serves as a registration with the host RM for the given IO channels from
- * the specified procs - the host RM is expected to ensure that this local PMIx server
- * is on the distribution list for the channel/proc combination
- */
-typedef pmix_status_t (*pmix_server_iof_fn_t)(const pmix_proc_t procs[], size_t nprocs,
-                                              const pmix_info_t directives[], size_t ndirs,
-                                              pmix_iof_channel_t channels,
-                                              pmix_op_cbfunc_t cbfunc, void *cbdata);
-
-/* Passes stdin to the host RM for transmission to recipients. The host RM is
- * responsible for forwarding the data to all PMIx servers that have requested
- * stdin from the specified source.
- *
- * source - pointer to the identifier of the process whose stdin is being provided
- *
- * bo - pointer to a byte object containing the stdin data
- *
- * directives - array of key-value attributes further defining the request. This
- *              might include directives on buffering and security credentials for
- *              access to protected channels
- *
- * ndirs - size of the directives array
- *
- * cbfunc - callback function when the IO forwarding has been setup
- *
- * cbdata - object to be returned in cbfunc
- *
- */
-
-typedef pmix_status_t (*pmix_server_stdin_fn_t)(const pmix_proc_t *source,
-                                                const pmix_byte_object_t *bo,
-                                                const pmix_info_t directives[], size_t ndirs,
-                                                pmix_op_cbfunc_t cbfunc, void *cbdata);
-
-
 typedef struct pmix_server_module_2_0_0_t {
     /* v1x interfaces */
     pmix_server_client_connected_fn_t   client_connected;
@@ -499,11 +441,9 @@ typedef struct pmix_server_module_2_0_0_t {
     /* v3x interfaces */
     pmix_server_get_cred_fn_t           get_credential;
     pmix_server_validate_cred_fn_t      validate_credential;
-    pmix_server_iof_fn_t                register_iof;
-    pmix_server_stdin_fn_t              push_stdin;
 } pmix_server_module_t;
 
-/****    HOST RM FUNCTIONS FOR INTERFACE TO PMIX SERVER    ****/
+/****    SERVER SUPPORT INIT/FINALIZE FUNCTIONS    ****/
 
 /* Initialize the server support library, and provide a
  * pointer to a pmix_server_module_t structure
@@ -670,38 +610,6 @@ PMIX_EXPORT pmix_status_t PMIx_server_setup_application(const char nspace[],
 PMIX_EXPORT pmix_status_t PMIx_server_setup_local_support(const char nspace[],
                                                           pmix_info_t info[], size_t ninfo,
                                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
-
-/* Provide a function by which the host RM can pass forwarded IO
- * to the local PMIx server for distribution to its clients. The
- * PMIx server is responsible for determining which of its clients
- * have actually registered for the provided data
- *
- * Parameters include:
- *
- * source - the process that provided the data being forwarded
- *
- * channel - the IOF channel (stdin, stdout, etc.)
- *
- * bo - a byte object containing the data
- *
- * info - an optional array of metadata describing the data, including
- *        attributes such as PMIX_IOF_COMPLETE to indicate that the
- *        source channel has been closed
- *
- * ninfo - number of elements in the info array
- *
- * cbfunc - a callback function to be executed once the provided data
- *          is no longer required. The host RM is required to retain
- *          the byte object until the callback is executed, or a
- *          non-success status is returned by the function
- *
- * cbdata - object pointer to be returned in the callback function
- */
-PMIX_EXPORT pmix_status_t PMIx_IOF_push(const pmix_proc_t *source,
-                                        pmix_iof_channel_t channel,
-                                        const pmix_byte_object_t *bo,
-                                        const pmix_info_t info[], size_t ninfo,
-                                        pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

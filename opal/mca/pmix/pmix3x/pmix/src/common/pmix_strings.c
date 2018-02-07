@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -216,40 +216,7 @@ PMIX_EXPORT const char* pmix_command_string(pmix_cmd_t cmd)
             return "JOB CONTROL";
         case PMIX_MONITOR_CMD:
             return "MONITOR";
-        case PMIX_IOF_CMD:
-            return "IOF";
         default:
             return "UNKNOWN";
     }
-}
-
-/* this is not a thread-safe implementation. To correctly implement this,
- * we need to port the thread-safe data code from OPAL and use it here */
-static char answer[300];
-
-PMIX_EXPORT const char* PMIx_IOF_channel_string(pmix_iof_channel_t channel)
-{
-    size_t cnt=0;
-
-    memset(answer, 0, sizeof(answer));
-    if (PMIX_FWD_STDIN_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDIN ", strlen("STDIN "));
-        cnt += strlen("STDIN ");
-    }
-    if (PMIX_FWD_STDOUT_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDOUT ", strlen("STDOUT "));
-        cnt += strlen("STDOUT ");
-    }
-    if (PMIX_FWD_STDERR_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDERR ", strlen("STDERR "));
-        cnt += strlen("STDERR ");
-    }
-    if (PMIX_FWD_STDDIAG_CHANNEL & channel) {
-        strncpy(&answer[cnt], "STDDIAG ", strlen("STDDIAG "));
-        cnt += strlen("STDDIAG ");
-    }
-    if (0 == cnt) {
-        strncpy(&answer[cnt], "NONE", strlen("NONE"));
-    }
-    return answer;
 }

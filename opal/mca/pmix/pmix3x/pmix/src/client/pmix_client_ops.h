@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,9 +42,6 @@ typedef struct {
     // verbosity for client event operations
     int event_output;
     int event_verbose;
-    // verbosity for client iof operations
-    int iof_output;
-    int iof_verbose;
     // verbosity for basic client functions
     int base_output;
     int base_verbose;

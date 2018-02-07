@@ -1025,22 +1025,7 @@ static void spcbfunc(pmix_status_t status,
                      char nspace[], void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
-    pmix_iof_req_t *req;
 
-    /* if it was successful, and there are IOF requests, then
-     * register them now */
-    if (PMIX_SUCCESS == status && PMIX_FWD_NO_CHANNELS != cd->channels) {
-         /* record the request */
-        req = PMIX_NEW(pmix_iof_req_t);
-        if (NULL != req) {
-            PMIX_RETAIN(cd->peer);
-            req->peer = cd->peer;
-            req->pname.nspace = strdup(nspace);
-            req->pname.rank = PMIX_RANK_WILDCARD;
-            req->channels = cd->channels;
-            pmix_list_append(&pmix_globals.iof_requests, &req->super);
-        }
-    }
     /* cleanup the caddy */
     if (NULL != cd->info) {
         PMIX_INFO_FREE(cd->info, cd->ninfo);
@@ -1063,8 +1048,7 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     int32_t cnt;
     pmix_status_t rc;
     pmix_proc_t proc;
-    size_t ninfo, n;
-    bool stdout_found = false, stderr_found = false, stddiag_found = false;
+    size_t ninfo;
 
     pmix_output_verbose(2, pmix_server_globals.spawn_output,
                         "recvd SPAWN");
@@ -1079,8 +1063,6 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     if (NULL == cd) {
         return PMIX_ERR_NOMEM;
     }
-    PMIX_RETAIN(peer);
-    cd->peer = peer;
     cd->spcbfunc = cbfunc;
     cd->cbdata = cbdata;
 
@@ -1109,48 +1091,10 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
-        /* run a quick check of the directives to see if any IOF
-         * requests were included so we can set that up now - helps
-         * to catch any early output */
-        cd->channels = PMIX_FWD_NO_CHANNELS;
-        for (n=0; n < cd->ninfo; n++) {
-            if (0 == strncmp(cd->info[n].key, PMIX_FWD_STDIN, PMIX_MAX_KEYLEN)) {
-                stdout_found = true;
-                if (PMIX_INFO_TRUE(&cd->info[n])) {
-                    cd->channels |= PMIX_FWD_STDIN_CHANNEL;
-                }
-            } else if (0 == strncmp(cd->info[n].key, PMIX_FWD_STDOUT, PMIX_MAX_KEYLEN)) {
-                if (PMIX_INFO_TRUE(&cd->info[n])) {
-                    cd->channels |= PMIX_FWD_STDOUT_CHANNEL;
-                }
-            } else if (0 == strncmp(cd->info[n].key, PMIX_FWD_STDERR, PMIX_MAX_KEYLEN)) {
-                stderr_found = true;
-                if (PMIX_INFO_TRUE(&cd->info[n])) {
-                    cd->channels |= PMIX_FWD_STDERR_CHANNEL;
-                }
-            } else if (0 == strncmp(cd->info[n].key, PMIX_FWD_STDDIAG, PMIX_MAX_KEYLEN)) {
-                stddiag_found = true;
-                if (PMIX_INFO_TRUE(&cd->info[n])) {
-                    cd->channels |= PMIX_FWD_STDDIAG_CHANNEL;
-                }
-            }
-        }
-        /* we will construct any required iof request tracker upon completion of the spawn */
     }
     /* add the directive to the end */
     if (PMIX_PROC_IS_TOOL(peer)) {
         PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_TOOL, NULL, PMIX_BOOL);
-        /* if the requestor is a tool, we default to forwarding all
-         * output IO channels */
-        if (!stdout_found) {
-            cd->channels |= PMIX_FWD_STDOUT_CHANNEL;
-        }
-        if (!stderr_found) {
-            cd->channels |= PMIX_FWD_STDERR_CHANNEL;
-        }
-        if (!stddiag_found) {
-            cd->channels |= PMIX_FWD_STDDIAG_CHANNEL;
-        }
     } else {
         PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_CLIENT, NULL, PMIX_BOOL);
     }
@@ -2598,130 +2542,6 @@ pmix_status_t pmix_server_validate_credential(pmix_peer_t *peer,
     return rc;
 }
 
-pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
-                                 pmix_buffer_t *buf,
-                                 pmix_op_cbfunc_t cbfunc,
-                                 void *cbdata)
-{
-    int32_t cnt;
-    pmix_status_t rc;
-    pmix_setup_caddy_t *cd;
-    pmix_iof_req_t *req;
-    bool notify, match;
-    size_t n;
-
-    pmix_output_verbose(2, pmix_server_globals.iof_output,
-                        "recvd register IOF request from client");
-
-    if (NULL == pmix_host_server.register_iof) {
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
-
-    cd = PMIX_NEW(pmix_setup_caddy_t);
-    if (NULL == cd) {
-        return PMIX_ERR_NOMEM;
-    }
-    cd->cbdata = cbdata;  // this is the pmix_server_caddy_t
-
-    /* unpack the number of procs */
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &cd->nprocs, &cnt, PMIX_SIZE);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        goto exit;
-    }
-    /* unpack the procs */
-    if (0 < cd->nprocs) {
-        PMIX_PROC_CREATE(cd->procs, cd->nprocs);
-        cnt = cd->nprocs;
-        PMIX_BFROPS_UNPACK(rc, peer, buf, cd->procs, &cnt, PMIX_PROC);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            goto exit;
-        }
-    }
-
-    /* unpack the number of directives */
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &cd->ninfo, &cnt, PMIX_SIZE);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        goto exit;
-    }
-    /* unpack the directives */
-    if (0 < cd->ninfo) {
-        PMIX_INFO_CREATE(cd->info, cd->ninfo);
-        cnt = cd->ninfo;
-        PMIX_BFROPS_UNPACK(rc, peer, buf, cd->info, &cnt, PMIX_INFO);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            goto exit;
-        }
-    }
-
-    /* unpack the channels */
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &cd->channels, &cnt, PMIX_IOF_CHANNEL);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        goto exit;
-    }
-
-    /* check to see if we have already registered this source/channel combination */
-    notify = false;
-    for (n=0; n < cd->nprocs; n++) {
-        match = false;
-        PMIX_LIST_FOREACH(req, &pmix_globals.iof_requests, pmix_iof_req_t) {
-            /* is this request from the same peer? */
-            if (peer != req->peer) {
-                continue;
-            }
-            /* do we already have this source for this peer? */
-            if (0 == strncmp(cd->procs[n].nspace, req->pname.nspace, PMIX_MAX_NSLEN) &&
-                (PMIX_RANK_WILDCARD == req->pname.rank || cd->procs[n].rank == req->pname.rank)) {
-                match = true;
-                if ((req->channels & cd->channels) != cd->channels) {
-                    /* this is a channel update */
-                    req->channels |= cd->channels;
-                    /* we need to notify the host */
-                    notify = true;
-                }
-                break;
-            }
-        }
-        /* if we didn't find the matching entry, then add it */
-        if (!match) {
-            /* record the request */
-            req = PMIX_NEW(pmix_iof_req_t);
-            if (NULL == req) {
-                rc = PMIX_ERR_NOMEM;
-                goto exit;
-            }
-            PMIX_RETAIN(peer);
-            req->peer = peer;
-            req->pname.nspace = strdup(cd->procs[n].nspace);
-            req->pname.rank = cd->procs[n].rank;
-            req->channels = cd->channels;
-            pmix_list_append(&pmix_globals.iof_requests, &req->super);
-        }
-    }
-
-    if (notify) {
-        /* ask the host to execute the request */
-        if (PMIX_SUCCESS != (rc = pmix_host_server.register_iof(cd->procs, cd->nprocs,
-                                                                cd->info, cd->ninfo,
-                                                                cd->channels,
-                                                                cbfunc, cd))) {
-            goto exit;
-        }
-    }
-    return PMIX_SUCCESS;
-
-  exit:
-    PMIX_RELEASE(cd);
-    return rc;
-}
-
 /*****    INSTANCE SERVER LIBRARY CLASSES    *****/
 static void tcon(pmix_server_trkr_t *t)
 {
@@ -2783,7 +2603,6 @@ PMIX_CLASS_INSTANCE(pmix_server_caddy_t,
 
 static void scadcon(pmix_setup_caddy_t *p)
 {
-    p->peer = NULL;
     memset(&p->proc, 0, sizeof(pmix_proc_t));
     PMIX_CONSTRUCT_LOCK(&p->lock);
     p->nspace = NULL;
@@ -2796,8 +2615,6 @@ static void scadcon(pmix_setup_caddy_t *p)
     p->info = NULL;
     p->ninfo = 0;
     p->keys = NULL;
-    p->channels = PMIX_FWD_NO_CHANNELS;
-    p->bo = NULL;
     p->cbfunc = NULL;
     p->opcbfunc = NULL;
     p->setupcbfunc = NULL;
@@ -2807,9 +2624,6 @@ static void scadcon(pmix_setup_caddy_t *p)
 }
 static void scaddes(pmix_setup_caddy_t *p)
 {
-    if (NULL != p->peer) {
-        PMIX_RELEASE(p->peer);
-    }
     PMIX_DESTRUCT_LOCK(&p->lock);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_setup_caddy_t,

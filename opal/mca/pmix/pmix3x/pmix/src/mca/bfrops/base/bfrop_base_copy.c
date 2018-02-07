@@ -113,7 +113,6 @@ pmix_status_t pmix_bfrops_base_std_copy(void **dest, void *src,
 
     case PMIX_INT16:
     case PMIX_UINT16:
-    case PMIX_IOF_CHANNEL:
         datasize = 2;
         break;
 

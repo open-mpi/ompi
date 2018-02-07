@@ -342,41 +342,6 @@ static void _check_for_notify(pmix_info_t info[], size_t ninfo)
     }
 }
 
-static void client_iof_handler(struct pmix_peer_t *pr,
-                               pmix_ptl_hdr_t *hdr,
-                               pmix_buffer_t *buf, void *cbdata)
-{
-    pmix_peer_t *peer = (pmix_peer_t*)pr;
-    pmix_proc_t source;
-    pmix_iof_channel_t channel;
-    pmix_byte_object_t bo;
-    int32_t cnt;
-    pmix_status_t rc;
-
-    pmix_output_verbose(2, pmix_client_globals.iof_output,
-                        "recvd IOF");
-
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &source, &cnt, PMIX_PROC);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return;
-    }
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &channel, &cnt, PMIX_IOF_CHANNEL);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return;
-    }
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return;
-    }
-    pmix_output(0, "IOF: %s", bo.bytes);
-}
-
 PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
                                     pmix_info_t info[], size_t ninfo)
 {
@@ -393,7 +358,6 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     pmix_lock_t reglock;
     size_t n;
     bool found;
-    pmix_ptl_posted_recv_t *rcv;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -430,13 +394,6 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
-    /* setup the IO Forwarding recv */
-    rcv = PMIX_NEW(pmix_ptl_posted_recv_t);
-    rcv->tag = PMIX_PTL_TAG_IOF;
-    rcv->cbfunc = client_iof_handler;
-    /* add it to the end of the list of recvs */
-    pmix_list_append(&pmix_ptl_globals.posted_recvs, &rcv->super);
-
 
     /* setup the globals */
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
@@ -621,7 +578,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
-    /* look for a debugger attach key */
+    /* lood for a debugger attach key */
     (void)strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     wildcard.rank = PMIX_RANK_WILDCARD;
     PMIX_INFO_LOAD(&ginfo, PMIX_OPTIONAL, NULL, PMIX_BOOL);
@@ -630,7 +587,6 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         /* if the value was found, then we need to wait for debugger attach here */
         /* register for the debugger release notification */
         PMIX_CONSTRUCT_LOCK(&reglock);
-        PMIX_POST_OBJECT(&reglock);
         PMIx_Register_event_handler(&code, 1, NULL, 0,
                                     notification_fn, NULL, (void*)&reglock);
         /* wait for it to arrive */

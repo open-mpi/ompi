@@ -21,7 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,16 +140,10 @@ pmix_status_t pmix_register_params(void)
                                   &pmix_client_globals.spawn_verbose);
 
     (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "event_verbose",
-                                  "Verbosity for client spawn operations",
+                                  "Verbosity for eventt spawn operations",
                                   PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
                                   &pmix_client_globals.event_verbose);
-
-    (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "iof_verbose",
-                                  "Verbosity for client iof operations",
-                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
-                                  &pmix_client_globals.iof_verbose);
 
     (void) pmix_mca_base_var_register ("pmix", "pmix", "client", "base_verbose",
                                   "Verbosity for basic client operations",
@@ -193,12 +187,6 @@ pmix_status_t pmix_register_params(void)
                                   PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
                                   &pmix_server_globals.event_verbose);
-
-    (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "iof_verbose",
-                                  "Verbosity for server iof operations",
-                                  PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  PMIX_INFO_LVL_1, PMIX_MCA_BASE_VAR_SCOPE_ALL,
-                                  &pmix_server_globals.iof_verbose);
 
     (void) pmix_mca_base_var_register ("pmix", "pmix", "server", "base_verbose",
                                   "Verbosity for basic server operations",

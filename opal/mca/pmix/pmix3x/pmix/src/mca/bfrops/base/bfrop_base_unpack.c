@@ -1603,11 +1603,6 @@ pmix_status_t pmix_bfrops_base_unpack_alloc_directive(pmix_buffer_t *buffer, voi
     return pmix_bfrops_base_unpack_byte(buffer, dest, num_vals, PMIX_UINT8);
 }
 
-pmix_status_t pmix_bfrops_base_unpack_iof_channel(pmix_buffer_t *buffer, void *dest,
-                                                  int32_t *num_vals, pmix_data_type_t type)
-{
-    return pmix_bfrops_base_unpack_int16(buffer, dest, num_vals, PMIX_UINT16);
-}
 
 /**** DEPRECATED ****/
 pmix_status_t pmix_bfrops_base_unpack_array(pmix_buffer_t *buffer, void *dest,

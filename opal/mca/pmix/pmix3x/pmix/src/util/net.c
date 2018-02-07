@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -79,7 +79,7 @@
 #include "src/util/output.h"
 #include "src/util/argv.h"
 #include "src/util/show_help.h"
-#include "src/util/tsd.h"
+#include "src/threads/tsd.h"
 #include "src/runtime/pmix_rte.h"
 
 /* this function doesn't depend on sockaddr_h */
