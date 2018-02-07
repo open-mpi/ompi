@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -53,6 +53,7 @@ mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[] = {
     {MCA_BTL_FLAGS_NEED_ACK, "need-ack", 0},
     {MCA_BTL_FLAGS_NEED_CSUM, "need-csum", 0},
     {MCA_BTL_FLAGS_HETEROGENEOUS_RDMA, "hetero-rdma", 0},
+    {MCA_BTL_FLAGS_RDMA_FLUSH, "rdma-flush", 0},
     {0, NULL, 0}
 };
 

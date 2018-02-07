@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
@@ -243,6 +243,9 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* The BTL is using progress thread and need the protection on matching */
 #define MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED 0x40000
+
+/* The BTL supports RMDA flush */
+#define MCA_BTL_FLAGS_RDMA_FLUSH      0x80000
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
@@ -1165,6 +1168,20 @@ typedef void (*mca_btl_base_module_dump_fn_t)(
 typedef int (*mca_btl_base_module_ft_event_fn_t)(int state);
 
 /**
+ * Flush all outstanding RDMA operations on an endpoint or all endpoints.
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    Endpoint to flush (NULL == all)
+ *
+ * This function returns when all outstanding RDMA (put, get, atomic) operations
+ * that were started prior to the flush call have completed. This call does
+ * NOT guarantee that all BTL callbacks have been completed.
+ *
+ * The BTL is allowed to ignore the endpoint parameter and flush *all* endpoints.
+ */
+typedef int (*mca_btl_base_module_flush_fn_t) (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint);
+
+/**
  * BTL module interface functions and attributes.
  */
 struct mca_btl_base_module_t {
@@ -1231,22 +1248,29 @@ struct mca_btl_base_module_t {
 #if OPAL_CUDA_SUPPORT
     size_t      btl_cuda_max_send_size;   /**< set if CUDA max send_size is different from host max send size */
 #endif /* OPAL_CUDA_SUPPORT */
+
+    mca_btl_base_module_flush_fn_t btl_flush; /**< flush all previous operations on an endpoint */
+
+    unsigned char padding[256]; /**< padding to future-proof the btl module */
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 /*
- * Macro for use in modules that are of type btl v3.0.0
- * NOTE: This is not the final version of 3.0.0. Consider it
- * alpha until this comment is removed.
+ * Macro for use in modules that are of type btl v3.1.0
  */
-#define MCA_BTL_BASE_VERSION_3_0_0              \
-    OPAL_MCA_BASE_VERSION_2_1_0("btl", 3, 0, 0)
+#define MCA_BTL_BASE_VERSION_3_1_0              \
+    OPAL_MCA_BASE_VERSION_2_1_0("btl", 3, 1, 0)
 
 #define MCA_BTL_DEFAULT_VERSION(name)                       \
-    MCA_BTL_BASE_VERSION_3_0_0,                             \
+    MCA_BTL_BASE_VERSION_3_1_0,                             \
     .mca_component_name = name,                             \
     MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, \
                           OPAL_RELEASE_VERSION)
+
+/**
+ * Convinience macro for detecting the BTL interface version.
+ */
+#define BTL_VERSION 310
 
 END_C_DECLS
 
