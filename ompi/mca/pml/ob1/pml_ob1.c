@@ -341,7 +341,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
        expose all currently in use btls. */
 
     OPAL_LIST_FOREACH(sm, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
-        if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
+        if ((MCA_BTL_FLAGS_SEND & sm->btl_module->btl_flags) && sm->btl_module->btl_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
             opal_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
                            true,
                            sm->btl_component->btl_version.mca_component_name,
