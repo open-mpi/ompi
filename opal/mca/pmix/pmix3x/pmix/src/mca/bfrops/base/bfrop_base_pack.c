@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1269,10 +1269,4 @@ pmix_status_t pmix_bfrops_base_pack_array(pmix_buffer_t *buffer, const void *src
     }
 
     return PMIX_SUCCESS;
-}
-
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_iof_channel(pmix_buffer_t *buffer, const void *src,
-                                                            int32_t num_vals, pmix_data_type_t type)
-{
-    return pmix_bfrops_base_pack_int16(buffer, src, num_vals, PMIX_UINT16);
 }

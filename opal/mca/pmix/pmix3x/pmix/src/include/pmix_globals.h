@@ -31,7 +31,6 @@
 #endif
 #include PMIX_EVENT_HEADER
 
-#include <pmix.h>
 #include <pmix_common.h>
 
 #include "src/class/pmix_hash_table.h"
@@ -53,6 +52,8 @@ BEGIN_C_DECLS
 
 /* internal-only attributes */
 #define PMIX_BFROPS_MODULE                  "pmix.bfrops.mod"       // (char*) name of bfrops plugin in-use by a given nspace
+#define PMIX_PNET_SETUP_APP                 "pmix.pnet.setapp"      // (pmix_byte_object_t) blob containing info to be given to
+                                                                    //      pnet framework on remote nodes
 
 /* define an internal-only process name that has
  * a dynamically-sized nspace field to save memory */
@@ -96,7 +97,6 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_MONITOR_CMD            19
 #define PMIX_GET_CREDENTIAL_CMD     20
 #define PMIX_VALIDATE_CRED_CMD      21
-#define PMIX_IOF_CMD                22
 
 /* provide a "pretty-print" function for cmds */
 const char* pmix_command_string(pmix_cmd_t cmd);
@@ -228,17 +228,6 @@ typedef struct pmix_peer_t {
 PMIX_CLASS_DECLARATION(pmix_peer_t);
 
 
-/* tracker for IOF requests */
-typedef struct {
-    pmix_list_item_t super;
-    pmix_peer_t *peer;
-    pmix_name_t pname;
-    pmix_iof_channel_t channels;
-    pmix_iof_cbfunc_t cbfunc;
-} pmix_iof_req_t;
-PMIX_CLASS_DECLARATION(pmix_iof_req_t);
-
-
 /* caddy for query requests */
 typedef struct {
     pmix_object_t super;
@@ -318,7 +307,6 @@ PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
     pmix_info_t *directives;
     size_t ndirs;
     pmix_notification_fn_t evhdlr;
-    pmix_iof_req_t *iofreq;
     pmix_kval_t *kv;
     pmix_value_t *vptr;
     pmix_server_caddy_t *cd;
@@ -326,8 +314,9 @@ PMIX_CLASS_DECLARATION(pmix_server_caddy_t);
     bool enviro;
     union {
        pmix_release_cbfunc_t relfn;
-       pmix_hdlr_reg_cbfunc_t hdlrregcbfn;
+       pmix_evhdlr_reg_cbfunc_t evregcbfn;
        pmix_op_cbfunc_t opcbfn;
+       pmix_evhdlr_reg_cbfunc_t errregcbfn;
     } cbfunc;
     void *cbdata;
     size_t ref;
@@ -351,7 +340,7 @@ typedef struct {
         pmix_lookup_cbfunc_t lookupfn;
         pmix_spawn_cbfunc_t spawnfn;
         pmix_connect_cbfunc_t cnctfn;
-        pmix_hdlr_reg_cbfunc_t hdlrregfn;
+        pmix_evhdlr_reg_cbfunc_t errregfn;
     } cbfunc;
     size_t errhandler_ref;
     void *cbdata;
@@ -425,7 +414,6 @@ typedef struct {
     bool commits_pending;
     struct timeval event_window;
     pmix_list_t cached_events;          // events waiting in the window prior to processing
-    pmix_list_t iof_requests;           // list of pmix_iof_req_t IOF requests
     pmix_ring_buffer_t notifications;   // ring buffer of pending notifications
     /* processes also need a place where they can store
      * their own internal data - e.g., data provided by

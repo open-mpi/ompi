@@ -41,7 +41,7 @@
     pmix_info_t *info;
     size_t ninfo;
     pmix_notification_fn_t evhdlr;
-    pmix_hdlr_reg_cbfunc_t evregcbfn;
+    pmix_evhdlr_reg_cbfunc_t evregcbfn;
     void *cbdata;
 } pmix_rshift_caddy_t;
 static void rscon(pmix_rshift_caddy_t *p)
@@ -766,7 +766,7 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
 PMIX_EXPORT void PMIx_Register_event_handler(pmix_status_t codes[], size_t ncodes,
                                              pmix_info_t info[], size_t ninfo,
                                              pmix_notification_fn_t event_hdlr,
-                                             pmix_hdlr_reg_cbfunc_t cbfunc,
+                                             pmix_evhdlr_reg_cbfunc_t cbfunc,
                                              void *cbdata)
 {
     pmix_rshift_caddy_t *cd;

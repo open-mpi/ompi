@@ -1636,35 +1636,6 @@ pmix_status_t pmix_bfrops_base_print_alloc_directive(char **output, char *prefix
     }
 }
 
-pmix_status_t pmix_bfrops_base_print_iof_channel(char **output, char *prefix,
-                                                 pmix_iof_channel_t *src,
-                                                 pmix_data_type_t type)
-{
-    char *prefx;
-    int ret;
-
-    /* deal with NULL prefix */
-    if (NULL == prefix) {
-        if (0 > asprintf(&prefx, " ")) {
-            return PMIX_ERR_NOMEM;
-        }
-    } else {
-        prefx = prefix;
-    }
-
-    ret = asprintf(output, "%sData type: PMIX_IOF_CHANNEL\tValue: %s",
-                   prefx, PMIx_IOF_channel_string(*src));
-    if (prefx != prefix) {
-        free(prefx);
-    }
-
-    if (0 > ret) {
-        return PMIX_ERR_OUT_OF_RESOURCE;
-    } else {
-        return PMIX_SUCCESS;
-    }
-}
-
 
 /**** DEPRECATED ****/
 pmix_status_t pmix_bfrops_base_print_array(char **output, char *prefix,

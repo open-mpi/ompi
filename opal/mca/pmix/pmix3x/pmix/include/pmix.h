@@ -567,6 +567,7 @@ PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pm
         PMIX_INFO_DESTRUCT(&_in);                                           \
     } while(0)
 
+
 /* Request a credential from the PMIx server/SMS.
  * Input values include:
  *
@@ -631,87 +632,6 @@ PMIX_EXPORT pmix_status_t PMIx_Validate_credential(const pmix_byte_object_t *cre
                                                    const pmix_info_t info[], size_t ninfo,
                                                    pmix_validation_cbfunc_t cbfunc, void *cbdata);
 
-/* Define a callback function for delivering forwarded IO to a process
- * This function will be called whenever data becomes available, or a
- * specified buffering size and/or time has been met. The function
- * will be passed the following values:
- *
- * iofhdlr - the returned registration number of the handler being invoked.
- *           This is required when deregistering the handler.
- *
- * channel - a bitmask identifying the channel the data arrived on
- *
- * source - the nspace/rank of the process that generated the data
- *
- * payload - pointer to character array containing the data. Note that
- *           multiple strings may be included, and that the array may
- *           _not_ be NULL terminated
- *
- * info - an optional array of info provided by the source containing
- *        metadata about the payload. This could include PMIX_IOF_COMPLETE
- *
- * ninfo - number of elements in the optional info array
- */
- typedef void (*pmix_iof_cbfunc_t)(size_t iofhdlr, pmix_iof_channel_t channel,
-                                   pmix_proc_t *source, char *payload,
-                                   pmix_info_t info[], size_t ninfo);
-
-
-/* Register to receive IO forwarded from a remote process.
- *
- * procs - array of identifiers for sources whose IO is being
- *         requested. Wildcard rank indicates that all procs
- *         in the specified nspace are included in the request
- *
- * nprocs - number of identifiers in the procs array
- *
- * directives - optional array of attributes to control the
- *              behavior of the request. For example, this
- *              might include directives on buffering IO
- *              before delivery, and/or directives to include
- *              or exclude any backlogged data
- *
- * ndirs - number of elements in the directives array
- *
- * channel - bitmask of IO channels included in the request
- *
- * cbfunc - function to be called when relevant IO is received
- *
- * regcbfunc - since registration is async, this is the
- *             function to be called when registration is
- *             completed. The function itself will return
- *             a non-success error if the registration cannot
- *             be submitted - in this case, the regcbfunc
- *             will _not_ be called.
- *
- * cbdata - pointer to object to be returned in regcbfunc
- */
-PMIX_EXPORT pmix_status_t PMIx_IOF_register(const pmix_proc_t procs[], size_t nprocs,
-                                            const pmix_info_t directives[], size_t ndirs,
-                                            pmix_iof_channel_t channel, pmix_iof_cbfunc_t cbfunc,
-                                            pmix_hdlr_reg_cbfunc_t regcbfunc, void *regcbdata);
-
-/* Deregister from IO forwarded from a remote process.
- *
- * iofhdlr - the registration number returned from the
- *           call to PMIx_IOF_register
- *
- * directives - optional array of attributes to control the
- *              behavior of the request. For example, this
- *              might include directives regarding what to
- *              do with any data currently in the IO buffer
- *              for this process
- *
- * cbfunc - function to be called when deregistration has
- *          been completed. Note that any IO to be flushed
- *          may continue to be received after deregistration
- *          has completed.
- *
- * cbdata - pointer to object to be returned in cbfunc
- */
-PMIX_EXPORT pmix_status_t PMIx_IOF_deregister(size_t iofhdlr,
-                                              const pmix_info_t directives[], size_t ndirs,
-                                              pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

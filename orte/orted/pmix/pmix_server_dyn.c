@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -333,8 +333,13 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
         /***   NO USE LOCAL   ***/
         } else if (0 == strcmp(info->key, OPAL_PMIX_NO_PROCS_ON_HEAD)) {
             OPAL_CHECK_BOOL(info, flag);
-            orte_set_attribute(&jdata->attributes, ORTE_MAPPING_NO_USE_LOCAL,
-                               ORTE_ATTR_GLOBAL, &flag, OPAL_BOOL);
+            if (flag) {
+                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
+            } else {
+                ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
+            }
+            /* mark that the user specified it */
+            ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_LOCAL_GIVEN);
 
         /***   OVERSUBSCRIBE   ***/
         } else if (0 == strcmp(info->key, OPAL_PMIX_NO_OVERSUBSCRIBE)) {
@@ -344,6 +349,8 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
             } else {
                 ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
             }
+            /* mark that the user specified it */
+            ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_SUBSCRIBE_GIVEN);
 
         /***   REPORT BINDINGS  ***/
         } else if (0 == strcmp(info->key, OPAL_PMIX_REPORT_BINDINGS)) {

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -184,7 +184,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 /* if we weren't given a directive either way, then we will error out
                  * as the #slots were specifically given, either by the host RM or
                  * via hostfile/dash-host */
-                if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, app->num_procs, app->app, orte_process_info.nodename);
                     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -366,7 +366,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                     /* if we weren't given a directive either way, then we will error out
                      * as the #slots were specifically given, either by the host RM or
                      * via hostfile/dash-host */
-                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app, orte_process_info.nodename);
                         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -584,7 +584,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                     /* if we weren't given a directive either way, then we will error out
                      * as the #slots were specifically given, either by the host RM or
                      * via hostfile/dash-host */
-                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
                         orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                        true, app->num_procs, app->app, orte_process_info.nodename);
                         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);

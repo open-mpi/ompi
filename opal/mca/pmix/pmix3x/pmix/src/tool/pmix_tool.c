@@ -69,7 +69,7 @@ extern pmix_client_globals_t pmix_client_globals;
 #include "src/runtime/pmix_rte.h"
 #include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/base/base.h"
-#include "src/mca/ptl/base/base.h"
+#include "src/mca/ptl/ptl.h"
 #include "src/mca/psec/psec.h"
 #include "src/include/pmix_globals.h"
 
@@ -189,53 +189,6 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
 }
 
 
-static void tool_iof_handler(struct pmix_peer_t *pr,
-                             pmix_ptl_hdr_t *hdr,
-                             pmix_buffer_t *buf, void *cbdata)
-{
-    pmix_peer_t *peer = (pmix_peer_t*)pr;
-    pmix_proc_t source;
-    pmix_iof_channel_t channel;
-    pmix_byte_object_t bo;
-    int32_t cnt;
-    pmix_status_t rc;
-
-    pmix_output_verbose(2, pmix_client_globals.iof_output,
-                        "recvd IOF");
-
-    /* if the buffer is empty, they are simply closing the channel */
-    if (0 == buf->bytes_used) {
-        return;
-    }
-
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &source, &cnt, PMIX_PROC);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return;
-    }
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &channel, &cnt, PMIX_IOF_CHANNEL);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return;
-    }
-    cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
-    if (PMIX_SUCCESS != rc) {
-        PMIX_ERROR_LOG(rc);
-        return;
-    }
-    if (NULL != bo.bytes && 0 < bo.size) {
-        if (channel & PMIX_FWD_STDOUT_CHANNEL) {
-            write(fileno(stdout), bo.bytes, bo.size);
-        } else {
-            fprintf(stderr, "%s", bo.bytes);
-        }
-    }
-    PMIX_BYTE_OBJECT_DESTRUCT(&bo);
-}
-
 PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                                pmix_info_t info[], size_t ninfo)
 {
@@ -247,7 +200,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     bool rank_given = false;
     pmix_info_t ginfo;
     size_t n;
-    pmix_ptl_posted_recv_t *rcv;
     pmix_proc_t wildcard;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
@@ -286,13 +238,6 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
-    /* setup the IO Forwarding recv */
-    rcv = PMIX_NEW(pmix_ptl_posted_recv_t);
-    rcv->tag = PMIX_PTL_TAG_IOF;
-    rcv->cbfunc = tool_iof_handler;
-    /* add it to the end of the list of recvs */
-    pmix_list_append(&pmix_ptl_globals.posted_recvs, &rcv->super);
-
 
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_client_globals.peers, pmix_pointer_array_t);

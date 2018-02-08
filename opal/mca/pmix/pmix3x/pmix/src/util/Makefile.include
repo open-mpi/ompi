@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -47,9 +47,9 @@ headers += \
         util/getid.h \
         util/strnlen.h \
         util/hash.h \
+        util/name_fns.h \
         util/net.h \
         util/pif.h \
-        util/tsd.h \
         util/parse_options.h \
         util/compress.h
 
@@ -72,6 +72,7 @@ sources += \
         util/path.c \
         util/getid.c \
         util/hash.c \
+        util/name_fns.c \
         util/net.c \
         util/pif.c \
         util/parse_options.c \

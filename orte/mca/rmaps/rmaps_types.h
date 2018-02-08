@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,7 +89,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 #define ORTE_MAPPING_SUBSCRIBE_GIVEN   0x0400
 #define ORTE_MAPPING_SPAN              0x0800
 /* an error flag */
-#define ORTE_MAPPING_CONFLICTED        0x2000
+#define ORTE_MAPPING_CONFLICTED        0x1000
+/* directives given */
+#define ORTE_MAPPING_LOCAL_GIVEN       0x2000
 #define ORTE_MAPPING_GIVEN             0x4000
 /* mapping a debugger job */
 #define ORTE_MAPPING_DEBUGGER          0x8000

@@ -15,5 +15,4 @@ sources += \
         common/pmix_log.c \
         common/pmix_control.c \
         common/pmix_data.c \
-        common/pmix_security.c \
-        common/pmix_iof.c
+        common/pmix_security.c

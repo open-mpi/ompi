@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -159,8 +159,6 @@ int pmix_rte_init(pmix_proc_type_t type,
     /* construct the global notification ring buffer */
     PMIX_CONSTRUCT(&pmix_globals.notifications, pmix_ring_buffer_t);
     pmix_ring_buffer_init(&pmix_globals.notifications, 256);
-    /* and setup the iof request tracking list */
-    PMIX_CONSTRUCT(&pmix_globals.iof_requests, pmix_list_t);
 
     /* Setup client verbosities as all procs are allowed to
      * access client APIs */
@@ -199,12 +197,6 @@ int pmix_rte_init(pmix_proc_type_t type,
         pmix_client_globals.event_output = pmix_output_open(NULL);
         pmix_output_set_verbosity(pmix_client_globals.event_output,
                                   pmix_client_globals.event_verbose);
-    }
-    if (0 < pmix_client_globals.iof_verbose) {
-        /* set default output */
-        pmix_client_globals.iof_output = pmix_output_open(NULL);
-        pmix_output_set_verbosity(pmix_client_globals.iof_output,
-                                  pmix_client_globals.iof_verbose);
     }
 
     /* get our effective id's */

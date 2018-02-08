@@ -35,7 +35,6 @@ typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
     pmix_lock_t lock;
-    pmix_peer_t *peer;
     char *nspace;
     pmix_status_t status;
     pmix_status_t *codes;
@@ -52,8 +51,6 @@ typedef struct {
     char **keys;
     pmix_app_t *apps;
     size_t napps;
-    pmix_iof_channel_t channels;
-    pmix_byte_object_t *bo;
     pmix_op_cbfunc_t opcbfunc;
     pmix_dmodex_response_fn_t cbfunc;
     pmix_setup_application_cbfunc_t setupcbfunc;
@@ -99,7 +96,7 @@ PMIX_CLASS_DECLARATION(pmix_peer_events_info_t);
 
 typedef struct {
     pmix_list_item_t super;
-    pmix_list_t peers;              // list of pmix_peer_events_info_t
+    pmix_list_t peers;              // list of pmix_prevents_info_t
     int code;
 } pmix_regevents_info_t;
 PMIX_CLASS_DECLARATION(pmix_regevents_info_t);
@@ -131,9 +128,6 @@ typedef struct {
     // verbosity for server event operations
     int event_output;
     int event_verbose;
-    // verbosity for server iof operations
-    int iof_output;
-    int iof_verbose;
     // verbosity for basic server functions
     int base_output;
     int base_verbose;
@@ -261,11 +255,6 @@ pmix_status_t pmix_server_validate_credential(pmix_peer_t *peer,
                                               pmix_buffer_t *buf,
                                               pmix_validation_cbfunc_t cbfunc,
                                               void *cbdata);
-
-pmix_status_t pmix_server_iofreg(pmix_peer_t *peer,
-                                 pmix_buffer_t *buf,
-                                 pmix_op_cbfunc_t cbfunc,
-                                 void *cbdata);
 
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,

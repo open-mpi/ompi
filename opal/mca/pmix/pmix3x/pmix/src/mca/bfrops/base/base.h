@@ -379,8 +379,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_val(pmix_buffer_t *buffer,
                                                     pmix_value_t *p);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_alloc_directive(pmix_buffer_t *buffer, const void *src,
                                                                 int32_t num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_pack_iof_channel(pmix_buffer_t *buffer, const void *src,
-                                                            int32_t num_vals, pmix_data_type_t type);
 
 /*
 * "Standard" unpack functions
@@ -468,8 +466,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_query(pmix_buffer_t *buffer, v
                                                         int32_t *num_vals, pmix_data_type_t type);
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_alloc_directive(pmix_buffer_t *buffer, void *dest,
                                                                   int32_t *num_vals, pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_iof_channel(pmix_buffer_t *buffer, void *dest,
-                                                              int32_t *num_vals, pmix_data_type_t type);
 /**** DEPRECATED ****/
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_unpack_array(pmix_buffer_t *buffer, void *dest,
                                                         int32_t *num_vals, pmix_data_type_t type);
@@ -641,9 +637,6 @@ PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_rank(char **output, char *prefi
 PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_alloc_directive(char **output, char *prefix,
                                                                  pmix_alloc_directive_t *src,
                                                                  pmix_data_type_t type);
-PMIX_EXPORT pmix_status_t pmix_bfrops_base_print_iof_channel(char **output, char *prefix,
-                                                            pmix_iof_channel_t *src,
-                                                            pmix_data_type_t type);
 
 /*
  * Common helper functions
