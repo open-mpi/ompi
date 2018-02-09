@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Inria.  All rights reserved.
+ * Copyright (c) 2013-2018 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +40,7 @@ int mca_pml_monitoring_isend(const void *buf,
      * If this fails the destination is not part of my MPI_COM_WORLD
      * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
      */
-    if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(dst, comm, &world_rank)) {
+    if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(dst, comm->c_remote_group, &world_rank)) {
         size_t type_size, data_size;
         ompi_datatype_type_size(datatype, &type_size);
         data_size = count*type_size;
@@ -61,7 +61,7 @@ int mca_pml_monitoring_send(const void *buf,
 {
     int world_rank;
     /* Are we sending to a peer from my own MPI_COMM_WORLD? */
-    if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(dst, comm, &world_rank)) {
+    if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(dst, comm->c_remote_group, &world_rank)) {
         size_t type_size, data_size;
         ompi_datatype_type_size(datatype, &type_size);
         data_size = count*type_size;

@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Inria.  All rights reserved.
+ * Copyright (c) 2013-2018 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -56,7 +56,8 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
 {
     if( -1 == data->world_rank ) {
         /* Get current process world_rank */
-        mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm), data->p_comm,
+        mca_common_monitoring_get_world_rank(ompi_comm_rank(data->p_comm),
+					     data->p_comm->c_remote_group,
                                              &data->world_rank);
     }
     /* Only list procs if the hashtable is already initialized,
@@ -76,7 +77,7 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
             tmp_procs[0] = '\0';
             /* Build procs list */
             for(i = 0; i < size; ++i) {
-                if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, data->p_comm, &world_rank) )
+                if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, data->p_comm->c_remote_group, &world_rank) )
                     pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
             }
             tmp_procs[pos - 1] = '\0'; /* Remove final coma */

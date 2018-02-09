@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 Inria.  All rights reserved.
+ * Copyright (c) 2016-2018 Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +30,7 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
@@ -55,7 +55,7 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
@@ -78,7 +78,7 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
@@ -103,7 +103,7 @@
          * If this fails the destination is not part of my MPI_COM_WORLD \
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
          */                                                             \
-        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, ompi_osc_monitoring_## template ##_get_comm(win), &world_rank)) { \
+        if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \
             ompi_datatype_type_size(origin_datatype, &type_size);       \
             data_size = origin_count*type_size;                         \
