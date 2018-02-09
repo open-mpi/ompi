@@ -14,8 +14,8 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reseved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -240,9 +240,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 {
     opal_list_item_t *item, *head, *ghost = &lifo->opal_lifo_ghost;
 
-    item = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
-
-    while (item != ghost) {
+    while ((item=(opal_list_item_t *)lifo->opal_lifo_head.data.item) != ghost) {
         /* ensure it is safe to pop the head */
         if (opal_atomic_swap_32((volatile int32_t *) &item->item_free, 1)) {
             continue;
