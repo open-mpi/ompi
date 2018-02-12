@@ -84,108 +84,6 @@ mca_mtl_psm2_component_t mca_mtl_psm2_component = {
     }
 };
 
-struct ompi_mtl_psm2_shadow_variable {
-    int variable_type;
-    void *storage;
-    mca_base_var_storage_t default_value;
-    const char *env_name;
-    mca_base_var_info_lvl_t info_level;
-    const char *mca_name;
-    const char *description;
-};
-
-struct ompi_mtl_psm2_shadow_variable ompi_mtl_psm2_shadow_variables[] = {
-    {MCA_BASE_VAR_TYPE_STRING, &ompi_mtl_psm2.psm2_devices, {.stringval = "self,shm,hfi"}, "PSM2_DEVICES", OPAL_INFO_LVL_3,
-     "devices", "Comma-delimited list of PSM2 devices. Valid values: self, shm, hfi (default: self,shm,hfi)"},
-    {MCA_BASE_VAR_TYPE_STRING, &ompi_mtl_psm2.psm2_memory, {.stringval = "normal"}, "PSM2_MEMORY", OPAL_INFO_LVL_9,
-     "memory_model", "PSM2 memory usage mode (default: normal)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_sendreqs_max, {.ulval = 1048576}, "PSM2_MQ_SENDREQS_MAX", OPAL_INFO_LVL_3,
-     "mq_sendreqs_max", "PSM2 maximum number of isend requests in flight (default: 1M)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_recvreqs_max, {.ulval = 1048576}, "PSM2_MQ_RECVREQS_MAX", OPAL_INFO_LVL_3,
-     "mq_recvreqs_max", "PSM2 maximum number of irecv requests in flight (default: 1M)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_rndv_hfi_threshold, {.ulval = 64000}, "PSM2_MQ_RNDV_HFI_THRESH", OPAL_INFO_LVL_3,
-     "hfi_eager_limit", "PSM2 eager to rendezvous threshold (default: 64000)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_rndv_shm_threshold, {.ulval = 16000}, "PSM2_MQ_RNDV_SHM_THRESH", OPAL_INFO_LVL_3,
-     "shm_eager_limit", "PSM2 shared memory eager to rendezvous threshold (default: 16000)"},
-    {MCA_BASE_VAR_TYPE_BOOL, &ompi_mtl_psm2.psm2_recvthread, {.boolval = true}, "PSM2_RCVTHREAD", OPAL_INFO_LVL_3,
-     "use_receive_thread", "Use PSM2 progress thread (default: true)"},
-    {MCA_BASE_VAR_TYPE_BOOL, &ompi_mtl_psm2.psm2_shared_contexts, {.boolval = true}, "PSM2_SHAREDCONTEXTS", OPAL_INFO_LVL_6,
-     "use_shared_contexts", "Share PSM contexts between MPI processes (default: true)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_shared_contexts_max, {.ulval = 8}, "PSM2_SHAREDCONTEXTS_MAX", OPAL_INFO_LVL_9,
-     "max_shared_contexts", "Maximum number of contexts available on a node (default: 8, max: 8)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_tracemask, {.ulval = 1}, "PSM2_TRACEMASK", OPAL_INFO_LVL_9,
-     "trace_mask", "PSM2 tracemask value. See PSM2 documentation for accepted values (default: 1)"},
-    {-1},
-};
-
-static void ompi_mtl_psm2_set_shadow_env (struct ompi_mtl_psm2_shadow_variable *variable)
-{
-    mca_base_var_storage_t *storage = variable->storage;
-    char *env_value;
-    int ret = 0;
-
-    switch (variable->variable_type) {
-    case MCA_BASE_VAR_TYPE_BOOL:
-        ret = asprintf (&env_value, "%s=%s", variable->env_name, storage->boolval ? "YES" : "NO");
-        break;
-    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-        if (0 == strcmp (variable->env_name, "PSM2_TRACEMASK")) {
-            /* PSM2 documentation shows the tracemask as a hexidecimal number. to be consitent
-             * use hexidecimal here. */
-            ret = asprintf (&env_value, "%s=0x%lx", variable->env_name, storage->ulval);
-        } else {
-            ret = asprintf (&env_value, "%s=%lu", variable->env_name, storage->ulval);
-        }
-        break;
-    case MCA_BASE_VAR_TYPE_STRING:
-        ret = asprintf (&env_value, "%s=%s", variable->env_name, storage->stringval);
-        break;
-    }
-
-    if (0 > ret) {
-        fprintf (stderr, "ERROR setting PSM2 environment variable: %s\n", variable->env_name);
-    } else {
-        putenv (env_value);
-    }
-}
-
-static void ompi_mtl_psm2_register_shadow_env (struct ompi_mtl_psm2_shadow_variable *variable)
-{
-    mca_base_var_storage_t *storage = variable->storage;
-    char *env_value;
-
-    env_value = getenv (variable->env_name);
-    switch (variable->variable_type) {
-    case MCA_BASE_VAR_TYPE_BOOL:
-        if (env_value) {
-            int tmp;
-            (void) mca_base_var_enum_bool.value_from_string (&mca_base_var_enum_bool, env_value, &tmp);
-            storage->boolval = !!tmp;
-        } else {
-            storage->boolval = variable->default_value.boolval;
-        }
-        break;
-    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-        if (env_value) {
-            storage->ulval = strtol (env_value, NULL, 0);
-        } else {
-            storage->ulval = variable->default_value.ulval;
-        }
-        break;
-    case MCA_BASE_VAR_TYPE_STRING:
-        if (env_value) {
-            storage->stringval = env_value;
-        } else {
-            storage->stringval = variable->default_value.stringval;
-        }
-        break;
-    }
-
-    (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version, variable->mca_name, variable->description,
-                                            variable->variable_type, NULL, 0, 0, variable->info_level, MCA_BASE_VAR_SCOPE_READONLY,
-                                            variable->storage);
-}
-
 static int
 get_num_total_procs(int *out_ntp)
 {
@@ -236,10 +134,6 @@ ompi_mtl_psm2_component_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &param_priority);
-
-    for (int i = 0 ; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0 ; ++i) {
-        ompi_mtl_psm2_register_shadow_env (ompi_mtl_psm2_shadow_variables + i);
-    }
 
     ompi_mtl_psm2_register_pvars();
 
@@ -370,10 +264,6 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
         opal_output(0, "Error in psm2_error_register_handler (error %s)\n",
 		    psm2_error_get_string(err));
 	return NULL;
-    }
-
-    for (int i = 0 ; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0 ; ++i) {
-        ompi_mtl_psm2_set_shadow_env (ompi_mtl_psm2_shadow_variables + i);
     }
 
 #if OPAL_CUDA_SUPPORT
