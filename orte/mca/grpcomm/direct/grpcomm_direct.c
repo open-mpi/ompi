@@ -5,7 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -26,13 +26,13 @@
 #include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/regx/regx.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/state/state.h"
 #include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/grpcomm/base/base.h"
@@ -416,7 +416,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     goto relay;
                 }
                 if (NULL != nidmap) {
-                    if (ORTE_SUCCESS != (ret = orte_util_nidmap_parse(nidmap))) {
+                    if (ORTE_SUCCESS != (ret = orte_regx.nidmap_parse(nidmap))) {
                         ORTE_ERROR_LOG(ret);
                         goto relay;
                     }
@@ -436,7 +436,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                                          "%s grpcomm:direct:xcast updating daemon nidmap",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-                    if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_nodemap(data))) {
+                    if (ORTE_SUCCESS != (ret = orte_regx.decode_daemon_nodemap(data))) {
                         ORTE_ERROR_LOG(ret);
                         goto relay;
                     }
