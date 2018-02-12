@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -203,7 +204,7 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
     char *node;
     char prefix[ORTE_MAX_NODE_PREFIX];
     int i, j, n, len, startnum, nodenum, numdigits;
-    bool found, fullname;
+    bool found;
     char *suffix, *sfx, *nodenames;
     orte_regex_node_t *ndreg;
     orte_regex_range_t *range, *rng;
@@ -264,37 +265,32 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
             }
         }
         node = nptr->name;
-        /* determine this node's prefix by looking for first non-alpha char */
-        fullname = false;
+        /* determine this node's prefix by looking for first digit char */
         len = strlen(node);
         startnum = -1;
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
-        numdigits = 0;
         for (i=0, j=0; i < len; i++) {
-            if (!isalpha(node[i])) {
-                /* found a non-alpha char */
-                if (!isdigit(node[i])) {
-                    /* if it is anything but a digit, we just use
-                     * the entire name
-                     */
-                    fullname = true;
-                    break;
-                }
+            /* valid hostname characters are ascii letters, digits and the '-' character. */
+            if (isdigit(node[i])) {
                 /* count the size of the numeric field - but don't
                  * add the digits to the prefix
                  */
-                numdigits++;
                 if (startnum < 0) {
                     /* okay, this defines end of the prefix */
                     startnum = i;
                 }
                 continue;
             }
+            /* this must be either an alpha, a '.', or '-' */
+            if (!isalpha(node[i]) && '-' != node[i] && '.' != node[i]) {
+                orte_show_help("help-regex.txt", "regex:invalid-name", true, node);
+                return ORTE_ERR_SILENT;
+            }
             if (startnum < 0) {
                 prefix[j++] = node[i];
             }
         }
-        if (fullname || startnum < 0) {
+        if (startnum < 0) {
             /* can't compress this name - just add it to the list */
             ndreg = OBJ_NEW(orte_regex_node_t);
             ndreg->prefix = strdup(node);
@@ -305,8 +301,10 @@ int orte_util_nidmap_create(opal_pointer_array_t *pool, char **regex)
         nodenum = strtol(&node[startnum], &sfx, 10);
         if (NULL != sfx) {
             suffix = strdup(sfx);
+            numdigits = (int)(sfx - &node[startnum]);
         } else {
             suffix = NULL;
+            numdigits = (int)strlen(&node[startnum]);
         }
         /* is this node name already on our list? */
         found = false;
