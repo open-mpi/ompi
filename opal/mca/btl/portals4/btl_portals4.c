@@ -389,17 +389,12 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
     struct mca_btl_portals4_module_t* portals4_btl = (struct mca_btl_portals4_module_t*) btl_base;
     int ret;
     size_t i;
-    bool need_activate = false;
 
     opal_output_verbose(50, opal_btl_base_framework.framework_output,
                         "mca_btl_portals4_add_procs: Adding %d procs (%d) for NI %d",
                         (int) nprocs,
                         (int) portals4_btl->portals_num_procs,
                         portals4_btl->interface_num);
-
-    if (0 == portals4_btl->portals_num_procs) {
-        need_activate = true;
-    }
 
     /*
      * The PML handed us a list of procs that need Portals4
@@ -435,7 +430,7 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
             portals4_btl->interface_num));
     }
 
-    if (need_activate && portals4_btl->portals_num_procs > 0) {
+    if (mca_btl_portals4_component.need_init && portals4_btl->portals_num_procs > 0) {
         if (mca_btl_portals4_component.use_logical) {
             ret = create_maptable(portals4_btl, nprocs, procs, btl_peer_data);
             if (OPAL_SUCCESS != ret) {
@@ -453,6 +448,7 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
                                 __FILE__, __LINE__, ret);
             return ret;
         }
+        mca_btl_portals4_component.need_init = 0;
     }
 
     return OPAL_SUCCESS;
@@ -478,9 +474,6 @@ mca_btl_portals4_del_procs(struct mca_btl_base_module_t *btl,
         free(btl_peer_data[i]);
         OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_num_procs, -1);
     }
-
-    if (0 == portals4_btl->portals_num_procs)
-        mca_btl_portals4_free_module(portals4_btl);
 
     return OPAL_SUCCESS;
 }
