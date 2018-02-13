@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
-.\" Copyright (c) 2017      Intel, Inc.  All rights reserved.
+.\" Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 .\" Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 .\"                         reserved.
 .\" $COPYRIGHT$
@@ -192,14 +192,14 @@ Number of processes to run.
 .
 .TP
 .B -novm\fR,\fP --novm
-Execute without creating an allocation-spanning virtual machine (only start 
+Execute without creating an allocation-spanning virtual machine (only start
 daemons on nodes hosting application procs).
 .
 .
 .
 .TP
 .B -hnp\fR,\fP --hnp \fR<arg0>\fP
-Specify the URI of the Head Node Process (HNP), or the name of the file (specified as 
+Specify the URI of the Head Node Process (HNP), or the name of the file (specified as
 file:filename) that contains that info.
 .
 .
@@ -330,7 +330,7 @@ each node. (Enabled by default).
 .
 .TP
 .B -oversubscribe\fR,\fP --oversubscribe
-Nodes are allowed to be oversubscribed, even on a managed system, and 
+Nodes are allowed to be oversubscribed, even on a managed system, and
 overloading of processing elements.
 .
 .TP
@@ -414,7 +414,10 @@ Redirect the stdout, stderr, and stddiag of all processes to a process-unique ve
 the specified filename. Any directories in the filename will automatically be created.
 Each output file will consist of filename.id, where the id will be the
 processes' rank in MPI_COMM_WORLD, left-filled with
-zero's for correct ordering in listings.
+zero's for correct ordering in listings. A relative path value will be converted to an
+absolute path based on the cwd where mpirun is executed. Note that this \fIwill not\fP work
+on environments where the file system on compute nodes differs from that where mpirun
+is executed.
 .
 .
 .TP
@@ -724,15 +727,15 @@ Report events to a tool listening at the specified URI.
 .
 .TP
 .B -report-pid\fR,\fP --report-pid \fR<channel>\fP
-Print out mpirun's PID during startup. The channel must be either a '-' to indicate 
-that the pid is to be output to stdout, a '+' to indicate that the pid is to be 
+Print out mpirun's PID during startup. The channel must be either a '-' to indicate
+that the pid is to be output to stdout, a '+' to indicate that the pid is to be
 output to stderr, or a filename to which the pid is to be written.
 .
 .
 .TP
 .B -report-uri\fR,\fP --report-uri \fR<channel>\fP
-Print out mpirun's URI during startup. The channel must be either a '-' to indicate 
-that the URI is to be output to stdout, a '+' to indicate that the URI is to be 
+Print out mpirun's URI during startup. The channel must be either a '-' to indicate
+that the URI is to be output to stdout, a '+' to indicate that the URI is to be
 output to stderr, or a filename to which the URI is to be written.
 .
 .
@@ -1629,7 +1632,7 @@ we return the exit status of the process with the lowest MPI_COMM_WORLD rank to 
 .IP \[bu]
 if all processes in the primary job normally terminate with exit status 0, and one or more
 processes in a secondary job normally terminate with non-zero exit status, we (a) return
-the exit status of the process with the lowest MPI_COMM_WORLD rank in the lowest jobid to have a non-zero 
+the exit status of the process with the lowest MPI_COMM_WORLD rank in the lowest jobid to have a non-zero
 status, and (b) output a message summarizing the exit status of the primary and all secondary jobs.
 .IP \[bu]
 if the cmd line option --report-child-jobs-separately is set, we will return -only- the
