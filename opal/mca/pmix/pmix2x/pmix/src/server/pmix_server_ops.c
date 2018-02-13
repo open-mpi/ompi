@@ -226,6 +226,9 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
     /* mark us as having successfully received a blob from this proc */
     info->modex_recvd = true;
 
+    /* update the commit counter */
+    peer->commit_cnt++;
+
     /* see if anyone remote is waiting on this data - could be more than one */
     PMIX_LIST_FOREACH_SAFE(dcd, dcdnext, &pmix_server_globals.remote_pnd, pmix_dmdx_remote_t) {
         if (0 != strncmp(dcd->cd->proc.nspace, nptr->nspace, PMIX_MAX_NSLEN)) {
@@ -248,7 +251,7 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
                 PMIX_LIST_FOREACH(kp, &cb.kvs, pmix_kval_t) {
                     /* we pack this in our native BFROPS form as it
                      * will be sent to another daemon */
-                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &pbkt, &kp, 1, PMIX_KVAL);
+                    PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &pbkt, kp, 1, PMIX_KVAL);
                 }
                 PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
             }
@@ -264,7 +267,11 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
         }
     }
     /* see if anyone local is waiting on this data- could be more than one */
-    return pmix_pending_resolve(nptr, info->pname.rank, PMIX_SUCCESS, NULL);
+    rc = pmix_pending_resolve(nptr, info->pname.rank, PMIX_SUCCESS, NULL);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+    }
+    return rc;
 }
 
 /* get an existing object for tracking LOCAL participation in a collective

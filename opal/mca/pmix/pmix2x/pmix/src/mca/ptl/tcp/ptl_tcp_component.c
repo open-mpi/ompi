@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -625,6 +625,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
         }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "WRITING SYSTEM FILE %s",
+                            mca_ptl_tcp_component.system_filename);
         fp = fopen(mca_ptl_tcp_component.system_filename, "w");
         if (NULL == fp) {
             pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.system_filename);
@@ -637,7 +640,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
 
         /* output my nspace and rank plus the URI */
         fprintf(fp, "%s\n", lt->uri);
-        /* add a flag that indicates we accept v2.1 protocols */
+        /* add a flag that indicates we accept v3.0 protocols */
         fprintf(fp, "v%s\n", PMIX_VERSION);
         fclose(fp);
         /* set the file mode */
@@ -659,6 +662,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
         }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "WRITING TOOL FILE %s",
+                            mca_ptl_tcp_component.session_filename);
         fp = fopen(mca_ptl_tcp_component.session_filename, "w");
         if (NULL == fp) {
             pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.session_filename);
@@ -1200,14 +1206,25 @@ static void connection_handler(int sd, short args, void *cbdata)
     } else {
         peer->nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
     }
-    free(msg);  // can now release the data buffer
     if (NULL == peer->nptr->compat.gds) {
+        free(msg);
         info->proc_cnt--;
         pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
         PMIX_RELEASE(peer);
         /* send an error reply to the client */
         goto error;
     }
+
+    /* if we haven't previously stored the version for this
+     * nspace, do so now */
+    if (!nptr->version_stored) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_BFROPS_MODULE, peer->nptr->compat.bfrops->version, PMIX_STRING);
+        PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, peer->nptr, &ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+        nptr->version_stored = true;
+    }
+
+    free(msg);  // can now release the data buffer
 
     /* the choice of PTL module is obviously us */
     peer->nptr->compat.ptl = &pmix_ptl_tcp_module;
@@ -1424,12 +1441,22 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     /* set the gds */
     PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, pnd->gds, PMIX_STRING);
     peer->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+    PMIX_INFO_DESTRUCT(&ginfo);
     if (NULL == peer->nptr->compat.gds) {
         PMIX_RELEASE(peer);
         pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
+    }
+
+    /* if we haven't previously stored the version for this
+     * nspace, do so now */
+    if (!peer->nptr->version_stored) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_BFROPS_MODULE, peer->nptr->compat.bfrops->version, PMIX_STRING);
+        PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, peer->nptr, &ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+        nptr->version_stored = true;
     }
 
     /* validate the connection */

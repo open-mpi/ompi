@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -112,6 +112,7 @@ typedef struct {
     pmix_hash_table_t internal;
     pmix_hash_table_t remote;
     pmix_hash_table_t local;
+    bool gdata_added;
 } pmix_hash_trkr_t;
 
 static void htcon(pmix_hash_trkr_t *p)
@@ -124,6 +125,7 @@ static void htcon(pmix_hash_trkr_t *p)
     pmix_hash_table_init(&p->remote, 256);
     PMIX_CONSTRUCT(&p->local, pmix_hash_table_t);
     pmix_hash_table_init(&p->local, 256);
+    p->gdata_added = false;
 }
 static void htdes(pmix_hash_trkr_t *p)
 {
@@ -426,6 +428,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
             /* an array of data pertaining to a specific proc */
             if (PMIX_DATA_ARRAY != info[n].value.type) {
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+                rc = PMIX_ERR_TYPE_MISMATCH;
                 goto release;
             }
             size = info[n].value.data.darray->size;
@@ -433,6 +436,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
             /* first element of the array must be the rank */
             if (0 != strcmp(iptr[0].key, PMIX_RANK) ||
                 PMIX_PROC_RANK != iptr[0].value.type) {
+                rc = PMIX_ERR_TYPE_MISMATCH;
                 PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
                 goto release;
             }
@@ -458,7 +462,7 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
                         if (NULL == tmp) {
                             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                             rc = PMIX_ERR_NOMEM;
-                            return rc;
+                            goto release;
                         }
                         kp2->value->type = PMIX_COMPRESSED_STRING;
                         free(kp2->value->data.string);
@@ -493,10 +497,10 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
             if (PMIX_STRING_SIZE_CHECK(kp2->value)) {
                 if (pmix_util_compress_string(kp2->value->data.string, &tmp, &len)) {
                     if (NULL == tmp) {
-                        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
-                        PMIX_RELEASE(kp2);
                         rc = PMIX_ERR_NOMEM;
-                        return rc;
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(kp2);
+                        goto release;
                     }
                     kp2->value->type = PMIX_COMPRESSED_STRING;
                     free(kp2->value->data.string);
@@ -513,26 +517,29 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
     }
 
     /* now add any global data that was provided */
-    PMIX_LIST_FOREACH(kvptr, &pmix_server_globals.gdata, pmix_kval_t) {
-        /* sadly, the data cannot simultaneously exist on two lists,
-         * so we must make a copy of it here */
-        kp2 = PMIX_NEW(pmix_kval_t);
-        if (NULL == kp2) {
-            rc = PMIX_ERR_NOMEM;
-            goto release;
+    if (!trk->gdata_added) {
+        PMIX_LIST_FOREACH(kvptr, &pmix_server_globals.gdata, pmix_kval_t) {
+            /* sadly, the data cannot simultaneously exist on two lists,
+             * so we must make a copy of it here */
+            kp2 = PMIX_NEW(pmix_kval_t);
+            if (NULL == kp2) {
+                rc = PMIX_ERR_NOMEM;
+                goto release;
+            }
+            kp2->key = strdup(kvptr->key);
+            PMIX_VALUE_XFER(rc, kp2->value, kvptr->value);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(kp2);
+                goto release;
+            }
+            if (PMIX_SUCCESS != (rc = pmix_hash_store(ht, PMIX_RANK_WILDCARD, kp2))) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(kp2);
+                break;
+            }
         }
-        kp2->key = strdup(kvptr->key);
-        PMIX_VALUE_XFER(rc, kp2->value, kvptr->value);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(kp2);
-            goto release;
-        }
-        if (PMIX_SUCCESS != (rc = pmix_hash_store(ht, PMIX_RANK_WILDCARD, kp2))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(kp2);
-            break;
-        }
+        trk->gdata_added = true;
     }
 
   release:
@@ -1151,7 +1158,6 @@ static pmix_status_t hash_store_modex(struct pmix_nspace_t *nspace,
 {
     pmix_nspace_t *ns = (pmix_nspace_t*)nspace;
     pmix_hash_trkr_t *trk, *t;
-    pmix_server_caddy_t *scd;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;
     pmix_buffer_t pbkt;

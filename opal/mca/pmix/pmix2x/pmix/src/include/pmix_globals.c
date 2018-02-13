@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  *                         and Technology (RIST). All rights reserved.
@@ -57,6 +57,7 @@ static void nscon(pmix_nspace_t *p)
     p->nspace = NULL;
     p->nlocalprocs = 0;
     p->all_registered = false;
+    p->version_stored = false;
     p->jobbkt = NULL;
     p->ndelivered = 0;
     PMIX_CONSTRUCT(&p->ranks, pmix_list_t);
@@ -124,6 +125,7 @@ static void pcon(pmix_peer_t *p)
     PMIX_CONSTRUCT(&p->send_queue, pmix_list_t);
     p->send_msg = NULL;
     p->recv_msg = NULL;
+    p->commit_cnt = 0;
 }
 static void pdes(pmix_peer_t *p)
 {

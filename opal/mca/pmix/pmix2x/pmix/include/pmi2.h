@@ -7,11 +7,8 @@
 #ifndef PMI2_H_INCLUDED
 #define PMI2_H_INCLUDED
 
-#ifdef PMIX_HAVE_VISIBILITY
-#define PMIX_EXPORT __attribute__((__visibility__("default")))
-#else
-#define PMIX_EXPORT
-#endif
+/* Structure and constant definitions */
+#include <pmix_common.h>
 
 #define PMI2_MAX_KEYLEN 64
 #define PMI2_MAX_VALLEN 1024

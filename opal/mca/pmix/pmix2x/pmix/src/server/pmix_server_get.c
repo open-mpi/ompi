@@ -518,35 +518,22 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
             *local = true;
         }
         if (PMIX_RANK_WILDCARD != rank) {
+            peer = NULL;
             /* see if the requested rank is local */
             PMIX_LIST_FOREACH(iptr, &nptr->ranks, pmix_rank_info_t) {
                 if (rank == iptr->pname.rank) {
                     scope = PMIX_LOCAL;
+                    if (0 <= iptr->peerid) {
+                        peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, iptr->peerid);
+                    }
+                    if (NULL == peer) {
+                        /* this rank has not connected yet, so this request needs to be held */
+                        return PMIX_ERR_NOT_FOUND;
+                    }
                     break;
                 }
             }
-            if (PMIX_LOCAL == scope) {
-                /* must have found a local rank
-                 * we need the personality module for a client from this
-                 * nspace, but it doesn't matter which one as they all
-                 * must use the same GDS module. We don't know the GDS
-                 * module, however, until _after_ the first local client
-                 * connects to us. Since the nspace of the requestor may
-                 * not match the nspace of the proc whose info is being
-                 * requested, we cannot be sure this will have occurred.
-                 * So we have to loop again to see if someone has connected */
-                peer = NULL;
-                PMIX_LIST_FOREACH(iptr, &nptr->ranks, pmix_rank_info_t) {
-                    if (0 <= iptr->peerid) {
-                        peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, iptr->peerid);
-                        break;
-                    }
-                }
-                if (NULL == peer) {
-                    /* nobody has connected yet, so this request needs to be held */
-                    return PMIX_ERR_NOT_FOUND;
-                }
-            } else {
+            if (PMIX_LOCAL != scope)  {
                 /* this must be a remote rank */
                 if (local) {
                     *local = false;
@@ -623,6 +610,9 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
 
     /* retrieve the data for the specific rank they are asking about */
     if (PMIX_RANK_WILDCARD != rank) {
+        if (!peer->commit_cnt) {
+            return PMIX_ERR_NOT_FOUND;
+        }
         proc.rank = rank;
         PMIX_CONSTRUCT(&cb, pmix_cb_t);
         /* this is a local request, so give the gds the option
