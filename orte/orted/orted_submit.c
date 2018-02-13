@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -813,7 +813,19 @@ int orte_submit_job(char *argv[], int *index,
     }
     /* if we were asked to output to files, pass it along */
     if (NULL != orte_cmd_options.output_filename) {
-        orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, orte_cmd_options.output_filename, OPAL_STRING);
+        /* if the given filename isn't an absolute path, then
+         * convert it to one so the name will be relative to
+         * the directory where prun was given as that is what
+         * the user will have seen */
+        if (!opal_path_is_absolute(orte_cmd_options.output_filename)) {
+            char cwd[OPAL_PATH_MAX], path;
+            getcwd(cwd, sizeof(cwd));
+            path = opal_os_path(false, cwd, orte_cmd_options.output_filename, NULL);
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, path, OPAL_STRING);
+            free(path);
+        } else {
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, orte_cmd_options.output_filename, OPAL_STRING);
+        }
     }
     /* if we were asked to merge stderr to stdout, mark it so */
     if (orte_cmd_options.merge) {
