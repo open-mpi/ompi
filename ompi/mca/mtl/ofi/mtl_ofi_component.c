@@ -98,6 +98,7 @@ ompi_mtl_ofi_component_register(void)
 {
     int ret;
     mca_base_var_enum_t *new_enum = NULL;
+    char *desc;
 
     param_priority = 25;   /* for now give a lower priority than the psm mtl */
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
@@ -124,6 +125,18 @@ ompi_mtl_ofi_component_register(void)
                                     OPAL_INFO_LVL_1,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &prov_exclude);
+
+    ompi_mtl_ofi.ofi_progress_event_count = 100;
+    asprintf(&desc, "Max number of events to read each call to OFI progress (default: %d events will be read per OFI progress call)", ompi_mtl_ofi.ofi_progress_event_count);
+    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                    "progress_event_cnt",
+                                    desc,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_6,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &ompi_mtl_ofi.ofi_progress_event_count);
+
+     free(desc);
 
     ret = mca_base_var_enum_create ("control_prog_type", control_prog_type, &new_enum);
     if (OPAL_SUCCESS != ret) {
@@ -465,11 +478,35 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      *     - dynamic memory-spanning memory region
      */
     cq_attr.format = FI_CQ_FORMAT_TAGGED;
+
+    /**
+     * If a user has set an ofi_progress_event_count > the default, then
+     * the CQ size hint is set to the user's desired value such that
+     * the CQ created will have enough slots to store up to
+     * ofi_progress_event_count events. If a user has not set the
+     * ofi_progress_event_count, then the provider is trusted to set a
+     * default high CQ size and the CQ size hint is left unspecified.
+     */
+    if (ompi_mtl_ofi.ofi_progress_event_count > 100) {
+        cq_attr.size = ompi_mtl_ofi.ofi_progress_event_count;
+    }
+
     ret = fi_cq_open(ompi_mtl_ofi.domain, &cq_attr, &ompi_mtl_ofi.cq, NULL);
     if (ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_cq_open failed: %s\n",
                             __FILE__, __LINE__, fi_strerror(-ret));
+        goto error;
+    }
+
+    /**
+     * Allocate memory for storing the CQ events read in OFI progress.
+     */
+    ompi_mtl_ofi.progress_entries = calloc(ompi_mtl_ofi.ofi_progress_event_count, sizeof(struct fi_cq_tagged_entry));
+    if (OPAL_UNLIKELY(!ompi_mtl_ofi.progress_entries)) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: alloc of CQ event storage failed: %s\n",
+                            __FILE__, __LINE__, strerror(errno));
         goto error;
     }
 
@@ -595,6 +632,10 @@ error:
     if (ompi_mtl_ofi.fabric) {
         (void) fi_close((fid_t)ompi_mtl_ofi.fabric);
     }
+    if (ompi_mtl_ofi.progress_entries) {
+        free(ompi_mtl_ofi.progress_entries);
+    }
+
     return NULL;
 }
 
@@ -625,6 +666,8 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
     if ((ret = fi_close((fid_t)ompi_mtl_ofi.fabric))) {
         goto finalize_err;
     }
+
+    free(ompi_mtl_ofi.progress_entries);
 
     return OMPI_SUCCESS;
 
