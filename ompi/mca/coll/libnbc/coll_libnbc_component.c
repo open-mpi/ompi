@@ -262,6 +262,11 @@ ompi_coll_libnbc_progress(void)
     ompi_coll_libnbc_request_t* request, *next;
     int res;
 
+    if (0 == opal_list_get_size (&mca_coll_libnbc_component.active_requests)) {
+        /* no requests -- nothing to do. do not grab a lock */
+        return 0;
+    }
+
     /* process active requests, and use mca_coll_libnbc_component.lock to access the
      * mca_coll_libnbc_component.active_requests list */
     OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
