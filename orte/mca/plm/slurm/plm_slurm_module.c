@@ -422,10 +422,10 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
-                             "%s plm:slurm: final top-level argv:\n\t%s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == param) ? "NULL" : param));
+        opal_output(orte_plm_base_framework.framework_output,
+                    "%s plm:slurm: final top-level argv:\n\t%s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    (NULL == param) ? "NULL" : param);
         if (NULL != param) free(param);
     }
 
