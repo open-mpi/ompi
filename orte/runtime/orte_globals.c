@@ -14,8 +14,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -148,7 +148,6 @@ orte_vpid_t orte_total_procs = 0;
 /* IOF controls */
 bool orte_tag_output = false;
 bool orte_timestamp_output = false;
-char *orte_output_filename = NULL;
 /* generate new xterm windows to display output from specified ranks */
 char *orte_xterm = NULL;
 

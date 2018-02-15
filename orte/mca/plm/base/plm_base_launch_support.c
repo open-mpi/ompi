@@ -14,8 +14,8 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -1530,13 +1530,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "oob_tcp_static_ipv4_ports");
         opal_argv_append(argc, argv, param);
         free(param);
-    }
-
-    /* if output-filename was specified, pass that along */
-    if (NULL != orte_output_filename) {
-        opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "orte_output_filename");
-        opal_argv_append(argc, argv, orte_output_filename);
     }
 
     /* if --xterm was specified, pass that along */

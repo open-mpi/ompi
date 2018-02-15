@@ -15,8 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -530,7 +530,6 @@ ORTE_DECLSPEC extern orte_vpid_t orte_total_procs;
 /* IOF controls */
 ORTE_DECLSPEC extern bool orte_tag_output;
 ORTE_DECLSPEC extern bool orte_timestamp_output;
-ORTE_DECLSPEC extern char *orte_output_filename;
 /* generate new xterm windows to display output from specified ranks */
 ORTE_DECLSPEC extern char *orte_xterm;
 
