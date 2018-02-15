@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -41,7 +41,8 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
     # get rid of the trailing slash(es)
     dir_prefix=$(echo $3 | sed -e 'sX/*$XXg')
     opal_check_package_header_happy="no"
-    AS_IF([test "$dir_prefix" = "/usr" || \
+    AS_IF([test "$dir_prefix" = "" || \
+           test "$dir_prefix" = "/usr" || \
            test "$dir_prefix" = "/usr/local"],
            [ # try as is...
             AC_VERBOSE([looking for header without includes])
@@ -52,11 +53,18 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
 
     AS_IF([test "$opal_check_package_header_happy" = "no"],
           [AS_IF([test "$dir_prefix" != ""],
-                 [$1_CPPFLAGS="$$1_CPPFLAGS -I$dir_prefix/include"
-                  CPPFLAGS="$CPPFLAGS -I$dir_prefix/include"])
-          AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
-	  AS_IF([test "$opal_check_package_header_happy" = "yes"], [$4], [$5])],
-          [$4])
+                 [$1_CPPFLAGS="$$1_CPPFLAGS -I$dir_prefix"
+                  CPPFLAGS="$CPPFLAGS -I$dir_prefix"
+                  AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
+                  AS_IF([test "$opal_check_package_header_happy" = "no"],
+                        [unset opal_Header
+                         $1_CPPFLAGS="$$1_CPPFLAGS -I$dir_prefix/include"
+                         CPPFLAGS="$CPPFLAGS -I$dir_prefix/include"
+                         AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])])])])
+
+    AS_IF([test "$opal_check_package_header_happy" = "yes"],
+          [$4], [$5])
+
     unset opal_check_package_header_happy
 
     OPAL_VAR_SCOPE_POP([dir_prefix])
@@ -77,10 +85,14 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
     # see comment above
     unset opal_Lib
     opal_check_package_lib_happy="no"
-    AS_IF([test "$6" != ""],
+
+    # get rid of the trailing slash(es)
+    libdir_prefix=$(echo $6 | sed -e 'sX/*$XXg')
+
+    AS_IF([test "$libdir_prefix" != ""],
           [ # libdir was specified - search only there
-           $1_LDFLAGS="$$1_LDFLAGS -L$6"
-           LDFLAGS="$LDFLAGS -L$6"
+           $1_LDFLAGS="$$1_LDFLAGS -L$libdir_prefix"
+           LDFLAGS="$LDFLAGS -L$libdir_prefix"
            AC_SEARCH_LIBS([$3], [$2],
                         [opal_check_package_lib_happy="yes"],
                         [opal_check_package_lib_happy="no"], [$4])
@@ -89,26 +101,30 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                   $1_LDFLAGS="$opal_check_package_$1_orig_LDFLAGS"
                   unset opal_Lib])],
           [ # libdir was not specified - go through search path
-           opal_check_package_libdir="$5"
-           AS_IF([test "$opal_check_package_libdir" = "" || \
-                  test "$opal_check_package_libdir" = "/usr" || \
-                  test "$opal_check_package_libdir" = "/usr/local"],
-               [ # try as is...
-                AC_VERBOSE([looking for library without search path])
-                AC_SEARCH_LIBS([$3], [$2],
-                        [opal_check_package_lib_happy="yes"],
-                        [opal_check_package_lib_happy="no"], [$4])
-                AS_IF([test "$opal_check_package_lib_happy" = "no"],
-                    [ # no go on the as is..  see what happens later...
-                     LDFLAGS="$opal_check_package_$1_save_LDFLAGS"
-                     $1_LDFLAGS="$opal_check_package_$1_orig_LDFLAGS"
-                     unset opal_Lib])])
+            # get rid of the trailing slash(es)
+            libdir_prefix=$(echo $5 | sed -e 'sX/*$XXg')
+
+           # first try standard locations as otherwise our
+           # searches with libdir_prefix locations might come
+           # back positive and unnecessarily add an LDFLAG
+           AC_VERBOSE([looking for library without search path])
+           AC_SEARCH_LIBS([$3], [$2],
+                          [opal_check_package_lib_happy="yes"],
+                          [opal_check_package_lib_happy="no"], [$4])
+           AS_IF([test "$opal_check_package_lib_happy" = "no"],
+                 [ # no go on the as is..  see what happens later...
+                  LDFLAGS="$opal_check_package_$1_save_LDFLAGS"
+                  $1_LDFLAGS="$opal_check_package_$1_orig_LDFLAGS"
+                  unset opal_Lib])
 
            AS_IF([test "$opal_check_package_lib_happy" = "no"],
-               [AS_IF([test "$opal_check_package_libdir" != ""],
-                    [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib"
-                     LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib"
-                     AC_VERBOSE([looking for library in lib])
+           # if we didn't find it, check the given/lib64 directory
+               [AS_IF([test "$libdir_prefix" != "" && \
+                       test "$libdir_prefix" != "/usr" && \
+                       test "$libdir_prefix" != "/usr/local"],
+                    [$1_LDFLAGS="$$1_LDFLAGS -L$libdir_prefix/lib64"
+                     LDFLAGS="$LDFLAGS -L$libdir_prefix/lib64"
+                     AC_VERBOSE([looking for library in $libdir_prefix/lib64])
                      AC_SEARCH_LIBS([$3], [$2],
                                [opal_check_package_lib_happy="yes"],
                                [opal_check_package_lib_happy="no"], [$4])
@@ -118,19 +134,23 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
                           $1_LDFLAGS="$opal_check_package_$1_orig_LDFLAGS"
                           unset opal_Lib])])])
 
-           AS_IF([test "$opal_check_package_lib_happy" = "no"],
-               [AS_IF([test "$opal_check_package_libdir" != ""],
-                    [$1_LDFLAGS="$$1_LDFLAGS -L$opal_check_package_libdir/lib64"
-                     LDFLAGS="$LDFLAGS -L$opal_check_package_libdir/lib64"
-                     AC_VERBOSE([looking for library in lib64])
-                     AC_SEARCH_LIBS([$3], [$2],
-                               [opal_check_package_lib_happy="yes"],
-                               [opal_check_package_lib_happy="no"], [$4])
-                     AS_IF([test "$opal_check_package_lib_happy" = "no"],
-                         [ # no go on the as is..  see what happens later...
-                          LDFLAGS="$opal_check_package_$1_save_LDFLAGS"
-                          $1_LDFLAGS="$opal_check_package_$1_orig_LDFLAGS"
-                          unset opal_Lib])])])])
+            AS_IF([test "$opal_check_package_lib_happy" = "no"],
+            # if we still haven't found it, check the given/lib directory
+                  [AS_IF([test "$libdir_prefix" != "" && \
+                          test "$libdir_prefix" != "/usr" && \
+                          test "$libdir_prefix" != "/usr/local"],
+                       [$1_LDFLAGS="$$1_LDFLAGS -L$libdir_prefix/lib"
+                        LDFLAGS="$LDFLAGS -L$libdir_prefix/lib"
+                        AC_VERBOSE([looking for library in $libdir_prefix/lib])
+                        AC_SEARCH_LIBS([$3], [$2],
+                                  [opal_check_package_lib_happy="yes"],
+                                  [opal_check_package_lib_happy="no"], [$4])
+                        AS_IF([test "$opal_check_package_lib_happy" = "no"],
+                            [ # no go on the as is..  see what happens later...
+                             LDFLAGS="$opal_check_package_$1_save_LDFLAGS"
+                             $1_LDFLAGS="$opal_check_package_$1_orig_LDFLAGS"
+                             unset opal_Lib])])])
+            ])
 
     AS_IF([test "$opal_check_package_lib_happy" = "yes"],
           [ # libnl v1 and libnl3 are known to *not* coexist
