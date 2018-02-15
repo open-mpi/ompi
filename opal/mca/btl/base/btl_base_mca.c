@@ -14,7 +14,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -180,6 +180,10 @@ int mca_btl_base_param_verify(mca_btl_base_module_t *module)
 
     if (NULL == module->btl_get) {
         module->btl_flags &= ~MCA_BTL_FLAGS_GET;
+    }
+
+    if (NULL == module->btl_flush) {
+        module->btl_flags &= ~MCA_BTL_FLAGS_RDMA_FLUSH;
     }
 
     if (0 == module->btl_atomic_flags) {
