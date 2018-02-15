@@ -818,7 +818,7 @@ int orte_submit_job(char *argv[], int *index,
          * the directory where prun was given as that is what
          * the user will have seen */
         if (!opal_path_is_absolute(orte_cmd_options.output_filename)) {
-            char cwd[OPAL_PATH_MAX], path;
+            char cwd[OPAL_PATH_MAX], *path;
             getcwd(cwd, sizeof(cwd));
             path = opal_os_path(false, cwd, orte_cmd_options.output_filename, NULL);
             orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, path, OPAL_STRING);
