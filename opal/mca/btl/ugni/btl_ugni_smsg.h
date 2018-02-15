@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -49,10 +49,8 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
 
     if (OPAL_UNLIKELY((GNI_RC_SUCCESS != grc && !event_data) || GNI_CQ_OVERRUN(event_data))) {
         /* TODO -- need to handle overrun -- how do we do this without an event?
-           will the event eventually come back? Ask Cray */
-        BTL_ERROR(("post error! cq overrun = %d", (int)GNI_CQ_OVERRUN(event_data)));
-        assert (0);
-        return mca_btl_rc_ugni_to_opal (grc);
+         * will the event eventually come back? Ask Cray */
+        return mca_btl_ugni_event_fatal_error (grc, event_data);
     }
 
     assert (GNI_CQ_GET_TYPE(event_data) == GNI_CQ_EVENT_TYPE_SMSG);
@@ -93,7 +91,7 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
             }
         }
 
-        (void) mca_btl_ugni_progress_local_smsg (ugni_module, endpoint->smsg_ep_handle->device);
+        (void) mca_btl_ugni_progress_local_smsg (ugni_module, endpoint->smsg_ep_handle.device);
         return OPAL_SUCCESS;
     }
 
@@ -104,7 +102,8 @@ static inline int opal_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
     }
 
     BTL_ERROR(("GNI_SmsgSendWTag failed with rc = %d. handle = %lu, hdr_len = %d, payload_len = %d",
-               grc, (uintptr_t) frag->endpoint->smsg_ep_handle, (int) hdr_len, (int) payload_len));
+               grc, (uintptr_t) frag->endpoint->smsg_ep_handle.gni_handle, (int) hdr_len,
+               (int) payload_len));
 
     return OPAL_ERROR;
 }
