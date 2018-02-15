@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
@@ -16,11 +16,13 @@
 
 #include "btl_ugni.h"
 #include "btl_ugni_endpoint.h"
+#include "btl_ugni_frag.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/bit_ops.h"
+#include "opal/mca/hwloc/base/base.h"
 
 static inline int get_ptag(uint8_t *out_ptag)
 {
@@ -60,7 +62,6 @@ static inline int get_cookie (uint32_t *out_cookie)
     }
 
     *out_cookie = tmp_cookie;
-
     return OPAL_SUCCESS;
 }
 
@@ -115,18 +116,7 @@ int mca_btl_ugni_device_init (mca_btl_ugni_device_t *device, int virtual_device_
     uint32_t dev_pe_addr;
     int rc;
 
-    OBJ_CONSTRUCT(&device->endpoints, opal_free_list_t);
-    OBJ_CONSTRUCT(&device->pending_post, opal_list_t);
-
-    rc = opal_free_list_init (&device->endpoints, sizeof (mca_btl_ugni_endpoint_handle_t),
-                              8, OBJ_CLASS(mca_btl_ugni_endpoint_handle_t), 0, 8, 0,
-                              mca_btl_ugni_component.local_cq_size, 16,
-                              NULL, 0, NULL, mca_btl_ugni_endpoint_handle_init_rdma,
-                              (void *) device);
-    if (OPAL_SUCCESS != rc) {
-        OBJ_DESTRUCT(&device->endpoints);
-        return rc;
-    }
+    OBJ_CONSTRUCT(&device->rdma_descs, opal_free_list_t);
 
     /* create a communication domain */
     rc = GNI_CdmCreate (mca_btl_ugni_component.cdm_id_base | virtual_device_id, mca_btl_ugni_component.ptag,
@@ -149,13 +139,23 @@ int mca_btl_ugni_device_init (mca_btl_ugni_device_t *device, int virtual_device_
         return mca_btl_rc_ugni_to_opal (rc);
     }
 
+    rc = opal_free_list_init (&device->rdma_descs, sizeof (mca_btl_ugni_rdma_desc_t),
+                              64, OBJ_CLASS(mca_btl_ugni_rdma_desc_t), 0, 8, 0,
+                              mca_btl_ugni_component.local_rdma_cq_size, 32,
+                              NULL, 0, NULL, mca_btl_ugni_rdma_desc_init, (void *) device);
+    if (OPAL_SUCCESS != rc) {
+        OBJ_DESTRUCT(&device->rdma_descs);
+        return rc;
+    }
+
     device->lock = 0;
     device->dev_rdma_local_cq.gni_handle = 0;
     device->dev_rdma_local_cq.active_operations = 0;
     device->dev_rdma_local_irq_cq.gni_handle = 0;
     device->dev_rdma_local_irq_cq.active_operations = 0;
     device->dev_smsg_local_cq.gni_handle = 0;
-    device->dev_smsg_local_cq.active_operations= 0;
+    device->dev_smsg_local_cq.active_operations = 0;
+    device->flushed = true;
 
     return OPAL_SUCCESS;
 }
@@ -164,8 +164,7 @@ int mca_btl_ugni_device_fini (mca_btl_ugni_device_t *dev)
 {
     int rc;
 
-    OBJ_DESTRUCT(&dev->endpoints);
-    OBJ_DESTRUCT(&dev->pending_post);
+    OBJ_DESTRUCT(&dev->rdma_descs);
 
     if (0 != dev->dev_rdma_local_cq.gni_handle) {
         GNI_CqDestroy (dev->dev_rdma_local_cq.gni_handle);
@@ -243,25 +242,44 @@ int mca_btl_ugni_init (void)
     FILE *fh;
 
     if (0 == mca_btl_ugni_component.virtual_device_count) {
-        /* XXX -- TODO -- might want to improve this logic. One option would be to
-         * compare the number of local peers vs the number of cores or hyperthreads
-         * on the node. */
+        int core_count;
 
-        if (!opal_using_threads() || opal_process_info.num_local_peers >= 255) {
+        (void) opal_hwloc_base_get_topology ();
+        core_count = hwloc_get_nbobjs_by_type (opal_hwloc_topology, HWLOC_OBJ_CORE);
+
+        if (core_count <= opal_process_info.num_local_peers || !opal_using_threads()) {
             /* there is probably no benefit to using multiple device contexts when not
              * using threads. */
             mca_btl_ugni_component.virtual_device_count = 1;
-        } else if (opal_process_info.num_local_peers >= 127) {
-            mca_btl_ugni_component.virtual_device_count = 2;
-        } else if (opal_process_info.num_local_peers >= 63) {
-            mca_btl_ugni_component.virtual_device_count = 4;
-        } else if (opal_process_info.num_local_peers >= 31) {
-            mca_btl_ugni_component.virtual_device_count = 8;
         } else {
-            mca_btl_ugni_component.virtual_device_count = 16;
+            mca_btl_ugni_component.virtual_device_count = core_count / (opal_process_info.num_local_peers + 1);
         }
-    } else if (MCA_BTL_UGNI_MAX_DEV_HANDLES < mca_btl_ugni_component.virtual_device_count) {
+    }
+
+    if (MCA_BTL_UGNI_MAX_DEV_HANDLES < mca_btl_ugni_component.virtual_device_count) {
         mca_btl_ugni_component.virtual_device_count = MCA_BTL_UGNI_MAX_DEV_HANDLES;
+    }
+
+    if (0 == mca_btl_ugni_component.local_rdma_cq_size) {
+        if (1 == mca_btl_ugni_component.virtual_device_count) {
+            mca_btl_ugni_component.local_rdma_cq_size = 2048;
+        } else {
+            mca_btl_ugni_component.local_rdma_cq_size = 256;
+        }
+    }
+
+    if ((mca_btl_ugni_component.virtual_device_count * (1 + opal_process_info.num_local_peers)) < 122) {
+        /* if there are fewer total devices than FMA descriptors it makes sense to turn off FMA sharing.
+         * *DO NOT* override a user requested flag. */
+        mca_base_var_source_t source = MCA_BASE_VAR_SOURCE_DEFAULT;
+
+        mca_base_var_get_value (mca_btl_ugni_component.cdm_flags_id, NULL, &source, NULL);
+        if (MCA_BASE_VAR_SOURCE_DEFAULT == source) {
+            BTL_VERBOSE(("disabling shared FMA sharing"));
+
+            mca_btl_ugni_component.cdm_flags &= ~GNI_CDM_MODE_FMA_SHARED;
+            mca_btl_ugni_component.cdm_flags |= GNI_CDM_MODE_FMA_DEDICATED;
+        }
     }
 
     fh = fopen ("/proc/sys/kernel/pid_max", "r");

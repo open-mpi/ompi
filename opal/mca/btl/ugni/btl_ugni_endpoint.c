@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2017      Intel, Inc.  All rights reserved.
@@ -156,7 +156,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
         return OPAL_SUCCESS;
     }
 
-    device = ep->smsg_ep_handle->device;
+    device = ep->smsg_ep_handle.device;
 
     while (device->dev_smsg_local_cq.active_operations) {
         /* ensure all sends are complete before removing and procs */
@@ -181,15 +181,14 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
             }
         } while (device->dev_smsg_local_cq.active_operations);
 
-        (void) opal_atomic_add_fetch_32 (&ep->smsg_ep_handle->device->smsg_connections, -1);
+        (void) opal_atomic_add_fetch_32 (&ep->smsg_ep_handle.device->smsg_connections, -1);
     }
 
     mca_btl_ugni_device_lock (device);
 
     /* NTH: this call may not need the device lock. seems to work without it but
      * the lock is here to be safe. */
-    (void) mca_btl_ugni_ep_handle_destroy (ep->smsg_ep_handle);
-    ep->smsg_ep_handle = NULL;
+    (void) mca_btl_ugni_ep_handle_cleanup (&ep->smsg_ep_handle);
 
     mca_btl_ugni_device_unlock (device);
 
@@ -221,10 +220,10 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     /* bind endpoint to remote address */
     /* we bind two endpoints to seperate out local smsg completion and local fma completion */
     mca_btl_ugni_device_lock (device);
-    ep->smsg_ep_handle = mca_btl_ugni_ep_handle_create (ep, device->dev_smsg_local_cq.gni_handle, device);
+    rc = mca_btl_ugni_ep_handle_init (ep, device->dev_smsg_local_cq.gni_handle, device, &ep->smsg_ep_handle);
     mca_btl_ugni_device_unlock (device);
-    if (OPAL_UNLIKELY(NULL == ep->smsg_ep_handle)) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        return rc;
     }
 
     /* build connection data */
@@ -262,7 +261,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
                  ep->mailbox->attr.smsg_attr.mem_hndl.qword2, ep->mailbox->attr.smsg_attr.mbox_offset,
                  ep->mailbox->attr.smsg_attr.mbox_maxcredit, ep->mailbox->attr.smsg_attr.msg_maxsize));
 
-    grc = GNI_SmsgInit (ep->smsg_ep_handle->gni_handle, &ep->mailbox->attr.smsg_attr,
+    grc = GNI_SmsgInit (ep->smsg_ep_handle.gni_handle, &ep->mailbox->attr.smsg_attr,
                         &ep->remote_attr->smsg_attr);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
         BTL_ERROR(("error initializing SMSG protocol. rc = %d", grc));
@@ -274,11 +273,11 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
      * index on the remote peer. This makes lookup of endpoints on completion take
      * a single lookup in the endpoints array. we will not be able to change the
      * remote peer's index in the endpoint's array after this point. */
-    GNI_EpSetEventData (ep->smsg_ep_handle->gni_handle, ep->index, ep->remote_attr->index);
+    GNI_EpSetEventData (ep->smsg_ep_handle.gni_handle, ep->index, ep->remote_attr->index);
 
     ep->rmt_irq_mem_hndl = ep->remote_attr->rmt_irq_mem_hndl;
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
-    (void) opal_atomic_add_fetch_32 (&ep->smsg_ep_handle->device->smsg_connections, 1);
+    (void) opal_atomic_add_fetch_32 (&ep->smsg_ep_handle.device->smsg_connections, 1);
 
     /* send all pending messages */
     BTL_VERBOSE(("endpoint connected. posting %u sends", (unsigned int) opal_list_get_size (&ep->frag_wait_list)));
@@ -308,7 +307,7 @@ static int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep)
     /* the irq cq is associated with only the first device */
     ep->mailbox->attr.rmt_irq_mem_hndl = ugni_module->devices->smsg_irq_mhndl;
 
-    rc = GNI_EpPostDataWId (ep->smsg_ep_handle->gni_handle, &ep->mailbox->attr, sizeof (ep->mailbox->attr),
+    rc = GNI_EpPostDataWId (ep->smsg_ep_handle.gni_handle, &ep->mailbox->attr, sizeof (ep->mailbox->attr),
                             ep->remote_attr, sizeof (*ep->remote_attr),
                             MCA_BTL_UGNI_CONNECT_DIRECTED_ID | ep->index);
     if (OPAL_LIKELY(GNI_RC_SUCCESS == rc)) {
@@ -372,44 +371,10 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep)
     return mca_btl_ugni_ep_connect_finish (ep);
 }
 
-int mca_btl_ugni_endpoint_handle_init_rdma (opal_free_list_item_t *item, void *ctx)
+int mca_btl_ugni_ep_handle_init (mca_btl_ugni_endpoint_t *ep, gni_cq_handle_t cq,
+                                 mca_btl_ugni_device_t *device, mca_btl_ugni_endpoint_handle_t *ep_handle)
 {
-    mca_btl_ugni_endpoint_handle_t *handle = (mca_btl_ugni_endpoint_handle_t *) item;
-    mca_btl_ugni_device_t *device = (mca_btl_ugni_device_t *) ctx;
     gni_return_t grc;
-
-    grc = GNI_EpCreate (device->dev_handle, device->dev_rdma_local_cq.gni_handle, &handle->gni_handle);
-    handle->device = device;
-    return mca_btl_rc_ugni_to_opal (grc);
-}
-
-static void mca_btl_ugni_endpoint_handle_construct (mca_btl_ugni_endpoint_handle_t *handle)
-{
-    handle->gni_handle = 0;
-}
-
-static void mca_btl_ugni_endpoint_handle_destruct (mca_btl_ugni_endpoint_handle_t *handle)
-{
-    if (handle->gni_handle) {
-        GNI_EpDestroy (handle->gni_handle);
-        handle->gni_handle = 0;
-    }
-}
-
-OBJ_CLASS_INSTANCE(mca_btl_ugni_endpoint_handle_t, opal_object_t,
-                   mca_btl_ugni_endpoint_handle_construct,
-                   mca_btl_ugni_endpoint_handle_destruct);
-
-mca_btl_ugni_endpoint_handle_t *mca_btl_ugni_ep_handle_create (mca_btl_ugni_endpoint_t *ep, gni_cq_handle_t cq,
-                                                               mca_btl_ugni_device_t *device)
-{
-    mca_btl_ugni_endpoint_handle_t *ep_handle;
-    gni_return_t grc;
-
-    ep_handle = OBJ_NEW(mca_btl_ugni_endpoint_handle_t);
-    if (OPAL_UNLIKELY(NULL == ep_handle)) {
-        return NULL;
-    }
 
     ep_handle->device = device;
 
@@ -419,19 +384,14 @@ mca_btl_ugni_endpoint_handle_t *mca_btl_ugni_ep_handle_create (mca_btl_ugni_endp
         grc = GNI_EpBind (ep_handle->gni_handle, ep->ep_rem_addr, ep->ep_rem_id);
     }
 
-    if (GNI_RC_SUCCESS != grc) {
-        OBJ_RELEASE(ep_handle);
-        ep_handle = NULL;
-    }
-
-    return ep_handle;
+    return mca_btl_rc_ugni_to_opal (grc);
 }
 
-int mca_btl_ugni_ep_handle_destroy (mca_btl_ugni_endpoint_handle_t *ep_handle)
+int mca_btl_ugni_ep_handle_cleanup (mca_btl_ugni_endpoint_handle_t *ep_handle)
 {
     int rc;
 
-    if (NULL == ep_handle || 0 == ep_handle->gni_handle) {
+    if (0 == ep_handle->gni_handle) {
         return OPAL_SUCCESS;
     }
 
@@ -439,9 +399,11 @@ int mca_btl_ugni_ep_handle_destroy (mca_btl_ugni_endpoint_handle_t *ep_handle)
     rc = GNI_EpUnbind (ep_handle->gni_handle);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         /* should warn */
+    } else {
+        (void) GNI_EpDestroy (ep_handle->gni_handle);
     }
 
-    OBJ_RELEASE(ep_handle);
+    ep_handle->gni_handle = 0;
 
     return OPAL_SUCCESS;
 }
