@@ -386,10 +386,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     OMPI_TIMING_INIT(32);
 
-    /* bitflag of the thread level support provided. To be used
-     * for the modex in order to work in heterogeneous environments. */
-    uint8_t threadlevel_bf;
-
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
 
     /* Ensure that we were not already initialized or finalized.
@@ -551,18 +547,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * register for callbacks when other libs declare */
     if (OMPI_SUCCESS != (ret = ompi_interlib_declare(*provided, OMPI_IDENT_STRING))) {
         error = "ompi_interlib_declare";
-        goto error;
-    }
-
-    /* determine the bitflag belonging to the threadlevel_support provided */
-    memset ( &threadlevel_bf, 0, sizeof(uint8_t));
-    OMPI_THREADLEVEL_SET_BITFLAG ( ompi_mpi_thread_provided, threadlevel_bf );
-
-    /* add this bitflag to the modex */
-    OPAL_MODEX_SEND_STRING(ret, OPAL_PMIX_GLOBAL,
-                           "MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t));
-    if (OPAL_SUCCESS != ret) {
-        error = "ompi_mpi_init: modex send thread level";
         goto error;
     }
 
