@@ -58,83 +58,52 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([opal_event_external_CPPFLAGS_save opal_event_external_CFLAGS_save opal_event_external_LDFLAGS_save opal_event_external_LIBS_save])
 
-    AC_ARG_WITH([libevent],
-       [AC_HELP_STRING([--with-libevent=DIR],
-             [Search for libevent headers and libraries in DIR.  Should only be used if an external copy of libevent is being used.])])
+    OPAL_DECLARE_PACKAGE([libevent],
+                         [Search for libevent headers and libraries in DIR.  Should only be used if an external copy of libevent is being used.],
+                         [Search for libevent headers with FLAGS.  Should only be used if an external copy of libevent is being used.],
+                         [Search for libevent libraries with FLAGS.  Should only be used if an external copy of libevent is being used.])
 
     # Bozo check
     AS_IF([test "$with_libevent" = "no"],
           [AC_MSG_WARN([It is not possible to configure Open MPI --without-libevent])
            AC_MSG_ERROR([Cannot continue])])
 
-    AC_ARG_WITH([libevent-libdir],
-       [AC_HELP_STRING([--with-libevent-libdir=DIR],
-             [Search for libevent libraries in DIR.  Should only be used if an external copy of libevent is being used.])])
-
     # Make sure the user didn't specify --with-libevent=internal and
-    # --with-libevent-libdir=whatever (because you can only specify
-    # --with-libevent-libdir when external libevent is being used).
-    AS_IF([test "$with_libevent" = "internal" && test -n "$with_libevent_libdir"],
-          [AC_MSG_WARN([Both --with-libevent=internal and --with-libevent-libdir=DIR])
-           AC_MSG_WARN([were specified, which does not make sense.])
-           AC_MSG_ERROR([Cannot continue])])
+    # --with-libevent-{cpp,ld}flags=whatever (because you can only specify
+    # --with-libevent-{cpp,ld}flags when external libevent is being used).
+    AS_IF([test "$with_libevent" = "internal"],
+          [AS_IF([test -n "$with_libevent_cppflags" || test -n "$with_libevent_ldflags"],
+                 [AC_MSG_WARN([Both --with-libevent=internal and --with-libevent-{cpp,ld}flags=FLAGS])
+                  AC_MSG_WARN([were specified, which does not make sense.])
+                  AC_MSG_ERROR([Cannot continue])])])
 
     # Do we want this external component? (slightly redundant logic,
     # but hopefully slightly more clear...)
     opal_event_external_want=no
     AS_IF([test "$with_libevent" = "external"], [opal_event_external_want=yes])
-    AS_IF([test -n "$with_libevent_libdir"], [opal_event_external_want=yes])
+    AS_IF([test -n "$with_libevent_cppflags" || test -n "$with_libevent_ldflags"], [opal_event_external_want=yes])
     AS_IF([test -n "$with_libevent" && test "$with_libevent" != "no" && test "$with_libevent" != "internal"], [opal_event_external_want=yes])
 
     # If we want external support, try it
     AS_IF([test "$opal_event_external_want" = "yes"],
-          [ # Error out if the specified dir does not exist
-           OPAL_CHECK_WITHDIR([libevent-libdir], [$with_libevent_libdir],
-                              [libevent.*])
-
-           AC_MSG_CHECKING([for external libevent in])
-           AS_IF([test "$with_libevent" != "external" && test "$with_libevent" != "yes"],
-                 [opal_event_dir=$with_libevent
-                  AC_MSG_RESULT([$opal_event_dir])
-                  OPAL_CHECK_WITHDIR([libevent], [$opal_event_dir],
-                                     [include/event.h])
-                  AS_IF([test -z "$with_libevent_libdir" || test "$with_libevent_libdir" = "yes"],
-                        [AC_MSG_CHECKING([for $with_libevent/lib64])
-                         AS_IF([test -d "$with_libevent/lib64"],
-                               [opal_event_libdir_found=yes
-                                AC_MSG_RESULT([found])],
-                               [opal_event_libdir_found=no
-                                AC_MSG_RESULT([not found])])
-                         AS_IF([test "$opal_event_libdir_found" = "yes"],
-                               [opal_event_libdir="$with_libevent/lib64"],
-                               [AC_MSG_CHECKING([for $with_libevent/lib])
-                                AS_IF([test -d "$with_libevent/lib"],
-                                      [AC_MSG_RESULT([found])
-                                       opal_event_libdir="$with_libevent/lib"],
-                                      [AC_MSG_RESULT([not found])
-                                       AC_MSG_WARN([Library directories were not found:])
-                                       AC_MSG_WARN([    $with_libevent/lib64])
-                                       AC_MSG_WARN([    $with_libevent/lib])
-                                       AC_MSG_WARN([Please use --with-libevent-libdir to identify it.])
-                                       AC_MSG_ERROR([Cannot continue])])])])],
-                 [AC_MSG_RESULT([(default search paths)])])
-           AS_IF([test ! -z "$with_libevent_libdir" && test "$with_libevent_libdir" != "yes"],
-                 [opal_event_libdir="$with_libevent_libdir"])
+          [AC_MSG_CHECKING([for external libevent in])
+           AS_IF([test "$with_libevent" = "external" || test "$with_libevent" = "yes"],
+                 [with_libevent=
+                  AC_MSG_RESULT([(default search paths)])])
 
            opal_event_external_CPPFLAGS_save=$CPPFLAGS
            opal_event_external_CFLAGS_save=$CFLAGS
            opal_event_external_LDFLAGS_save=$LDFLAGS
            opal_event_external_LIBS_save=$LIBS
 
-           OPAL_CHECK_PACKAGE([opal_event_external],
-                              [event.h],
-                              [event],
-                              [event_config_new],
-                              [-levent_pthreads],
-                              [$opal_event_dir],
-                              [$opal_event_libdir],
-                              [opal_event_external_support=yes],
-                              [opal_event_external_support=no])
+           OPAL_CHECK_PACKAGE2([opal_event_external],
+                               [event.h],
+                               [event],
+                               [event_config_new],
+                               [-levent_pthreads],
+                               [libevent],
+                               [opal_event_external_support=yes],
+                               [opal_event_external_support=no])
 
            # Ensure that this libevent has the symbol
            # "evthread_set_lock_callbacks", which will only exist if
