@@ -17,7 +17,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -302,9 +302,19 @@ int orte_submit_init(int argc, char *argv[],
      if (orte_cmd_options.version) {
         char *str, *project_name = NULL;
         if (0 == strcmp(orte_basename, "mpirun")) {
+#ifdef OPAL_IDENT_STRING
+            /* OPAL_IDENT_STRING is set when configured --with-ident-string */
+            project_name = OPAL_IDENT_STRING;
+#else
             project_name = "Open MPI";
-        } else {
+#endif
+        } else { /* orterun */
+#ifdef ORTE_IDENT_STRING
+            /* ORTE_IDENT_STRING is set when configured --with-ident-string */
+            project_name = ORTE_IDENT_STRING;
+#else
             project_name = "OpenRTE";
+#endif
         }
         str = opal_info_make_version_str("all",
                                          OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
