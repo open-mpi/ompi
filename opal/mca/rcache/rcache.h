@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -47,6 +47,14 @@ enum {
     MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM = 0x0010,
     /** invalid registration (no valid for passing to rcache register) */
     MCA_RCACHE_FLAGS_INVALID           = 0x0080,
+    /** reserved for rcache module */
+    MCA_RCACHE_FLAGS_MOD_RESV0         = 0x0100,
+    /** reserved for rcache module */
+    MCA_RCACHE_FLAGS_MOD_RESV1         = 0x0200,
+    /** reserved for rcache module */
+    MCA_RCACHE_FLAGS_MOD_RESV2         = 0x0400,
+    /** reserved for rcache module */
+    MCA_RCACHE_FLAGS_MOD_RESV3         = 0x0800,
     /** reserved for register function */
     MCA_RCACHE_FLAGS_RESV0             = 0x1000,
     /** reserved for register function */
@@ -84,9 +92,9 @@ struct mca_rcache_base_registration_t {
     /** artifact of old mpool/rcache architecture. used by cuda code */
     unsigned char *alloc_base;
     /** number of outstanding references */
-    int32_t ref_count;
+    volatile int32_t ref_count;
     /** registration flags */
-    uint32_t flags;
+    volatile uint32_t flags;
     /** internal rcache context */
     void *rcache_context;
 #if OPAL_CUDA_GDR_SUPPORT

@@ -15,7 +15,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -34,35 +34,6 @@
 
 #include "opal/mca/rcache/rcache.h"
 #include "rcache_base_vma.h"
-
-/*
- * Data structures for the tree of allocated memory
- */
-
-struct mca_rcache_base_vma_reg_list_item_t
-{
-    opal_list_item_t super;
-    mca_rcache_base_registration_t *reg;
-};
-typedef struct mca_rcache_base_vma_reg_list_item_t mca_rcache_base_vma_reg_list_item_t;
-OBJ_CLASS_DECLARATION(mca_rcache_base_vma_reg_list_item_t);
-
-/**
- * The item in the vma_tree itself
- */
-struct mca_rcache_base_vma_item_t
-{
-    opal_free_list_item_t super;     /**< the parent class */
-    uintptr_t start;                 /**< the base of the memory range */
-    uintptr_t end;                   /**< the bound of the memory range */
-    opal_list_t reg_list;            /**< list of regs on this vma */
-    bool in_use;                     /**< vma is in use in iterate */
-    mca_rcache_base_vma_module_t *vma_module; /**< pointer to rcache vma belongs to */
-};
-typedef struct mca_rcache_base_vma_item_t mca_rcache_base_vma_item_t;
-
-OBJ_CLASS_DECLARATION(mca_rcache_base_vma_item_t);
-
 
 /*
  * initialize the vma tree
@@ -111,8 +82,17 @@ void mca_rcache_base_vma_tree_dump_range (mca_rcache_base_vma_module_t *vma_modu
  * Iterate over matching registration handles in the tree.
  */
 int mca_rcache_base_vma_tree_iterate (mca_rcache_base_vma_module_t *vma_module,
-                                      unsigned char *base, size_t size,
+                                      unsigned char *base, size_t size, bool partial_ok,
                                       int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
                                       void *ctx);
+
+/**
+ * @brief Get the current size of the vma tree
+ *
+ * @param[in] vma_module   rcache vma tree module
+ *
+ * @returns the current number of vma regions in the tree
+ */
+size_t mca_rcache_base_vma_tree_size (mca_rcache_base_vma_module_t *vma_module);
 
 #endif /* MCA_RCACHE_BASE_VMA_TREE_H */

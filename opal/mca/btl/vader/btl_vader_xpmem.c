@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -33,7 +33,6 @@ int mca_btl_vader_xpmem_init (void)
 }
 
 struct vader_check_reg_ctx_t {
-    mca_rcache_base_vma_module_t *vma_module;
     mca_btl_base_endpoint_t *ep;
     mca_rcache_base_registration_t **reg;
     uintptr_t base;
@@ -58,11 +57,22 @@ static int vader_check_reg (mca_rcache_base_registration_t *reg, void *ctx)
         return 1;
     }
 
-    /* remove this pointer from the rcache and decrement its reference count
-       (so it is detached later) */
-    mca_rcache_base_vma_delete (vader_ctx->vma_module, reg);
-
     return 2;
+}
+
+void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *ep)
+{
+    mca_rcache_base_vma_module_t *vma_module =  mca_btl_vader_component.vma_module;
+    int32_t ref_count;
+
+    ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
+    if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_RCACHE_FLAGS_PERSIST))) {
+        mca_rcache_base_vma_delete (vma_module, reg);
+
+        opal_memchecker_base_mem_noaccess (reg->rcache_context, (uintptr_t)(reg->bound - reg->base));
+        (void)xpmem_detach (reg->rcache_context);
+        OBJ_RELEASE (reg);
+    }
 }
 
 /* look up the remote pointer in the peer rcache and attach if
@@ -73,7 +83,7 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     mca_rcache_base_vma_module_t *vma_module = mca_btl_vader_component.vma_module;
     uint64_t attach_align = 1 << mca_btl_vader_component.log_attach_align;
     mca_rcache_base_registration_t *reg = NULL;
-    vader_check_reg_ctx_t check_ctx = {.ep = ep, .reg = &reg, .vma_module = vma_module};
+    vader_check_reg_ctx_t check_ctx = {.ep = ep, .reg = &reg};
     xpmem_addr_t xpmem_addr;
     uintptr_t base, bound;
     int rc;
@@ -88,16 +98,17 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     check_ctx.bound = bound;
 
     /* several segments may match the base pointer */
-    rc = mca_rcache_base_vma_iterate (vma_module, (void *) base, bound - base, vader_check_reg, &check_ctx);
+    rc = mca_rcache_base_vma_iterate (vma_module, (void *) base, bound - base, true, vader_check_reg, &check_ctx);
     if (2 == rc) {
+        /* remove this pointer from the rcache and decrement its reference count
+           (so it is detached later) */
+        mca_rcache_base_vma_delete (vma_module, reg);
+
         /* start the new segment from the lower of the two bases */
         base = (uintptr_t) reg->base < base ? (uintptr_t) reg->base : base;
 
-        if (OPAL_LIKELY(0 == opal_atomic_add_fetch_32 (&reg->ref_count, -1))) {
-            /* this pointer is not in use */
-            (void) xpmem_detach (reg->rcache_context);
-            OBJ_RELEASE(reg);
-        }
+        /* remove the last reference to this registration */
+        vader_return_registration (reg, ep);
 
         reg = NULL;
     }
@@ -127,7 +138,9 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
 
             opal_memchecker_base_mem_defined (reg->rcache_context, bound - base);
 
-            mca_rcache_base_vma_insert (vma_module, reg, 0);
+            if (!(flags & MCA_RCACHE_FLAGS_PERSIST)) {
+                mca_rcache_base_vma_insert (vma_module, reg, 0);
+            }
         }
     }
 
@@ -138,22 +151,6 @@ mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpo
     return reg;
 }
 
-void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *ep)
-{
-    mca_rcache_base_vma_module_t *vma_module =  mca_btl_vader_component.vma_module;
-    int32_t ref_count;
-
-    ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
-    if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_RCACHE_FLAGS_PERSIST))) {
-        /* protect rcache access */
-        mca_rcache_base_vma_delete (vma_module, reg);
-
-        opal_memchecker_base_mem_noaccess (reg->rcache_context, (uintptr_t)(reg->bound - reg->base));
-        (void)xpmem_detach (reg->rcache_context);
-        OBJ_RELEASE (reg);
-    }
-}
-
 static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registration_t *reg, void *ctx)
 {
     mca_rcache_base_vma_module_t *vma_module = mca_btl_vader_component.vma_module;
@@ -161,7 +158,6 @@ static int mca_btl_vader_endpoint_xpmem_rcache_cleanup (mca_rcache_base_registra
     if ((intptr_t) reg->alloc_base == ep->peer_smp_rank) {
         /* otherwise dereg will fail on assert */
         reg->ref_count = 0;
-        (void) mca_rcache_base_vma_delete (vma_module, reg);
         OBJ_RELEASE(reg);
     }
 
@@ -172,7 +168,7 @@ void mca_btl_vader_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep)
 {
     /* clean out the registration cache */
     (void) mca_rcache_base_vma_iterate (mca_btl_vader_component.vma_module,
-                                        NULL, (size_t) -1,
+                                        NULL, (size_t) -1, true,
                                         mca_btl_vader_endpoint_xpmem_rcache_cleanup,
                                         (void *) ep);
     if (ep->segment_base) {
