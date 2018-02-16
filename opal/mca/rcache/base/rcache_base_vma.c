@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -53,14 +53,6 @@ OBJ_CLASS_INSTANCE(mca_rcache_base_vma_module_t, opal_object_t,
 
 mca_rcache_base_vma_module_t *mca_rcache_base_vma_module_alloc (void)
 {
-    if (!mca_rcache_base_vma_tree_items_inited) {
-        opal_free_list_init (&mca_rcache_base_vma_tree_items, sizeof (mca_rcache_base_vma_item_t),
-                             8, OBJ_CLASS(mca_rcache_base_vma_item_t), 0, 8,
-                             mca_rcache_base_vma_tree_items_min, mca_rcache_base_vma_tree_items_max,
-                             mca_rcache_base_vma_tree_items_inc, NULL, 0, NULL, NULL, NULL);
-        mca_rcache_base_vma_tree_items_inited = true;
-    }
-
     return OBJ_NEW(mca_rcache_base_vma_module_t);
 }
 
@@ -154,15 +146,20 @@ int mca_rcache_base_vma_delete (mca_rcache_base_vma_module_t *vma_module,
 }
 
 int mca_rcache_base_vma_iterate (mca_rcache_base_vma_module_t *vma_module,
-                                 unsigned char *base, size_t size,
+                                 unsigned char *base, size_t size, bool partial_ok,
                                  int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
                                  void *ctx)
 {
-    return mca_rcache_base_vma_tree_iterate (vma_module, base, size, callback_fn, ctx);
+    return mca_rcache_base_vma_tree_iterate (vma_module, base, size, partial_ok, callback_fn, ctx);
 }
 
 void mca_rcache_base_vma_dump_range (mca_rcache_base_vma_module_t *vma_module,
                                      unsigned char *base, size_t size, char *msg)
 {
     mca_rcache_base_vma_tree_dump_range (vma_module, base, size, msg);
+}
+
+size_t mca_rcache_base_vma_size (mca_rcache_base_vma_module_t *vma_module)
+{
+    return mca_rcache_base_vma_tree_size (vma_module);
 }

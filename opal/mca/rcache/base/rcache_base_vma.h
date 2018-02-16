@@ -13,7 +13,7 @@
  *
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -33,7 +33,7 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_rb_tree.h"
+#include "opal/class/opal_interval_tree.h"
 #include "opal/class/opal_lifo.h"
 
 BEGIN_C_DECLS
@@ -42,7 +42,7 @@ struct mca_rcache_base_registration_t;
 
 struct mca_rcache_base_vma_module_t {
     opal_object_t super;
-    opal_rb_tree_t rb_tree;
+    opal_interval_tree_t tree;
     opal_list_t vma_list;
     opal_lifo_t vma_gc_lifo;
     size_t reg_cur_cache_size;
@@ -77,6 +77,7 @@ void mca_rcache_base_vma_dump_range (mca_rcache_base_vma_module_t *vma_module,
  * @param[in] vma_module  vma tree
  * @param[in] base        base address of region
  * @param[in] size        size of region
+ * @param[in] partial_ok  partial overlap of range is ok
  * @param[in] callback_fn function to call for each matching registration handle
  * @param[in] ctx         callback context
  *
@@ -87,9 +88,11 @@ void mca_rcache_base_vma_dump_range (mca_rcache_base_vma_module_t *vma_module,
  * other than OPAL_SUCCESS.
  */
 int mca_rcache_base_vma_iterate (mca_rcache_base_vma_module_t *vma_module,
-                                 unsigned char *base, size_t size,
+                                 unsigned char *base, size_t size, bool partial_ok,
                                  int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
                                  void *ctx);
+
+size_t mca_rcache_base_vma_size (mca_rcache_base_vma_module_t *vma_module);
 
 END_C_DECLS
 

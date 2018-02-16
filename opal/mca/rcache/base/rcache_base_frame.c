@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012-2016 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -73,11 +73,6 @@ OBJ_CLASS_INSTANCE(mca_rcache_base_registration_t, opal_free_list_item_t,
  * Global variables
  */
 opal_list_t mca_rcache_base_modules = {{0}};
-opal_free_list_t mca_rcache_base_vma_tree_items = {{{0}}};
-bool mca_rcache_base_vma_tree_items_inited = false;
-unsigned int mca_rcache_base_vma_tree_items_min = TREE_ITEMS_MIN;
-int mca_rcache_base_vma_tree_items_max = TREE_ITEMS_MAX;
-unsigned int mca_rcache_base_vma_tree_items_inc = TREE_ITEMS_INC;
 
 OBJ_CLASS_INSTANCE(mca_rcache_base_selected_module_t, opal_list_item_t, NULL, NULL);
 
@@ -114,9 +109,6 @@ static int mca_rcache_base_close(void)
         (void) mca_base_framework_close (&opal_memory_base_framework);
     }
 
-    OBJ_DESTRUCT(&mca_rcache_base_vma_tree_items);
-    mca_rcache_base_vma_tree_items_inited = false;
-
     /* All done */
     /* Close all remaining available components */
     return mca_base_framework_components_close(&opal_rcache_base_framework, NULL);
@@ -133,37 +125,12 @@ static int mca_rcache_base_open(mca_base_open_flag_t flags)
 
     OBJ_CONSTRUCT(&mca_rcache_base_modules, opal_list_t);
 
-    /* the free list is only initialized when a VMA tree is created */
-    OBJ_CONSTRUCT(&mca_rcache_base_vma_tree_items, opal_free_list_t);
-
      /* Open up all available components */
     return mca_base_framework_components_open(&opal_rcache_base_framework, flags);
 }
 
 static int mca_rcache_base_register_mca_variables (mca_base_register_flag_t flags)
 {
-
-    mca_rcache_base_vma_tree_items_min = TREE_ITEMS_MIN;
-    (void) mca_base_framework_var_register (&opal_rcache_base_framework, "vma_tree_items_min",
-                                            "Minimum number of VMA tree items to allocate (default: "
-                                            STRINGIFY(TREE_ITEMS_MIN) ")", MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                            NULL, MCA_BASE_VAR_BIND_NO_OBJECT, 0, OPAL_INFO_LVL_6,
-                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_rcache_base_vma_tree_items_min);
-
-    mca_rcache_base_vma_tree_items_max = TREE_ITEMS_MAX;
-    (void) mca_base_framework_var_register (&opal_rcache_base_framework, "vma_tree_items_max",
-                                            "Maximum number of VMA tree items to allocate (default: "
-                                            STRINGIFY(TREE_ITEMS_MAX) ", -1: unlimited)", MCA_BASE_VAR_TYPE_INT,
-                                            NULL, MCA_BASE_VAR_BIND_NO_OBJECT, 0, OPAL_INFO_LVL_6,
-                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_rcache_base_vma_tree_items_max);
-
-    mca_rcache_base_vma_tree_items_inc = TREE_ITEMS_INC;
-    (void) mca_base_framework_var_register (&opal_rcache_base_framework, "vma_tree_items_inc",
-                                            "Number of VMA tree items to allocate at a time (default: "
-                                            STRINGIFY(TREE_ITEMS_INC) ")", MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                            NULL, MCA_BASE_VAR_BIND_NO_OBJECT, 0, OPAL_INFO_LVL_6,
-                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_rcache_base_vma_tree_items_inc);
-
     return OPAL_SUCCESS;
 }
 

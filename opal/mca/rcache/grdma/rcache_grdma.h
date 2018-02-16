@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -33,6 +33,8 @@
 #if HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+
+#define MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU MCA_RCACHE_FLAGS_MOD_RESV0
 
 BEGIN_C_DECLS
 

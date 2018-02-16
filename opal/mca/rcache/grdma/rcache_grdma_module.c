@@ -14,7 +14,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -59,14 +59,20 @@ static int mca_rcache_grdma_invalidate_range (mca_rcache_base_module_t *rcache, 
                                               size_t size);
 static void mca_rcache_grdma_finalize (mca_rcache_base_module_t *rcache);
 static bool mca_rcache_grdma_evict (mca_rcache_base_module_t *rcache);
+static int mca_rcache_grdma_add_to_gc (mca_rcache_base_registration_t *grdma_reg);
 
-static inline bool registration_is_cacheable(mca_rcache_base_registration_t *reg)
+static inline bool registration_flags_cacheable (uint32_t flags)
 {
     return (mca_rcache_grdma_component.leave_pinned &&
-            !(reg->flags &
+            !(flags &
               (MCA_RCACHE_FLAGS_CACHE_BYPASS |
                MCA_RCACHE_FLAGS_PERSIST |
                MCA_RCACHE_FLAGS_INVALID)));
+}
+
+static inline bool registration_is_cacheable(mca_rcache_base_registration_t *reg)
+{
+    return registration_flags_cacheable (reg->flags);
 }
 
 #if OPAL_CUDA_GDR_SUPPORT
@@ -132,7 +138,9 @@ static inline int dereg_mem(mca_rcache_base_registration_t *reg)
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) reg->rcache;
     int rc;
 
-    if(!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS)) {
+    reg->ref_count = 0;
+
+    if (!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS)) {
         mca_rcache_base_vma_delete (rcache_grdma->cache->vma_module, reg);
     }
 
@@ -167,14 +175,15 @@ static inline bool mca_rcache_grdma_evict_lru_local (mca_rcache_grdma_cache_t *c
     opal_mutex_lock (&cache->vma_module->vma_lock);
     old_reg = (mca_rcache_base_registration_t *)
         opal_list_remove_first (&cache->lru_list);
-    opal_mutex_unlock (&cache->vma_module->vma_lock);
     if (NULL == old_reg) {
+        opal_mutex_unlock (&cache->vma_module->vma_lock);
         return false;
     }
 
     rcache_grdma = (mca_rcache_grdma_module_t *) old_reg->rcache;
 
     (void) dereg_mem (old_reg);
+    opal_mutex_unlock (&cache->vma_module->vma_lock);
 
     rcache_grdma->stat_evicted++;
 
@@ -196,6 +205,39 @@ struct mca_rcache_base_find_args_t {
 
 typedef struct mca_rcache_base_find_args_t mca_rcache_base_find_args_t;
 
+static inline void mca_rcache_grdma_add_to_lru (mca_rcache_grdma_module_t *rcache_grdma, mca_rcache_base_registration_t *grdma_reg)
+{
+    opal_mutex_lock (&rcache_grdma->cache->vma_module->vma_lock);
+
+    opal_list_append(&rcache_grdma->cache->lru_list, (opal_list_item_t *) grdma_reg);
+
+    /* ensure the append is complete before setting the flag */
+    opal_atomic_wmb ();
+
+    /* mark this registration as being in the LRU */
+    opal_atomic_fetch_or_32 ((volatile int32_t *) &grdma_reg->flags, MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU);
+
+    opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
+}
+
+static inline void mca_rcache_grdma_remove_from_lru (mca_rcache_grdma_module_t *rcache_grdma, mca_rcache_base_registration_t *grdma_reg)
+{
+    /* if the reference count was observed to be 0 (which must be the case for this
+     * function to be called then some thread deregistered the region. it may be the
+     * case that the deregistration is still ongoing so wait until the deregistration
+     * thread has marked this registration as being in the lru before continuing */
+    while (!(grdma_reg->flags & MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU));
+
+    /* opal lists are not thread safe at this time so we must lock :'( */
+    opal_mutex_lock (&rcache_grdma->cache->vma_module->vma_lock);
+
+    opal_list_remove_item (&rcache_grdma->cache->lru_list, (opal_list_item_t *) grdma_reg);
+    /* clear the LRU flag */
+    grdma_reg->flags &= ~MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU;
+
+    opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
+}
+
 static int mca_rcache_grdma_check_cached (mca_rcache_base_registration_t *grdma_reg, void *ctx)
 {
     mca_rcache_base_find_args_t *args = (mca_rcache_base_find_args_t *) ctx;
@@ -209,39 +251,22 @@ static int mca_rcache_grdma_check_cached (mca_rcache_base_registration_t *grdma_
     if (OPAL_UNLIKELY((args->access_flags & grdma_reg->access_flags) != args->access_flags)) {
         args->access_flags |= grdma_reg->access_flags;
 
-        if (0 != grdma_reg->ref_count) {
-            if (!(grdma_reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS)) {
-                mca_rcache_base_vma_delete (rcache_grdma->cache->vma_module, grdma_reg);
-            }
-
-            /* mark the registration to go away when it is deregistered */
-            grdma_reg->flags |= MCA_RCACHE_FLAGS_INVALID | MCA_RCACHE_FLAGS_CACHE_BYPASS;
-        } else {
-            if (registration_is_cacheable(grdma_reg)) {
-                opal_list_remove_item (&rcache_grdma->cache->lru_list, (opal_list_item_t *) grdma_reg);
-            }
-
-            dereg_mem (grdma_reg);
-        }
-    } else {
-        if (0 == grdma_reg->ref_count) {
-            /* Leave pinned must be set for this to still be in the rcache. */
-            opal_list_remove_item(&rcache_grdma->cache->lru_list,
-                                  (opal_list_item_t *) grdma_reg);
-        }
-
-        /* This segment fits fully within an existing segment. */
-        rcache_grdma->stat_cache_hit++;
-        int32_t ref_cnt = opal_atomic_add_fetch_32 (&grdma_reg->ref_count, 1);
-        OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
-                             "returning existing registration %p. references %d", (void *) grdma_reg, ref_cnt));
-        (void)ref_cnt;
-        args->reg = grdma_reg;
-        return 1;
+        /* can't use this registration */
+        return mca_rcache_grdma_add_to_gc (grdma_reg);
     }
 
-    /* can't use this registration */
-    return 0;
+    int32_t ref_cnt = opal_atomic_fetch_add_32 (&grdma_reg->ref_count, 1);
+    args->reg = grdma_reg;
+
+    if (0 == ref_cnt) {
+        mca_rcache_grdma_remove_from_lru (rcache_grdma, grdma_reg);
+    }
+
+    /* This segment fits fully within an existing segment. */
+    (void) opal_atomic_fetch_add_32 ((volatile int32_t *) &rcache_grdma->stat_cache_hit, 1);
+    OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
+                         "returning existing registration %p. references %d", (void *) grdma_reg, ref_cnt));
+    return 1;
 }
 
 /*
@@ -286,7 +311,7 @@ static int mca_rcache_grdma_register (mca_rcache_base_module_t *rcache, void *ad
                                                  .base = base, .bound = bound,
                                                  .access_flags = access_flags};
         /* check to see if memory is registered */
-        rc = mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, base, size,
+        rc = mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, base, size, false,
                                           mca_rcache_grdma_check_cached, (void *) &find_args);
         if (1 == rc) {
             *reg = find_args.reg;
@@ -338,7 +363,6 @@ static int mca_rcache_grdma_register (mca_rcache_base_module_t *rcache, void *ad
          * use in multiple simultaneous transactions. We used to set bypass_cache
          * here is !mca_rcache_grdma_component.leave_pinned. */
         rc = mca_rcache_base_vma_insert (rcache_grdma->cache->vma_module, grdma_reg, 0);
-
         if (OPAL_UNLIKELY(rc != OPAL_SUCCESS)) {
             rcache_grdma->resources.deregister_mem (rcache_grdma->resources.reg_data, grdma_reg);
             opal_free_list_return_mt (&rcache_grdma->reg_list, item);
@@ -395,9 +419,7 @@ static int mca_rcache_grdma_deregister (mca_rcache_base_module_t *rcache,
 {
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) rcache;
     int32_t ref_count;
-    int rc = OPAL_SUCCESS;
 
-    opal_mutex_lock (&rcache_grdma->cache->vma_module->vma_lock);
     ref_count = opal_atomic_add_fetch_32 (&reg->ref_count, -1);
 
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
@@ -405,25 +427,15 @@ static int mca_rcache_grdma_deregister (mca_rcache_base_module_t *rcache,
 
     assert (ref_count >= 0);
     if (ref_count > 0) {
-        opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
         return OPAL_SUCCESS;
     }
 
     if (registration_is_cacheable(reg)) {
-        opal_list_append(&rcache_grdma->cache->lru_list, (opal_list_item_t *) reg);
-        opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
-
+        mca_rcache_grdma_add_to_lru (rcache_grdma, reg);
         return OPAL_SUCCESS;
     }
 
-    if (!(reg->flags & MCA_RCACHE_FLAGS_INVALID)) {
-        /* only call dereg mem if this registration is not in the GC lifo */
-        rc = dereg_mem (reg);
-    }
-
-    opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
-
-    return rc;
+    return dereg_mem (reg);
 }
 
 struct gc_add_args_t {
@@ -432,9 +444,30 @@ struct gc_add_args_t {
 };
 typedef struct gc_add_args_t gc_add_args_t;
 
-static int gc_add (mca_rcache_base_registration_t *grdma_reg, void *ctx)
+static int mca_rcache_grdma_add_to_gc (mca_rcache_base_registration_t *grdma_reg)
 {
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) grdma_reg->rcache;
+    uint32_t flags = opal_atomic_fetch_or_32 ((volatile int32_t *) &grdma_reg->flags, MCA_RCACHE_FLAGS_INVALID);
+
+    if ((flags & MCA_RCACHE_FLAGS_INVALID) || 0 != grdma_reg->ref_count) {
+        /* nothing to do */
+        return OPAL_SUCCESS;
+    }
+
+    /* This may be called from free() so avoid recursively calling into free by just
+     * shifting this registration into the garbage collection list. The cleanup will
+     * be done on the next registration attempt. */
+    if (registration_flags_cacheable (flags)) {
+        mca_rcache_grdma_remove_from_lru (rcache_grdma, grdma_reg);
+    }
+
+    opal_lifo_push_atomic (&rcache_grdma->cache->gc_lifo, (opal_list_item_t *) grdma_reg);
+
+    return OPAL_SUCCESS;
+}
+
+static int gc_add (mca_rcache_base_registration_t *grdma_reg, void *ctx)
+{
     gc_add_args_t *args = (gc_add_args_t *) ctx;
 
     if (grdma_reg->flags & MCA_RCACHE_FLAGS_INVALID) {
@@ -452,18 +485,7 @@ static int gc_add (mca_rcache_base_registration_t *grdma_reg, void *ctx)
         return OPAL_ERROR;
     }
 
-    /* This may be called from free() so avoid recursively calling into free by just
-     * shifting this registration into the garbage collection list. The cleanup will
-     * be done on the next registration attempt. */
-    if (registration_is_cacheable (grdma_reg) && !grdma_reg->ref_count) {
-        opal_list_remove_item (&rcache_grdma->cache->lru_list, (opal_list_item_t *) grdma_reg);
-    }
-
-    grdma_reg->flags |= MCA_RCACHE_FLAGS_INVALID;
-
-    opal_lifo_push_atomic (&rcache_grdma->cache->gc_lifo, (opal_list_item_t *) grdma_reg);
-
-    return OPAL_SUCCESS;
+    return mca_rcache_grdma_add_to_gc (grdma_reg);
 }
 
 static int mca_rcache_grdma_invalidate_range (mca_rcache_base_module_t *rcache,
@@ -471,7 +493,7 @@ static int mca_rcache_grdma_invalidate_range (mca_rcache_base_module_t *rcache,
 {
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) rcache;
     gc_add_args_t args = {.base = base, .size = size};
-    return mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, base, size, gc_add, &args);
+    return mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, base, size, true, gc_add, &args);
 }
 
 /* Make sure this registration request is not stale.  In other words, ensure
@@ -498,28 +520,9 @@ static int check_for_cuda_freed_memory (mca_rcache_base_module_t *rcache, void *
     /* This memory has been freed.  Find all registrations and delete. Ensure they are deregistered
      * now by passing dereg_mem as the delete function. This is safe because the vma lock is
      * recursive and this is only called from register. */
-    return mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, addr, size, gc_add, NULL);
+    return mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, addr, size, true, gc_add, NULL);
 }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
-
-static int iterate_dereg_finalize (mca_rcache_base_registration_t *grdma_reg, void *ctx)
-{
-    mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) ctx;
-
-    if ((mca_rcache_base_module_t *) rcache_grdma != grdma_reg->rcache) {
-        return 0;
-    }
-
-    if (registration_is_cacheable (grdma_reg)) {
-        opal_list_remove_item (&rcache_grdma->cache->lru_list, (opal_list_item_t *) grdma_reg);
-    }
-
-    /* set the reference count to 0 otherwise dereg will fail on assert */
-    grdma_reg->ref_count = 0;
-
-    return dereg_mem (grdma_reg);
-}
-
 
 static void mca_rcache_grdma_finalize (mca_rcache_base_module_t *rcache)
 {
@@ -528,17 +531,18 @@ static void mca_rcache_grdma_finalize (mca_rcache_base_module_t *rcache)
     /* Statistic */
     if (true == mca_rcache_grdma_component.print_stats) {
         opal_output(0, "%s grdma: stats "
-                "(hit/miss/found/not found/evicted): %d/%d/%d/%d/%d\n",
+                "(hit/miss/found/not found/evicted/tree size): %d/%d/%d/%d/%d/%ld\n",
                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                 rcache_grdma->stat_cache_hit, rcache_grdma->stat_cache_miss,
                 rcache_grdma->stat_cache_found, rcache_grdma->stat_cache_notfound,
-                rcache_grdma->stat_evicted);
+                    rcache_grdma->stat_evicted, (long) mca_rcache_base_vma_size (rcache_grdma->cache->vma_module));
     }
 
-    do_unregistration_gc (&rcache_grdma->super);
+   do_unregistration_gc (&rcache_grdma->super);
 
-    (void) mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, NULL, (size_t) -1,
-                                        iterate_dereg_finalize, (void *) rcache);
+    (void) mca_rcache_base_vma_iterate (rcache_grdma->cache->vma_module, NULL, (size_t) -1, true,
+                                        gc_add, (void *) rcache);
+    do_unregistration_gc (rcache);
 
     OBJ_RELEASE(rcache_grdma->cache);
 
