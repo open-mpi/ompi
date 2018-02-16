@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,7 +76,7 @@
 #  define USNIC_PUT_REMOTE        des_segments
 #  define USNIC_PUT_REMOTE_COUNT  des_segments_count
 
-#  define BTL_VERSION 30
+#  define BTL_VERSION 310
 
 #  define USNIC_COMPAT_FREE_LIST_GET(list, item) \
     (item) = opal_free_list_get((list))
@@ -334,7 +335,7 @@ opal_btl_usnic_put(
 /* BTL 3.0 (i.e., >=v1.9, but listed separately because these are
    really BTL API issues) */
 
-#elif BTL_VERSION == 30
+#elif BTL_VERSION == 310
 
 #include "opal/mca/btl/btl.h"
 
