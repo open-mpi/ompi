@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
@@ -51,6 +51,15 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
         case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
             ((int *) buf)[0] = value->intval;
             break;
+        case MCA_BASE_VAR_TYPE_INT32_T:
+        case MCA_BASE_VAR_TYPE_UINT32_T:
+            ((int32_t *) buf)[0] = value->int32tval;
+            break;
+        case MCA_BASE_VAR_TYPE_INT64_T:
+        case MCA_BASE_VAR_TYPE_UINT64_T:
+            ((int64_t *) buf)[0] = value->int64tval;
+            break;
+        case MCA_BASE_VAR_TYPE_LONG:
         case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
             ((unsigned long *) buf)[0] = value->ulval;
             break;
@@ -61,7 +70,7 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
             ((size_t *) buf)[0] = value->sizetval;
             break;
         case MCA_BASE_VAR_TYPE_BOOL:
-            ((int *) buf)[0] = value->boolval;
+            ((bool *) buf)[0] = value->boolval;
             break;
         case MCA_BASE_VAR_TYPE_DOUBLE:
             ((double *) buf)[0] = value->lfval;

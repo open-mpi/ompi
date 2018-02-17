@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -92,6 +92,17 @@ typedef enum {
     MCA_BASE_VAR_TYPE_BOOL,
     /** The variable is of type double */
     MCA_BASE_VAR_TYPE_DOUBLE,
+    /** The variable is of type long int */
+    MCA_BASE_VAR_TYPE_LONG,
+    /** The variable is of type int32_t */
+    MCA_BASE_VAR_TYPE_INT32_T,
+    /** The variable is of type uint32_t */
+    MCA_BASE_VAR_TYPE_UINT32_T,
+    /** The variable is of type int64_t */
+    MCA_BASE_VAR_TYPE_INT64_T,
+    /** The variable is of type uint64_t */
+    MCA_BASE_VAR_TYPE_UINT64_T,
+
     /** Maximum variable type. */
     MCA_BASE_VAR_TYPE_MAX
 } mca_base_var_type_t;
@@ -204,14 +215,24 @@ typedef enum {
 typedef union {
     /** integer value */
     int intval;
+    /** int32_t value */
+    int32_t int32tval;
+    /** long value */
+    long longval;
+    /** int64_t value */
+    int64_t int64tval;
     /** unsigned int value */
     unsigned int uintval;
+    /** uint32_t value */
+    uint32_t uint32tval;
     /** string value */
     char *stringval;
     /** boolean value */
     bool boolval;
     /** unsigned long value */
     unsigned long ulval;
+    /** uint64_t value */
+    uint64_t uint64tval;
     /** unsigned long long value */
     unsigned long long ullval;
     /** size_t value */
