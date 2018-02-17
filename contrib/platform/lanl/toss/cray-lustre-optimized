@@ -1,0 +1,34 @@
+# (c) 2012-2018 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI configuration for Cray XC v2.x GNU compiler,
+# Lustre
+
+if test "$CC" = "cc" ; then
+   echo "ERROR: Open MPI should not be compiled with Cray's wrapper compilers (cc/CC/ftn)"
+   exit 1
+fi
+
+source ./common
+source ./common-optimized
+
+# enable Lustre in romio
+with_io_romio_flags="--with-file-system=ufs+nfs+lustre"
+
+# Disable components not needed
+enable_mca_no_build=crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake
+enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1
+
+# enable direct calling for ob1
+enable_mca_direct=pml-ob1
+
+# do not use IB verbs
+with_verbs=no
+
+# do not use torque
+with_tm=no
+
+enable_dlopen=yes
+
+enable_orte_static_ports=no
+
+enable_pty_support=no
+
