@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -28,53 +28,41 @@ void ompi_mpit_unlock (void)
     opal_mutex_unlock (&ompi_mpit_big_lock);
 }
 
+static MPI_Datatype mca_to_mpi_datatypes[MCA_BASE_VAR_TYPE_MAX] = {
+    [MCA_BASE_VAR_TYPE_INT] = MPI_INT,
+    [MCA_BASE_VAR_TYPE_UNSIGNED_INT] = MPI_UNSIGNED,
+    [MCA_BASE_VAR_TYPE_UNSIGNED_LONG] = MPI_UNSIGNED_LONG,
+    [MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG] = MPI_UNSIGNED_LONG_LONG,
+
+#if SIZEOF_SIZE_T == SIZEOF_UNSIGNED_INT
+    [MCA_BASE_VAR_TYPE_SIZE_T] = MPI_UNSIGNED,
+#elif SIZEOF_SIZE_T == SIZEOF_UNSIGNED_LONG
+    [MCA_BASE_VAR_TYPE_SIZE_T] = MPI_UNSIGNED_LONG,
+#elif SIZEOF_SIZE_T == SIZEOF_LONG_LONG
+    [MCA_BASE_VAR_TYPE_SIZE_T] = MPI_UNSIGNED_LONG_LONG,
+#else
+    [MCA_BASE_VAR_TYPE_SIZE_T] = NULL,
+#endif
+
+    [MCA_BASE_VAR_TYPE_STRING] = MPI_CHAR,
+    [MCA_BASE_VAR_TYPE_VERSION_STRING] = MPI_CHAR,
+    [MCA_BASE_VAR_TYPE_BOOL] = MPI_C_BOOL,
+    [MCA_BASE_VAR_TYPE_DOUBLE] = MPI_DOUBLE,
+    [MCA_BASE_VAR_TYPE_LONG] = MPI_LONG,
+    [MCA_BASE_VAR_TYPE_INT32_T] = MPI_INT32_T,
+    [MCA_BASE_VAR_TYPE_UINT32_T] = MPI_UINT32_T,
+    [MCA_BASE_VAR_TYPE_INT64_T] = MPI_INT64_T,
+    [MCA_BASE_VAR_TYPE_UINT64_T] = MPI_UINT64_T,
+};
+
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
 {
     if (!datatype) {
         return OMPI_SUCCESS;
     }
 
-    switch (type) {
-    case MCA_BASE_VAR_TYPE_INT:
-        *datatype = MPI_INT;
-        break;
-    case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
-        *datatype = MPI_UNSIGNED;
-        break;
-    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-        *datatype = MPI_UNSIGNED_LONG;
-        break;
-    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
-        *datatype = MPI_UNSIGNED_LONG_LONG;
-        break;
-    case MCA_BASE_VAR_TYPE_SIZE_T:
-        if (sizeof (size_t) == sizeof (unsigned)) {
-            *datatype = MPI_UNSIGNED;
-        } else if (sizeof (size_t) == sizeof (unsigned long)) {
-            *datatype = MPI_UNSIGNED_LONG;
-        } else if (sizeof (size_t) == sizeof (unsigned long long)) {
-            *datatype = MPI_UNSIGNED_LONG_LONG;
-        } else {
-            /* not supported -- fixme */
-            assert (0);
-        }
-
-        break;
-    case MCA_BASE_VAR_TYPE_STRING:
-    case MCA_BASE_VAR_TYPE_VERSION_STRING:
-        *datatype = MPI_CHAR;
-        break;
-    case MCA_BASE_VAR_TYPE_BOOL:
-        *datatype = MPI_INT;
-        break;
-    case MCA_BASE_VAR_TYPE_DOUBLE:
-        *datatype = MPI_DOUBLE;
-        break;
-    default:
-        /* not supported -- fixme */
-        assert (0);
-        break;
-    }
+    *datatype = mca_to_mpi_datatypes[type];
+    assert (*datatype);
 
     return OMPI_SUCCESS;
 }

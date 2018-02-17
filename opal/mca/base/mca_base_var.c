@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -88,7 +88,12 @@ const char *ompi_var_type_names[] = {
     "string",
     "version_string",
     "bool",
-    "double"
+    "double",
+    "long",
+    "int32_t",
+    "uint32_t",
+    "int64_t",
+    "uint64_t",
 };
 
 const size_t ompi_var_type_sizes[] = {
@@ -100,7 +105,12 @@ const size_t ompi_var_type_sizes[] = {
     sizeof (char),
     sizeof (char),
     sizeof (bool),
-    sizeof (double)
+    sizeof (double),
+    sizeof (long),
+    sizeof (int32_t),
+    sizeof (uint32_t),
+    sizeof (int64_t),
+    sizeof (uint64_t),
 };
 
 static const char *var_source_names[] = {
@@ -683,8 +693,13 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
 
     switch (var->mbv_type) {
     case MCA_BASE_VAR_TYPE_INT:
+    case MCA_BASE_VAR_TYPE_INT32_T:
+    case MCA_BASE_VAR_TYPE_UINT32_T:
+    case MCA_BASE_VAR_TYPE_LONG:
     case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
+    case MCA_BASE_VAR_TYPE_INT64_T:
+    case MCA_BASE_VAR_TYPE_UINT64_T:
     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
     case MCA_BASE_VAR_TYPE_BOOL:
     case MCA_BASE_VAR_TYPE_SIZE_T:
@@ -710,6 +725,17 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
             MCA_BASE_VAR_TYPE_UNSIGNED_INT == var->mbv_type) {
             int *castme = (int*) var->mbv_storage;
             *castme = int_value;
+        } else if (MCA_BASE_VAR_TYPE_INT32_T == var->mbv_type ||
+            MCA_BASE_VAR_TYPE_UINT32_T == var->mbv_type) {
+            int32_t *castme = (int32_t *) var->mbv_storage;
+            *castme = int_value;
+        } else if (MCA_BASE_VAR_TYPE_INT64_T == var->mbv_type ||
+            MCA_BASE_VAR_TYPE_UINT64_T == var->mbv_type) {
+            int64_t *castme = (int64_t *) var->mbv_storage;
+            *castme = int_value;
+        } else if (MCA_BASE_VAR_TYPE_LONG == var->mbv_type) {
+            long *castme = (long*) var->mbv_storage;
+            *castme = (long) int_value;
         } else if (MCA_BASE_VAR_TYPE_UNSIGNED_LONG == var->mbv_type) {
             unsigned long *castme = (unsigned long*) var->mbv_storage;
             *castme = (unsigned long) int_value;
@@ -1263,11 +1289,18 @@ static int register_variable (const char *project_name, const char *framework_na
     uintptr_t align = 0;
     switch (type) {
     case MCA_BASE_VAR_TYPE_INT:
-        align = OPAL_ALIGNMENT_INT;
-        break;
     case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
         align = OPAL_ALIGNMENT_INT;
         break;
+    case MCA_BASE_VAR_TYPE_INT32_T:
+    case MCA_BASE_VAR_TYPE_UINT32_T:
+        align = OPAL_ALIGNMENT_INT32;
+        break;
+    case MCA_BASE_VAR_TYPE_INT64_T:
+    case MCA_BASE_VAR_TYPE_UINT64_T:
+        align = OPAL_ALIGNMENT_INT64;
+        break;
+    case MCA_BASE_VAR_TYPE_LONG:
     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
         align = OPAL_ALIGNMENT_LONG;
         break;
@@ -1913,6 +1946,21 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
         switch (var->mbv_type) {
         case MCA_BASE_VAR_TYPE_INT:
             ret = asprintf (value_string, "%d", value->intval);
+            break;
+        case MCA_BASE_VAR_TYPE_INT32_T:
+            ret = asprintf (value_string, "%" PRId32, value->int32tval);
+            break;
+        case MCA_BASE_VAR_TYPE_UINT32_T:
+            ret = asprintf (value_string, "%" PRIu32, value->uint32tval);
+            break;
+        case MCA_BASE_VAR_TYPE_INT64_T:
+            ret = asprintf (value_string, "%" PRId64, value->int64tval);
+            break;
+        case MCA_BASE_VAR_TYPE_UINT64_T:
+            ret = asprintf (value_string, "%" PRIu64, value->uint64tval);
+            break;
+        case MCA_BASE_VAR_TYPE_LONG:
+            ret = asprintf (value_string, "%ld", value->longval);
             break;
         case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
             ret = asprintf (value_string, "%u", value->uintval);
