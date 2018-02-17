@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc. All rights reserved.
@@ -18,6 +18,7 @@
 #define BTL_USNIC_COMPAT_H
 
 #include "opal/mca/rcache/rcache.h"
+#include "opal/mca/btl/btl.h"
 
 /************************************************************************/
 
@@ -76,7 +77,16 @@
 #  define USNIC_PUT_REMOTE        des_segments
 #  define USNIC_PUT_REMOTE_COUNT  des_segments_count
 
-#  define BTL_VERSION 310
+// Starting after Open MPI v3.1.0, the BTL_VERSION macro was defined
+// by btl.h (it'll likely get into v4.0.0 -- don't know if this change
+// will migrate to the v3.x.y branches).  So if BTL_VERSION is already
+// defined, then we don't need to define it again.  As of this writing
+// (Feb 2018), this set of defines works fine with BTL v3.0.0 and
+// v3.1.0.  So we'll set the BTL version to the minimium acceptable
+// value: 3.0.0.
+#  if !defined(BTL_VERSION)
+#      define BTL_VERSION 300
+#  endif
 
 #  define USNIC_COMPAT_FREE_LIST_GET(list, item) \
     (item) = opal_free_list_get((list))
@@ -297,8 +307,6 @@ struct mca_btl_base_endpoint_t;
 
 #if BTL_VERSION == 20
 
-#include "ompi/mca/btl/btl.h"
-
 /* This function changed signature in BTL 3.0 */
 mca_btl_base_descriptor_t*
 opal_btl_usnic_prepare_src(
@@ -335,9 +343,7 @@ opal_btl_usnic_put(
 /* BTL 3.0 (i.e., >=v1.9, but listed separately because these are
    really BTL API issues) */
 
-#elif BTL_VERSION == 310
-
-#include "opal/mca/btl/btl.h"
+#elif BTL_VERSION >= 300
 
 /* This function changed signature compared to BTL 2.0 */
 struct mca_btl_base_descriptor_t *
