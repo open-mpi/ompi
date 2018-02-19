@@ -34,6 +34,7 @@ static int mca_io_ompio_request_free ( struct ompi_request_t **req)
     opal_list_remove_item (&mca_io_ompio_pending_requests, &ompio_req->req_item);
 
     OBJ_RELEASE (*req);
+    *req = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
