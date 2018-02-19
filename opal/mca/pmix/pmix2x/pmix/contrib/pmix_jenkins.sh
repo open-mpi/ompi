@@ -395,4 +395,3 @@ if [ -n "$JENKINS_RUN_TESTS" -a "$JENKINS_RUN_TESTS" -ne "0" ]; then
         set -e
     fi
 fi
-

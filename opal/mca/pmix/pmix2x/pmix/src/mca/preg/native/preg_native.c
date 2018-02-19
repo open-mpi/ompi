@@ -699,7 +699,7 @@ static pmix_status_t resolve_nodes(const char *nspace,
     pmix_proc_t proc;
 
     cb = PMIX_NEW(pmix_cb_t);
-    cb->pname.nspace = (char*)nspace;
+    cb->pname.nspace = strdup(nspace);
 
     PMIX_THREADSHIFT(cb, _resolve_nodes);
 

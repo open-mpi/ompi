@@ -52,6 +52,8 @@ BEGIN_C_DECLS
 
 /* internal-only attributes */
 #define PMIX_BFROPS_MODULE                  "pmix.bfrops.mod"       // (char*) name of bfrops plugin in-use by a given nspace
+#define PMIX_PNET_SETUP_APP                 "pmix.pnet.setapp"      // (pmix_byte_object_t) blob containing info to be given to
+                                                                    //      pnet framework on remote nodes
 
 /* define an internal-only process name that has
  * a dynamically-sized nspace field to save memory */

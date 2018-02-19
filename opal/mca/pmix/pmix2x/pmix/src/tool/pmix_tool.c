@@ -328,6 +328,18 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     /* Success, so copy the nspace and rank */
     (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     proc->rank = pmix_globals.myid.rank;
+    /* and into our own peer object */
+    if (NULL == pmix_globals.mypeer->nptr->nspace) {
+        pmix_globals.mypeer->nptr->nspace = strdup(proc->nspace);
+    }
+    /* setup a rank_info object for us */
+    pmix_globals.mypeer->info = PMIX_NEW(pmix_rank_info_t);
+    if (NULL == pmix_globals.mypeer->info) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_NOMEM;
+    }
+    pmix_globals.mypeer->info->pname.nspace = strdup(proc->nspace);
+    pmix_globals.mypeer->info->pname.rank = proc->rank;
 
     /* increment our init reference counter */
     pmix_globals.init_cntr++;

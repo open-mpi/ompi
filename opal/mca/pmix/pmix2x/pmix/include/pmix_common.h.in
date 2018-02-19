@@ -755,6 +755,20 @@ typedef struct pmix_byte_object {
     char *bytes;
     size_t size;
 } pmix_byte_object_t;
+#define PMIX_BYTE_OBJECT_CREATE(m, n)   \
+    do {                                \
+        (m) = (pmix_byte_object_t*)malloc((n) * sizeof(pmix_byte_object_t));   \
+        if (NULL != (m)) {                                                     \
+            memset((m), 0, (n)*sizeof(pmix_byte_object_t));                    \
+        }                                                                      \
+    } while(0)
+
+#define PMIX_BYTE_OBJECT_CONSTRUCT(m)   \
+    do {                                \
+        (m)->bytes = NULL;              \
+        (m)->size = 0;                  \
+    } while(0)
+
 #define PMIX_BYTE_OBJECT_DESTRUCT(m)    \
     do {                                \
         if (NULL != (m)->bytes) {       \
@@ -771,6 +785,14 @@ typedef struct pmix_byte_object {
             }                               \
         }                                   \
         free((m));                          \
+    } while(0)
+
+#define PMIX_BYTE_OBJECT_LOAD(b, d, s)      \
+    do {                                    \
+        (b)->bytes = (d);                   \
+        (d) = NULL;                         \
+        (b)->size = (s);                    \
+        (s) = 0;                            \
     } while(0)
 
 
