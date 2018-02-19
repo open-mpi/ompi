@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2017      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -139,7 +139,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Timestamp all application process output", OPAL_CMD_LINE_OTYPE_OUTPUT },
     { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
       &orte_cmd_options.output_filename, OPAL_CMD_LINE_TYPE_STRING,
-      "Redirect output from application processes into filename/job/rank/std[out,err,diag]",
+      "Redirect output from application processes into filename/job/rank/std[out,err,diag]. A relative path value will be converted to an absolute path",
       OPAL_CMD_LINE_OTYPE_OUTPUT },
     { NULL, '\0', "merge-stderr-to-stdout", "merge-stderr-to-stdout", 0,
       &orte_cmd_options.merge, OPAL_CMD_LINE_TYPE_BOOL,

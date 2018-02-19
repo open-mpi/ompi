@@ -14,8 +14,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -495,14 +495,6 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_timestamp_output);
-
-    /* redirect output into files */
-    orte_output_filename = NULL;
-    (void) mca_base_var_register ("orte", "orte", NULL, "output_filename",
-                                  "Redirect output from application processes into filename.rank [default: NULL]",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_output_filename);
 
     orte_show_resolved_nodenames = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "show_resolved_nodenames",
