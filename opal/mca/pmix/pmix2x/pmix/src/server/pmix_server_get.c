@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -761,6 +761,7 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
     pmix_dmdx_request_t *dm;
     bool found;
     pmix_buffer_t pbkt;
+    pmix_cb_t cb;
 
     PMIX_ACQUIRE_OBJECT(caddy);
 
@@ -783,7 +784,7 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
          * processes from it running on this host - so just record it
          * so we know we have the data for any future requests */
         nptr = PMIX_NEW(pmix_nspace_t);
-        (void)strncpy(nptr->nspace, caddy->lcd->proc.nspace, PMIX_MAX_NSLEN);
+        nptr->nspace = strdup(caddy->lcd->proc.nspace);
         /* add to the list */
         pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
     }
@@ -794,7 +795,12 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
      * store the data first so we can immediately satisfy any future
      * requests. Then, rather than duplicate the resolve code here, we
      * will let the pmix_pending_resolve function go ahead and retrieve
-     * it from the GDS */
+     * it from the GDS
+     *
+     * NOTE: if the data returned is NULL, then it has already been
+     * stored (e.g., via a register_nspace call in response to a request
+     * for job-level data). For now, we will retrieve it so it can
+     * be stored for each peer */
     if (PMIX_SUCCESS == caddy->status) {
         /* cycle across all outstanding local requests and collect their
          * unique nspaces so we can store this for each one */
@@ -829,31 +835,66 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
                 peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, rinfo->peerid);
             }
             PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-
-            PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, caddy->data, caddy->ndata);
-            /* unpack and store it*/
-            kv = PMIX_NEW(pmix_kval_t);
-            cnt = 1;
-            PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
-            while (PMIX_SUCCESS == rc) {
-                PMIX_GDS_STORE_KV(rc, peer, &caddy->lcd->proc, PMIX_REMOTE, kv);
+            if (NULL == caddy->data) {
+                /* we assume that the data was provided via a call to
+                 * register_nspace, so what we need to do now is simply
+                 * transfer it across to the individual nspace storage
+                 * components */
+                PMIX_CONSTRUCT(&cb, pmix_cb_t);
+                PMIX_PROC_CREATE(cb.proc, 1);
+                if (NULL == cb.proc) {
+                    PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+                    PMIX_DESTRUCT(&cb);
+                    goto complete;
+                }
+                (void)strncpy(cb.proc->nspace, nm->ns->nspace, PMIX_MAX_NSLEN);
+                cb.proc->rank = PMIX_RANK_WILDCARD;
+                cb.scope = PMIX_INTERNAL;
+                cb.copy = false;
+                PMIX_GDS_FETCH_KV(rc, pmix_globals.mypeer, &cb);
                 if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_DESTRUCT(&cb);
+                    goto complete;
+                }
+                PMIX_LIST_FOREACH(kv, &cb.kvs, pmix_kval_t) {
+                    PMIX_GDS_STORE_KV(rc, peer, &caddy->lcd->proc, PMIX_INTERNAL, kv);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        break;
+                    }
+                }
+                PMIX_DESTRUCT(&cb);
+            } else {
+                PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, caddy->data, caddy->ndata);
+                /* unpack and store it*/
+                kv = PMIX_NEW(pmix_kval_t);
+                cnt = 1;
+                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+                while (PMIX_SUCCESS == rc) {
+                    if (caddy->lcd->proc.rank == PMIX_RANK_WILDCARD) {
+                        PMIX_GDS_STORE_KV(rc, peer, &caddy->lcd->proc, PMIX_INTERNAL, kv);
+                    } else {
+                        PMIX_GDS_STORE_KV(rc, peer, &caddy->lcd->proc, PMIX_REMOTE, kv);
+                    }
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        caddy->status = rc;
+                        goto complete;
+                    }
+                    PMIX_RELEASE(kv);
+                    kv = PMIX_NEW(pmix_kval_t);
+                    cnt = 1;
+                    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
+                }
+                PMIX_RELEASE(kv);
+                pbkt.base_ptr = NULL;  // protect the data
+                PMIX_DESTRUCT(&pbkt);
+                if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
                     PMIX_ERROR_LOG(rc);
                     caddy->status = rc;
                     goto complete;
                 }
-                PMIX_RELEASE(kv);
-                kv = PMIX_NEW(pmix_kval_t);
-                cnt = 1;
-                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
-            }
-            PMIX_RELEASE(kv);
-            pbkt.base_ptr = NULL;  // protect the data
-            PMIX_DESTRUCT(&pbkt);
-            if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
-                PMIX_ERROR_LOG(rc);
-                caddy->status = rc;
-                goto complete;
             }
         }
         PMIX_LIST_DESTRUCT(&nspaces);

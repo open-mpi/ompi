@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -315,7 +315,7 @@ int pmix_mca_base_var_group_component_register (const pmix_mca_base_component_t 
                                                 const char *description)
 {
     /* 1.7 components do not store the project */
-    return group_register (NULL, component->pmix_mca_type_name,
+    return group_register (component->pmix_mca_project_name, component->pmix_mca_type_name,
                            component->pmix_mca_component_name, description);
 }
 

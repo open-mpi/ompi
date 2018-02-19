@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -2995,44 +2995,35 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
                                       pmix_byte_object_t *bo)
 {
     pmix_nspace_t *ns = (pmix_nspace_t*)nspace;
-    pmix_server_caddy_t *scd;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;
     pmix_buffer_t pbkt;
     pmix_proc_t proc;
     pmix_kval_t *kv;
-    pmix_peer_t *peer;
 
     pmix_output_verbose(2, pmix_gds_base_framework.framework_output,
                         "[%s:%d] gds:dstore:store_modex for nspace %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
                         ns->nspace);
 
+    /* NOTE: THE BYTE OBJECT DELIVERED HERE WAS CONSTRUCTED
+     * BY A SERVER, AND IS THEREFORE PACKED USING THE SERVER'S
+     * PEER OBJECT (WHICH IS REQUIRED TO BE THE SAME AS OUR OWN) */
+
     /* this is data returned via the PMIx_Fence call when
      * data collection was requested, so it only contains
      * REMOTE/GLOBAL data. The byte object contains
      * the rank followed by pmix_kval_t's. The list of callbacks
      * contains all local participants. */
-    peer = NULL;
-    PMIX_LIST_FOREACH(scd, cbs, pmix_server_caddy_t) {
-        if (scd->peer->nptr == ns) {
-            peer = scd->peer;
-            break;
-        }
-    }
-    if (NULL == peer) {
-        /* we can ignore this one */
-        return PMIX_SUCCESS;
-    }
 
     /* setup the byte object for unpacking */
     PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
     /* the next step unfortunately NULLs the byte object's
      * entries, so we need to ensure we restore them! */
-    PMIX_LOAD_BUFFER(peer, &pbkt, bo->bytes, bo->size);
+    PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt, bo->bytes, bo->size);
     /* unload the proc that provided this data */
     cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, &pbkt, &proc, &cnt, PMIX_PROC);
+    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, &proc, &cnt, PMIX_PROC);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         bo->bytes = pbkt.base_ptr;
@@ -3052,7 +3043,7 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
     /* unpack the remaining values until we hit the end of the buffer */
     cnt = 1;
     kv = PMIX_NEW(pmix_kval_t);
-    PMIX_BFROPS_UNPACK(rc, peer, &pbkt, kv, &cnt, PMIX_KVAL);
+    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
     while (PMIX_SUCCESS == rc) {
         /* store this in the hash table */
         PMIX_GDS_STORE_KV(rc, pmix_globals.mypeer, &proc, PMIX_REMOTE, kv);
@@ -3071,7 +3062,7 @@ static pmix_status_t dstore_store_modex(struct pmix_nspace_t *nspace,
         /* continue along */
         kv = PMIX_NEW(pmix_kval_t);
         cnt = 1;
-        PMIX_BFROPS_UNPACK(rc, peer, &pbkt, kv, &cnt, PMIX_KVAL);
+        PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer, &pbkt, kv, &cnt, PMIX_KVAL);
     }
     PMIX_RELEASE(kv);  // maintain accounting
     if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
