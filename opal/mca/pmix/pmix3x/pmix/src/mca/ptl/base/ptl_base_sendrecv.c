@@ -129,8 +129,7 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
         }
         /* reduce the number of local procs */
         --peer->nptr->nlocalprocs;
-        /* now decrease the refcount - might actually free the object */
-        PMIX_RELEASE(peer->info);
+
         /* remove this client from our array */
         pmix_pointer_array_set_item(&pmix_server_globals.clients,
                                     peer->index, NULL);
@@ -155,6 +154,10 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
              * an event. If not, then we do */
             PMIX_REPORT_EVENT(err, peer, PMIX_RANGE_NAMESPACE, _notify_complete);
         }
+        /* now decrease the refcount - might actually free the object */
+        PMIX_RELEASE(peer->info);
+
+        /* Release peer info */
         PMIX_RELEASE(peer);
      } else {
         /* if I am a client, there is only
