@@ -2,8 +2,8 @@
 /*
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,11 +69,18 @@ int mca_btl_vader_put_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *
     struct iovec dst_iov = {.iov_base = (void *)(intptr_t) remote_address, .iov_len = size};
     ssize_t ret;
 
-    ret = process_vm_writev (endpoint->segment_data.other.seg_ds->seg_cpid, &src_iov, 1, &dst_iov, 1, 0);
-    if (ret != (ssize_t)size) {
-        opal_output(0, "Wrote %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
-        return OPAL_ERROR;
-    }
+    /* This should not be needed, see the rationale in mca_btl_vader_get_cma() */
+    do {
+        ret = process_vm_writev (endpoint->segment_data.other.seg_ds->seg_cpid, &src_iov, 1, &dst_iov, 1, 0);
+        if (0 > ret) {
+            opal_output(0, "Wrote %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
+            return OPAL_ERROR;
+        }
+        src_iov.iov_base = (void *)((char *)src_iov.iov_base + ret);
+        src_iov.iov_len -= ret;
+        dst_iov.iov_base = (void *)((char *)dst_iov.iov_base + ret);
+        dst_iov.iov_len -= ret;
+    } while (0 < src_iov.iov_len);
 
     /* always call the callback function */
     cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
