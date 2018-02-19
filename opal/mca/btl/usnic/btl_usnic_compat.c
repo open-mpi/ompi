@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -659,7 +659,7 @@ int opal_btl_usnic_put(
 
 /*----------------------------------------------------------------------*/
 
-#elif BTL_VERSION == 30
+#elif BTL_VERSION >= 30
 
 /*
  * BTL 3.0 prepare_src function.
