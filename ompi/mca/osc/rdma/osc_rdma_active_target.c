@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -240,10 +240,6 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
 
     if ((assert & MPI_MODE_NOCHECK) || 0 == ompi_group_size (group)) {
         return OMPI_SUCCESS;
-    }
-
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* translate group ranks into the communicator */
