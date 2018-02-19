@@ -58,7 +58,7 @@ int cache_group(oshmem_group_t *group,
     } else {
 #if ABORT_ON_CACHE_OVERFLOW
         opal_output(0,
-                    "error: group cache overflow on rank %i: cache_size = %u: try encreasing oshmem_group_cache_size mca parameter",
+                    "error: group cache overflow on rank %i: cache_size = %u: try increasing oshmem_proc_group_cache_size mca parameter",
                     group->my_pe,
                     oshmem_group_cache_size);
         oshmem_shmem_abort(-1);
@@ -76,7 +76,7 @@ int cache_group(oshmem_group_t *group,
 int oshmem_group_cache_list_init(void)
 {
     int mca_value;
-    int cache_size_default = 100;
+    int cache_size_default = 1000;
     OBJ_CONSTRUCT(&oshmem_group_cache_list, opal_list_t);
 
     mca_value = cache_size_default;
@@ -94,7 +94,7 @@ int oshmem_group_cache_list_init(void)
                                  &mca_value);
     if (mca_value < 0) {
         opal_output(0,
-                    "error: oshmem_group_cache_size mca parameter was set to %i while it has to be positive value. Default value %i will be used.",
+                    "error: oshmem_proc_group_cache_size mca parameter was set to %i while it has to be positive value. Default value %i will be used.",
                     mca_value,
                     cache_size_default);
         mca_value = cache_size_default;
