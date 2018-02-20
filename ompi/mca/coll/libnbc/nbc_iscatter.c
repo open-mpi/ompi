@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +48,7 @@ int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *par
 static int nbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                          void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                          struct ompi_communicator_t *comm, ompi_request_t ** request,
-                         struct mca_coll_base_module_2_2_0_t *module) {
+                         struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
   int rank, p, res;
   MPI_Aint sndext = 0;
   NBC_Schedule *schedule;
@@ -157,7 +158,7 @@ static int nbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype sendty
   }
 #endif
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
@@ -170,7 +171,8 @@ int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype 
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, module);
+    int res = nbc_iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
+                           comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -187,7 +189,7 @@ int ompi_coll_libnbc_iscatter (const void* sendbuf, int sendcount, MPI_Datatype 
 static int nbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_2_0_t *module) {
+                               struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
     int res, rsize;
     MPI_Aint sndext;
     NBC_Schedule *schedule;
@@ -235,7 +237,7 @@ static int nbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Datatype 
         return res;
     }
 
-    res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
+    res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         OBJ_RELEASE(schedule);
         return res;
@@ -248,7 +250,8 @@ int ompi_coll_libnbc_iscatter_inter (const void* sendbuf, int sendcount, MPI_Dat
                                      void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                      struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iscatter_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, module);
+    int res = nbc_iscatter_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
+                                 comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -266,15 +269,9 @@ int ompi_coll_libnbc_scatter_init(const void* sendbuf, int sendcount, MPI_Dataty
                                   void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                   struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, module);
+    int res = nbc_iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
+                           comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 
@@ -285,15 +282,9 @@ int ompi_coll_libnbc_scatter_inter_init(const void* sendbuf, int sendcount, MPI_
                                         void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                         struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                         struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iscatter_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, module);
+    int res = nbc_iscatter_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root,
+                                 comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 

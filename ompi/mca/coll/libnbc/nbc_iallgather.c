@@ -10,6 +10,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, voi
  * each node receives from it's left (modulo p) neighbor */
 static int nbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                           MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                          struct mca_coll_base_module_2_2_0_t *module)
+                          struct mca_coll_base_module_2_2_0_t *module, bool persistent)
 {
   int rank, p, res;
   MPI_Aint rcvext;
@@ -78,8 +79,7 @@ static int nbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendt
     }
   }
   if (1 == p) {
-    *request = &ompi_request_empty;
-    return OMPI_SUCCESS;
+    return nbc_get_noop_request(persistent, request);
   }
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -154,7 +154,7 @@ static int nbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendt
   }
 #endif
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
@@ -168,7 +168,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
                                 struct mca_coll_base_module_2_2_0_t *module)
 {
     int res = nbc_iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-                             comm, request, module);
+                             comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -185,7 +185,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
 
 static int nbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_2_0_t *module)
+                                struct mca_coll_base_module_2_2_0_t *module, bool persistent)
 {
   int res, rsize;
   MPI_Aint rcvext;
@@ -231,7 +231,7 @@ static int nbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype
     return res;
   }
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
@@ -244,7 +244,7 @@ int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Da
 				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				      struct mca_coll_base_module_2_2_0_t *module) {
     int res = nbc_iallgather_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-                                   comm, request, module);
+                                   comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -262,15 +262,9 @@ int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Da
 int ompi_coll_libnbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                     MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request, module);
+    int res = nbc_iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+                             comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 
@@ -280,15 +274,9 @@ int ompi_coll_libnbc_allgather_init(const void* sendbuf, int sendcount, MPI_Data
 int ompi_coll_libnbc_allgather_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                           MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                           struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iallgather_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request, module);
+    int res = nbc_iallgather_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+                                   comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 

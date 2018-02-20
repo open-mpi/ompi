@@ -19,7 +19,10 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
  *                         rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * $COPYRIGHT$
  *
+ * Additional copyrights may follow
  */
 #include "nbc_internal.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -649,12 +652,14 @@ int NBC_Start(NBC_Handle *handle) {
   if ((ompi_request_t *)handle == &ompi_request_empty) {
     return OMPI_SUCCESS;
   }
+
   /* kick off first round */
+  handle->super.req_state = OMPI_REQUEST_ACTIVE;
   res = NBC_Start_round(handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;
   }
-  handle->super.req_state = OMPI_REQUEST_ACTIVE;
+
   OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
   opal_list_append(&mca_coll_libnbc_component.active_requests, &(handle->super.super.super));
   OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
@@ -662,12 +667,37 @@ int NBC_Start(NBC_Handle *handle) {
   return OMPI_SUCCESS;
 }
 
-int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf) {
-  int tmp_tag;
+int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
+                         ompi_coll_libnbc_module_t *module, bool persistent,
+                         ompi_request_t **request, void *tmpbuf) {
+  int ret, tmp_tag;
   bool need_register = false;
   ompi_coll_libnbc_request_t *handle;
 
-  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, handle);
+  /* no operation (e.g. one process barrier)? */
+  if (((int *)schedule->data)[0] == 0 && schedule->data[sizeof(int)] == 0) {
+    ret = nbc_get_noop_request(persistent, request);
+    if (OMPI_SUCCESS != ret) {
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* update the module->tag here because other processes may have operations
+     * and they may update the module->tag */
+    OPAL_THREAD_LOCK(&module->mutex);
+    tmp_tag = module->tag--;
+    if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
+      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
+      NBC_DEBUG(2,"resetting tags ...\n");
+    }
+    OPAL_THREAD_UNLOCK(&module->mutex);
+
+    OBJ_RELEASE(schedule);
+    free(tmpbuf);
+
+    return OMPI_SUCCESS;
+  }
+
+  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, persistent, handle);
   if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
 
   handle->tmpbuf = NULL;
@@ -731,15 +761,6 @@ void NBC_SchedCache_args_delete(void *entry) {
 }
 #endif
 
-int NBC_Persist(NBC_Handle *handle) {
-
-  handle->super.req_complete = REQUEST_PENDING;
-  handle->super.req_start = ompi_coll_libnbc_start;
-  handle->super.req_persistent = true;
-
-  return OMPI_SUCCESS;
-}
-
 static int NBC_Start_internal(NBC_Handle *handle) {
 
   /* kick off first round */
@@ -788,6 +809,7 @@ int ompi_coll_libnbc_start(size_t count, ompi_request_t ** request) {
     NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
     NBC_DEBUG(5, "--------------------------------\n");
 
+    handle->super.req_complete = REQUEST_PENDING;
     handle->super.req_state = OMPI_REQUEST_ACTIVE;
     res = NBC_Start_internal(handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

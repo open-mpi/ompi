@@ -11,6 +11,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +42,7 @@
 
 static int nbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                     struct mca_coll_base_module_2_2_0_t *module) {
+                                     struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
   int peer, rank, maxr, p, res, count;
   MPI_Aint ext;
   ptrdiff_t gap, span;
@@ -195,7 +196,7 @@ static int nbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int rec
     return res;
   }
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -208,7 +209,8 @@ static int nbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int rec
 int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                            MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                            struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ireduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op, comm, request, module);
+    int res = nbc_ireduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op,
+                                        comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -223,8 +225,8 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
 }
 
 static int nbc_ireduce_scatter_block_inter(const void *sendbuf, void *recvbuf, int rcount, struct ompi_datatype_t *dtype,
-                                           struct ompi_op_t *op, struct ompi_communicator_t *comm,
-                                           ompi_request_t **request, struct mca_coll_base_module_2_2_0_t *module) {
+                                           struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t **request,
+                                           struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
   int rank, res, count, lsize, rsize;
   MPI_Aint ext;
   ptrdiff_t gap, span, span_align;
@@ -333,7 +335,7 @@ static int nbc_ireduce_scatter_block_inter(const void *sendbuf, void *recvbuf, i
     return res;
   }
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -346,7 +348,8 @@ static int nbc_ireduce_scatter_block_inter(const void *sendbuf, void *recvbuf, i
 int ompi_coll_libnbc_ireduce_scatter_block_inter(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                                  MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                                  struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ireduce_scatter_block_inter(sendbuf, recvbuf, recvcount, datatype, op, comm, request, module);
+    int res = nbc_ireduce_scatter_block_inter(sendbuf, recvbuf, recvcount, datatype, op,
+                                              comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -363,15 +366,9 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void* sendbuf, void* recv
 int ompi_coll_libnbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                                MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                                struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ireduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op, comm, request, module);
+    int res = nbc_ireduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op,
+                                        comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 
@@ -381,15 +378,9 @@ int ompi_coll_libnbc_reduce_scatter_block_init(const void* sendbuf, void* recvbu
 int ompi_coll_libnbc_reduce_scatter_block_inter_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                                      MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                                      struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ireduce_scatter_block_inter(sendbuf, recvbuf, recvcount, datatype, op, comm, request, module);
+    int res = nbc_ireduce_scatter_block_inter(sendbuf, recvbuf, recvcount, datatype, op,
+                                              comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 

@@ -18,7 +18,7 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
  *                         rights reserved.
-
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -336,6 +336,10 @@ ompi_coll_libnbc_progress(void)
                 else {
                     request->super.req_status.MPI_ERROR = res;
                 }
+                if(request->super.req_persistent) {
+                    /* reset for the next communication */
+                    request->row_offset = 0;
+                }
                 if(!request->super.req_persistent || !REQUEST_COMPLETE(&request->super)) {
             	    ompi_request_complete(&request->super, true);
                 }
@@ -397,11 +401,8 @@ request_free(struct ompi_request_t **ompi_req)
         return MPI_ERR_REQUEST;
     }
 
-    if (!request->super.req_persistent) {
-        OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
-
-        *ompi_req = MPI_REQUEST_NULL;
-    }
+    OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
+    *ompi_req = MPI_REQUEST_NULL;
 
     return OMPI_SUCCESS;
 }
@@ -412,6 +413,7 @@ request_construct(ompi_coll_libnbc_request_t *request)
 {
     request->super.req_type = OMPI_REQUEST_COLL;
     request->super.req_status._cancelled = 0;
+    request->super.req_start = ompi_coll_libnbc_start;
     request->super.req_free = request_free;
     request->super.req_cancel = request_cancel;
 }

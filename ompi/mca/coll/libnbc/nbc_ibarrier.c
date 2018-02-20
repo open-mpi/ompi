@@ -11,6 +11,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +23,7 @@
 
 /* Dissemination implementation of MPI_Ibarrier */
 static int nbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                        struct mca_coll_base_module_2_2_0_t *module)
+                        struct mca_coll_base_module_2_2_0_t *module, bool persistent)
 {
   int rank, p, maxround, res, recvpeer, sendpeer;
   NBC_Schedule *schedule;
@@ -89,7 +90,7 @@ static int nbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** requ
   OBJ_RETAIN(schedule);
 #endif
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
@@ -100,7 +101,7 @@ static int nbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** requ
 
 int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ibarrier(comm, request, module);
+    int res = nbc_ibarrier(comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -116,7 +117,7 @@ int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t *
 }
 
 static int nbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                                    struct mca_coll_base_module_2_2_0_t *module)
+                              struct mca_coll_base_module_2_2_0_t *module, bool persistent)
 {
   int rank, res, rsize;
   NBC_Schedule *schedule;
@@ -177,7 +178,7 @@ static int nbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t *
       return res;
   }
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
@@ -187,7 +188,7 @@ static int nbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t *
 
 int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
                                     struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ibarrier_inter(comm, request, module);
+    int res = nbc_ibarrier_inter(comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -204,15 +205,8 @@ int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_reque
 
 int ompi_coll_libnbc_barrier_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ibarrier(comm, request, module);
+    int res = nbc_ibarrier(comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 
@@ -221,15 +215,8 @@ int ompi_coll_libnbc_barrier_init(struct ompi_communicator_t *comm, MPI_Info inf
 
 int ompi_coll_libnbc_barrier_inter_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                         struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ibarrier_inter(comm, request, module);
+    int res = nbc_ibarrier_inter(comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 

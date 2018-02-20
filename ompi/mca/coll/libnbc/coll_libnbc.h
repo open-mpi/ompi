@@ -16,6 +16,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,15 +132,13 @@ OBJ_CLASS_DECLARATION(ompi_coll_libnbc_request_t);
 typedef ompi_coll_libnbc_request_t NBC_Handle;
 
 
-#define OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, req)                       \
+#define OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, persistent, req)           \
     do {                                                                \
         opal_free_list_item_t *item;                                    \
         item = opal_free_list_wait (&mca_coll_libnbc_component.requests); \
         req = (ompi_coll_libnbc_request_t*) item;                       \
-        OMPI_REQUEST_INIT(&req->super, false);                          \
+        OMPI_REQUEST_INIT(&req->super, persistent);                     \
         req->super.req_mpi_object.comm = comm;                          \
-        req->super.req_complete = false;                                \
-        req->super.req_state = OMPI_REQUEST_INACTIVE;                   \
     } while (0)
 
 #define OMPI_COLL_LIBNBC_REQUEST_RETURN(req)                            \

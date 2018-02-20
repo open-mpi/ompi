@@ -10,6 +10,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +47,7 @@ int NBC_Ineighbor_alltoallv_args_compare(NBC_Ineighbor_alltoallv_args *a, NBC_In
 static int nbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
                                    void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                    struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                   struct mca_coll_base_module_2_2_0_t *module) {
+                                   struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
   int res, indegree, outdegree, *srcs, *dsts;
   MPI_Aint sndext, rcvext;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -161,7 +162,7 @@ static int nbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const i
   }
 #endif
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, NULL);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, NULL);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     return res;
@@ -174,7 +175,8 @@ int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, c
                                          void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ineighbor_alltoallv(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype, comm, request, module);
+    int res = nbc_ineighbor_alltoallv(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,
+                                      comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -192,15 +194,9 @@ int ompi_coll_libnbc_neighbor_alltoallv_init(const void *sbuf, const int *scount
                                              void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                              struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                              struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ineighbor_alltoallv(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype, comm, request, module);
+    int res = nbc_ineighbor_alltoallv(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,
+                                      comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-    }
-
-    res = NBC_Persist(*(ompi_coll_libnbc_request_t **)request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
-        *request = &ompi_request_null.request;
         return res;
     }
 

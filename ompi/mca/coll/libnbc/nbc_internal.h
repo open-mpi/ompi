@@ -14,7 +14,10 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * $COPYRIGHT$
  *
+ * Additional copyrights may follow
  */
 #ifndef __NBC_INTERNAL_H__
 #define __NBC_INTERNAL_H__
@@ -260,8 +263,9 @@ void NBC_SchedCache_args_delete_key_dummy(void *k);
 
 
 int NBC_Start(NBC_Handle *handle);
-int NBC_Persist(NBC_Handle *handle);
-int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm, ompi_coll_libnbc_module_t *module, ompi_request_t **request, void *tmpbuf);
+int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
+                         ompi_coll_libnbc_module_t *module, bool persistent,
+                         ompi_request_t **request, void *tmpbuf);
 void NBC_Return_handle(ompi_coll_libnbc_request_t *request);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
 int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
@@ -363,6 +367,16 @@ static inline void nbc_schedule_inc_round (NBC_Schedule *schedule) {
   memcpy (&last_round_num, lastround, sizeof (last_round_num));
   ++last_round_num;
   memcpy (lastround, &last_round_num, sizeof (last_round_num));
+}
+
+/* returns a no-operation request (e.g. for one process barrier) */
+static inline int nbc_get_noop_request(bool persistent, ompi_request_t **request) {
+  if (persistent) {
+    return ompi_request_persistent_noop_create(request);
+  } else {
+    *request = &ompi_request_empty;
+    return OMPI_SUCCESS;
+  }
 }
 
 /* NBC_PRINT_ROUND prints a round in a schedule. A round has the format:
