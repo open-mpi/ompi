@@ -321,8 +321,7 @@ int NBC_Progress(NBC_Handle *handle) {
   int i;
   ompi_status_public_t status;
 
-  /* the handle is done if there is no schedule attached */
-  if (NULL == handle->schedule) {
+  if (handle->nbc_complete) {
     return NBC_OK;
   }
 
@@ -388,8 +387,9 @@ int NBC_Progress(NBC_Handle *handle) {
       /* this was the last round - we're done */
       NBC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
 
+      handle->nbc_complete = true;
       if (!handle->super.req_persistent) {
-          NBC_Free(handle);
+        NBC_Free(handle);
       }
 
       return NBC_OK;
@@ -706,6 +706,7 @@ int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
   handle->comm = comm;
   handle->schedule = NULL;
   handle->row_offset = 0;
+  handle->nbc_complete = persistent ? true : false;
 
   /******************** Do the tag and shadow comm administration ...  ***************/
 
@@ -811,6 +812,7 @@ int ompi_coll_libnbc_start(size_t count, ompi_request_t ** request) {
 
     handle->super.req_complete = REQUEST_PENDING;
     handle->super.req_state = OMPI_REQUEST_ACTIVE;
+    handle->nbc_complete = false;
     res = NBC_Start_internal(handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_DEBUG(5, " ** bad result from NBC_Start_internal **\n");

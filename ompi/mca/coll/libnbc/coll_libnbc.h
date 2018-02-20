@@ -117,6 +117,7 @@ struct ompi_coll_libnbc_request_t {
     ompi_request_t super;
     MPI_Comm comm;
     long row_offset;
+    bool nbc_complete; /* status in libnbc level */
     int tag;
     volatile int req_count;
     ompi_request_t **req_array;
