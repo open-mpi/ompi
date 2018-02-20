@@ -29,6 +29,7 @@
 #include "ompi_config.h"
 
 #include "coll_libnbc.h"
+#include "nbc_internal.h"
 
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
@@ -385,6 +386,44 @@ OBJ_CLASS_INSTANCE(ompi_coll_libnbc_module_t,
 
 
 static int
+request_start(size_t count, ompi_request_t ** requests)
+{
+    int i, res;
+
+    NBC_DEBUG(5, " ** request_start **\n");
+
+    for (i = 0; i < count; i++) {
+        NBC_Handle *handle = (NBC_Handle *) requests[i];
+        NBC_Schedule *schedule = handle->schedule;
+
+        NBC_DEBUG(5, "--------------------------------\n");
+        NBC_DEBUG(5, "schedule %p size %u\n", &schedule, sizeof(schedule));
+        NBC_DEBUG(5, "handle %p size %u\n", &handle, sizeof(handle));
+        NBC_DEBUG(5, "data %p size %u\n", &schedule->data, sizeof(schedule->data));
+        NBC_DEBUG(5, "req_array %p size %u\n", &handle->req_array, sizeof(handle->req_array));
+        NBC_DEBUG(5, "row_offset=%u address=%p size=%u\n", handle->row_offset, &handle->row_offset, sizeof(handle->row_offset));
+        NBC_DEBUG(5, "req_count=%u address=%p size=%u\n", handle->req_count, &handle->req_count, sizeof(handle->req_count));
+        NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
+        NBC_DEBUG(5, "--------------------------------\n");
+
+        handle->super.req_complete = REQUEST_PENDING;
+        handle->nbc_complete = false;
+
+        res = NBC_Start(handle);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            NBC_DEBUG(5, " ** bad result from NBC_Start **\n");
+            return res;
+        }
+    }
+
+    NBC_DEBUG(5, " ** LEAVING request_start **\n");
+
+    return OMPI_SUCCESS;
+
+}
+
+
+static int
 request_cancel(struct ompi_request_t *request, int complete)
 {
     return MPI_ERR_REQUEST;
@@ -413,7 +452,7 @@ request_construct(ompi_coll_libnbc_request_t *request)
 {
     request->super.req_type = OMPI_REQUEST_COLL;
     request->super.req_status._cancelled = 0;
-    request->super.req_start = ompi_coll_libnbc_start;
+    request->super.req_start = request_start;
     request->super.req_free = request_free;
     request->super.req_cancel = request_cancel;
 }

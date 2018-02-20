@@ -410,8 +410,6 @@ int ompi_coll_libnbc_neighbor_alltoallw_init(const void *sbuf, const int *scount
                                              struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                              struct mca_coll_base_module_2_2_0_t *module);
 
-int ompi_coll_libnbc_start(size_t count, ompi_request_t ** request);
-
 
 END_C_DECLS
 
