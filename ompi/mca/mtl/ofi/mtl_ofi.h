@@ -63,8 +63,7 @@ __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_progress(void)
 {
     ssize_t ret;
-    int count = 0;
-    struct fi_cq_tagged_entry wc = { 0 };
+    int count = 0, i, events_read;
     struct fi_cq_err_entry error = { 0 };
     ompi_mtl_ofi_request_t *ofi_req = NULL;
 
@@ -74,19 +73,23 @@ ompi_mtl_ofi_progress(void)
      * Call the request's callback.
      */
     while (true) {
-        ret = fi_cq_read(ompi_mtl_ofi.cq, (void *)&wc, 1);
+        ret = fi_cq_read(ompi_mtl_ofi.cq, ompi_mtl_ofi.progress_entries,
+                ompi_mtl_ofi.ofi_progress_event_count);
         if (ret > 0) {
-            count++;
-            if (NULL != wc.op_context) {
-                ofi_req = TO_OFI_REQ(wc.op_context);
-                assert(ofi_req);
-                ret = ofi_req->event_callback(&wc, ofi_req);
-                if (OMPI_SUCCESS != ret) {
-                    opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
-                                   "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
-                                   __FILE__, __LINE__, ret);
-                    fflush(stderr);
-                    exit(1);
+            count+= ret;
+            events_read = ret;
+            for (i = 0; i < events_read; i++) {
+                if (NULL != ompi_mtl_ofi.progress_entries[i].op_context) {
+                    ofi_req = TO_OFI_REQ(ompi_mtl_ofi.progress_entries[i].op_context);
+                    assert(ofi_req);
+                    ret = ofi_req->event_callback(&ompi_mtl_ofi.progress_entries[i], ofi_req);
+                    if (OMPI_SUCCESS != ret) {
+                        opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
+                                       "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
+                                       __FILE__, __LINE__, ret);
+                        fflush(stderr);
+                        exit(1);
+                    }
                 }
             }
         } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
