@@ -58,7 +58,7 @@ static int nbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype send
   if (inplace) {
       sendtype = recvtype;
       sendcount = recvcounts[rank];
-  } else {
+  } else if (!persistent) { /* for persistent, the copy must be scheduled */
     /* copy my data to receive buffer */
     rbuf = (char *) recvbuf + displs[rank] * rcvext;
     res = NBC_Copy (sendbuf, sendcount, sendtype, rbuf, recvcounts[rank], recvtype, comm);
@@ -73,6 +73,16 @@ static int nbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype send
   }
 
   sbuf = (char *) recvbuf + displs[rank] * rcvext;
+
+  if (persistent && !inplace) { /* for nonblocking, data has been copied already */
+    /* copy my data to receive buffer (= send buffer of NBC_Sched_send) */
+    res = NBC_Sched_copy ((void *)sendbuf, false, sendcount, sendtype,
+                          sbuf, false, recvcounts[rank], recvtype, schedule, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      OBJ_RELEASE(schedule);
+      return res;
+    }
+  }
 
   /* do p-1 rounds */
   for (int r = 1 ; r < p ; ++r) {

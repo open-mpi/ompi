@@ -110,16 +110,6 @@ static int nbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendty
   } else
     alg = NBC_A2A_LINEAR; /*NBC_A2A_PAIRWISE;*/
 
-  if (!inplace) {
-    /* copy my data to receive buffer */
-    rbuf = (char *) recvbuf + rank * recvcount * rcvext;
-    sbuf = (char *) sendbuf + rank * sendcount * sndext;
-    res = NBC_Copy (sbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
-    }
-  }
-
   /* allocate temp buffer if we need one */
   if (alg == NBC_A2A_INPLACE) {
     span = opal_datatype_span(&recvtype->super, recvcount, &gap);
@@ -203,6 +193,19 @@ static int nbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendty
     if (OPAL_UNLIKELY(NULL == schedule)) {
       free(tmpbuf);
       return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (!inplace) {
+      /* copy my data to receive buffer */
+      rbuf = (char *) recvbuf + rank * recvcount * rcvext;
+      sbuf = (char *) sendbuf + rank * sendcount * sndext;
+      res = NBC_Sched_copy (sbuf, false, sendcount, sendtype,
+                            rbuf, false, recvcount, recvtype, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
+        free(tmpbuf);
+        return res;
+      }
     }
 
     switch(alg) {

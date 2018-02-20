@@ -70,7 +70,7 @@ static int nbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const int *re
     count += recvcounts[r];
   }
 
-  if (p == 1 || 0 == count) {
+  if ((1 == p && (!persistent || inplace)) || 0 == count) {
     if (!inplace) {
       /* single node not in_place: copy data to recvbuf */
       res = NBC_Copy(sendbuf, recvcounts[0], datatype, recvbuf, recvcounts[0], datatype, comm);
@@ -174,8 +174,14 @@ static int nbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const int *re
       }
     }
 
-    res = NBC_Sched_copy (lbuf, true, recvcounts[0], datatype, recvbuf, false,
-                          recvcounts[0], datatype, schedule, false);
+    if (p == 1) {
+      /* single node not in_place: copy data to recvbuf */
+      res = NBC_Sched_copy ((void *)sendbuf, false, recvcounts[0], datatype,
+                            recvbuf, false, recvcounts[0], datatype, schedule, false);
+    } else {
+      res = NBC_Sched_copy (lbuf, true, recvcounts[0], datatype, recvbuf, false,
+                            recvcounts[0], datatype, schedule, false);
+    }
   } else {
     res = NBC_Sched_recv (recvbuf, false, recvcounts[rank], datatype, 0, schedule, false);
   }

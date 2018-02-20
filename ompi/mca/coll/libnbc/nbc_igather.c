@@ -71,13 +71,6 @@ static int nbc_igather(const void* sendbuf, int sendcount, MPI_Datatype sendtype
   if (inplace) {
     sendcount = recvcount;
     sendtype = recvtype;
-  } else if (rank == root) {
-    rbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
-    /* if I am the root - just copy the message (only without MPI_IN_PLACE) */
-    res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
-    }
   }
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -111,7 +104,17 @@ static int nbc_igather(const void* sendbuf, int sendcount, MPI_Datatype sendtype
     } else {
       for (int i = 0 ; i < p ; ++i) {
         rbuf = (char *)recvbuf + i * recvcount * rcvext;
-        if (i != root) {
+        if (i == root) {
+          if (!inplace) {
+            /* if I am the root - just copy the message */
+            res = NBC_Sched_copy ((void *)sendbuf, false, sendcount, sendtype,
+                                  rbuf, false, recvcount, recvtype, schedule, false);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+              OBJ_RELEASE(schedule);
+              return res;
+            }
+          }
+        } else {
           /* root receives message to the right buffer */
           res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, i, schedule, false);
           if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

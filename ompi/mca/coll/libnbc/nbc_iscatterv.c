@@ -64,7 +64,8 @@ static int nbc_iscatterv(const void* sendbuf, const int *sendcounts, const int *
       if (i == root) {
         if (!inplace) {
           /* if I am the root - just copy the message */
-          res = NBC_Copy (sbuf, sendcounts[i], sendtype, recvbuf, recvcount, recvtype, comm);
+          res = NBC_Sched_copy (sbuf, false, sendcounts[i], sendtype,
+                                recvbuf, false, recvcount, recvtype, schedule, false);
         } else {
           res = OMPI_SUCCESS;
         }

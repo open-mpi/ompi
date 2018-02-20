@@ -87,7 +87,7 @@ static int nbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Dat
     return res;
   }
 
-  if (1 == p) {
+  if (1 == p && (!persistent || inplace)) {
     if (!inplace) {
       /* for a single node - copy data to receivebuf */
       res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
@@ -127,13 +127,18 @@ static int nbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Dat
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    switch(alg) {
-      case NBC_ARED_BINOMIAL:
-        res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, tmpbuf);
-        break;
-      case NBC_ARED_RING:
-        res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, tmpbuf);
-        break;
+    if (p == 1) {
+      res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
+                           recvbuf, false, count, datatype, schedule, false);
+    } else {
+      switch(alg) {
+        case NBC_ARED_BINOMIAL:
+          res = allred_sched_diss(rank, p, count, datatype, gap, sendbuf, recvbuf, op, inplace, schedule, tmpbuf);
+          break;
+        case NBC_ARED_RING:
+          res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, tmpbuf);
+          break;
+      }
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -348,7 +353,9 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
     rbuf = recvbuf;
     tmprbuf = false;
     if (inplace) {
-        res = NBC_Copy(rbuf, count, datatype, ((char *)tmpbuf) - gap, count, datatype, MPI_COMM_SELF);
+        res = NBC_Sched_copy(rbuf, false, count, datatype,
+                             ((char *)tmpbuf) - gap, false, count, datatype,
+                             schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }

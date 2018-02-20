@@ -77,19 +77,22 @@ static int nbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int 
     sendcounts = recvcounts;
     sdispls = rdispls;
     sendtypes = recvtypes;
-  } else if (sendcounts[rank] != 0) {
-    rbuf = (char *) recvbuf + rdispls[rank];
-    sbuf = (char *) sendbuf + sdispls[rank];
-    res = NBC_Copy(sbuf, sendcounts[rank], sendtypes[rank], rbuf, recvcounts[rank], recvtypes[rank], comm);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
-    }
   }
 
   schedule = OBJ_NEW(NBC_Schedule);
   if (OPAL_UNLIKELY(NULL == schedule)) {
     free(tmpbuf);
     return OMPI_ERR_OUT_OF_RESOURCE;
+  }
+
+  if (!inplace && sendcounts[rank] != 0) {
+    rbuf = (char *) recvbuf + rdispls[rank];
+    sbuf = (char *) sendbuf + sdispls[rank];
+    res = NBC_Sched_copy(sbuf, false, sendcounts[rank], sendtypes[rank],
+                         rbuf, false, recvcounts[rank], recvtypes[rank], schedule, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      return res;
+    }
   }
 
   if (inplace) {

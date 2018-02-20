@@ -89,7 +89,8 @@ static int nbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int rec
 
     /* copy data to redbuf if we only have a single node */
     if ((p == 1) && !inplace) {
-      res = NBC_Copy (sendbuf, count, datatype, redbuf, count, datatype, comm);
+      res = NBC_Sched_copy ((void *)sendbuf, false, count, datatype,
+                            redbuf, false, count, datatype, schedule, false);
       if (OMPI_SUCCESS != res) {
         OBJ_RELEASE(schedule);
         free(tmpbuf);

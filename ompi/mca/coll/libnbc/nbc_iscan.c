@@ -61,14 +61,6 @@ static int nbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  if (!inplace) {
-    /* copy data to receivebuf */
-    res = NBC_Copy (sendbuf, count, datatype, recvbuf, count, datatype, comm);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
-    }
-  }
-
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Scan_args *args, *found, search;
 
@@ -84,6 +76,16 @@ static int nbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype
     schedule = OBJ_NEW(NBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (!inplace) {
+      /* copy data to receivebuf */
+      res = NBC_Sched_copy ((void *)sendbuf, false, count, datatype,
+                            recvbuf, false, count, datatype, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
+        return res;
+      }
     }
 
     if(rank != 0) {

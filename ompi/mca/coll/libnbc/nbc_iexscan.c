@@ -64,23 +64,6 @@ static int nbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Dataty
     rank = ompi_comm_rank (comm);
     p = ompi_comm_size (comm);
 
-    span = opal_datatype_span(&datatype->super, count, &gap);
-    if (0 < rank) {
-        tmpbuf = malloc(span);
-        if (NULL == tmpbuf) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        if (inplace) {
-            res = NBC_Copy(recvbuf, count, datatype, (char *)tmpbuf-gap, count, datatype, comm);
-        } else {
-            res = NBC_Copy(sendbuf, count, datatype, (char *)tmpbuf-gap, count, datatype, comm);
-        }
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-            free(tmpbuf);
-            return res;
-        }
-    }
-
 #ifdef NBC_CACHE_SCHEDULE
     /* search schedule in communicator specific tree */
     search.sendbuf = sendbuf;
@@ -98,6 +81,24 @@ static int nbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Dataty
         }
 
         if (rank != 0) {
+            span = opal_datatype_span(&datatype->super, count, &gap);
+            tmpbuf = malloc(span);
+            if (NULL == tmpbuf) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            if (inplace) {
+                res = NBC_Sched_copy(recvbuf, false, count, datatype,
+                                     (char *)tmpbuf-gap, false, count, datatype, schedule, false);
+            } else {
+                res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
+                                     (char *)tmpbuf-gap, false, count, datatype, schedule, false);
+            }
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                OBJ_RELEASE(schedule);
+                free(tmpbuf);
+                return res;
+            }
+
             res = NBC_Sched_recv (recvbuf, false, count, datatype, rank-1, schedule, false);
 
             if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

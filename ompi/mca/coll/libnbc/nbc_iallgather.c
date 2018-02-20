@@ -70,7 +70,7 @@ static int nbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendt
   if (inplace) {
     sendtype = recvtype;
     sendcount = recvcount;
-  } else {
+  } else if (!persistent) { /* for persistent, the copy must be scheduled */
     /* copy my data to receive buffer */
     rbuf = (char *) recvbuf + rank * recvcount * rcvext;
     res = NBC_Copy (sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
@@ -78,7 +78,7 @@ static int nbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendt
       return res;
     }
   }
-  if (1 == p) {
+  if (1 == p && (!persistent || inplace)) {
     return nbc_get_noop_request(persistent, request);
   }
 
@@ -99,6 +99,17 @@ static int nbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendt
     }
 
     sbuf = (char *)recvbuf + rank * recvcount * rcvext;
+
+    if (persistent && !inplace) { /* for nonblocking, data has been copied already */
+      /* copy my data to receive buffer (= send buffer of NBC_Sched_send) */
+      res = NBC_Sched_copy ((void *)sendbuf, false, sendcount, sendtype,
+                            sbuf, false, recvcount, recvtype, schedule, true);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
+        return res;
+      }
+    }
+
     /* do p-1 rounds */
     for(int r = 0 ; r < p ; ++r) {
       if(r != rank) {

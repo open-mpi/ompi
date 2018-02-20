@@ -85,7 +85,7 @@ static int nbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Dataty
   }
 
   /* only one node -> copy data */
-  if (p == 1) {
+  if (1 == p && (!persistent || inplace)) {
     if (!inplace) {
       res = NBC_Copy (sendbuf, count, datatype, recvbuf, count, datatype, comm);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -140,13 +140,18 @@ static int nbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Dataty
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    switch(alg) {
-      case NBC_RED_BINOMIAL:
-        res = red_sched_binomial(rank, p, root, sendbuf, redbuf, tmpredbuf, count, datatype, op, inplace, schedule, tmpbuf);
-        break;
-      case NBC_RED_CHAIN:
-        res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, tmpbuf, segsize);
-        break;
+    if (p == 1) {
+      res = NBC_Sched_copy ((void *)sendbuf, false, count, datatype,
+                            recvbuf, false, count, datatype, schedule, false);
+    } else {
+      switch(alg) {
+        case NBC_RED_BINOMIAL:
+          res = red_sched_binomial(rank, p, root, sendbuf, redbuf, tmpredbuf, count, datatype, op, inplace, schedule, tmpbuf);
+          break;
+        case NBC_RED_CHAIN:
+          res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, tmpbuf, segsize);
+          break;
+      }
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -351,7 +356,9 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
     rbuf = redbuf;
     tmprbuf = tmpredbuf;
     if (inplace) {
-        res = NBC_Copy(rbuf, count, datatype, ((char *)tmpbuf)-gap, count, datatype, MPI_COMM_SELF);
+        res = NBC_Sched_copy(rbuf, false, count, datatype,
+                             ((char *)tmpbuf)-gap, false, count, datatype,
+                             schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }

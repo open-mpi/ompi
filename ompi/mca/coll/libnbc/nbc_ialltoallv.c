@@ -89,14 +89,6 @@ static int nbc_ialltoallv(const void* sendbuf, const int *sendcounts, const int 
       NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
       return res;
     }
-    if (sendcounts[rank] != 0) {
-      rbuf = (char *) recvbuf + rdispls[rank] * rcvext;
-      sbuf = (char *) sendbuf + sdispls[rank] * sndext;
-      res = NBC_Copy (sbuf, sendcounts[rank], sendtype, rbuf, recvcounts[rank], recvtype, comm);
-      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        return res;
-      }
-    }
   }
 
   schedule = OBJ_NEW(NBC_Schedule);
@@ -105,6 +97,17 @@ static int nbc_ialltoallv(const void* sendbuf, const int *sendcounts, const int 
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
+
+  if (!inplace && sendcounts[rank] != 0) {
+    rbuf = (char *) recvbuf + rdispls[rank] * rcvext;
+    sbuf = (char *) sendbuf + sdispls[rank] * sndext;
+    res = NBC_Sched_copy (sbuf, false, sendcounts[rank], sendtype,
+                          rbuf, false, recvcounts[rank], recvtype, schedule, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      OBJ_RELEASE(schedule);
+      return res;
+    }
+  }
 
   if (inplace) {
     res = a2av_sched_inplace(rank, p, schedule, recvbuf, recvcounts,

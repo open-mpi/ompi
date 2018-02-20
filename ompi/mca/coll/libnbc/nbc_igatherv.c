@@ -72,8 +72,8 @@ static int nbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtyp
       if (i == root) {
         if (!inplace) {
           /* if I am the root - just copy the message */
-          res = NBC_Copy (sendbuf, sendcount, sendtype, rbuf, recvcounts[i], recvtype,
-                          comm);
+          res = NBC_Sched_copy ((void *)sendbuf, false, sendcount, sendtype,
+                                rbuf, false, recvcounts[i], recvtype, schedule, false);
           if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
             OBJ_RELEASE(schedule);
             return res;
