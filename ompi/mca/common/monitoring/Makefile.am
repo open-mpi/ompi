@@ -5,6 +5,7 @@
 # Copyright (c) 2016      Inria.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,13 +38,14 @@ if OPAL_INSTALL_BINARIES
 bin_SCRIPTS = profile2mat.pl aggregate_profile.pl
 endif # OPAL_INSTALL_BINARIES
 
-else
+else # MCA_BUILD_ompi_common_monitoring_DSO
 noinst_LTLIBRARIES += $(component_noinst)
-endif
+endif # MCA_BUILD_ompi_common_monitoring_DSO
 
 libmca_common_monitoring_la_SOURCES = $(headers) $(sources)
 libmca_common_monitoring_la_CPPFLAGS = $(common_monitoring_CPPFLAGS)
 libmca_common_monitoring_la_LDFLAGS =  \
+        -version-info $(libmca_ompi_common_monitoring_so_version) \
         $(common_monitoring_LDFLAGS)
 libmca_common_monitoring_la_LIBADD = $(common_monitoring_LIBS)
 libmca_common_monitoring_noinst_la_SOURCES = $(headers) $(sources)

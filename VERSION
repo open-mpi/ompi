@@ -103,6 +103,7 @@ libompitrace_so_version=0:0:0
 
 # OMPI layer
 libmca_ompi_common_ompio_so_version=0:0:0
+libmca_ompi_common_monitoring_so_version=0:0:0
 
 # ORTE layer
 libmca_orte_common_alps_so_version=0:0:0
