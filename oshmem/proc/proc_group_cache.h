@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -13,29 +13,33 @@
 #include "oshmem_config.h"
 #include "proc.h"
 
-#define OSHMEM_GROUP_CACHE_ENABLED  1
-#define ABORT_ON_CACHE_OVERFLOW 1
+#define OSHMEM_GROUP_CACHE_ENABLED 1
+
 BEGIN_C_DECLS
-struct oshmem_group_cache_t {
-    opal_list_item_t item;
-    oshmem_group_t *group;
-    int cache_id[3];
-};
 
-typedef struct oshmem_group_cache_t oshmem_group_cache_t;
-OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(oshmem_group_cache_t);
-OSHMEM_DECLSPEC extern opal_list_t oshmem_group_cache_list;
+/**
+ * A group cache.
+ *
+ * Deletion of a group is not implemented because it
+ * requires a synchronization between PEs
+ *
+ * If cache enabled every group is kept until the
+ * shmem_finalize() is called
+ */
 
-oshmem_group_t* find_group_in_cache(int PE_start, int logPE_stride, int PE_size);
+int oshmem_group_cache_init(void);
+void oshmem_group_cache_destroy(void);
 
-int cache_group(oshmem_group_t *group,
-                int PE_start,
-                int logPE_stride,
-                int PE_size);
-int oshmem_group_cache_list_init(void);
-int oshmem_group_cache_list_free(void);
+oshmem_group_t* oshmem_group_cache_find(int pe_start, int pe_stride, int pe_size);
 
-extern unsigned int oshmem_group_cache_size;
+int oshmem_group_cache_insert(oshmem_group_t *group, int pe_start,
+                              int pe_stride, int pe_size);
+
+static inline int oshmem_group_cache_enabled(void)
+{
+    return OSHMEM_GROUP_CACHE_ENABLED;
+}
+
 END_C_DECLS
 
 #endif

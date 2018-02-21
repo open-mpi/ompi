@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -102,17 +102,10 @@ static int _shmem_finalize(void)
     if (OSHMEM_SUCCESS != (ret = oshmem_request_finalize())) {
         return ret;
     }
-    /* must free cached groups before we kill collectives */
-    if (OSHMEM_SUCCESS != (ret = oshmem_group_cache_list_free())) {
-        return ret;
-    }
-    /* We need to call mca_scoll_base_group_unselect explicitly for each group
-     * that are not freed by oshmem_group_cache_list_free. We can only release its collectives at this point */
-    mca_scoll_base_group_unselect(oshmem_group_all);
-    mca_scoll_base_group_unselect(oshmem_group_self);
+
+    oshmem_proc_group_finalize_scoll();
 
     /* Close down MCA modules */
-
     if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_atomic_base_framework) ) ) {
         return ret;
     }

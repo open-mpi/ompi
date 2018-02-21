@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -16,14 +16,7 @@
 
 #include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/proc/proc.h"
-#include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
-
-#if OSHMEM_GROUP_CACHE_ENABLED == 0
-static bool __group_cache_enabled = false;
-#else
-static bool __group_cache_enabled = true;
-#endif /* OSHMEM_GROUP_CACHE_ENABLED */
 
 /*
  * The shared memory (SHMEM) reduction routines perform an associative binary operation
@@ -50,47 +43,22 @@ static bool __group_cache_enabled = true;
     RUNTIME_CHECK_ADDR(source);                                                             \
                                                                                             \
     {                                                                                       \
-        /* Create group basing PE_start, logPE_stride and PE_size */                        \
-        if (!__group_cache_enabled)                                                         \
-        {                                                                                   \
-            group = oshmem_proc_group_create(PE_start, (1 << logPE_stride), PE_size);       \
-            if (!group)                                                                     \
-                rc = OSHMEM_ERROR;                                                          \
-        }                                                                                   \
-        else                                                                                \
-        {                                                                                   \
-            group = find_group_in_cache(PE_start,logPE_stride,PE_size);                     \
-            if (!group)                                                                     \
-            {                                                                               \
-                group = oshmem_proc_group_create(PE_start, (1 << logPE_stride), PE_size);   \
-                if (!group)                                                                 \
-                    rc = OSHMEM_ERROR;                                                      \
-                cache_group(group,PE_start,logPE_stride,PE_size);                           \
-            }                                                                               \
-        }                                                                                   \
-                                                                                            \
-        /* Collective operation call */                                                     \
-        if ( rc == OSHMEM_SUCCESS )                                                         \
-        {                                                                                   \
+        group = oshmem_proc_group_create_nofail(PE_start, 1<<logPE_stride, PE_size);        \
         oshmem_op_t* op = oshmem_op_##name##type_name;                                      \
-            size_t size = nreduce * op->dt_size;                                            \
+        size_t size = nreduce * op->dt_size;                                                \
                                                                                             \
-            /* Call collective reduce operation */                                          \
-            rc = group->g_scoll.scoll_reduce(                                               \
-                                group,                                                      \
-                                op,                                                         \
-                                (void*)target,                                              \
-                                (const void*)source,                                        \
-                                size,                                                       \
-                                pSync,                                                      \
-                                (void*)pWrk,                                                \
-                                SCOLL_DEFAULT_ALG );                                        \
-        }                                                                                   \
+        /* Call collective reduce operation */                                              \
+        rc = group->g_scoll.scoll_reduce(                                                   \
+                group,                                                                      \
+                op,                                                                         \
+                (void*)target,                                                              \
+                (const void*)source,                                                        \
+                size,                                                                       \
+                pSync,                                                                      \
+                (void*)pWrk,                                                                \
+                SCOLL_DEFAULT_ALG );                                                        \
                                                                                             \
-        if ( !__group_cache_enabled && (rc == OSHMEM_SUCCESS ) )                            \
-        {                                                                                   \
-            oshmem_proc_group_destroy(group);                                               \
-        }                                                                                   \
+        oshmem_proc_group_destroy(group);                                                   \
     }                                                                                       \
     RUNTIME_CHECK_RC(rc);                                                                   \
 }
