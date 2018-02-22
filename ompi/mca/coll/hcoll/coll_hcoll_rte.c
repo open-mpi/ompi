@@ -185,7 +185,7 @@ static int recv_nb(struct dte_data_representation_t data,
     if (NULL == ec_h.handle && -1 != ec_h.rank) {
         fprintf(stderr,"***Error in hcolrte_rml_recv_nb: wrong null argument: "
                 "ec_h.handle = %p, ec_h.rank = %d\n",ec_h.handle,ec_h.rank);
-        return 1;
+        return HCOLL_ERROR;
     }
     assert(HCOL_DTE_IS_INLINE(data));
     /*do inline nb recv*/
@@ -195,7 +195,7 @@ static int recv_nb(struct dte_data_representation_t data,
     if (!buffer && !HCOL_DTE_IS_ZERO(data)) {
         fprintf(stderr, "***Error in hcolrte_rml_recv_nb: buffer pointer is NULL"
                 " for non DTE_ZERO INLINE data representation\n");
-        return 1;
+        return HCOLL_ERROR;
     }
     size = (size_t)data.rep.in_line_rep.data_handle.in_line.packed_size*count/8;
 
@@ -204,7 +204,7 @@ static int recv_nb(struct dte_data_representation_t data,
     if (MCA_PML_CALL(irecv(buffer,size,&(ompi_mpi_unsigned_char.dt),ec_h.rank,
                            tag,comm,&ompi_req)))
     {
-        return 1;
+        return HCOLL_ERROR;
     }
     req->data = (void *)ompi_req;
     req->status = HCOLRTE_REQUEST_ACTIVE;
@@ -226,7 +226,7 @@ static int send_nb( dte_data_representation_t data,
     if (! ec_h.handle) {
         fprintf(stderr,"***Error in hcolrte_rml_send_nb: wrong null argument: "
                 "ec_h.handle = %p, ec_h.rank = %d\n",ec_h.handle,ec_h.rank);
-        return 1;
+        return HCOLL_ERROR;
     }
     assert(HCOL_DTE_IS_INLINE(data));
     /*do inline nb recv*/
@@ -235,7 +235,7 @@ static int send_nb( dte_data_representation_t data,
     if (!buffer && !HCOL_DTE_IS_ZERO(data)) {
         fprintf(stderr, "***Error in hcolrte_rml_send_nb: buffer pointer is NULL"
                 " for non DTE_ZERO INLINE data representation\n");
-        return 1;
+        return HCOLL_ERROR;
     }
     size = (size_t)data.rep.in_line_rep.data_handle.in_line.packed_size*count/8;
     HCOL_VERBOSE(30,"PML_ISEND: dest = %d: buf = %p: size = %u: comm = %p",
@@ -243,7 +243,7 @@ static int send_nb( dte_data_representation_t data,
     if (MCA_PML_CALL(isend(buffer,size,&(ompi_mpi_unsigned_char.dt),ec_h.rank,
                            tag,MCA_PML_BASE_SEND_STANDARD,comm,&ompi_req)))
     {
-        return 1;
+        return HCOLL_ERROR;
     }
     req->data = (void *)ompi_req;
     req->status = HCOLRTE_REQUEST_ACTIVE;
