@@ -1,4 +1,4 @@
-# -*- shell-script -*-
+# -*- autoconf -*-
 #
 # Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
@@ -96,12 +96,13 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
            opal_event_external_LDFLAGS_save=$LDFLAGS
            opal_event_external_LIBS_save=$LIBS
 
-           OPAL_CHECK_PACKAGE2([opal_event_external],
+           OPAL_CHECK_PACKAGE2([libevent],
+                               [opal_event_external],
                                [event.h],
-                               [event],
+                               [],
                                [event_config_new],
+                               [event],
                                [-levent_pthreads],
-                               [libevent],
                                [opal_event_external_support=yes],
                                [opal_event_external_support=no])
 

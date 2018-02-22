@@ -1,4 +1,4 @@
-# -*- shell-script -*-
+# -*- autocont -*-
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
@@ -15,18 +15,18 @@
 # MCA_zlib_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([OPAL_ZLIB_CONFIG],[
-
     OPAL_DECLARE_PACKAGE([zlib],
                          [Search for zlib headers and libraries in DIR],
                          [Search for zlib headers with these CPPFLAGS],
                          [Search for zlib library with these LDFLAGS])
 
-    OPAL_CHECK_PACKAGE2([opal_zlib],
+    OPAL_CHECK_PACKAGE2([zlib],
+                        [opal_zlib],
                         [zlib.h],
-                        [z],
+                        [],
                         [deflate],
-                        [-lz],
-                        [zlib],
+                        [z],
+                        [],
                         [opal_zlib_support=1],
                         [opal_zlib_support=0])
 
@@ -49,5 +49,4 @@ AC_DEFUN([OPAL_ZLIB_CONFIG],[
 
     AC_DEFINE_UNQUOTED([OPAL_HAVE_ZLIB], [$opal_zlib_support],
                        [Whether or not we have zlib support])
-
 ])dnl
