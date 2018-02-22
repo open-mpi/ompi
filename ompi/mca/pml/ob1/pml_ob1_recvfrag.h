@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -42,6 +42,7 @@ struct mca_pml_ob1_recv_frag_t {
     opal_free_list_item_t super;
     mca_pml_ob1_hdr_t hdr;
     size_t num_segments;
+    struct mca_pml_ob1_recv_frag_t* range;
     mca_btl_base_module_t* btl;
     mca_btl_base_segment_t segments[MCA_BTL_DES_MAX_SEGMENTS];
     mca_pml_ob1_buffer_t buffers[MCA_BTL_DES_MAX_SEGMENTS];
@@ -167,7 +168,18 @@ extern void mca_pml_ob1_recv_frag_callback_fin( mca_btl_base_module_t *btl,
                                                 mca_btl_base_descriptor_t* descriptor,
                                                 void* cbdata );
 
+/**
+ * Extract the next fragment from the cant_match ordered list. This fragment
+ * will be the next in sequence.
+ */
+extern mca_pml_ob1_recv_frag_t*
+check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
 
+void append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
+                                 mca_pml_ob1_recv_frag_t* frag,
+                                 uint16_t seq);
+
+extern void mca_pml_ob1_dump_cant_match(mca_pml_ob1_recv_frag_t* queue);
 END_C_DECLS
 
 #endif
