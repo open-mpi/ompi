@@ -111,6 +111,7 @@ pmix_status_t pmix_bfrops_base_unpack(pmix_pointer_array_t *regtypes,
         }
         if (PMIX_INT32 != local_type) { /* if the length wasn't first, then error */
             *num_vals = 0;
+            PMIX_ERROR_LOG(PMIX_ERR_UNPACK_FAILURE);
             return PMIX_ERR_UNPACK_FAILURE;
         }
     }
@@ -753,8 +754,13 @@ pmix_status_t pmix_bfrops_base_unpack_val(pmix_buffer_t *buffer,
                 return ret;
             }
             break;
-        case PMIX_QUERY:
-            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_query(buffer, val->data.darray, &m, PMIX_QUERY))) {
+        case PMIX_ALLOC_DIRECTIVE:
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_alloc_directive(buffer, &val->data.adir, &m, PMIX_ALLOC_DIRECTIVE))) {
+                return ret;
+            }
+            break;
+        case PMIX_ENVAR:
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_envar(buffer, &val->data.envar, &m, PMIX_ENVAR))) {
                 return ret;
             }
             break;
@@ -1524,6 +1530,15 @@ pmix_status_t pmix_bfrops_base_unpack_darray(pmix_buffer_t *buffer, void *dest,
                     return ret;
                 }
                 break;
+            case PMIX_ENVAR:
+                ptr[i].array = (pmix_envar_t*)malloc(m * sizeof(pmix_envar_t));
+                if (NULL == ptr[i].array) {
+                    return PMIX_ERR_NOMEM;
+                }
+                if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_envar(buffer, ptr[i].array, &m, ptr[i].type))) {
+                    return ret;
+                }
+                break;
             /**** DEPRECATED ****/
             case PMIX_INFO_ARRAY:
                 ptr[i].array = (pmix_info_array_t*)malloc(m * sizeof(pmix_info_array_t));
@@ -1603,6 +1618,45 @@ pmix_status_t pmix_bfrops_base_unpack_alloc_directive(pmix_buffer_t *buffer, voi
     return pmix_bfrops_base_unpack_byte(buffer, dest, num_vals, PMIX_UINT8);
 }
 
+pmix_status_t pmix_bfrops_base_unpack_iof_channel(pmix_buffer_t *buffer, void *dest,
+                                                  int32_t *num_vals, pmix_data_type_t type)
+{
+    return pmix_bfrops_base_unpack_int16(buffer, dest, num_vals, PMIX_UINT16);
+}
+
+pmix_status_t pmix_bfrops_base_unpack_envar(pmix_buffer_t *buffer, void *dest,
+                                            int32_t *num_vals, pmix_data_type_t type)
+{
+    pmix_envar_t *ptr;
+    int32_t i, n, m;
+    pmix_status_t ret;
+
+    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
+                        "pmix_bfrop_unpack: %d envars", *num_vals);
+
+    ptr = (pmix_envar_t *) dest;
+    n = *num_vals;
+
+    for (i = 0; i < n; ++i) {
+        PMIX_ENVAR_CONSTRUCT(&ptr[i]);
+        /* unpack the name */
+        m=1;
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_string(buffer, &ptr[i].envar, &m, PMIX_STRING))) {
+            return ret;
+        }
+        /* unpack the value */
+        m=1;
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_string(buffer, &ptr[i].value, &m, PMIX_STRING))) {
+            return ret;
+        }
+        /* unpack the separator */
+        m=1;
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_byte(buffer, &ptr[i].separator, &m, PMIX_BYTE))) {
+            return ret;
+        }
+    }
+    return PMIX_SUCCESS;
+}
 
 /**** DEPRECATED ****/
 pmix_status_t pmix_bfrops_base_unpack_array(pmix_buffer_t *buffer, void *dest,

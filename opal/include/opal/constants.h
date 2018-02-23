@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,7 +97,8 @@ enum {
     OPAL_ERR_EVENT_REGISTRATION             = (OPAL_ERR_BASE - 66),
     OPAL_ERR_HEARTBEAT_ALERT                = (OPAL_ERR_BASE - 67),
     OPAL_ERR_FILE_ALERT                     = (OPAL_ERR_BASE - 68),
-    OPAL_ERR_MODEL_DECLARED                 = (OPAL_ERR_BASE - 69)
+    OPAL_ERR_MODEL_DECLARED                 = (OPAL_ERR_BASE - 69),
+    OPAL_PMIX_LAUNCH_DIRECTIVE              = (OPAL_ERR_BASE - 70)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

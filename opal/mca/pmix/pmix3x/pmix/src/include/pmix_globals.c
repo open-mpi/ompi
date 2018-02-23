@@ -109,6 +109,7 @@ static void nscon(pmix_nspace_t *p)
     PMIX_CONSTRUCT(&p->epilog.cleanup_dirs, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.cleanup_files, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.ignores, pmix_list_t);
+    PMIX_CONSTRUCT(&p->setup_data, pmix_list_t);
 }
 static void nsdes(pmix_nspace_t *p)
 {
@@ -125,6 +126,7 @@ static void nsdes(pmix_nspace_t *p)
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_dirs);
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_files);
     PMIX_LIST_DESTRUCT(&p->epilog.ignores);
+    PMIX_LIST_DESTRUCT(&p->setup_data);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_t,
                                 pmix_list_item_t,
@@ -219,6 +221,24 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_peer_t,
                                 pmix_object_t,
                                 pcon, pdes);
 
+static void iofreqcon(pmix_iof_req_t *p)
+{
+    p->peer = NULL;
+    memset(&p->pname, 0, sizeof(pmix_name_t));
+    p->channels = PMIX_FWD_NO_CHANNELS;
+    p->cbfunc = NULL;
+}
+static void iofreqdes(pmix_iof_req_t *p)
+{
+    if (NULL != p->peer) {
+        PMIX_RELEASE(p->peer);
+    }
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_iof_req_t,
+                                pmix_list_item_t,
+                                iofreqcon, iofreqdes);
+
+
 static void scon(pmix_shift_caddy_t *p)
 {
     PMIX_CONSTRUCT_LOCK(&p->lock);
@@ -234,6 +254,7 @@ static void scon(pmix_shift_caddy_t *p)
     p->directives = NULL;
     p->ndirs = 0;
     p->evhdlr = NULL;
+    p->iofreq = NULL;
     p->kv = NULL;
     p->vptr = NULL;
     p->cd = NULL;

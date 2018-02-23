@@ -252,10 +252,13 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                          "%s sending data of size %d via PMIx to tool %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)numbytes,
-                                         ORTE_NAME_PRINT(&sink->daemon));
-                    rc = opal_pmix.server_iof_push(&proct->name, rev->tag, data, numbytes));
-                    if (ORTE_SUCCESS != rc) {
-                        ORTE_ERROR_LOG(rc);
+                                         ORTE_NAME_PRINT(&sink->daemon)));
+                    /* don't pass down zero byte blobs */
+                    if (0 < numbytes) {
+                        rc = opal_pmix.server_iof_push(&proct->name, rev->tag, data, numbytes);
+                        if (ORTE_SUCCESS != rc) {
+                            ORTE_ERROR_LOG(rc);
+                        }
                     }
                 } else {
                     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,

@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -920,6 +920,11 @@ int orte_dt_unpack_attr(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
             break;
         case OPAL_NAME:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.name, &m, ORTE_NAME))) {
+                return ret;
+            }
+            break;
+        case OPAL_ENVAR:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.envar, &m, OPAL_ENVAR))) {
                 return ret;
             }
             break;

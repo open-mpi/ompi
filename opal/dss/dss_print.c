@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -806,6 +806,13 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
     case OPAL_PTR:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_PTR\tKey: %s", prefx, src->key);
         break;
+    case OPAL_ENVAR:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_ENVAR\tKey: %s\tName: %s\tValue: %s\tSeparator: %c",
+                 prefx, src->key,
+                 (NULL == src->data.envar.envar) ? "NULL" : src->data.envar.envar,
+                 (NULL == src->data.envar.value) ? "NULL" : src->data.envar.value,
+                 ('\0' == src->data.envar.separator) ? ' ' : src->data.envar.separator);
+        break;
     default:
         asprintf(output, "%sOPAL_VALUE: Data type: UNKNOWN\tKey: %s\tValue: UNPRINTABLE",
                  prefx, src->key);
@@ -893,5 +900,27 @@ int opal_dss_print_status(char **output, char *prefix,
     }
 
     asprintf(output, "%sData type: OPAL_STATUS\tValue: %s", prefx, opal_strerror(*src));
+    return OPAL_SUCCESS;
+}
+
+
+int opal_dss_print_envar(char **output, char *prefix,
+                         opal_envar_t *src, opal_data_type_t type)
+{
+    char *prefx = " ";
+
+    /* deal with NULL prefix */
+    if (NULL != prefix) prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_ENVAR\tValue: NULL pointer", prefx);
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sOPAL_VALUE: Data type: OPAL_ENVAR\tName: %s\tValue: %s\tSeparator: %c",
+             prefx, (NULL == src->envar) ? "NULL" : src->envar,
+             (NULL == src->value) ? "NULL" : src->value,
+             ('\0' == src->separator) ? ' ' : src->separator);
     return OPAL_SUCCESS;
 }

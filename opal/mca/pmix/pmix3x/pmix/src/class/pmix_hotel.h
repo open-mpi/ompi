@@ -142,7 +142,6 @@ PMIX_CLASS_DECLARATION(pmix_hotel_t);
  * @param evbase Pointer to event base used for eviction timeout
  * @param eviction_timeout Max length of a stay at the hotel before
  * the eviction callback is invoked (in microseconds)
- * @param eviction_event_priority Event lib priority for the eviction timeout
  * @param evict_callback_fn Callback function invoked if an occupant
  * does not check out before the eviction_timeout.
  *
@@ -158,11 +157,10 @@ PMIX_CLASS_DECLARATION(pmix_hotel_t);
  * @return PMIX_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-PMIX_EXPORT int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
-                                  pmix_event_base_t *evbase,
-                                  uint32_t eviction_timeout,
-                                  int eviction_event_priority,
-                                  pmix_hotel_eviction_callback_fn_t evict_callback_fn);
+PMIX_EXPORT pmix_status_t pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
+                                          pmix_event_base_t *evbase,
+                                          uint32_t eviction_timeout,
+                                          pmix_hotel_eviction_callback_fn_t evict_callback_fn);
 
 /**
  * Check in an occupant to the hotel.
@@ -184,9 +182,9 @@ PMIX_EXPORT int pmix_hotel_init(pmix_hotel_t *hotel, int num_rooms,
  * @return PMIX_ERR_TEMP_OUT_OF_RESOURCE is the hotel is full.  Try
  * again later.
  */
-static inline int pmix_hotel_checkin(pmix_hotel_t *hotel,
-                                     void *occupant,
-                                     int *room_num)
+static inline pmix_status_t pmix_hotel_checkin(pmix_hotel_t *hotel,
+                                               void *occupant,
+                                               int *room_num)
 {
     pmix_hotel_room_t *room;
 
@@ -214,8 +212,8 @@ static inline int pmix_hotel_checkin(pmix_hotel_t *hotel,
  * caller *knows* that there is a room available.
  */
 static inline void pmix_hotel_checkin_with_res(pmix_hotel_t *hotel,
-                                     void *occupant,
-                                     int *room_num)
+                                               void *occupant,
+                                               int *room_num)
 {
     pmix_hotel_room_t *room;
 

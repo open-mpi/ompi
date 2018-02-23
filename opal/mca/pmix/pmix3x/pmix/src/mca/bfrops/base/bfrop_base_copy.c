@@ -113,6 +113,7 @@ pmix_status_t pmix_bfrops_base_std_copy(void **dest, void *src,
 
     case PMIX_INT16:
     case PMIX_UINT16:
+    case PMIX_IOF_CHANNEL:
         datasize = 2;
         break;
 
@@ -366,18 +367,22 @@ pmix_status_t pmix_bfrops_base_copy_pinfo(pmix_proc_info_t **dest,
                                           pmix_proc_info_t *src,
                                           pmix_data_type_t type)
 {
-    *dest = (pmix_proc_info_t*)malloc(sizeof(pmix_proc_info_t));
-    (void)strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
-    (*dest)->proc.rank = src->proc.rank;
+    pmix_proc_info_t *p;
+
+    PMIX_PROC_INFO_CREATE(p, 1);
+    if (NULL == p) {
+        return PMIX_ERR_NOMEM;
+    }
     if (NULL != src->hostname) {
-        (*dest)->hostname = strdup(src->hostname);
+        p->hostname = strdup(src->hostname);
     }
     if (NULL != src->executable_name) {
-        (*dest)->executable_name = strdup(src->executable_name);
+        p->executable_name = strdup(src->executable_name);
     }
-    (*dest)->pid = src->pid;
-    (*dest)->exit_code = src->exit_code;
-    (*dest)->state = src->state;
+    memcpy(&p->pid, &src->pid, sizeof(pid_t));
+    memcpy(&p->exit_code, &src->exit_code, sizeof(int));
+    memcpy(&p->state, &src->state, sizeof(pmix_proc_state_t));
+    *dest = p;
     return PMIX_SUCCESS;
 }
 
@@ -402,6 +407,7 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
     pmix_modex_data_t *pm, *sm;
     pmix_proc_info_t *pi, *si;
     pmix_query_t *pq, *sq;
+    pmix_envar_t *pe, *se;
 
     p = (pmix_data_array_t*)calloc(1, sizeof(pmix_data_array_t));
     if (NULL == p) {
@@ -822,6 +828,24 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
                 }
             }
             break;
+        case PMIX_ENVAR:
+            PMIX_ENVAR_CREATE(p->array, src->size);
+            if (NULL == p->array) {
+                free(p);
+                return PMIX_ERR_NOMEM;
+            }
+            pe = (pmix_envar_t*)p->array;
+            se = (pmix_envar_t*)src->array;
+            for (n=0; n < src->size; n++) {
+                if (NULL != se[n].envar) {
+                    pe[n].envar = strdup(se[n].envar);
+                }
+                if (NULL != se[n].value) {
+                    pe[n].value = strdup(se[n].value);
+                }
+                pe[n].separator = se[n].separator;
+            }
+            break;
         default:
             free(p);
             return PMIX_ERR_UNKNOWN_DATA_TYPE;
@@ -876,3 +900,21 @@ pmix_status_t pmix_bfrops_base_copy_array(pmix_info_array_t **dest,
     return PMIX_SUCCESS;
 }
 /*******************/
+
+pmix_status_t pmix_bfrops_base_copy_envar(pmix_envar_t **dest,
+                                          pmix_envar_t *src,
+                                          pmix_data_type_t type)
+{
+    PMIX_ENVAR_CREATE(*dest, 1);
+    if (NULL == (*dest)) {
+        return PMIX_ERR_NOMEM;
+    }
+    if (NULL != src->envar) {
+        (*dest)->envar = strdup(src->envar);
+    }
+    if (NULL != src->value) {
+        (*dest)->value = strdup(src->value);
+    }
+    (*dest)->separator = src->separator;
+    return PMIX_SUCCESS;
+}

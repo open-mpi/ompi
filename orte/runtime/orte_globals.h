@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -365,6 +365,8 @@ typedef struct {
     orte_job_flags_t flags;
     /* attributes */
     opal_list_t attributes;
+    /* launch msg buffer */
+    opal_buffer_t launch_msg;
 } orte_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_t);
 

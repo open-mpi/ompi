@@ -78,7 +78,9 @@ typedef struct pmix_pnet_globals_t pmix_pnet_globals_t;
 
 PMIX_EXPORT extern pmix_pnet_globals_t pmix_pnet_globals;
 
-PMIX_EXPORT pmix_status_t pmix_pnet_base_setup_app(char *nspace, pmix_list_t *ilist);
+PMIX_EXPORT pmix_status_t pmix_pnet_base_setup_app(char *nspace,
+                                                   pmix_info_t info[], size_t ninfo,
+                                                   pmix_list_t *ilist);
 PMIX_EXPORT pmix_status_t pmix_pnet_base_setup_local_network(char *nspace,
                                                              pmix_info_t info[],
                                                              size_t ninfo);

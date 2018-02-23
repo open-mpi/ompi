@@ -559,7 +559,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         /* look up job data object */
         if (NULL == (jdata = orte_get_job_data_object(job))) {
             /* we can safely ignore this request as the job
-             * was already cleaned up */
+             * was already cleaned up, or it was a tool */
             goto CLEANUP;
         }
 

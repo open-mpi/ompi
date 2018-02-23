@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,25 +125,26 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_DAEMONS_REPORTED         10  /* all launched daemons have reported */
 #define ORTE_JOB_STATE_VM_READY                 11  /* the VM is ready for operation */
 #define ORTE_JOB_STATE_LAUNCH_APPS              12  /* ready to launch apps */
-#define ORTE_JOB_STATE_RUNNING                  13  /* all procs have been fork'd */
-#define ORTE_JOB_STATE_SUSPENDED                14  /* job has been suspended */
-#define ORTE_JOB_STATE_REGISTERED               15  /* all procs registered for sync */
-#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      16  /* job ready for debugger init after spawn */
-#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    17  /* all local procs have attempted launch */
-#define ORTE_JOB_STATE_DEBUGGER_DETACH          18  /* a debugger has detached */
+#define ORTE_JOB_STATE_SEND_LAUNCH_MSG          13  /* send launch msg to daemons */
+#define ORTE_JOB_STATE_RUNNING                  14  /* all procs have been fork'd */
+#define ORTE_JOB_STATE_SUSPENDED                15  /* job has been suspended */
+#define ORTE_JOB_STATE_REGISTERED               16  /* all procs registered for sync */
+#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      17  /* job ready for debugger init after spawn */
+#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    18  /* all local procs have attempted launch */
+#define ORTE_JOB_STATE_DEBUGGER_DETACH          19  /* a debugger has detached */
 
 /*
  * Define a "boundary" so we can easily and quickly determine
  * if a job is still running or not - any value less than
  * this one means that we are not terminated
  */
-#define ORTE_JOB_STATE_UNTERMINATED             20
+#define ORTE_JOB_STATE_UNTERMINATED             30
 
-#define ORTE_JOB_STATE_TERMINATED               21  /* all processes have terminated and job is no longer running */
-#define ORTE_JOB_STATE_ALL_JOBS_COMPLETE        22
-#define ORTE_JOB_STATE_DAEMONS_TERMINATED       23
-#define ORTE_JOB_STATE_NOTIFY_COMPLETED         24  /* callback to notify when job completes */
-#define ORTE_JOB_STATE_NOTIFIED                 25
+#define ORTE_JOB_STATE_TERMINATED               31  /* all processes have terminated and job is no longer running */
+#define ORTE_JOB_STATE_ALL_JOBS_COMPLETE        32
+#define ORTE_JOB_STATE_DAEMONS_TERMINATED       33
+#define ORTE_JOB_STATE_NOTIFY_COMPLETED         34  /* callback to notify when job completes */
+#define ORTE_JOB_STATE_NOTIFIED                 35
 
 /* Define a boundary so we can easily and quickly determine
  * if a job abnormally terminated - leave a little room

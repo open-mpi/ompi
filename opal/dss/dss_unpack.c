@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -1099,6 +1099,11 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                 return ret;
             }
             break;
+        case OPAL_ENVAR:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.envar, &m, OPAL_ENVAR))) {
+                return ret;
+            }
+            break;
         default:
             opal_output(0, "UNPACK-OPAL-VALUE: UNSUPPORTED TYPE %d FOR KEY %s", (int)ptr[i]->type, ptr[i]->key);
             return OPAL_ERROR;
@@ -1260,4 +1265,36 @@ int opal_dss_unpack_status(opal_buffer_t *buffer, void *dest,
     }
 
     return ret;
+}
+
+
+int opal_dss_unpack_envar(opal_buffer_t *buffer, void *dest,
+                          int32_t *num_vals, opal_data_type_t type)
+{
+    opal_envar_t *ptr;
+    int32_t i, n, m;
+    int ret;
+
+    ptr = (opal_envar_t *) dest;
+    n = *num_vals;
+
+    for (i = 0; i < n; ++i) {
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &ptr[i].envar, &m, OPAL_STRING))) {
+            OPAL_ERROR_LOG(ret);
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &ptr[i].value, &m, OPAL_STRING))) {
+            OPAL_ERROR_LOG(ret);
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_byte(buffer, &ptr[i].separator, &m, OPAL_BYTE))) {
+            OPAL_ERROR_LOG(ret);
+            return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
 }

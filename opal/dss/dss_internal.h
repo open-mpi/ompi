@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
@@ -334,6 +334,8 @@ int opal_dss_pack_vpid(opal_buffer_t *buffer, const void *src,
 
 int opal_dss_pack_status(opal_buffer_t *buffer, const void *src,
                          int32_t num_vals, opal_data_type_t type);
+int opal_dss_pack_envar(opal_buffer_t *buffer, const void *src,
+                        int32_t num_vals, opal_data_type_t type);
 
 /*
  * Internal unpack functions
@@ -407,6 +409,9 @@ int opal_dss_unpack_vpid(opal_buffer_t *buffer, void *dest,
 int opal_dss_unpack_status(opal_buffer_t *buffer, void *dest,
                            int32_t *num_vals, opal_data_type_t type);
 
+int opal_dss_unpack_envar(opal_buffer_t *buffer, void *dest,
+                          int32_t *num_vals, opal_data_type_t type);
+
 /*
  * Internal copy functions
  */
@@ -437,6 +442,8 @@ int opal_dss_copy_name(opal_process_name_t **dest, opal_process_name_t *src, opa
 int opal_dss_copy_jobid(opal_jobid_t **dest, opal_jobid_t *src, opal_data_type_t type);
 
 int opal_dss_copy_vpid(opal_vpid_t **dest, opal_vpid_t *src, opal_data_type_t type);
+
+int opal_dss_copy_envar(opal_envar_t **dest, opal_envar_t *src, opal_data_type_t type);
 
 
 /*
@@ -503,6 +510,7 @@ int opal_dss_compare_jobid(opal_jobid_t *value1,
                            opal_data_type_t type);
 
 int opal_dss_compare_status(int *value1, int *value2, opal_data_type_t type);
+int opal_dss_compare_envar(opal_envar_t *value1, opal_envar_t *value2, opal_data_type_t type);
 
 /*
  * Internal print functions
@@ -544,6 +552,8 @@ int opal_dss_print_name(char **output, char *prefix, opal_process_name_t *name, 
 int opal_dss_print_jobid(char **output, char *prefix, opal_process_name_t *src, opal_data_type_t type);
 int opal_dss_print_vpid(char **output, char *prefix, opal_process_name_t *src, opal_data_type_t type);
 int opal_dss_print_status(char **output, char *prefix, int *src, opal_data_type_t type);
+int opal_dss_print_envar(char **output, char *prefix,
+                         opal_envar_t *src, opal_data_type_t type);
 
 
 /*

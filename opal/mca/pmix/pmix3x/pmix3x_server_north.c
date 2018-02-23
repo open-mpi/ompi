@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -111,6 +111,15 @@ static pmix_status_t server_job_control(const pmix_proc_t *requestor,
                                         const pmix_proc_t targets[], size_t ntargets,
                                         const pmix_info_t directives[], size_t ndirs,
                                         pmix_info_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t server_iof_pull(const pmix_proc_t procs[], size_t nprocs,
+                                     const pmix_info_t directives[], size_t ndirs,
+                                     pmix_iof_channel_t channels,
+                                     pmix_op_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t server_stdin(const pmix_proc_t *source,
+                                  const pmix_proc_t targets[], size_t ntargets,
+                                  const pmix_info_t directives[], size_t ndirs,
+                                  const pmix_byte_object_t *bo,
+                                  pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 pmix_server_module_t mymodule = {
     .client_connected = server_client_connected_fn,
@@ -131,9 +140,11 @@ pmix_server_module_t mymodule = {
     .tool_connected = server_tool_connection,
     .log = server_log,
     .allocate = server_allocate,
-    .job_control = server_job_control
+    .job_control = server_job_control,
     /* we do not support monitoring, but use the
      * PMIx internal monitoring capability */
+    .iof_pull = server_iof_pull,
+    .push_stdin = server_stdin
 };
 
 opal_pmix_server_module_t *host_module = NULL;
@@ -1273,4 +1284,27 @@ static pmix_status_t server_job_control(const pmix_proc_t *proct,
     }
 
     return PMIX_SUCCESS;
+}
+
+static pmix_status_t server_iof_pull(const pmix_proc_t procs[], size_t nprocs,
+                                     const pmix_info_t directives[], size_t ndirs,
+                                     pmix_iof_channel_t channels,
+                                     pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    if (NULL == host_module || NULL == host_module->iof_pull) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+    return PMIX_ERR_NOT_SUPPORTED;
+}
+
+static pmix_status_t server_stdin(const pmix_proc_t *source,
+                                  const pmix_proc_t targets[], size_t ntargets,
+                                  const pmix_info_t directives[], size_t ndirs,
+                                  const pmix_byte_object_t *bo,
+                                  pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    if (NULL == host_module || NULL == host_module->iof_push) {
+        return PMIX_ERR_NOT_SUPPORTED;
+    }
+    return PMIX_ERR_NOT_SUPPORTED;
 }

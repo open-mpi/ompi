@@ -109,7 +109,7 @@ static int orte_iof_base_close(void)
  */
 static int orte_iof_base_open(mca_base_open_flag_t flags)
 {
-    int rc, xmlfd;
+    int xmlfd;
 
     /* daemons do not need to do this as they do not write out stdout/err */
     if (!ORTE_PROC_IS_DAEMON) {

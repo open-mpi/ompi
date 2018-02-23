@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1000,6 +1000,12 @@ pmix_status_t pmix_bfrops_base_pack_darray(pmix_buffer_t *buffer, const void *sr
                     return ret;
                 }
                 break;
+            case PMIX_ENVAR:
+                if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_envar(buffer, p[i].array, p[i].size, PMIX_ENVAR))) {
+                    return ret;
+                }
+                break;
+
             /**** DEPRECATED ****/
             case PMIX_INFO_ARRAY:
                 if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_array(buffer, p[i].array, p[i].size, PMIX_INFO_ARRAY))) {
@@ -1223,6 +1229,12 @@ pmix_status_t pmix_bfrops_base_pack_val(pmix_buffer_t *buffer,
                 return ret;
             }
             break;
+        case PMIX_ENVAR:
+            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_envar(buffer, &p->data.envar, 1, PMIX_ENVAR))) {
+                return ret;
+            }
+            break;
+
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
             if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_array(buffer, p->data.array, 1, PMIX_INFO_ARRAY))) {
@@ -1268,5 +1280,35 @@ pmix_status_t pmix_bfrops_base_pack_array(pmix_buffer_t *buffer, const void *src
         }
     }
 
+    return PMIX_SUCCESS;
+}
+
+pmix_status_t pmix_bfrops_base_pack_iof_channel(pmix_buffer_t *buffer, const void *src,
+                                                int32_t num_vals, pmix_data_type_t type)
+{
+    return pmix_bfrops_base_pack_int16(buffer, src, num_vals, PMIX_UINT16);
+}
+
+pmix_status_t pmix_bfrops_base_pack_envar(pmix_buffer_t *buffer, const void *src,
+                                          int32_t num_vals, pmix_data_type_t type)
+{
+    pmix_envar_t *ptr = (pmix_envar_t*)src;
+    int32_t i;
+    pmix_status_t ret;
+
+    for (i=0; i < num_vals; ++i) {
+        /* pack the name */
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_string(buffer, &ptr[i].envar, 1, PMIX_STRING))) {
+            return ret;
+        }
+        /* pack the value */
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_string(buffer, &ptr[i].value, 1, PMIX_STRING))) {
+            return ret;
+        }
+        /* pack the separator */
+        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_byte(buffer, &ptr[i].separator, 1, PMIX_BYTE))) {
+            return ret;
+        }
+    }
     return PMIX_SUCCESS;
 }
