@@ -20,6 +20,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -190,6 +191,24 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, iscatter);
             COPY(avail->ac_module, comm, iscatterv);
 
+            COPY(avail->ac_module, comm, allgather_init);
+            COPY(avail->ac_module, comm, allgatherv_init);
+            COPY(avail->ac_module, comm, allreduce_init);
+            COPY(avail->ac_module, comm, alltoall_init);
+            COPY(avail->ac_module, comm, alltoallv_init);
+            COPY(avail->ac_module, comm, alltoallw_init);
+            COPY(avail->ac_module, comm, barrier_init);
+            COPY(avail->ac_module, comm, bcast_init);
+            COPY(avail->ac_module, comm, exscan_init);
+            COPY(avail->ac_module, comm, gather_init);
+            COPY(avail->ac_module, comm, gatherv_init);
+            COPY(avail->ac_module, comm, reduce_init);
+            COPY(avail->ac_module, comm, reduce_scatter_block_init);
+            COPY(avail->ac_module, comm, reduce_scatter_init);
+            COPY(avail->ac_module, comm, scan_init);
+            COPY(avail->ac_module, comm, scatter_init);
+            COPY(avail->ac_module, comm, scatterv_init);
+
             /* We can not reliably check if this comm has a topology
              * at this time. The flags are set *after* coll_select */
             COPY(avail->ac_module, comm, neighbor_allgather);
@@ -203,6 +222,12 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             COPY(avail->ac_module, comm, ineighbor_alltoall);
             COPY(avail->ac_module, comm, ineighbor_alltoallv);
             COPY(avail->ac_module, comm, ineighbor_alltoallw);
+
+            COPY(avail->ac_module, comm, neighbor_allgather_init);
+            COPY(avail->ac_module, comm, neighbor_allgatherv_init);
+            COPY(avail->ac_module, comm, neighbor_alltoall_init);
+            COPY(avail->ac_module, comm, neighbor_alltoallv_init);
+            COPY(avail->ac_module, comm, neighbor_alltoallw_init);
 
             COPY(avail->ac_module, comm, reduce_local);
         }
@@ -249,6 +274,23 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, iscan)) ||
         CHECK_NULL(which_func, comm, iscatter) ||
         CHECK_NULL(which_func, comm, iscatterv) ||
+        CHECK_NULL(which_func, comm, allgather_init) ||
+        CHECK_NULL(which_func, comm, allgatherv_init) ||
+        CHECK_NULL(which_func, comm, allreduce_init) ||
+        CHECK_NULL(which_func, comm, alltoall_init) ||
+        CHECK_NULL(which_func, comm, alltoallv_init) ||
+        CHECK_NULL(which_func, comm, alltoallw_init) ||
+        CHECK_NULL(which_func, comm, barrier_init) ||
+        CHECK_NULL(which_func, comm, bcast_init) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, exscan_init)) ||
+        CHECK_NULL(which_func, comm, gather_init) ||
+        CHECK_NULL(which_func, comm, gatherv_init) ||
+        CHECK_NULL(which_func, comm, reduce_init) ||
+        CHECK_NULL(which_func, comm, reduce_scatter_block_init) ||
+        CHECK_NULL(which_func, comm, reduce_scatter_init) ||
+        ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, scan_init)) ||
+        CHECK_NULL(which_func, comm, scatter_init) ||
+        CHECK_NULL(which_func, comm, scatterv_init) ||
         CHECK_NULL(which_func, comm, reduce_local) ) {
         /* TODO -- Once the topology flags are set before coll_select then
          * check if neighborhood collectives have been set. */
