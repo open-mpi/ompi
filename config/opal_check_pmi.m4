@@ -40,24 +40,29 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
 
     # check for the header
     AS_IF([test -n "$1"],
-          [AC_MSG_CHECKING([for $3.h in $1/include])
-           AS_IF([test -f $1/include/$3.h],
+          [AC_MSG_CHECKING([for $3.h in $1])
+           AS_IF([test -f $1/$3.h && test -r $1/$3.h],
                  [AC_MSG_RESULT([found])
-                  opal_check_$3_mycppflags="-I$1/include"],
+                  opal_check_$3_mycppflags="-I$1"],
                  [AC_MSG_RESULT([not found])
-                  AC_MSG_CHECKING([for $3.h in $1/include/slurm])
-                  AS_IF([test -f $1/include/slurm/$3.h],
+                  AC_MSG_CHECKING([for $3.h in $1/include])
+                  AS_IF([test -f $1/include/$3.h && test -r $1/include/$3.h],
                         [AC_MSG_RESULT([found])
-                         opal_check_$3_mycppflags="-I$1/include/slurm"
-                         $5],
+                         opal_check_$3_mycppflags="-I$1/include"],
                         [AC_MSG_RESULT([not found])
-                         opal_check_$3_hdr_happy=no])])],
+                         AC_MSG_CHECKING([for $3.h in $1/include/slurm])
+                         AS_IF([test -f $1/include/slurm/$3.h && test -r $1/include/slurm/$3.h],
+                               [AC_MSG_RESULT([found])
+                                opal_check_$3_mycppflags="-I$1/include/slurm"
+                                $5],
+                               [AC_MSG_RESULT([not found])
+                                opal_check_$3_hdr_happy=no])])])],
           [AC_MSG_CHECKING([for $3.h in /usr/include])
-           AS_IF([test -f /usr/include/$3.h],
+           AS_IF([test -f /usr/include/$3.h && test -r /usr/include/$3.h],
                  [AC_MSG_RESULT([found])],
                  [AC_MSG_RESULT([not found])
                   AC_MSG_CHECKING([for $3.h in /usr/include/slurm])
-                  AS_IF([test -f /usr/include/slurm/$3.h],
+                  AS_IF([test -f /usr/include/slurm/$3.h && test -r /usr/include/slurm/$3.h],
                         [AC_MSG_RESULT([found])
                          opal_check_$3_mycppflags="-I/usr/include/slurm"
                          $5],
