@@ -17,6 +17,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -866,6 +867,12 @@ static int setup_fork(orte_job_t *jdata,
        variables. */
     param = NULL;
     orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&param, OPAL_STRING);
+    /* grab the parameter from the first app context because the current context does not have a prefix assigned */
+    if (NULL == param) {
+        tmp_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+        assert (NULL != tmp_app);
+        orte_get_attribute(&tmp_app->attributes, ORTE_APP_PREFIX_DIR, (void**)&param, OPAL_STRING);
+    } 
     for (i = 0; NULL != param && NULL != app->env && NULL != app->env[i]; ++i) {
         char *newenv;
 
