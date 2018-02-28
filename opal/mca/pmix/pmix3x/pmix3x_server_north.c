@@ -954,6 +954,7 @@ static void info_cbfunc(int status,
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
             (void)strncpy(pcaddy->info[n].key, kv->key, PMIX_MAX_KEYLEN);
             pmix3x_value_load(&pcaddy->info[n].value, kv);
+            ++n;
         }
     }
     /* we are done with the incoming data */
@@ -1012,10 +1013,20 @@ static pmix_status_t server_query(pmix_proc_t *proct,
         for (m=0; m < queries[n].nqual; m++) {
             oinfo = OBJ_NEW(opal_value_t);
             opal_list_append(&q->qualifiers, &oinfo->super);
-            oinfo->key = strdup(queries[n].qualifiers[m].key);
-            if (OPAL_SUCCESS != (rc = pmix3x_value_unload(oinfo, &queries[n].qualifiers[m].value))) {
-                OBJ_RELEASE(opalcaddy);
-                return pmix3x_convert_opalrc(rc);
+
+            if (0 == strcmp(queries[n].qualifiers[m].key, PMIX_NSPACE)) {
+                /* must convert this to jobid */
+                oinfo->key = strdup(OPAL_PMIX_PROCID);
+                if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&oinfo->data.name.jobid, queries[n].qualifiers[m].value.data.string))) {
+                    OBJ_RELEASE(opalcaddy);
+                    return pmix3x_convert_opalrc(rc);
+                }
+            } else {
+                oinfo->key = strdup(queries[n].qualifiers[m].key);
+                if (OPAL_SUCCESS != (rc = pmix3x_value_unload(oinfo, &queries[n].qualifiers[m].value))) {
+                    OBJ_RELEASE(opalcaddy);
+                    return pmix3x_convert_opalrc(rc);
+                }
             }
         }
     }

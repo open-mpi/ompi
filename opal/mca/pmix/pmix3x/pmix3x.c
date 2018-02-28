@@ -909,13 +909,41 @@ void pmix3x_value_load(pmix_value_t *v,
                 v->data.darray->array = info;
                 n=0;
                 OPAL_LIST_FOREACH(val, list, opal_value_t) {
-                    (void)strncpy(info[n].key, val->key, PMIX_MAX_KEYLEN);
+                    if (NULL != val->key) {
+                        (void)strncpy(info[n].key, val->key, PMIX_MAX_KEYLEN);
+                    }
                     pmix3x_value_load(&info[n].value, val);
                     ++n;
                 }
             } else {
                 v->data.darray->array = NULL;
             }
+            break;
+        case OPAL_PROC_INFO:
+            v->type = PMIX_PROC_INFO;
+            PMIX_PROC_INFO_CREATE(v->data.pinfo, 1);
+            /* see if this job is in our list of known nspaces */
+            found = false;
+            OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+                if (job->jobid == kv->data.pinfo.name.jobid) {
+                    (void)strncpy(v->data.pinfo->proc.nspace, job->nspace, PMIX_MAX_NSLEN);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                (void)opal_snprintf_jobid(v->data.pinfo->proc.nspace, PMIX_MAX_NSLEN, kv->data.pinfo.name.jobid);
+            }
+            v->data.pinfo->proc.rank = pmix3x_convert_opalrank(kv->data.pinfo.name.vpid);
+            if (NULL != kv->data.pinfo.hostname) {
+                v->data.pinfo->hostname = strdup(kv->data.pinfo.hostname);
+            }
+            if (NULL != kv->data.pinfo.executable_name) {
+                v->data.pinfo->executable_name = strdup(kv->data.pinfo.executable_name);
+            }
+            v->data.pinfo->pid = kv->data.pinfo.pid;
+            v->data.pinfo->exit_code = kv->data.pinfo.exit_code;
+            v->data.pinfo->state = pmix3x_convert_opalstate(kv->data.pinfo.state);
             break;
         case OPAL_ENVAR:
             v->type = PMIX_ENVAR;
@@ -1099,7 +1127,9 @@ int pmix3x_value_unload(opal_value_t *kv,
             /* handle the various types */
             if (PMIX_INFO == v->data.darray->type) {
                 pmix_info_t *iptr = (pmix_info_t*)v->data.darray->array;
-                ival->key = strdup(iptr[n].key);
+                if (NULL != iptr[n].key) {
+                    ival->key = strdup(iptr[n].key);
+                }
                 rc = pmix3x_value_unload(ival, &iptr[n].value);
                 if (OPAL_SUCCESS != rc) {
                     OPAL_LIST_RELEASE(lt);
@@ -1109,6 +1139,37 @@ int pmix3x_value_unload(opal_value_t *kv,
                 }
             }
         }
+        break;
+    case PMIX_PROC_INFO:
+        kv->type = OPAL_PROC_INFO;
+        if (NULL == v->data.pinfo) {
+            rc = OPAL_ERR_BAD_PARAM;
+            break;
+        }
+        /* see if this job is in our list of known nspaces */
+        found = false;
+        OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+            if (0 == strncmp(job->nspace, v->data.pinfo->proc.nspace, PMIX_MAX_NSLEN)) {
+                kv->data.pinfo.name.jobid = job->jobid;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&kv->data.pinfo.name.jobid, v->data.pinfo->proc.nspace))) {
+                return pmix3x_convert_opalrc(rc);
+            }
+        }
+        kv->data.pinfo.name.vpid = pmix3x_convert_rank(v->data.pinfo->proc.rank);
+        if (NULL != v->data.pinfo->hostname) {
+            kv->data.pinfo.hostname = strdup(v->data.pinfo->hostname);
+        }
+        if (NULL != v->data.pinfo->executable_name) {
+            kv->data.pinfo.executable_name = strdup(v->data.pinfo->executable_name);
+        }
+        kv->data.pinfo.pid = v->data.pinfo->pid;
+        kv->data.pinfo.exit_code = v->data.pinfo->exit_code;
+        kv->data.pinfo.state = pmix3x_convert_state(v->data.pinfo->state);
         break;
     case PMIX_ENVAR:
         kv->type = OPAL_ENVAR;
@@ -1347,6 +1408,7 @@ static void infocbfunc(pmix_status_t status,
             opal_list_append(results, &iptr->super);
             iptr->key = strdup(info[n].key);
             if (OPAL_SUCCESS != (rc = pmix3x_value_unload(iptr, &info[n].value))) {
+                OPAL_ERROR_LOG(rc);
                 OPAL_LIST_RELEASE(results);
                 results = NULL;
                 break;
@@ -1507,6 +1569,103 @@ opal_pmix_alloc_directive_t pmix3x_convert_allocdir(pmix_alloc_directive_t dir)
             return OPAL_PMIX_ALLOC_REAQCUIRE;
         default:
             return OPAL_PMIX_ALLOC_UNDEF;
+    }
+}
+
+int pmix3x_convert_state(pmix_proc_state_t state)
+{
+    switch(state) {
+        case PMIX_PROC_STATE_UNDEF:
+            return 0;
+        case PMIX_PROC_STATE_PREPPED:
+        case PMIX_PROC_STATE_LAUNCH_UNDERWAY:
+            return 1;
+        case PMIX_PROC_STATE_RESTART:
+            return 2;
+        case PMIX_PROC_STATE_TERMINATE:
+            return 3;
+        case PMIX_PROC_STATE_RUNNING:
+            return 4;
+        case PMIX_PROC_STATE_CONNECTED:
+            return 5;
+        case PMIX_PROC_STATE_UNTERMINATED:
+            return 15;
+        case PMIX_PROC_STATE_TERMINATED:
+            return 20;
+        case PMIX_PROC_STATE_KILLED_BY_CMD:
+            return 51;
+        case PMIX_PROC_STATE_ABORTED:
+            return 52;
+        case PMIX_PROC_STATE_FAILED_TO_START:
+            return 53;
+        case PMIX_PROC_STATE_ABORTED_BY_SIG:
+            return 54;
+        case PMIX_PROC_STATE_TERM_WO_SYNC:
+            return 55;
+        case PMIX_PROC_STATE_COMM_FAILED:
+            return 56;
+        case PMIX_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+            return 57;
+        case PMIX_PROC_STATE_CALLED_ABORT:
+            return 58;
+        case PMIX_PROC_STATE_HEARTBEAT_FAILED:
+            return 59;
+        case PMIX_PROC_STATE_MIGRATING:
+            return 60;
+        case PMIX_PROC_STATE_CANNOT_RESTART:
+            return 61;
+        case PMIX_PROC_STATE_TERM_NON_ZERO:
+            return 62;
+        case PMIX_PROC_STATE_FAILED_TO_LAUNCH:
+            return 63;
+        default:
+            return 0;  // undef
+    }
+}
+
+pmix_proc_state_t pmix3x_convert_opalstate(int state)
+{
+    switch(state) {
+        case 0:
+            return PMIX_PROC_STATE_UNDEF;
+        case 1:
+            return PMIX_PROC_STATE_LAUNCH_UNDERWAY;
+        case 2:
+            return PMIX_PROC_STATE_RESTART;
+        case 3:
+            return PMIX_PROC_STATE_TERMINATE;
+        case 4:
+            return PMIX_PROC_STATE_RUNNING;
+        case 5:
+            return PMIX_PROC_STATE_CONNECTED;
+        case 51:
+            return PMIX_PROC_STATE_KILLED_BY_CMD;
+        case 52:
+            return PMIX_PROC_STATE_ABORTED;
+        case 53:
+            return PMIX_PROC_STATE_FAILED_TO_START;
+        case 54:
+            return PMIX_PROC_STATE_ABORTED_BY_SIG;
+        case 55:
+            return PMIX_PROC_STATE_TERM_WO_SYNC;
+        case 56:
+            return PMIX_PROC_STATE_COMM_FAILED;
+        case 57:
+            return PMIX_PROC_STATE_SENSOR_BOUND_EXCEEDED;
+        case 58:
+            return PMIX_PROC_STATE_CALLED_ABORT;
+        case 59:
+            return PMIX_PROC_STATE_HEARTBEAT_FAILED;
+        case 60:
+            return PMIX_PROC_STATE_MIGRATING;
+        case 61:
+            return PMIX_PROC_STATE_CANNOT_RESTART;
+        case 62:
+            return PMIX_PROC_STATE_TERM_NON_ZERO;
+        case 63:
+            return PMIX_PROC_STATE_FAILED_TO_LAUNCH;
+        default:
+            return PMIX_PROC_STATE_UNDEF;
     }
 }
 

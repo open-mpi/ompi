@@ -573,11 +573,13 @@ typedef uint8_t pmix_proc_state_t;
 #define PMIX_PROC_STATE_ABORTED_BY_SIG          (PMIX_PROC_STATE_ERROR +  4)  /* process aborted by signal */
 #define PMIX_PROC_STATE_TERM_WO_SYNC            (PMIX_PROC_STATE_ERROR +  5)  /* process exit'd w/o calling PMIx_Finalize */
 #define PMIX_PROC_STATE_COMM_FAILED             (PMIX_PROC_STATE_ERROR +  6)  /* process communication has failed */
-#define PMIX_PROC_STATE_CALLED_ABORT            (PMIX_PROC_STATE_ERROR +  7)  /* process called "PMIx_Abort" */
-#define PMIX_PROC_STATE_MIGRATING               (PMIX_PROC_STATE_ERROR +  8)  /* process failed and is waiting for resources before restarting */
-#define PMIX_PROC_STATE_CANNOT_RESTART          (PMIX_PROC_STATE_ERROR +  9)  /* process failed and cannot be restarted */
-#define PMIX_PROC_STATE_TERM_NON_ZERO           (PMIX_PROC_STATE_ERROR + 10)  /* process exited with a non-zero status, indicating abnormal */
-#define PMIX_PROC_STATE_FAILED_TO_LAUNCH        (PMIX_PROC_STATE_ERROR + 11)  /* unable to launch process */
+#define PMIX_PROC_STATE_SENSOR_BOUND_EXCEEDED   (PMIX_PROC_STATE_ERROR +  7)  /* process exceeded a sensor limit */
+#define PMIX_PROC_STATE_CALLED_ABORT            (PMIX_PROC_STATE_ERROR +  8)  /* process called "PMIx_Abort" */
+#define PMIX_PROC_STATE_HEARTBEAT_FAILED        (PMIX_PROC_STATE_ERROR +  9)  /* process failed to send heartbeat w/in time limit */
+#define PMIX_PROC_STATE_MIGRATING               (PMIX_PROC_STATE_ERROR + 10)  /* process failed and is waiting for resources before restarting */
+#define PMIX_PROC_STATE_CANNOT_RESTART          (PMIX_PROC_STATE_ERROR + 11)  /* process failed and cannot be restarted */
+#define PMIX_PROC_STATE_TERM_NON_ZERO           (PMIX_PROC_STATE_ERROR + 12)  /* process exited with a non-zero status, indicating abnormal */
+#define PMIX_PROC_STATE_FAILED_TO_LAUNCH        (PMIX_PROC_STATE_ERROR + 13)  /* unable to launch process */
 
 
 /****    PMIX ERROR CONSTANTS    ****/
@@ -1356,16 +1358,20 @@ struct pmix_info_t {
         }                                       \
     } while (0)
 
-#define PMIX_INFO_LOAD(m, k, v, t)                      \
-    do {                                                \
-        (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
-        pmix_value_load(&((m)->value), (v), (t));       \
-    } while (0)
-#define PMIX_INFO_XFER(d, s)                                \
+#define PMIX_INFO_LOAD(m, k, v, t)                          \
     do {                                                    \
-        (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN); \
-        (d)->flags = (s)->flags;                      \
-        pmix_value_xfer(&(d)->value, &(s)->value);          \
+        if (NULL != (k)) {                                  \
+            (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
+        }                                                   \
+        pmix_value_load(&((m)->value), (v), (t));           \
+    } while (0)
+#define PMIX_INFO_XFER(d, s)                                    \
+    do {                                                        \
+        if (NULL != (s)->key) {                                 \
+            (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN); \
+        }                                                       \
+        (d)->flags = (s)->flags;                                \
+        pmix_value_xfer(&(d)->value, &(s)->value);              \
     } while(0)
 
 #define PMIX_INFO_REQUIRED(m)       \
@@ -1386,7 +1392,9 @@ struct pmix_info_t {
                 (r) = PMIX_ERR_NOMEM;                          \
                 break;                                         \
             }                                                  \
-            _kv->key = strdup(_info[_n].key);                  \
+            if (NULL != _info[_n].key) {                       \
+                _kv->key = strdup(_info[_n].key);              \
+            }                                                  \
             PMIX_VALUE_XFER((r), _kv->value, &_info[_n].value);\
             if (PMIX_SUCCESS != (r)) {                         \
                 PMIX_RELEASE(_kv);                             \

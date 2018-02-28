@@ -342,6 +342,11 @@ OPAL_MODULE_DECLSPEC opal_pmix_alloc_directive_t pmix3x_convert_allocdir(pmix_al
 
 OPAL_MODULE_DECLSPEC char* pmix3x_convert_jobid(opal_jobid_t jobid);
 
+OPAL_MODULE_DECLSPEC int pmix3x_convert_state(pmix_proc_state_t state);
+
+OPAL_MODULE_DECLSPEC pmix_proc_state_t pmix3x_convert_opalstate(int state);
+
+
 END_C_DECLS
 
 #endif /* MCA_PMIX_EXTERNAL_H */

@@ -534,7 +534,7 @@ OBJ_CLASS_DECLARATION(opal_pmix_modex_data_t);
 typedef struct {
     opal_list_item_t super;
     char **keys;
-    opal_list_t qualifiers;
+    opal_list_t qualifiers;  // list of opal_value_t
 } opal_pmix_query_t;
 OBJ_CLASS_DECLARATION(opal_pmix_query_t);
 

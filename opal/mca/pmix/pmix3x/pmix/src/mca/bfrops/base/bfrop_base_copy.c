@@ -373,6 +373,7 @@ pmix_status_t pmix_bfrops_base_copy_pinfo(pmix_proc_info_t **dest,
     if (NULL == p) {
         return PMIX_ERR_NOMEM;
     }
+    memcpy(&p->proc, &src->proc, sizeof(pmix_proc_t));
     if (NULL != src->hostname) {
         p->hostname = strdup(src->hostname);
     }
@@ -623,7 +624,7 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
             p1 = (pmix_info_t*)p->array;
             s1 = (pmix_info_t*)src->array;
             for (n=0; n < src->size; n++) {
-                PMIX_INFO_LOAD(&p1[n], s1[n].key, &s1[n].value.data.flag, s1[n].value.type);
+                PMIX_INFO_XFER(&p1[n], &s1[n]);
             }
             break;
         case PMIX_PDATA:
@@ -635,7 +636,7 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
             pd = (pmix_pdata_t*)p->array;
             sd = (pmix_pdata_t*)src->array;
             for (n=0; n < src->size; n++) {
-                PMIX_PDATA_LOAD(&pd[n], &sd[n].proc, sd[n].key, &sd[n].value.data.flag, sd[n].value.type);
+                PMIX_PDATA_XFER(&pd[n], &sd[n]);
             }
             break;
         case PMIX_BUFFER:
