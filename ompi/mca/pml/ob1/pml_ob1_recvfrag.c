@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -66,10 +66,11 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_recv_frag_t,
  */
 
 /**
- * Append a unexpected descriptor to a queue. This function will allocate and
+ * Append an unexpected descriptor to a queue. This function will allocate and
  * initialize the fragment (if necessary) and then will add it to the specified
  * queue. The allocated fragment is not returned to the caller.
  */
+
 static void
 append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
                     mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
@@ -83,20 +84,223 @@ append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
 }
 
 /**
+ * Append an unexpected descriptor to an ordered queue.
+ *
+ * use the opal_list_item_t to maintain themselves on an ordered list
+ * according to their hdr_seq. Special care has been taken to cope with
+ * overflowing the uint16_t we use for the hdr_seq. The current algorithm
+ * works as long as there are no two elements with the same hdr_seq in the
+ * list in same time (aka. no more than 2^16-1 left out-of-sequence
+ * messages. On the vertical layer, messages with contiguous sequence
+ * number organize themselves in a way to minimize the search space.
+ */
+void
+append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
+                            mca_pml_ob1_recv_frag_t *frag,
+                            uint16_t seq)
+{
+    mca_pml_ob1_recv_frag_t  *prior, *next;
+    mca_pml_ob1_match_hdr_t *hdr;
+
+    frag->super.super.opal_list_next = (opal_list_item_t*)frag;
+    frag->super.super.opal_list_prev = (opal_list_item_t*)frag;
+    frag->range = NULL;
+    hdr = &frag->hdr.hdr_match;
+
+    if( NULL == *queue ) {  /* no pending fragments yet */
+        *queue = frag;
+        return;
+    }
+
+    prior = *queue;
+    assert(hdr->hdr_seq != prior->hdr.hdr_match.hdr_seq);
+
+    /* The hdr_seq being 16 bits long it can rollover rather quickly. We need to
+     * account for this rollover or the matching will fail.
+     * Extract the items from the list to order them safely */
+    if( hdr->hdr_seq < prior->hdr.hdr_match.hdr_seq ) {
+        uint16_t d1, d2 = prior->hdr.hdr_match.hdr_seq - hdr->hdr_seq;
+        do {
+            d1 = d2;
+            prior = (mca_pml_ob1_recv_frag_t*)(prior->super.super.opal_list_prev);
+            d2 = prior->hdr.hdr_match.hdr_seq - hdr->hdr_seq;
+        } while( (hdr->hdr_seq < prior->hdr.hdr_match.hdr_seq) &&
+                 (d1 > d2) && (prior != *queue) );
+    } else {
+        uint16_t prior_seq = prior->hdr.hdr_match.hdr_seq,
+        next_seq = ((mca_pml_ob1_recv_frag_t*)(prior->super.super.opal_list_next))->hdr.hdr_match.hdr_seq;
+        /* prevent rollover */
+        while( (hdr->hdr_seq > prior_seq) && (hdr->hdr_seq > next_seq) && (prior_seq < next_seq) ) {
+            prior_seq = next_seq;
+            prior = (mca_pml_ob1_recv_frag_t*)(prior->super.super.opal_list_next);
+            next_seq = ((mca_pml_ob1_recv_frag_t*)(prior->super.super.opal_list_next))->hdr.hdr_match.hdr_seq;
+        }
+    }
+
+    /* prior is the fragment with a closest hdr_seq lesser than the current hdr_seq */
+    mca_pml_ob1_recv_frag_t* parent = prior;
+
+    /* Is this fragment the next in range ? */
+    if( NULL == parent->range ) {
+        if( (parent->hdr.hdr_match.hdr_seq + 1) == hdr->hdr_seq ) {
+            parent->range = (mca_pml_ob1_recv_frag_t*)frag;
+            goto merge_ranges;
+        }
+        /* all other cases fallback and add the frag after the parent */
+    } else {
+        /* can we add the frag to the range of the previous fragment ? */
+        mca_pml_ob1_recv_frag_t* largest = (mca_pml_ob1_recv_frag_t*)parent->range->super.super.opal_list_prev;
+        if( (largest->hdr.hdr_match.hdr_seq + 1) == hdr->hdr_seq ) {
+            /* the frag belongs to this range */
+            frag->super.super.opal_list_prev = (opal_list_item_t*)largest;
+            frag->super.super.opal_list_next = largest->super.super.opal_list_next;
+            frag->super.super.opal_list_prev->opal_list_next = (opal_list_item_t*)frag;
+            frag->super.super.opal_list_next->opal_list_prev = (opal_list_item_t*)frag;
+            goto merge_ranges;
+        }
+        /* all other cases fallback and add the frag after the parent */
+    }
+
+    frag->super.super.opal_list_prev = (opal_list_item_t*)prior;
+    frag->super.super.opal_list_next = (opal_list_item_t*)prior->super.super.opal_list_next;
+    frag->super.super.opal_list_prev->opal_list_next = (opal_list_item_t*)frag;
+    frag->super.super.opal_list_next->opal_list_prev = (opal_list_item_t*)frag;
+    parent = frag;  /* the frag is not part of a range yet */
+
+    /* if the newly added element is closer to the next expected sequence mark it so */
+    if( parent->hdr.hdr_match.hdr_seq >= seq )
+        if( abs(parent->hdr.hdr_match.hdr_seq - seq) < abs((*queue)->hdr.hdr_match.hdr_seq - seq))
+            *queue = parent;
+
+ merge_ranges:
+    /* is the next hdr_seq the increasing next one ? */
+    next = (mca_pml_ob1_recv_frag_t*)parent->super.super.opal_list_next;
+    uint16_t upper = parent->hdr.hdr_match.hdr_seq;
+    if( NULL != parent->range ) {
+        upper = ((mca_pml_ob1_recv_frag_t*)parent->range->super.super.opal_list_prev)->hdr.hdr_match.hdr_seq;
+    }
+    if( (upper + 1) == next->hdr.hdr_match.hdr_seq ) {
+        /* remove next from the horizontal chain */
+        next->super.super.opal_list_next->opal_list_prev = (opal_list_item_t*)parent;
+        parent->super.super.opal_list_next = next->super.super.opal_list_next;
+        /* merge next with it's own range */
+        if( NULL != next->range ) {
+            next->super.super.opal_list_next = (opal_list_item_t*)next->range;
+            next->super.super.opal_list_prev = next->range->super.super.opal_list_prev;
+            next->super.super.opal_list_next->opal_list_prev = (opal_list_item_t*)next;
+            next->super.super.opal_list_prev->opal_list_next = (opal_list_item_t*)next;
+            next->range = NULL;
+        } else {
+            next->super.super.opal_list_prev = (opal_list_item_t*)next;
+            next->super.super.opal_list_next = (opal_list_item_t*)next;
+        }
+        if( NULL == parent->range ) {
+            parent->range = next;
+        } else {
+            /* we have access to parent->range so make frag be it's predecessor */
+            frag = (mca_pml_ob1_recv_frag_t*)parent->range->super.super.opal_list_prev;
+            /* merge the 2 rings such that frag is right before next */
+            frag->super.super.opal_list_next = (opal_list_item_t*)next;
+            parent->range->super.super.opal_list_prev = next->super.super.opal_list_prev;
+            next->super.super.opal_list_prev->opal_list_next = (opal_list_item_t*)parent->range;
+            next->super.super.opal_list_prev = (opal_list_item_t*)frag;
+        }
+        if( next == *queue )
+            *queue = parent;
+    }
+}
+
+/*
+ * remove the head of ordered list and restructure the list.
+ */
+static mca_pml_ob1_recv_frag_t*
+remove_head_from_ordered_list(mca_pml_ob1_recv_frag_t** queue)
+{
+    mca_pml_ob1_recv_frag_t* frag = *queue;
+    /* queue is empty, nothing to see. */
+    if( NULL == *queue )
+        return NULL;
+    if( NULL == frag->range ) {
+        /* head has no range, */
+        if( frag->super.super.opal_list_next == (opal_list_item_t*)frag ) {
+            /* head points to itself means it is the only
+             * one in this queue. We set the new head to NULL */
+            *queue = NULL;
+        } else {
+            /* make the next one a new head. */
+            *queue = (mca_pml_ob1_recv_frag_t*)frag->super.super.opal_list_next;
+            frag->super.super.opal_list_next->opal_list_prev = frag->super.super.opal_list_prev;
+            frag->super.super.opal_list_prev->opal_list_next = frag->super.super.opal_list_next;
+        }
+    } else {
+        /* head has range */
+        mca_pml_ob1_recv_frag_t* range = frag->range;
+        frag->range = NULL;
+        *queue = (mca_pml_ob1_recv_frag_t*)range;
+        if( range->super.super.opal_list_next == (opal_list_item_t*)range ) {
+            /* the range has no next element */
+            assert( range->super.super.opal_list_prev == (opal_list_item_t*)range );
+            range->range = NULL;
+        } else {
+            range->range = (mca_pml_ob1_recv_frag_t*)range->super.super.opal_list_next;
+            /* remove the range from the vertical chain */
+            range->super.super.opal_list_next->opal_list_prev = range->super.super.opal_list_prev;
+            range->super.super.opal_list_prev->opal_list_next = range->super.super.opal_list_next;
+        }
+        /* replace frag with range in the horizontal range if not the only element */
+        if( frag->super.super.opal_list_next == (opal_list_item_t*)frag ) {
+            range->super.super.opal_list_next = (opal_list_item_t*)range;
+            range->super.super.opal_list_prev = (opal_list_item_t*)range;
+        } else {
+            range->super.super.opal_list_next = frag->super.super.opal_list_next;
+            range->super.super.opal_list_prev = frag->super.super.opal_list_prev;
+            range->super.super.opal_list_next->opal_list_prev = (opal_list_item_t*)range;
+            range->super.super.opal_list_prev->opal_list_next = (opal_list_item_t*)range;
+        }
+    }
+    frag->super.super.opal_list_next = NULL;
+    frag->super.super.opal_list_prev = NULL;
+    return frag;
+}
+
+/**
  * Match incoming recv_frags against posted receives.
  * Supports out of order delivery.
  *
- * @param frag_header (IN)          Header of received recv_frag.
- * @param frag_desc (IN)            Received recv_frag descriptor.
- * @param match_made (OUT)          Flag indicating wether a match was made.
- * @param additional_matches (OUT)  List of additional matches
+ * @param hdr (IN)                  Header of received recv_frag.
+ * @param segments (IN)             Received recv_frag descriptor.
+ * @param num_segments (IN)         Flag indicating wether a match was made.
+ * @param type (IN)                 Type of the message header.
  * @return                          OMPI_SUCCESS or error status on failure.
  */
 static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
                                         mca_pml_ob1_match_hdr_t *hdr,
                                         mca_btl_base_segment_t* segments,
                                         size_t num_segments,
-                                        int type);
+                                        int type );
+
+/**
+ * Match incoming frags against posted receives. If frag is not NULL then we assume
+ * it is already local and that it can be released upon completion.
+ * Supports out of order delivery.
+ *
+ * @param comm_ptr (IN)             Communicator where the message has been received
+ * @param proc (IN)                 Proc for which we have received the message.
+ * @param hdr (IN)                  Header of received recv_frag.
+ * @param segments (IN)             Received recv_frag descriptor.
+ * @param num_segments (IN)         Flag indicating wether a match was made.
+ * @param type (IN)                 Type of the message header.
+ * @return                          OMPI_SUCCESS or error status on failure.
+ */
+static int
+mca_pml_ob1_recv_frag_match_proc( mca_btl_base_module_t *btl,
+                                  ompi_communicator_t* comm_ptr,
+                                  mca_pml_ob1_comm_proc_t *proc,
+                                  mca_pml_ob1_match_hdr_t *hdr,
+                                  mca_btl_base_segment_t* segments,
+                                  size_t num_segments,
+                                  int type,
+                                  mca_pml_ob1_recv_frag_t* frag );
 
 static mca_pml_ob1_recv_request_t*
 match_one(mca_btl_base_module_t *btl,
@@ -104,6 +308,17 @@ match_one(mca_btl_base_module_t *btl,
           size_t num_segments, ompi_communicator_t *comm_ptr,
           mca_pml_ob1_comm_proc_t *proc,
           mca_pml_ob1_recv_frag_t* frag);
+
+mca_pml_ob1_recv_frag_t*
+check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc)
+{
+    mca_pml_ob1_recv_frag_t *frag = proc->frags_cant_match;
+
+    if( (NULL != frag) && (frag->hdr.hdr_match.hdr_seq == proc->expected_sequence) ) {
+        return remove_head_from_ordered_list(&proc->frags_cant_match);
+    }
+    return NULL;
+}
 
 void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                           mca_btl_base_tag_t tag,
@@ -163,15 +378,14 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
      */
     OB1_MATCHING_LOCK(&comm->matching_lock);
 
-     /* get sequence number of next message that can be processed */
-    if(OPAL_UNLIKELY((((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence)) ||
-                     (opal_list_get_size(&proc->frags_cant_match) > 0 ))) {
-        goto slow_path;
+    if(OPAL_UNLIKELY(((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence))) {
+        mca_pml_ob1_recv_frag_t* frag;
+        MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
+        MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
+        append_frag_to_ordered_list(&proc->frags_cant_match, frag, proc->expected_sequence);
+        OB1_MATCHING_UNLOCK(&comm->matching_lock);
+        return;
     }
-
-    /* This is the sequence number we were expecting, so we can try
-     * matching it to already posted receives.
-     */
 
     /* We're now expecting the next sequence number. */
     proc->expected_sequence++;
@@ -181,14 +395,13 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
      * generation until we reach the correct sequence number.
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
-                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, NULL);
 
     /* The match is over. We generate the SEARCH_POSTED_Q_END here,
-     * before going into the mca_pml_ob1_check_cantmatch_for_match so
-     * we can make a difference for the searching time for all
-     * messages.
+     * before going into check_cantmatch_for_match so we can make
+     * a difference for the searching time for all messages.
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
@@ -198,7 +411,12 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
 
     if(OPAL_LIKELY(match)) {
         bytes_received = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
-        match->req_recv.req_bytes_packed = bytes_received;
+        /* We don't need to know the total amount of bytes we just received,
+         * but we need to know if there is any data in this message. The
+         * simplest way is to get the extra length from the first segment,
+         * and then add the number of remaining segments.
+         */
+        match->req_recv.req_bytes_packed = bytes_received + (num_segments-1);
 
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         if(match->req_bytes_expected > 0) {
@@ -244,12 +462,31 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
         /*  don't need a rmb as that is for checking */
         recv_request_pml_complete(match);
     }
-    return;
 
- slow_path:
-    OB1_MATCHING_UNLOCK(&comm->matching_lock);
-    mca_pml_ob1_recv_frag_match(btl, hdr, segments,
-                                num_segments, MCA_PML_OB1_HDR_TYPE_MATCH);
+    /* We matched the frag, Now see if we already have the next sequence in
+     * our OOS list. If yes, try to match it.
+     *
+     * NOTE:
+     * To optimize the number of lock used, mca_pml_ob1_recv_frag_match_proc()
+     * MUST be called with communicator lock and will RELEASE the lock. This is
+     * not ideal but it is better for the performance.
+     */
+    if(NULL != proc->frags_cant_match) {
+        mca_pml_ob1_recv_frag_t* frag;
+
+        OB1_MATCHING_LOCK(&comm->matching_lock);
+        if((frag = check_cantmatch_for_match(proc))) {
+            /* mca_pml_ob1_recv_frag_match_proc() will release the lock. */
+            mca_pml_ob1_recv_frag_match_proc(frag->btl, comm_ptr, proc,
+                                             &frag->hdr.hdr_match,
+                                             frag->segments, frag->num_segments,
+                                             frag->hdr.hdr_match.hdr_common.hdr_type, frag);
+        } else {
+            OB1_MATCHING_UNLOCK(&comm->matching_lock);
+        }
+    }
+
+    return;
 }
 
 
@@ -563,31 +800,6 @@ match_one(mca_btl_base_module_t *btl,
     } while(true);
 }
 
-static mca_pml_ob1_recv_frag_t* check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc)
-{
-    mca_pml_ob1_recv_frag_t *frag;
-
-    /* search the list for a fragment from the send with sequence
-     * number next_msg_seq_expected
-     */
-    for(frag = (mca_pml_ob1_recv_frag_t*)opal_list_get_first(&proc->frags_cant_match);
-        frag != (mca_pml_ob1_recv_frag_t*)opal_list_get_end(&proc->frags_cant_match);
-        frag = (mca_pml_ob1_recv_frag_t*)opal_list_get_next(frag))
-    {
-        mca_pml_ob1_match_hdr_t* hdr = &frag->hdr.hdr_match;
-        /*
-         * If the message has the next expected seq from that proc...
-         */
-        if(hdr->hdr_seq != proc->expected_sequence)
-            continue;
-
-        opal_list_remove_item(&proc->frags_cant_match, (opal_list_item_t*)frag);
-        return frag;
-    }
-
-    return NULL;
-}
-
 /**
  * RCS/CTS receive side matching
  *
@@ -625,12 +837,11 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
                                         int type)
 {
     /* local variables */
-    uint16_t next_msg_seq_expected, frag_msg_seq;
+    uint16_t frag_msg_seq;
+    uint16_t next_msg_seq_expected;
     ompi_communicator_t *comm_ptr;
-    mca_pml_ob1_recv_request_t *match = NULL;
     mca_pml_ob1_comm_t *comm;
     mca_pml_ob1_comm_proc_t *proc;
-    mca_pml_ob1_recv_frag_t* frag = NULL;
 
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
@@ -649,14 +860,13 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
 
     /* source sequence number */
-    frag_msg_seq = hdr->hdr_seq;
     proc = mca_pml_ob1_peer_lookup (comm_ptr, hdr->hdr_src);
 
-    /**
-     * We generate the MSG_ARRIVED event as soon as the PML is aware of a matching
-     * fragment arrival. Independing if it is received on the correct order or not.
-     * This will allow the tools to figure out if the messages are not received in the
-     * correct order (if multiple network interfaces).
+    /* We generate the MSG_ARRIVED event as soon as the PML is aware
+     * of a matching fragment arrival. Independing if it is received
+     * on the correct order or not. This will allow the tools to
+     * figure out if the messages are not received in the correct
+     * order (if multiple network interfaces).
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
@@ -670,38 +880,69 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
      */
     OB1_MATCHING_LOCK(&comm->matching_lock);
 
-    /* get sequence number of next message that can be processed */
+    frag_msg_seq = hdr->hdr_seq;
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
-    if(OPAL_UNLIKELY(frag_msg_seq != next_msg_seq_expected))
-        goto wrong_seq;
 
-    /*
-     * This is the sequence number we were expecting,
-     * so we can try matching it to already posted
-     * receives.
+    /* If the sequence number is wrong, queue it up for later. */
+    if(OPAL_UNLIKELY(frag_msg_seq != next_msg_seq_expected)) {
+        mca_pml_ob1_recv_frag_t* frag;
+        MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
+        MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
+        append_frag_to_ordered_list(&proc->frags_cant_match, frag, next_msg_seq_expected);
+        OB1_MATCHING_UNLOCK(&comm->matching_lock);
+        return OMPI_SUCCESS;
+    }
+
+    /* mca_pml_ob1_recv_frag_match_proc() will release the lock. */
+    return mca_pml_ob1_recv_frag_match_proc(btl, comm_ptr, proc, hdr,
+                                            segments, num_segments,
+                                            type, NULL);
+}
+
+
+/* mca_pml_ob1_recv_frag_match_proc() will match the given frag and
+ * then try to match the next frag in sequence by looking into arrived
+ * out of order frags in frags_cant_match list until it can't find one.
+ *
+ * ATTENTION: THIS FUNCTION MUST BE CALLED WITH COMMUNICATOR LOCK HELD.
+ * THE LOCK WILL BE RELEASED UPON RETURN. USE WITH CARE. */
+static int
+mca_pml_ob1_recv_frag_match_proc( mca_btl_base_module_t *btl,
+                                  ompi_communicator_t* comm_ptr,
+                                  mca_pml_ob1_comm_proc_t *proc,
+                                  mca_pml_ob1_match_hdr_t *hdr,
+                                  mca_btl_base_segment_t* segments,
+                                  size_t num_segments,
+                                  int type,
+                                  mca_pml_ob1_recv_frag_t* frag )
+{
+    /* local variables */
+    mca_pml_ob1_comm_t* comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
+    mca_pml_ob1_recv_request_t *match = NULL;
+
+    /* If we are here, this is the sequence number we were expecting,
+     * so we can try matching it to already posted receives.
      */
 
-out_of_order_match:
+ match_this_frag:
     /* We're now expecting the next sequence number. */
     proc->expected_sequence++;
 
-    /**
-     * We generate the SEARCH_POSTED_QUEUE only when the message is received
-     * in the correct sequence. Otherwise, we delay the event generation until
-     * we reach the correct sequence number.
+    /* We generate the SEARCH_POSTED_QUEUE only when the message is
+     * received in the correct sequence. Otherwise, we delay the event
+     * generation until we reach the correct sequence number.
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
-                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, frag);
 
-    /**
-     * The match is over. We generate the SEARCH_POSTED_Q_END here, before going
-     * into the mca_pml_ob1_check_cantmatch_for_match so we can make a difference
-     * for the searching time for all messages.
+    /* The match is over. We generate the SEARCH_POSTED_Q_END here,
+     * before going into check_cantmatch_for_match we can make a
+     * difference for the searching time for all messages.
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
-                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
     /* release matching lock before processing fragment */
     OB1_MATCHING_UNLOCK(&comm->matching_lock);
@@ -725,10 +966,10 @@ out_of_order_match:
 
     /*
      * Now that new message has arrived, check to see if
-     * any fragments on the c_c_frags_cant_match list
+     * any fragments on the frags_cant_match list
      * may now be used to form new matchs
      */
-    if(OPAL_UNLIKELY(opal_list_get_size(&proc->frags_cant_match) > 0)) {
+    if(OPAL_UNLIKELY(NULL != proc->frags_cant_match)) {
         OB1_MATCHING_LOCK(&comm->matching_lock);
         if((frag = check_cantmatch_for_match(proc))) {
             hdr = &frag->hdr.hdr_match;
@@ -736,20 +977,11 @@ out_of_order_match:
             num_segments = frag->num_segments;
             btl = frag->btl;
             type = hdr->hdr_common.hdr_type;
-            goto out_of_order_match;
+            goto match_this_frag;
         }
         OB1_MATCHING_UNLOCK(&comm->matching_lock);
     }
 
-    return OMPI_SUCCESS;
-wrong_seq:
-    /*
-     * This message comes after the next expected, so it
-     * is ahead of sequence.  Save it for later.
-     */
-    append_frag_to_list(&proc->frags_cant_match, btl, hdr, segments,
-                        num_segments, NULL);
-    OB1_MATCHING_UNLOCK(&comm->matching_lock);
     return OMPI_SUCCESS;
 }
 
