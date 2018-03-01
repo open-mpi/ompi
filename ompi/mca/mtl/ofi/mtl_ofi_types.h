@@ -49,6 +49,12 @@ typedef struct mca_mtl_ofi_module_t {
     /** Maximum inject size */
     size_t max_inject_size;
 
+    /** Maximum number of CQ events to read in OFI Progress */
+    int ofi_progress_event_count;
+
+    /** CQ event storage */
+    struct fi_cq_tagged_entry *progress_entries;
+
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
