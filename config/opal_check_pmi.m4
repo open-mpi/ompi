@@ -14,8 +14,8 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
-# Copyright (c) 2014-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2014-2018 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -39,18 +39,35 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
     opal_check_$3_mycppflags=
 
     # check for the header
-    AC_MSG_CHECKING([for $3.h in $1/include])
-    AS_IF([test -f $1/include/$3.h],
-          [AC_MSG_RESULT([found])
-           opal_check_$3_mycppflags="-I$1/include"],
-          [AC_MSG_RESULT([not found])
-           AC_MSG_CHECKING([for $3.h in $1/include/slurm])
-           AS_IF([test -f $1/include/slurm/$3.h],
+    AS_IF([test -n "$1"],
+          [AC_MSG_CHECKING([for $3.h in $1])
+           AS_IF([test -f $1/$3.h && test -r $1/$3.h],
                  [AC_MSG_RESULT([found])
-                  opal_check_$3_mycppflags="-I$1/include/slurm"
-                  $5],
+                  opal_check_$3_mycppflags="-I$1"],
                  [AC_MSG_RESULT([not found])
-                  opal_check_$3_hdr_happy=no])])
+                  AC_MSG_CHECKING([for $3.h in $1/include])
+                  AS_IF([test -f $1/include/$3.h && test -r $1/include/$3.h],
+                        [AC_MSG_RESULT([found])
+                         opal_check_$3_mycppflags="-I$1/include"],
+                        [AC_MSG_RESULT([not found])
+                         AC_MSG_CHECKING([for $3.h in $1/include/slurm])
+                         AS_IF([test -f $1/include/slurm/$3.h && test -r $1/include/slurm/$3.h],
+                               [AC_MSG_RESULT([found])
+                                opal_check_$3_mycppflags="-I$1/include/slurm"
+                                $5],
+                               [AC_MSG_RESULT([not found])
+                                opal_check_$3_hdr_happy=no])])])],
+          [AC_MSG_CHECKING([for $3.h in /usr/include])
+           AS_IF([test -f /usr/include/$3.h && test -r /usr/include/$3.h],
+                 [AC_MSG_RESULT([found])],
+                 [AC_MSG_RESULT([not found])
+                  AC_MSG_CHECKING([for $3.h in /usr/include/slurm])
+                  AS_IF([test -f /usr/include/slurm/$3.h && test -r /usr/include/slurm/$3.h],
+                        [AC_MSG_RESULT([found])
+                         opal_check_$3_mycppflags="-I/usr/include/slurm"
+                         $5],
+                        [AC_MSG_RESULT([not found])
+                         opal_check_$3_hdr_happy=no])])])
 
     AS_IF([test "$opal_check_$3_hdr_happy" != "no"],
           [CPPFLAGS="$CPPFLAGS $opal_check_$3_mycppflags"
@@ -65,51 +82,47 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
 
     # check for the library in the given location in case
     # an exact path was given
-    AC_MSG_CHECKING([for lib$3 in $2])
-    files=`ls $2/lib$3.* 2> /dev/null | wc -l`
-    AS_IF([test "$files" -gt "0"],
-          [AC_MSG_RESULT([found])
-           LDFLAGS="$LDFLAGS -L$2"
-           AC_CHECK_LIB([$3], [$4],
-                        [opal_check_$3_lib_happy=yes
-                         $3_LDFLAGS=-L$2
-                         $3_rpath=$2],
+    AS_IF([test -z "$1" && test -z "$2"],
+          [AC_CHECK_LIB([$3], [$4],
+                        [opal_check_$3_lib_happy=yes],
                         [opal_check_$3_lib_happy=no])],
-          [opal_check_$3_lib_happy=no
-           AC_MSG_RESULT([not found])])
-
-    # check for presence of lib64 directory - if found, see if the
-    # desired library is present and matches our build requirements
-    files=`ls $2/lib64/lib$3.* 2> /dev/null | wc -l`
-    AS_IF([test "$opal_check_$3_lib_happy" != "yes"],
-          [AC_MSG_CHECKING([for lib$3 in $2/lib64])
-           AS_IF([test "$files" -gt "0"],
-                 [AC_MSG_RESULT([found])
-                  LDFLAGS="$LDFLAGS -L$2/lib64"
-                  AC_CHECK_LIB([$3], [$4],
-                               [opal_check_$3_lib_happy=yes
-                                $3_LDFLAGS=-L$2/lib64
-                                $3_rpath=$2/lib64],
-                               [opal_check_$3_lib_happy=no])],
-                 [opal_check_$3_lib_happy=no
-                  AC_MSG_RESULT([not found])])])
-
-
-    # if we didn't find lib64, or the library wasn't present or correct,
-    # then try a lib directory if present
-    files=`ls $2/lib/lib$3.* 2> /dev/null | wc -l`
-    AS_IF([test "$opal_check_$3_lib_happy" != "yes"],
-          [AC_MSG_CHECKING([for lib$3 in $2/lib])
-           AS_IF([test "$files" -gt "0"],
-                 [AC_MSG_RESULT([found])
-                  LDFLAGS="$LDFLAGS -L$2/lib"
-                  AC_CHECK_LIB([$3], [$4],
-                               [opal_check_$3_lib_happy=yes
-                                $3_LDFLAGS=-L$2/lib
-                                $3_rpath=$2/lib],
-                               [opal_check_$3_lib_happy=no])],
-                 [opal_check_$3_lib_happy=no
-                  AC_MSG_RESULT([not found])])])
+          [AS_IF([test -n "$2"],
+                 [AC_MSG_CHECKING([for lib$3 in $2])
+                  files=`ls $2/lib$3.* 2> /dev/null | wc -l`
+                  AS_IF([test "$files" -gt "0"],
+                        [AC_MSG_RESULT([found])
+                         LDFLAGS="$LDFLAGS -L$2"
+                         AC_CHECK_LIB([$3], [$4],
+                                      [opal_check_$3_lib_happy=yes
+                                       $3_LDFLAGS=-L$2
+                                       $3_rpath=$2],
+                                      [opal_check_$3_lib_happy=no])],
+                        [opal_check_$3_lib_happy=no
+                         AC_MSG_RESULT([not found])])],
+                 [AC_MSG_CHECKING([for lib$3 in $1/lib])
+                  files=`ls $1/lib/lib$3.* 2> /dev/null | wc -l`
+                  AS_IF([test "$files" -gt "0"],
+                        [AC_MSG_RESULT([found])
+                         LDFLAGS="$LDFLAGS -L$1/lib"
+                         AC_CHECK_LIB([$3], [$4],
+                                      [opal_check_$3_lib_happy=yes
+                                       $3_LDFLAGS=-L$1/lib
+                                       $3_rpath=$1/lib],
+                                      [opal_check_$3_lib_happy=no])],
+                        [# check for presence of lib64 directory - if found, see if the
+                         # desired library is present and matches our build requirements
+                         AC_MSG_CHECKING([for lib$3 in $1/lib64])
+                         files=`ls $1/lib64/lib$3.* 2> /dev/null | wc -l`
+                         AS_IF([test "$files" -gt "0"],
+                               [AC_MSG_RESULT([found])
+                                LDFLAGS="$LDFLAGS -L$1/lib64"
+                                AC_CHECK_LIB([$3], [$4],
+                                             [opal_check_$3_lib_happy=yes
+                                              $3_LDFLAGS=-L$1/lib64
+                                              $3_rpath=$1/lib64],
+                                             [opal_check_$3_lib_happy=no])],
+                               [opal_check_$3_lib_happy=no
+                                AC_MSG_RESULT([not found])])])])])
 
     # restore flags
     CPPFLAGS=$opal_check_$3_save_CPPFLAGS
@@ -124,7 +137,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
 # OPAL_CHECK_PMI()
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_PMI],[
-    OPAL_VAR_SCOPE_PUSH([check_pmi_install_dir check_pmi_lib_dir default_pmi_loc default_pmi_libloc slurm_pmi_found])
+    OPAL_VAR_SCOPE_PUSH([check_pmi_install_dir check_pmi_lib_dir default_pmi_libloc slurm_pmi_found])
 
     AC_ARG_WITH([pmi],
                 [AC_HELP_STRING([--with-pmi(=DIR)],
@@ -137,7 +150,6 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
     check_pmi_install_dir=
     check_pmi_lib_dir=
-    default_pmi_loc=
     default_pmi_libloc=
     slurm_pmi_found=
 
@@ -149,18 +161,10 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            # cannot use OPAL_CHECK_PACKAGE as its backend header
            # support appends "include" to the path, which won't
            # work with slurm :-(
-           AS_IF([test ! -z "$with_pmi" && test "$with_pmi" != "yes"],
-                 [check_pmi_install_dir=$with_pmi
-                  default_pmi_loc=no],
-                 [check_pmi_install_dir=/usr
-                  default_pmi_loc=yes])
-           AS_IF([test ! -z "$with_pmi_libdir"],
-                 [check_pmi_lib_dir=$with_pmi_libdir
-                  default_pmi_libloc=no],
-                 [check_pmi_lib_dir=$check_pmi_install_dir
-          AS_IF([test "$default_pmi_loc" = "no"],
-                [default_pmi_libloc=no],
-                [default_pmi_libloc=yes])])
+           AS_IF([test -n "$with_pmi" && test "$with_pmi" != "yes"],
+                 [check_pmi_install_dir=$with_pmi])
+           AS_IF([test -n "$with_pmi_libdir"],
+                 [check_pmi_lib_dir=$with_pmi_libdir])
 
            # check for pmi-1 lib */
            slurm_pmi_found=no
@@ -174,10 +178,10 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                               [opal_enable_pmi1=no])
 
            AS_IF([test "$opal_enable_pmi1" = "yes"],
-                 [AS_IF([test "$default_pmi_loc" = "no" || test "$slurm_pmi_found" = "yes"],
+                 [AS_IF([test "$slurm_pmi_found" = "yes"],
                         [opal_pmi1_CPPFLAGS="$pmi_CPPFLAGS"
                          AC_SUBST(opal_pmi1_CPPFLAGS)])
-                  AS_IF([test "$default_pmi_libloc" = "no" || test "$slurm_pmi_found" = "yes"],
+                  AS_IF([test "$slurm_pmi_found" = "yes"],
                         [opal_pmi1_LDFLAGS="$pmi_LDFLAGS"
                          AC_SUBST(opal_pmi1_LDFLAGS)
                          opal_pmi1_rpath="$pmi_rpath"
@@ -195,10 +199,10 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                               [opal_enable_pmi2=no])
 
            AS_IF([test "$opal_enable_pmi2" = "yes"],
-                 [AS_IF([test "$default_pmi_loc" = "no" || test "$slurm_pmi_found" = "yes"],
+                 [AS_IF([test "$slurm_pmi_found" = "yes"],
                         [opal_pmi2_CPPFLAGS="$pmi2_CPPFLAGS"
                          AC_SUBST(opal_pmi2_CPPFLAGS)])
-                  AS_IF([test "$default_pmi_libloc" = "no" || test "$slurm_pmi_found" = "yes"],
+                  AS_IF([test "$slurm_pmi_found" = "yes"],
                         [opal_pmi2_LDFLAGS="$pmi2_LDFLAGS"
                          AC_SUBST(opal_pmi2_LDFLAGS)
                          opal_pmi2_rpath="$pmi2_rpath"
