@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -107,6 +107,7 @@ typedef struct {
 #define    OPAL_INFO_DIRECTIVES     (opal_data_type_t)   36 /**< corresponds to PMIx info directives type (uint32_t) */
 #define    OPAL_PROC_STATE          (opal_data_type_t)   37 /**< corresponds to PMIx proc state type (uint8_t) */
 #define    OPAL_PROC_INFO           (opal_data_type_t)   38 /**< corresponds to PMIx proc_info type */
+#define    OPAL_ENVAR               (opal_data_type_t)   39 /**< corresponds to PMIx envar type */
 
     /* OPAL Dynamic */
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)  100
@@ -131,7 +132,16 @@ typedef struct {
     opal_status_t exit_code;
     opal_proc_state_t state;
 } opal_proc_info_t;
-OBJ_CLASS_DECLARATION(opal_proc_info_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_proc_info_t);
+
+/* defaine a struct for envar directives */
+typedef struct {
+    opal_list_item_t super;
+    char *envar;
+    char *value;
+    char separator;
+} opal_envar_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_envar_t);
 
 /* Data value object */
 typedef struct {
@@ -163,6 +173,7 @@ typedef struct {
         opal_process_name_t name;
         opal_proc_info_t pinfo;
         void *ptr;  // never packed or passed anywhere
+        opal_envar_t envar;
     } data;
 } opal_value_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_t);

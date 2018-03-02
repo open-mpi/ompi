@@ -58,8 +58,6 @@
 #ident PMIX_VERSION
 #endif
 
-extern pmix_client_globals_t pmix_client_globals;
-
 #include "src/class/pmix_list.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
@@ -69,11 +67,16 @@ extern pmix_client_globals_t pmix_client_globals;
 #include "src/runtime/pmix_rte.h"
 #include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/base/base.h"
-#include "src/mca/ptl/ptl.h"
+#include "src/mca/ptl/base/base.h"
 #include "src/mca/psec/psec.h"
 #include "src/include/pmix_globals.h"
+#include "src/common/pmix_iof.h"
 
 #define PMIX_MAX_RETRIES 10
+
+extern pmix_client_globals_t pmix_client_globals;
+static pmix_event_t stdinsig;
+static pmix_iof_read_event_t stdinev;
 
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
@@ -91,7 +94,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
     pmix_event_chain_t *chain;
     size_t ninfo;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.event_output,
                         "pmix:tool_notify_recv - processing event");
 
     /* a zero-byte buffer indicates that this recv is being
@@ -172,7 +175,7 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
     /* now put the callback object tag in the last element */
     PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.event_output,
                         "[%s:%d] pmix:tool_notify_recv - processing event %d, calling errhandler",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank, chain->status);
 
@@ -181,13 +184,60 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
 
   error:
     /* we always need to return */
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_client_globals.event_output,
                         "pmix:tool_notify_recv - unpack error status =%d, calling def errhandler", rc);
     chain = PMIX_NEW(pmix_event_chain_t);
     chain->status = rc;
     pmix_invoke_local_event_hdlr(chain);
 }
 
+
+static void tool_iof_handler(struct pmix_peer_t *pr,
+                             pmix_ptl_hdr_t *hdr,
+                             pmix_buffer_t *buf, void *cbdata)
+{
+    pmix_peer_t *peer = (pmix_peer_t*)pr;
+    pmix_proc_t source;
+    pmix_iof_channel_t channel;
+    pmix_byte_object_t bo;
+    int32_t cnt;
+    pmix_status_t rc;
+
+    pmix_output_verbose(2, pmix_client_globals.iof_output,
+                        "recvd IOF");
+
+    /* if the buffer is empty, they are simply closing the channel */
+    if (0 == buf->bytes_used) {
+        return;
+    }
+
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &source, &cnt, PMIX_PROC);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &channel, &cnt, PMIX_IOF_CHANNEL);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    if (NULL != bo.bytes && 0 < bo.size) {
+        if (channel & PMIX_FWD_STDOUT_CHANNEL) {
+            pmix_iof_write_output(&source, channel, &bo, &pmix_client_globals.iof_stdout.wev);
+        } else {
+            pmix_iof_write_output(&source, channel, &bo, &pmix_client_globals.iof_stderr.wev);
+        }
+    }
+    PMIX_BYTE_OBJECT_DESTRUCT(&bo);
+}
 
 PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
                                pmix_info_t info[], size_t ninfo)
@@ -198,9 +248,12 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     bool found, do_not_connect = false;
     bool nspace_given = false;
     bool rank_given = false;
+    bool fwd_stdin = false;
     pmix_info_t ginfo;
     size_t n;
+    pmix_ptl_posted_recv_t *rcv;
     pmix_proc_t wildcard;
+    int fd;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -238,6 +291,13 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
+    /* setup the IO Forwarding recv */
+    rcv = PMIX_NEW(pmix_ptl_posted_recv_t);
+    rcv->tag = PMIX_PTL_TAG_IOF;
+    rcv->cbfunc = tool_iof_handler;
+    /* add it to the end of the list of recvs */
+    pmix_list_append(&pmix_ptl_globals.posted_recvs, &rcv->super);
+
 
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_client_globals.peers, pmix_pointer_array_t);
@@ -296,6 +356,9 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
             } else if (0 == strncmp(info[n].key, PMIX_TOOL_RANK, PMIX_MAX_KEYLEN)) {
                 pmix_globals.myid.rank = info[n].value.data.rank;
                 rank_given = true;
+            } else if (0 == strncmp(info[n].key, PMIX_FWD_STDIN, PMIX_MAX_KEYLEN)) {
+                /* they want us to forward our stdin to someone */
+                fwd_stdin = true;
             }
         }
     }
@@ -342,6 +405,81 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     pmix_globals.mypeer->info->pname.nspace = strdup(proc->nspace);
     pmix_globals.mypeer->info->pname.rank = proc->rank;
 
+    /* setup IOF */
+    PMIX_IOF_SINK_DEFINE(&pmix_client_globals.iof_stdout, &pmix_globals.myid,
+                         1, PMIX_FWD_STDOUT_CHANNEL, pmix_iof_write_handler);
+    PMIX_IOF_SINK_DEFINE(&pmix_client_globals.iof_stderr, &pmix_globals.myid,
+                         2, PMIX_FWD_STDERR_CHANNEL, pmix_iof_write_handler);
+    if (fwd_stdin) {
+        /* setup the read - we don't want to set nonblocking on our
+         * stdio stream.  If we do so, we set the file descriptor to
+         * non-blocking for everyone that has that file descriptor, which
+         * includes everyone else in our shell pipeline chain.  (See
+         * http://lists.freebsd.org/pipermail/freebsd-hackers/2005-January/009742.html).
+         * This causes things like "prun -np 1 big_app | cat" to lose
+         * output, because cat's stdout is then ALSO non-blocking and cat
+         * isn't built to deal with that case (same with almost all other
+         * unix text utils).*/
+        fd = fileno(stdin);
+        if (isatty(fd)) {
+            /* We should avoid trying to read from stdin if we
+             * have a terminal, but are backgrounded.  Catch the
+             * signals that are commonly used when we switch
+             * between being backgrounded and not.  If the
+             * filedescriptor is not a tty, don't worry about it
+             * and always stay connected.
+             */
+            pmix_event_signal_set(pmix_globals.evbase, &stdinsig,
+                                  SIGCONT, pmix_iof_stdin_cb,
+                                  &stdinev);
+
+            /* setup a read event to read stdin, but don't activate it yet. The
+             * dst_name indicates who should receive the stdin. If that recipient
+             * doesn't do a corresponding pull, however, then the stdin will
+             * be dropped upon receipt at the local daemon
+             */
+            PMIX_CONSTRUCT(&stdinev, pmix_iof_read_event_t);
+            stdinev.fd = fd;
+            stdinev.always_readable = pmix_iof_fd_always_ready(fd);
+            if (stdinev.always_readable) {
+                pmix_event_evtimer_set(pmix_globals.evbase,
+                                       &stdinev.ev,
+                                       pmix_iof_read_local_handler,
+                                       &stdinev);
+            } else {
+                pmix_event_set(pmix_globals.evbase,
+                               &stdinev.ev, fd,
+                               PMIX_EV_READ,
+                               pmix_iof_read_local_handler, &stdinev);
+            }                                                               \
+            /* check to see if we want the stdin read event to be
+             * active - we will always at least define the event,
+             * but may delay its activation
+             */
+            if (pmix_iof_stdin_check(fd)) {
+                PMIX_IOF_READ_ACTIVATE(&stdinev);
+            }
+        } else {
+            /* if we are not looking at a tty, just setup a read event
+             * and activate it
+             */
+            PMIX_CONSTRUCT(&stdinev, pmix_iof_read_event_t);
+            stdinev.fd = fd;
+            stdinev.always_readable = pmix_iof_fd_always_ready(fd);
+            if (stdinev.always_readable) {
+                pmix_event_evtimer_set(pmix_globals.evbase,
+                                       &stdinev.ev,
+                                       pmix_iof_read_local_handler,
+                                       &stdinev);
+            } else {
+                pmix_event_set(pmix_globals.evbase,
+                               &stdinev.ev, fd,
+                               PMIX_EV_READ,
+                               pmix_iof_read_local_handler, &stdinev);
+            }                                                               \
+            PMIX_IOF_READ_ACTIVATE(&stdinev);
+        }
+    }
     /* increment our init reference counter */
     pmix_globals.init_cntr++;
 
@@ -720,6 +858,12 @@ PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void)
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:tool finalize called");
+
+    /* flush anything that is still trying to be written out */
+    pmix_iof_static_dump_output(&pmix_client_globals.iof_stdout);
+    pmix_iof_static_dump_output(&pmix_client_globals.iof_stderr);
+    PMIX_DESTRUCT(&pmix_client_globals.iof_stdout);
+    PMIX_DESTRUCT(&pmix_client_globals.iof_stderr);
 
     /* setup a cmd message to notify the PMIx
      * server that we are normally terminating */

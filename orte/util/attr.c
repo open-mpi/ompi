@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,12 +33,6 @@ typedef struct {
 
 /* all default to NULL */
 static orte_attr_converter_t converters[MAX_CONVERTERS];
-
-static int orte_attr_unload(orte_attribute_t *kv,
-                            void **data, opal_data_type_t type);
-
-static int orte_attr_load(orte_attribute_t *kv,
-                          void *data, opal_data_type_t type);
 
 bool orte_get_attribute(opal_list_t *attributes,
                         orte_attribute_key_t key,
@@ -92,6 +86,81 @@ int orte_set_attribute(opal_list_t *attributes,
         return rc;
     }
     opal_list_append(attributes, &kv->super);
+    return ORTE_SUCCESS;
+}
+
+orte_attribute_t* orte_fetch_attribute(opal_list_t *attributes,
+                                       orte_attribute_t *prev,
+                                       orte_attribute_key_t key)
+{
+    orte_attribute_t *kv, *end, *next;
+
+    /* if prev is NULL, then find the first attr on the list
+     * that matches the key */
+    if (NULL == prev) {
+        OPAL_LIST_FOREACH(kv, attributes, orte_attribute_t) {
+            if (key == kv->key) {
+                return kv;
+            }
+        }
+        /* if we get, then the key isn't on the list */
+        return NULL;
+    }
+
+    /* if we are at the end of the list, then nothing to do */
+    end = (orte_attribute_t*)opal_list_get_end(attributes);
+    if (prev == end || end == (orte_attribute_t*)opal_list_get_next(&prev->super) ||
+        NULL == opal_list_get_next(&prev->super)) {
+        return NULL;
+    }
+
+    /* starting with the next item on the list, search
+     * for the next attr with the matching key */
+    next = (orte_attribute_t*)opal_list_get_next(&prev->super);
+    while (NULL != next) {
+        if (next->key == key) {
+            return next;
+        }
+        next = (orte_attribute_t*)opal_list_get_next(&next->super);
+    }
+
+    /* if we get here, then no matching key was found */
+    return NULL;
+}
+
+int orte_add_attribute(opal_list_t *attributes,
+                       orte_attribute_key_t key, bool local,
+                       void *data, opal_data_type_t type)
+{
+    orte_attribute_t *kv;
+    int rc;
+
+    kv = OBJ_NEW(orte_attribute_t);
+    kv->key = key;
+    kv->local = local;
+    if (OPAL_SUCCESS != (rc = orte_attr_load(kv, data, type))) {
+        OBJ_RELEASE(kv);
+        return rc;
+    }
+    opal_list_append(attributes, &kv->super);
+    return ORTE_SUCCESS;
+}
+
+int orte_prepend_attribute(opal_list_t *attributes,
+                           orte_attribute_key_t key, bool local,
+                           void *data, opal_data_type_t type)
+{
+    orte_attribute_t *kv;
+    int rc;
+
+    kv = OBJ_NEW(orte_attribute_t);
+    kv->key = key;
+    kv->local = local;
+    if (OPAL_SUCCESS != (rc = orte_attr_load(kv, data, type))) {
+        OBJ_RELEASE(kv);
+        return rc;
+    }
+    opal_list_prepend(attributes, &kv->super);
     return ORTE_SUCCESS;
 }
 
@@ -170,6 +239,16 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "APP-PREFIX-DIR";
         case ORTE_APP_NO_CACHEDIR:
             return "ORTE_APP_NO_CACHEDIR";
+        case ORTE_APP_SET_ENVAR:
+            return "ORTE_APP_SET_ENVAR";
+        case ORTE_APP_UNSET_ENVAR:
+            return "ORTE_APP_UNSET_ENVAR";
+        case ORTE_APP_PREPEND_ENVAR:
+            return "ORTE_APP_PREPEND_ENVAR";
+        case ORTE_APP_APPEND_ENVAR:
+            return "ORTE_APP_APPEND_ENVAR";
+        case ORTE_APP_ADD_ENVAR:
+            return "ORTE_APP_ADD_ENVAR";
 
         case ORTE_NODE_USERNAME:
             return "NODE-USERNAME";
@@ -290,6 +369,18 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE_JOB_FULLY_DESCRIBED";
         case ORTE_JOB_SILENT_TERMINATION:
             return "ORTE_JOB_SILENT_TERMINATION";
+        case ORTE_JOB_SET_ENVAR:
+            return "ORTE_JOB_SET_ENVAR";
+        case ORTE_JOB_UNSET_ENVAR:
+            return "ORTE_JOB_UNSET_ENVAR";
+        case ORTE_JOB_PREPEND_ENVAR:
+            return "ORTE_JOB_PREPEND_ENVAR";
+        case ORTE_JOB_APPEND_ENVAR:
+            return "ORTE_JOB_APPEND_ENVAR";
+        case ORTE_JOB_ADD_ENVAR:
+            return "ORTE_APP_ADD_ENVAR";
+        case ORTE_JOB_APP_SETUP_DATA:
+            return "ORTE_JOB_APP_SETUP_DATA";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";
@@ -360,11 +451,12 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
 }
 
 
-static int orte_attr_load(orte_attribute_t *kv,
-                          void *data, opal_data_type_t type)
+int orte_attr_load(orte_attribute_t *kv,
+                   void *data, opal_data_type_t type)
 {
     opal_byte_object_t *boptr;
     struct timeval *tv;
+    opal_envar_t *envar;
 
     kv->type = type;
     if (NULL == data) {
@@ -485,6 +577,18 @@ static int orte_attr_load(orte_attribute_t *kv,
         kv->data.name = *(opal_process_name_t *)data;
         break;
 
+    case OPAL_ENVAR:
+        OBJ_CONSTRUCT(&kv->data.envar, opal_envar_t);
+        envar = (opal_envar_t*)data;
+        if (NULL != envar->envar) {
+            kv->data.envar.envar = strdup(envar->envar);
+        }
+        if (NULL != envar->value) {
+            kv->data.envar.value = strdup(envar->value);
+        }
+        kv->data.envar.separator = envar->separator;
+        break;
+
     default:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         return OPAL_ERR_NOT_SUPPORTED;
@@ -492,10 +596,11 @@ static int orte_attr_load(orte_attribute_t *kv,
     return OPAL_SUCCESS;
 }
 
-static int orte_attr_unload(orte_attribute_t *kv,
-                            void **data, opal_data_type_t type)
+int orte_attr_unload(orte_attribute_t *kv,
+                     void **data, opal_data_type_t type)
 {
     opal_byte_object_t *boptr;
+    opal_envar_t *envar;
 
     if (type != kv->type) {
         return OPAL_ERR_TYPE_MISMATCH;
@@ -601,6 +706,18 @@ static int orte_attr_unload(orte_attribute_t *kv,
 
     case OPAL_NAME:
         memcpy(*data, &kv->data.name, sizeof(orte_process_name_t));
+        break;
+
+    case OPAL_ENVAR:
+        envar = OBJ_NEW(opal_envar_t);
+        if (NULL != kv->data.envar.envar) {
+            envar->envar = strdup(kv->data.envar.envar);
+        }
+        if (NULL != kv->data.envar.value) {
+            envar->value = strdup(kv->data.envar.value);
+        }
+        envar->separator = kv->data.envar.separator;
+        *data = envar;
         break;
 
     default:

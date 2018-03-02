@@ -98,6 +98,7 @@ PMIX_EXPORT pmix_status_t PMIx_tool_init(pmix_proc_t *proc,
  * operation. */
 PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void);
 
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

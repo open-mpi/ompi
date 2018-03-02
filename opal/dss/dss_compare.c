@@ -12,7 +12,7 @@
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -359,6 +359,8 @@ int opal_dss_compare_value(opal_value_t *value1, opal_value_t *value2, opal_data
         return opal_dss_compare_timeval(&value1->data.tv, &value2->data.tv, type);
     case OPAL_NAME:
         return opal_dss_compare_name(&value1->data.name, &value2->data.name, type);
+    case OPAL_ENVAR:
+        return opal_dss_compare_envar(&value1->data.envar, &value2->data.envar, type);
     default:
         opal_output(0, "COMPARE-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)value1->type);
         return OPAL_EQUAL;
@@ -458,3 +460,47 @@ int opal_dss_compare_status(int *value1, int *value2, opal_data_type_t type)
     return OPAL_EQUAL;
 }
 
+int opal_dss_compare_envar(opal_envar_t *value1, opal_envar_t *value2, opal_data_type_t type)
+{
+    int rc;
+
+    if (NULL != value1->envar) {
+        if (NULL == value2->envar) {
+            return OPAL_VALUE1_GREATER;
+        }
+        rc = strcmp(value1->envar, value2->envar);
+        if (rc < 0) {
+            return OPAL_VALUE2_GREATER;
+        } else if (0 < rc) {
+            return OPAL_VALUE1_GREATER;
+        }
+    } else if (NULL != value2->envar) {
+        /* we know value1->envar had to be NULL */
+        return OPAL_VALUE2_GREATER;
+    }
+
+    /* if both are NULL or are equal, then check value */
+    if (NULL != value1->value) {
+        if (NULL == value2->value) {
+            return OPAL_VALUE1_GREATER;
+        }
+        rc = strcmp(value1->value, value2->value);
+        if (rc < 0) {
+            return OPAL_VALUE2_GREATER;
+        } else if (0 < rc) {
+            return OPAL_VALUE1_GREATER;
+        }
+    } else if (NULL != value2->value) {
+        /* we know value1->value had to be NULL */
+        return OPAL_VALUE2_GREATER;
+    }
+
+    /* finally, check separator */
+    if (value1->separator < value2->separator) {
+        return OPAL_VALUE2_GREATER;
+    }
+    if (value2->separator < value1->separator) {
+        return OPAL_VALUE1_GREATER;
+    }
+    return OPAL_EQUAL;
+}

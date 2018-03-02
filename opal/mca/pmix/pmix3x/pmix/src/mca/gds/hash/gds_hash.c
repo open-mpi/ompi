@@ -333,7 +333,8 @@ static pmix_status_t store_map(pmix_hash_table_t *ht,
     }
 
     /* store the comma-delimited list of nodes hosting
-     * procs in this nspace */
+     * procs in this nspace in case someone using PMIx v2
+     * requests it */
     kp2 = PMIX_NEW(pmix_kval_t);
     kp2->key = strdup(PMIX_NODE_LIST);
     kp2->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
@@ -397,6 +398,19 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
     ht = &trk->internal;
     for (n=0; n < ninfo; n++) {
         if (0 == strcmp(info[n].key, PMIX_NODE_MAP)) {
+            /* store the node map itself since that is
+             * what v3 uses */
+            kp2 = PMIX_NEW(pmix_kval_t);
+            kp2->key = strdup(PMIX_NODE_MAP);
+            kp2->value = (pmix_value_t*)malloc(sizeof(pmix_value_t));
+            kp2->value->type = PMIX_STRING;
+            kp2->value->data.string = strdup(info[n].value.data.string);
+            if (PMIX_SUCCESS != (rc = pmix_hash_store(ht, PMIX_RANK_WILDCARD, kp2))) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(kp2);
+                return rc;
+            }
+
             /* parse the regex to get the argv array of node names */
             if (PMIX_SUCCESS != (rc = pmix_preg.parse_nodes(info[n].value.data.string, &nodes))) {
                 PMIX_ERROR_LOG(rc);

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,6 +63,7 @@ ORTE_DECLSPEC void orte_plm_base_daemons_launched(int fd, short args, void *cbda
 ORTE_DECLSPEC void orte_plm_base_vm_ready(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_mapping_complete(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_launch_apps(int fd, short args, void *cbdata);
+ORTE_DECLSPEC void orte_plm_base_send_launch_msg(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_post_launch(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_registered(int fd, short args, void *cbdata);
 

@@ -800,14 +800,16 @@ static int setup_fork(orte_job_t *jdata,
                       orte_app_context_t *app)
 {
     int i;
-    char *param;
+    char *param, *p2, *saveptr;
     bool oversubscribed;
     orte_node_t *node;
     char **envcpy, **nps, **firstranks;
     char *npstring, *firstrankstring;
     char *num_app_ctx;
     bool takeus = false;
+    bool exists;
     orte_app_context_t* tmp_app;
+    orte_attribute_t *attr;
 
     opal_output_verbose(1, orte_schizo_base_framework.framework_output,
                         "%s schizo:ompi: setup_fork",
@@ -1050,6 +1052,132 @@ static int setup_fork(orte_job_t *jdata,
     free(num_app_ctx);
     free(firstrankstring);
     free(npstring);
+
+    /* now process any envar attributes - we begin with the job-level
+     * ones as the app-specific ones can override them. We have to
+     * process them in the order they were given to ensure we wind
+     * up in the desired final state */
+    OPAL_LIST_FOREACH(attr, &jdata->attributes, orte_attribute_t) {
+        if (ORTE_JOB_SET_ENVAR == attr->key) {
+            opal_setenv(attr->data.envar.envar, attr->data.envar.value, true, &app->env);
+        } else if (ORTE_JOB_ADD_ENVAR == attr->key) {
+            opal_setenv(attr->data.envar.envar, attr->data.envar.value, false, &app->env);
+        } else if (ORTE_JOB_UNSET_ENVAR == attr->key) {
+            opal_unsetenv(attr->data.string, &app->env);
+        } else if (ORTE_JOB_PREPEND_ENVAR == attr->key) {
+            /* see if the envar already exists */
+            exists = false;
+            for (i=0; NULL != app->env[i]; i++) {
+                saveptr = strchr(app->env[i], '=');   // cannot be NULL
+                *saveptr = '\0';
+                if (0 == strcmp(app->env[i], attr->data.envar.envar)) {
+                    /* we have the var - prepend it */
+                    param = saveptr;
+                    ++param;  // move past where the '=' sign was
+                    (void)asprintf(&p2, "%s%c%s", attr->data.envar.value,
+                                   attr->data.envar.separator, param);
+                    *saveptr = '=';  // restore the current envar setting
+                    opal_setenv(attr->data.envar.envar, p2, true, &app->env);
+                    free(p2);
+                    exists = true;
+                    break;
+                } else {
+                    *saveptr = '=';  // restore the current envar setting
+                }
+            }
+            if (!exists) {
+                /* just insert it */
+                opal_setenv(attr->data.envar.envar, attr->data.envar.value, true, &app->env);
+            }
+        } else if (ORTE_JOB_APPEND_ENVAR == attr->key) {
+            /* see if the envar already exists */
+            exists = false;
+            for (i=0; NULL != app->env[i]; i++) {
+                saveptr = strchr(app->env[i], '=');   // cannot be NULL
+                *saveptr = '\0';
+                if (0 == strcmp(app->env[i], attr->data.envar.envar)) {
+                    /* we have the var - prepend it */
+                    param = saveptr;
+                    ++param;  // move past where the '=' sign was
+                    (void)asprintf(&p2, "%s%c%s", param, attr->data.envar.separator,
+                                   attr->data.envar.value);
+                    *saveptr = '=';  // restore the current envar setting
+                    opal_setenv(attr->data.envar.envar, p2, true, &app->env);
+                    free(p2);
+                    exists = true;
+                    break;
+                } else {
+                    *saveptr = '=';  // restore the current envar setting
+                }
+            }
+            if (!exists) {
+                /* just insert it */
+                opal_setenv(attr->data.envar.envar, attr->data.envar.value, true, &app->env);
+            }
+        }
+    }
+
+    /* now do the same thing for any app-level attributes */
+    OPAL_LIST_FOREACH(attr, &app->attributes, orte_attribute_t) {
+        if (ORTE_APP_SET_ENVAR == attr->key) {
+            opal_setenv(attr->data.envar.envar, attr->data.envar.value, true, &app->env);
+        } else if (ORTE_APP_ADD_ENVAR == attr->key) {
+            opal_setenv(attr->data.envar.envar, attr->data.envar.value, false, &app->env);
+        } else if (ORTE_APP_UNSET_ENVAR == attr->key) {
+            opal_unsetenv(attr->data.string, &app->env);
+        } else if (ORTE_APP_PREPEND_ENVAR == attr->key) {
+            /* see if the envar already exists */
+            exists = false;
+            for (i=0; NULL != app->env[i]; i++) {
+                saveptr = strchr(app->env[i], '=');   // cannot be NULL
+                *saveptr = '\0';
+                if (0 == strcmp(app->env[i], attr->data.envar.envar)) {
+                    /* we have the var - prepend it */
+                    param = saveptr;
+                    ++param;  // move past where the '=' sign was
+                    (void)asprintf(&p2, "%s%c%s", attr->data.envar.value,
+                                   attr->data.envar.separator, param);
+                    *saveptr = '=';  // restore the current envar setting
+                    opal_setenv(attr->data.envar.envar, p2, true, &app->env);
+                    free(p2);
+                    exists = true;
+                    break;
+                } else {
+                    *saveptr = '=';  // restore the current envar setting
+                }
+            }
+            if (!exists) {
+                /* just insert it */
+                opal_setenv(attr->data.envar.envar, attr->data.envar.value, true, &app->env);
+            }
+        } else if (ORTE_APP_APPEND_ENVAR == attr->key) {
+            /* see if the envar already exists */
+            exists = false;
+            for (i=0; NULL != app->env[i]; i++) {
+                saveptr = strchr(app->env[i], '=');   // cannot be NULL
+                *saveptr = '\0';
+                if (0 == strcmp(app->env[i], attr->data.envar.envar)) {
+                    /* we have the var - prepend it */
+                    param = saveptr;
+                    ++param;  // move past where the '=' sign was
+                    (void)asprintf(&p2, "%s%c%s", param, attr->data.envar.separator,
+                                   attr->data.envar.value);
+                    *saveptr = '=';  // restore the current envar setting
+                    opal_setenv(attr->data.envar.envar, p2, true, &app->env);
+                    free(p2);
+                    exists = true;
+                    break;
+                } else {
+                    *saveptr = '=';  // restore the current envar setting
+                }
+            }
+            if (!exists) {
+                /* just insert it */
+                opal_setenv(attr->data.envar.envar, attr->data.envar.value, true, &app->env);
+            }
+        }
+    }
+
     return ORTE_SUCCESS;
 }
 

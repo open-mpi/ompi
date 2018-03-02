@@ -1014,6 +1014,13 @@ int pmix_bfrops_base_print_status(char **output, char *prefix,
             rc = asprintf(output, "%sPMIX_VALUE: Data type: DATA_ARRAY\tARRAY SIZE: %ld",
                           prefx, (long)src->data.darray->size);
             break;
+        case PMIX_ENVAR:
+            rc = asprintf(output, "%sPMIX_VALUE: Data type: PMIX_ENVAR\tName: %s\tValue: %s\tSeparator: %c",
+                          prefx, (NULL == src->data.envar.envar) ? "NULL" : src->data.envar.envar,
+                          (NULL == src->data.envar.value) ? "NULL" : src->data.envar.value,
+                          src->data.envar.separator);
+            break;
+
         /**** DEPRECATED ****/
         case PMIX_INFO_ARRAY:
             rc = asprintf(output, "%sPMIX_VALUE: Data type: INFO_ARRAY\tARRAY SIZE: %ld",
@@ -1625,6 +1632,66 @@ pmix_status_t pmix_bfrops_base_print_alloc_directive(char **output, char *prefix
 
     ret = asprintf(output, "%sData type: PMIX_ALLOC_DIRECTIVE\tValue: %s",
                    prefx, PMIx_Alloc_directive_string(*src));
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    if (0 > ret) {
+        return PMIX_ERR_OUT_OF_RESOURCE;
+    } else {
+        return PMIX_SUCCESS;
+    }
+}
+
+pmix_status_t pmix_bfrops_base_print_iof_channel(char **output, char *prefix,
+                                                 pmix_iof_channel_t *src,
+                                                 pmix_data_type_t type)
+{
+    char *prefx;
+    int ret;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) {
+        if (0 > asprintf(&prefx, " ")) {
+            return PMIX_ERR_NOMEM;
+        }
+    } else {
+        prefx = prefix;
+    }
+
+    ret = asprintf(output, "%sData type: PMIX_IOF_CHANNEL\tValue: %s",
+                   prefx, PMIx_IOF_channel_string(*src));
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    if (0 > ret) {
+        return PMIX_ERR_OUT_OF_RESOURCE;
+    } else {
+        return PMIX_SUCCESS;
+    }
+}
+
+pmix_status_t pmix_bfrops_base_print_envar(char **output, char *prefix,
+                                           pmix_envar_t *src,
+                                           pmix_data_type_t type)
+{
+    char *prefx;
+    int ret;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) {
+        if (0 > asprintf(&prefx, " ")) {
+            return PMIX_ERR_NOMEM;
+        }
+    } else {
+        prefx = prefix;
+    }
+
+    ret = asprintf(output, "%sData type: PMIX_ENVAR\tName: %s\tValue: %s\tSeparator: %c",
+                   prefx, (NULL == src->envar) ? "NULL" : src->envar,
+                   (NULL == src->value) ? "NULL" : src->value,
+                   ('\0' == src->separator) ? ' ' : src->separator);
     if (prefx != prefix) {
         free(prefx);
     }

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -338,6 +338,16 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
     case OPAL_NAME:
         memcpy(&p->data.name, &src->data.name, sizeof(opal_process_name_t));
         break;
+    case OPAL_ENVAR:
+        OBJ_CONSTRUCT(&p->data.envar, opal_envar_t);
+        if (NULL != src->data.envar.envar) {
+            p->data.envar.envar = strdup(src->data.envar.envar);
+        }
+        if (NULL != src->data.envar.value) {
+            p->data.envar.value = strdup(src->data.envar.value);
+        }
+        p->data.envar.separator = src->data.envar.separator;
+        break;
     default:
         opal_output(0, "COPY-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
         return OPAL_ERROR;
@@ -405,6 +415,28 @@ int opal_dss_copy_vpid(opal_vpid_t **dest, opal_vpid_t *src, opal_data_type_t ty
     }
 
     *val = *src;
+    *dest = val;
+
+    return OPAL_SUCCESS;
+}
+
+int opal_dss_copy_envar(opal_envar_t **dest, opal_envar_t *src, opal_data_type_t type)
+{
+    opal_envar_t *val;
+
+    val = OBJ_NEW(opal_envar_t);
+    if (NULL == val) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (NULL != src->envar) {
+        val->envar = strdup(src->envar);
+    }
+    if (NULL != src->value) {
+        val->value = strdup(src->value);
+    }
+    val->separator = src->separator;
     *dest = val;
 
     return OPAL_SUCCESS;

@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
@@ -305,6 +305,10 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_MODEL_DECLARED:
         retval = "Model declared";
         break;
+    case OPAL_PMIX_LAUNCH_DIRECTIVE:
+        retval = "Launch directive";
+        break;
+
     default:
         retval = "UNRECOGNIZED";
     }

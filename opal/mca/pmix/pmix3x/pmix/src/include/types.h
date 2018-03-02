@@ -244,6 +244,8 @@ typedef struct event pmix_event_t;
 
 #define pmix_event_assign(x, b, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
+#define pmix_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+
 #define pmix_event_add(ev, tv) event_add((ev), (tv))
 
 #define pmix_event_del(ev) event_del((ev))
@@ -264,5 +266,6 @@ typedef struct event pmix_event_t;
 
 #define pmix_event_evtimer_del(x) pmix_event_del((x))
 
+#define pmix_event_signal_set(b, x, fd, cb, arg) event_assign((x), (b), (fd), EV_SIGNAL|EV_PERSIST, (event_callback_fn) (cb), (arg))
 
 #endif /* PMIX_TYPES_H */

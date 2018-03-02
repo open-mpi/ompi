@@ -109,6 +109,7 @@ typedef struct {
     opal_pmix_spawn_cbfunc_t spcbfunc;
     opal_pmix_evhandler_reg_cbfunc_t evregcbfunc;
     opal_pmix_info_cbfunc_t qcbfunc;
+    opal_pmix_setup_application_cbfunc_t setupcbfunc;
     void *cbdata;
 } pmix3x_opcaddy_t;
 OBJ_CLASS_DECLARATION(pmix3x_opcaddy_t);
@@ -297,11 +298,16 @@ OPAL_MODULE_DECLSPEC int pmix3x_server_notify_event(int status,
                                                     opal_list_t *info,
                                                     opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-#if 0
 OPAL_MODULE_DECLSPEC int pmix3x_server_iof_push(const opal_process_name_t *source,
                                                 opal_pmix_iof_channel_t channel,
                                                 unsigned char *data, size_t nbytes);
-#endif
+
+OPAL_MODULE_DECLSPEC int pmix3x_server_setup_application(opal_jobid_t jobid,
+                                                         opal_list_t *info,
+                                                         opal_pmix_setup_application_cbfunc_t cbfunc, void *cbdata);
+OPAL_MODULE_DECLSPEC int pmix3x_server_setup_local_support(opal_jobid_t jobid,
+                                                           opal_list_t *info,
+                                                           opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /****  COMPONENT UTILITY FUNCTIONS  ****/
 OPAL_MODULE_DECLSPEC int opal_pmix_pmix3x_check_evars(void);
@@ -335,6 +341,11 @@ OPAL_MODULE_DECLSPEC int pmix3x_value_unload(opal_value_t *kv,
 OPAL_MODULE_DECLSPEC opal_pmix_alloc_directive_t pmix3x_convert_allocdir(pmix_alloc_directive_t dir);
 
 OPAL_MODULE_DECLSPEC char* pmix3x_convert_jobid(opal_jobid_t jobid);
+
+OPAL_MODULE_DECLSPEC int pmix3x_convert_state(pmix_proc_state_t state);
+
+OPAL_MODULE_DECLSPEC pmix_proc_state_t pmix3x_convert_opalstate(int state);
+
 
 END_C_DECLS
 

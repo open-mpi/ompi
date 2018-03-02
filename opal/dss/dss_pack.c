@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -836,6 +836,11 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
                 return ret;
             }
             break;
+        case OPAL_ENVAR:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.envar, 1, OPAL_ENVAR))) {
+                return ret;
+            }
+            break;
         default:
             opal_output(0, "PACK-OPAL-VALUE: UNSUPPORTED TYPE %d FOR KEY %s", (int)ptr[i]->type, ptr[i]->key);
             return OPAL_ERROR;
@@ -980,4 +985,25 @@ int opal_dss_pack_status(opal_buffer_t *buffer, const void *src,
     }
 
     return ret;
+}
+
+int opal_dss_pack_envar(opal_buffer_t *buffer, const void *src,
+                        int32_t num_vals, opal_data_type_t type)
+{
+    int ret;
+    int32_t n;
+    opal_envar_t *ptr = (opal_envar_t*)src;
+
+    for (n=0; n < num_vals; n++) {
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &ptr[n].envar, 1, OPAL_STRING))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &ptr[n].value, 1, OPAL_STRING))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_byte(buffer, &ptr[n].separator, 1, OPAL_BYTE))) {
+            return ret;
+        }
+    }
+    return OPAL_SUCCESS;
 }

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -231,6 +231,26 @@ OBJ_CLASS_INSTANCE(opal_node_stats_t, opal_object_t,
                    opal_node_stats_construct,
                    opal_node_stats_destruct);
 
+
+static void opal_envar_construct(opal_envar_t *obj)
+{
+    obj->envar = NULL;
+    obj->value = NULL;
+    obj->separator = '\0';
+}
+static void opal_envar_destruct(opal_envar_t *obj)
+{
+    if (NULL != obj->envar) {
+        free(obj->envar);
+    }
+    if (NULL != obj->value) {
+        free(obj->value);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_envar_t,
+                   opal_list_item_t,
+                   opal_envar_construct,
+                   opal_envar_destruct);
 
 int opal_dss_register_vars (void)
 {
@@ -622,6 +642,17 @@ int opal_dss_open(void)
                                           (opal_dss_print_fn_t)opal_dss_print_status,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_STATUS", &tmp))) {
+        return rc;
+    }
+
+    tmp = OPAL_ENVAR;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_envar,
+                                          opal_dss_unpack_envar,
+                                          (opal_dss_copy_fn_t)opal_dss_copy_envar,
+                                          (opal_dss_compare_fn_t)opal_dss_compare_envar,
+                                          (opal_dss_print_fn_t)opal_dss_print_envar,
+                                          OPAL_DSS_UNSTRUCTURED,
+                                          "OPAL_ENVAR", &tmp))) {
         return rc;
     }
     /* All done */

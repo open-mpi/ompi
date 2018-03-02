@@ -45,7 +45,7 @@
 
 /* Instantiate the global vars */
 pmix_pnet_globals_t pmix_pnet_globals = {{{0}}};
-pmix_pnet_module_t pmix_pnet = {
+pmix_pnet_API_module_t pmix_pnet = {
     .setup_app = pmix_pnet_base_setup_app,
     .setup_local_network = pmix_pnet_base_setup_local_network,
     .setup_fork = pmix_pnet_base_setup_fork,

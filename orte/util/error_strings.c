@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -253,6 +253,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "VM READY";
     case ORTE_JOB_STATE_LAUNCH_APPS:
         return "PENDING APP LAUNCH";
+    case ORTE_JOB_STATE_SEND_LAUNCH_MSG:
+        return "SENDING LAUNCH MSG";
     case ORTE_JOB_STATE_RUNNING:
         return "RUNNING";
     case ORTE_JOB_STATE_SUSPENDED:

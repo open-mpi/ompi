@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -837,6 +837,12 @@ int orte_dt_pack_attr(opal_buffer_t *buffer, const void *src, int32_t num_vals,
                 return ret;
             }
             break;
+        case OPAL_ENVAR:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.envar, 1, OPAL_ENVAR))) {
+                return ret;
+            }
+            break;
+
         default:
             opal_output(0, "PACK-ORTE-ATTR: UNSUPPORTED TYPE %d", (int)ptr[i]->type);
             return OPAL_ERROR;

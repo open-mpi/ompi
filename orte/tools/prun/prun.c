@@ -89,6 +89,24 @@
 /* ensure I can behave like a daemon */
 #include "prun.h"
 
+typedef struct {
+    opal_object_t super;
+    opal_pmix_lock_t lock;
+    opal_list_t info;
+} myinfo_t;
+static void mcon(myinfo_t *p)
+{
+    OPAL_PMIX_CONSTRUCT_LOCK(&p->lock);
+    OBJ_CONSTRUCT(&p->info, opal_list_t);
+}
+static void mdes(myinfo_t *p)
+{
+    OPAL_PMIX_DESTRUCT_LOCK(&p->lock);
+    OPAL_LIST_DESTRUCT(&p->info);
+}
+static OBJ_CLASS_INSTANCE(myinfo_t, opal_object_t,
+                          mcon, mdes);
+
 static struct {
     bool terminate_dvm;
     bool system_server_first;
@@ -99,6 +117,7 @@ static struct {
 static opal_list_t job_info;
 static volatile bool active = false;
 static orte_jobid_t myjobid = ORTE_JOBID_INVALID;
+static myinfo_t myinfo;
 
 static int create_app(int argc, char* argv[],
                       opal_list_t *jdata,
@@ -209,17 +228,70 @@ static void evhandler(int status,
     }
 }
 
+typedef struct {
+    opal_pmix_lock_t lock;
+    opal_list_t list;
+} mylock_t;
+
+
+static void setupcbfunc(int status,
+                        opal_list_t *info,
+                        void *provided_cbdata,
+                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    mylock_t *mylock = (mylock_t*)provided_cbdata;
+    opal_value_t *kv;
+
+    if (NULL != info) {
+        /* cycle across the provided info */
+        while (NULL != (kv = (opal_value_t*)opal_list_remove_first(info))) {
+            opal_list_append(&mylock->list, &kv->super);
+        }
+    }
+
+    /* release the caller */
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, cbdata);
+    }
+
+    OPAL_PMIX_WAKEUP_THREAD(&mylock->lock);
+}
+
+static void launchhandler(int status,
+                          const opal_process_name_t *source,
+                          opal_list_t *info, opal_list_t *results,
+                          opal_pmix_notification_complete_fn_t cbfunc,
+                          void *cbdata)
+{
+    opal_value_t *p;
+
+    /* the info list will include the launch directives, so
+     * transfer those to the myinfo_t for return to the main thread */
+    while (NULL != (p = (opal_value_t*)opal_list_remove_first(info))) {
+        opal_list_append(&myinfo.info, &p->super);
+    }
+
+    /* we _always_ have to execute the evhandler callback or
+     * else the event progress engine will hang */
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, NULL, NULL, NULL, cbdata);
+    }
+
+    /* now release the thread */
+    OPAL_PMIX_WAKEUP_THREAD(&myinfo.lock);
+}
 
 int prun(int argc, char *argv[])
 {
     int rc, i;
     char *param;
     opal_pmix_lock_t lock;
-    opal_list_t apps;
+    opal_list_t apps, *lt;
     opal_pmix_app_t *app;
-    opal_value_t *val;
-    opal_list_t info;
+    opal_value_t *val, *kv, *kv2;
+    opal_list_t info, codes;
     struct timespec tp = {0, 100000};
+    mylock_t mylock;
 
     /* init the globals */
     memset(&orte_cmd_options, 0, sizeof(orte_cmd_options));
@@ -477,7 +549,17 @@ int prun(int argc, char *argv[])
         val = OBJ_NEW(opal_value_t);
         val->key = strdup(OPAL_PMIX_OUTPUT_TO_FILE);
         val->type = OPAL_STRING;
-        val->data.string = strdup(orte_cmd_options.output_filename);
+        /* if the given filename isn't an absolute path, then
+         * convert it to one so the name will be relative to
+         * the directory where prun was given as that is what
+         * the user will have seen */
+        if (!opal_path_is_absolute(orte_cmd_options.output_filename)) {
+            char cwd[OPAL_PATH_MAX];
+            getcwd(cwd, sizeof(cwd));
+            val->data.string = opal_os_path(false, cwd, orte_cmd_options.output_filename, NULL);
+        } else {
+            val->data.string = strdup(orte_cmd_options.output_filename);
+        }
         opal_list_append(&job_info, &val->super);
     }
     /* if we were asked to merge stderr to stdout, mark it so */
@@ -631,6 +713,91 @@ int prun(int argc, char *argv[])
         val->type = OPAL_BOOL;
         val->data.flag = true;
         opal_list_append(&job_info, &val->super);
+    }
+
+    /* pickup any relevant envars */
+    if (NULL != opal_pmix.server_setup_application) {
+        OBJ_CONSTRUCT(&info, opal_list_t);
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup(OPAL_PMIX_SETUP_APP_ENVARS);
+        val->type = OPAL_BOOL;
+        val->data.flag = true;
+        opal_list_append(&info, &val->super);
+
+        OPAL_PMIX_CONSTRUCT_LOCK(&mylock.lock);
+        OBJ_CONSTRUCT(&mylock.list, opal_list_t);
+        rc = opal_pmix.server_setup_application(ORTE_PROC_MY_NAME->jobid,
+                                                &info, setupcbfunc, &mylock);
+        if (OPAL_SUCCESS != rc) {
+            OPAL_LIST_DESTRUCT(&info);
+            OPAL_PMIX_DESTRUCT_LOCK(&mylock.lock);
+            OBJ_DESTRUCT(&mylock.list);
+            goto DONE;
+        }
+        OPAL_PMIX_WAIT_THREAD(&mylock.lock);
+        OPAL_PMIX_DESTRUCT_LOCK(&mylock.lock);
+        /* transfer any returned ENVARS to the job_info */
+        while (NULL != (val = (opal_value_t*)opal_list_remove_first(&mylock.list))) {
+            if (0 == strcmp(val->key, OPAL_PMIX_SET_ENVAR) ||
+                0 == strcmp(val->key, OPAL_PMIX_ADD_ENVAR) ||
+                0 == strcmp(val->key, OPAL_PMIX_UNSET_ENVAR) ||
+                0 == strcmp(val->key, OPAL_PMIX_PREPEND_ENVAR) ||
+                0 == strcmp(val->key, OPAL_PMIX_APPEND_ENVAR)) {
+                opal_list_append(&job_info, &val->super);
+            } else {
+                OBJ_RELEASE(val);
+            }
+        }
+        OPAL_LIST_DESTRUCT(&mylock.list);
+    }
+
+    /* if we were launched by a tool wanting to direct our
+     * operation, then we need to pause here and give it
+     * a chance to tell us what we need to do */
+    if (NULL != (param = getenv("PMIX_LAUNCHER_PAUSE_FOR_TOOL")) &&
+        0 == strcmp(param, "1")) {
+        /* register for the PMIX_LAUNCH_DIRECTIVE event */
+        OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+        OBJ_CONSTRUCT(&codes, opal_list_t);
+        val = OBJ_NEW(opal_value_t);
+        val->key = strdup("foo");
+        val->type = OPAL_INT;
+        val->data.integer = OPAL_PMIX_LAUNCH_DIRECTIVE;
+        opal_list_append(&codes, &val->super);
+        /* setup the myinfo object to capture the returned
+         * values - must do so prior to registering in case
+         * the event has already arrived */
+        OBJ_CONSTRUCT(&myinfo, myinfo_t);
+        /* go ahead and register */
+        opal_pmix.register_evhandler(&codes, NULL, launchhandler, regcbfunc, &lock);
+        OPAL_PMIX_WAIT_THREAD(&lock);
+        OPAL_PMIX_DESTRUCT_LOCK(&lock);
+        OPAL_LIST_DESTRUCT(&codes);
+        /* now wait for the launch directives to arrive */
+        OPAL_PMIX_WAIT_THREAD(&myinfo.lock);
+        /* process the returned directives */
+        OPAL_LIST_FOREACH(val, &myinfo.info, opal_value_t) {
+            if (0 == strcmp(val->key, OPAL_PMIX_DEBUG_JOB_DIRECTIVES)) {
+                /* there will be a pointer to a list containing the directives */
+                lt = (opal_list_t*)val->data.ptr;
+                while (NULL != (kv = (opal_value_t*)opal_list_remove_first(lt))) {
+                    opal_output(0, "JOB DIRECTIVE: %s", kv->key);
+                    opal_list_append(&job_info, &kv->super);
+                }
+            } else if (0 == strcmp(val->key, OPAL_PMIX_DEBUG_APP_DIRECTIVES)) {
+                /* there will be a pointer to a list containing the directives */
+                lt = (opal_list_t*)val->data.ptr;
+                OPAL_LIST_FOREACH(kv, lt, opal_value_t) {
+                    opal_output(0, "APP DIRECTIVE: %s", kv->key);
+                    OPAL_LIST_FOREACH(app, &apps, opal_pmix_app_t) {
+                        /* the value can only be on one list at a time, so replicate it */
+                        kv2 = OBJ_NEW(opal_value_t);
+                        opal_value_xfer(kv2, kv);
+                        opal_list_append(&app->info, &kv2->super);
+                    }
+                }
+            }
+        }
     }
 
     if (OPAL_SUCCESS != (rc = opal_pmix.spawn(&job_info, &apps, &myjobid))) {

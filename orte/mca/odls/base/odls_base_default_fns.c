@@ -56,7 +56,7 @@
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/pstat/pstat.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -100,6 +100,39 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
+static void setup_cbfunc(int status,
+                         opal_list_t *info,
+                         void *provided_cbdata,
+                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    orte_job_t *jdata = (orte_job_t*)provided_cbdata;
+    opal_value_t *kv;
+    opal_buffer_t cache, *bptr;
+    int rc;
+
+    OBJ_CONSTRUCT(&cache, opal_buffer_t);
+    if (NULL != info) {
+        /* cycle across the provided info */
+        OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(&cache, &kv, 1, OPAL_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+            }
+        }
+    }
+    /* add the results */
+    bptr = &cache;
+    opal_dss.pack(&jdata->launch_msg, &bptr, 1, OPAL_BUFFER);
+    OBJ_DESTRUCT(&cache);
+
+    /* release our caller */
+    if (NULL != cbfunc) {
+        cbfunc(rc, cbdata);
+    }
+
+    /* move to next stage */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SEND_LAUNCH_MSG);
+
+}
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -350,7 +383,18 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         free(nidmap);
     }
 
-    /* compute and pack the regex of ppn */
+    /* get any application prep info */
+    if (NULL != opal_pmix.server_setup_application) {
+        /* we don't want to block here because it could
+         * take some indeterminate time to get the info */
+        if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_application(jdata->jobid, NULL, setup_cbfunc, jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    /* move to next stage */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SEND_LAUNCH_MSG);
 
     return ORTE_SUCCESS;
 }
@@ -360,6 +404,12 @@ static void fm_release(void *cbdata)
     opal_buffer_t *bptr = (opal_buffer_t*)cbdata;
 
     OBJ_RELEASE(bptr);
+}
+
+static void ls_cbunc(int status, void *cbdata)
+{
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+    OPAL_PMIX_WAKEUP_THREAD(lock);
 }
 
 int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
@@ -376,6 +426,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     orte_app_context_t *app;
     int8_t flag;
     char *ppn;
+    opal_value_t *kv;
+    opal_list_t local_support, cache;
+    opal_pmix_lock_t lock;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                          "%s odls:constructing child list",
@@ -385,6 +438,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     *job = ORTE_JOBID_INVALID;
     /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+    OBJ_CONSTRUCT(&local_support, opal_list_t);
 
     /* unpack the flag to see if new daemons were launched */
     cnt=1;
@@ -504,17 +559,18 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
     }
 
+    /* extract the ppn regex */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ppn, &cnt, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+
     /* if the job is fully described, then mpirun will have computed
      * and sent us the complete array of procs in the orte_job_t, so we
      * don't need to do anything more here */
     if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
         if (!ORTE_PROC_IS_HNP) {
-            /* extract the ppn regex */
-            cnt = 1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &ppn, &cnt, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
-            }
             /* populate the node array of the job map and the proc array of
              * the job object so we know how many procs are on each node */
             if (ORTE_SUCCESS != (rc = orte_regx.parse_ppn(jdata, ppn))) {
@@ -522,10 +578,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 free(ppn);
                 goto REPORT_ERROR;
             }
-            free(ppn);
             /* now assign locations to the procs */
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
                 ORTE_ERROR_LOG(rc);
+                free(ppn);
                 goto REPORT_ERROR;
             }
         }
@@ -533,13 +589,62 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
          * to the jdata->procs array */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
             ORTE_ERROR_LOG(rc);
+            free(ppn);
             goto REPORT_ERROR;
         }
         /* and finally, compute the local and node ranks */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
             ORTE_ERROR_LOG(rc);
+            free(ppn);
             goto REPORT_ERROR;
         }
+    }
+    free(ppn);
+
+    /* unpack the buffer containing any application setup info - there
+     * might not be any, so it isn't an error if we don't find things */
+    cnt=1;
+    rc = opal_dss.unpack(buffer, &bptr, &cnt, OPAL_BUFFER);
+    if (OPAL_SUCCESS == rc) {
+        /* there was setup data - process it */
+        cnt=1;
+        OBJ_CONSTRUCT(&cache, opal_list_t);
+        while (ORTE_SUCCESS == (rc = opal_dss.unpack(bptr, &kv, &cnt, OPAL_VALUE))) {
+            /* if this is an envar operation, cache it in reverse order
+             * so that the order the user provided is preserved */
+            if (0 == strcmp(kv->key, OPAL_PMIX_SET_ENVAR) ||
+                0 == strcmp(kv->key, OPAL_PMIX_ADD_ENVAR) ||
+                0 == strcmp(kv->key, OPAL_PMIX_UNSET_ENVAR) ||
+                0 == strcmp(kv->key, OPAL_PMIX_PREPEND_ENVAR) ||
+                0 == strcmp(kv->key, OPAL_PMIX_APPEND_ENVAR)) {
+                opal_list_prepend(&cache, &kv->super);
+            } else {
+                /* need to pass it to pmix.setup_local_support */
+                opal_list_append(&local_support, &kv->super);
+            }
+        }
+        OBJ_RELEASE(bptr);
+        /* add any cache'd values  to the front of the job attributes  */
+        while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&cache))) {
+            if (0 == strcmp(kv->key, OPAL_PMIX_SET_ENVAR)) {
+                orte_prepend_attribute(&jdata->attributes, ORTE_JOB_SET_ENVAR,
+                                       ORTE_ATTR_GLOBAL, &kv->data.envar, OPAL_ENVAR);
+            } else if (0 == strcmp(kv->key, OPAL_PMIX_ADD_ENVAR)) {
+                orte_prepend_attribute(&jdata->attributes, ORTE_JOB_ADD_ENVAR,
+                                       ORTE_ATTR_GLOBAL, &kv->data.envar, OPAL_ENVAR);
+            } else if (0 == strcmp(kv->key, OPAL_PMIX_UNSET_ENVAR)) {
+                orte_prepend_attribute(&jdata->attributes, ORTE_JOB_UNSET_ENVAR,
+                                       ORTE_ATTR_GLOBAL, kv->data.string, OPAL_STRING);
+            } else if (0 == strcmp(kv->key, OPAL_PMIX_PREPEND_ENVAR)) {
+                orte_prepend_attribute(&jdata->attributes, ORTE_JOB_PREPEND_ENVAR,
+                                       ORTE_ATTR_GLOBAL, &kv->data.envar, OPAL_ENVAR);
+            } else if (0 == strcmp(kv->key, OPAL_PMIX_APPEND_ENVAR)) {
+                orte_prepend_attribute(&jdata->attributes, ORTE_JOB_APPEND_ENVAR,
+                                       ORTE_ATTR_GLOBAL, &kv->data.envar, OPAL_ENVAR);
+            }
+            OBJ_RELEASE(kv);
+        }
+        OPAL_LIST_DESTRUCT(&cache);
     }
 
     /* now that the node array in the job map and jdata are completely filled out,.
@@ -636,6 +741,27 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         orte_rmaps_base_display_map(jdata);
     }
 
+    /* register this job with the PMIx server - need to wait until after we
+     * have computed the #local_procs before calling the function */
+    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, false))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+
+    /* if we have local support setup info, then execute it here - we
+     * have to do so AFTER we register the nspace so the PMIx server
+     * has the nspace info it needs */
+    if (0 < opal_list_get_size(&local_support) &&
+        NULL != opal_pmix.server_setup_local_support) {
+        if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_local_support(jdata->jobid, &local_support,
+                                                                       ls_cbunc, &lock))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
+    } else {
+        lock.active = false;  // we won't get a callback
+    }
+
     /* if we have a file map, then we need to load it */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FILE_MAPS, (void**)&bptr, OPAL_BUFFER)) {
         if (NULL != orte_dfs.load_file_maps) {
@@ -648,13 +774,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     /* load any controls into the job */
     orte_rtc.assign(jdata);
 
-    /* register this job with the PMIx server - need to wait until after we
-     * have computed the #local_procs before calling the function */
-    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, false))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-
     /* spin up the spawn threads */
     orte_odls_base_start_threads(jdata);
 
@@ -663,9 +782,15 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
      * proc structures. For the HNP, the proc structs will
      * remain in the orte_job_t array */
 
+    /* wait here until the local support has been setup */
+    OPAL_PMIX_WAIT_THREAD(&lock);
+    OPAL_PMIX_DESTRUCT_LOCK(&lock);
+    OPAL_LIST_DESTRUCT(&local_support);
     return ORTE_SUCCESS;
 
   REPORT_ERROR:
+    OPAL_PMIX_DESTRUCT_LOCK(&lock);
+    OPAL_LIST_DESTRUCT(&local_support);
     /* we have to report an error back to the HNP so we don't just
      * hang. Although there shouldn't be any errors once this is
      * all debugged, it is still good practice to have a way

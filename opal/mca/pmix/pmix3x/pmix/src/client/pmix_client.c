@@ -75,6 +75,7 @@ static const char pmix_version_string[] = PMIX_VERSION;
 #include "src/mca/preg/preg.h"
 #include "src/mca/ptl/base/base.h"
 #include "src/include/pmix_globals.h"
+#include "src/common/pmix_iof.h"
 
 #include "pmix_client_ops.h"
 
@@ -342,6 +343,53 @@ static void _check_for_notify(pmix_info_t info[], size_t ninfo)
     }
 }
 
+static void client_iof_handler(struct pmix_peer_t *pr,
+                               pmix_ptl_hdr_t *hdr,
+                               pmix_buffer_t *buf, void *cbdata)
+{
+    pmix_peer_t *peer = (pmix_peer_t*)pr;
+    pmix_proc_t source;
+    pmix_iof_channel_t channel;
+    pmix_byte_object_t bo;
+    int32_t cnt;
+    pmix_status_t rc;
+
+    pmix_output_verbose(2, pmix_client_globals.iof_output,
+                        "recvd IOF");
+
+    /* if the buffer is empty, they are simply closing the channel */
+    if (0 == buf->bytes_used) {
+        return;
+    }
+
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &source, &cnt, PMIX_PROC);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &channel, &cnt, PMIX_IOF_CHANNEL);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    cnt = 1;
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &bo, &cnt, PMIX_BYTE_OBJECT);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return;
+    }
+    if (NULL != bo.bytes && 0 < bo.size) {
+        if (channel & PMIX_FWD_STDOUT_CHANNEL) {
+            pmix_iof_write_output(&source, channel, &bo, &pmix_client_globals.iof_stdout.wev);
+        } else {
+            pmix_iof_write_output(&source, channel, &bo, &pmix_client_globals.iof_stderr.wev);
+        }
+    }
+    PMIX_BYTE_OBJECT_DESTRUCT(&bo);
+}
+
 PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
                                     pmix_info_t info[], size_t ninfo)
 {
@@ -358,6 +406,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     pmix_lock_t reglock;
     size_t n;
     bool found;
+    pmix_ptl_posted_recv_t *rcv;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -394,6 +443,13 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return rc;
     }
+    /* setup the IO Forwarding recv */
+    rcv = PMIX_NEW(pmix_ptl_posted_recv_t);
+    rcv->tag = PMIX_PTL_TAG_IOF;
+    rcv->cbfunc = client_iof_handler;
+    /* add it to the end of the list of recvs */
+    pmix_list_append(&pmix_ptl_globals.posted_recvs, &rcv->super);
+
 
     /* setup the globals */
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
@@ -578,7 +634,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
-    /* lood for a debugger attach key */
+    /* look for a debugger attach key */
     (void)strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     wildcard.rank = PMIX_RANK_WILDCARD;
     PMIX_INFO_LOAD(&ginfo, PMIX_OPTIONAL, NULL, PMIX_BOOL);
@@ -587,6 +643,7 @@ PMIX_EXPORT pmix_status_t PMIx_Init(pmix_proc_t *proc,
         /* if the value was found, then we need to wait for debugger attach here */
         /* register for the debugger release notification */
         PMIX_CONSTRUCT_LOCK(&reglock);
+        PMIX_POST_OBJECT(&reglock);
         PMIx_Register_event_handler(&code, 1, NULL, 0,
                                     notification_fn, NULL, (void*)&reglock);
         /* wait for it to arrive */
@@ -1118,11 +1175,27 @@ static void _commitfn(int sd, short args, void *cbdata)
     return rc;
 }
 
+static void _resolve_peers(int sd, short args, void *cbdata)
+{
+    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
+    pmix_status_t rc;
+
+    cb->status = pmix_preg.resolve_peers(cb->key, cb->pname.nspace,
+                                         &cb->procs, &cb->nprocs);
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
+    PMIX_WAKEUP_THREAD(&cb->lock);
+}
+
 /* need to thread-shift this request */
 PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
                                              const char *nspace,
                                              pmix_proc_t **procs, size_t *nprocs)
 {
+    pmix_cb_t *cb;
+    pmix_status_t rc;
+    pmix_proc_t proc;
+
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -1130,16 +1203,71 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
-    /* set default */
-    *procs = NULL;
-    *nprocs = 0;
 
-    return pmix_preg.resolve_peers(nodename, nspace, procs, nprocs);
+    cb = PMIX_NEW(pmix_cb_t);
+    cb->key = (char*)nodename;
+    cb->pname.nspace = strdup(nspace);
+
+    PMIX_THREADSHIFT(cb, _resolve_peers);
+
+    /* wait for the result */
+    PMIX_WAIT_THREAD(&cb->lock);
+
+    /* if the nspace wasn't found, then we need to
+     * ask the server for that info */
+    if (PMIX_ERR_INVALID_NAMESPACE == cb->status) {
+        (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
+        proc.rank = PMIX_RANK_WILDCARD;
+        /* any key will suffice as it will bring down
+         * the entire data blob */
+        rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, NULL);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_RELEASE(cb);
+            return rc;
+        }
+        /* retry the fetch */
+        cb->lock.active = true;
+        PMIX_THREADSHIFT(cb, _resolve_peers);
+        PMIX_WAIT_THREAD(&cb->lock);
+    }
+    *procs = cb->procs;
+    *nprocs = cb->nprocs;
+
+    rc = cb->status;
+    PMIX_RELEASE(cb);
+    return rc;
+}
+
+static void _resolve_nodes(int fd, short args, void *cbdata)
+{
+    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
+    char *regex, **names;
+
+    /* get a regular expression describing the PMIX_NODE_MAP */
+    cb->status = pmix_preg.resolve_nodes(cb->pname.nspace, &regex);
+    if (PMIX_SUCCESS == cb->status) {
+        /* parse it into an argv array of names */
+        cb->status = pmix_preg.parse_nodes(regex, &names);
+        if (PMIX_SUCCESS == cb->status) {
+            /* assemble it into a comma-delimited list */
+            cb->key = pmix_argv_join(names, ',');
+            pmix_argv_free(names);
+        } else {
+            free(regex);
+        }
+    }
+    /* post the data so the receiving thread can acquire it */
+    PMIX_POST_OBJECT(cb);
+    PMIX_WAKEUP_THREAD(&cb->lock);
 }
 
 /* need to thread-shift this request */
 PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist)
 {
+    pmix_cb_t *cb;
+    pmix_status_t rc;
+    pmix_proc_t proc;
+
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -1147,8 +1275,35 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
-    /* set default */
-    *nodelist = NULL;
+    cb = PMIX_NEW(pmix_cb_t);
+    cb->pname.nspace = strdup(nspace);
 
-    return pmix_preg.resolve_nodes(nspace, nodelist);
+    PMIX_THREADSHIFT(cb, _resolve_nodes);
+
+    /* wait for the result */
+    PMIX_WAIT_THREAD(&cb->lock);
+
+    /* if the nspace wasn't found, then we need to
+     * ask the server for that info */
+    if (PMIX_ERR_INVALID_NAMESPACE == cb->status) {
+        (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
+        proc.rank = PMIX_RANK_WILDCARD;
+        /* any key will suffice as it will bring down
+         * the entire data blob */
+        rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, NULL);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_RELEASE(cb);
+            return rc;
+        }
+        /* retry the fetch */
+        cb->lock.active = true;
+        PMIX_THREADSHIFT(cb, _resolve_nodes);
+        PMIX_WAIT_THREAD(&cb->lock);
+    }
+    /* the string we want is in the key field */
+    *nodelist = cb->key;
+
+    rc = cb->status;
+    PMIX_RELEASE(cb);
+    return rc;
 }

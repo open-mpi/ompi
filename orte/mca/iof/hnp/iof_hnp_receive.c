@@ -250,9 +250,12 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
                  sink->name.vpid == origin.vpid)) {
                 /* send the data to the tool */
                 if (NULL != opal_pmix.server_iof_push) {
-                    rc = opal_pmix.server_iof_push(&proct->name, stream, data, numbytes);
-                    if (ORTE_SUCCESS != rc) {
-                        ORTE_ERROR_LOG(rc);
+                    /* don't pass along zero byte blobs */
+                    if (0 < numbytes) {
+                        rc = opal_pmix.server_iof_push(&proct->name, stream, data, numbytes);
+                        if (ORTE_SUCCESS != rc) {
+                            ORTE_ERROR_LOG(rc);
+                        }
                     }
                 } else {
                     orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &origin, stream, data, numbytes);

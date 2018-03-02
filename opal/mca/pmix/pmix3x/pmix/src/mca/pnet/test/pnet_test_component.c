@@ -31,24 +31,23 @@
 
 #include "src/util/argv.h"
 #include "src/mca/pnet/pnet.h"
-#include "pnet_opa.h"
+#include "pnet_test.h"
 
 static pmix_status_t component_open(void);
 static pmix_status_t component_close(void);
 static pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority);
-static pmix_status_t component_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-pmix_pnet_opa_component_t mca_pnet_opa_component = {
+pmix_pnet_test_component_t mca_pnet_test_component = {
     .super = {
         .base = {
             PMIX_PNET_BASE_VERSION_1_0_0,
 
             /* Component name and version */
-            .pmix_mca_component_name = "opa",
+            .pmix_mca_component_name = "test",
             PMIX_MCA_BASE_MAKE_VERSION(component,
                                        PMIX_MAJOR_VERSION,
                                        PMIX_MINOR_VERSION,
@@ -57,7 +56,6 @@ pmix_pnet_opa_component_t mca_pnet_opa_component = {
             /* Component open and close functions */
             .pmix_mca_open_component = component_open,
             .pmix_mca_close_component = component_close,
-            .pmix_mca_register_component_params = component_register,
             .pmix_mca_query_component = component_query,
         },
         .data = {
@@ -69,48 +67,30 @@ pmix_pnet_opa_component_t mca_pnet_opa_component = {
     .exclude = NULL
 };
 
-static char *includeparam;
-static char *excludeparam;
-
-static pmix_status_t component_register(void)
-{
-    pmix_mca_base_component_t *component = &mca_pnet_opa_component.super.base;
-
-    includeparam = "HFI_*,PSM2_*";
-    (void)pmix_mca_base_component_var_register(component, "include_envars",
-                                               "Comma-delimited list of envars to harvest (\'*\' and \'?\' supported)",
-                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                               PMIX_INFO_LVL_2,
-                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &includeparam);
-    if (NULL != includeparam) {
-        mca_pnet_opa_component.include = pmix_argv_split(includeparam, ',');
-    }
-
-    excludeparam = NULL;
-    (void)pmix_mca_base_component_var_register(component, "exclude_envars",
-                                               "Comma-delimited list of envars to exclude (\'*\' and \'?\' supported)",
-                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                               PMIX_INFO_LVL_2,
-                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &excludeparam);
-    if (NULL != excludeparam) {
-        mca_pnet_opa_component.exclude = pmix_argv_split(excludeparam, ',');
-    }
-
-    return PMIX_SUCCESS;
-}
-
 static pmix_status_t component_open(void)
 {
-    return PMIX_SUCCESS;
+    int index;
+    const pmix_mca_base_var_storage_t *value=NULL;
+
+    /* we only allow ourselves to be considered IF the user
+     * specifically requested so */
+    if (0 > (index = pmix_mca_base_var_find("pmix", "pnet", NULL, NULL))) {
+        return PMIX_ERROR;
+    }
+    pmix_mca_base_var_get_value(index, &value, NULL, NULL);
+    if (NULL != value && NULL != value->stringval && '\0' != value->stringval[0]) {
+        if (NULL != strstr(value->stringval, "test")) {
+            return PMIX_SUCCESS;
+        }
+    }
+    return PMIX_ERROR;
 }
 
 
 static pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority)
 {
-    *priority = 10;
-    *module = (pmix_mca_base_module_t *)&pmix_opa_module;
+    *priority = 0;
+    *module = (pmix_mca_base_module_t *)&pmix_test_module;
     return PMIX_SUCCESS;
 }
 

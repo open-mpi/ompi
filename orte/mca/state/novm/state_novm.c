@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,6 +80,7 @@ static orte_job_state_t launch_states[] = {
     ORTE_JOB_STATE_MAP_COMPLETE,
     ORTE_JOB_STATE_SYSTEM_PREP,
     ORTE_JOB_STATE_LAUNCH_APPS,
+    ORTE_JOB_STATE_SEND_LAUNCH_MSG,
     ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE,
     ORTE_JOB_STATE_RUNNING,
     ORTE_JOB_STATE_REGISTERED,
@@ -101,6 +102,7 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     map_complete,
     orte_plm_base_complete_setup,
     orte_plm_base_launch_apps,
+    orte_plm_base_send_launch_msg,
     orte_state_base_local_launch_complete,
     orte_plm_base_post_launch,
     orte_plm_base_registered,

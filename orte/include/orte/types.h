@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -144,6 +144,7 @@ typedef struct {
         orte_vpid_t vpid;
         orte_jobid_t jobid;
         opal_process_name_t name;
+        opal_envar_t envar;
     } data;
 } orte_attribute_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);

@@ -15,6 +15,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,7 +169,7 @@ opal_progress_finalize(void)
     return OPAL_SUCCESS;
 }
 
-static int opal_progress_events()
+static int opal_progress_events(void)
 {
     int events = 0;
 

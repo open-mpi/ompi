@@ -246,6 +246,25 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
             } else if (0 == strcmp(info->key, OPAL_PMIX_PRELOAD_FILES)) {
                 orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES,
                                    ORTE_ATTR_GLOBAL, info->data.string, OPAL_STRING);
+
+            /***   ENVIRONMENTAL VARIABLE DIRECTIVES   ***/
+            /* there can be multiple of these, so we add them to the attribute list */
+            } else if (0 == strcmp(info->key, OPAL_PMIX_SET_ENVAR)) {
+                orte_add_attribute(&app->attributes, ORTE_APP_SET_ENVAR,
+                                   ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+            } else if (0 == strcmp(info->key, OPAL_PMIX_ADD_ENVAR)) {
+                orte_add_attribute(&app->attributes, ORTE_APP_ADD_ENVAR,
+                                   ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+            } else if (0 == strcmp(info->key, OPAL_PMIX_UNSET_ENVAR)) {
+                orte_add_attribute(&app->attributes, ORTE_APP_UNSET_ENVAR,
+                                   ORTE_ATTR_GLOBAL, info->data.string, OPAL_STRING);
+            } else if (0 == strcmp(info->key, OPAL_PMIX_PREPEND_ENVAR)) {
+                orte_add_attribute(&app->attributes, ORTE_APP_PREPEND_ENVAR,
+                                   ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+            } else if (0 == strcmp(info->key, OPAL_PMIX_APPEND_ENVAR)) {
+                orte_add_attribute(&app->attributes, ORTE_APP_APPEND_ENVAR,
+                                   ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+
             } else {
                 /* unrecognized key */
                 orte_show_help("help-orted.txt", "bad-key",
@@ -459,6 +478,24 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
         } else if (0 == strcmp(info->key, OPAL_PMIX_DEBUGGER_DAEMONS)) {
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON);
             ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_DEBUGGER);
+
+        /***   ENVIRONMENTAL VARIABLE DIRECTIVES   ***/
+        /* there can be multiple of these, so we add them to the attribute list */
+        } else if (0 == strcmp(info->key, OPAL_PMIX_SET_ENVAR)) {
+            orte_add_attribute(&jdata->attributes, ORTE_JOB_SET_ENVAR,
+                               ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+        } else if (0 == strcmp(info->key, OPAL_PMIX_ADD_ENVAR)) {
+            orte_add_attribute(&jdata->attributes, ORTE_JOB_ADD_ENVAR,
+                               ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+        } else if (0 == strcmp(info->key, OPAL_PMIX_UNSET_ENVAR)) {
+            orte_add_attribute(&jdata->attributes, ORTE_JOB_UNSET_ENVAR,
+                               ORTE_ATTR_GLOBAL, info->data.string, OPAL_STRING);
+        } else if (0 == strcmp(info->key, OPAL_PMIX_PREPEND_ENVAR)) {
+            orte_add_attribute(&jdata->attributes, ORTE_JOB_PREPEND_ENVAR,
+                               ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
+        } else if (0 == strcmp(info->key, OPAL_PMIX_APPEND_ENVAR)) {
+            orte_add_attribute(&jdata->attributes, ORTE_JOB_APPEND_ENVAR,
+                               ORTE_ATTR_GLOBAL, &info->data.envar, OPAL_ENVAR);
 
         /***   DEFAULT - CACHE FOR INCLUSION WITH JOB INFO   ***/
         } else {

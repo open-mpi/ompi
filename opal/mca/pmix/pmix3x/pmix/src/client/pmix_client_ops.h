@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +17,7 @@
 #include "src/class/pmix_list.h"
 #include "src/class/pmix_pointer_array.h"
 #include "src/include/pmix_globals.h"
+#include "src/common/pmix_iof.h"
 
 BEGIN_C_DECLS
 
@@ -42,9 +43,15 @@ typedef struct {
     // verbosity for client event operations
     int event_output;
     int event_verbose;
+    // verbosity for client iof operations
+    int iof_output;
+    int iof_verbose;
     // verbosity for basic client functions
     int base_output;
     int base_verbose;
+    /* IOF output sinks */
+    pmix_iof_sink_t iof_stdout;
+    pmix_iof_sink_t iof_stderr;
 } pmix_client_globals_t;
 
 PMIX_EXPORT extern pmix_client_globals_t pmix_client_globals;
