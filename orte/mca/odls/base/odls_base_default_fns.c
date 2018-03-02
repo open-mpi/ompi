@@ -646,16 +646,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
         OPAL_LIST_DESTRUCT(&cache);
     }
-    if (0 < opal_list_get_size(&local_support) &&
-        NULL != opal_pmix.server_setup_local_support) {
-        if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_local_support(jdata->jobid, &local_support,
-                                                                       ls_cbunc, &lock))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
-        }
-    } else {
-        lock.active = false;  // we won't get a callback
-    }
 
     /* now that the node array in the job map and jdata are completely filled out,.
      * we need to "wireup" the procs to their nodes so other utilities can
@@ -751,6 +741,27 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         orte_rmaps_base_display_map(jdata);
     }
 
+    /* register this job with the PMIx server - need to wait until after we
+     * have computed the #local_procs before calling the function */
+    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, false))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+
+    /* if we have local support setup info, then execute it here - we
+     * have to do so AFTER we register the nspace so the PMIx server
+     * has the nspace info it needs */
+    if (0 < opal_list_get_size(&local_support) &&
+        NULL != opal_pmix.server_setup_local_support) {
+        if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_local_support(jdata->jobid, &local_support,
+                                                                       ls_cbunc, &lock))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
+    } else {
+        lock.active = false;  // we won't get a callback
+    }
+
     /* if we have a file map, then we need to load it */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FILE_MAPS, (void**)&bptr, OPAL_BUFFER)) {
         if (NULL != orte_dfs.load_file_maps) {
@@ -762,13 +773,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
 
     /* load any controls into the job */
     orte_rtc.assign(jdata);
-
-    /* register this job with the PMIx server - need to wait until after we
-     * have computed the #local_procs before calling the function */
-    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata, false))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
 
     /* spin up the spawn threads */
     orte_odls_base_start_threads(jdata);

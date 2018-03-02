@@ -37,6 +37,7 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 #include "src/util/pmix_environ.h"
+#include "src/mca/preg/preg.h"
 
 #include "src/mca/pnet/pnet.h"
 #include "src/mca/pnet/base/base.h"
@@ -298,6 +299,10 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
     size_t n;
     pmix_status_t rc;
     pmix_kval_t *kv;
+    char *nodestring, **nodes;
+    pmix_proc_t *procs;
+    size_t nprocs;
+
 
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
@@ -321,6 +326,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
             }
         }
     }
+
     return PMIX_SUCCESS;
 }
 
