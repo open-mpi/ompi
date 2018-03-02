@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +24,7 @@
 #if OPAL_CMA_NEED_SYSCALL_DEFS
 #include "opal/sys/cma.h"
 #endif /* OPAL_CMA_NEED_SYSCALL_DEFS */
+
 
 #endif
 
@@ -71,11 +74,34 @@ int mca_btl_vader_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *
     struct iovec dst_iov = {.iov_base = local_address, .iov_len = size};
     ssize_t ret;
 
-    ret = process_vm_readv (endpoint->segment_data.other.seg_ds->seg_cpid, &dst_iov, 1, &src_iov, 1, 0);
-    if (ret != (ssize_t)size) {
-        opal_output(0, "Read %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
-        return OPAL_ERROR;
-    }
+    /*
+     * According to the man page :
+     * "On success, process_vm_readv() returns the number of bytes read and
+     * process_vm_writev() returns the number of bytes written.  This return
+     * value may be less than the total number of requested bytes, if a
+     * partial read/write occurred.  (Partial transfers apply at the
+     * granularity of iovec elements.  These system calls won't perform a
+     * partial transfer that splits a single iovec element.)".
+     * So since we use a single iovec element, the returned size should either
+     * be 0 or size, and the do loop should not be needed here.
+     * We tried on various Linux kernels with size > 2 GB, and surprisingly,
+     * the returned value is always 0x7ffff000 (fwiw, it happens to be the size
+     * of the larger number of pages that fits a signed 32 bits integer).
+     * We do not know whether this is a bug from the kernel, the libc or even
+     * the man page, but for the time being, we do as is process_vm_readv() could
+     * return any value.
+     */
+    do {
+        ret = process_vm_readv (endpoint->segment_data.other.seg_ds->seg_cpid, &dst_iov, 1, &src_iov, 1, 0);
+        if (0 > ret) {
+            opal_output(0, "Read %ld, expected %lu, errno = %d\n", (long)ret, (unsigned long)size, errno);
+            return OPAL_ERROR;
+        }
+        src_iov.iov_base = (void *)((char *)src_iov.iov_base + ret);
+        src_iov.iov_len -= ret;
+        dst_iov.iov_base = (void *)((char *)dst_iov.iov_base + ret);
+        dst_iov.iov_len -= ret;
+    } while (0 < src_iov.iov_len);
 
     /* always call the callback function */
     cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
