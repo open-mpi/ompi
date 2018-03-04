@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -19,7 +19,6 @@
 #include "oshmem/mca/scoll/scoll.h"
 
 #include "oshmem/proc/proc.h"
-#include "oshmem/proc/proc_group_cache.h"
 
 static void _shmem_collect(void *target,
                             const void *source,
@@ -58,47 +57,21 @@ static void _shmem_collect(void *target,
                             long *pSync,
                             bool array_type)
 {
-    int rc = OSHMEM_SUCCESS;
-    oshmem_group_t* group = NULL;
+    int rc;
+    oshmem_group_t *group;
 
-    {
-        /* Create group basing PE_start, logPE_stride and PE_size */
-#if OSHMEM_GROUP_CACHE_ENABLED == 0
-        group = oshmem_proc_group_create(PE_start, (1 << logPE_stride), PE_size);
-        if (!group)
-        rc = OSHMEM_ERROR;
-#else
-        group = find_group_in_cache(PE_start, logPE_stride, PE_size);
-        if (!group) {
-            group = oshmem_proc_group_create(PE_start,
-                                             (1 << logPE_stride),
-                                             PE_size);
-            if (!group) {
-                rc = OSHMEM_ERROR;
-            } else {
-                cache_group(group, PE_start, logPE_stride, PE_size);
-            }
-        }
-#endif /* OSHMEM_GROUP_CACHE_ENABLED */
-
-        /* Collective operation call */
-        if (rc == OSHMEM_SUCCESS) {
-            /* Call collective broadcast operation */
-            rc = group->g_scoll.scoll_collect(group,
-                                              target,
-                                              source,
-                                              nbytes,
-                                              pSync,
-                                              array_type,
-                                              SCOLL_DEFAULT_ALG);
-        }
-#if OSHMEM_GROUP_CACHE_ENABLED == 0
-        if ( rc == OSHMEM_SUCCESS )
-        {
-            oshmem_proc_group_destroy(group);
-        }
-#endif /* OSHMEM_GROUP_CACHE_ENABLED */
-    }
+    /* Create group basing PE_start, logPE_stride and PE_size */
+    group = oshmem_proc_group_create_nofail(PE_start, 1<<logPE_stride, PE_size);
+    /* Call collective broadcast operation */
+    rc = group->g_scoll.scoll_collect(group,
+                                      target,
+                                      source,
+                                      nbytes,
+                                      pSync,
+                                      array_type,
+                                      SCOLL_DEFAULT_ALG);
+    oshmem_proc_group_destroy(group);
+    RUNTIME_CHECK_RC(rc);
 }
 
 #if OSHMEM_PROFILING

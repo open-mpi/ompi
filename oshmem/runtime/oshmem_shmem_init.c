@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -256,11 +256,6 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     /* initialize proc */
     if (OSHMEM_SUCCESS != (ret = oshmem_proc_init())) {
         error = "oshmem_proc_init() failed";
-        goto error;
-    }
-
-    if (OSHMEM_SUCCESS != (ret = oshmem_group_cache_list_init())) {
-        error = "oshmem_group_cache_list_init() failed";
         goto error;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -17,8 +17,6 @@
 #include "oshmem/types.h"
 #include "oshmem/constants.h"
 
-#include "oshmem/mca/scoll/scoll.h"
-
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
 #include "opal/dss/dss_types.h"
@@ -29,6 +27,10 @@
 
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
+
+#include "oshmem/mca/scoll/scoll.h"
+#include "oshmem/runtime/runtime.h"
+#include "oshmem/shmem/shmem_api_logger.h"
 
 BEGIN_C_DECLS
 
@@ -177,18 +179,16 @@ OSHMEM_DECLSPEC int oshmem_proc_group_init(void);
 /**
  * Finalize the OSHMEM process predefined groups
  *
- * Initialize the Open SHMEM process predefined groups.  This function will
- * query the run-time environment and build a list of the proc
- * instances in the current pe set.  The local information not
- * easily determined by the run-time ahead of time (architecture and
- * hostname) will be published during this call.
- *
- * @note This is primarily used once during SHMEM setup.
- *
  * @retval OSHMEM_SUCESS  System successfully initialized
  * @retval OSHMEM_ERROR   Initialization failed due to unspecified error
  */
 OSHMEM_DECLSPEC int oshmem_proc_group_finalize(void);
+
+/**
+ * Release collectives used by the groups. The function
+ * must be called prior to the oshmem_proc_group_finalize()
+ */
+OSHMEM_DECLSPEC void oshmem_proc_group_finalize_scoll(void);
 
 /**
  * Create processes group.
@@ -205,7 +205,29 @@ OSHMEM_DECLSPEC int oshmem_proc_group_finalize(void);
  */
 OSHMEM_DECLSPEC oshmem_group_t *oshmem_proc_group_create(int pe_start,
                                                          int pe_stride,
-                                                         size_t pe_size);
+                                                         int pe_size);
+
+/**
+ * same as above but abort on failure
+ */
+static inline oshmem_group_t *
+oshmem_proc_group_create_nofail(int pe_start, int pe_stride, int pe_size)
+{
+    oshmem_group_t *group;
+
+    group = oshmem_proc_group_create(pe_start, pe_stride, pe_size);
+    if (NULL == group) {
+        goto fatal;
+    }
+    return group;
+
+fatal:
+    SHMEM_API_ERROR("Failed to create group (%d,%d,%d)",
+                    pe_start, pe_stride, pe_size);
+    oshmem_shmem_abort(-1);
+    return NULL;
+}
+
 
 /**
  * Destroy processes group.
