@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
@@ -505,6 +505,7 @@ ORTE_DECLSPEC extern char **orted_cmd_line;
 ORTE_DECLSPEC extern char **orte_fork_agent;
 
 /* debugger job */
+ORTE_DECLSPEC extern bool orte_debugger_always_create_proctable;
 ORTE_DECLSPEC extern bool orte_debugger_dump_proctable;
 ORTE_DECLSPEC extern char *orte_debugger_test_daemon;
 ORTE_DECLSPEC extern bool orte_debugger_test_attach;

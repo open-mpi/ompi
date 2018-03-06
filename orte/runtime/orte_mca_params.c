@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -294,6 +294,22 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_debugger_dump_proctable);
+
+    /*
+     * MPIR Attach Mode requires that the MPIR_proctable be available in the
+     * starter process so that a tool can later attach to the running processes.
+     * This can be limiting to scalability since the MPIR_PROCDESC data structure
+     * requires knowledge of the process pid, which has to be reported back to
+     * the starter. For this scalability reason we do _not_ create the proctable
+     * unless the user asks to do so (or the sysadmin sets this MCA parameter
+     * globally.
+     */
+    orte_debugger_always_create_proctable = false;
+    (void) mca_base_var_register ("orte", "orte", NULL, "always_create_proctable",
+                                  "Whether or not to always create MPIR proctable, even when not debugging (default: false)",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_debugger_always_create_proctable);
 
     orte_debugger_test_daemon = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "debugger_test_daemon",

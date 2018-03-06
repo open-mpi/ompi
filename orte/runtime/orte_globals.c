@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2018 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,6 +118,7 @@ char **orted_cmd_line=NULL;
 char **orte_fork_agent=NULL;
 
 /* debugger job */
+bool orte_debugger_always_create_proctable = false;
 bool orte_debugger_dump_proctable = false;
 char *orte_debugger_test_daemon = NULL;
 bool orte_debugger_test_attach = false;
