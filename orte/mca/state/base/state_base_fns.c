@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -680,7 +681,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
         jdata->num_launched++;
         if (jdata->num_launched == jdata->num_procs) {
-            if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+            if (orte_debugger_always_create_proctable || ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
                 ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
             } else {
                 ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_RUNNING);
