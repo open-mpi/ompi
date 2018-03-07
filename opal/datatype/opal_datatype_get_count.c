@@ -191,6 +191,9 @@ int opal_datatype_compute_ptypes( opal_datatype_t* datatype )
             datatype->ptypes[pElems[pos_desc].elem.common.type] += pElems[pos_desc].elem.count;
             nbElems += pElems[pos_desc].elem.count;
 
+            DUMP( "  compute_ptypes-add: type %d count %"PRIsize_t" (total type %"PRIsize_t" total %lld)\n",
+                  pElems[pos_desc].elem.common.type, datatype->ptypes[pElems[pos_desc].elem.common.type],
+                  pElems[pos_desc].elem.count, nbElems );
             pos_desc++;  /* advance to the next data */
         }
     }
