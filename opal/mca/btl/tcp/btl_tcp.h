@@ -167,7 +167,10 @@ struct mca_btl_tcp_module_t {
 #if 0
     int                tcp_ifindex; /**< BTL interface index */
 #endif
-    struct sockaddr_storage tcp_ifaddr; /**< BTL interface address */
+    struct sockaddr_storage tcp_ifaddr; /**< First IPv4 address discovered for this interface, bound as sending address for this BTL */
+#if OPAL_ENABLE_IPV6
+    struct sockaddr_storage tcp_ifaddr_6; /**< First IPv6 address discovered for this interface, bound as sending address for this BTL  */
+#endif
     uint32_t           tcp_ifmask;  /**< BTL interface netmask */
 
     opal_mutex_t       tcp_endpoints_mutex;

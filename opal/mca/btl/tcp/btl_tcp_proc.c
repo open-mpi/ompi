@@ -486,7 +486,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         }
 
         /*
-         * in case the peer address has all intended connections,
+         * in case the peer address has created all intended connections,
          * mark the complete peer interface as 'not available'
          */
         if(endpoint_addr->addr_inuse >=  mca_btl_tcp_component.tcp_num_links) {
@@ -810,12 +810,15 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
 void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr, int sd)
 {
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
+    int found_match = 0;
+    mca_btl_base_endpoint_t* match_btl_endpoint;
+
     for( size_t i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
         /* We are not here to make a decision about what is good socket
          * and what is not. We simply check that this socket fit the endpoint
-         * end we prepare for the real decision function mca_btl_tcp_endpoint_accept. */
-        if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family ) {
+         * end we prepare for the real decision function mca_btl_tcp_endpoint_accept. */ 
+        if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
             continue;
         }
         switch (addr->sa_family) {
@@ -833,6 +836,10 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                                               tmp[1], 16),
                                     (int)i, (int)btl_proc->proc_endpoint_count);
                 continue;
+            } else if (btl_endpoint->endpoint_state != MCA_BTL_TCP_CLOSED) {
+                 found_match = 1;
+                 match_btl_endpoint = btl_endpoint;
+                 continue;
             }
             break;
 #if OPAL_ENABLE_IPV6
@@ -857,7 +864,17 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
             ;
         }
 
+        /* Set state to CONNECTING to ensure that subsequent conenctions do not attempt to re-use endpoint in the num_links > 1 case*/
+        btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
         (void)mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);
+        OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+        return;
+    }
+    /* In this case the connection was inbound to an address exported, but was not in a CLOSED state.
+     * mca_btl_tcp_endpoint_accept() has logic to deal with the race condition that has likely caused this
+     * scenario, so call it here.*/     
+    if (found_match) {
+        (void)mca_btl_tcp_endpoint_accept(match_btl_endpoint, addr, sd);
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
         return;
     }

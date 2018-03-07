@@ -511,6 +511,17 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
         btl->tcp_send_handler = 0;
 #endif
 
+       struct sockaddr_storage addr;
+       opal_ifkindextoaddr(if_kindex, (struct sockaddr*) &addr,
+                                          sizeof (struct sockaddr_storage));
+#if OPAL_ENABLE_IPV6
+        if (addr.ss_family == AF_INET6) {
+            btl->tcp_ifaddr_6 =  addr;
+        }
+#endif
+        if (addr.ss_family == AF_INET) {
+           btl->tcp_ifaddr = addr;
+        }
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
