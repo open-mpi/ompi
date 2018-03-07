@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -29,6 +29,7 @@
 #include <stddef.h>
 
 #include "opal/util/arch.h"
+#include "opal/util/output.h"
 #include "opal/datatype/opal_datatype_internal.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_convertor_internal.h"
@@ -40,6 +41,7 @@ bool opal_unpack_debug = false;
 bool opal_pack_debug = false;
 bool opal_position_debug = false;
 bool opal_copy_debug = false;
+int opal_ddt_verbose = -1;  /* Has the datatype verbose it's own output stream */
 
 extern int opal_cuda_verbose;
 
@@ -177,11 +179,19 @@ int opal_datatype_register_params(void)
 	return ret;
     }
 
+    ret = mca_base_var_register ("opal", "opal", NULL, "ddt_verbose",
+                                 "Set level of opal datatype verbosity",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &opal_ddt_verbose);
+    if (0 > ret) {
+        return ret;
+    }
 #if OPAL_CUDA_SUPPORT
     /* Set different levels of verbosity in the cuda related code. */
     ret = mca_base_var_register ("opal", "opal", NULL, "cuda_verbose",
                                  "Set level of opal cuda verbosity",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, -1, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
                                  &opal_cuda_verbose);
     if (0 > ret) {
@@ -224,6 +234,12 @@ int32_t opal_datatype_init( void )
         datatype->desc.desc[1].end_loop.items           = 1;
         datatype->desc.desc[1].end_loop.first_elem_disp = datatype->desc.desc[0].elem.disp;
         datatype->desc.desc[1].end_loop.size            = datatype->size;
+    }
+
+    /* Enable a private output stream for datatype */
+    if( opal_ddt_verbose > 0 ) {
+        opal_datatype_dfd = opal_output_open(NULL);
+        opal_output_set_verbosity(opal_datatype_dfd, opal_ddt_verbose);
     }
 
     return OPAL_SUCCESS;

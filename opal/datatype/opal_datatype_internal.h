@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -49,10 +49,9 @@ static inline void DUMP( char* fmt, ... )
    va_list list;
 
    va_start( list, fmt );
-   opal_output( opal_datatype_dfd, fmt, list );
+   opal_output_vverbose( 0, opal_datatype_dfd, fmt, list );
    va_end( list );
 }
-#      define DUMP                   printf
 #    endif  /* __GNUC__ && !__STDC__ */
 #  endif  /* ACCEPT_C99 */
 #else
@@ -329,8 +328,8 @@ struct opal_datatype_t;
         .ptypes = OPAL_DATATYPE_INIT_PTYPES_ARRAY_UNAVAILABLE                        \
     }
 
-#define OPAL_DATATYPE_INITIALIZER_LOOP(FLAGS)       OPAL_DATATYPE_INIT_BASIC_TYPE( OPAL_DATATYPE_LOOP, LOOP, FLAGS )
-#define OPAL_DATATYPE_INITIALIZER_END_LOOP(FLAGS)   OPAL_DATATYPE_INIT_BASIC_TYPE( OPAL_DATATYPE_END_LOOP, END_LOOP, FLAGS )
+#define OPAL_DATATYPE_INITIALIZER_LOOP(FLAGS)       OPAL_DATATYPE_INIT_BASIC_TYPE( OPAL_DATATYPE_LOOP, LOOP_S, FLAGS )
+#define OPAL_DATATYPE_INITIALIZER_END_LOOP(FLAGS)   OPAL_DATATYPE_INIT_BASIC_TYPE( OPAL_DATATYPE_END_LOOP, LOOP_E, FLAGS )
 #define OPAL_DATATYPE_INITIALIZER_LB(FLAGS)         OPAL_DATATYPE_INIT_BASIC_TYPE( OPAL_DATATYPE_LB, LB, FLAGS )
 #define OPAL_DATATYPE_INITIALIZER_UB(FLAGS)         OPAL_DATATYPE_INIT_BASIC_TYPE( OPAL_DATATYPE_UB, UB, FLAGS )
 #define OPAL_DATATYPE_INITIALIZER_INT1(FLAGS)       OPAL_DATATYPE_INIT_BASIC_DATATYPE( int8_t, OPAL_ALIGNMENT_INT8, INT1, FLAGS )
