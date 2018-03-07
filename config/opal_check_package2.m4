@@ -83,44 +83,52 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE2_LIB], [
     AS_VAR_PUSHDEF([opal_Ldflags], [with_$1_ldflags])
 
     opal_check_package2_lib_happy="no"
-    AS_IF([test -n "$opal_Ldflags" || test -z "$opal_With" || test "$opal_With" = "yes"],
+    AS_IF([test -n "$opal_Ldflags"],
           [# ldflags was specified - use as is
            $2_LDFLAGS="$$2_LDFLAGS $opal_Ldflags"
            LDFLAGS="$LDFLAGS $opal_Ldflags"
-           AS_IF([test -z "$opal_Ldflags"],
-                 [AC_VERBOSE([looking for library without search path])])
-           AC_SEARCH_LIBS([$3], [$4],
+           AC_CHECK_LIB([$4], [$3],
                         [opal_check_package2_lib_happy="yes"],
                         [opal_check_package2_lib_happy="no"], [$5])
            AS_IF([test "$opal_check_package2_lib_happy" = "no"],
                  [LDFLAGS="$opal_check_package_$2_save_LDFLAGS"
                   $2_LDFLAGS="$opal_check_package_$2_orig_LDFLAGS"
                   unset opal_Lib])],
-          [AS_IF([test -d "$opal_With/lib"],
-                 [$2_LDFLAGS="$$2_LDFLAGS -L$opal_With/lib"
-                  LDFLAGS="$LDFLAGS -L$opal_With/lib"
-                  AC_VERBOSE([looking for library in lib])
+          [AS_IF([test -z "$opal_With" || test "$opal_With" = "yes"],
+                 [# no path specified, try the default AC_SEARCH_LIBS
+                  AC_VERBOSE([looking for library without search path])
                   AC_SEARCH_LIBS([$3], [$4],
-                                 [opal_check_package2_lib_happy="yes"],
-                                 [opal_check_package2_lib_happy="no"], [$5])
+                               [opal_check_package2_lib_happy="yes"],
+                               [opal_check_package2_lib_happy="no"], [$5])
                   AS_IF([test "$opal_check_package2_lib_happy" = "no"],
-                        [# no go on the as is..  see what happens later...
-                         LDFLAGS="$opal_check_package_$2_save_LDFLAGS"
-                         $2_LDFLAGS="$opal_check_package_$2_orig_LDFLAGS"
-                         unset opal_Lib])])
-
-           AS_IF([test "$opal_check_package2_lib_happy" = "no" && test -d "$opal_With/lib64"],
-                 [$2_LDFLAGS="$$2_LDFLAGS -L$opal_With/lib64"
-                  LDFLAGS="$LDFLAGS -L$opal_With/lib64"
-                  AC_VERBOSE([looking for library in lib64])
-                  AC_SEARCH_LIBS([$3], [$4],
-                                 [opal_check_package2_lib_happy="yes"],
-                                 [opal_check_package2_lib_happy="no"], [$5])
-                  AS_IF([test "$opal_check_package2_lib_happy" = "no"],
-                        [# no go on the as is..  see what happens later...
-                         LDFLAGS="$opal_check_package_$2_save_LDFLAGS"
-                         $2_LDFLAGS="$opal_check_package_$2_orig_LDFLAGS"
-                         unset opal_Lib])])])
+                        [unset opal_Lib])],
+                 [# --with-foo=DIR was specified, try DIR/lib and DIR/lib64 if libraries exist
+                  files=`ls $opal_With/lib/lib$4.* 2> /dev/null | wc -l`
+                  AS_IF([test $files -gt 0],
+                        [$2_LDFLAGS="$$2_LDFLAGS -L$opal_With/lib"
+                         LDFLAGS="$LDFLAGS -L$opal_With/lib"
+                         AC_VERBOSE([looking for library in lib])
+                         AC_CHECK_LIB([$4], [$3],
+                                      [opal_check_package2_lib_happy="yes"],
+                                      [opal_check_package2_lib_happy="no"], [$5])
+                         AS_IF([test "$opal_check_package2_lib_happy" = "no"],
+                               [# no go on the as is..  see what happens later...
+                                LDFLAGS="$opal_check_package_$2_save_LDFLAGS"
+                                $2_LDFLAGS="$opal_check_package_$2_orig_LDFLAGS"
+                                unset opal_Lib])])
+                  files=`ls $opal_With/lib64/lib$4.* 2> /dev/null | wc -l`
+                  AS_IF([test "$opal_check_package2_lib_happy" = "no" && test -$files -gt 0],
+                        [$2_LDFLAGS="$$2_LDFLAGS -L$opal_With/lib64"
+                         LDFLAGS="$LDFLAGS -L$opal_With/lib64"
+                         AC_VERBOSE([looking for library in lib64])
+                         AC_CHECK_LIB([$4], [$3],
+                                      [opal_check_package2_lib_happy="yes"],
+                                      [opal_check_package2_lib_happy="no"], [$5])
+                         AS_IF([test "$opal_check_package2_lib_happy" = "no"],
+                               [# no go on the as is..  see what happens later...
+                                LDFLAGS="$opal_check_package_$2_save_LDFLAGS"
+                                $2_LDFLAGS="$opal_check_package_$2_orig_LDFLAGS"
+                                unset opal_Lib])])])])
 
     AS_IF([test "$opal_check_package2_lib_happy" = "yes"],
           [ # libnl v1 and libnl3 are known to *not* coexist
