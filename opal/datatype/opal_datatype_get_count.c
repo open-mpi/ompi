@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -60,9 +60,8 @@ ssize_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t
             continue;
         }
         if( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ) {
-            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
             do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, loop->loops, 0 );
+                PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, pElems[pos_desc].loop.loops, 0 );
                 pos_desc++;
             } while( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
             DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
@@ -123,9 +122,8 @@ int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, size_t
             continue;
         }
         if( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ) {
-            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
             do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, loop->loops, 0 );
+                PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, pElems[pos_desc].loop.loops, 0 );
                 pos_desc++;
             } while( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
             DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
@@ -182,9 +180,8 @@ int opal_datatype_compute_ptypes( opal_datatype_t* datatype )
             continue;
         }
         if( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ) {
-            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
             do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, loop->loops, 0 );
+                PUSH_STACK( pStack, stack_pos, pos_desc, OPAL_DATATYPE_LOOP, pElems[pos_desc].loop.loops, 0 );
                 pos_desc++;
             } while( OPAL_DATATYPE_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
             DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
