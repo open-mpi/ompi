@@ -137,6 +137,14 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
      * In addition, if the data is contiguous but true_lb differes
      * from zero, ROMIO will ignore the displacement. Thus, lie!
      */
+
+    size_t size;
+    opal_datatype_type_size (&datatype->super, &size);
+    if ( 0 == size ) {
+        *flag = 1;
+        return;
+    }
+
     *flag = ompi_datatype_is_contiguous_memory_layout(datatype, 2);
     if (*flag) {
         MPI_Aint true_extent, true_lb;
