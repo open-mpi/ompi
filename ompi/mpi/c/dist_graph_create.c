@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 The University of Tennessee and The University
+ * Copyright (c) 2012-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
@@ -62,7 +62,7 @@ int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],
         /* Ensure the arrays are full of valid-valued integers */
         comm_size = ompi_comm_size(comm_old);
         for( i = index = 0; i < n; ++i ) {
-            if (sources[i] < 0 || sources[i] >= comm_size) {
+            if (((sources[i] < 0) && (sources[i] != MPI_PROC_NULL)) || sources[i] >= comm_size) {
                 return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
                                               FUNC_NAME);
             } else if (degrees[i] < 0) {
@@ -70,7 +70,7 @@ int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],
                                               FUNC_NAME);
             }
             for( j = 0; j < degrees[i]; ++j ) {
-                if (destinations[index] < 0 || destinations[index] >= comm_size) {
+                if (((destinations[index] < 0) && (destinations[index] != MPI_PROC_NULL)) || destinations[index] >= comm_size) {
                     return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
                                                   FUNC_NAME);
                 } else if (MPI_UNWEIGHTED != weights && weights[index] < 0) {
