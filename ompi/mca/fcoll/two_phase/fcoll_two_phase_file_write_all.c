@@ -1068,7 +1068,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 
     if (nprocs_recv){
 	if (*hole){
-	    if (off > 0){
+	    if (off >= 0){
 		fh->f_io_array = (mca_io_ompio_io_array_t *)malloc
 		    (sizeof(mca_io_ompio_io_array_t));
 		if (NULL == fh->f_io_array) {
