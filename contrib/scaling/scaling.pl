@@ -3,6 +3,10 @@
 # Copyright (c) 2012      Los Alamos National Security, Inc.
 #                         All rights reserved.
 # Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+
 
 use strict;
 use Getopt::Long;
@@ -21,6 +25,7 @@ my $runall = 1;
 my $rawoutput = 0;
 my $myresults = "myresults";
 my $ppn = 1;
+my $npmin = 1;
 my @csvrow;
 my $multiplier = 1;
 
@@ -29,8 +34,8 @@ my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_mod
 my @starterlist = qw(mpirun prun srun aprun);
 my @starteroptionlist = (" --novm --timeout 600",
                          " --system-server-only",
-                         " --distribution=cyclic --ntasks-per-node=",
-                         " -N");
+                         " --distribution=cyclic",
+                         "");
 
 # Set to true if the script should merely print the cmds
 # it would run, but don't run them
@@ -54,6 +59,7 @@ GetOptions(
     "rawout" => \$rawoutput,
     "ppn=s" => \$ppn,
     "multiplier=s" => \$multiplier,
+    "npmin=s" => \$npmin,
 ) or die "unable to parse options, stopped";
 
 if ($HELP) {
@@ -72,6 +78,7 @@ if ($HELP) {
 --rawout             Provide raw timing output to the file
 --ppn=n              Run n procs/node
 --multiplier=n       Run n daemons/node (only for DVM and mpirun)
+--npmin=n            Minimal number of nodes
 ";
     exit(0);
 }
@@ -133,11 +140,11 @@ foreach $starter (@starterlist) {
             push @starteroptions, $opt;
         } elsif ($useaprun && $starter eq "aprun") {
             push @starters, $starter;
-            $opt = $starteroptionlist[$idx] . " " . $ppn;
+            $opt = $starteroptionlist[$idx] . " -N " . $ppn;
             push @starteroptions, $opt;
         } elsif ($usesrun && $starter eq "srun") {
             push @starters, $starter;
-            $opt = $starteroptionlist[$idx] . $ppn;
+            $opt = $starteroptionlist[$idx] . " --ntasks-per-node " . $ppn;
             push @starteroptions, $opt;
         }
     }
@@ -191,10 +198,21 @@ my $index = 0;
 
 sub runcmd()
 {
+    my $rc;
     for (1..$reps) {
         $output = `$cmd`;
+        # Check the error code of the command; if the error code is alright
+        # just add a 0 in front of the number to neutraly mark the success;
+        # If the code is not correct, add a ! in front of the number to mark
+        # it invalid.
+        if($? != 0) {
+            $rc = "0";
+        }
+        else {
+            $rc = "!";
+        }
         if ($myresults && $rawoutput) {
-            print FILE $n . " " . $output . "\n";
+            print FILE $n . " " . $output . " $rc\n";
         }
         @lines = split(/\n/, $output);
         foreach $line (@lines) {
@@ -216,14 +234,14 @@ sub runcmd()
                         if (0 == $strloc) {
                             if (0 == $idx) {
                                 # it must be in the next location
-                                push @csvrow,$results[1];
+                                push @csvrow,join $rc,$results[1];
                             } else {
                                 # it must be in the prior location
-                                push @csvrow,$results[$idx-1];
+                                push @csvrow,join $rc,$results[$idx-1];
                             }
                         } else {
                             # take the portion of the string up to the tag
-                            push @csvrow,substr($res, 0, $strloc);
+                            push @csvrow,join $rc,substr($res, 0, $strloc);
                         }
                     } else {
                         $strloc = index($res, "elapsed");
@@ -234,14 +252,14 @@ sub runcmd()
                             if (0 == $strloc) {
                                 if (0 == $idx) {
                                     # it must be in the next location
-                                    push @csvrow,$results[1];
+                                    push @csvrow,join $rc,$results[1];
                                 } else {
                                     # it must be in the prior location
-                                    push @csvrow,$results[$idx-1];
+                                    push @csvrow,join $rc,$results[$idx-1];
                                 }
                             } else {
                                 # take the portion of the string up to the tag
-                                push @csvrow,substr($res, 0, $strloc);
+                                push @csvrow,join $rc,substr($res, 0, $strloc);
                             }
                         }
                     }
@@ -270,6 +288,7 @@ sub runcmd()
 }
 
 foreach $starter (@starters) {
+    my $dvmout;
     print "STARTER: $starter\n";
     # if we are going to use the dvm, then we
     if ($starter eq "prun") {
@@ -278,21 +297,22 @@ foreach $starter (@starters) {
             $dvm = $dvm . " --mca rtc ^hwloc --mca ras_base_multiplier " . $multiplier;
         }
         # need to start it
+        print "##DVM: Launching $dvm\n";
         if ($myresults) {
             print FILE "\n\n$dvm\n";
         }
         if (!$SHOWME) {
-            unless ($pid = fork) {
-                unless (fork) {
-                    exec "$dvm 2>&1";
-                    die "no exec";
-                }
-                exit 0;
+            $havedvm = open($dvmout, $dvm."|") or die "##DVM: Spawn error $!\n";
+            print "##DVM: pid=$havedvm\n";
+            # Wait that the dvm reports that it is ready
+            my $waitready = <$dvmout>;
+            if($waitready =~ /DVM ready/i) {
+                print "##DVM: $waitready\n";
             }
-            $havedvm = 1;
+            else {
+                die "##DVM: error: $waitready\n";
+            }
         }
-        # give it a couple of seconds to start
-        sleep 2;
     } else {
         if ($myresults) {
             print FILE "\n\n";
@@ -305,6 +325,13 @@ foreach $starter (@starters) {
     my $testnum = 0;
     foreach $test (@tests) {
         $option = $options[$testnum];
+        if ($starter eq "aprun") {
+            $option =~ s/-mca\s+(\S+)\s+(\S+)/-e OMPI_MCA_$1=$2/g;
+        }
+        if ($starter eq "srun") {
+            $option =~ s/-mca\s+(\S+)\s+(\S+)\s*/OMPI_MCA_$1=$2,/g;
+            $option =~ s/\s*(OMPI_MCA\S+)/ --export=$1ALL/g;
+        }
         if (-e $test) {
             if ($myresults) {
                 print FILE "#nodes,$test,$option\n";
@@ -322,11 +349,12 @@ foreach $starter (@starters) {
                     }
                 }
             }
-            $n = 1;
+            $n = $npmin;
             while ($n <= $num_nodes) {
                 push @csvrow,$n;
-                if ($starter eq "prun" or $starter eq "mpirun") {
-                    $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option -n $n $test 2>&1";
+                if ($starter eq "prun" or $starter eq "mpirun" or $starter eq "aprun") {
+                    my $np = $n * $ppn;
+                    $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option -n $np $test 2>&1";
                 } else {
                     $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option -N $n $test 2>&1";
                 }
@@ -358,8 +386,8 @@ foreach $starter (@starters) {
     if ($havedvm) {
         if (!$SHOWME) {
             $cmd = "prun --system-server-only --terminate";
-            my $rc = `$cmd`;
-            waitpid($pid, 0);
+            system($cmd);
+            waitpid($havedvm, 0);
         }
         $havedvm = 0;
     }
