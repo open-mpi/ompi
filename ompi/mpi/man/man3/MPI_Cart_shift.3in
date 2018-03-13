@@ -83,7 +83,7 @@ Depending on the periodicity of the Cartesian group in the specified coordinate 
 .nf
   \&....
   C find process rank
-        CALL MPI_COMM_RANK(comm, rank, ierr))
+        CALL MPI_COMM_RANK(comm, rank, ierr)
   C find Cartesian coordinates
         CALL MPI_CART_COORDS(comm, rank, maxdims, coords,
                              ierr)
