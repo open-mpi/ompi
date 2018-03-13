@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -191,7 +191,7 @@ int opal_datatype_register_params(void)
     /* Set different levels of verbosity in the cuda related code. */
     ret = mca_base_var_register ("opal", "opal", NULL, "cuda_verbose",
                                  "Set level of opal cuda verbosity",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, -1, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
                                  &opal_cuda_verbose);
     if (0 > ret) {
