@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  *
@@ -92,6 +92,7 @@ enum {
     MCA_BTL_VADER_CMA   = 1,
     MCA_BTL_VADER_KNEM  = 2,
     MCA_BTL_VADER_NONE  = 3,
+    MCA_BTL_VADER_EMUL  = 4,
 };
 
 /**
@@ -233,6 +234,11 @@ int mca_btl_vader_put_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
+int mca_btl_vader_put_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                               uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                               mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                               int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
 /**
  * Initiate an synchronous get.
  *
@@ -260,6 +266,29 @@ int mca_btl_vader_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
                             mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
                             int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
+
+int mca_btl_vader_get_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
+                               uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                               mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                               int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+int mca_btl_vader_emu_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                           uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
+                           mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                           mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+int mca_btl_vader_emu_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                            void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                            mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                            uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                            void *cbcontext, void *cbdata);
+
+int mca_btl_vader_emu_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                              void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
+                              mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value, int flags,
+                              int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+void mca_btl_vader_sc_emu_init (void);
 
 /**
  * Allocate a segment.
