@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -44,27 +44,17 @@ static int request_free(struct ompi_request_t **ompi_req)
     return OMPI_SUCCESS;
 }
 
-static int request_complete (struct ompi_request_t *request)
-{
-    ompi_osc_rdma_request_t *parent_request = ((ompi_osc_rdma_request_t *) request)->parent_request;
-
-    if (parent_request && 0 == OPAL_THREAD_ADD_FETCH32 (&parent_request->outstanding_requests, -1)) {
-        ompi_osc_rdma_request_complete (parent_request, OMPI_SUCCESS);
-    }
-
-    return OMPI_SUCCESS;
-}
-
 static void request_construct(ompi_osc_rdma_request_t *request)
 {
     request->super.req_type = OMPI_REQUEST_WIN;
     request->super.req_status._cancelled = 0;
     request->super.req_free = request_free;
     request->super.req_cancel = request_cancel;
-    request->super.req_complete_cb = request_complete;
     request->parent_request = NULL;
+    request->to_free = NULL;
     request->buffer = NULL;
     request->internal = false;
+    request->cleanup = NULL;
     request->outstanding_requests = 0;
     OBJ_CONSTRUCT(&request->convertor, opal_convertor_t);
 }

@@ -205,6 +205,8 @@ typedef struct ompi_osc_rdma_aggregation_t ompi_osc_rdma_aggregation_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_aggregation_t);
 
+typedef void (*ompi_osc_rdma_pending_op_cb_fn_t) (void *, void *, int);
+
 struct ompi_osc_rdma_pending_op_t {
     opal_list_item_t super;
     struct ompi_osc_rdma_frag_t *op_frag;
@@ -212,11 +214,28 @@ struct ompi_osc_rdma_pending_op_t {
     void *op_result;
     size_t op_size;
     volatile bool op_complete;
+    ompi_osc_rdma_pending_op_cb_fn_t cbfunc;
+    void *cbdata;
+    void *cbcontext;
 };
 
 typedef struct ompi_osc_rdma_pending_op_t ompi_osc_rdma_pending_op_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_pending_op_t);
+
+/** Communication buffer for packing messages */
+struct ompi_osc_rdma_frag_t {
+    opal_free_list_item_t super;
+
+    /* Number of operations which have started writing into the frag, but not yet completed doing so */
+    volatile int32_t pending;
+    volatile int64_t curr_index;
+
+    struct ompi_osc_rdma_module_t *module;
+    mca_btl_base_registration_handle_t *handle;
+};
+typedef struct ompi_osc_rdma_frag_t ompi_osc_rdma_frag_t;
+OBJ_CLASS_DECLARATION(ompi_osc_rdma_frag_t);
 
 #define OSC_RDMA_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_osc_base_framework.framework_output, __VA_ARGS__))
 

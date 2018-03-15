@@ -22,7 +22,7 @@ struct ompi_osc_rdma_module_t;
  * This object is used as a cache for information associated with a peer.
  */
 struct ompi_osc_rdma_peer_t {
-    opal_object_t super;
+    opal_list_item_t super;
 
     /** rdma data endpoint for this peer */
     struct mca_btl_base_endpoint_t *data_endpoint;
@@ -35,6 +35,9 @@ struct ompi_osc_rdma_peer_t {
 
     /** registration handle associated with the state */
     mca_btl_base_registration_handle_t *state_handle;
+
+    /** lock to protrct peer structure */
+    opal_mutex_t lock;
 
     /** rank of this peer in the window */
     int rank;
@@ -134,6 +137,8 @@ enum {
     OMPI_OSC_RDMA_PEER_STATE_FREE           = 0x20,
     /** peer base handle should be freed */
     OMPI_OSC_RDMA_PEER_BASE_FREE            = 0x40,
+    /** peer was demand locked as part of lock-all (when in demand locking mode) */
+    OMPI_OSC_RDMA_PEER_DEMAND_LOCKED        = 0x80,
 };
 
 /**
@@ -248,5 +253,15 @@ static inline bool ompi_osc_rdma_peer_local_state (ompi_osc_rdma_peer_t *peer)
     return !!(peer->flags & OMPI_OSC_RDMA_PEER_LOCAL_STATE);
 }
 
+/**
+ * @brief check if the peer has been demand locked as part of the current epoch
+ *
+ * @param[in] peer            peer object to check
+ *
+ */
+static inline bool ompi_osc_rdma_peer_is_demand_locked (ompi_osc_rdma_peer_t *peer)
+{
+    return !!(peer->flags & OMPI_OSC_RDMA_PEER_DEMAND_LOCKED);
+}
 
 #endif /* OMPI_OSC_RDMA_PEER_H */

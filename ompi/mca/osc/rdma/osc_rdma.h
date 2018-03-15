@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -50,6 +50,11 @@
 
 #include "opal_stdint.h"
 
+enum {
+    OMPI_OSC_RDMA_LOCKING_TWO_LEVEL,
+    OMPI_OSC_RDMA_LOCKING_ON_DEMAND,
+};
+
 /**
  * @brief osc rdma component structure
  */
@@ -87,6 +92,9 @@ struct ompi_osc_rdma_component_t {
     /** Default value of the no_locks info key for new windows */
     bool no_locks;
 
+    /** Locking mode to use as the default for all windows */
+    int locking_mode;
+
     /** Accumulate operations will only operate on a single intrinsic datatype */
     bool acc_single_intrinsic;
 
@@ -119,6 +127,8 @@ struct ompi_osc_rdma_module_t {
     /** Mutex lock protecting module data */
     opal_mutex_t lock;
 
+    /** locking mode to use */
+    int locking_mode;
 
     /* window configuration */
 
@@ -147,9 +157,11 @@ struct ompi_osc_rdma_module_t {
     /** Local displacement unit. */
     int disp_unit;
 
-
     /** global leader */
     ompi_osc_rdma_peer_t *leader;
+
+    /** my peer structure */
+    ompi_osc_rdma_peer_t *my_peer;
 
     /** pointer to free on cleanup (may be NULL) */
     void *free_after;
@@ -275,6 +287,16 @@ int ompi_osc_rdma_free (struct ompi_win_t *win);
  * @returns OMPI_ERR_OUT_OF_RESOURCE on failure
  */
 int ompi_osc_module_add_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer);
+
+/**
+ * @brief demand lock a peer
+ *
+ * @param[in] module          osc rdma module
+ * @param[in] peer            peer to lock
+ *
+ * @returns OMPI_SUCCESS on success
+ */
+int ompi_osc_rdma_demand_lock_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer);
 
 /**
  * @brief check if a peer object is cached for a remote rank
@@ -449,10 +471,18 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
         }
 
         return NULL;
-    case OMPI_OSC_RDMA_SYNC_TYPE_FENCE:
     case OMPI_OSC_RDMA_SYNC_TYPE_LOCK:
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found fence/lock_all access epoch for target %d", target);
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found lock_all access epoch for target %d", target);
 
+        *peer = ompi_osc_rdma_module_peer (module, target);
+        if (OPAL_UNLIKELY(OMPI_OSC_RDMA_LOCKING_ON_DEMAND == module->locking_mode &&
+                          !ompi_osc_rdma_peer_is_demand_locked (*peer))) {
+            ompi_osc_rdma_demand_lock_peer (module, *peer);
+        }
+
+        return &module->all_sync;
+    case OMPI_OSC_RDMA_SYNC_TYPE_FENCE:
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found fence access epoch for target %d", target);
         /* fence epoch is now active */
         module->all_sync.epoch_active = true;
         *peer = ompi_osc_rdma_module_peer (module, target);
@@ -470,6 +500,62 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
     return NULL;
 }
 
+static bool ompi_osc_rdma_use_btl_flush (ompi_osc_rdma_module_t *module)
+{
+#if defined(BTL_VERSION) && (BTL_VERSION >= 310)
+    return !!(module->selected_btl->btl_flush);
+#else
+    return false;
+#endif
+}
+
+/**
+ * @brief increment the outstanding rdma operation counter (atomic)
+ *
+ * @param[in] rdma_sync         osc rdma synchronization object
+ */
+static inline void ompi_osc_rdma_sync_rdma_inc_always (ompi_osc_rdma_sync_t *rdma_sync)
+{
+    ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma.counter, 1);
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "inc: there are %ld outstanding rdma operations",
+                     (unsigned long) rdma_sync->outstanding_rdma.counter);
+}
+
+static inline void ompi_osc_rdma_sync_rdma_inc (ompi_osc_rdma_sync_t *rdma_sync)
+{
+#if defined(BTL_VERSION) && (BTL_VERSION >= 310)
+    if (ompi_osc_rdma_use_btl_flush (rdma_sync->module)) {
+        return;
+    }
+#endif
+    ompi_osc_rdma_sync_rdma_inc_always (rdma_sync);
+}
+
+/**
+ * @brief decrement the outstanding rdma operation counter (atomic)
+ *
+ * @param[in] rdma_sync         osc rdma synchronization object
+ */
+static inline void ompi_osc_rdma_sync_rdma_dec_always (ompi_osc_rdma_sync_t *rdma_sync)
+{
+    opal_atomic_wmb ();
+    ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma.counter, -1);
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "dec: there are %ld outstanding rdma operations",
+                     (unsigned long) rdma_sync->outstanding_rdma.counter);
+}
+
+static inline void ompi_osc_rdma_sync_rdma_dec (ompi_osc_rdma_sync_t *rdma_sync)
+{
+#if defined(BTL_VERSION) && (BTL_VERSION >= 310)
+    if (ompi_osc_rdma_use_btl_flush (rdma_sync->module)) {
+        return;
+    }
+#endif
+    ompi_osc_rdma_sync_rdma_dec_always (rdma_sync);
+}
+
 /**
  * @brief complete all outstanding rdma operations to all peers
  *
@@ -477,18 +563,31 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
  */
 static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
 {
-    ompi_osc_rdma_aggregation_t *aggregation, *next;
-
     if (opal_list_get_size (&sync->aggregations)) {
+        ompi_osc_rdma_aggregation_t *aggregation, *next;
+
         OPAL_THREAD_SCOPED_LOCK(&sync->lock,
                                 OPAL_LIST_FOREACH_SAFE(aggregation, next, &sync->aggregations, ompi_osc_rdma_aggregation_t) {
+                                    fprintf (stderr, "Flushing aggregation %p, peeer %p\n", aggregation, aggregation->peer);
                                     ompi_osc_rdma_peer_aggregate_flush (aggregation->peer);
                                 });
     }
 
+#if !defined(BTL_VERSION) || (BTL_VERSION < 310)
     do {
         opal_progress ();
-    }  while (sync->outstanding_rdma);
+    }  while (ompi_osc_rdma_sync_get_count (sync));
+#else
+    mca_btl_base_module_t *btl_module = sync->module->selected_btl;
+
+    do {
+        if (!ompi_osc_rdma_use_btl_flush (sync->module)) {
+            opal_progress ();
+        } else {
+            btl_module->btl_flush (btl_module, NULL);
+        }
+    }  while (ompi_osc_rdma_sync_get_count (sync) || (sync->module->rdma_frag && (sync->module->rdma_frag->pending > 1)));
+#endif
 }
 
 /**

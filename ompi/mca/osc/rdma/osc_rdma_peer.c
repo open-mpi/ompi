@@ -303,7 +303,7 @@ static void ompi_osc_rdma_peer_destruct (ompi_osc_rdma_peer_t *peer)
     }
 }
 
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_peer_t, opal_object_t,
+OBJ_CLASS_INSTANCE(ompi_osc_rdma_peer_t, opal_list_item_t,
                    ompi_osc_rdma_peer_construct,
                    ompi_osc_rdma_peer_destruct);
 
