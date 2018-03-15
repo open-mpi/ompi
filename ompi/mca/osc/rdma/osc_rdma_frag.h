@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -16,34 +16,14 @@
 #include "osc_rdma.h"
 #include "opal/align.h"
 
-/** Communication buffer for packing messages */
-struct ompi_osc_rdma_frag_t {
-    opal_free_list_item_t super;
-
-    /* start of unused space */
-    unsigned char *top;
-
-    /* space remaining in buffer */
-    uint32_t remain_len;
-    /* Number of operations which have started writing into the frag, but not yet completed doing so */
-    int32_t pending;
-
-    ompi_osc_rdma_module_t *module;
-    mca_btl_base_registration_handle_t *handle;
-};
-typedef struct ompi_osc_rdma_frag_t ompi_osc_rdma_frag_t;
-OBJ_CLASS_DECLARATION(ompi_osc_rdma_frag_t);
-
-
 static inline void ompi_osc_rdma_frag_complete (ompi_osc_rdma_frag_t *frag)
 {
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "returning frag. pending = %d", frag->pending);
     if (0 == OPAL_THREAD_ADD_FETCH32(&frag->pending, -1)) {
         opal_atomic_rmb ();
 
-        ompi_osc_rdma_deregister (frag->module, frag->handle);
-        frag->handle = NULL;
-
-        opal_free_list_return (&mca_osc_rdma_component.frags, (opal_free_list_item_t *) frag);
+        (void) opal_atomic_swap_32 (&frag->pending, 1);
+        (void) opal_atomic_swap_64 (&frag->curr_index, 0);
     }
 }
 
@@ -53,7 +33,8 @@ static inline void ompi_osc_rdma_frag_complete (ompi_osc_rdma_frag_t *frag)
 static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size_t request_len,
                                             ompi_osc_rdma_frag_t **buffer, char **ptr)
 {
-    ompi_osc_rdma_frag_t *curr;
+    ompi_osc_rdma_frag_t *curr = module->rdma_frag;
+    int64_t my_index;
     int ret;
 
     /* ensure all buffers are 8-byte aligned */
@@ -63,59 +44,55 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
         return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
-    OPAL_THREAD_LOCK(&module->lock);
-    curr = module->rdma_frag;
-    if (OPAL_UNLIKELY(NULL == curr || curr->remain_len < request_len)) {
-        if (NULL == curr || (NULL != curr && curr->pending > 1)) {
-            opal_free_list_item_t *item = NULL;
+    if (NULL == curr) {
+        opal_free_list_item_t *item = NULL;
 
-            /* release the initial reference to the buffer */
-            module->rdma_frag = NULL;
+        item = opal_free_list_get (&mca_osc_rdma_component.frags);
+        if (OPAL_UNLIKELY(NULL == item)) {
+            OPAL_THREAD_UNLOCK(&module->lock);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-            if (curr) {
-                ompi_osc_rdma_frag_complete (curr);
-            }
+        curr = (ompi_osc_rdma_frag_t *) item;
 
-            item = opal_free_list_get (&mca_osc_rdma_component.frags);
-            if (OPAL_UNLIKELY(NULL == item)) {
-                OPAL_THREAD_UNLOCK(&module->lock);
+        curr->handle = NULL;
+        curr->pending = 1;
+        curr->module = module;
+        curr->curr_index = 0;
+
+        if (module->selected_btl->btl_register_mem) {
+            ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, curr->super.ptr, mca_osc_rdma_component.buffer_size,
+                                          MCA_BTL_REG_FLAG_ACCESS_ANY, &curr->handle);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
+        }
 
-            curr = module->rdma_frag = (ompi_osc_rdma_frag_t *) item;
-
+        if (!opal_atomic_compare_exchange_strong_ptr (&module->rdma_frag, &(void *){NULL}, curr)) {
+            ompi_osc_rdma_deregister (module, curr->handle);
             curr->handle = NULL;
-            curr->pending = 1;
-            curr->module = module;
-        }
 
-        curr->top = curr->super.ptr;
-        curr->remain_len = mca_osc_rdma_component.buffer_size;
+            opal_free_list_return (&mca_osc_rdma_component.frags, &curr->super);
 
-        if (curr->remain_len < request_len) {
-            OPAL_THREAD_UNLOCK(&module->lock);
-            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            curr = module->rdma_frag;
         }
     }
 
-    if (!curr->handle && module->selected_btl->btl_register_mem) {
-        ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, curr->super.ptr, mca_osc_rdma_component.buffer_size,
-                                      MCA_BTL_REG_FLAG_ACCESS_ANY, &curr->handle);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            OPAL_THREAD_UNLOCK(&module->lock);
-            return ret;
-        }
-    }
-
-
-    *ptr = (char *) curr->top;
-    *buffer = curr;
-
-    curr->top += request_len;
-    curr->remain_len -= request_len;
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "allocating frag. pending = %d", curr->pending);
     OPAL_THREAD_ADD_FETCH32(&curr->pending, 1);
 
-    OPAL_THREAD_UNLOCK(&module->lock);
+    my_index = opal_atomic_fetch_add_64 (&curr->curr_index, request_len);
+    if (my_index + request_len > mca_osc_rdma_component.buffer_size) {
+        if (my_index <= mca_osc_rdma_component.buffer_size) {
+            /* this thread caused the buffer to spill over */
+            ompi_osc_rdma_frag_complete (curr);
+        }
+        ompi_osc_rdma_frag_complete (curr);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    *ptr = (void *) ((intptr_t) curr->super.ptr + my_index);
+    *buffer = curr;
 
     return OMPI_SUCCESS;
 }

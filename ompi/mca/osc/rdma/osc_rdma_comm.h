@@ -24,23 +24,6 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define ALIGNMENT_MASK(x) ((x) ? (x) - 1 : 0)
 
-/* helper functions */
-static inline void ompi_osc_rdma_cleanup_rdma (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_frag_t *frag,
-                                               mca_btl_base_registration_handle_t *handle, ompi_osc_rdma_request_t *request)
-{
-    if (frag) {
-        ompi_osc_rdma_frag_complete (frag);
-    } else {
-        ompi_osc_rdma_deregister (sync->module, handle);
-    }
-
-    if (request) {
-        (void) OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1);
-    }
-
-    ompi_osc_rdma_sync_rdma_dec (sync);
-}
-
 /**
  * @brief find a remote segment associate with the memory region
  *
@@ -133,5 +116,9 @@ int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *or
 int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, struct mca_btl_base_endpoint_t *endpoint,
                                 uint64_t source_address, mca_btl_base_registration_handle_t *source_handle,
                                 void *data, size_t len);
+
+int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
+                              mca_btl_base_registration_handle_t *target_handle, void *source_buffer, size_t size,
+                              ompi_osc_rdma_request_t *request);
 
 #endif /* OMPI_OSC_RDMA_COMM_H */
