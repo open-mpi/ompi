@@ -83,6 +83,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                             [$ompi_check_ucx_libdir],
                                             [ompi_check_ucx_happy="yes"],
                                             [ompi_check_ucx_happy="no"])
+
                          CPPFLAGS="$ompi_check_ucx_$1_save_CPPFLAGS"
                          LDFLAGS="$ompi_check_ucx_$1_save_LDFLAGS"
                          LIBS="$ompi_check_ucx_$1_save_LIBS"
