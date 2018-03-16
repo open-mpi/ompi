@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -40,6 +40,22 @@
 #pragma weak MPI_Wtime = PMPI_Wtime
 #endif
 #define MPI_Wtime PMPI_Wtime
+/**
+ * Have a base time set on the first call to wtime, to improve the range
+ * and accuracy of the user visible timer.
+ * More info: https://github.com/mpi-forum/mpi-issues/issues/77#issuecomment-369663119
+ */
+#if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
+struct timespec ompi_wtime_time_origin = {.tv_sec = 0};
+#else
+struct timeval ompi_wtime_time_origin = {.tv_sec = 0};
+#endif
+#else  /* OMPI_BUILD_MPI_PROFILING */
+#if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
+extern struct timespec ompi_wtime_time_origin;
+#else
+extern struct timeval ompi_wtime_time_origin;
+#endif
 #endif
 
 double MPI_Wtime(void)
@@ -58,16 +74,22 @@ double MPI_Wtime(void)
 #endif
 #else
 #if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
-    struct timespec tp = {.tv_sec = 0, .tv_nsec = 0};
+    struct timespec tp;
     (void) clock_gettime(CLOCK_MONOTONIC, &tp);
-    wtime = tp.tv_sec;
-    wtime += tp.tv_nsec/1.0e+9;
+    if( OPAL_UNLIKELY(0 == ompi_wtime_time_origin.tv_sec) ) {
+        ompi_wtime_time_origin = tp;
+    }
+    wtime  = (double)(tp.tv_nsec - ompi_wtime_time_origin.tv_nsec)/1.0e+9;
+    wtime += (tp.tv_sec - ompi_wtime_time_origin.tv_sec);
 #else
     /* Fall back to gettimeofday() if we have nothing else */
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    wtime = tv.tv_sec;
-    wtime += (double)tv.tv_usec / 1000000.0;
+    if( OPAL_UNLIKELY(0 == ompi_wtime_time_origin.tv_sec) ) {
+        ompi_wtime_time_origin = tv;
+    }
+    wtime  = (double)(tv.tv_usec - ompi_wtime_time_origin.tv_usec) / 1.0e+6;
+    wtime += (tv.tv_sec - ompi_wtime_time_origin.tv_sec);
 #endif
 #endif
 
