@@ -410,7 +410,7 @@ static void vm_ready(int fd, short args, void *cbdata)
             OBJ_RELEASE(buf);
         }
         /* notify that the vm is ready */
-        fprintf(stdout, "DVM ready\n");
+        fprintf(stdout, "DVM ready\n"); fflush(stdout);
         OBJ_RELEASE(caddy);
         return;
     }
