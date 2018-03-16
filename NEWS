@@ -20,6 +20,8 @@ Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
+                        reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -53,7 +55,7 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-3.1.0 -- January, 2018
+3.1.0 -- March, 2018
 ----------------------
 
 - The output-filename option for mpirun is now converted to an
@@ -99,23 +101,171 @@ included in the vX.Y.Z section and be denoted as:
 - Remove support for XL compilers older than v13.1.
 - Remove support for atomic operations using MacOS atomics library.
 
-3.0.0 -- July, 2017
--------------------
+3.0.1 -- March, 2018
+----------------------
+
+- Fix ability to attach parallel debuggers to MPI processes.
+- Fix a number of issues in MPI I/O found by the HDF5 test suite.
+- Fix (extremely) large message transfers with shared memory.
+- Fix out of sequence bug in multi-NIC configurations.
+- Fix stdin redirection bug that could result in lost input.
+- Disable the LSF launcher if CSM is detected.
+- Plug a memory leak in MPI_Mem_free().  Thanks to Philip Blakely for reporting.
+- Fix the tree spawn operation when the number of nodes is larger than the radix.
+  Thanks to Carlos Eduardo de Andrade for reporting.
+- Fix Fortran 2008 macro in MPI extensions.  Thanks to Nathan T. Weeks for
+  reporting.
+- Add UCX to list of interfaces that OpenSHMEM will use by default.
+- Add --{enable|disable}-show-load-errors-by-default to control
+  default behavior of the load errors option.
+- OFI MTL improvements: handle empty completion queues properly, fix
+  incorrect error message around fi_getinfo(), use default progress
+  option for provider by default, Add support for reading multiple
+  CQ events in ofi_progress.
+- PSM2 MTL improvements: Allow use of GPU buffers, thread fixes.
+- Numerous corrections to memchecker behavior.
+- Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
+  MPI processes on the same node where mpirun is executing using a separate
+  orte daemon, rather than the mpirun process.   This may be useful to set to
+  true when using SLURM, as it improves interoperability with SLURM's signal
+  propagation tools.  By default it is set to false, except for Cray XC systems.
+- Fix a problem reported on the mailing separately by Kevin McGrattan and Stephen
+  Guzik about consistency issues on NFS file systems when using OMPIO. This fix
+  also introduces a new mca parameter fs_ufs_lock_algorithm which allows to
+  control the locking algorithm used by ompio for read/write operations. By
+  default, ompio does not perfom locking on local UNIX file systems, locks the
+  entire file per operation on NFS file systems, and selective byte-range
+  locking on other distributed file systems.
+- Add an mca parameter pmix_server_usock_connections to allow mpirun to
+  support applications statically built against the Open MPI v2.x release,
+  or installed in a container along with the Open MPI v2.x libraries. It is
+  set to false by default.
+
+3.0.0 -- September, 2017
+------------------------
 
 Major new features:
 
 - Use UCX allocator for OSHMEM symmetric heap allocations to optimize intra-node
   data transfers.  UCX SPML only.
 - Use UCX multi-threaded API in the UCX PML.  Requires UCX 1.0 or later.
+- Added support for Flux PMI
+- Update embedded PMIx to version 2.1.0
+- Update embedded hwloc to version 1.11.7
 
 Changes in behavior compared to prior versions:
 
-Removed legacy support:
-- "yoda" SPML component is removed from the Open SHMEM codebase. It was utilizing
-  Open MPI BTL components for supported networks. Please see README for the currently
-  available options.
+- Per Open MPI's versioning scheme (see the README), increasing the
+  major version number to 3 indicates that this version is not
+  ABI-compatible with prior versions of Open MPI. In addition, there may
+  be differences in MCA parameter names and defaults from previous releases.
+  Command line options for mpirun and other commands may also differ from
+  previous versions. You will need to recompile MPI and OpenSHMEM applications
+  to work with this version of Open MPI.
+- With this release, Open MPI supports MPI_THREAD_MULTIPLE by default.
+- New configure options have been added to specify the locations of libnl
+  and zlib.
+- A new configure option has been added to request Flux PMI support.
+- The help menu for mpirun and related commands is now context based.
+  "mpirun --help compatibility" generates the help menu in the same format
+  as previous releases.
 
-Known issues (to be addressed in v3.0.1):
+Removed legacy support:
+- AIX is no longer supported.
+- Loadlever is no longer supported.
+- OpenSHMEM currently supports the UCX and MXM transports via the ucx and ikrit
+  SPMLs respectively.
+- Remove IB XRC support from the OpenIB BTL due to lack of support.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1
+
+Known issues:
+
+- MPI_Connect/accept between applications started by different mpirun
+  commands will fail, even if ompi-server is running.
+
+2.1.3 -- March, 2018
+--------------------
+
+Bug fixes/minor improvements:
+- Update internal PMIx version to 1.2.5.
+- Fix a problem with ompi_info reporting using param option.
+  Thanks to Alexander Pozdneev for reporting.
+- Correct PMPI_Aint_{add|diff} to be functions (not subroutines)
+  in the Fortran mpi_f08 module.
+- Fix a problem when doing MPI I/O using data types with large
+  extents in conjunction with MPI_TYPE_CREATE_SUBARRAY.  Thanks to
+  Christopher Brady for reporting.
+- Fix a problem when opening many files using MPI_FILE_OPEN.
+  Thanks to William Dawson for reporting.
+- Fix a problem with debuggers failing to attach to a running job.
+  Thanks to Dirk Schubert for reporting.
+- Fix a problem when using madvise and the OpenIB BTL.  Thanks to
+  Timo Bingmann for reporting.
+- Fix a problem in the Vader BTL that resulted in failures of
+  IMB under certain circumstances.  Thanks to Nicolas Morey-
+  Chaisemartin for reporting.
+- Fix a problem preventing Open MPI from working under Cygwin.
+  Thanks to Marco Atzeri for reporting.
+- Reduce some verbosity being emitted by the USNIC BTL under certain
+  circumstances.  Thanks to Peter Forai for reporting.
+- Fix a problem with misdirection of SIGKILL.  Thanks to Michael Fern
+  for reporting.
+- Replace use of posix_memalign with malloc for small allocations.  Thanks
+  to Ben Menaude for reporting.
+- Fix a problem with Open MPI's out of band TCP network for file descriptors
+  greater than 32767.  Thanks to Wojtek Wasko for reporting and fixing.
+- Plug a memory leak in MPI_Mem_free().  Thanks to Philip Blakely for reporting.
+
+2.1.2 -- September, 2017
+------------------------
+
+Bug fixes/minor improvements:
+- Update internal PMIx version to 1.2.3.
+- Fix some problems when using the NAG Fortran compiler to build Open MPI
+  and when using the compiler wrappers.  Thanks to Neil Carlson for reporting.
+- Fix a compilation problem with the SM BTL.  Thanks to Paul Hargrove for
+  reporting.
+- Fix a problem with MPI_IALLTOALLW when using zero-length messages.
+  Thanks to Dahai Guo for reporting.
+- Fix a problem with C11 generic type interface for SHMEM_G.  Thanks
+  to Nick Park for reporting.
+- Switch to using the lustreapi.h include file when building Open MPI
+  with Lustre support.
+- Fix a problem in the OB1 PML that led to hangs with OSU collective tests.
+- Fix a progression issue with MPI_WIN_FLUSH_LOCAL.  Thanks to
+  Joseph Schuchart for reporting.
+- Fix an issue with recent versions of PBSPro requiring libcrypto.
+  Thanks to Petr Hanousek for reporting.
+- Fix a problem when using MPI_ANY_SOURCE with MPI_SENDRECV.
+- Fix an issue that prevented signals from being propagated to ORTE
+  daemons.
+- Ensure that signals are forwarded from ORTE daemons to all processes
+  in the process group created by the daemons.  Thanks to Ted Sussman
+  for reporting.
+- Fix a problem with launching a job under a debugger. Thanks to
+  Greg Lee for reporting.
+- Fix a problem with Open MPI native I/O MPI_FILE_OPEN when using
+  a communicator having an associated topology.  Thanks to
+  Wei-keng Liao for reporting.
+- Fix an issue when using MPI_ACCUMULATE with derived datatypes.
+- Fix a problem with Fortran bindings that led to compilation errors
+  for user defined reduction operations.  Thanks to Nathan Weeks for
+  reporting.
+- Fix ROMIO issues with large writes/reads when using NFS file systems.
+- Fix definition of Fortran MPI_ARGV_NULL and MPI_ARGVS_NULL.
+- Enable use of the head node of a SLURM allocation on Cray XC systems.
+- Fix a problem with synchronous sends when using the UCX PML.
+- Use default socket buffer size to improve TCP BTL performance.
+- Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
+  MPI processes on the same node where mpirun is executing using a separate
+  orte daemon, rather than the mpirun process.   This may be useful to set to
+  true when using SLURM, as it improves interoperability with SLURM's signal
+  propagation tools.  By default it is set to false, except for Cray XC systems.
+- Fix --without-lsf when lsf is installed in the default search path.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1
+- Remove IB XRC support from the OpenIB BTL due to loss of maintainer.
 
 2.1.1 -- April, 2017
 --------------------
