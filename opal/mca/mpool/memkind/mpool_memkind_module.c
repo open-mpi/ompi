@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
 #include "opal/mca/mpool/base/base.h"
 
 size_t partition_page_sizes[MEMKIND_NUM_BASE_KIND] = {
-    4096, 4069, 2097152, 4096, 2097152, 2097152,
+    4096, 4096, 2097152, 4096, 2097152, 2097152,
     1073741824, 1073741824, 1073741824, 4096, 4096,
 };
 
