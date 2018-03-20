@@ -277,6 +277,7 @@ static int create_listen(void)
     }
 
     /* get the address info for this interface */
+    memset(&inaddr, 0, sizeof(inaddr));
     ((struct sockaddr_in*) &inaddr)->sin_family = AF_INET;
     ((struct sockaddr_in*) &inaddr)->sin_addr.s_addr = INADDR_ANY;
     addrlen = sizeof(struct sockaddr_in);
@@ -529,6 +530,7 @@ static int create_listen6(void)
     }
 
     /* get the address info for this interface */
+    memset(&inaddr, 0, sizeof(inaddr));
     ((struct sockaddr_in6*) &inaddr)->sin6_family = AF_INET6;
     ((struct sockaddr_in6*) &inaddr)->sin6_addr = in6addr_any;
     addrlen = sizeof(struct sockaddr_in6);

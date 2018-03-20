@@ -52,6 +52,8 @@
 #include <netdb.h>
 #endif
 #include <ctype.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
@@ -84,6 +86,8 @@
 #include "orte/mca/oob/tcp/oob_tcp_peer.h"
 #include "orte/mca/oob/tcp/oob_tcp_connection.h"
 #include "orte/mca/oob/tcp/oob_tcp_listener.h"
+#include "oob_tcp_peer.h"
+
 /*
  * Local utility functions
  */
@@ -843,6 +847,8 @@ static int parse_uri(const uint16_t af_family,
             opal_output (0, "oob_tcp_parse_uri: Could not convert %s\n", host);
             return ORTE_ERR_BAD_PARAM;
         }
+        in6->sin6_family = AF_INET6;
+        in6->sin6_port =  htons(atoi(port));
     }
 #endif
     else {
@@ -973,6 +979,7 @@ static int component_set_addr(orte_process_name_t *peer,
             }
 
             maddr = OBJ_NEW(mca_oob_tcp_addr_t);
+            ((struct sockaddr_storage*) &(maddr->addr))->ss_family = af_family;
             if (ORTE_SUCCESS != (rc = parse_uri(af_family, host, ports, (struct sockaddr_storage*) &(maddr->addr)))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(maddr);
