@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -17,6 +17,7 @@
 #include "oshmem/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+#include "ompi/util/timings.h"
 
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/scoll/scoll.h"
@@ -57,6 +58,8 @@ int mca_scoll_enable(void)
 {
     int ret = OSHMEM_SUCCESS;
 
+    OPAL_TIMING_ENV_INIT(mca_scoll_enable);
+
     if (!mca_scoll_sync_array) {
         void* ptr = (void*) mca_scoll_sync_array;
         int i = 0;
@@ -69,15 +72,22 @@ int mca_scoll_enable(void)
         }
     }
 
+    OPAL_TIMING_ENV_NEXT(mca_scoll_enable, "memheap");
+
     /* Note: it is done to support FCA only and we need to consider possibility to
      * find a way w/o this ugly hack
      */
     if (OSHMEM_SUCCESS != (ret = mca_scoll_base_select(oshmem_group_all))) {
         return ret;
     }
+
+    OPAL_TIMING_ENV_NEXT(mca_scoll_enable, "group_all");
+
     if (OSHMEM_SUCCESS != (ret = mca_scoll_base_select(oshmem_group_self))) {
         return ret;
     }
+
+    OPAL_TIMING_ENV_NEXT(mca_scoll_enable, "group_self");
 
     return OSHMEM_SUCCESS;
 }

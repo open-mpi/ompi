@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2017-2018 Mellanox Technologies Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,7 +91,7 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
 #define OPAL_TIMING_ENV_INIT_PREFIX(prefix, name)                                 \
     do {                                                                          \
         opal_timing_env_t name ## _val, *name = &(name ## _val);                  \
-        *name = OPAL_TIMING_ENV_START_TYPE(__func__, OPAL_TIMING_AUTOMATIC_TIMER, prefix); \
+        *name = OPAL_TIMING_ENV_START_TYPE(__func__, name, OPAL_TIMING_AUTOMATIC_TIMER, prefix); \
     } while(0)
 
 #define OPAL_TIMING_ENV_NEXT(h, ...)                                              \
@@ -121,7 +121,8 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
                 h->error = 1;                                                     \
             }                                                                     \
             setenv(buf1, buf2, 1);                                                \
-            filename = strrchr(__FILE__, '/') + 1;                                \
+            filename = strrchr(__FILE__, '/');                                    \
+            filename = (filename == NULL) ? strdup(__FILE__) : filename+1;        \
             n = snprintf(buf1, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_FILE_%d", h->id, h->cntr); \
             if ( n > OPAL_TIMING_STR_LEN ){                                       \
                 h->error = 1;                                                     \
@@ -207,7 +208,7 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
 
 #define OPAL_TIMING_ENV_INIT(name)
 
-#define OPAL_TIMING_ENV_INIT_PREFIX(prefix)
+#define OPAL_TIMING_ENV_INIT_PREFIX(prefix, name)
 
 #define OPAL_TIMING_ENV_NEXT(h, ... )
 

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +21,7 @@
 #include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "ompi/util/timings.h"
 
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/scoll/scoll.h"
@@ -194,6 +195,8 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
     opal_list_item_t *item;
     int ret;
 
+    OPAL_TIMING_ENV_INIT(mca_scoll_base_select);
+
     /* Announce */
     SCOLL_VERBOSE(10, "scoll:base:group_select: new group: %d", group->id);
     mca_scoll_base_group_unselect(group);
@@ -206,6 +209,9 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
         group->g_scoll.scoll_alltoall = scoll_null_alltoall;
         return OSHMEM_SUCCESS;
     }
+
+    OPAL_TIMING_ENV_NEXT(mca_scoll_base_select, "setup");
+
     SCOLL_VERBOSE(10,
                   "scoll:base:group_select: Checking all available modules");
     selectable = check_components(&oshmem_scoll_base_framework.framework_components, group);
@@ -217,6 +223,8 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
         /* There's no modules available */
         return OSHMEM_ERROR;
     }
+
+    OPAL_TIMING_ENV_NEXT(mca_scoll_base_select, "check_components");
 
     /* do the selection loop */
     for (item = opal_list_remove_first(selectable); NULL != item; item =
@@ -236,6 +244,8 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
         OBJ_RELEASE(avail);
     }
 
+    OPAL_TIMING_ENV_NEXT(mca_scoll_base_select, "select_loop");
+
     /* Done with the list from the check_components() call so release it. */
     OBJ_RELEASE(selectable);
     if ((NULL == group->g_scoll.scoll_barrier)
@@ -246,6 +256,8 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
         mca_scoll_base_group_unselect(group);
         return OSHMEM_ERR_NOT_FOUND;
     }
+
+    OPAL_TIMING_ENV_NEXT(mca_scoll_base_select, "release");
 
     return OSHMEM_SUCCESS;
 }

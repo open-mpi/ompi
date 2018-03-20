@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2017-2018 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,6 +21,7 @@ typedef struct {
     double ts;
     char *file;
     char *prefix;
+    int imported;
 }   ompi_timing_val_t;
 
 typedef struct {
@@ -36,10 +37,14 @@ typedef struct ompi_timing_t {
     int cnt;
     int error;
     int enabled;
+    int import_cnt;
     opal_timing_ts_func_t get_ts;
     ompi_timing_list_t *timing;
     ompi_timing_list_t *cur_timing;
 } ompi_timing_t;
+
+#define OMPI_TIMING_ENABLED \
+    (getenv("OMPI_TIMING_ENABLE") ? atoi(getenv("OMPI_TIMING_ENABLE")) : 0)
 
 #define OMPI_TIMING_INIT(_size)                                                \
     ompi_timing_t OMPI_TIMING;                                                 \
@@ -50,6 +55,7 @@ typedef struct ompi_timing_t {
     OMPI_TIMING.error = 0;                                                     \
     OMPI_TIMING.ts = OMPI_TIMING.get_ts();                                     \
     OMPI_TIMING.enabled = 0;                                                   \
+    OMPI_TIMING.import_cnt = 0;                                                \
     {                                                                          \
         char *ptr;                                                             \
         ptr = getenv("OMPI_TIMING_ENABLE");                                    \
@@ -94,7 +100,8 @@ typedef struct ompi_timing_t {
 #define OMPI_TIMING_NEXT(...)                                                      \
     do {                                                                           \
         if (!OMPI_TIMING.error && OMPI_TIMING.enabled) {                           \
-            char *f = strrchr(__FILE__, '/') + 1;                                  \
+            char *f = strrchr(__FILE__, '/');                                      \
+            f = (f == NULL) ? strdup(__FILE__) : f+1;                              \
             int len = 0;                                                           \
             if (OMPI_TIMING.cur_timing->use >= OMPI_TIMING.size){                  \
                 OMPI_TIMING_ITEM_EXTEND;                                           \
@@ -135,10 +142,13 @@ typedef struct ompi_timing_t {
             int cnt;                                                               \
             int i;                                                                 \
             double ts;                                                             \
+            OMPI_TIMING.import_cnt++;                                              \
             OPAL_TIMING_ENV_CNT(func, cnt);                                        \
             OPAL_TIMING_ENV_ERROR_PREFIX(_prefix, func, OMPI_TIMING.error);        \
             for(i = 0; i < cnt; i++){                                              \
                 char *desc, *filename;                                             \
+                OMPI_TIMING.cur_timing->val[OMPI_TIMING.cur_timing->use].imported= \
+                    OMPI_TIMING.import_cnt;                                        \
                 OPAL_TIMING_ENV_GETDESC_PREFIX(_prefix, &filename, func, i, &desc, ts);  \
                 OMPI_TIMING_APPEND(filename, func, desc, ts);                      \
             }                                                                      \
@@ -155,6 +165,7 @@ typedef struct ompi_timing_t {
             MPI_Comm_size(MPI_COMM_WORLD, &size);                                 \
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);                                 \
             int error = 0;                                                        \
+            int imported = 0;                                                     \
                                                                                   \
             MPI_Reduce(&OMPI_TIMING.error, &error, 1,                             \
                 MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);                             \
@@ -171,6 +182,7 @@ typedef struct ompi_timing_t {
                 char **desc = (char**)malloc(sizeof(char*) * OMPI_TIMING.cnt);    \
                 char **prefix = (char**)malloc(sizeof(char*) * OMPI_TIMING.cnt);  \
                 char **file = (char**)malloc(sizeof(char*) * OMPI_TIMING.cnt);    \
+                double total_avg = 0, total_min = 0, total_max = 0;               \
                                                                                   \
                 if( OMPI_TIMING.cnt > 0 ) {                                       \
                     OMPI_TIMING.ts = OMPI_TIMING.get_ts();                        \
@@ -193,21 +205,53 @@ typedef struct ompi_timing_t {
                         timing = (ompi_timing_list_t*)timing->next;               \
                     } while (timing != NULL);                                     \
                                                                                   \
-                    if( 0 == rank ){                                              \
+                    if( 0 == rank ) {                                             \
                         if (OMPI_TIMING.timing->next) {                           \
                             printf("==OMPI_TIMING== warning: added the extra timings allocation that might misrepresent the results.\n"            \
                                    "==OMPI_TIMING==          Increase the inited size of timings to avoid extra allocation during runtime.\n");    \
                         }                                                         \
                                                                                   \
                         printf("------------------ %s ------------------\n",      \
-                                OMPI_TIMING.prefix);                              \
+                            OMPI_TIMING.prefix);                                  \
+                        imported = OMPI_TIMING.timing->val[0].imported;           \
                         for(i=0; i< OMPI_TIMING.cnt; i++){                        \
+                            bool print_total = 0;                                 \
+                            imported = OMPI_TIMING.timing->val[i].imported;       \
                             avg[i] /= size;                                       \
-                            printf("[%s:%s:%s]: %lf / %lf / %lf\n",               \
+                            printf("%s[%s:%s:%s]: %lf / %lf / %lf\n",             \
+                                imported ? " -- " : "",                           \
                                 file[i], prefix[i], desc[i], avg[i], min[i], max[i]); \
+                            if (OMPI_TIMING.timing->val[i].imported) {            \
+                                total_avg += avg[i];                              \
+                                total_min += min[i];                              \
+                                total_max += max[i];                              \
+                            }                                                     \
+                            if (i == (OMPI_TIMING.cnt-1)) {                       \
+                                print_total = true;                               \
+                            } else {                                              \
+                                print_total = imported != OMPI_TIMING.timing->val[i+1].imported; \
+                            }                                                     \
+                            if (print_total && OMPI_TIMING.timing->val[i].imported) {            \
+                                printf("%s[%s:%s:%s]: %lf / %lf / %lf\n",         \
+                                    imported ? " !! " : "",                       \
+                                    file[i], prefix[i], "total",                  \
+                                    total_avg, total_min, total_max);             \
+                                    total_avg = 0; total_min = 0; total_max = 0;  \
+                            }                                                     \
                         }                                                         \
+                        total_avg = 0; total_min = 0; total_max = 0;              \
+                        for(i=0; i< OMPI_TIMING.cnt; i++) {                       \
+                            if (!OMPI_TIMING.timing->val[i].imported) {           \
+                                total_avg += avg[i];                              \
+                                total_min += min[i];                              \
+                                total_max += max[i];                              \
+                            }                                                     \
+                        }                                                         \
+                        printf("[%s:total] %lf / %lf / %lf\n",                    \
+                            OMPI_TIMING.prefix,                                   \
+                            total_avg, total_min, total_max);                     \
                         printf("[%s:overhead]: %lf \n", OMPI_TIMING.prefix,       \
-                                OMPI_TIMING.get_ts() - OMPI_TIMING.ts);           \
+                            OMPI_TIMING.get_ts() - OMPI_TIMING.ts);               \
                     }                                                             \
                 }                                                                 \
                 free(avg);                                                        \
@@ -232,6 +276,8 @@ typedef struct ompi_timing_t {
 #define OMPI_TIMING_IMPORT_OPAL(func)
 
 #define OMPI_TIMING_FINALIZE
+
+#define OMPI_TIMING_ENABLED 0
 
 #endif
 
