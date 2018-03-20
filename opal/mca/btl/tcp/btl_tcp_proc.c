@@ -857,6 +857,10 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                                               tmp[1], INET6_ADDRSTRLEN),
                                     (int)i, (int)btl_proc->proc_endpoint_count);
                 continue;
+            } else if (btl_endpoint->endpoint_state != MCA_BTL_TCP_CLOSED) {
+                 found_match = 1;
+                 match_btl_endpoint = btl_endpoint;
+                 continue;
             }
             break;
 #endif
