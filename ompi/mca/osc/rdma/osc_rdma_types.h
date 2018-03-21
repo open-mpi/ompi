@@ -229,7 +229,11 @@ struct ompi_osc_rdma_frag_t {
 
     /* Number of operations which have started writing into the frag, but not yet completed doing so */
     volatile int32_t pending;
+#if OPAL_HAVE_ATOMIC_MATH_64
     volatile int64_t curr_index;
+#else
+    volatile int32_t curr_index;
+#endif
 
     struct ompi_osc_rdma_module_t *module;
     mca_btl_base_registration_handle_t *handle;
