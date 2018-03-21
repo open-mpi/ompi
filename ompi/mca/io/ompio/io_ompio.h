@@ -72,7 +72,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 
 #define QUEUESIZE 2048
 #define MCA_IO_DEFAULT_FILE_VIEW_SIZE 4*1024*1024
-#define OMPIO_FCOLL_WANT_TIME_BREAKDOWN 1
+#define OMPIO_FCOLL_WANT_TIME_BREAKDOWN 0
 
 #define OMPIO_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define OMPIO_MAX(a, b) (((a) < (b)) ? (b) : (a))
