@@ -75,6 +75,7 @@
 #include "connect/connect.h"
 
 #include "opal/util/sys_limits.h"
+#include "opal/align.h"
 
 #if (ENABLE_DYNAMIC_SL)
 #include "connect/btl_openib_connect_sl.h"
@@ -1040,7 +1041,7 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
 
 static int udcm_module_allocate_buffers (udcm_module_t *m)
 {
-    size_t total_size;
+    size_t total_size, page_size;
 
     m->msg_length   = sizeof (udcm_msg_hdr_t) +
         mca_btl_openib_component.num_qps * sizeof (udcm_qp_t);
@@ -1048,8 +1049,11 @@ static int udcm_module_allocate_buffers (udcm_module_t *m)
     total_size = (udcm_recv_count + 1) * (m->msg_length +
                                           UDCM_GRH_SIZE);
 
+    page_size = opal_getpagesize();
+    total_size = OPAL_ALIGN(total_size, page_size, size_t);
+
     m->cm_buffer = NULL;
-    posix_memalign ((void **)&m->cm_buffer, (size_t)opal_getpagesize(),
+    posix_memalign ((void **)&m->cm_buffer, (size_t)page_size,
                     total_size);
     if (NULL == m->cm_buffer) {
         BTL_ERROR(("malloc failed! errno = %d", errno));
