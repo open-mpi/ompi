@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -12,6 +12,12 @@
 #include "patcher_overwrite.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/sys_limits.h"
+
+#include <sys/mman.h>
+#if HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
 
 static int mca_patcher_overwrite_priority;
 
@@ -28,6 +34,28 @@ static int mca_patcher_overwrite_register (void)
 
 static int mca_patcher_overwrite_query (mca_base_module_t **module, int *priority)
 {
+    unsigned long page_size = opal_getpagesize ();
+    int wxabort = 0;
+    int ret;
+
+#if defined(CTL_KERN) && defined(KERN_WXABORT)
+    (void) sysctl ((int []) {CTL_KERN, KERN_WXABORT}, 2, &wxabort, &(int) {sizeof (wxabort)}, NULL, 0);
+#endif
+    if (1 != wxabort) {
+        /* try to modify the protection on a function. if we can't change the protection we
+         * can't support the overwrite style of runtime patching. */
+        ret = mprotect ((void *)((intptr_t) mca_patcher_overwrite_query & ~(page_size - 1)),
+                        page_size, PROT_EXEC|PROT_READ|PROT_WRITE);
+    } else {
+        /* kern.wxabort is set. can not change memory protection */
+        ret = -1;
+    }
+
+    if (0 != ret) {
+        *priority = -1;
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
     *module = &mca_patcher_overwrite_module.super;
     *priority = mca_patcher_overwrite_priority;
     return OPAL_SUCCESS;
