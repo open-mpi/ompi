@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  *
@@ -18,13 +18,19 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-
-
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "opal/util/fd.h"
 #include "opal/constants.h"
@@ -126,3 +132,49 @@ bool opal_fd_is_blkdev(int fd)
     return S_ISBLK(buf.st_mode);
 }
 
+const char *opal_fd_get_peer_name(int fd)
+{
+    char *str;
+    const char *ret;
+    struct sockaddr sa;
+    socklen_t slt = (socklen_t) sizeof(sa);
+
+    int rc = getpeername(fd, &sa, &slt);
+    if (0 != rc) {
+        ret = strdup("Unknown");
+        return ret;
+    }
+
+    size_t len = INET_ADDRSTRLEN;
+#if OPAL_ENABLE_IPV6
+    len = INET6_ADDRSTRLEN;
+#endif
+    str = malloc(len);
+    if (NULL == str) {
+        return NULL;
+    }
+
+    if (sa.sa_family == AF_INET) {
+        struct sockaddr_in *si;
+        si = (struct sockaddr_in*) &sa;
+        ret = inet_ntop(AF_INET, &(si->sin_addr), str, INET_ADDRSTRLEN);
+        if (NULL == ret) {
+            free(str);
+        }
+    }
+#if OPAL_ENABLE_IPV6
+    else if (sa.sa_family == AF_INET6) {
+        struct sockaddr_in6 *si6;
+        si6 = (struct sockaddr_in6*) &sa;
+        ret = inet_ntop(AF_INET6, &(si6->sin6_addr), str, INET6_ADDRSTRLEN);
+        if (NULL == ret) {
+            free(str);
+        }
+    }
+#endif
+    else {
+        ret = strdup("Unknown");
+    }
+
+    return ret;
+}
