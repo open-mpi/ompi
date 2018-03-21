@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -37,23 +37,21 @@
 
 
 /*
+ * Local functions
+ */
+static int default_backend(const char *filename, const char *topic,
+                           bool want_error_header, va_list arglist);
+
+
+/*
  * Private variables
  */
 static const char *default_filename = "help-messages";
 static const char *dash_line = "--------------------------------------------------------------------------\n";
 static int output_stream = -1;
 static char **search_dirs = NULL;
-
-/*
- * Local functions
- */
-static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist);
-static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...);
-
-opal_show_help_fn_t opal_show_help = opal_show_help_internal;
-opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
+static volatile bool enabled = true;
+static opal_show_help_internal_fn_t registered_backend = default_backend;
 
 
 int opal_show_help_init(void)
@@ -330,8 +328,17 @@ char *opal_show_help_string(const char *filename, const char *topic,
     return output;
 }
 
-static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist)
+/* This is the default back-end to all the opal_show_*help()
+ * functions.  All it does it render the string and then call
+ * opal_output().
+ *
+ * All decisions about whether show_help messages are enabled or not
+ * have been made by the time this function is invoked.
+ */
+static int default_backend(const char *filename,
+                           const char *topic,
+                           bool want_error_header,
+                           va_list arglist)
 {
     char *output;
 
@@ -348,18 +355,66 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic,
     return (NULL == output) ? OPAL_ERROR : OPAL_SUCCESS;
 }
 
-static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...)
+int opal_show_vhelp(const char *filename, const char *topic,
+                    bool want_error_header, va_list arglist)
+{
+    if (!enabled) {
+        return OPAL_SUCCESS;
+    }
+
+    return registered_backend(filename, topic,
+                              want_error_header, arglist);
+}
+
+int opal_show_vhelp_final(const char *filename, const char *topic,
+                          bool want_error_header, va_list arglist)
+{
+    if (!enabled) {
+        return OPAL_SUCCESS;
+    }
+
+    enabled = false;
+
+    return registered_backend(filename, topic,
+                              want_error_header, arglist);
+}
+
+int opal_show_help(const char *filename, const char *topic,
+                   bool want_error_header, ...)
 {
     va_list arglist;
-    int rc;
+    int rc = OPAL_SUCCESS;
 
-    /* Convert it to a single string */
     va_start(arglist, want_error_header);
     rc = opal_show_vhelp(filename, topic, want_error_header, arglist);
     va_end(arglist);
 
     return rc;
+}
+
+int opal_show_help_final(const char *filename, const char *topic,
+                                bool want_error_header, ...)
+{
+    va_list arglist;
+    int rc = OPAL_SUCCESS;
+
+    va_start(arglist, want_error_header);
+    rc = opal_show_vhelp_final(filename, topic, want_error_header,
+                               arglist);
+    va_end(arglist);
+
+    return rc;
+}
+
+int opal_show_help_register_backend(opal_show_help_internal_fn_t func)
+{
+    if (NULL == func) {
+        registered_backend = default_backend;
+    } else {
+        registered_backend = func;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 int opal_show_help_add_dir(const char *directory)

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -29,9 +29,10 @@
 #ifndef _ORTE_SHOW_HELP_H_
 #define _ORTE_SHOW_HELP_H_
 
+#include "opal/util/show_help.h"
+
 #include "orte_config.h"
 #include "orte/types.h"
-
 
 #include "orte/mca/rml/rml_types.h"
 
@@ -71,16 +72,6 @@ ORTE_DECLSPEC bool orte_show_help_is_available(void);
 ORTE_DECLSPEC void orte_show_help_finalize(void);
 
 /**
- * Show help.
- *
- * Sends show help messages to the HNP if on a backend node.  Note
- * that aggregation is not currently supported on HNP-less systems
- * (e.g., cray).
- */
-ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic,
-                                 bool want_error_header, ...);
-
-/**
  * Exactly the same as orte_show_help, but pass in a rendered string,
  * rather than a varargs list which must be rendered.
  */
@@ -104,6 +95,14 @@ ORTE_DECLSPEC int orte_show_help_suppress(const char *filename,
 ORTE_DECLSPEC void orte_show_help_recv(int status, orte_process_name_t* sender,
                                        opal_buffer_t *buffer, orte_rml_tag_t tag,
                                        void* cbdata);
+
+/**
+ * Many places in ORTE invoke orte_show_help() instead of
+ * opal_show_help() (due to a previous implementation of the
+ * *_show_help() functionality).  A simple #define here re-orients
+ * them all to use opal_show_help().
+ */
+#define orte_show_help opal_show_help
 
 END_C_DECLS
 #endif

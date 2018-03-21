@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -112,8 +112,10 @@ OPAL_DECLSPEC int opal_show_help_finalize(void);
 
 
 /**
- * Look up a text message in a text file and display it to the
- * stderr using printf()-like substitutions (%d, %s, etc.).
+ * Look up a text message in a text file and display it to the stderr
+ * using printf()-like substitutions (%d, %s, etc.), but only if
+ * show_help messages have not been previously disabled by a call to
+ * opal_show_*help_final().
  *
  * @param filename File where the text messages are contained.
  * @param topic String index of which message to display from the
@@ -127,22 +129,49 @@ OPAL_DECLSPEC int opal_show_help_finalize(void);
  * (typically $prefix/share/openmpi), and looks up the message
  * based on the topic, and displays it.  If want_error_header is
  * true, a header and footer of asterisks are also displayed.
+ *
+ * If show_help() messages have been disabled, nothing is emitted and
+ * OPAL_SUCCESS is returned.
  */
-typedef int (*opal_show_help_fn_t)(const char *filename, const char *topic,
-                                   bool want_error_header, ...);
-OPAL_DECLSPEC extern opal_show_help_fn_t opal_show_help;
+OPAL_DECLSPEC int opal_show_help(const char *filename,
+                                 const char *topic,
+                                 bool want_error_header, ...);
+
+/**
+ * The same as invoking opal_show_help(), but also guarantees that no
+ * other show_help messages will be printed after this message.
+ *
+ * See opal_show_help() for a description of the arguments.
+ */
+OPAL_DECLSPEC int opal_show_help_final(const char *filename,
+                                       const char *topic,
+                                       bool want_error_header, ...);
 
 /**
  * This function does the same thing as opal_show_help(), but accepts
  * a va_list form of varargs.
  */
-typedef int (*opal_show_vhelp_fn_t)(const char *filename, const char *topic,
-                                    bool want_error_header, va_list ap);
-OPAL_DECLSPEC extern opal_show_vhelp_fn_t opal_show_vhelp;
+OPAL_DECLSPEC int opal_show_vhelp(const char *filename,
+                                  const char *topic,
+                                  bool want_error_header,
+                                  va_list ap);
 
 /**
- * This function does the same thing as opal_show_help(), but returns
- * its output in a string (that must be freed by the caller).
+ * This function does the same thing as opal_show_help_final(), but
+ * accepts a va_list form of varargs.
+ */
+OPAL_DECLSPEC int opal_show_vhelp_final(const char *filename,
+                                        const char *topic,
+                                        bool want_error_header,
+                                        va_list ap);
+
+/**
+ * This function essentially does the same thing as opal_show_help(),
+ * but returns its output in a string (that must be freed by the
+ * caller).
+ *
+ * Note that strings are *always* returned, regardless of whether
+ * opal_show_*help_final() has previously been invoked or not.
  */
 OPAL_DECLSPEC char* opal_show_help_string(const char *filename,
                                           const char *topic,
@@ -170,6 +199,24 @@ OPAL_DECLSPEC char* opal_show_help_vstring(const char *filename,
  * interfering with the linked ORTE libs when they need to do show_help.
  */
 OPAL_DECLSPEC int opal_show_help_add_dir(const char *directory);
+
+/**
+ * Register a function to take over the back-end functionality of
+ * emitting show_help messages.
+ *
+ * The default back-end functionality of the show_help functions is to
+ * emit messages to stderr.  Upper-level functions may wish to take
+ * over this functionality, for example, to send show_help messages
+ * over the network for remote display and/or aggregation.
+ *
+ * Registering a NULL value will reset the back-end functionlity to
+ * its default.
+ */
+typedef int (*opal_show_help_internal_fn_t)(const char *filename,
+                                            const char *topic,
+                                            bool want_error_header,
+                                            va_list ap);
+OPAL_DECLSPEC int opal_show_help_register_backend(opal_show_help_internal_fn_t func);
 
 END_C_DECLS
 

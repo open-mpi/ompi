@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
@@ -87,7 +87,8 @@ static void tuple_list_item_destructor(tuple_list_item_t *obj);
 static OBJ_CLASS_INSTANCE(tuple_list_item_t, opal_list_item_t,
                    tuple_list_item_constructor,
                    tuple_list_item_destructor);
-
+static int orte_show_help_backend(const char *filename, const char *topic,
+                                  bool want_error_header, va_list ap);
 
 /* List of (filename, topic) tuples that have already been displayed */
 static opal_list_t abd_tuples;
@@ -99,8 +100,6 @@ static struct timeval show_help_interval = { 5, 0 };
 static time_t show_help_time_last_displayed = 0;
 static bool show_help_timer_set = false;
 static opal_event_t show_help_timer_event;
-
-static opal_show_help_fn_t save_help = NULL;
 
 static void tuple_list_item_constructor(tuple_list_item_t *obj)
 {
@@ -557,8 +556,8 @@ int orte_show_help_init(void)
     orte_help_output = opal_output_open(&lds);
     OBJ_DESTRUCT(&lds);
 
-    save_help = opal_show_help;
-    opal_show_help = orte_show_help;
+    opal_show_help_register_backend(orte_show_help_backend);
+
     ready = true;
 
     return ORTE_SUCCESS;
@@ -573,8 +572,7 @@ void orte_show_help_finalize(void)
 
     opal_output_close(orte_help_output);
 
-    opal_show_help = save_help;
-    save_help = NULL;
+    opal_show_help_register_backend(NULL);
 
     /* Shutdown show_help, showing final messages */
     if (ORTE_PROC_IS_HNP) {
@@ -590,21 +588,17 @@ void orte_show_help_finalize(void)
     }
 }
 
-int orte_show_help(const char *filename, const char *topic,
-                   bool want_error_header, ...)
+static int orte_show_help_backend(const char *filename, const char *topic,
+                                  bool want_error_header, va_list ap)
 {
     int rc = ORTE_SUCCESS;
-    va_list arglist;
     char *output;
 
     if (orte_execute_quiet) {
         return ORTE_SUCCESS;
     }
 
-    va_start(arglist, want_error_header);
-    output = opal_show_help_vstring(filename, topic, want_error_header,
-                                    arglist);
-    va_end(arglist);
+    output = opal_show_help_vstring(filename, topic, want_error_header, ap);
 
     /* If nothing came back, there's nothing to do */
     if (NULL == output) {

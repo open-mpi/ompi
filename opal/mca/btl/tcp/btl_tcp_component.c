@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
@@ -1345,6 +1345,34 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
 }
 
 
+static const char *get_peer_name(int fd)
+{
+    char *str;
+    const char *ret;
+    struct sockaddr sa;
+    struct sockaddr_in *si;
+    socklen_t slt = (socklen_t) sizeof(sa);
+
+    int rc = getpeername(fd, &sa, &slt);
+    if (0 != rc) {
+        ret = strdup("Unknown");
+        return ret;
+    }
+
+    str = malloc(INET_ADDRSTRLEN);
+    if (NULL == str) {
+        return NULL;
+    }
+
+    si = (struct sockaddr_in*) &sa;
+    ret = inet_ntop(AF_INET, &(si->sin_addr), str, INET_ADDRSTRLEN);
+    if (NULL == ret) {
+        free(str);
+    }
+
+    return ret;
+}
+
 /**
  * Event callback when there is data available on the registered
  * socket to recv. This callback is triggered only once per lifetime
@@ -1376,20 +1404,22 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
         if (ENOPROTOOPT == errno) {
             sockopt = false;
         } else {
-            opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                                "Cannot get current recv timeout value of the socket"
-                                "Local_host:%s PID:%d",
-                                opal_process_info.nodename, getpid());
+            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           "getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, ...)",
+                           strerror(opal_socket_errno), opal_socket_errno);
             return;
         }
     } else {
         tv.tv_sec = 2;
         tv.tv_usec = 0;
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
-            opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                                "Cannot set new recv timeout value of the socket"
-                                "Local_host:%s PID:%d",
-                                opal_process_info.nodename, getpid());
+            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                           true, opal_process_info.nodename,
+                           getpid(),
+                           "setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, ...)",
+                           strerror(opal_socket_errno), opal_socket_errno);
            return;
        }
     }
@@ -1408,14 +1438,16 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
      * This attempted connection will be ignored; your MPI job may or may not
      * continue properly.
      */
-     if (sizeof(hs_msg) != retval) {
-         opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                            "process did not receive full connect ACK "
-                            "Local_host:%s PID:%d String_received:%s Test_fail:%s",
-                            opal_process_info.nodename,
-                            getpid(),
-                            (retval > 0) ? hs_msg.magic_id : "<nothing>",
-                            "handshake message length");
+    if (sizeof(hs_msg) != retval) {
+         const char *peer = get_peer_name(sd);
+         opal_show_help("help-mpi-btl-tcp.txt",
+                        "did not receive full magic id string",
+                        true,
+                        opal_process_info.nodename,
+                        getpid(),
+                        opal_version_string,
+                        peer);
+         free((char*) peer);
 
          /* The other side probably isn't OMPI, so just hang up */
          CLOSE_THE_SOCKET(sd);
@@ -1424,12 +1456,18 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     guid = hs_msg.guid;
     if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
-        opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                            "process did not receive right magic string. "
-                            "Local_host:%s PID:%d String_received:%s Test_fail:%s",
-                            opal_process_info.nodename,
-                            getpid(), hs_msg.magic_id,
-                            "string value");
+         const char *peer = get_peer_name(sd);
+         opal_show_help("help-mpi-btl-tcp.txt",
+                        "received incorrect magic id string",
+                        true,
+                        opal_process_info.nodename,
+                        getpid(),
+                        opal_version_string,
+                        peer,
+                        hs_msg.magic_id,
+                        mca_btl_tcp_magic_id_string);
+         free((char*) peer);
+
         /* The other side probably isn't OMPI, so just hang up */
         CLOSE_THE_SOCKET(sd);
         return;
@@ -1438,10 +1476,11 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     if (sockopt) {
        /* reset RECVTIMEO option to its original state */
        if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sizeof(save))) {
-           opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                               "Cannot reset recv timeout value"
-                               "Local_host:%s PID:%d",
-                               opal_process_info.nodename, getpid());
+           opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
+                          true, opal_process_info.nodename,
+                          getpid(),
+                          "setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, ...)",
+                          strerror(opal_socket_errno), opal_socket_errno);
           return;
        }
     }
