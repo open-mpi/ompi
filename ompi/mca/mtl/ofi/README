@@ -24,8 +24,8 @@ CQ.
 OFI TAG:
 MPI needs to send 96 bits of information per message (32 bits communicator id,
 32 bits source rank, 32 bits MPI tag) but OFI only offers 64 bits tags. In
-addition, the OFI MTL uses 4 bits of the OFI tag for the synchronous send protocol.
-Therefore, there are only 60 bits available in the OFI tag for message usage. The
+addition, the OFI MTL uses 2 bits of the OFI tag for the synchronous send protocol.
+Therefore, there are only 62 bits available in the OFI tag for message usage. The
 OFI MTL offers the mtl_ofi_tag_mode mca parameter with 4 modes to address this:
 
 "auto" (Default):
@@ -36,19 +36,19 @@ fall back to "ofi_tag_1".
 
 "ofi_tag_1":
 For providers that do not support FI_REMOTE_CQ_DATA, the OFI MTL will
-trim the fields (Communicator ID, Source Rank, MPI tag) to make them fit the 60
+trim the fields (Communicator ID, Source Rank, MPI tag) to make them fit the 62
 bits available bit in the OFI tag. There are two options available with different
 number of bits for the Communicator ID and MPI tag fields. This tag distribution
 offers: 12 bits for Communicator ID (max Communicator ID 4,095) subject to
-provider reserved bits (see mem_tag_format below), 16 bits for Source Rank (max
-Source Rank 65,535), 32 bits for MPI tag (max MPI tag is INT_MAX).
+provider reserved bits (see mem_tag_format below), 18 bits for Source Rank (max
+Source Rank 262,143), 32 bits for MPI tag (max MPI tag is INT_MAX).
 
 "ofi_tag_2":
 Same as 2 "ofi_tag_1" but offering a different OFI tag distribution for
 applications that may require a greater number of supported Communicators at the
 expense of fewer MPI tag bits. This tag distribution offers: 24 bits for
-Communicator ID (max Communicator ED 16,777,215. See mem_tag_format below), 16
-bits for Source Rank (max Source Rank 65,535), 20 bits for MPI tag (max MPI tag
+Communicator ID (max Communicator ED 16,777,215. See mem_tag_format below), 18
+bits for Source Rank (max Source Rank 262,143), 20 bits for MPI tag (max MPI tag
 524,287).
 
 "ofi_tag_full":

@@ -274,8 +274,6 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
 
         ofi_req->completion_count = 2;
 
-        MTL_OFI_SET_SYNC_SEND(match_bits);
-
         MTL_OFI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ep,
                                           NULL,
                                           0,
@@ -291,6 +289,8 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
             free(ack_req);
             return ompi_mtl_ofi_get_error(ret);
         }
+        /* The SYNC_SEND tag bit is set for the send operation only.*/
+        MTL_OFI_SET_SYNC_SEND(match_bits);
     } else {
         ofi_req->completion_count = 1;
     }
@@ -424,20 +424,6 @@ ompi_mtl_ofi_isend(struct mca_mtl_base_module_t *mtl,
 }
 
 /**
- * Called when a completion for SYNC ACK send is received.
- * This completes the synchronous recv operation. Thus, we
- * call the upper layer's completion function.
- */
-__opal_attribute_always_inline__ static inline int
-ompi_mtl_ofi_sync_recv_callback(struct fi_cq_tagged_entry *wc,
-                                ompi_mtl_ofi_request_t *ofi_req)
-{
-    ofi_req->super.completion_callback(&ofi_req->super);
-
-    return OMPI_SUCCESS;
-}
-
-/**
  * Called when a completion for a posted recv is received.
  */
 __opal_attribute_always_inline__ static inline int
@@ -450,6 +436,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     int src = mtl_ofi_get_source(wc);
     ompi_status_public_t *status = NULL;
+    struct fi_msg_tagged tagged_msg;
 
     assert(ofi_req->super.ompi_req);
     status = &ofi_req->super.ompi_req->req_status;
@@ -487,21 +474,25 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     }
 
     /**
-     * We do not want any SYNC_SEND_ACK here!
-     * See mtl_ofi_send.c for details.
-     */
+    * We can only accept MTL_OFI_SYNC_SEND in the standard recv callback.
+    * MTL_OFI_SYNC_SEND_ACK should only be received in the send_ack
+    * callback.
+    */
     assert(!MTL_OFI_IS_SYNC_SEND_ACK(wc->tag));
 
     /**
      * If this recv is part of an MPI_Ssend operation, then we send an
-     * acknowledgment back to the sender. The fi_context can be
-     * re-used safely because the previous operation has completed.
-     * This recv request will complete once we get a completion for
-     * this send. See ompi_mtl_ofi_sync_recv_callback().
-     * Otherwise, this request is now complete.
+     * acknowledgment back to the sender.
+     * The ack message is sent without generating a completion event in
+     * the completion queue by not setting FI_COMPLETION in the flags to
+     * fi_tsendmsg(FI_SELECTIVE_COMPLETION).
+     * This is done since the 0 byte message requires no
+     * notification on the send side for a successful completion.
+     * If a failure occurs the provider will notify the error
+     * in the cq_readerr during OFI progress. Once the message has been
+     * successfully processed the request is marked as completed.
      */
     if (OPAL_UNLIKELY(MTL_OFI_IS_SYNC_SEND(wc->tag))) {
-        ofi_req->event_callback = ompi_mtl_ofi_sync_recv_callback;
         /**
          * If the recv request was posted for any source,
          * we need to extract the source's actual address.
@@ -511,22 +502,31 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
             endpoint = ompi_mtl_ofi_get_endpoint(ofi_req->mtl, ompi_proc);
             ofi_req->remote_addr = endpoint->peer_fiaddr;
         }
-	    MTL_OFI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
-                                          NULL,
-                                          0,
-                                          NULL,
-                                          ofi_req->remote_addr,
-                                          wc->tag | ompi_mtl_ofi.sync_send_ack,
-                                          (void *) &ofi_req->ctx));
+
+        tagged_msg.msg_iov = NULL;
+        tagged_msg.desc = NULL;
+        tagged_msg.iov_count = 0;
+        tagged_msg.addr = ofi_req->remote_addr;
+        /**
+        * We must continue to use the user's original tag but remove the
+        * sync_send protocol tag bit and instead apply the sync_send_ack
+        * tag bit to complete the initator's sync send receive.
+        */
+        tagged_msg.tag = (wc->tag | ompi_mtl_ofi.sync_send_ack) & ~ompi_mtl_ofi.sync_send;
+        tagged_msg.context = NULL;
+        tagged_msg.data = 0;
+
+        MTL_OFI_RETRY_UNTIL_DONE(fi_tsendmsg(ompi_mtl_ofi.ep,
+                                 &tagged_msg, 0));
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: fi_tsend failed: %s(%zd)",
+                                "%s:%d: fi_tsendmsg failed: %s(%zd)",
                                 __FILE__, __LINE__, fi_strerror(-ret), ret);
             status->MPI_ERROR = OMPI_ERROR;
         }
-    } else {
-        ofi_req->super.completion_callback(&ofi_req->super);
     }
+
+    ofi_req->super.completion_callback(&ofi_req->super);
 
     return OMPI_SUCCESS;
 }
@@ -701,7 +701,7 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     struct fi_msg_tagged msg;
     int ompi_ret;
     ssize_t ret;
-    uint64_t msgflags = FI_CLAIM;
+    uint64_t msgflags = FI_CLAIM | FI_COMPLETION;
 
     ompi_ret = ompi_mtl_datatype_recv_buf(convertor,
                                           &start,
@@ -791,7 +791,7 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     uint64_t match_bits, mask_bits;
     ssize_t ret;
     struct fi_msg_tagged msg;
-    uint64_t msgflags = FI_PEEK;
+    uint64_t msgflags = FI_PEEK | FI_COMPLETION;
 
     if (ompi_mtl_ofi.fi_cq_data) {
      /* If the source is known, use its peer_fiaddr. */
@@ -877,7 +877,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     uint64_t match_bits, mask_bits;
     ssize_t ret;
     struct fi_msg_tagged msg;
-    uint64_t msgflags = FI_PEEK | FI_CLAIM;
+    uint64_t msgflags = FI_PEEK | FI_CLAIM | FI_COMPLETION;
 
     ofi_req = malloc(sizeof *ofi_req);
     if (NULL == ofi_req) {

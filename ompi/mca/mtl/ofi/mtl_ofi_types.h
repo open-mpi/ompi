@@ -89,18 +89,19 @@ typedef struct mca_mtl_ofi_component_t {
 */
 
 /* Support FI_REMOTE_CQ_DATA, send the source rank in the CQ data (4 Bytes is the minimum)
- *  01234567 01234567 01234567 0123 4567 01234567 01234567 01234567 01234567
- *                                 |    |
- *           context_id            |prot|          message tag
+ *  01234567 01234567 01234567 012345  67  01234567 01234567 01234567 01234567
+ *                                   |    |
+ *           context_id              |prot|          message tag
  */
-#define MTL_OFI_PROTO_BIT_COUNT         (4)
+#define MTL_OFI_PROTO_BIT_COUNT         (2)
 
-#define MTL_OFI_CID_BIT_COUNT_DATA      (28)
+#define MTL_OFI_CID_MASK_DATA           (0xFFFFFFFC00000000ULL)
+#define MTL_OFI_CID_BIT_COUNT_DATA      (30)
 #define MTL_OFI_TAG_MASK_DATA           (0x00000000FFFFFFFFULL)
 #define MTL_OFI_TAG_BIT_COUNT_DATA      (32)
-#define MTL_OFI_PROTO_MASK_DATA         (0x0000000F00000000ULL)
+#define MTL_OFI_PROTO_MASK_DATA         (0x0000000300000000ULL)
 #define MTL_OFI_SYNC_SEND_DATA          (0x0000000100000000ULL)
-#define MTL_OFI_SYNC_SEND_ACK_DATA      (0x0000000900000000ULL)
+#define MTL_OFI_SYNC_SEND_ACK_DATA      (0x0000000200000000ULL)
 
 /* Send tag with CQ_DATA */
 __opal_attribute_always_inline__ static inline uint64_t
@@ -136,38 +137,38 @@ mtl_ofi_create_recv_tag_CQD(uint64_t *match_bits, uint64_t *mask_bits,
 /*
 * ofi_tag_1: fallback when no FI_REMOTE_CQ_DATA is supported
 *
-*  01234567 0123 4567 01234567 0123 4567 01234567 01234567 01234567 01234567
-*               |                  |    |
-*    Comm id    |     source       |prot|           message tag
+*  01234567 0123 4567 01234567 012345   67   01234567 01234567 01234567 01234567
+*               |                     |    |
+*    Comm id    |     source          |prot|           message tag
 */
 
 #define MTL_OFI_CID_BIT_COUNT_1         (12)
-#define MTL_OFI_SOURCE_TAG_MASK_1       (0x000FFFF000000000ULL)
-#define MTL_OFI_SOURCE_BIT_COUNT_1      (16)
-#define MTL_OFI_SOURCE_MASK_1           (0x000000000000FFFFULL)
+#define MTL_OFI_SOURCE_TAG_MASK_1       (0x000FFFFC00000000ULL)
+#define MTL_OFI_SOURCE_BIT_COUNT_1      (18)
+#define MTL_OFI_SOURCE_MASK_1           (0x000000000003FFFFULL)
 #define MTL_OFI_TAG_MASK_1              (0x00000000FFFFFFFFULL)
 #define MTL_OFI_TAG_BIT_COUNT_1         (32)
-#define MTL_OFI_PROTO_MASK_1            (0x0000000F00000000ULL)
+#define MTL_OFI_PROTO_MASK_1            (0x0000000300000000ULL)
 #define MTL_OFI_SYNC_SEND_1             (0x0000000100000000ULL)
-#define MTL_OFI_SYNC_SEND_ACK_1         (0x0000000900000000ULL)
+#define MTL_OFI_SYNC_SEND_ACK_1         (0x0000000200000000ULL)
 
 /*
 * ofi_tag_2: Alternative tag when no FI_REMOTE_CQ_DATA is supported
 *
-*  01234567 01234567 01234567 01234567 01234567 0123 4567 01234567 01234567
-*                            |                 |    |
-*                Comm id     |     source      |prot|     message tag
+*  01234567 01234567 01234567 01234567 01234567 01  23   4567 01234567 01234567
+*                            |                    |    |
+*                Comm id     |     source         |prot|     message tag
 */
 
 #define MTL_OFI_CID_BIT_COUNT_2         (24)
-#define MTL_OFI_SOURCE_TAG_MASK_2       (0x000000FFFF000000ULL)
-#define MTL_OFI_SOURCE_BIT_COUNT_2      (16)
-#define MTL_OFI_SOURCE_MASK_2           (0x000000000000FFFFULL)
+#define MTL_OFI_SOURCE_TAG_MASK_2       (0x000000FFFFC00000ULL)
+#define MTL_OFI_SOURCE_BIT_COUNT_2      (18)
+#define MTL_OFI_SOURCE_MASK_2           (0x000000000003FFFFULL)
 #define MTL_OFI_TAG_MASK_2              (0x00000000000FFFFFULL)
 #define MTL_OFI_TAG_BIT_COUNT_2         (20)
-#define MTL_OFI_PROTO_MASK_2            (0x0000000000F00000ULL)
+#define MTL_OFI_PROTO_MASK_2            (0x0000000000300000ULL)
 #define MTL_OFI_SYNC_SEND_2             (0x0000000000100000ULL)
-#define MTL_OFI_SYNC_SEND_ACK_2         (0x0000000000900000ULL)
+#define MTL_OFI_SYNC_SEND_ACK_2         (0x0000000000200000ULL)
 
 /* Send tag */
 __opal_attribute_always_inline__ static inline uint64_t
