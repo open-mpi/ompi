@@ -296,7 +296,7 @@ int mca_coll_spacc_allreduce_intra_redscat_allgather(
          * to recursive doubling (previous step).
          */
 
-        step--;
+        step = nsteps - 1;
 
         for (int mask = nprocs_pof2 >> 1; mask > 0; mask >>= 1) {
             int vdest = vrank ^ mask;

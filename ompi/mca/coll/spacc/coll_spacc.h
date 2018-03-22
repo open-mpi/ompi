@@ -20,6 +20,7 @@ BEGIN_C_DECLS
 extern int mca_coll_spacc_stream;
 extern int mca_coll_spacc_priority;
 extern int mca_coll_spacc_verbose;
+extern int mca_coll_spacc_alltoallv_block_size;
 
 /* API functions */
 
@@ -30,6 +31,12 @@ mca_coll_base_module_t
 
 int mca_coll_spacc_module_enable(mca_coll_base_module_t *module,
                                  struct ompi_communicator_t *comm);
+
+int mca_coll_spacc_alltoallv_intra_block(
+    const void *sbuf, const int *scounts, const int *sdisps,
+    struct ompi_datatype_t *sdtype, void *rbuf, const int *rcounts,
+    const int *rdisps, struct ompi_datatype_t *rdtype,
+    struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
 int mca_coll_spacc_allreduce_intra_redscat_allgather(
     const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,

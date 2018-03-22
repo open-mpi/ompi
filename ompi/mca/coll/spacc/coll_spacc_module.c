@@ -11,6 +11,7 @@
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/coll.h"
 #include "coll_spacc.h"
 
@@ -63,7 +64,7 @@ mca_coll_base_module_t *ompi_coll_spacc_comm_query(
     spacc_module->super.coll_allgatherv = NULL;
     spacc_module->super.coll_allreduce  = mca_coll_spacc_allreduce_intra_redscat_allgather;
     spacc_module->super.coll_alltoall   = NULL;
-    spacc_module->super.coll_alltoallv  = NULL;
+    spacc_module->super.coll_alltoallv  = mca_coll_spacc_alltoallv_intra_block;
     spacc_module->super.coll_alltoallw  = NULL;
     spacc_module->super.coll_barrier    = NULL;
     spacc_module->super.coll_bcast      = NULL;
@@ -87,6 +88,10 @@ static int spacc_module_enable(mca_coll_base_module_t *module,
                                struct ompi_communicator_t *comm)
 {
     opal_output_verbose(30, mca_coll_spacc_stream, "coll:spacc:module_enable called");
+    /* prepare the placeholder for the array of request* */
+    module->base_data = OBJ_NEW(mca_coll_base_comm_t);
+    if (NULL == module->base_data)
+        return OMPI_ERROR;
     return OMPI_SUCCESS;
 }
 
