@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Los Alamos National Security, LLC. All
+ *                         rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,16 +26,16 @@
 #include "opal_stdint.h"
 #include "ompi/mpi/c/bindings.h"
 
-int MPI_Address(void *location, MPI_Aint *address)
+int MPI_Get_address(const void *location, MPI_Aint *address)
 {
 
     int rank;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    fprintf(stderr, "MPI_ADDRESS[%d]: location %0" PRIxPTR " address %0" PRIxPTR "\n",
+    fprintf(stderr, "MPI_GET_ADDRESS[%d]: location %0" PRIxPTR " address %0" PRIxPTR "\n",
             rank, (uintptr_t)location, (uintptr_t)address);
     fflush(stderr);
 
-    return PMPI_Address(location, address);
+    return PMPI_Get_address(location, address);
 }
