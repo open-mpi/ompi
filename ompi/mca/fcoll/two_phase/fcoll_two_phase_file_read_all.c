@@ -689,7 +689,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 		    }
 		    if (req_off < real_off + real_size) {
 			count[i]++;
-			PMPI_Address(read_buf+req_off-real_off,
+			PMPI_Get_address(read_buf+req_off-real_off,
 				     &(others_req[i].mem_ptrs[j]));
 
 			send_size[i] += (int)(OMPIO_MIN(real_off + real_size - req_off,
