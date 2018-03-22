@@ -135,12 +135,12 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 
     if (ADIOI_cb_config_list_keyval == MPI_KEYVAL_INVALID) {
         /* cleaned up by ADIOI_End_call */
-	MPI_Keyval_create((MPI_Copy_function *) ADIOI_cb_copy_name_array,
+	MPI_Comm_create_keyval((MPI_Copy_function *) ADIOI_cb_copy_name_array,
 			  (MPI_Delete_function *) ADIOI_cb_delete_name_array,
 			  &ADIOI_cb_config_list_keyval, NULL);
     }
     else {
-	MPI_Attr_get(comm, ADIOI_cb_config_list_keyval, (void *) &array, &found);
+	MPI_Comm_get_attr(comm, ADIOI_cb_config_list_keyval, (void *) &array, &found);
         if (found) {
             ADIOI_Assert(array != NULL);
 	    *arrayp = array;
@@ -255,8 +255,8 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
      * it next time an open is performed on this same comm, and on the
      * dupcomm, so we can use it in I/O operations.
      */
-    MPI_Attr_put(comm, ADIOI_cb_config_list_keyval, array);
-    MPI_Attr_put(dupcomm, ADIOI_cb_config_list_keyval, array);
+    MPI_Comm_set_attr (comm, ADIOI_cb_config_list_keyval, array);
+    MPI_Comm_set_attr (dupcomm, ADIOI_cb_config_list_keyval, array);
     *arrayp = array;
     return 0;
 }

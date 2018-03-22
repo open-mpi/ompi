@@ -54,7 +54,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
     int interleave_count = 0, i, nprocs, myrank, nprocs_for_coll;
     int cb_enable;
     ADIO_Offset bufsize;
-    MPI_Aint extent;
+    MPI_Aint extent, lb;
 #ifdef DEBUG2
     MPI_Aint bufextent;
 #endif
@@ -191,7 +191,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 	return;
     }
 
-    MPI_Type_extent(datatype, &extent);
+    MPI_Type_get_extent(datatype, &lb, &extent);
 #ifdef DEBUG2
     bufextent = extent * count;
 #endif
@@ -702,7 +702,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 {
     MPI_Count filetype_size, buftype_size, etype_size;
     int sum;
-    MPI_Aint filetype_extent;
+    MPI_Aint filetype_extent, lb;
     ADIO_Offset total_io;
     int filetype_is_contig;
     ADIO_Offset i, remainder;
@@ -726,7 +726,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
     ADIOI_Datatype_iscontig (fd->filetype, &filetype_is_contig);
 
     MPI_Type_size_x (fd->filetype, &filetype_size);
-    MPI_Type_extent (fd->filetype, &filetype_extent);
+    MPI_Type_get_extent (fd->filetype, &lb, &filetype_extent);
     MPI_Type_size_x (fd->etype, &etype_size);
     MPI_Type_size_x (buftype, &buftype_size);
 
@@ -884,7 +884,7 @@ void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
     int user_ind_rd_buffer_size;
     int f_is_contig, m_is_contig;
     int user_ds_read, user_ds_write;
-    MPI_Aint f_extent;
+    MPI_Aint f_extent, lb;
     MPI_Count f_size;
     int f_ds_percent; /* size/extent */
 
@@ -894,7 +894,7 @@ void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
     else
 	MPE_Log_event(5008, 0, NULL);
 #endif
-    MPI_Type_extent(custom_ftype, &f_extent);
+    MPI_Type_get_extent(custom_ftype, &lb, &f_extent);
     MPI_Type_size_x(custom_ftype, &f_size);
     f_ds_percent = 100 * f_size / f_extent;
 
