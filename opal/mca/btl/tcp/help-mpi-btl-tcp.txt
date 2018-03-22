@@ -35,7 +35,7 @@ values are in the range [1 .. 2^16-1]. This value will be ignored
 WARNING: Open MPI failed to TCP connect to a peer MPI process.  This
 should not happen.
 
-Your Open MPI job may now fail.
+Your Open MPI job may now hang or fail.
 
   Local host: %s
   PID:        %d
@@ -46,7 +46,7 @@ Your Open MPI job may now fail.
 WARNING: Open MPI failed to handshake with a connecting peer MPI
 process over TCP.  This should not happen.
 
-Your Open MPI job may now fail.
+Your Open MPI job may now hang or fail.
 
   Local host: %s
   PID:        %d
@@ -102,8 +102,11 @@ hopefully be able to continue).
   Known IPs of peer:   %s
 #
 [socket flag fail]
-WARNING: Open MPI failed to set flags on a TCP socket.  This should
-not happen.  It is likely that your MPI job will now fail.
+WARNING: Open MPI failed to get or set flags on a TCP socket.  This
+should not happen.
+
+This may cause unpredictable behavior, and may end up hanging or
+aborting your job.
 
   Local host: %s
   PID:        %d
@@ -165,3 +168,42 @@ Your Open MPI job may now fail.
   Message:    %s
   Error:      %s (%d)
 #
+[did not receive full magic id string]
+The TCP BTL received an inbound socket connection from an unidentified
+peer.  This typically means one of two things:
+
+1. A non-Open MPI process tried to connect to this Open MPI process.
+2. An Open MPI process compiled against a different version of Open
+   MPI tried to connect to this Open MPI process.
+
+Open MPI only supports running exactly the same version between all
+processes in a single job.
+
+This may cause unpredictable behavior, and may end up aborting your
+job.
+
+  Local host:             %s
+  Local PID:              %d
+  Local Open MPI version: %s
+  Peer IP address:        %s
+#
+[received incorrect magic id string]
+The TCP BTL received an inbound socket connection from a peer that did
+not identify itself correctly as an Open MPI process. This typically
+means one of two things:
+
+1. A non-Open MPI process tried to connect to this Open MPI process.
+2. An Open MPI process compiled against a different version of Open
+   MPI tried to connect to this Open MPI process.
+
+Open MPI only supports running exactly the same version between all
+processes in a single job.
+
+This may cause unpredictable behavior, and may end up hanging or
+aborting your job.
+
+  Local host:             %s
+  Local PID:              %d
+  Local Open MPI version: %s
+  Peer IP address:        %s
+  Peer identifier:        %s (expected %s)
