@@ -190,7 +190,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                [AC_MSG_RESULT([yes])],
                [AC_MSG_RESULT([no])
                 AC_MSG_ERROR([The Open MPI v2.1.x series does not support hwloc >= v2.0.
-Open MPI v3.1.0 and later support hwloc >= v2.0.
+Open MPI v4.0.0 and later support hwloc >= v2.0.
 Cannot continue])])
            AS_IF([test "$opal_hwloc_dir" != ""],
                  [CFLAGS=$opal_hwloc_external_CFLAGS_save])
