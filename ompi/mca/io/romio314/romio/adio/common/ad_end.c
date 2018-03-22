@@ -72,13 +72,13 @@ int ADIOI_End_call(MPI_Comm comm, int keyval, void *attribute_val, void
     ADIOI_UNREFERENCED_ARG(attribute_val);
     ADIOI_UNREFERENCED_ARG(extra_state);
 
-    MPI_Keyval_free(&keyval);
+    MPI_Comm_free_keyval (&keyval);
 
     /* The end call will be called after all possible uses of this keyval, even
      * if a file was opened with MPI_COMM_SELF.  Note, this assumes LIFO
      * MPI_COMM_SELF attribute destruction behavior mandated by MPI-2.2. */
     if (ADIOI_cb_config_list_keyval != MPI_KEYVAL_INVALID)
-        MPI_Keyval_free(&ADIOI_cb_config_list_keyval);
+        MPI_Comm_free_keyval (&ADIOI_cb_config_list_keyval);
 
     ADIO_End(&error_code);
     return error_code;
