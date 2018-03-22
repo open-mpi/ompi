@@ -1003,7 +1003,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
               [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
 
-        powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
+        powerpc-*|powerpc64-*|ppc-*)
+           AC_MSG_ERROR([Big endian PPC is no longer supported.])
+           ;;
+
+        powerpcle-*|powerpc64le-*|rs6000-*)
             OPAL_CHECK_POWERPC_REG
             if test "$ac_cv_sizeof_long" = "4" ; then
                 opal_cv_asm_arch="POWERPC32"

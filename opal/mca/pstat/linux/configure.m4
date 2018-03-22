@@ -26,7 +26,10 @@ AC_DEFUN([MCA_opal_pstat_linux_CONFIG],[
     AC_CONFIG_FILES([opal/mca/pstat/linux/Makefile])
 
    case "${host}" in
-   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|powerpc64le-*linux*|powerpcle-*linux*|sparc*-*linux*)
+       powerpc-*|powerpc64-*|ppc-*)
+           AC_MSG_ERROR([Big endian PPC is no longer supported.])
+           ;;
+   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc64le-*linux*|powerpcle-*linux*|sparc*-*linux*)
               AS_IF([test -r "/proc/cpuinfo"],
                      [pstat_linux_happy="yes"],
                      [pstat_linux_happy="no"])
