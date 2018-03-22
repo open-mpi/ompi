@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -38,32 +38,49 @@ BEGIN_C_DECLS
 
 static const int mca_mpool_memkind_default_pagesize = 4096;
 
+
 struct mca_mpool_memkind_module_t {
     mca_mpool_base_module_t super;
     memkind_t kind;
+    memkind_memtype_t type;
+    memkind_policy_t  policy;
+    memkind_bits_t    memkind_bits;
     int page_size;
 };
+
 typedef struct mca_mpool_memkind_module_t mca_mpool_memkind_module_t;
+
+struct mca_mpool_memkind_module_le_t {
+    opal_list_item_t super;
+    mca_mpool_memkind_module_t module;
+};
+typedef struct mca_mpool_memkind_module_le_t mca_mpool_memkind_module_le_t;
+
+OBJ_CLASS_DECLARATION(mca_mpool_memkind_module_le_t);
 
 struct mca_mpool_memkind_component_t {
     mca_mpool_base_component_t super;
     int  hbw;
     int  pagesize;
     int  bind;
-    int  default_partition;
+    memkind_memtype_t default_type;
+    memkind_policy_t  default_policy;
+    memkind_bits_t    default_memkind_bits;
+    memkind_t         default_kind;
     int  priority;
-    char *memkind_file;
     int  output;
-    mca_mpool_memkind_module_t modules[MEMKIND_NUM_BASE_KIND];
+    opal_list_t module_list;
 };
+
 typedef struct mca_mpool_memkind_component_t mca_mpool_memkind_component_t;
 OPAL_MODULE_DECLSPEC extern mca_mpool_memkind_component_t mca_mpool_memkind_component;
 
-/*
+/**
  *  Initializes the mpool module.
-*/
+ */
 
-void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool, int partition);
+void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool);
+
 
 /**
   *  Allocate block of high bandwidth memory.
