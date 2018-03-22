@@ -13,6 +13,8 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2016      Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2018      Los Alamos National Security, LLC. All rights
+!                         reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -99,41 +101,6 @@ function MPI_Aint_diff(addr1, addr2)
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: addr2
   integer(kind=MPI_ADDRESS_KIND) MPI_Aint_diff
 end function MPI_Aint_diff
-
-end interface
-
-interface MPI_Attr_delete
-
-subroutine MPI_Attr_delete(comm, keyval, ierror)
-  integer, intent(in) :: comm
-  integer, intent(in) :: keyval
-  integer, intent(out) :: ierror
-end subroutine MPI_Attr_delete
-
-end interface
-
-
-interface MPI_Attr_get
-
-subroutine MPI_Attr_get(comm, keyval, attribute_val, flag, ierror)
-  integer, intent(in) :: comm
-  integer, intent(in) :: keyval
-  integer, intent(out) :: attribute_val
-  logical, intent(out) :: flag
-  integer, intent(out) :: ierror
-end subroutine MPI_Attr_get
-
-end interface
-
-
-interface MPI_Attr_put
-
-subroutine MPI_Attr_put(comm, keyval, attribute_val, ierror)
-  integer, intent(in) :: comm
-  integer, intent(in) :: keyval
-  integer, intent(in) :: attribute_val
-  integer, intent(out) :: ierror
-end subroutine MPI_Attr_put
 
 end interface
 
@@ -604,45 +571,12 @@ end subroutine MPI_Dims_create
 end interface
 
 
-interface MPI_Errhandler_create
-
-subroutine MPI_Errhandler_create(function, errhandler, ierror)
-  external :: function
-  integer, intent(out) :: errhandler
-  integer, intent(out) :: ierror
-end subroutine MPI_Errhandler_create
-
-end interface
-
-
 interface MPI_Errhandler_free
 
 subroutine MPI_Errhandler_free(errhandler, ierror)
   integer, intent(inout) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_Errhandler_free
-
-end interface
-
-
-interface MPI_Errhandler_get
-
-subroutine MPI_Errhandler_get(comm, errhandler, ierror)
-  integer, intent(in) :: comm
-  integer, intent(out) :: errhandler
-  integer, intent(out) :: ierror
-end subroutine MPI_Errhandler_get
-
-end interface
-
-
-interface MPI_Errhandler_set
-
-subroutine MPI_Errhandler_set(comm, errhandler, ierror)
-  integer, intent(in) :: comm
-  integer, intent(in) :: errhandler
-  integer, intent(out) :: ierror
-end subroutine MPI_Errhandler_set
 
 end interface
 
@@ -1195,29 +1129,6 @@ end subroutine MPI_Is_thread_main
 end interface
 
 
-interface MPI_Keyval_create
-
-subroutine MPI_Keyval_create(copy_fn, delete_fn, keyval, extra_state, ierror)
-  external :: copy_fn
-  external :: delete_fn
-  integer, intent(out) :: keyval
-  integer, intent(in) :: extra_state
-  integer, intent(out) :: ierror
-end subroutine MPI_Keyval_create
-
-end interface
-
-
-interface MPI_Keyval_free
-
-subroutine MPI_Keyval_free(keyval, ierror)
-  integer, intent(inout) :: keyval
-  integer, intent(out) :: ierror
-end subroutine MPI_Keyval_free
-
-end interface
-
-
 interface MPI_Op_commutative
 
 subroutine MPI_Op_commutative(op, commute, ierror)
@@ -1686,17 +1597,6 @@ end subroutine MPI_Type_dup
 end interface
 
 
-interface MPI_Type_extent
-
-subroutine MPI_Type_extent(type, extent, ierror)
-  integer, intent(in) :: type
-  integer, intent(out) :: extent
-  integer, intent(out) :: ierror
-end subroutine MPI_Type_extent
-
-end interface
-
-
 interface MPI_Type_free
 
 subroutine MPI_Type_free(type, ierror)
@@ -1828,36 +1728,6 @@ end subroutine MPI_Type_get_true_extent_x
 end interface
 
 
-interface MPI_Type_hindexed
-
-subroutine MPI_Type_hindexed(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
-        , ierror)
-  integer, intent(in) :: count
-  integer, dimension(*), intent(in) :: array_of_blocklengths
-  integer, dimension(*), intent(in) :: array_of_displacements
-  integer, intent(in) :: oldtype
-  integer, intent(out) :: newtype
-  integer, intent(out) :: ierror
-end subroutine MPI_Type_hindexed
-
-end interface
-
-
-interface MPI_Type_hvector
-
-subroutine MPI_Type_hvector(count, blocklength, stride, oldtype, newtype&
-        , ierror)
-  integer, intent(in) :: count
-  integer, intent(in) :: blocklength
-  integer, intent(in) :: stride
-  integer, intent(in) :: oldtype
-  integer, intent(out) :: newtype
-  integer, intent(out) :: ierror
-end subroutine MPI_Type_hvector
-
-end interface
-
-
 interface MPI_Type_indexed
 
 subroutine MPI_Type_indexed(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
@@ -1869,17 +1739,6 @@ subroutine MPI_Type_indexed(count, array_of_blocklengths, array_of_displacements
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
 end subroutine MPI_Type_indexed
-
-end interface
-
-
-interface MPI_Type_lb
-
-subroutine MPI_Type_lb(type, lb, ierror)
-  integer, intent(in) :: type
-  integer, intent(out) :: lb
-  integer, intent(out) :: ierror
-end subroutine MPI_Type_lb
 
 end interface
 
@@ -1939,32 +1798,6 @@ subroutine MPI_Type_size_x(type, size, ierror)
   integer(kind=MPI_COUNT_KIND), intent(out) :: size
   integer, intent(out) :: ierror
 end subroutine MPI_Type_size_x
-
-end interface
-
-
-interface MPI_Type_struct
-
-subroutine MPI_Type_struct(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype&
-        , ierror)
-  integer, intent(in) :: count
-  integer, dimension(*), intent(in) :: array_of_blocklengths
-  integer, dimension(*), intent(in) :: array_of_displacements
-  integer, dimension(*), intent(in) :: array_of_types
-  integer, intent(out) :: newtype
-  integer, intent(out) :: ierror
-end subroutine MPI_Type_struct
-
-end interface
-
-
-interface MPI_Type_ub
-
-subroutine MPI_Type_ub(mtype, ub, ierror)
-  integer, intent(in) :: mtype
-  integer, intent(out) :: ub
-  integer, intent(out) :: ierror
-end subroutine MPI_Type_ub
 
 end interface
 

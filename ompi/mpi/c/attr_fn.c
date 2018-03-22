@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,30 +127,6 @@ int OMPI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm comm, int comm_keyval,
 int OMPI_C_MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
                      void* attribute_val_in, void* attribute_val_out,
                      int* flag )
-{
-   *flag = 1;
-   *(void**)attribute_val_out = attribute_val_in;
-   return MPI_SUCCESS;
-}
-
-int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
-                               void* attribute_val_out,
-                               void* extra_state )
-{
-   return MPI_SUCCESS;
-}
-
-int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                             void* attribute_val_in, void* attribute_val_out,
-                             int* flag )
-{
-   *flag= 0;
-   return MPI_SUCCESS;
-}
-
-int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                       void* attribute_val_in, void* attribute_val_out,
-                       int* flag )
 {
    *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;

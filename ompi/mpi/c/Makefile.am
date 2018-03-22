@@ -65,7 +65,6 @@ libmpi_c_mpi_la_SOURCES = \
         add_error_class.c \
         add_error_code.c \
         add_error_string.c \
-        address.c \
         allgather.c \
         iallgather.c \
         allgatherv.c \
@@ -79,9 +78,6 @@ libmpi_c_mpi_la_SOURCES = \
         ialltoallv.c \
         alltoallw.c \
         ialltoallw.c \
-        attr_delete.c \
-        attr_get.c \
-        attr_put.c \
         barrier.c \
         ibarrier.c \
         bcast.c \
@@ -144,11 +140,8 @@ libmpi_c_mpi_la_SOURCES = \
 	compare_and_swap.c \
         dims_create.c \
         errhandler_c2f.c \
-        errhandler_create.c \
         errhandler_f2c.c \
         errhandler_free.c \
-        errhandler_get.c \
-        errhandler_set.c \
         error_class.c \
         error_string.c \
         exscan.c \
@@ -277,8 +270,6 @@ libmpi_c_mpi_la_SOURCES = \
         is_thread_main.c \
         isend.c \
         issend.c \
-        keyval_create.c \
-        keyval_free.c \
         lookup_name.c \
         message_f2c.c \
         message_c2f.c \
@@ -370,7 +361,6 @@ libmpi_c_mpi_la_SOURCES = \
         type_create_subarray.c \
         type_delete_attr.c \
         type_dup.c \
-        type_extent.c \
         type_f2c.c \
         type_free.c \
         type_free_keyval.c \
@@ -382,17 +372,12 @@ libmpi_c_mpi_la_SOURCES = \
         type_get_name.c \
         type_get_true_extent.c \
         type_get_true_extent_x.c \
-        type_hindexed.c \
-        type_hvector.c \
         type_indexed.c \
-        type_lb.c \
         type_match_size.c \
         type_set_attr.c \
         type_set_name.c \
         type_size.c \
         type_size_x.c \
-        type_struct.c \
-        type_ub.c \
         type_vector.c \
         unpack_external.c \
         unpack.c \

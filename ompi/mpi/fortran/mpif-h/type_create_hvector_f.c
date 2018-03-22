@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +76,7 @@ void ompi_type_create_hvector_f(MPI_Fint *count, MPI_Fint *blocklength,
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    c_ierr = PMPI_Type_hvector(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Type_create_hvector(OMPI_FINT_2_INT(*count),
                               OMPI_FINT_2_INT(*blocklength),
                               *stride,
                               c_old, &c_new);
