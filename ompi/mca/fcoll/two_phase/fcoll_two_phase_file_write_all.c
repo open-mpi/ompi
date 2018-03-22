@@ -781,7 +781,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 			       size,i,
 			       count[i]);
 #endif
-			PMPI_Address(write_buf+req_off-off,
+			PMPI_Get_address(write_buf+req_off-off,
 				     &(others_req[i].mem_ptrs[j]));
 #if DEBUG_ON
 			printf("%d : mem_ptrs : %ld\n", fh->f_rank,
