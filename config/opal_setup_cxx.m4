@@ -189,18 +189,6 @@ EOF
          AC_MSG_ERROR([C and C++ compilers are not link compatible.  Can not continue.])])
     fi
 
-    # If we are on HP-UX, ensure that we're using aCC
-    case "$host" in
-    *hpux*)
-        if test "$BASECXX" = "CC"; then
-            AC_MSG_WARN([*** You will probably have problems compiling the MPI 2])
-            AC_MSG_WARN([*** C++ bindings with the HP-UX CC compiler.  You should])
-            AC_MSG_WARN([*** probably be using the aCC compiler.  Re-run configure])
-            AC_MSG_WARN([*** with the environment variable "CXX=aCC".])
-        fi
-        ;;
-    esac
-
     # Note: gcc-imperonating compilers accept -O3
     if test "$WANT_DEBUG" = "1"; then
         OPTFLAGS=
