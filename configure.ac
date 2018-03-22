@@ -523,9 +523,6 @@ OPAL_CHECK_OFFSETOF
 # OPAL...?  Shrug.
 m4_ifdef([project_ompi], [OPAL_SETUP_CXX
                           OMPI_SETUP_CXX])
-# Used in Makefile.ompi-rules
-AM_CONDITIONAL(MAN_PAGE_BUILD_MPI_CXX_BINDINGS,
-               [test "$WANT_MPI_CXX_SUPPORT" = 1])
 
 ##################################
 # Only after setting up both

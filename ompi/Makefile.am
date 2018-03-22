@@ -85,7 +85,6 @@ SUBDIRS = \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
-        mpi/cxx \
         $(OMPI_MPIEXT_MPIFH_DIRS) \
         mpi/fortran/mpif-h \
         $(OMPI_MPIEXT_USEMPI_DIR) \
@@ -114,7 +113,6 @@ DIST_SUBDIRS = \
         etc \
         mpi/c \
         mpi/tool \
-        mpi/cxx \
         mpi/fortran/base \
         mpi/fortran/mpif-h \
         mpi/fortran/use-mpi-tkr \
