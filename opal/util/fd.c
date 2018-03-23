@@ -176,7 +176,7 @@ const char *opal_fd_get_peer_name(int fd)
     }
 #endif
     else {
-        ret = strdup("Unknown");
+        strncpy(str, "Unknown", len);
     }
 
     return ret;

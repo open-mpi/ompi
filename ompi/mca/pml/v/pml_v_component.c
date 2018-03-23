@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2004-2015 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -140,10 +140,15 @@ static int mca_pml_v_component_close(void)
     ompi_pml_v_output_close ();
 
     /* Mark that we have changed something */
-    snprintf(mca_pml_base_selected_component.pmlm_version.mca_component_name,
-             MCA_BASE_MAX_TYPE_NAME_LEN, "%s]v%s",
+    char *new_name;
+    asprintf(&new_name, "%s]v%s",
              mca_pml_v.host_pml_component.pmlm_version.mca_component_name,
              mca_vprotocol_component.pmlm_version.mca_component_name);
+    size_t len = sizeof(mca_pml_base_selected_component.pmlm_version.mca_component_name);
+    strncpy(mca_pml_base_selected_component.pmlm_version.mca_component_name,
+            new_name, len - 1);
+    mca_pml_base_selected_component.pmlm_version.mca_component_name[len - 1] = '\0';
+    free(new_name);
 
     /* Replace finalize */
     mca_pml_base_selected_component.pmlm_finalize =
