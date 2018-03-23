@@ -2124,6 +2124,11 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 opal_list_remove_item(&nodes, item);
                 OBJ_RELEASE(item);
+            } else {
+                /* The filtering logic sets this flag only for nodes which 
+                 * are kept after filtering. This flag will be subsequently
+                 * used in rmaps components and must be reset here */
+                ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
             }
             item = next;
         }
