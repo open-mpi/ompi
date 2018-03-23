@@ -2,7 +2,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
- * Copyright (c) 2014-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -416,13 +416,8 @@ void oshmem_info_do_config(bool want_all)
                   MPI_MAX_INFO_VAL);
     opal_info_out_int("MPI_MAX_PORT_NAME",      "options:mpi-max-port-name",
                   MPI_MAX_PORT_NAME);
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
     opal_info_out_int("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string",
                   MPI_MAX_DATAREP_STRING);
-#else
-    opal_info_out("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string",
-                  "IO interface not provided");
-#endif
 
     /* This block displays all the options with which the current
      * installation of oshmem was configured. */

@@ -9,7 +9,7 @@
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,8 +108,12 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
        the top level (specifically, MPI_TYPE_DUP). */
     new_ompi_datatype->d_keyhash = NULL;
     new_ompi_datatype->args = NULL;
-    snprintf (new_ompi_datatype->name, MPI_MAX_OBJECT_NAME, "Dup %s",
-              oldType->name);
+
+    char *new_name;
+    asprintf(&new_name, "Dup %s", oldType->name);
+    strncpy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME - 1);
+    new_ompi_datatype->name[MPI_MAX_OBJECT_NAME - 1] = '\0';
+    free(new_name);
 
     return OMPI_SUCCESS;
 }
