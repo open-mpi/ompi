@@ -190,9 +190,17 @@ void orte_plm_base_allocation_complete(int fd, short args, void *cbdata)
 
     ORTE_ACQUIRE_OBJECT(caddy);
 
-    /* move the state machine along */
-    caddy->jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
-    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_LAUNCH_DAEMONS);
+    /* if we don't want to launch, then we at least want
+     * to map so we can see where the procs would have
+     * gone - so skip to the mapping state */
+    if (orte_do_not_launch) {
+        caddy->jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
+        ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_MAP);
+    } else {
+        /* move the state machine along */
+        caddy->jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
+        ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_LAUNCH_DAEMONS);
+    }
 
     /* cleanup */
     OBJ_RELEASE(caddy);

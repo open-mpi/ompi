@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -379,35 +379,34 @@ static int rank_by(orte_job_t *jdata,
             all_done = false;
             while (!all_done && cnt < app->num_procs) {
                 all_done = true;
-                /* cycle across the objects */
-                for (i=0; i < num_objs && cnt < app->num_procs && all_done; i++) {
-                    obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i);
-                    /* find the next proc for this job and app_context */
-                    for (j=0; j < node->procs->size && cnt < app->num_procs; j++) {
-                        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-                            continue;
-                        }
-                        /* ignore procs from other jobs */
-                        if (proc->name.jobid != jdata->jobid) {
-                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                                "mca:rmaps:rank_by skipping proc %s - from another job, num_ranked %d",
-                                                ORTE_NAME_PRINT(&proc->name), num_ranked);
-                            continue;
-                        }
-                        /* ignore procs that are already ranked */
-                        if (ORTE_VPID_INVALID != proc->name.vpid) {
-                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                                "mca:rmaps:rank_by skipping proc %s - already ranked, num_ranked %d",
-                                                ORTE_NAME_PRINT(&proc->name), num_ranked);
-                            continue;
-                        }
-                        /* ignore procs from other apps */
-                        if (proc->app_idx != app->idx) {
-                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                                "mca:rmaps:rank_by skipping proc %s - from another app, num_ranked %d",
-                                                ORTE_NAME_PRINT(&proc->name), num_ranked);
-                            continue;
-                        }
+                for (j=0; j < node->procs->size && cnt < app->num_procs; j++) {
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                        continue;
+                    }
+                    /* ignore procs from other jobs */
+                    if (proc->name.jobid != jdata->jobid) {
+                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps:rank_by skipping proc %s - from another job, num_ranked %d",
+                                            ORTE_NAME_PRINT(&proc->name), num_ranked);
+                        continue;
+                    }
+                    /* ignore procs that are already ranked */
+                    if (ORTE_VPID_INVALID != proc->name.vpid) {
+                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps:rank_by skipping proc %s - already ranked, num_ranked %d",
+                                            ORTE_NAME_PRINT(&proc->name), num_ranked);
+                        continue;
+                    }
+                    /* ignore procs from other apps */
+                    if (proc->app_idx != app->idx) {
+                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps:rank_by skipping proc %s - from another app, num_ranked %d",
+                                            ORTE_NAME_PRINT(&proc->name), num_ranked);
+                        continue;
+                    }
+                    /* cycle across the objects */
+                    for (i=0; i < num_objs && cnt < app->num_procs && all_done; i++) {
+                        obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i);
                          /* protect against bozo case */
                         locale = NULL;
                         if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
@@ -429,7 +428,8 @@ static int rank_by(orte_job_t *jdata,
                         }
                         cnt++;
                         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                            "mca:rmaps:rank_by: assigned rank %s", ORTE_VPID_PRINT(proc->name.vpid));
+                                            "mca:rmaps:rank_by: proc in position %d is on object %d assigned rank %s",
+                                            j, i, ORTE_VPID_PRINT(proc->name.vpid));
                         /* insert the proc into the jdata array */
                         if (NULL != (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->name.vpid))) {
                             OBJ_RELEASE(pptr);
@@ -440,7 +440,8 @@ static int rank_by(orte_job_t *jdata,
                             OBJ_DESTRUCT(&objs);
                             return rc;
                         }
-                       /* flag that one was mapped */
+                        num_ranked++;
+                        /* flag that one was mapped */
                         all_done = false;
                         /* track where the highest vpid landed - this is our
                          * new bookmark

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -50,6 +50,8 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     bool hnp_alone = true, skiphnp = false;
     orte_attribute_t *kv;
     char **alias=NULL, **nalias;
+    orte_proc_t *daemon;
+    orte_job_t *djob;
 
     /* get the number of nodes */
     num_nodes = (orte_std_cntr_t)opal_list_get_size(nodes);
@@ -75,6 +77,9 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+    /* if we are not launching, get the daemon job */
+    djob = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
 
     /* get the hnp node's info */
     hnp_node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
@@ -188,6 +193,21 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             if (ORTE_SUCCESS > (rc = node->index)) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
+            }
+            if (orte_do_not_launch) {
+                /* create a daemon for this node since we won't be launching
+                 * and the mapper needs to see a daemon - this is used solely
+                 * for testing the mappers */
+                daemon = OBJ_NEW(orte_proc_t);
+                daemon->name.jobid = ORTE_PROC_MY_NAME->jobid;
+                daemon->name.vpid = node->index;
+                daemon->state = ORTE_PROC_STATE_RUNNING;
+                OBJ_RETAIN(node);
+                daemon->node = node;
+                opal_pointer_array_set_item(djob->procs, daemon->name.vpid, daemon);
+                djob->num_procs++;
+                OBJ_RETAIN(daemon);
+                node->daemon = daemon;
             }
             /* update the total slots in the job */
             orte_ras_base.total_slots_alloc += node->slots;
