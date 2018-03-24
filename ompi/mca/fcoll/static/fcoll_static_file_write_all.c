@@ -975,12 +975,12 @@ exit:
         decoded_iov = NULL;
     }
 
-    if (my_aggregator == fh->f_rank) {
+    if (NULL != local_iov_array){
+        free(local_iov_array);
+        local_iov_array = NULL;
+    }
 
-        if (NULL != local_iov_array){
-            free(local_iov_array);
-            local_iov_array = NULL;
-        }
+    if (my_aggregator == fh->f_rank) {
         for(l=0;l<fh->f_procs_per_group;l++){
             if (NULL != blocklen_per_process[l]){
                 free(blocklen_per_process[l]);
