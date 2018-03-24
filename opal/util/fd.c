@@ -138,7 +138,7 @@ bool opal_fd_is_blkdev(int fd)
 const char *opal_fd_get_peer_name(int fd)
 {
     char *str;
-    const char *ret;
+    const char *ret = NULL;
     struct sockaddr sa;
     socklen_t slt = (socklen_t) sizeof(sa);
 
@@ -152,7 +152,7 @@ const char *opal_fd_get_peer_name(int fd)
 #if OPAL_ENABLE_IPV6
     len = INET6_ADDRSTRLEN;
 #endif
-    str = malloc(len);
+    str = calloc(1, len);
     if (NULL == str) {
         return NULL;
     }
@@ -176,7 +176,9 @@ const char *opal_fd_get_peer_name(int fd)
     }
 #endif
     else {
+        // This string is guaranteed to be <= INET_ADDRSTRLEN
         strncpy(str, "Unknown", len);
+        ret = str;
     }
 
     return ret;
