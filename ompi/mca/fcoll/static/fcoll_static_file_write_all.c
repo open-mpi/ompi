@@ -14,6 +14,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -947,9 +948,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 #endif
 
         }
-
-        if (my_aggregator == fh->f_rank) {
-        }    }
+    }
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_exch = MPI_Wtime();
