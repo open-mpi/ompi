@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
- * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -1296,12 +1296,17 @@ int mca_io_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
        if (NULL == aggr_bytes_per_group_tmp) {
           opal_output (1, "OUT OF MEMORY\n");
           ret = OMPI_ERR_OUT_OF_RESOURCE;
+          free(end_offsets_tmp);
           goto exit;
        }
     decision_list_tmp = (int* )malloc (fh->f_init_num_aggrs * sizeof(int));
     if (NULL == decision_list_tmp) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
+        free(end_offsets_tmp);
+        if (NULL != aggr_bytes_per_group_tmp) {
+            free(aggr_bytes_per_group_tmp);
+        }
         goto exit;
     }
     //Communicate bytes per group between all aggregators
