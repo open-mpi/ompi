@@ -132,8 +132,8 @@ void free_non_constraint_tree(tm_tree_t *tree)
 {
   int d = tree->dumb;
 
-  free_list_child(tree);
   free_tab_child(tree);
+  free_list_child(tree);
   if(!d)
     FREE(tree);
 }
