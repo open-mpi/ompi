@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +53,7 @@
 #include "opal/util/proc.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/mca/pmix/base/base.h"
+#include "opal/util/timings.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -101,16 +104,20 @@ static int rte_init(void)
     bool bool_val, *bool_ptr = &bool_val, tdir_mca_override = false;
     size_t i;
 
+    OPAL_TIMING_ENV_INIT(rte_init);
+
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
         goto error;
     }
+    OPAL_TIMING_ENV_NEXT(rte_init, "orte_ess_base_std_prolog");
 
     /* get an async event base - we use the opal_async one so
      * we don't startup extra threads if not needed */
     orte_event_base = opal_progress_thread_init(NULL);
     progress_thread_running = true;
+    OPAL_TIMING_ENV_NEXT(rte_init, "progress_thread_init");
 
     /* open and setup pmix */
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
@@ -126,6 +133,8 @@ static int rte_init(void)
     }
     /* set the event base */
     opal_pmix_base_set_evbase(orte_event_base);
+    OPAL_TIMING_ENV_NEXT(rte_init, "pmix_framework_open");
+
     /* initialize the selected module */
     if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init(NULL)))) {
         /* we cannot run - this could be due to being direct launched
@@ -166,6 +175,8 @@ static int rte_init(void)
     pname.jobid = ORTE_PROC_MY_NAME->jobid;
     pname.vpid = 0;
 
+    OPAL_TIMING_ENV_NEXT(rte_init, "pmix_init");
+    
     /* get our local rank from PMI */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_RANK,
                           ORTE_PROC_MY_NAME, &u16ptr, OPAL_UINT16);
@@ -242,6 +253,7 @@ static int rte_init(void)
     if (OPAL_SUCCESS == ret) {
         orte_process_info.num_nodes = u32;
     }
+    OPAL_TIMING_ENV_NEXT(rte_init, "pmix_get_job_params");
 
     /* setup transport keys in case the MPI layer needs them -
      * we can use the jobfam and stepid as unique keys
@@ -263,6 +275,7 @@ static int rte_init(void)
         /* cannot free the envar as that messes up our environ */
         free(string_key);
     }
+    OPAL_TIMING_ENV_NEXT(rte_init, "orte_precondition_transport");
 
     /* retrieve temp directories info */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_TMPDIR, &wildcard_rank, &val, OPAL_STRING);
@@ -320,6 +333,7 @@ static int rte_init(void)
             orte_process_info.rm_session_dirs = bool_val;
         }
     }
+    OPAL_TIMING_ENV_NEXT(rte_init, "pmix_set_tdirs");
 
     /* get our local peers */
     if (0 < orte_process_info.num_local_peers) {
@@ -395,6 +409,7 @@ static int rte_init(void)
             free(mycpuset);
         }
     }
+    OPAL_TIMING_ENV_NEXT(rte_init, "pmix_set_locality");
 
     /* now that we have all required info, complete the setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {
@@ -402,12 +417,14 @@ static int rte_init(void)
         error = "orte_ess_base_app_setup";
         goto error;
     }
+    OPAL_TIMING_ENV_NEXT(rte_init, "ess_base_app_setup");
 
     /* setup process binding */
     if (ORTE_SUCCESS != (ret = orte_ess_base_proc_binding())) {
         error = "proc_binding";
         goto error;
     }
+    OPAL_TIMING_ENV_NEXT(rte_init, "ess_base_proc_binding");
 
     /* this needs to be set to enable debugger use when direct launched */
     if (NULL == orte_process_info.my_daemon_uri) {
@@ -443,7 +460,8 @@ static int rte_init(void)
         opal_pmix.commit();
         opal_pmix.fence(NULL, 0);
     }
-
+    OPAL_TIMING_ENV_NEXT(rte_init, "rte_init_done");
+    
     return ORTE_SUCCESS;
 
  error:

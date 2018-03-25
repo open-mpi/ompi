@@ -20,7 +20,7 @@
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2016-2018 Mellanox Technologies Ltd. All rights reserved.
  *
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -384,7 +384,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     volatile bool active;
     bool background_fence = false;
 
-    OMPI_TIMING_INIT(32);
+    OMPI_TIMING_INIT(64);
 
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
 
@@ -423,6 +423,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: opal_init_util failed";
         goto error;
     }
+    OMPI_TIMING_IMPORT_OPAL("opal_init_util");
 
     /* If thread support was enabled, then setup OPAL to allow for them. This must be done
      * early to prevent a race condition that can occur with orte_init(). */
@@ -512,8 +513,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: ompi_rte_init failed";
         goto error;
     }
-
     OMPI_TIMING_NEXT("rte_init");
+    OMPI_TIMING_IMPORT_OPAL("orte_ess_base_app_setup");
+    OMPI_TIMING_IMPORT_OPAL("rte_init");
 
     ompi_rte_initialized = true;
 
@@ -643,9 +645,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     OMPI_TIMING_IMPORT_OPAL("orte_init");
-    OMPI_TIMING_IMPORT_OPAL("opal_init_util");
     OMPI_TIMING_NEXT("rte_init-commit");
-
 
     /* exchange connection info - this function may also act as a barrier
      * if data exchange is required. The modex occurs solely across procs
@@ -653,6 +653,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * perform it internally */
     opal_pmix.commit();
     OMPI_TIMING_NEXT("commit");
+#if (OPAL_ENABLE_TIMING)
+    if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex && 
+            opal_pmix_collect_all_data) {
+        opal_pmix.fence(NULL, 0);
+        OMPI_TIMING_NEXT("pmix-barrier-1");
+        opal_pmix.fence(NULL, 0);
+        OMPI_TIMING_NEXT("pmix-barrier-2");
+    }
+#endif
 
     /* If we have a non-blocking fence:
      * if we are doing an async modex, but we are collecting all

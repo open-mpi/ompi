@@ -20,6 +20,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2018      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -479,11 +481,15 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
+    OPAL_TIMING_ENV_NEXT(otmng, "opal_dss_open");
+
     /* initialize the mca */
     if (OPAL_SUCCESS != (ret = mca_base_open())) {
         error = "mca_base_open";
         goto return_error;
     }
+
+    OPAL_TIMING_ENV_NEXT(otmng, "mca_base_open");
 
     /* initialize if framework */
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_if_base_framework, 0))) {

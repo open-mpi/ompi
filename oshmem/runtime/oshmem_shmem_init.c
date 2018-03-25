@@ -51,6 +51,7 @@
 #include "opal/mca/allocator/base/base.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/util/timings.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/runtime/runtime.h"
@@ -143,17 +144,26 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
 {
     int ret = OSHMEM_SUCCESS;
 
+    OMPI_TIMING_INIT(32);
+
     if (!oshmem_shmem_initialized) {
         if (!ompi_mpi_initialized && !ompi_mpi_finalized) {
             ret = ompi_mpi_init(argc, argv, requested, provided);
         }
+        OMPI_TIMING_NEXT("ompi_mpi_init");
 
         if (OSHMEM_SUCCESS != ret) {
             return ret;
         }
 
         PMPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
+        OMPI_TIMING_NEXT("PMPI_Comm_dup");
+
         ret = _shmem_init(argc, argv, requested, provided);
+        OMPI_TIMING_NEXT("_shmem_init");
+        OMPI_TIMING_IMPORT_OPAL("mca_scoll_mpi_comm_query");
+        OMPI_TIMING_IMPORT_OPAL("mca_scoll_enable");
+        OMPI_TIMING_IMPORT_OPAL("mca_scoll_base_select");
 
         if (OSHMEM_SUCCESS != ret) {
             return ret;
@@ -164,11 +174,15 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
             SHMEM_API_ERROR( "shmem_lock_init() failed");
             return OSHMEM_ERROR;
         }
+        OMPI_TIMING_NEXT("shmem_lock_init");
 
         /* this is a collective op, implies barrier */
         MCA_MEMHEAP_CALL(get_all_mkeys());
+        OMPI_TIMING_NEXT("get_all_mkeys()");
 
         oshmem_shmem_preconnect_all();
+        OMPI_TIMING_NEXT("shmem_preconnect_all");
+
 #if OSHMEM_OPAL_THREAD_ENABLE
         pthread_t thread_id;
         int perr;
@@ -178,11 +192,14 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
             return OSHMEM_ERROR;
         }
 #endif
+        OMPI_TIMING_NEXT("THREAD_ENABLE");
     }
 #ifdef SIGUSR1
     signal(SIGUSR1,sighandler__SIGUSR1);
     signal(SIGTERM,sighandler__SIGTERM);
 #endif
+    OMPI_TIMING_OUT;
+    OMPI_TIMING_FINALIZE;
     return ret;
 }
 
