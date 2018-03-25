@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,6 +50,7 @@ struct ompi_osc_rdma_event_t {
 
 typedef struct ompi_osc_rdma_event_t ompi_osc_rdma_event_t;
 
+#if 0
 static void *ompi_osc_rdma_event_put (int fd, int flags, void *context)
 {
     ompi_osc_rdma_event_t *event = (ompi_osc_rdma_event_t *) context;
@@ -112,7 +113,7 @@ static int ompi_osc_rdma_event_queue (ompi_osc_rdma_module_t *module, struct mca
 
     return OMPI_SUCCESS;
 }
-
+#endif
 
 static int ompi_osc_rdma_gacc_local (const void *source_buffer, int source_count, ompi_datatype_t *source_datatype,
                                      void *result_buffer, int result_count, ompi_datatype_t *result_datatype,
@@ -188,10 +189,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
                                              ompi_datatype_t *target_datatype, ompi_op_t *op, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    const size_t btl_alignment_mask = ALIGNMENT_MASK(module->selected_btl->btl_get_alignment);
     unsigned long len = target_count * target_datatype->super.size;
-    ompi_osc_rdma_frag_t *frag = NULL;
-    volatile bool complete = false;
     char *ptr = NULL;
     int ret;
 
@@ -523,7 +521,7 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
     ompi_osc_rdma_module_t *module = sync->module;
     int32_t atomic_flags = module->selected_btl->btl_atomic_flags;
     int ret, btl_op, flags;
-    int64_t origin, result;
+    int64_t origin;
 
     if ((8 != extent && !((MCA_BTL_ATOMIC_SUPPORTS_32BIT & atomic_flags) && 4 == extent)) ||
         (!(OMPI_DATATYPE_FLAG_DATA_INT & dt->super.flags) && !(MCA_BTL_ATOMIC_SUPPORTS_FLOAT & atomic_flags)) ||
@@ -590,13 +588,13 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
         new_value = old_value;
 
         if (&ompi_mpi_op_replace.op == op) {
-            memcpy ((void *)((intptr_t) &new_value) + offset, origin_addr, extent);
+            memcpy ((void *)((intptr_t) &new_value + offset), origin_addr, extent);
         } else if (&ompi_mpi_op_no_op.op != op) {
-            ompi_op_reduce (op, (void *) origin_addr, (void *)((intptr_t) &new_value) + offset, 1, dt);
+            ompi_op_reduce (op, (void *) origin_addr, (void*)((intptr_t) &new_value + offset), 1, dt);
         }
 
         ret = ompi_osc_rdma_btl_cswap (module, peer->data_endpoint, address, target_handle,
-                                       old_value, new_value, 0, &new_value);
+                                       old_value, new_value, 0, (int64_t*)&new_value);
         if (OPAL_SUCCESS != ret || new_value == old_value) {
             break;
         }
@@ -605,7 +603,7 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
     } while (1);
 
     if (result_addr) {
-        memcpy (result_addr, (void *)((intptr_t) &new_value) + offset, extent);
+        memcpy (result_addr, (void *)((intptr_t) &new_value + offset), extent);
     }
 
     if (OPAL_SUCCESS == ret) {
@@ -696,11 +694,9 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
                             mca_btl_base_registration_handle_t *target_handle, bool lock_acquired)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    const size_t btl_alignment_mask = ALIGNMENT_MASK(module->selected_btl->btl_get_alignment);
-    unsigned long offset, aligned_len, len = datatype->super.size;
+    unsigned long len = datatype->super.size;
     mca_btl_base_registration_handle_t *local_handle = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
-    ompi_osc_rdma_request_t *request;
     volatile bool complete = false;
     /* drop the const. this code will not attempt to change the value */
     char *ptr = (char *) source_addr;

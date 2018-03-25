@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -492,6 +492,7 @@ static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
     return ret;
 }
 
+#if 0
 static void ompi_osc_rdma_aggregate_append (ompi_osc_rdma_aggregation_t *aggregation, ompi_osc_rdma_request_t *request,
                                             void *source_buffer, size_t size)
 {
@@ -550,13 +551,16 @@ static int ompi_osc_rdma_aggregate_alloc (ompi_osc_rdma_sync_t *sync, ompi_osc_r
 
     return OMPI_SUCCESS;
 }
+#endif
 
 int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
                               mca_btl_base_registration_handle_t *target_handle, void *source_buffer, size_t size,
                               ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
+#if 0
     ompi_osc_rdma_aggregation_t *aggregation = peer->aggregate;
+#endif
     mca_btl_base_registration_handle_t *local_handle = NULL;
     mca_btl_base_rdma_completion_fn_t cbfunc = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
