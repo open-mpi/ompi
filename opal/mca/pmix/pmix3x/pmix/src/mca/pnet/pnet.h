@@ -56,15 +56,13 @@ typedef void (*pmix_pnet_base_module_fini_fn_t)(void);
  * tokens required for application processes to communicate with
  * each other
  */
-typedef pmix_status_t (*pmix_pnet_base_module_setup_app_fn_t)(pmix_nspace_t *nptr,
-                                                              pmix_info_t info[], size_t ninfo,
-                                                              pmix_list_t *ilist);
+typedef pmix_status_t (*pmix_pnet_base_module_setup_app_fn_t)(char *nspace, pmix_list_t *ilist);
 
 /**
  * Give the local network library an opportunity to setup address information
  * for the application by passing in the layout type and a regex describing
  * the layout */
-typedef pmix_status_t (*pmix_pnet_base_module_setup_local_net_fn_t)(pmix_nspace_t *nptr,
+typedef pmix_status_t (*pmix_pnet_base_module_setup_local_net_fn_t)(char *nspace,
                                                                     pmix_info_t info[],
                                                                     size_t ninfo);
 
@@ -72,7 +70,7 @@ typedef pmix_status_t (*pmix_pnet_base_module_setup_local_net_fn_t)(pmix_nspace_
  * Give the local network library an opportunity to add any envars to the
  * environment of a local application process prior to fork/exec
  */
-typedef pmix_status_t (*pmix_pnet_base_module_setup_fork_fn_t)(pmix_nspace_t *nptr, char ***env);
+typedef pmix_status_t (*pmix_pnet_base_module_setup_fork_fn_t)(const pmix_proc_t *peer, char ***env);
 
 /**
  * Provide an opportunity for the local network library to cleanup when a
@@ -101,51 +99,8 @@ typedef struct {
     pmix_pnet_base_module_local_app_finalized_fn_t  local_app_finalized;
 } pmix_pnet_module_t;
 
-
-/* define a few API versions of the functions */
-/**
- * Provide an opportunity for the network to define values that
- * are to be passed to an application. This can include security
- * tokens required for application processes to communicate with
- * each other
- */
-typedef pmix_status_t (*pmix_pnet_base_API_setup_app_fn_t)(char *nspace,
-                                                           pmix_info_t info[], size_t ninfo,
-                                                           pmix_list_t *ilist);
-
-/**
- * Give the local network library an opportunity to setup address information
- * for the application by passing in the layout type and a regex describing
- * the layout */
-typedef pmix_status_t (*pmix_pnet_base_API_setup_local_net_fn_t)(char *nspace,
-                                                                 pmix_info_t info[],
-                                                                 size_t ninfo);
-
-/**
- * Give the local network library an opportunity to add any envars to the
- * environment of a local application process prior to fork/exec
- */
-typedef pmix_status_t (*pmix_pnet_base_API_setup_fork_fn_t)(const pmix_proc_t *peer, char ***env);
-
-
-/**
- * Base structure for a PNET API
- */
-typedef struct {
-    char *name;
-    /* init/finalize */
-    pmix_pnet_base_module_init_fn_t                 init;
-    pmix_pnet_base_module_fini_fn_t                 finalize;
-    pmix_pnet_base_API_setup_app_fn_t               setup_app;
-    pmix_pnet_base_API_setup_local_net_fn_t         setup_local_network;
-    pmix_pnet_base_API_setup_fork_fn_t              setup_fork;
-    pmix_pnet_base_module_child_finalized_fn_t      child_finalized;
-    pmix_pnet_base_module_local_app_finalized_fn_t  local_app_finalized;
-} pmix_pnet_API_module_t;
-
-
 /* declare the global APIs */
-PMIX_EXPORT extern pmix_pnet_API_module_t pmix_pnet;
+PMIX_EXPORT extern pmix_pnet_module_t pmix_pnet;
 
 /*
  * the standard component data structure

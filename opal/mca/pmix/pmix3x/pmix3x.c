@@ -516,9 +516,6 @@ pmix_status_t pmix3x_convert_opalrc(int rc)
     case OPAL_ERR_MODEL_DECLARED:
         return PMIX_MODEL_DECLARED;
 
-    case OPAL_PMIX_LAUNCH_DIRECTIVE:
-        return PMIX_LAUNCH_DIRECTIVE;
-
     case OPAL_ERROR:
         return PMIX_ERROR;
     case OPAL_SUCCESS:
@@ -611,9 +608,6 @@ int pmix3x_convert_rc(pmix_status_t rc)
 
     case PMIX_MODEL_DECLARED:
         return OPAL_ERR_MODEL_DECLARED;
-
-    case PMIX_LAUNCH_DIRECTIVE:
-        return OPAL_PMIX_LAUNCH_DIRECTIVE;
 
     case PMIX_ERROR:
         return OPAL_ERROR;
@@ -896,7 +890,14 @@ void pmix3x_value_load(pmix_value_t *v,
             memcpy(&v->data.state, &kv->data.uint8, sizeof(uint8_t));
             break;
         case OPAL_PTR:
-            /* if someone returned a pointer, it must be to a list of
+            /* if the opal_value_t is passing a true pointer, then
+             * respect that request and pass it along */
+            if (0 == strcmp(kv->key, OPAL_PMIX_EVENT_RETURN_OBJECT)) {
+                v->type = PMIX_POINTER;
+                v->data.ptr = kv->data.ptr;
+                break;
+            }
+            /* otherwise, it must be to a list of
              * opal_value_t's that we need to convert to a pmix_data_array
              * of pmix_info_t structures */
             list = (opal_list_t*)kv->data.ptr;
@@ -1604,12 +1605,8 @@ int pmix3x_convert_state(pmix_proc_state_t state)
             return 55;
         case PMIX_PROC_STATE_COMM_FAILED:
             return 56;
-        case PMIX_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            return 57;
         case PMIX_PROC_STATE_CALLED_ABORT:
             return 58;
-        case PMIX_PROC_STATE_HEARTBEAT_FAILED:
-            return 59;
         case PMIX_PROC_STATE_MIGRATING:
             return 60;
         case PMIX_PROC_STATE_CANNOT_RESTART:
@@ -1650,13 +1647,9 @@ pmix_proc_state_t pmix3x_convert_opalstate(int state)
             return PMIX_PROC_STATE_TERM_WO_SYNC;
         case 56:
             return PMIX_PROC_STATE_COMM_FAILED;
-        case 57:
-            return PMIX_PROC_STATE_SENSOR_BOUND_EXCEEDED;
         case 58:
             return PMIX_PROC_STATE_CALLED_ABORT;
         case 59:
-            return PMIX_PROC_STATE_HEARTBEAT_FAILED;
-        case 60:
             return PMIX_PROC_STATE_MIGRATING;
         case 61:
             return PMIX_PROC_STATE_CANNOT_RESTART;

@@ -168,8 +168,6 @@ typedef struct {
     pmix_personality_t compat;
     pmix_epilog_t epilog;       // things to do upon termination of all local clients
                                 // from this nspace
-    pmix_list_t setup_data;     // list of pmix_kval_t containing info structs having blobs
-                                // for setting up the local node for this nspace/application
 } pmix_nspace_t;
 PMIX_CLASS_DECLARATION(pmix_nspace_t);
 

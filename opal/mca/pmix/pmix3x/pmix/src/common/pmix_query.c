@@ -63,7 +63,6 @@ static void query_cbfunc(struct pmix_peer_t *peer,
     PMIX_BFROPS_UNPACK(rc, peer, buf, &results->status, &cnt, PMIX_STATUS);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
-        results->status = rc;
         goto complete;
     }
     if (PMIX_SUCCESS != results->status) {
@@ -75,7 +74,6 @@ static void query_cbfunc(struct pmix_peer_t *peer,
     PMIX_BFROPS_UNPACK(rc, peer, buf, &results->ninfo, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
-        results->status = rc;
         goto complete;
     }
     if (0 < results->ninfo) {
@@ -84,7 +82,6 @@ static void query_cbfunc(struct pmix_peer_t *peer,
         PMIX_BFROPS_UNPACK(rc, peer, buf, results->info, &cnt, PMIX_INFO);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
-            results->status = rc;
             goto complete;
         }
     }
