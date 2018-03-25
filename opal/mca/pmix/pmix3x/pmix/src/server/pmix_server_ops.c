@@ -1138,6 +1138,9 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     cd->peer = peer;
     cd->spcbfunc = cbfunc;
     cd->cbdata = cbdata;
+    /* setup the proc name */
+    (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
+    proc.rank = peer->info->pname.rank;
 
     /* unpack the number of job-level directives */
     cnt=1;
@@ -1150,6 +1153,11 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     /* always add one directive that indicates whether the requestor
      * is a tool or client */
     cd->ninfo = ninfo + 1;
+    /* if it is a client, then we set the parent and
+     * "spawned" keys as well */
+    if (!PMIX_PROC_IS_TOOL(peer)) {
+        cd->ninfo += 2;
+    }
     PMIX_INFO_CREATE(cd->info, cd->ninfo);
     if (NULL == cd->info) {
         rc = PMIX_ERR_NOMEM;
@@ -1194,7 +1202,7 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     }
     /* add the directive to the end */
     if (PMIX_PROC_IS_TOOL(peer)) {
-        PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_TOOL, NULL, PMIX_BOOL);
+        PMIX_INFO_LOAD(&cd->info[cd->ninfo-1], PMIX_REQUESTOR_IS_TOOL, NULL, PMIX_BOOL);
         /* if the requestor is a tool, we default to forwarding all
          * output IO channels */
         if (!stdout_found) {
@@ -1207,7 +1215,9 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
             cd->channels |= PMIX_FWD_STDDIAG_CHANNEL;
         }
     } else {
-        PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_CLIENT, NULL, PMIX_BOOL);
+        PMIX_INFO_LOAD(&cd->info[cd->ninfo-3], PMIX_SPAWNED, NULL, PMIX_BOOL);
+        PMIX_INFO_LOAD(&cd->info[cd->ninfo-2], PMIX_PARENT_ID, &proc, PMIX_PROC);
+        PMIX_INFO_LOAD(&cd->info[cd->ninfo-1], PMIX_REQUESTOR_IS_CLIENT, NULL, PMIX_BOOL);
     }
 
     /* unpack the number of apps */
@@ -1232,8 +1242,6 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
         }
     }
     /* call the local server */
-    (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
-    proc.rank = peer->info->pname.rank;
     rc = pmix_host_server.spawn(&proc, cd->info, cd->ninfo, cd->apps, cd->napps, spcbfunc, cd);
 
   cleanup:

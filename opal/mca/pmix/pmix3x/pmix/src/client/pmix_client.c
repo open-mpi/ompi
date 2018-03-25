@@ -1175,27 +1175,11 @@ static void _commitfn(int sd, short args, void *cbdata)
     return rc;
 }
 
-static void _resolve_peers(int sd, short args, void *cbdata)
-{
-    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    pmix_status_t rc;
-
-    cb->status = pmix_preg.resolve_peers(cb->key, cb->pname.nspace,
-                                         &cb->procs, &cb->nprocs);
-    /* post the data so the receiving thread can acquire it */
-    PMIX_POST_OBJECT(cb);
-    PMIX_WAKEUP_THREAD(&cb->lock);
-}
-
 /* need to thread-shift this request */
 PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
                                              const char *nspace,
                                              pmix_proc_t **procs, size_t *nprocs)
 {
-    pmix_cb_t *cb;
-    pmix_status_t rc;
-    pmix_proc_t proc;
-
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -1203,71 +1187,16 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_peers(const char *nodename,
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
+    /* set default */
+    *procs = NULL;
+    *nprocs = 0;
 
-    cb = PMIX_NEW(pmix_cb_t);
-    cb->key = (char*)nodename;
-    cb->pname.nspace = strdup(nspace);
-
-    PMIX_THREADSHIFT(cb, _resolve_peers);
-
-    /* wait for the result */
-    PMIX_WAIT_THREAD(&cb->lock);
-
-    /* if the nspace wasn't found, then we need to
-     * ask the server for that info */
-    if (PMIX_ERR_INVALID_NAMESPACE == cb->status) {
-        (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
-        proc.rank = PMIX_RANK_WILDCARD;
-        /* any key will suffice as it will bring down
-         * the entire data blob */
-        rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, NULL);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_RELEASE(cb);
-            return rc;
-        }
-        /* retry the fetch */
-        cb->lock.active = true;
-        PMIX_THREADSHIFT(cb, _resolve_peers);
-        PMIX_WAIT_THREAD(&cb->lock);
-    }
-    *procs = cb->procs;
-    *nprocs = cb->nprocs;
-
-    rc = cb->status;
-    PMIX_RELEASE(cb);
-    return rc;
-}
-
-static void _resolve_nodes(int fd, short args, void *cbdata)
-{
-    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    char *regex, **names;
-
-    /* get a regular expression describing the PMIX_NODE_MAP */
-    cb->status = pmix_preg.resolve_nodes(cb->pname.nspace, &regex);
-    if (PMIX_SUCCESS == cb->status) {
-        /* parse it into an argv array of names */
-        cb->status = pmix_preg.parse_nodes(regex, &names);
-        if (PMIX_SUCCESS == cb->status) {
-            /* assemble it into a comma-delimited list */
-            cb->key = pmix_argv_join(names, ',');
-            pmix_argv_free(names);
-        } else {
-            free(regex);
-        }
-    }
-    /* post the data so the receiving thread can acquire it */
-    PMIX_POST_OBJECT(cb);
-    PMIX_WAKEUP_THREAD(&cb->lock);
+    return pmix_preg.resolve_peers(nodename, nspace, procs, nprocs);
 }
 
 /* need to thread-shift this request */
 PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist)
 {
-    pmix_cb_t *cb;
-    pmix_status_t rc;
-    pmix_proc_t proc;
-
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
     if (pmix_globals.init_cntr <= 0) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
@@ -1275,35 +1204,8 @@ PMIX_EXPORT pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist
     }
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
-    cb = PMIX_NEW(pmix_cb_t);
-    cb->pname.nspace = strdup(nspace);
+    /* set default */
+    *nodelist = NULL;
 
-    PMIX_THREADSHIFT(cb, _resolve_nodes);
-
-    /* wait for the result */
-    PMIX_WAIT_THREAD(&cb->lock);
-
-    /* if the nspace wasn't found, then we need to
-     * ask the server for that info */
-    if (PMIX_ERR_INVALID_NAMESPACE == cb->status) {
-        (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
-        proc.rank = PMIX_RANK_WILDCARD;
-        /* any key will suffice as it will bring down
-         * the entire data blob */
-        rc = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0, NULL);
-        if (PMIX_SUCCESS != rc) {
-            PMIX_RELEASE(cb);
-            return rc;
-        }
-        /* retry the fetch */
-        cb->lock.active = true;
-        PMIX_THREADSHIFT(cb, _resolve_nodes);
-        PMIX_WAIT_THREAD(&cb->lock);
-    }
-    /* the string we want is in the key field */
-    *nodelist = cb->key;
-
-    rc = cb->status;
-    PMIX_RELEASE(cb);
-    return rc;
+    return pmix_preg.resolve_nodes(nspace, nodelist);
 }

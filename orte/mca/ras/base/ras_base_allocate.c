@@ -215,10 +215,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             return;
         }
         OBJ_DESTRUCT(&nodes);
-        /* default to no-oversubscribe-allowed for managed systems */
-        if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
-            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-        }
         goto DISPLAY;
     } else if (orte_allocation_required) {
         /* if nothing was found, and an allocation is

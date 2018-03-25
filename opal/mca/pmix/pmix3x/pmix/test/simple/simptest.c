@@ -797,8 +797,22 @@ static pmix_status_t spawn_fn(const pmix_proc_t *proc,
                     pmix_spawn_cbfunc_t cbfunc, void *cbdata)
 {
     myxfer_t *x;
+    size_t n;
+    pmix_proc_t *pptr;
+    bool spawned;
 
     pmix_output(0, "SERVER: SPAWN");
+
+    /* check the job info for parent and spawned keys */
+    for (n=0; n < ninfo; n++) {
+        if (0 == strncmp(job_info[n].key, PMIX_PARENT_ID, PMIX_MAX_KEYLEN)) {
+            pptr = job_info[n].value.data.proc;
+            pmix_output(0, "SPAWN: Parent ID %s:%d", pptr->nspace, pptr->rank);
+        } else if (0 == strncmp(job_info[n].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN)) {
+            spawned = PMIX_INFO_TRUE(&job_info[n]);
+            pmix_output(0, "SPAWN: Spawned %s", spawned ? "TRUE" : "FALSE");
+        }
+    }
 
     /* in practice, we would pass this request to the local
      * resource manager for launch, and then have that server

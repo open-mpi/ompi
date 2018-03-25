@@ -129,6 +129,11 @@ int pmix3x_server_init(opal_pmix_server_module_t *module,
         }
     }
 
+    /* check for direct modex use-case */
+    if (opal_pmix_base_async_modex && !opal_pmix_collect_all_data) {
+        opal_setenv("PMIX_MCA_gds", "hash", true, &environ);
+    }
+
     /* insert ourselves into our list of jobids - it will be the
      * first, and so we'll check it first */
     job = OBJ_NEW(opal_pmix3x_jobid_trkr_t);

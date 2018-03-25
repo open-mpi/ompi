@@ -11,9 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,22 +19,22 @@
 # $HEADER$
 #
 
-headers = pnet_test.h
+headers = bfrop_pmix3.h
 sources = \
-        pnet_test_component.c \
-        pnet_test.c
+        bfrop_pmix3_component.c \
+        bfrop_pmix3.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_pmix_pnet_test_DSO
+if MCA_BUILD_pmix_bfrops_v3_DSO
 lib =
 lib_sources =
-component = mca_pnet_test.la
+component = mca_bfrops_v3.la
 component_sources = $(headers) $(sources)
 else
-lib = libmca_pnet_test.la
+lib = libmca_bfrops_v3.la
 lib_sources = $(headers) $(sources)
 component =
 component_sources =
@@ -44,9 +42,9 @@ endif
 
 mcacomponentdir = $(pmixlibdir)
 mcacomponent_LTLIBRARIES = $(component)
-mca_pnet_test_la_SOURCES = $(component_sources)
-mca_pnet_test_la_LDFLAGS = -module -avoid-version
+mca_bfrops_v3_la_SOURCES = $(component_sources)
+mca_bfrops_v3_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
-libmca_pnet_test_la_SOURCES = $(lib_sources)
-libmca_pnet_test_la_LDFLAGS = -module -avoid-version
+libmca_bfrops_v3_la_SOURCES = $(lib_sources)
+libmca_bfrops_v3_la_LDFLAGS = -module -avoid-version

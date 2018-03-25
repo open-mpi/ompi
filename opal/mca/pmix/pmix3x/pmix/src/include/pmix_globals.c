@@ -109,7 +109,6 @@ static void nscon(pmix_nspace_t *p)
     PMIX_CONSTRUCT(&p->epilog.cleanup_dirs, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.cleanup_files, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.ignores, pmix_list_t);
-    PMIX_CONSTRUCT(&p->setup_data, pmix_list_t);
 }
 static void nsdes(pmix_nspace_t *p)
 {
@@ -126,7 +125,6 @@ static void nsdes(pmix_nspace_t *p)
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_dirs);
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_files);
     PMIX_LIST_DESTRUCT(&p->epilog.ignores);
-    PMIX_LIST_DESTRUCT(&p->setup_data);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_t,
                                 pmix_list_item_t,

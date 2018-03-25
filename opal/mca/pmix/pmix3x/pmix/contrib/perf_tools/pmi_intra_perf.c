@@ -302,6 +302,12 @@ int main(int argc, char **argv)
                 commit_time, fence_time);
     }
 
+    /*
+     * The barrier ensures that all procs finished key fetching
+     * we had issues with dstor/lockless case evaluation
+     */
+    pmi_fence( 0 );
+
     /* Out of the perf path - send our results to rank 0 using same PMI */
     char key[128];
     sprintf(key, "PMIX_PERF_get_total_time.%d", rank);

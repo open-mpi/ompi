@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -367,23 +367,18 @@ pmix_status_t pmix_bfrops_base_copy_pinfo(pmix_proc_info_t **dest,
                                           pmix_proc_info_t *src,
                                           pmix_data_type_t type)
 {
-    pmix_proc_info_t *p;
-
-    PMIX_PROC_INFO_CREATE(p, 1);
-    if (NULL == p) {
-        return PMIX_ERR_NOMEM;
-    }
-    memcpy(&p->proc, &src->proc, sizeof(pmix_proc_t));
+    *dest = (pmix_proc_info_t*)malloc(sizeof(pmix_proc_info_t));
+    (void)strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
+    (*dest)->proc.rank = src->proc.rank;
     if (NULL != src->hostname) {
-        p->hostname = strdup(src->hostname);
+        (*dest)->hostname = strdup(src->hostname);
     }
     if (NULL != src->executable_name) {
-        p->executable_name = strdup(src->executable_name);
+        (*dest)->executable_name = strdup(src->executable_name);
     }
-    memcpy(&p->pid, &src->pid, sizeof(pid_t));
-    memcpy(&p->exit_code, &src->exit_code, sizeof(int));
-    memcpy(&p->state, &src->state, sizeof(pmix_proc_state_t));
-    *dest = p;
+    (*dest)->pid = src->pid;
+    (*dest)->exit_code = src->exit_code;
+    (*dest)->state = src->state;
     return PMIX_SUCCESS;
 }
 
@@ -624,7 +619,7 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
             p1 = (pmix_info_t*)p->array;
             s1 = (pmix_info_t*)src->array;
             for (n=0; n < src->size; n++) {
-                PMIX_INFO_XFER(&p1[n], &s1[n]);
+                PMIX_INFO_LOAD(&p1[n], s1[n].key, &s1[n].value.data.flag, s1[n].value.type);
             }
             break;
         case PMIX_PDATA:
@@ -636,7 +631,7 @@ pmix_status_t pmix_bfrops_base_copy_darray(pmix_data_array_t **dest,
             pd = (pmix_pdata_t*)p->array;
             sd = (pmix_pdata_t*)src->array;
             for (n=0; n < src->size; n++) {
-                PMIX_PDATA_XFER(&pd[n], &sd[n]);
+                PMIX_PDATA_LOAD(&pd[n], &sd[n].proc, sd[n].key, &sd[n].value.data.flag, sd[n].value.type);
             }
             break;
         case PMIX_BUFFER:
@@ -906,7 +901,7 @@ pmix_status_t pmix_bfrops_base_copy_envar(pmix_envar_t **dest,
                                           pmix_envar_t *src,
                                           pmix_data_type_t type)
 {
-    PMIX_ENVAR_CREATE(*dest, 1);
+    *dest = (pmix_envar_t*)malloc(sizeof(pmix_envar_t));
     if (NULL == (*dest)) {
         return PMIX_ERR_NOMEM;
     }
