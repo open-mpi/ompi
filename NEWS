@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
 $COPYRIGHT$
@@ -71,6 +71,7 @@ Master (not on release branches yet)
 - Remove IB XRC support from the OpenIB BTL due to lack of support.
 - Remove support for big endian PowerPC.
 - Remove support for XL compilers older than v13.1
+- Fix rank-by algorithms to properly rank by object and span
 
 3.0.0 -- September, 2017
 ------------------------
