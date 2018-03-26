@@ -304,15 +304,15 @@ static int rank_by(orte_job_t *jdata,
 {
     orte_app_context_t *app;
     hwloc_obj_t obj;
-    int num_objs, i, j, m, n, rc;
+    int num_objs, i, j, m, n, rc, nn;
     orte_vpid_t num_ranked=0;
     orte_node_t *node;
     orte_proc_t *proc, *pptr;
-    orte_vpid_t vpid;
+    orte_vpid_t vpid, np;
     int cnt;
     opal_pointer_array_t objs;
-    bool all_done;
     hwloc_obj_t locale;
+    orte_app_idx_t napp;
 
     if (ORTE_RANKING_SPAN & ORTE_GET_RANKING_DIRECTIVE(jdata->map->ranking)) {
         return rank_span(jdata, target, cache_level);
@@ -333,20 +333,21 @@ static int rank_by(orte_job_t *jdata,
      */
 
     vpid = 0;
-    for (n=0; n < jdata->apps->size; n++) {
+    for (n=0, napp=0; napp < jdata->num_apps && n < jdata->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
             continue;
         }
-
+        napp++;
         /* setup the pointer array */
         OBJ_CONSTRUCT(&objs, opal_pointer_array_t);
         opal_pointer_array_init(&objs, 2, INT_MAX, 2);
 
         cnt = 0;
-        for (m=0; m < jdata->map->nodes->size; m++) {
+        for (m=0, nn=0; nn < jdata->map->num_nodes && m < jdata->map->nodes->size; m++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, m))) {
                 continue;
             }
+            nn++;
 
             /* get the number of objects - only consider those we can actually use */
             num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, target,
@@ -376,13 +377,20 @@ static int rank_by(orte_job_t *jdata,
              * Perhaps someday someone will come up with a more efficient
              * algorithm, but this works for now.
              */
-            all_done = false;
-            while (!all_done && cnt < app->num_procs) {
-                all_done = true;
-                for (j=0; j < node->procs->size && cnt < app->num_procs; j++) {
+            i = 0;
+            while (cnt < app->num_procs) {
+                /* get the next object */
+                obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i);
+                if (NULL == obj) {
+                    break;
+                }
+                /* scan across the procs and find the one that is on this object */
+                np = 0;
+                for (j=0; np < node->num_procs && j < node->procs->size && cnt < app->num_procs; j++) {
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                         continue;
                     }
+                    np++;
                     /* ignore procs from other jobs */
                     if (proc->name.jobid != jdata->jobid) {
                         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -404,53 +412,48 @@ static int rank_by(orte_job_t *jdata,
                                             ORTE_NAME_PRINT(&proc->name), num_ranked);
                         continue;
                     }
-                    /* cycle across the objects */
-                    for (i=0; i < num_objs && cnt < app->num_procs && all_done; i++) {
-                        obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i);
-                         /* protect against bozo case */
-                        locale = NULL;
-                        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
-                            ORTE_ERROR_LOG(ORTE_ERROR);
-                            return ORTE_ERROR;
-                        }
-                        /* ignore procs not on this object */
-                        if (NULL == locale ||
-                            !hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
-                            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                                "mca:rmaps:rank_by: proc at position %d is not on object %d",
-                                                j, i);
-                            continue;
-                        }
-                        /* assign the vpid */
-                        proc->name.vpid = vpid++;
-                        if (0 == cnt) {
-                            app->first_rank = proc->name.vpid;
-                        }
-                        cnt++;
-                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                            "mca:rmaps:rank_by: proc in position %d is on object %d assigned rank %s",
-                                            j, i, ORTE_VPID_PRINT(proc->name.vpid));
-                        /* insert the proc into the jdata array */
-                        if (NULL != (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->name.vpid))) {
-                            OBJ_RELEASE(pptr);
-                        }
-                        OBJ_RETAIN(proc);
-                        if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
-                            ORTE_ERROR_LOG(rc);
-                            OBJ_DESTRUCT(&objs);
-                            return rc;
-                        }
-                        num_ranked++;
-                        /* flag that one was mapped */
-                        all_done = false;
-                        /* track where the highest vpid landed - this is our
-                         * new bookmark
-                         */
-                        jdata->bookmark = node;
-                        /* move to next object */
-                        break;
+                     /* protect against bozo case */
+                    locale = NULL;
+                    if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
+                        ORTE_ERROR_LOG(ORTE_ERROR);
+                        return ORTE_ERROR;
                     }
+                    /* ignore procs not on this object */
+                    if (NULL == locale ||
+                        !hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
+                        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                            "mca:rmaps:rank_by: proc at position %d is not on object %d",
+                                            j, i);
+                        continue;
+                    }
+                    /* assign the vpid */
+                    proc->name.vpid = vpid++;
+                    if (0 == cnt) {
+                        app->first_rank = proc->name.vpid;
+                    }
+                    cnt++;
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps:rank_by: proc in position %d is on object %d assigned rank %s",
+                                        j, i, ORTE_VPID_PRINT(proc->name.vpid));
+                    /* insert the proc into the jdata array */
+                    if (NULL != (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->name.vpid))) {
+                        OBJ_RELEASE(pptr);
+                    }
+                    OBJ_RETAIN(proc);
+                    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&objs);
+                        return rc;
+                    }
+                    num_ranked++;
+                    /* track where the highest vpid landed - this is our
+                     * new bookmark
+                     */
+                    jdata->bookmark = node;
+                    /* move to next object */
+                    break;
                 }
+                i++;
             }
         }
         /* cleanup */
@@ -473,6 +476,9 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
     unsigned cache_level;
 
     map = jdata->map;
+
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                        "RANKING POLICY: %s", orte_rmaps_base_print_ranking(map->ranking));
 
     /* start with the rank-by object options - if the object isn't
      * included in the topology, then we obviously cannot rank by it.
