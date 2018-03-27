@@ -34,6 +34,8 @@ AC_DEFUN([MCA_ompi_fs_lustre_CONFIG],[
           [$1],
           [$2])
 
+    OPAL_SUMMARY_ADD([[OMPIO File Systems]],[[Lustre]],[$1],[$fs_lustre_happy])
+
     # substitute in the things needed to build lustre
     AC_SUBST([fs_lustre_CPPFLAGS])
     AC_SUBST([fs_lustre_LDFLAGS])
