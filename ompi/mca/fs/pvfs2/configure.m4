@@ -30,6 +30,7 @@ AC_DEFUN([MCA_ompi_fs_pvfs2_CONFIG],[
                      [fs_pvfs2_happy="yes"],
                      [fs_pvfs2_happy="no"])
 
+    OPAL_SUMMARY_ADD([[OMPIO File Systems]],[[PVFS2/OrangeFS]],[$1],[$fs_pvfs2_happy])
     AS_IF([test "$fs_pvfs2_happy" = "yes"],
           [$1],
           [$2])
