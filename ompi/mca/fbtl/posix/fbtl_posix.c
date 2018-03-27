@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -116,7 +117,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 {
     bool ret=false;
 #if defined (FBTL_POSIX_HAVE_AIO)
-    int i=0, lcount=0, ret_code;
+    int i=0, lcount=0, ret_code=0;
     mca_fbtl_posix_request_data_t *data=(mca_fbtl_posix_request_data_t *)req->req_data;
     off_t start_offset, end_offset, total_length;
 

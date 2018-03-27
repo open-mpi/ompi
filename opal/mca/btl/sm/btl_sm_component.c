@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
@@ -77,6 +77,8 @@ static int mca_btl_sm_component_register(void)
                 }
             }
         }
+
+        opal_argv_free(names);
     }
 
     // Tell the framework that we don't want this component to be

@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2017-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -139,7 +139,7 @@ int ompi_osc_pt2pt_frag_flush_pending (ompi_osc_pt2pt_module_t *module, int targ
 
 int ompi_osc_pt2pt_frag_flush_pending_all (ompi_osc_pt2pt_module_t *module)
 {
-    int ret;
+    int ret = OPAL_SUCCESS;
 
     for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
         ret = ompi_osc_pt2pt_frag_flush_pending (module, i);

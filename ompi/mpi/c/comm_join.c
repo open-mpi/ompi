@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,9 +110,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         send_first = true;
     }
 
-    /* ensure the port name is NULL terminated */
-    memset(port_name, 0, MPI_MAX_PORT_NAME);
-
     /* Assumption: socket_send should not block, even if the socket
        is not configured to be non-blocking, because the message length are
        so short. */
@@ -120,16 +117,21 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     /* we will only use the send_first proc's port name,
      * so pass it to the recv_first participant */
     if (send_first) {
-        /* open a port */
+        // The port_name that we get back will be \0-terminated.  The
+        // strlen+\0 will be <= MPI_MAX_PORT_NAME characters.
         if (OMPI_SUCCESS != (rc = ompi_dpm_open_port(port_name))) {
             goto error;
         }
+        // Send the strlen+1 so that we both send the \0 and the
+        // receiver receives the \0.
         llen   = (uint32_t)(strlen(port_name)+1);
         len    = htonl(llen);
         ompi_socket_send( fd, (char *) &len, sizeof(uint32_t));
         ompi_socket_send (fd, port_name, llen);
     } else {
         ompi_socket_recv (fd, (char *) &rlen, sizeof(uint32_t));
+        // The lrlen that we receive will be the strlen+1 (to account
+        // for \0), and will be <= MPI_MAX_PORT_NAME.
         lrlen  = ntohl(rlen);
         ompi_socket_recv (fd, port_name, lrlen);
     }

@@ -1183,8 +1183,8 @@ static int mca_btl_tcp_component_exchange(void)
                  if ((AF_INET == my_ss.ss_family) &&
                      (4 != mca_btl_tcp_component.tcp_disable_family)) {
                      memcpy(&addrs[current_addr].addr_inet,
-                             &((struct sockaddr_in*)&my_ss)->sin_addr,
-                             sizeof(addrs[0].addr_inet));
+                            &((struct sockaddr_in*)&my_ss)->sin_addr,
+                            sizeof(struct in_addr));
                      addrs[current_addr].addr_port =
                          mca_btl_tcp_component.tcp_listen_port;
                      addrs[current_addr].addr_family = MCA_BTL_TCP_AF_INET;

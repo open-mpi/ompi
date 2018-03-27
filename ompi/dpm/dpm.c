@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
@@ -958,6 +958,7 @@ int ompi_dpm_open_port(char *port_name)
     r = opal_rand(&rnd);
     opal_convert_process_name_to_string(&tmp, OMPI_PROC_MY_NAME);
     snprintf(port_name, MPI_MAX_PORT_NAME-1, "%s:%u", tmp, r);
+    port_name[MPI_MAX_PORT_NAME - 1] = '\0';
     free(tmp);
     return OMPI_SUCCESS;
 }
