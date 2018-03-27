@@ -544,11 +544,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     unsigned long offset, total_size;
     unsigned long state_base, data_base;
     int local_rank, local_size, ret;
-    size_t local_rank_array_size, leader_peer_data_size;
+    size_t local_rank_array_size, leader_peer_data_size, my_base_offset = 0;
     int my_rank = ompi_comm_rank (module->comm);
     int global_size = ompi_comm_size (module->comm);
     ompi_osc_rdma_region_t *state_region;
-    int my_base_offset = 0;
     struct _local_data *temp;
     char *data_file;
 
