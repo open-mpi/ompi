@@ -12,6 +12,7 @@
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -202,7 +203,7 @@ int ompi_osc_rdma_demand_lock_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdm
     } while (0);
     );
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t *win)

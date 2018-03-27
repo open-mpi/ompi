@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -246,7 +246,7 @@ static int bind_downwards(orte_job_t *jdata,
                           hwloc_obj_type_t target,
                           unsigned cache_level)
 {
-    int j;
+    int j, rc;
     orte_job_map_t *map;
     orte_proc_t *proc;
     hwloc_obj_t trg_obj, nxt_obj;
@@ -367,7 +367,10 @@ static int bind_downwards(orte_job_t *jdata,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&proc->name), node->name);
             } else {
-                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), node->topology->topo, totalcpuset);
+                rc = opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), node->topology->topo, totalcpuset);
+                if (OPAL_SUCCESS != rc) {
+                    ORTE_ERROR_LOG(rc);
+                }
                 opal_output(orte_rmaps_base_framework.framework_output,
                             "%s BOUND PROC %s[%s] TO %s: %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -841,7 +844,8 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
             continue;
         }
-        if (!orte_no_vm && (int)ORTE_PROC_MY_NAME->vpid != node->index) {
+        if (!orte_no_vm && !orte_do_not_launch &&
+            (int)ORTE_PROC_MY_NAME->vpid != node->index) {
             continue;
         }
         if (!orte_do_not_launch) {

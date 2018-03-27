@@ -3,7 +3,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -23,6 +23,7 @@
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/util/argv.h"
 
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -179,6 +180,10 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             support = (struct hwloc_topology_support*)hwloc_topology_get_support(topo);
             support->cpubind->set_thisproc_cpubind = mca_ras_simulator_component.have_cpubind;
             support->membind->set_thisproc_membind = mca_ras_simulator_component.have_membind;
+            /* pass it thru the filter so we create the summaries required by the mappers */
+            if (OPAL_SUCCESS != opal_hwloc_base_filter_cpus(topo)) {
+                ORTE_ERROR_LOG(ORTE_ERROR);
+            }
             /* add it to our array */
             t = OBJ_NEW(orte_topology_t);
             t->topo = topo;

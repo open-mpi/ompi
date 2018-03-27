@@ -417,7 +417,33 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
     }
 
-    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
+    if (orte_do_not_launch) {
+        /* compute the ranks and add the proc objects
+         * to the jdata->procs array */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            goto cleanup;
+        }
+        /* compute and save local ranks */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            goto cleanup;
+        }
+        /* compute and save location assignments */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            goto cleanup;
+        }
+        /* compute and save bindings */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            goto cleanup;
+        }
+    } else if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_FULLY_DESCRIBED, NULL, OPAL_BOOL)) {
         /* compute and save location assignments */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_assign_locations(jdata))) {
             ORTE_ERROR_LOG(rc);
@@ -452,6 +478,11 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (NULL != (parent = orte_get_job_data_object(jdata->originator.jobid))) {
             parent->bookmark = jdata->bookmark;
         }
+    }
+
+    if (orte_do_not_launch) {
+        /* display the devel map */
+        orte_rmaps_base_display_map(jdata);
     }
 
     /* set the job state to the next position */

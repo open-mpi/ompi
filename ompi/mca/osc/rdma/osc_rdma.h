@@ -12,7 +12,7 @@
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -568,7 +568,7 @@ static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
 
         OPAL_THREAD_SCOPED_LOCK(&sync->lock,
                                 OPAL_LIST_FOREACH_SAFE(aggregation, next, &sync->aggregations, ompi_osc_rdma_aggregation_t) {
-                                    fprintf (stderr, "Flushing aggregation %p, peeer %p\n", aggregation, aggregation->peer);
+                                    fprintf (stderr, "Flushing aggregation %p, peer %p\n", (void*)aggregation, (void*)aggregation->peer);
                                     ompi_osc_rdma_peer_aggregate_flush (aggregation->peer);
                                 });
     }
