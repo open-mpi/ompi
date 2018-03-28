@@ -105,15 +105,13 @@ get_stride_elem(const void *base, ptrdiff_t sst, size_t nelems, size_t elem_size
 }
 
 static inline int
-get_dst_pe(struct oshmem_group_t *group, int src_blk_idx, int dst_blk_idx)
+get_dst_pe(struct oshmem_group_t *group, int src_blk_idx, int dst_blk_idx, int *dst_pe_idx)
 {
-    int dst_grp_pe;
-
     /* index permutation for better distribution of traffic */
-    dst_grp_pe = (dst_blk_idx + src_blk_idx) % group->proc_count;
+    (*dst_pe_idx) = (dst_blk_idx + src_blk_idx) % group->proc_count;
 
     /* convert to the global pe */
-    return oshmem_proc_pe(group->proc_array[dst_grp_pe]);
+    return oshmem_proc_pe(group->proc_array[*dst_pe_idx]);
 }
 
 static int a2as_alg_simple(struct oshmem_group_t *group,
@@ -127,6 +125,7 @@ static int a2as_alg_simple(struct oshmem_group_t *group,
     int dst_pe;
     int src_blk_idx;
     int dst_blk_idx;
+    int dst_pe_idx;
     size_t elem_idx;
 
     SCOLL_VERBOSE(14,
@@ -137,14 +136,14 @@ static int a2as_alg_simple(struct oshmem_group_t *group,
 
     for (src_blk_idx = 0; src_blk_idx < group->proc_count; src_blk_idx++) {
 
-        dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx);
+        dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx, &dst_pe_idx);
         for (elem_idx = 0; elem_idx < nelems; elem_idx++) {
             rc = MCA_SPML_CALL(put(
                         get_stride_elem(target, tst, nelems, element_size,
                                         dst_blk_idx, elem_idx),
                         element_size,
                         get_stride_elem(source, sst, nelems, element_size,
-                                        src_blk_idx, elem_idx),
+                                        dst_pe_idx, elem_idx),
                         dst_pe));
             if (OSHMEM_SUCCESS != rc) {
                 return rc;
@@ -164,6 +163,7 @@ static int a2a_alg_simple(struct oshmem_group_t *group,
     int dst_pe;
     int src_blk_idx;
     int dst_blk_idx;
+    int dst_pe_idx;
     void *dst_blk;
 
     SCOLL_VERBOSE(14,
@@ -177,11 +177,11 @@ static int a2a_alg_simple(struct oshmem_group_t *group,
 
     for (src_blk_idx = 0; src_blk_idx < group->proc_count; src_blk_idx++) {
 
-        dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx);
+        dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx, &dst_pe_idx);
         rc = MCA_SPML_CALL(put(dst_blk,
                                 nelems * element_size,
                                 get_stride_elem(source, 1, nelems,
-                                                element_size, src_blk_idx, 0),
+                                                element_size, dst_pe_idx, 0),
                                 dst_pe));
         if (OSHMEM_SUCCESS != rc) {
             return rc;
