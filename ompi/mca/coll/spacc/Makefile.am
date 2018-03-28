@@ -12,7 +12,9 @@ sources = \
         coll_spacc_component.c \
         coll_spacc_module.c \
         coll_spacc_allreduce.c \
-        coll_spacc_reduce.c
+        coll_spacc_exscan.c \
+        coll_spacc_reduce.c \
+        coll_spacc_scan.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
