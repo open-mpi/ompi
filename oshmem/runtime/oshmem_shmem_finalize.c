@@ -58,28 +58,27 @@
 #include "oshmem/shmem/shmem_lock.h"
 #include "oshmem/runtime/oshmem_shmem_preconnect.h"
 
+extern int oshmem_shmem_globalexit_status;
+
 static int _shmem_finalize(void);
 
 int oshmem_shmem_finalize(void)
 {
     int ret = OSHMEM_SUCCESS;
-    static int32_t finalize_has_already_started = 0;
-    int32_t _tmp = 0;
 
-    if (opal_atomic_compare_exchange_strong_32 (&finalize_has_already_started, &_tmp, 1)
-            && oshmem_shmem_initialized && !oshmem_shmem_aborted) {
+    if (oshmem_shmem_initialized && !oshmem_shmem_aborted) {
         /* Should be called first because ompi_mpi_finalize makes orte and opal finalization */
         ret = _shmem_finalize();
-
-        if ((OSHMEM_SUCCESS == ret) && ompi_mpi_initialized
-                && !ompi_mpi_finalized) {
-            PMPI_Comm_free(&oshmem_comm_world);
-            ret = ompi_mpi_finalize();
-        }
 
         if (OSHMEM_SUCCESS == ret) {
             oshmem_shmem_initialized = false;
         }
+    }
+
+    if ((OSHMEM_SUCCESS == ret) && ompi_mpi_initialized
+        && !ompi_mpi_finalized && oshmem_shmem_globalexit_status == 0) {
+        PMPI_Comm_free(&oshmem_comm_world);
+        ret = ompi_mpi_finalize();
     }
 
     return ret;
