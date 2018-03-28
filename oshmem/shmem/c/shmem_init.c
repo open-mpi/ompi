@@ -32,8 +32,6 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-extern int oshmem_shmem_globalexit_status;
-
 static inline void _shmem_init(void);
 
 void shmem_init(void)
@@ -50,7 +48,6 @@ void start_pes(int npes)
 
 static void shmem_onexit(int exitcode, void *arg)
 {
-    oshmem_shmem_globalexit_status = exitcode;
     shmem_finalize();
 }
 
