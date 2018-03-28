@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
         return rc;
     }
 
-    if (NULL != (rstrt = getenv("OMPI_MCA_orte_num_restarts"))) {
+    if (NULL != (rstrt = getenv(OPAL_MCA_PREFIX"orte_num_restarts"))) {
         restart = strtol(rstrt, NULL, 10);
     }
 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
            hostname, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid, restart);
 
     for (i=0; NULL != environ[i]; i++) {
-        if (0 == strncmp(environ[i], "OMPI_MCA", strlen("OMPI_MCA"))) {
+        if (0 == strncmp(environ[i], OPAL_MCA_PREFIX, strlen(OPAL_MCA_PREFIX))) {
             printf("\t%s\n", environ[i]);
         }
     }

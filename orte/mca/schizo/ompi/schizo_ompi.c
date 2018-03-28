@@ -725,7 +725,7 @@ static int parse_env(char *path,
         opal_argv_free(vars);
     }
     /* Did the user request to export any environment variables on the cmd line? */
-    env_set_flag = getenv("OMPI_MCA_mca_base_env_list");
+    env_set_flag = getenv(OPAL_MCA_PREFIX"mca_base_env_list");
     if (opal_cmd_line_is_taken(cmd_line, "x")) {
         if (NULL != env_set_flag) {
             orte_show_help("help-orterun.txt", "orterun:conflict-env-set", false);
@@ -898,25 +898,25 @@ static int setup_fork(orte_job_t *jdata,
     }
 
     /* pass my contact info to the local proc so we can talk */
-    opal_setenv("OMPI_MCA_orte_local_daemon_uri", orte_process_info.my_daemon_uri, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_local_daemon_uri", orte_process_info.my_daemon_uri, true, &app->env);
 
     /* pass the hnp's contact info to the local proc in case it
      * needs it
      */
     if (NULL != orte_process_info.my_hnp_uri) {
-        opal_setenv("OMPI_MCA_orte_hnp_uri", orte_process_info.my_hnp_uri, true, &app->env);
+        opal_setenv(OPAL_MCA_PREFIX"orte_hnp_uri", orte_process_info.my_hnp_uri, true, &app->env);
     }
 
     /* setup yield schedule - do not override any user-supplied directive! */
     if (oversubscribed) {
-        opal_setenv("OMPI_MCA_mpi_yield_when_idle", "1", false, &app->env);
+        opal_setenv(OPAL_MCA_PREFIX"mpi_yield_when_idle", "1", false, &app->env);
     } else {
-        opal_setenv("OMPI_MCA_mpi_yield_when_idle", "0", false, &app->env);
+        opal_setenv(OPAL_MCA_PREFIX"mpi_yield_when_idle", "0", false, &app->env);
     }
 
     /* set the app_context number into the environment */
     asprintf(&param, "%ld", (long)app->idx);
-    opal_setenv("OMPI_MCA_orte_app_num", param, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_app_num", param, true, &app->env);
     free(param);
 
     /* although the total_slots_alloc is the universe size, users
@@ -933,7 +933,7 @@ static int setup_fork(orte_job_t *jdata,
 
     /* pass the number of nodes involved in this job */
     asprintf(&param, "%ld", (long)(jdata->map->num_nodes));
-    opal_setenv("OMPI_MCA_orte_num_nodes", param, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_num_nodes", param, true, &app->env);
     free(param);
 
     /* pass a param telling the child what type and model of cpu we are on,
@@ -946,18 +946,18 @@ static int setup_fork(orte_job_t *jdata,
         obj = hwloc_get_root_obj(opal_hwloc_topology);
         if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUType")) ||
             NULL != (htmp = orte_local_cpu_type)) {
-            opal_setenv("OMPI_MCA_orte_cpu_type", htmp, true, &app->env);
+            opal_setenv(OPAL_MCA_PREFIX"orte_cpu_type", htmp, true, &app->env);
         }
         if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
             NULL != (htmp = orte_local_cpu_model)) {
-            opal_setenv("OMPI_MCA_orte_cpu_model", htmp, true, &app->env);
+            opal_setenv(OPAL_MCA_PREFIX"orte_cpu_model", htmp, true, &app->env);
         }
     } else {
         if (NULL != orte_local_cpu_type) {
-            opal_setenv("OMPI_MCA_orte_cpu_type", orte_local_cpu_type, true, &app->env);
+            opal_setenv(OPAL_MCA_PREFIX"orte_cpu_type", orte_local_cpu_type, true, &app->env);
         }
         if (NULL != orte_local_cpu_model) {
-            opal_setenv("OMPI_MCA_orte_cpu_model", orte_local_cpu_model, true, &app->env);
+            opal_setenv(OPAL_MCA_PREFIX"orte_cpu_model", orte_local_cpu_model, true, &app->env);
         }
     }
 
@@ -968,7 +968,7 @@ static int setup_fork(orte_job_t *jdata,
      * the shmem framework in opal.
      */
     if (NULL != (param = opal_shmem_base_best_runnable_component_name())) {
-        opal_setenv("OMPI_MCA_shmem_RUNTIME_QUERY_hint", param, true, &app->env);
+        opal_setenv(OPAL_MCA_PREFIX"shmem_RUNTIME_QUERY_hint", param, true, &app->env);
         free(param);
     }
 
@@ -977,29 +977,29 @@ static int setup_fork(orte_job_t *jdata,
      * MPI_INIT doesn't try to bind itself)
      */
     if (OPAL_BIND_TO_NONE != OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
-        opal_setenv("OMPI_MCA_orte_bound_at_launch", "1", true, &app->env);
+        opal_setenv(OPAL_MCA_PREFIX"orte_bound_at_launch", "1", true, &app->env);
     }
 
     char cache_line_size[16];
     snprintf(cache_line_size, 16, "%d", opal_cache_line_size);
-    opal_setenv("OMPI_MCA_opal_cache_line_size", cache_line_size, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"opal_cache_line_size", cache_line_size, true, &app->env);
 
     /* tell the ESS to avoid the singleton component - but don't override
      * anything that may have been provided elsewhere
      */
-    opal_setenv("OMPI_MCA_ess", "^singleton", false, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"ess", "^singleton", false, &app->env);
 
     /* ensure that the spawned process ignores direct launch components,
      * but do not overrride anything we were given */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", false, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"pmix", "^s1,s2,cray", false, &app->env);
 
     /* since we want to pass the name as separate components, make sure
      * that the "name" environmental variable is cleared!
      */
-    opal_unsetenv("OMPI_MCA_orte_ess_name", &app->env);
+    opal_unsetenv(OPAL_MCA_PREFIX"orte_ess_name", &app->env);
 
     asprintf(&param, "%ld", (long)jdata->num_procs);
-    opal_setenv("OMPI_MCA_orte_ess_num_procs", param, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_ess_num_procs", param, true, &app->env);
 
     /* although the num_procs is the comm_world size, users
      * would appreciate being given a public environmental variable
@@ -1024,10 +1024,10 @@ static int setup_fork(orte_job_t *jdata,
     free(param);
 
     /* forcibly set the local tmpdir base and top session dir to match ours */
-    opal_setenv("OMPI_MCA_orte_tmpdir_base", orte_process_info.tmpdir_base, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_tmpdir_base", orte_process_info.tmpdir_base, true, &app->env);
     /* TODO: should we use PMIx key to pass this data? */
-    opal_setenv("OMPI_MCA_orte_top_session_dir", orte_process_info.top_session_dir, true, &app->env);
-    opal_setenv("OMPI_MCA_orte_jobfam_session_dir", orte_process_info.jobfam_session_dir, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_top_session_dir", orte_process_info.top_session_dir, true, &app->env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_jobfam_session_dir", orte_process_info.jobfam_session_dir, true, &app->env);
 
     /* MPI-3 requires we provide some further info to the procs,
      * so we pass them as envars to avoid introducing further
@@ -1224,7 +1224,7 @@ static int setup_child(orte_job_t *jdata,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    opal_setenv("OMPI_MCA_ess_base_jobid", value, true, env);
+    opal_setenv(OPAL_MCA_PREFIX"ess_base_jobid", value, true, env);
     free(value);
 
     /* setup the vpid */
@@ -1232,7 +1232,7 @@ static int setup_child(orte_job_t *jdata,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    opal_setenv("OMPI_MCA_ess_base_vpid", value, true, env);
+    opal_setenv(OPAL_MCA_PREFIX"ess_base_vpid", value, true, env);
 
     /* although the vpid IS the process' rank within the job, users
      * would appreciate being given a public environmental variable
@@ -1276,7 +1276,7 @@ static int setup_child(orte_job_t *jdata,
     asprintf(&value, "%lu", (unsigned long) child->node_rank);
     opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, env);
     /* set an mca param for it too */
-    opal_setenv("OMPI_MCA_orte_ess_node_rank", value, true, env);
+    opal_setenv(OPAL_MCA_PREFIX"orte_ess_node_rank", value, true, env);
     free(value);
 
     /* provide the identifier for the PMIx connection - the
@@ -1295,14 +1295,14 @@ static int setup_child(orte_job_t *jdata,
          * restarted so they can take appropriate action
          */
         asprintf(&value, "%d", nrestarts);
-        opal_setenv("OMPI_MCA_orte_num_restarts", value, true, env);
+        opal_setenv(OPAL_MCA_PREFIX"orte_num_restarts", value, true, env);
         free(value);
     }
 
     /* if the proc should not barrier in orte_init, tell it */
     if (orte_get_attribute(&child->attributes, ORTE_PROC_NOBARRIER, NULL, OPAL_BOOL)
         || 0 < nrestarts) {
-        opal_setenv("OMPI_MCA_orte_do_not_barrier", "1", true, env);
+        opal_setenv(OPAL_MCA_PREFIX"orte_do_not_barrier", "1", true, env);
     }
 
     /* if the proc isn't going to forward IO, then we need to flag that
@@ -1344,7 +1344,7 @@ static int setup_child(orte_job_t *jdata,
          */
         opal_setenv("PWD", param, true, env);
         /* update the initial wdir value too */
-        opal_setenv("OMPI_MCA_initial_wdir", param, true, env);
+        opal_setenv(OPAL_MCA_PREFIX"initial_wdir", param, true, env);
     } else if (NULL != app->cwd) {
         /* change to it */
         if (0 != chdir(app->cwd)) {

@@ -13,8 +13,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
- *
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -107,7 +108,7 @@ int orte_ess_base_tool_setup(opal_list_t *flags)
 
     /* setup the PMIx framework - ensure it skips all non-PMIx components,
      * but do not override anything we were given */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    opal_setenv(OPAL_MCA_PREFIX"pmix", "^s1,s2,cray,isolated", false, &environ);
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pmix_base_open";

@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 
     int rc, i;
 
-    putenv("OMPI_MCA_orte_report_silent_errors=1");
+    putenv(OPAL_MCA_PREFIX"orte_report_silent_errors=1");
 
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_abort: couldn't init orte - error code %d\n", rc);

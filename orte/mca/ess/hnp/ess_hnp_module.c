@@ -15,7 +15,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -311,7 +311,7 @@ static int rte_init(void)
 
     /* setup the PMIx framework - ensure it skips all non-PMIx components, but
      * do not override anything we were given */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray,isolated", false, &environ);
+    opal_setenv(OPAL_MCA_PREFIX"pmix", "^s1,s2,cray,isolated", false, &environ);
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pmix_base_open";

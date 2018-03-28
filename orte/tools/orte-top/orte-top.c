@@ -14,6 +14,8 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -269,7 +271,7 @@ main(int argc, char *argv[])
 
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
-    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
+    opal_setenv(OPAL_MCA_PREFIX"ess", "tool", true, &environ);
 
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE

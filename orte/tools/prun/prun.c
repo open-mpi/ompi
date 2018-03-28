@@ -15,7 +15,7 @@
  * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -997,7 +997,7 @@ static int create_app(int argc, char* argv[],
     }
     /* Did the user request to export any environment variables on the cmd line? */
     char *env_set_flag;
-    env_set_flag = getenv("OMPI_MCA_mca_base_env_list");
+    env_set_flag = getenv(OPAL_MCA_PREFIX"mca_base_env_list");
     if (opal_cmd_line_is_taken(orte_cmd_line, "x")) {
         if (NULL != env_set_flag) {
             opal_show_help("help-orterun.txt", "orterun:conflict-env-set", false);

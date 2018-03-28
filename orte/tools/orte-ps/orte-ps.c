@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -422,7 +422,7 @@ static int orte_ps_init(int argc, char *argv[]) {
 
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
-    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
+    opal_setenv(OPAL_MCA_PREFIX"ess", "tool", true, &environ);
 
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE

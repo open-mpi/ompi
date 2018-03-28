@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -115,7 +115,7 @@ int ompi_mpiinfo_init(void)
     }
 
     /* max procs for the entire job */
-    if (NULL != (cptr = getenv("OMPI_MCA_orte_ess_num_procs"))) {
+    if (NULL != (cptr = getenv(OPAL_MCA_PREFIX"orte_ess_num_procs"))) {
         opal_info_set(&ompi_mpi_info_env.info.super, "maxprocs", cptr);
         /* Open MPI does not support the "soft" option, so set it to maxprocs */
         opal_info_set(&ompi_mpi_info_env.info.super, "soft", cptr);
@@ -126,7 +126,7 @@ int ompi_mpiinfo_init(void)
     opal_info_set(&ompi_mpi_info_env.info.super, "host", val);
 
     /* architecture name */
-    if (NULL != (cptr = getenv("OMPI_MCA_orte_cpu_type"))) {
+    if (NULL != (cptr = getenv(OPAL_MCA_PREFIX"orte_cpu_type"))) {
         opal_info_set(&ompi_mpi_info_env.info.super, "arch", cptr);
     }
 #ifdef HAVE_SYS_UTSNAME_H
@@ -142,7 +142,7 @@ int ompi_mpiinfo_init(void)
      * run by mpiexec as we otherwise have no reliable way
      * of determining the value
      */
-    if (NULL != (cptr = getenv("OMPI_MCA_initial_wdir"))) {
+    if (NULL != (cptr = getenv(OPAL_MCA_PREFIX"initial_wdir"))) {
         opal_info_set(&ompi_mpi_info_env.info.super, "wdir", cptr);
     }
 

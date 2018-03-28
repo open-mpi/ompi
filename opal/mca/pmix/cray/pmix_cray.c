@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -280,7 +280,7 @@ static void cray_get_more_info(void)
      */
     if(getenv("SLURM_WORKING_DIR") == NULL) {
         opal_getcwd(pbuf, OPAL_PATH_MAX);
-        opal_setenv("OMPI_MCA_initial_wdir", pbuf, true, &environ);
+        opal_setenv(OPAL_MCA_PREFIX"initial_wdir", pbuf, true, &environ);
     }
 
    fn_exit_w_lock:
