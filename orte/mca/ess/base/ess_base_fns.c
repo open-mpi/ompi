@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -42,6 +42,13 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ess/base/base.h"
+
+static void set_cache_line_size() {
+    char * env;
+    if (NULL != (env=getenv(OPAL_MCA_PREFIX"opal_cache_line_size"))) {
+        opal_cache_line_size = atoi(env);
+    }
+}
 
 int orte_ess_base_proc_binding(void)
 {
@@ -79,6 +86,7 @@ int orte_ess_base_proc_binding(void)
                 opal_output(0, "MCW rank %s not bound", ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid));
             }
         }
+        set_cache_line_size();
         return ORTE_SUCCESS;
     } else if (NULL != getenv(OPAL_MCA_PREFIX"orte_externally_bound")) {
         orte_proc_is_bound = true;
@@ -93,6 +101,7 @@ int orte_ess_base_proc_binding(void)
                             ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid), map);
             }
             free(map);
+            set_cache_line_size();
             return ORTE_SUCCESS;
         }
         /* the topology system will pickup the binding pattern */
