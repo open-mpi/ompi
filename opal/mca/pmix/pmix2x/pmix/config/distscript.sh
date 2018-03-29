@@ -54,3 +54,14 @@ touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
 
 echo "*** Updated VERSION file with repo rev: $repo_rev"
 echo "*** (via dist-hook / config/distscript.sh)"
+
+#
+# Update pmix.spec:%{version} with the main version
+#
+PMIX_SPEC=contrib/pmix.spec
+perl -pi -e 's/^Version:.*/Version: '$PMIX_REPO_REV'/' -- "${distdir}/$PMIX_SPEC"
+touch -r "${srcdir}/$PMIX_VERSION" "${distdir}/$PMIX_VERSION"
+
+echo "*** Updated $PMIX_SPEC file with repo rev: $PMIX_REPO_REV"
+echo "*** (via dist-hook / config/distscript.sh)"
+

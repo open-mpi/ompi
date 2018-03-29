@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -119,6 +119,8 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
     pmix_cmd_t cmd = PMIX_SPAWNNB_CMD;
     pmix_status_t rc;
     pmix_cb_t *cb;
+    pmix_info_t *spinfo;
+    size_t spninfo, n;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
 
@@ -145,19 +147,40 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
         return rc;
     }
 
-    /* pack the job-level directives */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+    /* always add one directive that indicates whether the requestor
+     * is a tool or client */
+    spninfo = ninfo + 1;
+    PMIX_INFO_CREATE(spinfo, spninfo);
+    if (NULL == spinfo) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
+        return PMIX_ERR_NOMEM;
+    }
+    /* copy the info across */
+    for (n=0; n < ninfo; n++) {
+        PMIX_INFO_XFER(&spinfo[n], (pmix_info_t*)&job_info[n]);
+    }
+    /* add the directive to the end */
+    if (PMIX_PROC_IS_TOOL) {
+        PMIX_INFO_LOAD(&spinfo[ninfo], PMIX_REQUESTOR_IS_TOOL, NULL, PMIX_BOOL);
+    } else {
+        PMIX_INFO_LOAD(&spinfo[ninfo], PMIX_REQUESTOR_IS_CLIENT, NULL, PMIX_BOOL);
+    }
+
+    /* pack the job-level directives */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &spninfo, 1, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        PMIX_INFO_FREE(spinfo, spninfo);
         return rc;
     }
-    if (0 < ninfo) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, job_info, ninfo, PMIX_INFO))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msg);
-            return rc;
-        }
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, spinfo, spninfo, PMIX_INFO))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        PMIX_INFO_FREE(spinfo, spninfo);
+        return rc;
     }
+    PMIX_INFO_FREE(spinfo, spninfo);
 
     /* pack the apps */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &napps, 1, PMIX_SIZE))) {
@@ -203,11 +226,22 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
     PMIX_ACQUIRE_OBJECT(cb);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:client recv callback activated with %d bytes",
+                        "pmix:client spawn callback activated with %d bytes",
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
 
     /* init */
     memset(nspace, 0, PMIX_MAX_NSLEN+1);
+
+    if (NULL == buf) {
+        ret = PMIX_ERR_BAD_PARAM;
+        goto report;
+    }
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        ret = PMIX_ERR_UNREACH;
+        goto report;
+    }
 
     /* unpack the returned status */
     cnt = 1;
@@ -223,7 +257,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
             ret = rc;
         }
         pmix_output_verbose(1, pmix_globals.debug_output,
-                        "pmix:client recv '%s'", n2);
+                        "pmix:client spawned %s", n2);
 
         if (NULL != n2) {
             (void)strncpy(nspace, n2, PMIX_MAX_NSLEN);
@@ -235,6 +269,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
         }
     }
 
+  report:
     if (NULL != cb->spawn_cbfunc) {
         cb->spawn_cbfunc(ret, nspace, cb->cbdata);
     }

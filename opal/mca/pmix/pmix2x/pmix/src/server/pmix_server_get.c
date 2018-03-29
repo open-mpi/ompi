@@ -7,7 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -218,11 +218,12 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     /* if the rank is wildcard, then they are asking for the job-level
      * info for this nspace - provide it */
     if (PMIX_RANK_WILDCARD == rank) {
+        pmix_buffer_t *bptr = &nptr->server->job_info; 
         PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
         pmix_bfrop.pack(&pbkt, &rank, 1, PMIX_PROC_RANK);
         /* the client is expecting this to arrive as a byte object
          * containing a buffer, so package it accordingly */
-        pmix_bfrop.pack(&pbkt, &nptr->server->job_info, 1, PMIX_BUFFER);
+        pmix_bfrop.pack(&pbkt, &bptr, 1, PMIX_BUFFER);
         PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
         PMIX_DESTRUCT(&pbkt);
         cbfunc(PMIX_SUCCESS, data, sz, cbdata, relfn, data);

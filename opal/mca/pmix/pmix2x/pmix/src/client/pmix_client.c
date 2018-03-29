@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -104,6 +104,12 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:client_notify_recv - processing event");
+
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        return;
+    }
 
     /* start the local notification chain */
     chain = PMIX_NEW(pmix_event_chain_t);
@@ -578,9 +584,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         msg = PMIX_NEW(pmix_buffer_t);
         /* pack the cmd */
         if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msg);
-            return rc;
+            goto complete;
         }
 
 
@@ -599,7 +603,8 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
         /* send to the server */
         if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg,
                                                      finwait_cbfunc, (void*)&tev))){
-            return rc;
+            pmix_event_del(&tev.ev);
+            goto complete;
         }
 
         /* wait for the ack to return */
@@ -614,6 +619,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
                              pmix_globals.myid.nspace, pmix_globals.myid.rank);
     }
 
+  complete:
     if (!pmix_globals.external_evbase) {
         /* stop the progress thread, but leave the event base
          * still constructed. This will allow us to safely
@@ -623,10 +629,7 @@ PMIX_EXPORT pmix_status_t PMIx_Finalize(const pmix_info_t info[], size_t ninfo)
     }
 
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    if (0 > (rc = pmix_dstore_nspace_del(pmix_globals.myid.nspace))) {
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
+    pmix_dstore_nspace_del(pmix_globals.myid.nspace);
 #endif
 
     PMIX_LIST_DESTRUCT(&pmix_client_globals.pending_requests);

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -151,7 +151,7 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
     pmix_job_data_caddy_t *cb = (pmix_job_data_caddy_t*)(cbdata);
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_nspace_t *nsptr = NULL, *nsptr2 = NULL;
-    pmix_kval_t *kptr, *kp2, kv;
+    pmix_kval_t *kptr, *kp2, *kv;
     int32_t cnt;
     size_t nnodes, len;
     uint32_t i;
@@ -278,11 +278,11 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
             /* unpack the list of procs on each node */
             for (i=0; i < nnodes; i++) {
                 cnt = 1;
-                PMIX_CONSTRUCT(&kv, pmix_kval_t);
-                if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&buf2, &kv, &cnt, PMIX_KVAL))) {
+                kv = PMIX_NEW(pmix_kval_t);
+                if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&buf2, kv, &cnt, PMIX_KVAL))) {
                     PMIX_ERROR_LOG(rc);
                     PMIX_DESTRUCT(&buf2);
-                    PMIX_DESTRUCT(&kv);
+                    PMIX_RELEASE(kv);
                     goto exit;
                 }
                 /* the name of the node is in the key, and the value is
@@ -290,7 +290,7 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
                  * have this node */
                 nrec = NULL;
                 PMIX_LIST_FOREACH(nr2, &nsptr->nodes, pmix_nrec_t) {
-                    if (0 == strcmp(nr2->name, kv.key)) {
+                    if (0 == strcmp(nr2->name, kv->key)) {
                         nrec = nr2;
                         break;
                     }
@@ -301,10 +301,10 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
                     if (NULL == nrec) {
                         PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
                         PMIX_DESTRUCT(&buf2);
-                        PMIX_DESTRUCT(&kv);
+                        PMIX_RELEASE(kv);
                         goto exit;
                     }
-                    nrec->name = strdup(kv.key);
+                    nrec->name = strdup(kv->key);
                     pmix_list_append(&nsptr->nodes, &nrec->super);
                 } else {
                     /* refresh the list */
@@ -312,13 +312,13 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
                         free(nrec->procs);
                     }
                 }
-                nrec->procs = strdup(kv.value->data.string);
+                nrec->procs = strdup(kv->value->data.string);
                 /* split the list of procs so we can store their
                  * individual location data */
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-                if (PMIX_SUCCESS != (rc = _add_key_for_rank(PMIX_RANK_WILDCARD, &kv, cb))) {
+                if (PMIX_SUCCESS != (rc = _add_key_for_rank(PMIX_RANK_WILDCARD, kv, cb))) {
                     PMIX_ERROR_LOG(rc);
-                    PMIX_DESTRUCT(&kv);
+                    PMIX_RELEASE(kv);
                     PMIX_DESTRUCT(&buf2);
                     pmix_argv_free(procs);
                     goto exit;
@@ -338,7 +338,7 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
                     if (PMIX_SUCCESS != (rc = _add_key_for_rank(rank, kp2, cb))) {
                         PMIX_ERROR_LOG(rc);
                         PMIX_RELEASE(kp2);
-                        PMIX_DESTRUCT(&kv);
+                        PMIX_RELEASE(kv);
                         PMIX_DESTRUCT(&buf2);
                         pmix_argv_free(procs);
                         goto exit;
@@ -347,7 +347,7 @@ static inline pmix_status_t _job_data_store(const char *nspace, void *cbdata)
                 }
                 pmix_argv_free(procs);
 #endif
-                PMIX_DESTRUCT(&kv);
+                PMIX_RELEASE(kv);  // maintain accounting
             }
             /* cleanup */
             PMIX_DESTRUCT(&buf2);

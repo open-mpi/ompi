@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -149,6 +149,8 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_MODEL_LIBRARY_NAME             "pmix.mdl.name"         // (char*) programming model implementation ID (e.g., "OpenMPI" or "MPICH")
 #define PMIX_MODEL_LIBRARY_VERSION          "pmix.mld.vrs"          // (char*) programming model version string (e.g., "2.1.1")
 #define PMIX_THREADING_MODEL                "pmix.threads"          // (char*) threading model used (e.g., "pthreads")
+#define PMIX_REQUESTOR_IS_TOOL              "pmix.req.tool"         // (bool) requesting process is a tool
+#define PMIX_REQUESTOR_IS_CLIENT            "pmix.req.client"       // (bool) requesting process is a client process
 
 
 /* attributes for the USOCK rendezvous socket  */
@@ -1568,6 +1570,17 @@ PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
  * will return an error code (generated upon unpacking) -
  * the error cannot be detected during packing.
  *
+ * The identity of the intended recipient of the packed buffer (i.e., the
+ * process that will be unpacking it) is used solely to resolve any data type
+ * differences between PMIx versions. The recipient must, therefore, be
+ * known to the user prior to calling the pack function so that the
+ * PMIx library is aware of the version the recipient is using.
+ *
+ * @param *target Pointer to a pmix_proc_t structure containing the
+ * nspace/rank of the process that will be unpacking the final buffer.
+ * A NULL value may be used to indicate that the target is based on
+ * the same PMIx version as the caller.
+ *
  * @param *buffer A pointer to the buffer into which the value is to
  * be packed.
  *
@@ -1601,7 +1614,8 @@ PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
  * status_code = PMIx_Data_pack(buffer, &src, 1, PMIX_INT32);
  * @endcode
  */
-PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
+PMIX_EXPORT pmix_status_t PMIx_Data_pack(const pmix_proc_t *target,
+                                         pmix_data_buffer_t *buffer,
                                          void *src, int32_t num_vals,
                                          pmix_data_type_t type);
 
@@ -1647,6 +1661,17 @@ PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
  * cases. Sending a number larger than can be handled by the recipient
  * will return an error code generated upon unpacking - these errors
  * cannot be detected during packing.
+ *
+ * The identity of the source of the packed buffer (i.e., the
+ * process that packed it) is used solely to resolve any data type
+ * differences between PMIx versions. The source must, therefore, be
+ * known to the user prior to calling the unpack function so that the
+ * PMIx library is aware of the version the source used.
+ *
+ * @param *source Pointer to a pmix_proc_t structure containing the
+ * nspace/rank of the process that packed the provided buffer.
+ * A NULL value may be used to indicate that the source is based on
+ * the same PMIx version as the caller.
  *
  * @param *buffer A pointer to the buffer from which the value will be
  * extracted.
@@ -1697,7 +1722,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
  *
  * @endcode
  */
-PMIX_EXPORT pmix_status_t PMIx_Data_unpack(pmix_data_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t PMIx_Data_unpack(const pmix_proc_t *source,
+                                           pmix_data_buffer_t *buffer, void *dest,
                                            int32_t *max_num_values,
                                            pmix_data_type_t type);
 

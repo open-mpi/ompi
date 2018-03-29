@@ -428,12 +428,18 @@ int pmix_mca_base_var_cache_files(bool rel_path_search)
     }
 
 #if PMIX_WANT_HOME_CONFIG_FILES
-    asprintf(&pmix_mca_base_var_files, "%s"PMIX_PATH_SEP".pmix" PMIX_PATH_SEP
-             "mca-params.conf%c%s" PMIX_PATH_SEP "pmix-mca-params.conf",
-             home, PMIX_ENV_SEP, pmix_pinstall_dirs.sysconfdir);
+    ret = asprintf(&pmix_mca_base_var_files, "%s"PMIX_PATH_SEP".pmix" PMIX_PATH_SEP
+                   "mca-params.conf%c%s" PMIX_PATH_SEP "pmix-mca-params.conf",
+                   home, ',', pmix_pinstall_dirs.sysconfdir);
+    if (PMIX_SUCCESS != ret) {
+        return ret;
+    }
 #else
-    asprintf(&pmix_mca_base_var_files, "%s" PMIX_PATH_SEP "pmix-mca-params.conf",
-             pmix_pinstall_dirs.sysconfdir);
+    ret = asprintf(&pmix_mca_base_var_files, "%s" PMIX_PATH_SEP "pmix-mca-params.conf",
+                   pmix_pinstall_dirs.sysconfdir);
+    if (PMIX_SUCCESS != ret) {
+        return ret;
+    }
 #endif
 
     /* Initialize a parameter that says where MCA param files can be found.

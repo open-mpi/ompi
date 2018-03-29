@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -73,6 +73,11 @@ bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1);
         (b)->pack_ptr = NULL;                   \
         (b)->unpack_ptr = NULL;                 \
     } while (0)
+
+/* Convenience macro to check for empty buffer without
+ * exposing the internals */
+#define PMIX_BUFFER_IS_EMPTY(b)     \
+    0 == (b)->bytes_used
 
 
 /**

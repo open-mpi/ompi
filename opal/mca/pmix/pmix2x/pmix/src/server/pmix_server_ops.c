@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -824,37 +824,61 @@ pmix_status_t pmix_server_unpublish(pmix_peer_t *peer,
     return rc;
 }
 
+static void spcbfunc(pmix_status_t status,
+                     char nspace[], void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+
+    /* cleanup the caddy */
+    if (NULL != cd->info) {
+        PMIX_INFO_FREE(cd->info, cd->ninfo);
+    }
+    if (NULL != cd->apps) {
+        PMIX_APP_CREATE(cd->apps, cd->napps);
+    }
+    if (NULL != cd->spcbfunc) {
+        cd->spcbfunc(status, nspace, cd->cbdata);
+    }
+    PMIX_RELEASE(cd);
+}
+
 pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
                                 pmix_buffer_t *buf,
                                 pmix_spawn_cbfunc_t cbfunc,
                                 void *cbdata)
 {
+    pmix_setup_caddy_t *cd;
     int32_t cnt;
-    size_t napps, ninfo;
-    pmix_info_t *info=NULL;
-    pmix_app_t *apps=NULL;
     pmix_status_t rc;
     pmix_proc_t proc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "recvd SPAWN");
+                        "PMIX SERVER recvd SPAWN");
 
     if (NULL == pmix_host_server.spawn) {
         PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
+    /* setup */
+    cd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == cd) {
+        return PMIX_ERR_NOMEM;
+    }
+    cd->spcbfunc = cbfunc;
+    cd->cbdata = cbdata;
+
     /* unpack the number of job-level directives */
     cnt=1;
-    if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ninfo, &cnt, PMIX_SIZE))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->ninfo, &cnt, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
     /* unpack the array of directives */
-    if (0 < ninfo) {
-        PMIX_INFO_CREATE(info, ninfo);
-        cnt=ninfo;
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, info, &cnt, PMIX_INFO))) {
+    if (0 < cd->ninfo) {
+        PMIX_INFO_CREATE(cd->info, cd->ninfo);
+        cnt = cd->ninfo;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, cd->info, &cnt, PMIX_INFO))) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -862,15 +886,19 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
 
     /* unpack the number of apps */
     cnt=1;
-    if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &napps, &cnt, PMIX_SIZE))) {
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &cd->napps, &cnt, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
     /* unpack the array of apps */
-    if (0 < napps) {
-        PMIX_APP_CREATE(apps, napps);
-        cnt=napps;
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, apps, &cnt, PMIX_APP))) {
+    if (0 < cd->napps) {
+        PMIX_APP_CREATE(cd->apps, cd->napps);
+        if (NULL == cd->apps) {
+            rc = PMIX_ERR_NOMEM;
+            goto cleanup;
+        }
+        cnt = cd->napps;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, cd->apps, &cnt, PMIX_APP))) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -878,14 +906,17 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     /* call the local server */
     (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
     proc.rank = peer->info->rank;
-    rc = pmix_host_server.spawn(&proc, info, ninfo, apps, napps, cbfunc, cbdata);
+    rc = pmix_host_server.spawn(&proc, cd->info, cd->ninfo, cd->apps, cd->napps, spcbfunc, cd);
 
- cleanup:
-    if (NULL != info) {
-        PMIX_INFO_FREE(info, ninfo);
-    }
-    if (NULL != apps) {
-        PMIX_APP_FREE(apps, napps);
+  cleanup:
+    if (PMIX_SUCCESS != rc) {
+        if (NULL != cd->info) {
+            PMIX_INFO_FREE(cd->info, cd->ninfo);
+        }
+        if (NULL != cd->apps) {
+            PMIX_APP_FREE(cd->apps, cd->napps);
+        }
+        PMIX_RELEASE(cd);
     }
     return rc;
 }
@@ -1732,9 +1763,12 @@ static void scadcon(pmix_setup_caddy_t *p)
     p->nlocalprocs = 0;
     p->info = NULL;
     p->ninfo = 0;
+    p->apps = NULL;
+    p->napps = 0;
     p->cbfunc = NULL;
     p->opcbfunc = NULL;
     p->setupcbfunc = NULL;
+    p->spcbfunc = NULL;
     p->cbdata = NULL;
 }
 static void scaddes(pmix_setup_caddy_t *p)
