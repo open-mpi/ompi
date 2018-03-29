@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +64,8 @@
         (b)->bytes_used = 0;                            \
     } while (0)
 
-PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
+PMIX_EXPORT pmix_status_t PMIx_Data_pack(const pmix_proc_t *target,
+                                         pmix_data_buffer_t *buffer,
                                          void *src, int32_t num_vals,
                                          pmix_data_type_t type)
 {
@@ -88,7 +89,8 @@ PMIX_EXPORT pmix_status_t PMIx_Data_pack(pmix_data_buffer_t *buffer,
 }
 
 
-PMIX_EXPORT pmix_status_t PMIx_Data_unpack(pmix_data_buffer_t *buffer, void *dest,
+PMIX_EXPORT pmix_status_t PMIx_Data_unpack(const pmix_proc_t *source,
+                                           pmix_data_buffer_t *buffer, void *dest,
                                            int32_t *max_num_values,
                                            pmix_data_type_t type)
 {

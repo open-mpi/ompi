@@ -156,18 +156,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_RENAME)
     AC_CONFIG_FILES(pmix_config_prefix[include/pmix_rename.h])
 
-    # Add any extra lib?
-    AC_ARG_WITH([pmix-extra-lib],
-                AC_HELP_STRING([--with-pmix-extra-lib=LIB],
-                               [Link the output PMIx library to this extra lib (used in embedded mode)]))
-    AC_MSG_CHECKING([for extra lib])
-    AS_IF([test ! -z "$with_pmix_extra_lib"],
-          [AC_MSG_RESULT([$with_pmix_extra_lib])
-           PMIX_EXTRA_LIB=$with_pmix_extra_lib],
-          [AC_MSG_RESULT([no])
-           PMIX_EXTRA_LIB=])
-    AC_SUBST(PMIX_EXTRA_LIB)
-
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
         PMIX_GCC_CFLAGS="-Wall -Wmissing-prototypes -Wundef"
@@ -697,6 +685,32 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     ##################################
 
     pmix_show_title "Modular Component Architecture (MCA) setup"
+
+    #
+    # Do we want to show component load error messages by default?
+    #
+
+    AC_MSG_CHECKING([for default value of mca_base_component_show_load_errors])
+    AC_ARG_ENABLE([show-load-errors-by-default],
+                  [AC_HELP_STRING([--enable-show-load-errors-by-default],
+                                  [Set the default value for the MCA parameter
+                                   mca_base_component_show_load_errors (but can be
+                                   overridden at run time by the usual
+                                   MCA-variable-setting mechansism).  This MCA variable
+                                   controls whether warnings are displayed when an MCA
+                                   component fails to load at run time due to an error.
+                                   (default: enabled, meaning that
+                                   mca_base_component_show_load_errors is enabled
+                                   by default])])
+    if test "$enable_show_load_errors_by_default" = "no" ; then
+        PMIX_SHOW_LOAD_ERRORS_DEFAULT=0
+        AC_MSG_RESULT([disabled by default])
+    else
+        PMIX_SHOW_LOAD_ERRORS_DEFAULT=1
+        AC_MSG_RESULT([enabled by default])
+    fi
+    AC_DEFINE_UNQUOTED(PMIX_SHOW_LOAD_ERRORS_DEFAULT, $PMIX_SHOW_LOAD_ERRORS_DEFAULT,
+                       [Default value for mca_base_component_show_load_errors MCA variable])
 
     AC_MSG_CHECKING([for subdir args])
     PMIX_CONFIG_SUBDIR_ARGS([pmix_subdir_args])

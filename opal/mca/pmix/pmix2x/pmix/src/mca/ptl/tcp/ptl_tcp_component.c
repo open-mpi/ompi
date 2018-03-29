@@ -13,6 +13,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -549,8 +550,8 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     } else if (AF_INET6 == mca_ptl_tcp_component.connection.ss_family) {
         prefix = "tcp6://";
         myport = ntohs(((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_port);
-    inet_ntop(AF_INET6, &((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_addr,
-              myconnhost, PMIX_MAXHOSTNAMELEN);
+        inet_ntop(AF_INET6, &((struct sockaddr_in6*) &mca_ptl_tcp_component.connection)->sin6_addr,
+                  myconnhost, PMIX_MAXHOSTNAMELEN);
     } else {
         goto sockerror;
     }
@@ -586,7 +587,13 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         fprintf(fp, "%s.%d:%s\n", pmix_globals.myid.nspace, pmix_globals.myid.rank, lt->uri);
         fclose(fp);
         /* set the file mode */
-        chmod(mca_ptl_tcp_component.system_filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (0 != chmod(mca_ptl_tcp_component.system_filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) {
+            PMIX_ERROR_LOG(PMIX_ERR_FILE_OPEN_FAILURE);
+            CLOSE_THE_SOCKET(lt->socket);
+            free(mca_ptl_tcp_component.system_filename);
+            mca_ptl_tcp_component.system_filename = NULL;
+            goto sockerror;
+        }
     }
     if (session_tool) {
         FILE *fp;
@@ -612,7 +619,13 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         fprintf(fp, "%s.%d:%s\n", pmix_globals.myid.nspace, pmix_globals.myid.rank, lt->uri);
         fclose(fp);
         /* set the file mode */
-        chmod(mca_ptl_tcp_component.session_filename, S_IRUSR | S_IWUSR | S_IRGRP);
+        if (0 != chmod(mca_ptl_tcp_component.session_filename, S_IRUSR | S_IWUSR | S_IRGRP)) {
+            PMIX_ERROR_LOG(PMIX_ERR_FILE_OPEN_FAILURE);
+            CLOSE_THE_SOCKET(lt->socket);
+            free(mca_ptl_tcp_component.system_filename);
+            mca_ptl_tcp_component.system_filename = NULL;
+            goto sockerror;
+        }
     }
 
     /* we need listener thread support */
@@ -1014,6 +1027,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         /* send an error reply to the client */
         goto error;
     }
+    free(msg);
 
     /* the choice of PTL module is obviously us */
     peer->compat.ptl = &pmix_ptl_tcp_module;
@@ -1158,12 +1172,14 @@ static void process_cbfunc(int sd, short args, void *cbdata)
 
     /* add this tool rank to the nspace */
     info = PMIX_NEW(pmix_rank_info_t);
-    (void)strncpy(info->nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN);
-    info->rank = 0;
     /* add this nspace to our pool */
     nptr = PMIX_NEW(pmix_nspace_t);
     info->nptr = nptr;
+    (void)strncpy(info->nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN);
+    info->rank = 0;
     (void)strncpy(nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN);
+    nptr->server = PMIX_NEW(pmix_server_nspace_t);
+
     pmix_list_append(&pmix_globals.nspaces, &nptr->super);
     /* need to include the uid/gid for validation */
     info->uid = pnd->uid;

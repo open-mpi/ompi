@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2018 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1156,11 +1156,19 @@ static void _store_internal(int sd, short args, void *cbdata)
         }
     }
     if (NULL == ns) {
-        /* shouldn't be possible */
-        cd->status = PMIX_ERR_NOT_FOUND;
-    } else {
-        cd->status = pmix_hash_store(&ns->internal, cd->rank, cd->kv);
+        /* we may not know this nspace, but we can create it */
+        ns = PMIX_NEW(pmix_nspace_t);
+        if (NULL == ns) {
+            cd->status = PMIX_ERR_NOMEM;
+        } else {
+            (void)strncpy(ns->nspace, cd->nspace, PMIX_MAX_NSLEN);
+            /* add the server object */
+            ns->server = PMIX_NEW(pmix_server_nspace_t);
+            pmix_list_append(&pmix_globals.nspaces, &ns->super);
+        }
     }
+    cd->status = pmix_hash_store(&ns->internal, cd->rank, cd->kv);
+
     if (cd->lock.active) {
         PMIX_WAKEUP_THREAD(&cd->lock);
     }
@@ -1243,7 +1251,6 @@ PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regexp)
         len = strlen(vptr);
         startnum = -1;
         memset(prefix, 0, PMIX_MAX_NODE_PREFIX);
-        numdigits = 0;
         for (i=0, j=0; i < len; i++) {
             if (!isalpha(vptr[i])) {
                 /* found a non-alpha char */
@@ -1257,7 +1264,6 @@ PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regexp)
                 /* count the size of the numeric field - but don't
                  * add the digits to the prefix
                  */
-                numdigits++;
                 if (startnum < 0) {
                     /* okay, this defines end of the prefix */
                     startnum = i;
@@ -1284,8 +1290,10 @@ PMIX_EXPORT pmix_status_t PMIx_generate_regex(const char *input, char **regexp)
         vnum = strtol(&vptr[startnum], &sfx, 10);
         if (NULL != sfx) {
             suffix = strdup(sfx);
+            numdigits = (int)(sfx - &vptr[startnum]);
         } else {
             suffix = NULL;
+            numdigits = (int)strlen(&vptr[startnum]);
         }
         /* is this value already on our list? */
         found = false;

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -478,11 +478,24 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
                         "pmix:client recv callback activated with %d bytes",
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
 
+    if (NULL == buf) {
+        rc = PMIX_ERR_BAD_PARAM;
+        goto report;
+    }
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        rc = PMIX_ERR_UNREACH;
+        goto report;
+    }
+
     /* unpack the returned status */
     cnt = 1;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_STATUS))) {
         PMIX_ERROR_LOG(rc);
     }
+
+  report:
     if (NULL != cb->op_cbfunc) {
         cb->op_cbfunc(rc, cb->cbdata);
     }
@@ -514,15 +527,25 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr,
                         "pmix:client recv callback activated with %d bytes",
                         (NULL == buf) ? -1 : (int)buf->bytes_used);
 
+    /* set the defaults */
+    pdata = NULL;
+    ndata = 0;
+
     if (NULL == cb->lookup_cbfunc) {
         /* nothing we can do with this */
         PMIX_RELEASE(cb);
         return;
     }
-
-    /* set the defaults */
-    pdata = NULL;
-    ndata = 0;
+    if (NULL == buf) {
+        rc = PMIX_ERR_BAD_PARAM;
+        goto report;
+    }
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        rc = PMIX_ERR_UNREACH;
+        goto report;
+    }
 
     /* unpack the returned status */
     cnt = 1;
@@ -556,6 +579,7 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr,
         }
     }
 
+  report:
     if (NULL != cb->lookup_cbfunc) {
         cb->lookup_cbfunc(rc, pdata, ndata, cb->cbdata);
     }

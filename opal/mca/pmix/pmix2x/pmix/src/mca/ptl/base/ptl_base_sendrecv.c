@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -44,10 +44,9 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
+#include "src/util/show_help.h"
 
 #include "src/mca/ptl/base/base.h"
-
-static uint32_t current_tag = PMIX_PTL_TAG_DYNAMIC;
 
 static void _notify_complete(pmix_status_t status, void *cbdata)
 {
@@ -55,7 +54,7 @@ static void _notify_complete(pmix_status_t status, void *cbdata)
     PMIX_RELEASE(chain);
 }
 
-static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
+void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
 {
     pmix_server_trkr_t *trk;
     pmix_rank_info_t *rinfo, *rnext;
@@ -351,7 +350,7 @@ void pmix_ptl_base_send_handler(int sd, short flags, void *cbdata)
             peer->send_ev_active = false;
             PMIX_RELEASE(msg);
             peer->send_msg = NULL;
-            lost_connection(peer, rc);
+            pmix_ptl_base_lost_connection(peer, rc);
             /* ensure we post the modified peer object before another thread
              * picks it back up */
             PMIX_POST_OBJECT(peer);
@@ -434,6 +433,11 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
             peer->recv_msg->hdr.pindex = ntohl(hdr.pindex);
             peer->recv_msg->hdr.tag = ntohl(hdr.tag);
             peer->recv_msg->hdr.nbytes = ntohl(hdr.nbytes);
+            if (pmix_ptl_globals.max_msg_size < peer->recv_msg->hdr.nbytes) {
+                pmix_show_help("help-pmix-runtime.txt", "ptl:message-too-large", true,
+                               peer->recv_msg->hdr.nbytes, pmix_ptl_globals.max_msg_size);
+                goto err_close;
+            }
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "RECVD MSG FOR TAG %d SIZE %d",
                                 (int)peer->recv_msg->hdr.tag,
@@ -533,7 +537,7 @@ void pmix_ptl_base_recv_handler(int sd, short flags, void *cbdata)
         PMIX_RELEASE(peer->recv_msg);
         peer->recv_msg = NULL;
     }
-    lost_connection(peer, PMIX_ERR_UNREACH);
+    pmix_ptl_base_lost_connection(peer, PMIX_ERR_UNREACH);
     /* ensure we post the modified peer object before another thread
      * picks it back up */
     PMIX_POST_OBJECT(peer);
@@ -609,11 +613,11 @@ void pmix_ptl_base_send_recv(int fd, short args, void *cbdata)
     }
 
     /* take the next tag in the sequence */
-    current_tag++;
-    if (UINT32_MAX == current_tag ) {
-        current_tag = PMIX_PTL_TAG_DYNAMIC;
+    pmix_ptl_globals.current_tag++;
+    if (UINT32_MAX == pmix_ptl_globals.current_tag ) {
+        pmix_ptl_globals.current_tag = PMIX_PTL_TAG_DYNAMIC;
     }
-    tag = current_tag;
+    tag = pmix_ptl_globals.current_tag;
 
     if (NULL != ms->cbfunc) {
         /* if a callback msg is expected, setup a recv for it */

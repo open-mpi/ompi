@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -260,7 +260,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     pmix_value_t *val = NULL;
     int32_t cnt;
     pmix_nspace_t *ns, *nptr;
-    pmix_rank_t rank;
+    pmix_proc_t proc;
 #if (PMIX_ENABLE_DSTORE != 1)
     pmix_rank_t cur_rank;
 #endif
@@ -274,8 +274,16 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
         PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
         return;
     }
-    /* cache the rank */
-    rank = cb->rank;
+    /* cache the proc id */
+    (void)strncpy(proc.nspace, cb->nspace, PMIX_MAX_NSLEN);
+    proc.rank = cb->rank;
+
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        ret = PMIX_ERR_UNREACH;
+        goto done;
+    }
 
     /* unpack the status */
     cnt = 1;
@@ -313,7 +321,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     /* we received the entire blob for this process, so
      * unpack and store it in the modex - this could consist
      * of buffers from multiple scopes */
-    cur_rank = rank;
+    cur_rank = cb->rank;
     cnt = 1;
     while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &cur_rank, &cnt, PMIX_PROC_RANK))) {
         pmix_kval_t *cur_kval;
@@ -413,13 +421,13 @@ done:
 
     /* now search any pending requests to see if they can be met */
     PMIX_LIST_FOREACH_SAFE(cb, cb2, &pmix_client_globals.pending_requests, pmix_cb_t) {
-        if (0 == strncmp(nptr->nspace, cb->nspace, PMIX_MAX_NSLEN) && cb->rank == rank) {
+        if (0 == strncmp(nptr->nspace, cb->nspace, PMIX_MAX_NSLEN) && cb->rank == proc.rank) {
            /* we have the data - see if we can find the key */
             val = NULL;
 #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-            rc = pmix_dstore_fetch(nptr->nspace, rank, cb->key, &val);
+            rc = pmix_dstore_fetch(nptr->nspace, proc.rank, cb->key, &val);
 #else
-            rc = pmix_hash_fetch(&nptr->modex, rank, cb->key, &val);
+            rc = pmix_hash_fetch(&nptr->modex, proc.rank, cb->key, &val);
 #endif /* PMIX_ENABLE_DSTORE */
             cb->value_cbfunc(rc, val, cb->cbdata);
             if (NULL != val) {

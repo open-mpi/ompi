@@ -23,7 +23,8 @@ sources += \
         client/pmix_client_connect.c
 
 if WANT_PMI_BACKWARD
-sources += \
-        client/pmi1.c \
+pmi1_sources += \
+        client/pmi1.c
+pmi2_sources += \
         client/pmi2.c
 endif

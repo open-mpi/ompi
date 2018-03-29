@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -37,6 +37,7 @@
 #include "src/class/pmix_pointer_array.h"
 #include "src/mca/mca.h"
 #include "src/mca/base/pmix_mca_base_framework.h"
+#include "src/include/pmix_globals.h"
 
 #include "src/mca/ptl/ptl.h"
 
@@ -77,6 +78,8 @@ struct pmix_ptl_globals_t {
     int stop_thread[2];
     bool listen_thread_active;
     pmix_list_t listeners;
+    pmix_ptl_tag_t current_tag;
+    size_t max_msg_size;
 };
 typedef struct pmix_ptl_globals_t pmix_ptl_globals_t;
 
@@ -119,6 +122,7 @@ PMIX_EXPORT pmix_status_t pmix_ptl_base_connect(struct sockaddr_storage *addr,
 PMIX_EXPORT void pmix_ptl_base_connection_handler(int sd, short args, void *cbdata);
 PMIX_EXPORT pmix_status_t pmix_ptl_base_send_connect_ack(int sd);
 PMIX_EXPORT pmix_status_t pmix_ptl_base_recv_connect_ack(int sd);
+PMIX_EXPORT void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err);
 
 
 END_C_DECLS

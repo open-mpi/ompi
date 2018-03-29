@@ -693,6 +693,7 @@ pmix_status_t pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
                 return PMIX_ERR_NOMEM;
             }
             if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_buffer(buffer, val->data.darray, &m, PMIX_DATA_ARRAY))) {
+                PMIX_ERROR_LOG(ret);
                 return ret;
             }
             break;
@@ -734,10 +735,12 @@ pmix_status_t pmix_bfrop_unpack_value(pmix_buffer_t *buffer, void *dest,
     for (i = 0; i < n; ++i) {
         /* unpack the type */
         if (PMIX_SUCCESS != (ret = pmix_bfrop_get_data_type(buffer, &ptr[i].type))) {
+            PMIX_ERROR_LOG(ret);
             return ret;
         }
         /* unpack value */
         if (PMIX_SUCCESS != (ret = unpack_val(buffer, &ptr[i])) ) {
+            PMIX_ERROR_LOG(ret);
             return ret;
         }
     }
@@ -1304,6 +1307,10 @@ pmix_status_t pmix_bfrop_unpack_darray(pmix_buffer_t *buffer, void *dest,
                 break;
             case PMIX_QUERY:
                 nbytes = sizeof(pmix_query_t);
+                break;
+            case PMIX_VALUE:
+                nbytes = sizeof(pmix_value_t);
+                break;
             default:
                 return PMIX_ERR_NOT_SUPPORTED;
         }

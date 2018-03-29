@@ -13,7 +13,8 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -116,8 +117,8 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                                      pmix_info_t *info, size_t ninfo)
 {
     char *evar, **uri, *suri;
-    char *filename, *nspace;
-    pmix_rank_t rank;
+    char *filename, *nspace=NULL;
+    pmix_rank_t rank = PMIX_RANK_WILDCARD;
     char *p, *p2;
     int sd, rc;
     size_t n;
@@ -176,6 +177,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
 
         /* go ahead and try to connect */
         if (PMIX_SUCCESS != (rc = try_connect(&sd))) {
+            free(nspace);
             return rc;
         }
         goto complete;
@@ -210,6 +212,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "ptl:tcp:tool getting connection info from %s",
                                 mca_ptl_tcp_component.super.uri);
+            nspace = NULL;
             rc = parse_uri_file(&mca_ptl_tcp_component.super.uri[6], &suri, &nspace, &rank);
             if (PMIX_SUCCESS != rc) {
                 return PMIX_ERR_UNREACH;
@@ -222,6 +225,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                             mca_ptl_tcp_component.super.uri);
         /* go ahead and try to connect */
         if (PMIX_SUCCESS != (rc = try_connect(&sd))) {
+            if (NULL != nspace) {
+                free(nspace);
+            }
             return rc;
         }
         goto complete;
@@ -248,6 +254,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             if (PMIX_SUCCESS == try_connect(&sd)) {
                 goto complete;
             }
+            free(nspace);
         }
     }
 
@@ -270,11 +277,15 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp:tool searching for given session server %s",
                             filename);
+        nspace = NULL;
         rc = df_search(mca_ptl_tcp_component.system_tmpdir,
                        filename, &sd, &nspace, &rank);
         free(filename);
         if (PMIX_SUCCESS == rc) {
             goto complete;
+        }
+        if (NULL != nspace) {
+            free(nspace);
         }
         /* since they gave us a specific pid and we couldn't
          * connect to it, return an error */
@@ -292,10 +303,14 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp:tool searching for session server %s",
                         filename);
+    nspace = NULL;
     rc = df_search(mca_ptl_tcp_component.system_tmpdir,
                    filename, &sd, &nspace, &rank);
     free(filename);
     if (PMIX_SUCCESS != rc) {
+        if (NULL != nspace){
+            free(nspace);
+        }
         return PMIX_ERR_UNREACH;
     }
 
@@ -303,6 +318,11 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "sock_peer_try_connect: Connection across to server succeeded");
 
+    /* do a final bozo check */
+    if (NULL == nspace || PMIX_RANK_WILDCARD == rank) {
+        CLOSE_THE_SOCKET(sd);
+        return PMIX_ERR_UNREACH;
+    }
     /* mark the connection as made */
     pmix_globals.connected = true;
     pmix_client_globals.myserver->sd = sd;
@@ -315,6 +335,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         pmix_client_globals.myserver->info->nptr = PMIX_NEW(pmix_nspace_t);
     }
     (void)strncpy(pmix_client_globals.myserver->info->nptr->nspace, nspace, PMIX_MAX_NSLEN);
+    free(nspace);
     pmix_client_globals.myserver->info->rank = rank;
 
     pmix_ptl_base_set_nonblocking(sd);
@@ -515,7 +536,9 @@ static pmix_status_t try_connect(int *sd)
 
     /* establish the connection */
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_connect(&mca_ptl_tcp_component.connection, len, sd))) {
-        PMIX_ERROR_LOG(rc);
+    /* Do not be noisy about this.  It is normal to try and fail different
+       connection methods until we find the right one */
+//        PMIX_ERROR_LOG(rc);
         return rc;
     }
 
@@ -578,7 +601,7 @@ static pmix_status_t send_connect_ack(int sd)
     if (PMIX_PROC_IS_CLIENT) {
         flag = 0;
         /* reserve space for our nspace and rank info */
-        sdsize += strlen(pmix_globals.myid.nspace) + 1 + sizeof(uint32_t);
+        sdsize += strlen(pmix_globals.myid.nspace) + 1 + sizeof(int);
     } else {
         flag = 1;
         /* add space for our uid/gid for ACL purposes */
@@ -619,7 +642,7 @@ static pmix_status_t send_connect_ack(int sd)
     memcpy(msg+csize, &u32, sizeof(uint32_t));
     csize += sizeof(uint32_t);
     /* load the credential */
-    if (0 < len) {
+    if (0 < u32) {
         memcpy(msg+csize, cred, len);
         csize += len;
     }
@@ -796,8 +819,9 @@ static pmix_status_t df_search(char *dirname, char *prefix,
     char *suri, *nsp, *newdir;
     pmix_rank_t rk;
     pmix_status_t rc;
+    struct stat buf;
     DIR *cur_dirp;
-    struct dirent * dir_entry;
+    struct dirent *dir_entry;
 
     if (NULL == (cur_dirp = opendir(dirname))) {
         return PMIX_ERR_NOT_FOUND;
@@ -813,9 +837,13 @@ static pmix_status_t df_search(char *dirname, char *prefix,
             0 == strcmp(dir_entry->d_name, "..")) {
             continue;
         }
+        newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
+        if (-1 == stat(newdir, &buf)) {
+            free(newdir);
+            continue;
+        }
         /* if it is a directory, down search */
-        if (DT_DIR == dir_entry->d_type) {
-            newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
+        if (S_ISDIR(buf.st_mode)) {
             rc = df_search(newdir, prefix, sd, nspace, rank);
             free(newdir);
             if (PMIX_SUCCESS == rc) {
@@ -824,22 +852,14 @@ static pmix_status_t df_search(char *dirname, char *prefix,
             }
             continue;
         }
-        /* if it isn't a regular file, ignore it */
-        if (DT_REG != dir_entry->d_type) {
-            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                                "pmix:tcp: ignoring %s", dir_entry->d_name);
-            continue;
-        }
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "pmix:tcp: checking %s vs %s", dir_entry->d_name, prefix);
         /* see if it starts with our prefix */
         if (0 == strncmp(dir_entry->d_name, prefix, strlen(prefix))) {
             /* try to read this file */
-            newdir = pmix_os_path(false, dirname, dir_entry->d_name, NULL);
             pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                 "pmix:tcp: reading file %s", newdir);
             rc = parse_uri_file(newdir, &suri, &nsp, &rk);
-            free(newdir);
             if (PMIX_SUCCESS == rc) {
                 if (NULL != mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);
@@ -852,10 +872,13 @@ static pmix_status_t df_search(char *dirname, char *prefix,
                     (*nspace) = nsp;
                     *rank = rk;
                     closedir(cur_dirp);
+                    free(newdir);
                     return PMIX_SUCCESS;
                 }
+                free(nsp);
             }
         }
+        free(newdir);
     }
     closedir(cur_dirp);
     return PMIX_ERR_NOT_FOUND;

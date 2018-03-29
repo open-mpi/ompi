@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -55,6 +55,17 @@ static void query_cbfunc(struct pmix_peer_t *peer,
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:query cback from server");
+
+    /* a zero-byte buffer indicates that this recv is being
+     * completed due to a lost connection */
+    if (PMIX_BUFFER_IS_EMPTY(buf)) {
+        /* release the caller */
+        if (NULL != cd->cbfunc) {
+            cd->cbfunc(PMIX_ERR_COMM_FAILURE, NULL, 0, cd->cbdata, NULL, NULL);
+        }
+        PMIX_RELEASE(cd);
+        return;
+    }
 
     results = PMIX_NEW(pmix_shift_caddy_t);
 
