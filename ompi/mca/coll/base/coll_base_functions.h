@@ -222,6 +222,7 @@ int ompi_coll_base_bcast_intra_bintree(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
 
 /* Exscan */
+int mca_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
 
 /* Gather */
 int ompi_coll_base_gather_intra_basic_linear(GATHER_ARGS);
@@ -245,6 +246,7 @@ int ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(REDUCESCATTER_ARG
 int ompi_coll_base_reduce_scatter_intra_ring(REDUCESCATTER_ARGS);
 
 /* Scan */
+int mca_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);
 
 /* Scatter */
 int ompi_coll_base_scatter_intra_basic_linear(SCATTER_ARGS);
