@@ -111,7 +111,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 
     /* This fix is needed for data seiving to work with
        two-phase collective I/O */
-    if ( mca_io_ompio_overwrite_amode ) {
+    if ( mca_io_ompio_overwrite_amode && !(amode & MPI_MODE_SEQUENTIAL) ) {
         if ((amode & MPI_MODE_WRONLY)){
             amode -= MPI_MODE_WRONLY;
             amode += MPI_MODE_RDWR;
