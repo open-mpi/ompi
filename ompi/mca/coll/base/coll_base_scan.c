@@ -87,7 +87,7 @@ int mca_coll_base_scan_intra_recursivedoubling(
     }
     char *psend = tmpsend_raw - gap;
     char *precv = tmprecv_raw - gap;
-    err = ompi_datatype_copy_content_same_ddt(dtype, count, psend, recvbuf);
+    err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, recvbuf);
     if (MPI_SUCCESS != err) { goto cleanup_and_return; }
     int is_commute = ompi_op_is_commute(op);
 
