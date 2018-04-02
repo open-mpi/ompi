@@ -698,6 +698,7 @@ exit :
         }
         free (aggr_data);
     }
+    free(local_iov_array);
     free(displs);
     free(decoded_iov);
     free(broken_counts);
@@ -768,6 +769,8 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     MPI_Aint *memory_displacements=NULL;
     int *temp_disp_index=NULL;
     MPI_Aint global_count = 0;
+    int* blocklength_proc=NULL;
+    ptrdiff_t* displs_proc=NULL;
 
     data->num_io_entries = 0;
     data->bytes_sent = 0;
@@ -1137,8 +1140,8 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
 
       ptrdiff_t send_mem_address  = NULL;
       ompi_datatype_t *newType   = MPI_DATATYPE_NULL;
-      int* blocklength_proc       = (int *)               calloc (blocklength_size, sizeof (int));
-      ptrdiff_t* displs_proc      = (ptrdiff_t *)         calloc (blocklength_size, sizeof (ptrdiff_t));
+      blocklength_proc  = (int *)               calloc (blocklength_size, sizeof (int));
+      displs_proc       = (ptrdiff_t *)         calloc (blocklength_size, sizeof (ptrdiff_t));
 
       if (NULL == blocklength_proc || NULL == displs_proc ) {
         opal_output (1, "OUT OF MEMORY\n");
@@ -1200,16 +1203,13 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                                  MCA_PML_BASE_SEND_STANDARD,
                                  data->comm,
                                  &reqs[data->procs_per_group]));
+        if ( MPI_DATATYPE_NULL != newType ) {
+          ompi_datatype_destroy(&newType);
+        }
         if (OMPI_SUCCESS != ret){
             goto exit;
         }
       }
-      if ( MPI_DATATYPE_NULL != newType ) {
-        ompi_datatype_destroy(&newType);
-      }
-        
-      free(blocklength_proc);
-      free(displs_proc);
     }
 
     
@@ -1288,6 +1288,8 @@ exit:
     free(sorted_file_offsets);
     free(file_offsets_for_agg);
     free(memory_displacements);
+    free(blocklength_proc);
+    free(displs_proc);
     
     return OMPI_SUCCESS;
 }
