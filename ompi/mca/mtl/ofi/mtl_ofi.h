@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
@@ -244,6 +244,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     ompi_mtl_ofi_request_t *ack_req = NULL; /* For synchronous send */
+    fi_addr_t src_addr = 0;
 
     ompi_proc = ompi_comm_peer_lookup(comm, dest);
     endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
@@ -255,6 +256,15 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
     ofi_req->length = length;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
 
+    if (ompi_mtl_ofi.fi_cq_data) {
+        match_bits = mtl_ofi_create_send_tag_CQD(comm->c_contextid, tag);
+        src_addr = endpoint->peer_fiaddr;
+    } else {
+        match_bits = mtl_ofi_create_send_tag(comm->c_contextid,
+                                             comm->c_my_rank, tag);
+        /* src_addr is ignored when FI_DIRECTED_RECV is not supported */
+    }
+
     if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_SYNCHRONOUS == mode)) {
         ack_req = malloc(sizeof(ompi_mtl_ofi_request_t));
         assert(ack_req);
@@ -263,14 +273,15 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
         ack_req->error_callback = ompi_mtl_ofi_send_ack_error_callback;
 
         ofi_req->completion_count = 2;
-        MTL_OFI_SET_SEND_BITS(match_bits, comm->c_contextid,
-                              comm->c_my_rank, tag, MTL_OFI_SYNC_SEND);
+
+        MTL_OFI_SET_SYNC_SEND(match_bits);
+
         MTL_OFI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ep,
                                           NULL,
                                           0,
                                           NULL,
-                                          endpoint->peer_fiaddr,
-                                          match_bits | MTL_OFI_SYNC_SEND_ACK,
+                                          src_addr,
+                                          match_bits | ompi_mtl_ofi.sync_send_ack,
                                           0, /* Exact match, no ignore bits */
                                           (void *) &ack_req->ctx));
         if (OPAL_UNLIKELY(0 > ret)) {
@@ -282,20 +293,30 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
         }
     } else {
         ofi_req->completion_count = 1;
-        MTL_OFI_SET_SEND_BITS(match_bits, comm->c_contextid,
-                              comm->c_my_rank, tag, 0);
     }
 
     if (ompi_mtl_ofi.max_inject_size >= length) {
-        MTL_OFI_RETRY_UNTIL_DONE(fi_tinject(ompi_mtl_ofi.ep,
+        if (ompi_mtl_ofi.fi_cq_data) {
+            MTL_OFI_RETRY_UNTIL_DONE(fi_tinjectdata(ompi_mtl_ofi.ep,
+                                            start,
+                                            length,
+                                            comm->c_my_rank,
+                                            endpoint->peer_fiaddr,
+                                            match_bits));
+        } else {
+            MTL_OFI_RETRY_UNTIL_DONE(fi_tinject(ompi_mtl_ofi.ep,
                                             start,
                                             length,
                                             endpoint->peer_fiaddr,
                                             match_bits));
+        }
+
         if (OPAL_UNLIKELY(0 > ret)) {
+            char *fi_api = ompi_mtl_ofi.fi_cq_data ? "fi_tinjectddata" : "fi_tinject";
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: fi_tinject failed: %s(%zd)",
-                                __FILE__, __LINE__, fi_strerror(-ret), ret);
+                                "%s:%d: %s failed: %s(%zd)",
+                                __FILE__, __LINE__,fi_api, fi_strerror(-ret), ret);
+
             if (ack_req) {
                 fi_cancel((fid_t)ompi_mtl_ofi.ep, &ack_req->ctx);
                 free(ack_req);
@@ -305,17 +326,29 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
 
         ofi_req->event_callback(NULL,ofi_req);
     } else {
-        MTL_OFI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
+        if (ompi_mtl_ofi.fi_cq_data) {
+            MTL_OFI_RETRY_UNTIL_DONE(fi_tsenddata(ompi_mtl_ofi.ep,
+                                          start,
+                                          length,
+                                          NULL,
+                                          comm->c_my_rank,
+                                          endpoint->peer_fiaddr,
+                                          match_bits,
+                                          (void *) &ofi_req->ctx));
+        } else {
+            MTL_OFI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
                                           start,
                                           length,
                                           NULL,
                                           endpoint->peer_fiaddr,
                                           match_bits,
                                           (void *) &ofi_req->ctx));
+        }
         if (OPAL_UNLIKELY(0 > ret)) {
+            char *fi_api = ompi_mtl_ofi.fi_cq_data ? "fi_tsendddata" : "fi_send";
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: fi_tsend failed: %s(%zd)",
-                                __FILE__, __LINE__, fi_strerror(-ret), ret);
+                                "%s:%d: %s failed: %s(%zd)",
+                                __FILE__, __LINE__,fi_api, fi_strerror(-ret), ret);
             return ompi_mtl_ofi_get_error(ret);
         }
     }
@@ -415,7 +448,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     ssize_t ret;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
-    int src;
+    int src = mtl_ofi_get_source(wc);
     ompi_status_public_t *status = NULL;
 
     assert(ofi_req->super.ompi_req);
@@ -427,7 +460,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
      */
     ofi_req->req_started = true;
 
-    status->MPI_SOURCE = MTL_OFI_GET_SOURCE(wc->tag);
+    status->MPI_SOURCE = src;
     status->MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
     status->_ucount = wc->len;
 
@@ -474,7 +507,6 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
          * we need to extract the source's actual address.
          */
         if (ompi_mtl_ofi.any_addr == ofi_req->remote_addr) {
-            src = MTL_OFI_GET_SOURCE(wc->tag);
             ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src);
             endpoint = ompi_mtl_ofi_get_endpoint(ofi_req->mtl, ompi_proc);
             ofi_req->remote_addr = endpoint->peer_fiaddr;
@@ -484,7 +516,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
                                           0,
                                           NULL,
                                           ofi_req->remote_addr,
-                                          wc->tag | MTL_OFI_SYNC_SEND_ACK,
+                                          wc->tag | ompi_mtl_ofi.sync_send_ack,
                                           (void *) &ofi_req->ctx));
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
@@ -510,7 +542,7 @@ ompi_mtl_ofi_recv_error_callback(struct fi_cq_err_entry *error,
     assert(ofi_req->super.ompi_req);
     status = &ofi_req->super.ompi_req->req_status;
     status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
-    status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
+    status->MPI_SOURCE = mtl_ofi_get_source((struct fi_cq_tagged_entry *) error);
 
     switch (error->err) {
         case FI_ETRUNC:
@@ -538,7 +570,7 @@ ompi_mtl_ofi_irecv(struct mca_mtl_base_module_t *mtl,
     int ompi_ret = OMPI_SUCCESS;
     ssize_t ret;
     uint64_t match_bits, mask_bits;
-    fi_addr_t remote_addr;
+    fi_addr_t remote_addr = ompi_mtl_ofi.any_addr;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     ompi_mtl_ofi_request_t *ofi_req = (ompi_mtl_ofi_request_t*) mtl_request;
@@ -546,15 +578,21 @@ ompi_mtl_ofi_irecv(struct mca_mtl_base_module_t *mtl,
     size_t length;
     bool free_after;
 
-    if (MPI_ANY_SOURCE != src) {
-        ompi_proc = ompi_comm_peer_lookup(comm, src);
-        endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
-        remote_addr = endpoint->peer_fiaddr;
-    } else {
-        remote_addr = ompi_mtl_ofi.any_addr;
-    }
 
-    MTL_OFI_SET_RECV_BITS(match_bits, mask_bits, comm->c_contextid, src, tag);
+    if (ompi_mtl_ofi.fi_cq_data) {
+        if (MPI_ANY_SOURCE != src) {
+            ompi_proc = ompi_comm_peer_lookup(comm, src);
+            endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+            remote_addr = endpoint->peer_fiaddr;
+        }
+
+        mtl_ofi_create_recv_tag_CQD(&match_bits, &mask_bits, comm->c_contextid,
+                                    tag);
+    } else {
+        mtl_ofi_create_recv_tag(&match_bits, &mask_bits, comm->c_contextid, src,
+                                tag);
+        /* src_addr is ignored when FI_DIRECTED_RECV is not used */
+    }
 
     ompi_ret = ompi_mtl_datatype_recv_buf(convertor,
                                           &start,
@@ -606,7 +644,7 @@ ompi_mtl_ofi_mrecv_callback(struct fi_cq_tagged_entry *wc,
 {
     struct mca_mtl_request_t *mrecv_req = ofi_req->mrecv_req;
     ompi_status_public_t *status = &mrecv_req->ompi_req->req_status;
-    status->MPI_SOURCE = MTL_OFI_GET_SOURCE(wc->tag);
+    status->MPI_SOURCE = mtl_ofi_get_source(wc);
     status->MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
     status->MPI_ERROR = MPI_SUCCESS;
     status->_ucount = wc->len;
@@ -628,7 +666,7 @@ ompi_mtl_ofi_mrecv_error_callback(struct fi_cq_err_entry *error,
     struct mca_mtl_request_t *mrecv_req = ofi_req->mrecv_req;
     ompi_status_public_t *status = &mrecv_req->ompi_req->req_status;
     status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
-    status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
+    status->MPI_SOURCE = mtl_ofi_get_source((struct fi_cq_tagged_entry  *) error);
 
     switch (error->err) {
         case FI_ETRUNC:
@@ -716,7 +754,7 @@ ompi_mtl_ofi_probe_callback(struct fi_cq_tagged_entry *wc,
 {
     ofi_req->match_state = 1;
     ofi_req->match_bits = wc->tag;
-    ofi_req->status.MPI_SOURCE = MTL_OFI_GET_SOURCE(wc->tag);
+    ofi_req->status.MPI_SOURCE = mtl_ofi_get_source(wc);
     ofi_req->status.MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
     ofi_req->status.MPI_ERROR = MPI_SUCCESS;
     ofi_req->status._ucount = wc->len;
@@ -749,22 +787,28 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     struct ompi_mtl_ofi_request_t ofi_req;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
-    fi_addr_t remote_proc = 0;
+    fi_addr_t remote_proc = ompi_mtl_ofi.any_addr;
     uint64_t match_bits, mask_bits;
     ssize_t ret;
     struct fi_msg_tagged msg;
     uint64_t msgflags = FI_PEEK;
 
-    /**
-     * If the source is known, use its peer_fiaddr.
-     */
-    if (MPI_ANY_SOURCE != src) {
-        ompi_proc = ompi_comm_peer_lookup( comm, src );
-        endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
-        remote_proc = endpoint->peer_fiaddr;
-    }
+    if (ompi_mtl_ofi.fi_cq_data) {
+     /* If the source is known, use its peer_fiaddr. */
+        if (MPI_ANY_SOURCE != src) {
+            ompi_proc = ompi_comm_peer_lookup( comm, src );
+            endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+            remote_proc = endpoint->peer_fiaddr;
+        }
 
-    MTL_OFI_SET_RECV_BITS(match_bits, mask_bits, comm->c_contextid, src, tag);
+        mtl_ofi_create_recv_tag_CQD(&match_bits, &mask_bits, comm->c_contextid,
+                                    tag);
+    }
+    else {
+        mtl_ofi_create_recv_tag(&match_bits, &mask_bits, comm->c_contextid, src,
+                                tag);
+        /* src_addr is ignored when FI_DIRECTED_RECV is not used */
+    }
 
     /**
      * fi_trecvmsg with FI_PEEK:
@@ -829,7 +873,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     struct ompi_mtl_ofi_request_t *ofi_req;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
-    fi_addr_t remote_proc = 0;
+    fi_addr_t remote_proc = ompi_mtl_ofi.any_addr;
     uint64_t match_bits, mask_bits;
     ssize_t ret;
     struct fi_msg_tagged msg;
@@ -843,13 +887,22 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     /**
      * If the source is known, use its peer_fiaddr.
      */
-    if (MPI_ANY_SOURCE != src) {
-        ompi_proc = ompi_comm_peer_lookup( comm, src );
-        endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
-        remote_proc = endpoint->peer_fiaddr;
-    }
 
-    MTL_OFI_SET_RECV_BITS(match_bits, mask_bits, comm->c_contextid, src, tag);
+    if (ompi_mtl_ofi.fi_cq_data) {
+        if (MPI_ANY_SOURCE != src) {
+            ompi_proc = ompi_comm_peer_lookup( comm, src );
+            endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+            remote_proc = endpoint->peer_fiaddr;
+        }
+
+        mtl_ofi_create_recv_tag_CQD(&match_bits, &mask_bits, comm->c_contextid,
+                                    tag);
+    }
+    else {
+        /* src_addr is ignored when FI_DIRECTED_RECV is not used */
+        mtl_ofi_create_recv_tag(&match_bits, &mask_bits, comm->c_contextid, src,
+                                tag);
+    }
 
     /**
      * fi_trecvmsg with FI_PEEK and FI_CLAIM:
