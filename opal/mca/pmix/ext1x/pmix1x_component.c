@@ -2,7 +2,7 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +38,11 @@ static int external_open(void);
 static int external_close(void);
 static int external_component_query(mca_base_module_t **module, int *priority);
 
+/*
+ * Local variable
+ */
+static char *pmix_library_version = NULL;
+
 
 /*
  * Instantiate the public struct with all of our public information
@@ -66,6 +71,7 @@ mca_pmix_ext1x_component_t mca_pmix_ext1x_component = {
            .mca_open_component = external_open,
            .mca_close_component = external_close,
            .mca_query_component = external_component_query,
+           .mca_register_component_params = external_register
         },
         /* Next the MCA v1.0.0 component meta data */
         .base_data = {
@@ -75,6 +81,22 @@ mca_pmix_ext1x_component_t mca_pmix_ext1x_component = {
     },
     .native_launch = false
 };
+
+static int external_register(void)
+{
+    mca_base_component_t *component = &mca_pmix_pmix3x_component.super.base_version;
+
+    asprintf(&pmix_library_version, "PMIx library version %s", PMIx_Get_version());
+    (void) mca_base_component_var_register(component, "library_version",
+                                           "Version of the underlying PMIx library",
+                                           MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &pmix_library_version);
+
+    return OPAL_SUCCESS;
+}
 
 static int external_open(void)
 {
