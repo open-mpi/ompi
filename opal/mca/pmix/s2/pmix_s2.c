@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -230,7 +230,7 @@ static int s2_init(opal_list_t *ilist)
     s2_pname.jobid = strtoul(pmix_kvs_name, &str, 10);
     s2_pname.jobid = (s2_pname.jobid << 16) & 0xffff0000;
     if (NULL != str) {
-        stepid = strtoul(str, NULL, 10);
+        stepid = strtoul(str+1, NULL, 10);
         s2_pname.jobid |= (stepid & 0x0000ffff);
     }
     s2_pname.vpid = s2_rank;
