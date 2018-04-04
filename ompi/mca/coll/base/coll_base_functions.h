@@ -14,7 +14,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
@@ -224,6 +224,8 @@ int ompi_coll_base_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
 
 /* Exscan */
 int ompi_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
+int ompi_coll_base_exscan_intra_linear(EXSCAN_ARGS);
+int ompi_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
 
 /* Gather */
 int ompi_coll_base_gather_intra_basic_linear(GATHER_ARGS);
@@ -248,6 +250,8 @@ int ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(REDUCESCATTER_ARG
 int ompi_coll_base_reduce_scatter_intra_ring(REDUCESCATTER_ARGS);
 
 /* Scan */
+int ompi_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);
+int ompi_coll_base_scan_intra_linear(SCAN_ARGS);
 int ompi_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);
 
 /* Scatter */
