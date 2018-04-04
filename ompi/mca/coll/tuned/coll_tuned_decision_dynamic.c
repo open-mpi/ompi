@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -609,4 +609,90 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, int scount,
     return ompi_coll_tuned_scatter_intra_dec_fixed (sbuf, scount, sdtype,
                                                     rbuf, rcount, rdtype,
                                                     root, comm, module);
+}
+
+int ompi_coll_tuned_exscan_intra_dec_dynamic(const void *sbuf, void* rbuf, int count,
+                                              struct ompi_datatype_t *dtype,
+                                              struct ompi_op_t *op,
+                                              struct ompi_communicator_t *comm,
+                                              mca_coll_base_module_t *module)
+{
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
+                 "ompi_coll_tuned_exscan_intra_dec_dynamic"));
+
+    /**
+     * check to see if we have some filebased rules.
+     */
+    if (tuned_module->com_rules[EXSCAN]) {
+        int comsize, alg, faninout, segsize, max_requests;
+        size_t dsize;
+
+        comsize = ompi_comm_size(comm);
+        ompi_datatype_type_size (dtype, &dsize);
+        dsize *= comsize;
+
+        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[EXSCAN],
+                                                        dsize, &faninout, &segsize, &max_requests);
+
+        if (alg) {
+            /* we have found a valid choice from the file based rules for this message size */
+            return ompi_coll_tuned_exscan_intra_do_this (sbuf, rbuf, count, dtype,
+                                                         op, comm, module,
+                                                         alg);
+        } /* found a method */
+    } /*end if any com rules to check */
+
+    if (tuned_module->user_forced[EXSCAN].algorithm) {
+        return ompi_coll_tuned_exscan_intra_do_this(sbuf, rbuf, count, dtype,
+                                                    op, comm, module,
+                                                    tuned_module->user_forced[EXSCAN].algorithm);
+    }
+
+    return ompi_coll_base_exscan_intra_linear(sbuf, rbuf, count, dtype,
+                                              op, comm, module);
+}
+
+int ompi_coll_tuned_scan_intra_dec_dynamic(const void *sbuf, void* rbuf, int count,
+                                           struct ompi_datatype_t *dtype,
+                                           struct ompi_op_t *op,
+                                           struct ompi_communicator_t *comm,
+                                           mca_coll_base_module_t *module)
+{
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
+                 "ompi_coll_tuned_scan_intra_dec_dynamic"));
+
+    /**
+     * check to see if we have some filebased rules.
+     */
+    if (tuned_module->com_rules[SCAN]) {
+        int comsize, alg, faninout, segsize, max_requests;
+        size_t dsize;
+
+        comsize = ompi_comm_size(comm);
+        ompi_datatype_type_size (dtype, &dsize);
+        dsize *= comsize;
+
+        alg = ompi_coll_tuned_get_target_method_params (tuned_module->com_rules[SCAN],
+                                                        dsize, &faninout, &segsize, &max_requests);
+
+        if (alg) {
+            /* we have found a valid choice from the file based rules for this message size */
+            return ompi_coll_tuned_scan_intra_do_this (sbuf, rbuf, count, dtype,
+                                                       op, comm, module,
+                                                       alg);
+        } /* found a method */
+    } /*end if any com rules to check */
+
+    if (tuned_module->user_forced[SCAN].algorithm) {
+        return ompi_coll_tuned_scan_intra_do_this(sbuf, rbuf, count, dtype,
+                                                  op, comm, module,
+                                                  tuned_module->user_forced[EXSCAN].algorithm);
+    }
+
+    return ompi_coll_base_scan_intra_linear(sbuf, rbuf, count, dtype,
+                                            op, comm, module);
 }
