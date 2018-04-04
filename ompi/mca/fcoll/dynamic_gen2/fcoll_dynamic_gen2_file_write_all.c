@@ -698,6 +698,7 @@ exit :
         }
         free (aggr_data);
     }
+    free(local_iov_array);
     free(displs);
     free(decoded_iov);
     free(broken_counts);
@@ -768,6 +769,8 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     MPI_Aint *memory_displacements=NULL;
     int *temp_disp_index=NULL;
     MPI_Aint global_count = 0;
+    int* blocklength_proc=NULL;
+    ptrdiff_t* displs_proc=NULL;
 
     data->num_io_entries = 0;
     data->bytes_sent = 0;
@@ -1131,85 +1134,82 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     }/* end if (aggregator == rank ) */
 
     if (bytes_sent) {
-      size_t remaining      = bytes_sent;
-      int block_index       = -1;
-      int blocklength_size  = INIT_LEN;
+        size_t remaining      = bytes_sent;
+        int block_index       = -1;
+        int blocklength_size  = INIT_LEN;
 
-      ptrdiff_t send_mem_address  = NULL;
-      ompi_datatype_t *newType   = MPI_DATATYPE_NULL;
-      int* blocklength_proc       = (int *)               calloc (blocklength_size, sizeof (int));
-      ptrdiff_t* displs_proc      = (ptrdiff_t *)         calloc (blocklength_size, sizeof (ptrdiff_t));
+        ptrdiff_t send_mem_address  = NULL;
+        ompi_datatype_t *newType    = MPI_DATATYPE_NULL;
+        blocklength_proc            = (int *)       calloc (blocklength_size, sizeof (int));
+        displs_proc                 = (ptrdiff_t *) calloc (blocklength_size, sizeof (ptrdiff_t));
 
-      if (NULL == blocklength_proc || NULL == displs_proc ) {
-        opal_output (1, "OUT OF MEMORY\n");
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit;
-      }
-
-      while (remaining) {
-        block_index++;
-
-        if(0 == block_index) {
-          send_mem_address = (ptrdiff_t) (data->decoded_iov[data->iov_index].iov_base) + 
-                              data->current_position;
-        }
-        else {
-          // Reallocate more memory if blocklength_size is not enough
-          if(0 == block_index % INIT_LEN) {
-            blocklength_size += INIT_LEN;
-            blocklength_proc = (int *)       realloc(blocklength_proc, blocklength_size * sizeof(int));
-            displs_proc      = (ptrdiff_t *) realloc(displs_proc, blocklength_size * sizeof(ptrdiff_t));
-          }
-          displs_proc[block_index] = (ptrdiff_t) (data->decoded_iov[data->iov_index].iov_base) + 
-                                      data->current_position - send_mem_address;
-        }
-
-        if (remaining >=
-            (data->decoded_iov[data->iov_index].iov_len - data->current_position)) {
-
-          blocklength_proc[block_index] = data->decoded_iov[data->iov_index].iov_len - 
-                                          data->current_position;
-          remaining = remaining -
-                      (data->decoded_iov[data->iov_index].iov_len - data->current_position);
-          data->iov_index = data->iov_index + 1;
-          data->current_position = 0;
-        }
-        else {
-            blocklength_proc[block_index] = remaining;
-            data->current_position += remaining;
-            remaining = 0;
-        }
-      }
-
-      data->total_bytes_written += bytes_sent;
-      data->bytes_sent = bytes_sent;
-
-      if ( 0 <= block_index ) {
-        ompi_datatype_create_hindexed(block_index+1,
-                                      blocklength_proc,
-                                      displs_proc,
-                                      MPI_BYTE,
-                                      &newType);
-        ompi_datatype_commit(&newType);
-
-        ret = MCA_PML_CALL(isend((char *)send_mem_address,
-                                 1,
-                                 newType,
-                                 aggregator,
-                                 FCOLL_DYNAMIC_GEN2_SHUFFLE_TAG+index,
-                                 MCA_PML_BASE_SEND_STANDARD,
-                                 data->comm,
-                                 &reqs[data->procs_per_group]));
-        if (OMPI_SUCCESS != ret){
+        if (NULL == blocklength_proc || NULL == displs_proc ) {
+            opal_output (1, "OUT OF MEMORY\n");
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
-      }
-      if ( MPI_DATATYPE_NULL != newType ) {
-        ompi_datatype_destroy(&newType);
-      }
-        
-      free(blocklength_proc);
-      free(displs_proc);
+
+        while (remaining) {
+            block_index++;
+
+            if(0 == block_index) {
+                send_mem_address = (ptrdiff_t) (data->decoded_iov[data->iov_index].iov_base) +
+                                                data->current_position;
+            }
+            else {
+                // Reallocate more memory if blocklength_size is not enough
+                if(0 == block_index % INIT_LEN) {
+                    blocklength_size += INIT_LEN;
+                    blocklength_proc = (int *)       realloc(blocklength_proc, blocklength_size * sizeof(int));
+                    displs_proc      = (ptrdiff_t *) realloc(displs_proc, blocklength_size * sizeof(ptrdiff_t));
+                }
+                displs_proc[block_index] = (ptrdiff_t) (data->decoded_iov[data->iov_index].iov_base) +
+                                                        data->current_position - send_mem_address;
+            }
+
+            if (remaining >=
+                (data->decoded_iov[data->iov_index].iov_len - data->current_position)) {
+
+                blocklength_proc[block_index] = data->decoded_iov[data->iov_index].iov_len -
+                                                data->current_position;
+                remaining = remaining -
+                            (data->decoded_iov[data->iov_index].iov_len - data->current_position);
+                data->iov_index = data->iov_index + 1;
+                data->current_position = 0;
+            }
+            else {
+                blocklength_proc[block_index] = remaining;
+                data->current_position += remaining;
+                remaining = 0;
+            }
+        }
+
+        data->total_bytes_written += bytes_sent;
+        data->bytes_sent = bytes_sent;
+
+        if ( 0 <= block_index ) {
+            ompi_datatype_create_hindexed(block_index+1,
+                                          blocklength_proc,
+                                          displs_proc,
+                                          MPI_BYTE,
+                                          &newType);
+            ompi_datatype_commit(&newType);
+
+            ret = MCA_PML_CALL(isend((char *)send_mem_address,
+                                     1,
+                                     newType,
+                                     aggregator,
+                                     FCOLL_DYNAMIC_GEN2_SHUFFLE_TAG+index,
+                                     MCA_PML_BASE_SEND_STANDARD,
+                                     data->comm,
+                                     &reqs[data->procs_per_group]));
+            if ( MPI_DATATYPE_NULL != newType ) {
+                ompi_datatype_destroy(&newType);
+            }
+            if (OMPI_SUCCESS != ret){
+                goto exit;
+            }
+        }
     }
 
     
@@ -1288,6 +1288,8 @@ exit:
     free(sorted_file_offsets);
     free(file_offsets_for_agg);
     free(memory_displacements);
+    free(blocklength_proc);
+    free(displs_proc);
     
     return OMPI_SUCCESS;
 }
