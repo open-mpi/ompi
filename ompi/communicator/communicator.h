@@ -634,6 +634,11 @@ OMPI_DECLSPEC int ompi_comm_revoke_internal(ompi_communicator_t* comm);
 OMPI_DECLSPEC int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** newcomm);
 
 /*
+ * Shrink the communicator
+ */
+OMPI_DECLSPEC int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** newcomm, ompi_request_t** request);
+
+/*
  * Check if the process is active
  */
 OMPI_DECLSPEC bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_id, bool remote);
