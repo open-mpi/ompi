@@ -34,8 +34,9 @@ int mca_atomic_mxm_cswap(void *target,
     mxm_send_req_t sreq;
 
     mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
+    memcpy(prev, value, nlong);
 
-    sreq.base.data.buffer.ptr = (void *) value;
+    sreq.base.data.buffer.ptr = prev;
     if (NULL == cond) {
         sreq.opcode = MXM_REQ_OP_ATOMIC_SWAP;
     } else {
@@ -44,8 +45,6 @@ int mca_atomic_mxm_cswap(void *target,
     }
 
     mca_atomic_mxm_post(&sreq);
-
-    memcpy(prev, value, nlong);
 
     return OSHMEM_SUCCESS;
 }
