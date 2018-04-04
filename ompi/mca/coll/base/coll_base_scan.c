@@ -23,7 +23,7 @@
 #include "ompi/op/op.h"
 
 /*
- * mca_coll_base_scan_intra_recursivedoubling
+ * ompi_coll_base_scan_intra_recursivedoubling
  *
  * Function:  Recursive doubling algorithm for inclusive scan.
  * Accepts:   Same as MPI_Scan
@@ -54,7 +54,7 @@
  * Memory requirements (per process): 2 * count * typesize = O(count)
  * Limitations: intra-communicators only
  */
-int mca_coll_base_scan_intra_recursivedoubling(
+int ompi_coll_base_scan_intra_recursivedoubling(
     const void *sendbuf, void *recvbuf, int count, struct ompi_datatype_t *datatype,
     struct ompi_op_t *op, struct ompi_communicator_t *comm,
     mca_coll_base_module_t *module)
