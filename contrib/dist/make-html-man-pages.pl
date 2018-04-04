@@ -76,7 +76,7 @@ sub doit {
 # Autogen if we don't have a configure script
 doit("./autogen.pl")
     if (! -x "configure");
-doit("./configure --prefix=$prefix --enable-mpi-ext=all");
+doit("./configure --prefix=$prefix --enable-mpi-ext=all --without-cs-fs");
 
 # Find this OMPI's version
 my $version = `fgrep PACKAGE_VERSION opal/include/opal_config.h | cut -d\\\" -f2`;
