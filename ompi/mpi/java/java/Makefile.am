@@ -3,6 +3,8 @@
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -73,7 +75,6 @@ if OMPI_WANT_JAVA_BINDINGS
 # from JAVA_SRC_FILES.
 JAVA_H = \
 	mpi_MPI.h          \
-	mpi_CartParms.h    \
 	mpi_CartComm.h     \
 	mpi_Comm.h         \
 	mpi_Constant.h     \
@@ -81,7 +82,6 @@ JAVA_H = \
 	mpi_Datatype.h     \
 	mpi_Errhandler.h   \
 	mpi_File.h         \
-	mpi_GraphParms.h   \
 	mpi_GraphComm.h    \
 	mpi_Group.h        \
 	mpi_Info.h         \
@@ -91,9 +91,7 @@ JAVA_H = \
 	mpi_Op.h           \
 	mpi_Prequest.h     \
 	mpi_Request.h      \
-	mpi_ShiftParms.h   \
 	mpi_Status.h       \
-	mpi_Version.h	   \
 	mpi_Win.h
 
 # A little verbosity magic; see Makefile.ompi-rules for an explanation.
