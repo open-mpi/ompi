@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,8 +58,8 @@ BEGIN_C_DECLS
     OMPI_DECLSPEC int ompi_fortran_string_c2f(char *cstr, char *fstr, int len);
 
     /**
-     * Convert an array of Fortran strings to an argv-style array of C
-     * strings.
+     * Convert an array of Fortran strings that are terminated with a
+     * blank line to an argv-style array of C strings.
      *
      * @param farray Array of fortran strings
      * @param string_len Length of each fortran string in the array
@@ -86,8 +86,29 @@ BEGIN_C_DECLS
      * number_of_argv_arrays).  Hence, the advance parameter is used
      * to specify this displacement.
      */
-    OMPI_DECLSPEC int ompi_fortran_argv_f2c(char *farray, int string_len,
-                                            int advancex, char ***cargv);
+    OMPI_DECLSPEC int ompi_fortran_argv_blank_f2c(char *farray, int string_len,
+                                                  int advancex, char ***cargv);
+
+    /**
+     * Convert an array of a specific number of Fortran strings to an
+     * argv-style array of C strings.
+     *
+     * @param farray Array of fortran strings
+     * @param farray_length Number of entries in the farray array
+     * @param string_len Length of each fortran string in the array
+     * @param advance Number of bytes to advance to get to the next string
+     * @param cargv Returned argv-style array of C strings
+     *
+     * @retval OMPI_SUCCESS upon success
+     * @retval OMPI_ERROR upon error
+     *
+     * This function is just like ompi_fortran_argv_blank_f2c(),
+     * except that it uses farray_length to determine the length of
+     * farray (vs. looking for a blank string to look for the end of
+     * the array).
+     */
+    OMPI_DECLSPEC int ompi_fortran_argv_count_f2c(char *farray, int farray_length, int string_len,
+                                                  int advancex, char ***cargv);
 
     /**
      * Convert an array of argvs to a C style array of argvs
