@@ -13,7 +13,7 @@
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -229,7 +229,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 found = true;
                 if (slots_given) {
                     node->slots += slots;
-                    if (0 < slots) {
+                    if (0 <= slots) {
                         ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
                     }
                 } else {
@@ -259,7 +259,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             node->slots_max = 0;
             if (slots_given) {
                 node->slots = slots;
-                if (0 < slots) {
+                if (0 <= slots) {
                     ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
                 }
             } else if (slots < 0) {
