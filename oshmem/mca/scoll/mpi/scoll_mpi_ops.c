@@ -256,9 +256,9 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
                 SCOLL_DEFAULT_ALG);
         return rc;
     }
-    rc = mpi_module->comm->c_coll->coll_allreduce(sbuf, rbuf, (int)count, dtype, h_op, mpi_module->comm, mpi_module->comm->c_coll->coll_allreduce_module);
+    rc = mpi_module->comm->c_coll->coll_allreduce( (sbuf == rbuf ? MPI_IN_PLACE : sbuf) , rbuf, (int)count, dtype, h_op, mpi_module->comm, mpi_module->comm->c_coll->coll_allreduce_module);
 #else
-    rc = mpi_module->comm->c_coll->coll_allreduce(sbuf, rbuf, count, dtype, h_op, mpi_module->comm, mpi_module->comm->c_coll->coll_allreduce_module);
+    rc = mpi_module->comm->c_coll->coll_allreduce( (sbuf == rbuf ? MPI_IN_PLACE : sbuf), rbuf, count, dtype, h_op, mpi_module->comm, mpi_module->comm->c_coll->coll_allreduce_module);
 #endif
     if (OMPI_SUCCESS != rc){
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK REDUCE");
