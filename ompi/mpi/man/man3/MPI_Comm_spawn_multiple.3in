@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
@@ -248,6 +248,15 @@ Other restrictions apply to the
 parameter; see MPI_Comm_spawn(3)'s description of the
 .I argv
 parameter for more details.
+.sp
+MPI-3.1 implies (but does not directly state) that the argument
+\fIarray_of_commands\fP must be an array of strings of length
+\fIcount\fP.  Unlike the \fIarray_of_argv\fP parameter,
+\fIarray_of_commands\fP does not need to be terminated with a NULL
+pointer in C or a blank string in Fortran.  Older versions of Open MPI
+required that \fIarray_of_commands\fP be terminated with a blank
+string in Fortran; that is no longer required in this version of Open
+MPI.
 .sp
 Calling MPI_Comm_spawn(3) many times would create many sets of
 children with different MPI_COMM_WORLDs, whereas
