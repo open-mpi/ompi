@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +58,27 @@ BEGIN_C_DECLS
      * fortran string is already allocated and has a length of len.
      */
     OMPI_DECLSPEC int ompi_fortran_string_c2f(char *cstr, char *fstr, int len);
+
+    /**
+     * Convert an array of count Fortran strings to an argv-style array of C
+     * strings.
+     *
+     * @param farray Array of fortran strings
+     * @param count Size of the Fortran strings array
+     * @param string_len Length of each fortran string in the array
+     * @param cargv Returned argv-style array of C strings
+     *
+     * @retval OMPI_SUCCESS upon success
+     * @retval OMPI_ERROR upon error
+     *
+     * This function is intented to be used in the MPI F77 bindings to
+     * convert arrays of fortran strings to argv-style arrays of C
+     * strings.  The argv array will be allocated and returned; it is
+     * the caller's responsibility to invoke opal_argv_free() to free
+     * it later (or equivalent).
+     */
+    OMPI_DECLSPEC int ompi_fortran_args_f2c(char *farray, int count,
+                                            int string_len, char ***cargv);
 
     /**
      * Convert an array of Fortran strings to an argv-style array of C

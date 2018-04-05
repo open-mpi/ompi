@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -136,6 +136,40 @@ int ompi_fortran_argv_f2c(char *array, int string_len, int advance,
     }
 
     free(cstr);
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ * creates a C argument vector from an F77 array of strings
+ */
+int ompi_fortran_args_f2c(char *array, int count,
+                          int string_len, char ***argv)
+{
+    int err, argc = 0;
+    char *cstr;
+
+    /* Fortran lines up strings in memory, each delimited by \0.  So
+       just convert them until we hit an extra \0. */
+
+    *argv = NULL;
+    for (int i=0; i < count ; i++) {
+	if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, string_len,
+                                                           &cstr))) {
+	    opal_argv_free(*argv);
+	    return err;
+	}
+
+	if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
+	    opal_argv_free(*argv);
+            free(cstr);
+	    return err;
+	}
+
+	free(cstr);
+	array += string_len;
+    }
+
     return OMPI_SUCCESS;
 }
 
