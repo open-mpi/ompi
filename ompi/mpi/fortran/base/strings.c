@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -101,11 +101,19 @@ int ompi_fortran_string_c2f(char *cstr, char *fstr, int len)
 
 
 /*
- * creates a C argument vector from an F77 array of strings
- * (terminated by a blank string)
+ * Creates a C argument vector from an F77 array of strings.  The
+ * array is terminated by a blank string.
+ *
+ * This function is quite similar to ompi_fortran_argv_count_f2c(),
+ * that it looks for a blank string to know when it has finished
+ * traversing the entire array (vs. having the length of the array
+ * passed in as a parameter).
+ *
+ * This function is used to convert "argv" in MPI_COMM_SPAWN (which is
+ * defined to be terminated by a blank string).
  */
-int ompi_fortran_argv_f2c(char *array, int string_len, int advance,
-                          char ***argv)
+int ompi_fortran_argv_blank_f2c(char *array, int string_len, int advance,
+                                char ***argv)
 {
     int err, argc = 0;
     char *cstr;
@@ -141,8 +149,52 @@ int ompi_fortran_argv_f2c(char *array, int string_len, int advance,
 
 
 /*
- * Creates a set of C argv arrays from an F77 array of argv's.  The
- * returned arrays need to be freed by the caller.
+ * Creates a C argument vector from an F77 array of array_len strings.
+ *
+ * This function is quite similar to ompi_fortran_argv_blank_f2c(),
+ * except that the length of the array is a parameter (vs. looking for
+ * a blank line to end the array).
+ *
+ * This function is used to convert "array_of_commands" in
+ * MPI_COMM_SPAWN_MULTIPLE (which is not precisely defined, but is
+ * assumed to be of length "count", and *not* terminated by a blank
+ * line).
+ */
+int ompi_fortran_argv_count_f2c(char *array, int array_len, int string_len, int advance,
+                                char ***argv)
+{
+    int err, argc = 0;
+    char *cstr;
+
+    /* Fortran lines up strings in memory, each delimited by \0.  So
+       just convert them until we hit an extra \0. */
+
+    *argv = NULL;
+    for (int i = 0; i < array_len; ++i) {
+	if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, string_len,
+                                                           &cstr))) {
+	    opal_argv_free(*argv);
+	    return err;
+	}
+
+	if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
+	    opal_argv_free(*argv);
+            free(cstr);
+	    return err;
+	}
+
+	free(cstr);
+	array += advance;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ * Creates a set of C argv arrays from an F77 array of argv's (where
+ * each argv array is terminated by a blank string).  The returned
+ * arrays need to be freed by the caller.
  */
 int ompi_fortran_multiple_argvs_f2c(int num_argv_arrays, char *array,
                                     int string_len, char ****argv)
@@ -155,9 +207,9 @@ int ompi_fortran_multiple_argvs_f2c(int num_argv_arrays, char *array,
     argv_array = (char ***) malloc (num_argv_arrays * sizeof(char **));
 
     for (i = 0; i < num_argv_arrays; ++i) {
-        ret = ompi_fortran_argv_f2c(current_array, string_len,
-                                    string_len * num_argv_arrays,
-                                    &argv_array[i]);
+        ret = ompi_fortran_argv_blank_f2c(current_array, string_len,
+                                          string_len * num_argv_arrays,
+                                          &argv_array[i]);
         if (OMPI_SUCCESS != ret) {
             free(argv_array);
             return ret;
