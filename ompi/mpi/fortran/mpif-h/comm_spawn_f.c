@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -101,7 +101,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     if (OMPI_IS_FORTRAN_ARGV_NULL(argv)) {
         c_argv = MPI_ARGV_NULL;
     } else {
-        ompi_fortran_argv_f2c(argv, string_len, string_len, &c_argv);
+        ompi_fortran_argv_blank_f2c(argv, string_len, string_len, &c_argv);
     }
 
     c_ierr = PMPI_Comm_spawn(c_command, c_argv,

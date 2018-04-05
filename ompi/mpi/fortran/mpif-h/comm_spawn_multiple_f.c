@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -115,8 +115,8 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 
     OMPI_ARRAY_FINT_2_INT(array_maxprocs, array_size);
 
-    ompi_fortran_argv_f2c(array_commands, cmd_string_len,
-                          cmd_string_len, &c_array_commands);
+    ompi_fortran_argv_count_f2c(array_commands, array_size, cmd_string_len,
+                                cmd_string_len, &c_array_commands);
 
     c_info = (MPI_Info *) malloc (array_size * sizeof(MPI_Info));
     for (i = 0; i < array_size; ++i) {
