@@ -690,7 +690,7 @@ int ompi_coll_tuned_scan_intra_dec_dynamic(const void *sbuf, void* rbuf, int cou
     if (tuned_module->user_forced[SCAN].algorithm) {
         return ompi_coll_tuned_scan_intra_do_this(sbuf, rbuf, count, dtype,
                                                   op, comm, module,
-                                                  tuned_module->user_forced[EXSCAN].algorithm);
+                                                  tuned_module->user_forced[SCAN].algorithm);
     }
 
     return ompi_coll_base_scan_intra_linear(sbuf, rbuf, count, dtype,
