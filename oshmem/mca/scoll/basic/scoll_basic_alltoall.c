@@ -99,7 +99,7 @@ static int _algorithm_simple(struct oshmem_group_t *group,
         rc = MCA_SPML_CALL(put(
                 (void *)((char *)target + j * tst * nelems * element_size),
                 nelems * element_size,
-                (void *)((char *)source + i * sst * nelems * element_size),
+                (void *)((char *)source + k * sst * nelems * element_size),
                 pe_cur));
         if (OSHMEM_SUCCESS != rc) {
             break;
