@@ -15,7 +15,7 @@ dnl                         reserved.
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
+dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
 dnl $COPYRIGHT$
@@ -37,7 +37,7 @@ AC_DEFUN([OPAL_SETUP_JAVA_BANNER],[
 AC_DEFUN([OPAL_SETUP_JAVA],[
     AC_REQUIRE([OPAL_SETUP_JAVA_BANNER])
 
-    OPAL_VAR_SCOPE_PUSH([opal_java_bad opal_java_found opal_java_dir opal_java_jnih opal_java_PATH_save opal_java_CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([opal_java_bad opal_javah_happy opal_java_found opal_java_dir opal_java_jnih opal_java_PATH_save opal_java_CPPFLAGS_save])
     AC_ARG_ENABLE(java,
                   AC_HELP_STRING([--enable-java],
                                  [Enable Java-based support in the system - use this option to disable all Java-based compiler tests (default: enabled)]))
@@ -161,13 +161,13 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
             AS_IF([test -n "$with_jdk_bindir" && test "$with_jdk_bindir" != "yes" && test "$with_jdk_bindir" != "no"],
                   [PATH="$with_jdk_bindir:$PATH"])
             AC_PATH_PROG(JAVAC, javac)
-            AC_PATH_PROG(JAVAH, javah)
             AC_PATH_PROG(JAR, jar)
             AC_PATH_PROG(JAVADOC, javadoc)
+            AC_PATH_PROG(JAVAH, javah)
             PATH=$opal_java_PATH_save
 
-            # Check to see if we have all 4 programs.
-            AS_IF([test -z "$JAVAC" || test -z "$JAVAH" || test -z "$JAR" || test -z "$JAVADOC"],
+            # Check to see if we have all 3 programs.
+            AS_IF([test -z "$JAVAC" || test -z "$JAR" || test -z "$JAVADOC"],
                   [opal_java_happy=no
                    HAVE_JAVA_SUPPORT=0],
                   [opal_java_happy=yes
@@ -178,6 +178,21 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                   [opal_java_CPPFLAGS_save=$CPPFLAGS
                    # silence a stupid Mac warning
                    CPPFLAGS="$CPPFLAGS -DTARGET_RT_MAC_CFM=0"
+                   AC_MSG_CHECKING([javac -h])
+                   cat > Conftest.java << EOF
+public final class Conftest {
+    public native void conftest();
+}
+EOF
+                   AS_IF([$JAVAC -d . -h . Conftest.java > /dev/null 2>&1],
+                         [AC_MSG_RESULT([yes])],
+                         [AC_MSG_RESULT([no])
+                          AS_IF([test -n "$JAVAH"],
+                                [opal_javah_happy=yes],
+                                [opal_java_happy=no])])
+                   rm -f Conftest.java Conftest.class Conftest.h
+
+
                    AS_IF([test -n "$with_jdk_headers" && test "$with_jdk_headers" != "yes" && test "$with_jdk_headers" != "no"],
                          [OPAL_JDK_CPPFLAGS="-I$with_jdk_headers"
                           # Some flavors of JDK also require -I<blah>/linux.
@@ -216,5 +231,6 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
 
     AC_DEFINE_UNQUOTED([OPAL_HAVE_JAVA_SUPPORT], [$HAVE_JAVA_SUPPORT], [do we have Java support])
     AM_CONDITIONAL(OPAL_HAVE_JAVA_SUPPORT, test "$opal_java_happy" = "yes")
+    AM_CONDITIONAL(OPAL_HAVE_JAVAH_SUPPORT, test "$opal_javah_happy" = "yes")
     OPAL_VAR_SCOPE_POP
 ])

@@ -4,6 +4,8 @@
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -74,7 +76,6 @@ if OMPI_WANT_JAVA_BINDINGS
 # from JAVA_SRC_FILES.
 JAVA_H = \
 	mpi_MPI.h          \
-	mpi_CartParms.h    \
 	mpi_CartComm.h     \
 	mpi_Comm.h         \
 	mpi_Constant.h     \
@@ -82,7 +83,6 @@ JAVA_H = \
 	mpi_Datatype.h     \
 	mpi_Errhandler.h   \
 	mpi_File.h         \
-	mpi_GraphParms.h   \
 	mpi_GraphComm.h    \
 	mpi_Group.h        \
 	mpi_Info.h         \
@@ -92,9 +92,7 @@ JAVA_H = \
 	mpi_Op.h           \
 	mpi_Prequest.h     \
 	mpi_Request.h      \
-	mpi_ShiftParms.h   \
 	mpi_Status.h       \
-	mpi_Version.h	   \
 	mpi_Win.h
 
 # A little verbosity magic; see Makefile.ompi-rules for an explanation.
@@ -140,6 +138,7 @@ ompi__v_JAVADOC_QUIET_0 = -quiet
 # in.  This, along with the fact that the .java files seem to have
 # circular references, prevents us from using a .foo.bar: generic
 # Makefile rule. :-(
+if OPAL_HAVE_JAVAH_SUPPORT
 mpi/MPI.class: $(JAVA_SRC_FILES)
 	$(OMPI_V_JAVAC) CLASSPATH=. ; \
 	export CLASSPATH ; \
@@ -148,11 +147,18 @@ mpi/MPI.class: $(JAVA_SRC_FILES)
 # Similar to above, all the generated .h files are dependent upon the
 # token mpi/MPI.class file.  Hence, all the classes will be generated
 # first, then we'll individually generate each of the .h files.
+
 $(JAVA_H): mpi/MPI.class
 	$(OMPI_V_JAVAH) sourcename=mpi.`echo $@ | sed -e s/^mpi_// -e s/.h$$//`; \
 	CLASSPATH=. ; \
 	export CLASSPATH ; \
 	$(JAVAH) -d . -jni $$sourcename
+else
+mpi/MPI.class: $(JAVA_SRC_FILES)
+	$(OMPI_V_JAVAC) CLASSPATH=. ; \
+	export CLASSPATH ; \
+	$(JAVAC) -h . -d . $(top_srcdir)/ompi/mpi/java/java/*.java
+endif # OPAL_HAVE_JAVAH_SUPPORT
 
 # Generate the .jar file from all the class files.  List mpi/MPI.class
 # as a dependency so that it fires the rule above that will generate
@@ -171,7 +177,11 @@ java_DATA = mpi.jar
 # List all the header files in BUILT_SOURCES so that Automake's "all"
 # target will build them.  This will also force the building of the
 # mpi/*.class files (for the jar file).
+if OPAL_HAVE_JAVAH_SUPPORT
 BUILT_SOURCES = $(JAVA_H) doc
+else
+BUILT_SOURCES = mpi/MPI.class doc
+endif
 
 # Convenience for building Javadoc docs
 jdoc: doc
