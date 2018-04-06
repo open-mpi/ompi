@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -72,6 +72,46 @@ Master (not on release branches yet)
 - Remove support for big endian PowerPC.
 - Remove support for XL compilers older than v13.1
 - Fix rank-by algorithms to properly rank by object and span
+
+3.0.1 -- March, 2018
+----------------------
+
+- Fix ability to attach parallel debuggers to MPI processes.
+- Fix a number of issues in MPI I/O found by the HDF5 test suite.
+- Fix (extremely) large message transfers with shared memory.
+- Fix out of sequence bug in multi-NIC configurations.
+- Fix stdin redirection bug that could result in lost input.
+- Disable the LSF launcher if CSM is detected.
+- Plug a memory leak in MPI_Mem_free().  Thanks to Philip Blakely for reporting.
+- Fix the tree spawn operation when the number of nodes is larger than the radix.
+  Thanks to Carlos Eduardo de Andrade for reporting.
+- Fix Fortran 2008 macro in MPI extensions.  Thanks to Nathan T. Weeks for
+  reporting.
+- Add UCX to list of interfaces that OpenSHMEM will use by default.
+- Add --{enable|disable}-show-load-errors-by-default to control
+  default behavior of the load errors option.
+- OFI MTL improvements: handle empty completion queues properly, fix
+  incorrect error message around fi_getinfo(), use default progress
+  option for provider by default, Add support for reading multiple
+  CQ events in ofi_progress.
+- PSM2 MTL improvements: Allow use of GPU buffers, thread fixes.
+- Numerous corrections to memchecker behavior.
+- Add a mca parameter ras_base_launch_orted_on_hn to allow for launching
+  MPI processes on the same node where mpirun is executing using a separate
+  orte daemon, rather than the mpirun process.   This may be useful to set to
+  true when using SLURM, as it improves interoperability with SLURM's signal
+  propagation tools.  By default it is set to false, except for Cray XC systems.
+- Fix a problem reported on the mailing separately by Kevin McGrattan and Stephen
+  Guzik about consistency issues on NFS file systems when using OMPIO. This fix
+  also introduces a new mca parameter fs_ufs_lock_algorithm which allows to
+  control the locking algorithm used by ompio for read/write operations. By
+  default, ompio does not perfom locking on local UNIX file systems, locks the
+  entire file per operation on NFS file systems, and selective byte-range
+  locking on other distributed file systems.
+- Add an mca parameter pmix_server_usock_connections to allow mpirun to
+  support applications statically built against the Open MPI v2.x release,
+  or installed in a container along with the Open MPI v2.x libraries. It is
+  set to false by default.
 
 3.0.0 -- September, 2017
 ------------------------
