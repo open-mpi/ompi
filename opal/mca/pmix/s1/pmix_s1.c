@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -223,7 +223,7 @@ static int s1_init(opal_list_t *ilist)
     s1_pname.jobid = strtoul(pmix_id, &str, 10);
     s1_pname.jobid = (s1_pname.jobid << 16) & 0xffff0000;
     if (NULL != str) {
-        ui32 = strtoul(str, NULL, 10);
+        ui32 = strtoul(str+1, NULL, 10);
         s1_pname.jobid |= (ui32 & 0x0000ffff);
     }
     ldr.jobid = s1_pname.jobid;
