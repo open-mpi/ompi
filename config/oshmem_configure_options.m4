@@ -153,7 +153,7 @@ fi
 
 #
 # We can't set am_conditional here since it's yet unknown if there is
-# valid Fortran compiler avaliable
+# valid Fortran compiler available
 #
 
 ]) dnl

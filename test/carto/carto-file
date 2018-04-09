@@ -20,7 +20,7 @@
   NODE               Ethernet                  eth1
 #
 #
-# Connection decleration  From node   To node:weight   To node:weight   ......
+# Connection declaration  From node   To node:weight   To node:weight   ......
 # (Reserve word)          (declered   (declered        (declered
 #                          above)      above)           above)
 #===============================================================================================

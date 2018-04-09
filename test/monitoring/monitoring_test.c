@@ -302,7 +302,7 @@ int main(int argc, char* argv[])
       if( rank%2 ) {
         MPI_Win_post(distant_group, 0, win);
         MPI_Win_wait(win);
-        /* Check recieved values */
+        /* Check received values */
         for( int v = 0; v < 10240; ++v )
 	  if( from != win_buff[v] ) {
 	    printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
@@ -327,7 +327,7 @@ int main(int argc, char* argv[])
 
       MPI_Barrier(MPI_COMM_WORLD);
 
-      /* Check recieved values */
+      /* Check received values */
       for( int v = 0; v < 10240; ++v )
         if( from != win_buff[v] ) {
 	  printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",

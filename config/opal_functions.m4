@@ -42,7 +42,7 @@ dnl
 AC_DEFUN([OPAL_CONFIGURE_SETUP],[
 
 # Some helper script functions.  Unfortunately, we cannot use $1 kinds
-# of arugments here because of the m4 substitution.  So we have to set
+# of arguments here because of the m4 substitution.  So we have to set
 # special variable names before invoking the function.  :-\
 
 opal_show_title() {
@@ -322,7 +322,7 @@ dnl #######################################################################
 # OPAL_APPEND_UNIQ(variable, new_argument)
 # ----------------------------------------
 # Append new_argument to variable if not already in variable.  This assumes a
-# space seperated list.
+# space separated list.
 #
 # This could probably be made more efficient :(.
 AC_DEFUN([OPAL_APPEND_UNIQ], [
@@ -453,7 +453,7 @@ dnl #######################################################################
 # - the argument does not begin with -I, -L, or -l, or
 # - the argument begins with -I, -L, or -l, and it's not already in variable
 #
-# This macro assumes a space seperated list.
+# This macro assumes a space separated list.
 AC_DEFUN([OPAL_FLAGS_APPEND_UNIQ], [
     OPAL_VAR_SCOPE_PUSH([opal_tmp opal_append])
 
@@ -649,7 +649,7 @@ AC_DEFUN([OPAL_COMPUTE_MAX_VALUE], [
                     overflow=1
                 fi
             else
-                # stil negative.  Time to give up.
+                # still negative.  Time to give up.
                 overflow=1
             fi
             opal_num_bits=0

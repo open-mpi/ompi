@@ -115,7 +115,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE(convertor);
 
     /**
-     * The datatype is not usefull anymore
+     * The datatype is not useful anymore
      */
     OBJ_RELEASE(sparse);
 

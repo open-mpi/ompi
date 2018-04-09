@@ -187,7 +187,7 @@ static int local_copy_ddt_count( opal_datatype_t const * const pdt, int count )
             }
         }
         if( 0 == errors ) {
-            printf("Validation check succesfully passed\n");
+            printf("Validation check successfully passed\n");
         } else {
             printf("Found %d errors. Giving up!\n", errors);
             exit(-1);
@@ -473,7 +473,7 @@ static int local_copy_with_convertor( opal_datatype_t const * const pdt, int cou
             }
         }
         if( 0 == errors ) {
-            printf("Validation check succesfully passed\n");
+            printf("Validation check successfully passed\n");
         } else {
             printf("Found %d errors. Giving up!\n", errors);
             exit(-1);

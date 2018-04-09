@@ -24,7 +24,7 @@
 # This file create as an output one heatmap per operation
 # tested. Currently, tested operations are :
 #   - MPI_Send (software overhead)
-#   - MPI_Send (ping-pong, to measure theoverhead with the communciation time)
+#   - MPI_Send (ping-pong, to measure the overhead with the communication time)
 #   - MPI_Bcast
 #   - MPI_Alltoall
 #   - MPI_Put

@@ -22,7 +22,7 @@ AC_DEFUN([OMPI_CXX_HAVE_EXCEPTIONS],[
 #
 # Arguments: None
 #
-# Depdencies: None
+# Dependencies: None
 #
 # Check to see if the C++ compiler can handle exceptions
 #

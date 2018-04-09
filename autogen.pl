@@ -915,7 +915,7 @@ sub patch_autotools_output {
     # Patch ltmain.sh error for PGI version numbers.  Redirect stderr to
     # /dev/null because this patch is only necessary for some versions of
     # Libtool (e.g., 2.2.6b); it'll [rightfully] fail if you have a new
-    # enough Libtool that dosn't need this patch.  But don't alarm the
+    # enough Libtool that doesn't need this patch.  But don't alarm the
     # user and make them think that autogen failed if this patch fails --
     # make the errors be silent.
     # Also patch ltmain.sh for NAG compiler
@@ -935,7 +935,7 @@ sub patch_autotools_output {
     my @verbose_out;
 
     # Total ugh.  We have to patch the configure script itself.  See below
-    # for explainations why.
+    # for explanations why.
     open(IN, "configure") || my_die "Can't open configure";
     my $c;
     $c .= $_

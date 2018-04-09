@@ -71,7 +71,7 @@ static void test(bool thread_usage){
     if( (array->size - array->number_free) == test_len_in_array) {
         test_success();
     } else {
-        test_failure("check on number of elments in array");
+        test_failure("check on number of elements in array");
     }
 
     /* check order of data */

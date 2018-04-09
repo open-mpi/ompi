@@ -52,10 +52,10 @@ main (int argc, char **argv)
 	opal_event_t timeout;
 	struct timeval tv;
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	opal_event_init();
 
-	/* Initalize one event */
+	/* Initialize one event */
 	opal_evtimer_set(&timeout, timeout_cb, &timeout);
 
 	timerclear(&tv);
