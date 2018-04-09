@@ -112,7 +112,7 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
     AS_VAR_SET(fortran_ignore_tkr_data,
                [${happy}:${ompi_fortran_ignore_tkr_type}:${ompi_fortran_ignore_tkr_predecl}])
 
-    # Now put the orignal CACHE_CHECK MSG_CHECKING back so that it can
+    # Now put the original CACHE_CHECK MSG_CHECKING back so that it can
     # output the MSG_RESULT.
     AC_MSG_CHECKING([Fortran compiler ignore TKR syntax])
     OPAL_VAR_SCOPE_POP

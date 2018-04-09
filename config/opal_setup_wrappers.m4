@@ -68,7 +68,7 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
 # That is, a component may not influence CFLAGS, CXXFLAGS, or FCFLAGS.
 #
 # Notes:
-#   * Keep user flags seperate as 1) they should have no influence
+#   * Keep user flags separate as 1) they should have no influence
 #     over build and 2) they don't go through the uniqification we do
 #     with the other wrapper compiler options
 #   * While the user (the person who runs configure) is allowed to set

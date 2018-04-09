@@ -123,10 +123,10 @@ main (int argc, char **argv)
 
 	fprintf(stderr, "Write data to %s\n", fifo);
 #endif
-	/* Initalize the event library */
+	/* Initialize the event library */
 	opal_init();
 
-	/* Initalize one event */
+	/* Initialize one event */
 #ifdef WIN32
 	opal_event.set(opal_event_base, &evfifo, (int)socket, OPAL_EV_READ, fifo_read, &evfifo);
 #else

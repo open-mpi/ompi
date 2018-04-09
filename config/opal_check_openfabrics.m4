@@ -57,7 +57,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
             # Enable padding for SPARC platforms by default  because the
             # btl will segv otherwise.  Keep padding disabled for other
             # platforms since there are some performance implications with
-            #  padding on for those plaforms.
+            #  padding on for those platforms.
             #
             case "${host}" in
 		sparc*)

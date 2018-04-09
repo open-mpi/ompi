@@ -3,7 +3,7 @@
 #  ====
 #  run script for mpi environment tests
 
-# Arguements
+# Arguments
 # ==========
 #
 # test_list  =  no args or all runs all tests

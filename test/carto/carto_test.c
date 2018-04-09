@@ -56,13 +56,13 @@ main(int argc, char* argv[])
         opal_graph_print(graph);
         slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
-            opal_output(0,"couldnt find slot0 in the graph exiting\n");
+            opal_output(0,"couldn't find slot0 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }
         end_node = opal_carto_base_find_node(graph, "slot3");
         if (NULL == end_node) {
-            opal_output(0,"couldnt find mthca1 in the graph exiting\n");
+            opal_output(0,"couldn't find mthca1 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }
@@ -87,13 +87,13 @@ main(int argc, char* argv[])
         opal_graph_print(graph);
         slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
-            opal_output(0,"couldnt find slot0 in the graph exiting\n");
+            opal_output(0,"couldn't find slot0 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }
         end_node = opal_carto_base_find_node(graph, "mthca1");
         if (NULL == end_node) {
-            opal_output(0,"couldnt find mthca1 in the graph exiting\n");
+            opal_output(0,"couldn't find mthca1 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }
@@ -118,13 +118,13 @@ main(int argc, char* argv[])
         opal_graph_print(graph);
         slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
-            opal_output(0,"couldnt find slot0 in the graph exiting\n");
+            opal_output(0,"couldn't find slot0 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }
         end_node = opal_carto_base_find_node(graph, "eth1");
         if (NULL == end_node) {
-            opal_output(0,"couldnt find mthca1 in the graph exiting\n");
+            opal_output(0,"couldn't find mthca1 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }
@@ -149,13 +149,13 @@ main(int argc, char* argv[])
         opal_graph_print(graph);
         slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
-            opal_output(0,"couldnt find slot0 in the graph exiting\n");
+            opal_output(0,"couldn't find slot0 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }
         end_node = opal_carto_base_find_node(graph, "mem3");
         if (NULL == end_node) {
-            opal_output(0,"couldnt find mthca1 in the graph exiting\n");
+            opal_output(0,"couldn't find mthca1 in the graph exiting\n");
             opal_carto_base_free_graph(graph);
             return -1;
         }

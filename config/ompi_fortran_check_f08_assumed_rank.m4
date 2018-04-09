@@ -54,7 +54,7 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
 
     AS_VAR_SET(fortran_f08_assumed_rank, [$happy]);
 
-    # Now put the orignal CACHE_CHECK MSG_CHECKING back so that it can
+    # Now put the original CACHE_CHECK MSG_CHECKING back so that it can
     # output the MSG_RESULT.
     AC_MSG_CHECKING([Fortran compiler F08 assumed rank syntax])
     OPAL_VAR_SCOPE_POP

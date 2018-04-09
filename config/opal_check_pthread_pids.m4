@@ -69,7 +69,7 @@ void *checkpid(void *arg) {
 [MSG=no OPAL_THREADS_HAVE_DIFFERENT_PIDS=0],
 [MSG=yes OPAL_THREADS_HAVE_DIFFERENT_PIDS=1],
 [
- # If we're cross compiling, we can't do another AC_* function here beause
+ # If we're cross compiling, we can't do another AC_* function here because
  # it we haven't displayed the result from the last one yet.  So defer
  # another test until below.
  OPAL_THREADS_HAVE_DIFFERENT_PIDS=

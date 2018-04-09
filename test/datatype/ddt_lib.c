@@ -418,7 +418,7 @@ ompi_datatype_t* test_contiguous( void )
 {
     ompi_datatype_t *pdt, *pdt1, *pdt2;
 
-    printf( "test contiguous (alignement)\n" );
+    printf( "test contiguous (alignment)\n" );
     ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt1);
     ompi_datatype_add( pdt1, &ompi_mpi_double.dt, 1, 0, -1 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {

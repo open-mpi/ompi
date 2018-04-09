@@ -611,7 +611,7 @@ opal_datatype_t* test_contiguous( void )
 {
     opal_datatype_t *pdt, *pdt1, *pdt2;
 
-    printf( "test contiguous (alignement)\n" );
+    printf( "test contiguous (alignment)\n" );
     opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt1);
     opal_datatype_add( pdt1, &opal_datatype_float8, 1, 0, -1 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {

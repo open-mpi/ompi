@@ -50,10 +50,10 @@ main (int argc, char **argv)
 {
     opal_event_t signal_int, signal_term;
 
-	/* Initalize the event library */
+	/* Initialize the event library */
 	opal_init();
 
-	/* Initalize one event */
+	/* Initialize one event */
 	opal_event.set(opal_event_base, &signal_term, SIGUSR1, OPAL_EV_SIGNAL|OPAL_EV_PERSIST, signal_cb,
 	    &signal_term);
 	opal_event.set(opal_event_base, &signal_int, SIGUSR2, OPAL_EV_SIGNAL|OPAL_EV_PERSIST, signal_cb,

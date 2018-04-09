@@ -186,7 +186,7 @@ dnl * library_name / function_name: check for function function_name in
 dnl   -llibrary_name.  Specifically, for library_name, use the "foo" form,
 dnl   as opposed to "libfoo".
 dnl * extra_libraries: if the library_name you are checking for requires
-dnl   additonal -l arguments to link successfully, list them here.
+dnl   additional -l arguments to link successfully, list them here.
 dnl * dir_prefix: if the header/library is located in a non-standard
 dnl   location (e.g., /opt/foo as opposed to /usr), list it here
 dnl * libdir_prefix: if the library is not under $dir_prefix/lib or

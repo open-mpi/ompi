@@ -52,11 +52,11 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI_EXPLICIT],[
 #
     AS_IF([test "$enable_static" = "yes"],
           [AS_IF([test -d /usr/lib/alps],
-                 [AC_MSG_RESULT([Detected presense of /usr/lib/alps])
+                 [AC_MSG_RESULT([Detected presence of /usr/lib/alps])
                   CRAY_PMI_LDFLAGS="$CRAY_PMI_LDFLAGS -L/usr/lib/alps -lalpslli -lalpsutil"
                   CRAY_PMI_LIBS="$CRAY_PMI_LIBS -L/usr/lib/alps -lalpslli -lalpsutil"],
                  [AS_IF([test -d /opt/cray/xe-sysroot/default/usr/lib/alps],
-                        [AC_MSG_RESULT([Detected presense of /opt/cray/xe-sysroot/default/usr/lib/alps])
+                        [AC_MSG_RESULT([Detected presence of /opt/cray/xe-sysroot/default/usr/lib/alps])
                          CRAY_PMI_LDFLAGS="$CRAY_PMI_LDFLAGS -L/opt/cray/xe-sysroot/default/usr/lib/alps -lalpslli -lalpsutil"
                          CRAY_PMI_LIBS="$CRAY_PMI_LIBS -L/opt/cray/xe-sysroot/default/usr/lib/alps -lalpslli -lalpsutil"],
                         [AC_MSG_ERROR([Requested enabling static linking but unable to local libalpslli and libalpsutil])])

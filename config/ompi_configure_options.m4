@@ -75,7 +75,7 @@ else
     GROUP_SPARSE=0
 fi
 AC_DEFINE_UNQUOTED([OMPI_GROUP_SPARSE],$GROUP_SPARSE,
-    [Wether we want sparse process groups])
+    [Whether we want sparse process groups])
 
 
 #
