@@ -1398,45 +1398,36 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     OBJ_RELEASE(event);
     retval = mca_btl_tcp_recv_blocking(sd, (void *)&hs_msg, sizeof(hs_msg));
 
-    /* An unknown process attempted to connect to Open MPI via TCP.
-     * Open MPI uses a "magic" string to trivially verify that the connecting
-     * process is a fellow Open MPI process.  An MPI process accepted a TCP
-     * connection but did not receive the correct magic string.  This might
-     * indicate an Open MPI version mismatch between different MPI processes
-     * in the same job, or it may indicate that some other agent is
-     * mistakenly attempting to connect to Open MPI's TCP listening sockets.
+    /* If we get a zero-length message back, it's likely that we
+       connected to Open MPI peer process X simultaneously, and the
+       peer closed its connection to us (in favor of our connection to
+       them).  This is not an error -- just close it and move on.
 
-     * This attempted connection will be ignored; your MPI job may or may not
-     * continue properly.
-     */
-    if (sizeof(hs_msg) != retval) {
+       Similarly, if we get less than sizeof(hs_msg) bytes, it
+       probably wasn't an Open MPI peer.  But we don't really care,
+       because the peer closed the socket.  So just close it and move
+       on. */
+    if (retval < sizeof(hs_msg)) {
          const char *peer = opal_fd_get_peer_name(sd);
-         opal_show_help("help-mpi-btl-tcp.txt",
-                        "did not receive full magic id string",
-                        true,
-                        opal_process_info.nodename,
-                        getpid(),
-                        opal_version_string,
-                        peer);
+         opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                             "Peer %s closed socket without sending BTL TCP magic ID handshake (we received %d bytes out of the expected %d) -- closing/ignoring this connection",
+                             peer, (int) retval, (int) sizeof(hs_msg));
          free((char*) peer);
-
-         /* The other side probably isn't OMPI, so just hang up */
          CLOSE_THE_SOCKET(sd);
          return;
     }
 
+    /* Open MPI uses a "magic" string to trivially verify that the
+       connecting process is a fellow Open MPI process.  See if we got
+       the correct magic string. */
     guid = hs_msg.guid;
     if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
          const char *peer = opal_fd_get_peer_name(sd);
-         opal_show_help("help-mpi-btl-tcp.txt",
-                        "received incorrect magic id string",
-                        true,
-                        opal_process_info.nodename,
-                        getpid(),
-                        opal_version_string,
-                        peer,
-                        hs_msg.magic_id,
-                        mca_btl_tcp_magic_id_string);
+         opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                             "Peer %s send us an incorrect Open MPI magic ID string (i.e., this was not a connection from the same version of Open MPI; expected \"%s\", received \"%s\")",
+                             peer,
+                             mca_btl_tcp_magic_id_string,
+                             hs_msg.magic_id);
          free((char*) peer);
 
         /* The other side probably isn't OMPI, so just hang up */

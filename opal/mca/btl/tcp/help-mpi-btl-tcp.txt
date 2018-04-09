@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2015-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -167,43 +167,3 @@ Your Open MPI job may now fail.
   PID:        %d
   Message:    %s
   Error:      %s (%d)
-#
-[did not receive full magic id string]
-The TCP BTL received an inbound socket connection from an unidentified
-peer.  This typically means one of two things:
-
-1. A non-Open MPI process tried to connect to this Open MPI process.
-2. An Open MPI process compiled against a different version of Open
-   MPI tried to connect to this Open MPI process.
-
-Open MPI only supports running exactly the same version between all
-processes in a single job.
-
-This may cause unpredictable behavior, and may end up aborting your
-job.
-
-  Local host:             %s
-  Local PID:              %d
-  Local Open MPI version: %s
-  Peer IP address:        %s
-#
-[received incorrect magic id string]
-The TCP BTL received an inbound socket connection from a peer that did
-not identify itself correctly as an Open MPI process. This typically
-means one of two things:
-
-1. A non-Open MPI process tried to connect to this Open MPI process.
-2. An Open MPI process compiled against a different version of Open
-   MPI tried to connect to this Open MPI process.
-
-Open MPI only supports running exactly the same version between all
-processes in a single job.
-
-This may cause unpredictable behavior, and may end up hanging or
-aborting your job.
-
-  Local host:             %s
-  Local PID:              %d
-  Local Open MPI version: %s
-  Peer IP address:        %s
-  Peer identifier:        %s (expected %s)
