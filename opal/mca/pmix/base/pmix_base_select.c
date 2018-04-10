@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,16 @@ int opal_pmix_base_select(void)
 {
     opal_pmix_base_component_t *best_component = NULL;
     opal_pmix_base_module_t *best_module = NULL;
+
+    // Set the PMIx component_show_load_errors MCA param based on the
+    // value of OPAL's mca_base_component_show_load_errors (i.e., the
+    // bool variable behind Open MPI's mca_component_show_load_errors
+    // MCA param).
+    char *pmix_show_load_errors_env = NULL;
+    asprintf(&pmix_show_load_errors_env,
+             "PMIX_MCA_mca_base_component_show_load_errors=%d",
+             mca_base_component_show_load_errors ? 1 : 0);
+    putenv(pmix_show_load_errors_env);
 
     /*
      * Select the best component
