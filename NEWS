@@ -39,6 +39,13 @@ it is possible for items to appear more than once in the list.
 3.0.2 -- May, 2018
 ------------------
 
+- Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
+  still not a supported platform, but it is no longer automatically
+  disabled.  See
+  https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
+  for more information.
+
+
 3.0.1 -- March, 2018
 ----------------------
 
