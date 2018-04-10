@@ -55,6 +55,17 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+3.1.1 -- TBD
+------------
+
+Bug fixes/minor improvements:
+- Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
+  still not a supported platform, but it is no longer automatically
+  disabled.  See
+  https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
+  for more information.
+
+
 3.1.0 -- March, 2018
 ----------------------
 
