@@ -13,24 +13,34 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_T_event_register_callback = PMPI_T_event_register_callback
 #endif
-#define MPI_T_event_register_callback PMPI_T_event_register_callback
+
+#if OMPI_PROFILING_DEFINES
+#include "ompi/mpi/tool/profile/defines.h"
 #endif
+
 
 int MPI_T_event_register_callback (MPI_T_event_registration event_registration,
                                    MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
                                    MPI_T_event_cb_function event_cb_function)
 {
+    mca_base_event_t * const event;
+    int ret;
+    
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    ompi_mpit_lock ();
+
+    ret = mca_base_event_register_callback (event_registration, (mca_base_cb_safety_t) cb_safety,
+                                            &info->super, user_data, (mca_base_event_cb_fn_t) event_cb_function);
+
+    ompi_mpit_unlock ();
+
+    return ompit_opal_to_mpit_error(ret);
 }

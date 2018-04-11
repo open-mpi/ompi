@@ -13,22 +13,26 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_T_event_read = PMPI_T_event_read
 #endif
-#define MPI_T_event_read PMPI_T_event_read
+
+#if OMPI_PROFILING_DEFINES
+#include "ompi/mpi/tool/profile/defines.h"
 #endif
+
 
 int MPI_T_event_read (MPI_T_event_instance event, int element_index, void *buffer)
 {
+    int ret;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    ret = mca_base_event_read (event, element_index, buffer);
+
+    return ompit_opal_to_mpit_error (ret);
 }
