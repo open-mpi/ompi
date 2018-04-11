@@ -25,7 +25,6 @@
  * Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -461,6 +460,8 @@ typedef struct ompi_mpit_cvar_handle_t *MPI_T_cvar_handle;
 typedef struct mca_base_pvar_handle_t *MPI_T_pvar_handle;
 typedef struct mca_base_pvar_session_t *MPI_T_pvar_session;
 typedef struct ompi_instance_t *MPI_Session;
+typedef struct mca_base_raised_event_t *MPI_T_event_instance;
+typedef struct mca_base_event_registration_t *MPI_T_event_registration;
 
 /*
  * MPI_Status
@@ -921,6 +922,41 @@ enum {
 };
 
 /*
+ * MPIT callback safety levels
+ */
+typedef enum {
+  MPI_T_CB_REQUIRE_NONE,
+  MPI_T_CB_REQUIRE_MPI_RESTRICTED,
+  MPI_T_CB_REQUIRE_THREAD_SAFE,
+  MPI_T_CB_REQUIRE_ASYNC_SIGNAL_SAFE
+} MPI_T_cb_safety;
+
+/*
+ * MPIT source ordering
+ */
+enum ompi_mpi_t_order_t {
+  MPI_T_ORDERED,
+  MPI_T_UNORDERED,
+};
+
+typedef enum ompi_mpi_t_order_t MPI_T_order;
+
+/*
+ * MPI Tool event functions
+ */
+typedef void (*MPI_T_event_free_cb_function) (MPI_T_event_registration handle,
+                                              MPI_T_cb_safety cb_safety,
+                                              void *user_data);
+typedef void (*MPI_T_event_dropped_cb_function) (int count,
+                                                 MPI_T_event_registration handle,
+                                                 MPI_T_cb_safety cb_safety,
+                                                 void *user_data);
+typedef void (*MPI_T_event_cb_function) (MPI_T_event_instance event,
+                                         MPI_T_event_registration handle,
+                                         MPI_T_cb_safety cb_safety,
+                                         void *user_data);
+
+/*
  * NULL handles
  */
 #define MPI_SESSION_NULL OMPI_PREDEFINED_GLOBAL(MPI_Session, ompi_mpi_instance_null)
@@ -955,6 +991,7 @@ enum {
 #define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle) 0)
 #define MPI_T_PVAR_SESSION_NULL ((MPI_T_pvar_session) 0)
 #define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle) 0)
+#define MPI_T_EVENT_REGISTRATION_NULL ((MPI_T_event_registration) 0)
 
 /* MPI-2 specifies that the name "MPI_TYPE_NULL_DELETE_FN" (and all
    related friends) must be accessible in C, C++, and Fortran. This is
@@ -2953,6 +2990,40 @@ OMPI_DECLSPEC  int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *nam
 OMPI_DECLSPEC  int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
                                         int *name_len);
 
+OMPI_DECLSPEC  int PMPI_T_event_get_num (int *num_events);
+OMPI_DECLSPEC  int PMPI_T_event_get_info (int event_index, char *name, int *name_len,
+                                          int *verbosity, MPI_Datatype *array_of_datatypes,
+                                          MPI_Aint *array_of_displacements, int *num_elements,
+                                          MPI_Aint *extent, MPI_T_enum *enumtype, MPI_Info *info,
+                                          char *desc, int *desc_len, int *bind);
+OMPI_DECLSPEC  int PMPI_T_event_get_index (const char *name, int *event_index);
+OMPI_DECLSPEC  int PMPI_T_event_handle_alloc (int event_index, void *obj_handle,
+                                              MPI_Info info, MPI_T_event_registration *event_registration);
+OMPI_DECLSPEC  int PMPI_T_event_handle_set_info (MPI_T_event_registration event_registration, MPI_Info info);
+OMPI_DECLSPEC  int PMPI_T_event_handle_get_info (MPI_T_event_registration event_registration,
+                                                    MPI_Info *info_used);
+OMPI_DECLSPEC  int PMPI_T_event_register_callback (MPI_T_event_registration event_registration,
+                                                   MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
+                                                   MPI_T_event_cb_function event_cb_function);
+OMPI_DECLSPEC  int PMPI_T_event_callback_set_info (MPI_T_event_registration event_registration,
+                                                    MPI_T_cb_safety cb_safety, MPI_Info info);
+OMPI_DECLSPEC  int PMPI_T_event_callback_get_info (MPI_T_event_registration event_registration,
+                                                   MPI_T_cb_safety cb_safety, MPI_Info *info_used);
+OMPI_DECLSPEC  int PMPI_T_event_handle_free (MPI_T_event_registration event_registration,
+                                             MPI_T_event_free_cb_function free_cb_function);
+OMPI_DECLSPEC  int PMPI_T_event_set_dropped_handler (MPI_T_event_registration handle,
+                                                     MPI_T_event_dropped_cb_function dropped_cb_function);
+OMPI_DECLSPEC  int PMPI_T_event_read (MPI_T_event_instance event, int element_index, void *buffer);
+OMPI_DECLSPEC  int PMPI_T_event_copy (MPI_T_event_instance event, void *buffer);
+OMPI_DECLSPEC  int PMPI_T_event_get_timestamp (MPI_T_event_instance event, MPI_Count *event_time);
+OMPI_DECLSPEC  int PMPI_T_event_get_source (MPI_T_event_instance event, int *source_index);
+OMPI_DECLSPEC  int PMPI_T_source_get_num (int *num_source);
+OMPI_DECLSPEC  int PMPI_T_source_get_info (int source_id, char *name, int *name_len,
+                                           char *desc, int *desc_len, MPI_T_order *ordering,
+                                           MPI_Count *ticks_per_second, MPI_Count *max_timestamp,
+                                           MPI_Info *info);
+OMPI_DECLSPEC  int PMPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
+
   /*
    * Tool MPI API
    */
@@ -3031,6 +3102,41 @@ OMPI_DECLSPEC  int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *va
 OMPI_DECLSPEC  int PMPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
                                           int *flag)
             __mpi_interface_deprecated_in_mpi40__("PMPI_Info_get_valuelen was deprecated in MPI-4.0; use PMPI_Info_get_string instead");
+
+OMPI_DECLSPEC  int MPI_T_event_get_num (int *num_events);
+OMPI_DECLSPEC  int MPI_T_event_get_info (int event_index, char *name, int *name_len,
+                                         int *verbosity, MPI_Datatype *array_of_datatypes,
+                                         MPI_Aint *array_of_displacements, int *num_elements,
+                                         MPI_Aint *extent, MPI_T_enum *enumtype, MPI_Info *info,
+                                         char *desc, int *desc_len, int *bind);
+OMPI_DECLSPEC  int MPI_T_event_get_index (const char *name, int *event_index);
+OMPI_DECLSPEC  int MPI_T_event_handle_alloc (int event_index, void *obj_handle,
+                                             MPI_Info info, MPI_T_event_registration *event_registration);
+OMPI_DECLSPEC  int MPI_T_event_handle_set_info (MPI_T_event_registration event_registration, MPI_Info info);
+OMPI_DECLSPEC  int MPI_T_event_handle_get_info (MPI_T_event_registration event_registration,
+                                                MPI_Info *info_used);
+OMPI_DECLSPEC  int MPI_T_event_handle_free (MPI_T_event_registration event_registration,
+                                            MPI_T_event_free_cb_function free_cb_function);
+OMPI_DECLSPEC  int MPI_T_event_register_callback (MPI_T_event_registration event_registration,
+                                                  MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
+                                                  MPI_T_event_cb_function event_cb_function);
+OMPI_DECLSPEC  int MPI_T_event_callback_set_info (MPI_T_event_registration event_registration,
+                                                  MPI_T_cb_safety cb_safety, MPI_Info info);
+OMPI_DECLSPEC  int MPI_T_event_callback_get_info (MPI_T_event_registration event_registration,
+                                                  MPI_T_cb_safety cb_safety, MPI_Info *info_used);
+OMPI_DECLSPEC  int MPI_T_event_set_dropped_handler (MPI_T_event_registration handle,
+                                                    MPI_T_event_dropped_cb_function dropped_cb_function);
+OMPI_DECLSPEC  int MPI_T_event_read (MPI_T_event_instance event, int element_index, void *buffer);
+OMPI_DECLSPEC  int MPI_T_event_copy (MPI_T_event_instance event, void *buffer);
+OMPI_DECLSPEC  int MPI_T_event_get_timestamp (MPI_T_event_instance event, MPI_Count *event_time);
+OMPI_DECLSPEC  int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index);
+
+OMPI_DECLSPEC  int MPI_T_source_get_num (int *num_source);
+OMPI_DECLSPEC  int MPI_T_source_get_info (int source_id, char *name, int *name_len,
+                                          char *desc, int *desc_len, MPI_T_order *ordering,
+                                          MPI_Count *ticks_per_second, MPI_Count *max_timestamp,
+                                          MPI_Info *info);
+OMPI_DECLSPEC  int MPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
 
 /*
  * Even though MPI_Copy_function and MPI_Delete_function are

@@ -4,7 +4,9 @@
 #                         reserved.
 # Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+# Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
+#                         reserved.
+# Copyright (c) 2018-2019 Triad National Security, LLC. All rightsa
 #                         reserved.
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
@@ -65,6 +67,21 @@ interface_profile_sources = \
 	cvar_write.c \
 	enum_get_info.c \
 	enum_get_item.c \
+	event_get_index.c \
+	event_copy.c \
+	event_callback_get_info.c \
+	event_callback_set_info.c \
+	event_handle_get_info.c \
+	event_handle_set_info.c \
+	event_get_info.c \
+	event_get_num.c \
+	event_get_source.c \
+	event_get_timestamp.c \
+	event_handle_alloc.c \
+	event_handle_free.c \
+	event_read.c \
+	event_register_callback.c \
+	event_set_dropped_handler.c \
 	finalize.c \
 	init_thread.c \
 	pvar_get_info.c \
@@ -79,7 +96,10 @@ interface_profile_sources = \
 	pvar_session_free.c \
 	pvar_start.c \
 	pvar_stop.c \
-	pvar_write.c
+	pvar_write.c \
+	source_get_num.c \
+	source_get_info.c \
+	source_get_timestamp.c
 
 libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources)
 libmpi_mpit_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1

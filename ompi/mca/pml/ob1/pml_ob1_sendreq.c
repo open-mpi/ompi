@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -106,8 +106,9 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     if(false == sendreq->req_send.req_base.req_free_called) {
 
         sendreq->req_send.req_base.req_free_called = true;
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+                              sendreq->req_send.req_base.req_comm, NULL, &sendreq);
 
         if (sendreq->req_send.req_base.req_pml_complete) {
             /* make buffer defined when the request is completed,
@@ -207,8 +208,10 @@ mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,
                                            mca_pml_ob1_send_request_t* sendreq )
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
     }
 
     /* signal request completion */
@@ -252,8 +255,10 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
                                      size_t req_bytes_delivered )
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
     }
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
@@ -907,8 +912,10 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
      * sent the GET message ...
      */
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
     }
 
     /* send */
@@ -1209,10 +1216,10 @@ cannot_pack:
         ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FRAG,
                 sendreq->req_send.req_base.req_proc);
 
-#if OMPI_WANT_PERUSE
-         PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
-                 &(sendreq->req_send.req_base), size, PERUSE_SEND);
-#endif  /* OMPI_WANT_PERUSE */
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+                              MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
 
          /* At this point, check to see if the BTL is doing an asynchronous
           * copy.  This would have been initiated in the mca_bml_base_prepare_src
@@ -1368,8 +1375,10 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
         }
     }
 
-    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), frag->rdma_length, PERUSE_SEND );
+    void *req = &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base);
+    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+                          MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+                          sendreq->req_send.req_base.req_comm, NULL, &req);
 
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
