@@ -12,19 +12,21 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_T_event_get_index = PMPI_T_event_get_index
 #endif
-#define MPI_T_event_get_index PMPI_T_event_get_index
+
+#if OMPI_PROFILING_DEFINES
+#include "ompi/mpi/tool/profile/defines.h"
 #endif
+
 
 int MPI_T_event_get_index (const char *name, int *event_index)
 {
+    mca_base_event_t *event = NULL;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
@@ -33,5 +35,14 @@ int MPI_T_event_get_index (const char *name, int *event_index)
         return MPI_ERR_ARG;
     }
 
-    return MPI_T_ERR_INVALID_NAME;
+    ompi_mpit_lock ();
+    (void) mca_base_event_get_by_fullname (name, &event);
+    ompi_mpit_unlock ();
+
+    if (NULL == event) {
+        return MPI_T_ERR_INVALID_NAME;
+    }
+
+    *event_index = event->event_index;
+    return MPI_SUCCESS;
 }

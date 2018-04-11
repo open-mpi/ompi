@@ -13,16 +13,16 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_T_event_get_source = PMPI_T_event_get_source
 #endif
-#define MPI_T_event_get_source PMPI_T_event_get_source
+
+#if OMPI_PROFILING_DEFINES
+#include "ompi/mpi/tool/profile/defines.h"
 #endif
+
 
 int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index)
 {
@@ -30,5 +30,6 @@ int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index)
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    mca_base_event_get_source (event, source_index);
+    return MPI_SUCCESS;
 }

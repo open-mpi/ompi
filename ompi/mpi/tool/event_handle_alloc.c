@@ -13,23 +13,48 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_T_event_handle_alloc = PMPI_T_event_handle_alloc
 #endif
-#define MPI_T_event_handle_alloc PMPI_T_event_handle_alloc
+
+#if OMPI_PROFILING_DEFINES
+#include "ompi/mpi/tool/profile/defines.h"
 #endif
+
 
 int MPI_T_event_handle_alloc (int event_index, void *obj_handle, MPI_Info info,
                               MPI_T_event_registration *event_registration)
 {
+    mca_base_event_t * const event;
+    int ret;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_INDEX;
+    ompi_mpit_lock ();
+
+    do {
+        /* Find the performance variable. mca_base_event_get() handles the
+           bounds checking. */
+        ret = mca_base_event_get_by_index (event_index, (mca_base_event_t **) &event);
+        if (OMPI_SUCCESS != ret) {
+            break;
+        }
+
+        /* Check the variable binding is something sane */
+        if (event->event_bind > MPI_T_BIND_MPI_INFO || event->event_bind < MPI_T_BIND_NO_OBJECT) {
+            /* This variable specified an invalid binding (not an MPI object). */
+            ret = MPI_T_ERR_INVALID_INDEX;
+            break;
+        }
+
+        ret = mca_base_event_registration_alloc (event, obj_handle, &info->super, event_registration);
+    } while (0);
+
+    ompi_mpit_unlock ();
+
+    return ompit_opal_to_mpit_error(ret);
 }

@@ -12,16 +12,16 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_T_event_get_num = PMPI_T_event_get_num
 #endif
-#define MPI_T_event_get_num PMPI_T_event_get_num
+
+#if OMPI_PROFILING_DEFINES
+#include "ompi/mpi/tool/profile/defines.h"
 #endif
+
 
 int MPI_T_event_get_num (int *num_event)
 {
@@ -33,6 +33,5 @@ int MPI_T_event_get_num (int *num_event)
         return MPI_ERR_ARG;
     }
 
-    *num_event = 0;
-    return MPI_SUCCESS;
+    return mca_base_event_get_count (num_event);
 }
