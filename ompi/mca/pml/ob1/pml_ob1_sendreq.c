@@ -103,8 +103,9 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     if(false == sendreq->req_send.req_base.req_free_called) {
 
         sendreq->req_send.req_base.req_free_called = true;
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                              sendreq->req_send.req_base.req_comm, &sendreq);
 
         if( true == sendreq->req_send.req_base.req_pml_complete ) {
             /* make buffer defined when the request is compeleted,
@@ -163,8 +164,10 @@ mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,
                                            mca_pml_ob1_send_request_t* sendreq )
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                              sendreq->req_send.req_base.req_comm, &req);
     }
 
     /* signal request completion */
@@ -198,8 +201,10 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
                                      size_t req_bytes_delivered )
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                              sendreq->req_send.req_base.req_comm, &req);
     }
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
@@ -745,8 +750,10 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
      * sent the GET message ...
      */
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                              sendreq->req_send.req_base.req_comm, &req);
     }
 
     /* send */
@@ -1042,10 +1049,10 @@ cannot_pack:
         ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FRAG,
                 sendreq->req_send.req_base.req_proc);
 
-#if OMPI_WANT_PERUSE
-         PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
-                 &(sendreq->req_send.req_base), size, PERUSE_SEND);
-#endif  /* OMPI_WANT_PERUSE */
+        void *req = &(sendreq->req_send.req_base);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                              sendreq->req_send.req_base.req_comm, &req);
 
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
          /* At this point, check to see if the BTL is doing an asynchronous
@@ -1193,8 +1200,10 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
         }
     }
 
-    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), frag->rdma_length, PERUSE_SEND );
+    void *req = &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base);
+    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                          sendreq->req_send.req_base.req_comm, &req);
 
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,

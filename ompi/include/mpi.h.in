@@ -417,6 +417,8 @@ typedef struct mca_base_var_enum_t *MPI_T_enum;
 typedef struct ompi_mpit_cvar_handle_t *MPI_T_cvar_handle;
 typedef struct mca_base_pvar_handle_t *MPI_T_pvar_handle;
 typedef struct mca_base_pvar_session_t *MPI_T_pvar_session;
+typedef struct mca_base_raised_event_t *MPI_T_event;
+typedef struct mca_base_event_handle_t *MPI_T_event_handle;
 
 /*
  * MPI_Status
@@ -814,6 +816,28 @@ enum {
   MPI_T_PVAR_CLASS_GENERIC
 };
 
+typedef enum {
+  MPI_T_CALLBACK_REQUIRE_NONE,
+  MPI_T_CALLBACK_REQUIRE_REENTRANT,
+  MPI_T_CALLBACK_REQUIRE_THREAD_SAFE,
+  MPI_T_CALLBACK_REQUIRE_ASYNC_SIGNAL_SAFE
+} MPI_T_cb_safety;
+
+/*
+ * MPI Tool event functions
+ */
+typedef void (*MPI_T_event_free_cb_function) (MPI_T_event_handle handle,
+                                              MPI_T_cb_safety cb_safety,
+                                              void *user_data);
+typedef void (*MPI_T_event_dropped_cb_function) (int count,
+                                                 MPI_T_event_handle handle,
+                                                 MPI_T_cb_safety cb_safety,
+                                                 void *user_data);
+typedef void (*MPI_T_event_cb_function) (MPI_T_event event,
+                                         MPI_T_event_handle handle,
+                                         MPI_T_cb_safety cb_safety,
+                                         void *user_data);
+
 /*
  * NULL handles
  */
@@ -848,6 +872,7 @@ enum {
 #define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle) 0)
 #define MPI_T_PVAR_SESSION_NULL ((MPI_T_pvar_session) 0)
 #define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle) 0)
+#define MPI_T_EVENT_HANDLE_NULL ((MPI_T_event_handle) 0)
 
 /* MPI-2 specifies that the name "MPI_TYPE_NULL_DELETE_FN" (and all
    related friends) must be accessible in C, C++, and Fortran. This is
@@ -2650,6 +2675,30 @@ OMPI_DECLSPEC  int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *nam
 OMPI_DECLSPEC  int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
                                         int *name_len);
 
+OMPI_DECLSPEC  int PMPI_T_event_get_num (int *num_events);
+OMPI_DECLSPEC  int PMPI_T_event_get_info (int event_index, char *name, int *name_len,
+                                          int *verbosity, MPI_Datatype *array_of_datatypes,
+                                          int *num_datatypes, MPI_T_enum *enumtype, int *extent,
+                                          char *desc, int *desc_len, int *bind);
+OMPI_DECLSPEC  int PMPI_T_event_get_index_by_name (const char *name, int *event_index);
+OMPI_DECLSPEC  int PMPI_T_event_get_index_by_handle (MPI_T_event_handle handle, int *event_index);
+OMPI_DECLSPEC  int PMPI_T_event_handle_alloc (int event_index, void *obj_handle,
+                                              void *user_data, MPI_T_event_cb_function event_cb_function,
+                                              MPI_T_event_handle *event_handle);
+OMPI_DECLSPEC  int PMPI_T_event_handle_free (MPI_T_event_free_cb_function free_cb_function,
+                                             MPI_T_event_handle *handle);
+OMPI_DECLSPEC  int PMPI_T_event_set_dropped_handler (MPI_T_event_dropped_cb_function dropped_cb_function,
+                                                     MPI_T_event_handle handle);
+OMPI_DECLSPEC  int PMPI_T_event_read (MPI_T_event event, int element_index, void *buffer);
+OMPI_DECLSPEC  int PMPI_T_event_read_some (MPI_T_event event, void *array_of_buffers[]);
+OMPI_DECLSPEC  int PMPI_T_event_read_all (MPI_T_event event, void *array_of_buffers[]);
+OMPI_DECLSPEC  int PMPI_T_event_get_time (MPI_T_event event, double *event_time);
+OMPI_DECLSPEC  int PMPI_T_event_get_source (MPI_T_event event, int *source_index);
+
+OMPI_DECLSPEC  int PMPI_T_event_source_get_num (int *num_source);
+OMPI_DECLSPEC  int PMPI_T_event_source_get_info (int source_id, char *name, int *name_len,
+                                                 char *desc, int *desc_len, int *ordering);
+
   /*
    * Tool MPI API
    */
@@ -2715,6 +2764,30 @@ OMPI_DECLSPEC  int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
             __mpi_interface_deprecated__("MPI_Attr_put was deprecated in MPI-2.0; use MPI_Comm_set_attr instead");
 OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
             __mpi_interface_deprecated__("PMPI_Attr_put was deprecated in MPI-2.0; use PMPI_Comm_set_attr instead");
+
+OMPI_DECLSPEC  int MPI_T_event_get_num (int *num_events);
+OMPI_DECLSPEC  int MPI_T_event_get_info (int event_index, char *name, int *name_len,
+                                         int *verbosity, MPI_Datatype *array_of_datatypes,
+                                         int *num_datatypes, MPI_T_enum *enumtype, int *extent,
+                                         char *desc, int *desc_len, int *bind);
+OMPI_DECLSPEC  int MPI_T_event_get_index_by_name (const char *name, int *event_index);
+OMPI_DECLSPEC  int MPI_T_event_get_index_by_handle (MPI_T_event_handle handle, int *event_index);
+OMPI_DECLSPEC  int MPI_T_event_handle_alloc (int event_index, void *obj_handle,
+                                             void *user_data, MPI_T_event_cb_function event_cb_function,
+                                             MPI_T_event_handle *event_handle);
+OMPI_DECLSPEC  int MPI_T_event_handle_free (MPI_T_event_free_cb_function free_cb_function,
+                                            MPI_T_event_handle *handle);
+OMPI_DECLSPEC  int MPI_T_event_set_dropped_handler (MPI_T_event_dropped_cb_function dropped_cb_function,
+                                                    MPI_T_event_handle handle);
+OMPI_DECLSPEC  int MPI_T_event_read (MPI_T_event event, int element_index, void *buffer);
+OMPI_DECLSPEC  int MPI_T_event_read_some (MPI_T_event event, void *array_of_buffers[]);
+OMPI_DECLSPEC  int MPI_T_event_read_all (MPI_T_event event, void *array_of_buffers[]);
+OMPI_DECLSPEC  int MPI_T_event_get_time (MPI_T_event event, double *event_time);
+OMPI_DECLSPEC  int MPI_T_event_get_source (MPI_T_event event, int *source_index);
+
+OMPI_DECLSPEC  int MPI_T_source_get_num (int *num_source);
+OMPI_DECLSPEC  int MPI_T_event_get_source_info (int source_id, char *name, int *name_len,
+                                                char *desc, int *desc_len, int *ordering);
 
 /*
  * Even though MPI_Copy_function and MPI_Delete_function are

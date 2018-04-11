@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2010-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
@@ -47,6 +47,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/base/mca_base_pvar.h"
+#include "opal/mca/base/mca_base_event.h"
 
 #include "opal/include/opal/frameworks.h"
 
@@ -621,6 +622,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 {
     const int *variables, *groups;
     const mca_base_pvar_t *pvar;
+    mca_base_event_t *event;
     const char *group_component;
     const mca_base_var_t *var;
     char **strings, *message;
@@ -750,6 +752,52 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
              * format in mca_base_var/pvar.c changes this needs to be changed as well */
             opal_asprintf (&message, "mca:%s:%s:pvar:%s:disabled:%s", group->group_framework,
                       group_component, pvar->name, requested ? "false" : "true");
+            opal_info_out("", "", message);
+            free (message);
+        }
+        free(strings);
+    }
+
+    variables = OPAL_VALUE_ARRAY_GET_BASE(&group->group_events, const int);
+    count = opal_value_array_get_size((opal_value_array_t *)&group->group_events);
+
+    for (i = 0 ; i < count ; ++i) {
+        ret = mca_base_event_get_by_index (variables[i], &event);
+        if (OPAL_SUCCESS != ret || max_level < event->event_verbosity) {
+            continue;
+        }
+
+        if (opal_info_pretty && curr_group != group) {
+            asprintf(&message, "MCA%s %s%s", requested ? "" : " (-)",
+                     group->group_framework,
+                     component_msg ? component_msg : "");
+            opal_info_out(message, message, "---------------------------------------------------");
+            free(message);
+            curr_group = group;
+        }
+
+        ret = mca_base_event_dump (variables[i], &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
+
+        for (j = 0 ; strings[j] ; ++j) {
+            if (0 == j && opal_info_pretty) {
+                asprintf (&message, "MCA%s %s%s", requested ? "" : " (-)",
+                          group->group_framework,
+                          component_msg ? component_msg : "");
+                opal_info_out(message, message, strings[j]);
+                free(message);
+            } else {
+                opal_info_out("", "", strings[j]);
+            }
+            free(strings[j]);
+        }
+        if (!opal_info_pretty) {
+            /* generate an entry indicating whether this variable is disabled or not. if the
+             * format in mca_base_var/pvar/event.c changes this needs to be changed as well */
+            asprintf (&message, "mca:%s:%s:event:%s:disabled:%s", group->group_framework,
+                      group_component, event->event_name, requested ? "false" : "true");
             opal_info_out("", "", message);
             free (message);
         }

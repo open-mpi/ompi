@@ -361,6 +361,43 @@ int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t 
     return OPAL_SUCCESS;
 }
 
+int mca_base_var_enum_create_simple (const char *name, char * const strings[], mca_base_var_enum_t **enumerator)
+{
+    mca_base_var_enum_t *new_enum;
+    int i;
+
+    *enumerator = NULL;
+
+    new_enum = OBJ_NEW(mca_base_var_enum_t);
+    if (NULL == new_enum) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    new_enum->enum_name = strdup (name);
+    if (NULL == new_enum->enum_name) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0 ; strings[i] ; ++i);
+    new_enum->enum_value_count = i;
+
+    /* make a copy of the values */
+    new_enum->enum_values = calloc (new_enum->enum_value_count + 1, sizeof (*new_enum->enum_values));
+    if (NULL == new_enum->enum_values) {
+        OBJ_RELEASE(new_enum);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0 ; i < new_enum->enum_value_count ; ++i) {
+        new_enum->enum_values[i].value = i;
+        new_enum->enum_values[i].string = strdup (strings[i]);
+    }
+
+    *enumerator = new_enum;
+
+    return OPAL_SUCCESS;
+}
+
 int mca_base_var_enum_create_flag (const char *name, const mca_base_var_enum_value_flag_t *flags, mca_base_var_enum_flag_t **enumerator)
 {
     mca_base_var_enum_flag_t *new_enum;

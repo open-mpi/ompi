@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -40,6 +40,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/base/mca_base_pvar.h"
+#include "opal/mca/base/mca_base_event.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
@@ -376,6 +377,21 @@ int mca_base_var_group_deregister (int group_index)
         OBJ_RELEASE (enums[i]);
     }
 
+    /* deregister all events */
+    size = opal_value_array_get_size(&group->group_events);
+    params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_events, int);
+
+    for (int i = 0 ; i < size ; ++i) {
+        mca_base_event_t *event;
+
+        ret = mca_base_event_get_by_index (params[i], &event);
+        if (OPAL_SUCCESS != ret || !(event->event_flags & MCA_BASE_EVENT_FLAG_IWG)) {
+            continue;
+        }
+
+        (void) mca_base_event_mark_invalid (event);
+    }
+
     size = opal_value_array_get_size(&group->group_subgroups);
     subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);
     for (int i = 0 ; i < size ; ++i) {
@@ -489,6 +505,36 @@ int mca_base_var_group_add_enum (const int group_index, const void * storage)
     return (int) opal_value_array_get_size (&group->group_enums) - 1;
 }
 
+int mca_base_var_group_add_event (const int group_index, const int event_index)
+{
+    mca_base_var_group_t *group;
+    int size, i, ret;
+    int *params;
+
+    ret = mca_base_var_group_get_internal (group_index, &group, false);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    size = opal_value_array_get_size(&group->group_events);
+    params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_events, int);
+    for (i = 0 ; i < size ; ++i) {
+        if (params[i] == event_index) {
+            return i;
+        }
+    }
+
+    if (OPAL_SUCCESS !=
+        (ret = opal_value_array_append_item (&group->group_events, &event_index))) {
+        return ret;
+    }
+
+    mca_base_var_groups_timestamp++;
+
+    /* return the group index */
+    return (int) opal_value_array_get_size (&group->group_events) - 1;
+}
+
 int mca_base_var_group_get (const int group_index, const mca_base_var_group_t **group)
 {
     return mca_base_var_group_get_internal (group_index, (mca_base_var_group_t **) group, false);
@@ -534,6 +580,9 @@ static void mca_base_var_group_constructor (mca_base_var_group_t *group)
 
     OBJ_CONSTRUCT(&group->group_enums, opal_value_array_t);
     opal_value_array_init (&group->group_enums, sizeof(void *));
+
+    OBJ_CONSTRUCT(&group->group_events, opal_value_array_t);
+    opal_value_array_init (&group->group_events, sizeof(int));
 }
 
 static void mca_base_var_group_destructor (mca_base_var_group_t *group)
@@ -557,6 +606,7 @@ static void mca_base_var_group_destructor (mca_base_var_group_t *group)
     OBJ_DESTRUCT(&group->group_vars);
     OBJ_DESTRUCT(&group->group_pvars);
     OBJ_DESTRUCT(&group->group_enums);
+    OBJ_DESTRUCT(&group->group_events);
 }
 
 int mca_base_var_group_get_count (void)

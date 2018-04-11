@@ -202,6 +202,9 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_enum_t);
 OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t values[],
                                             mca_base_var_enum_t **enumerator);
 
+OPAL_DECLSPEC int mca_base_var_enum_create_simple (const char *name, char * const strings[],
+                                                   mca_base_var_enum_t **enumerator);
+
 /**
  * Create a new default flag enumerator
  *

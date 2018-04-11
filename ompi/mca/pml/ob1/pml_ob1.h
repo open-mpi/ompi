@@ -41,6 +41,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/proc/proc.h"
 #include "opal/mca/allocator/base/base.h"
+#include "opal/mca/base/mca_base_event.h"
 
 BEGIN_C_DECLS
 
@@ -85,6 +86,25 @@ struct mca_pml_ob1_t {
     unsigned int unexpected_limit;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t;
+
+enum {
+    MCA_PML_OB1_EVENT_MESSAGE_ARRIVED,
+    MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN,
+    MCA_PML_OB1_EVENT_SEARCH_POSTED_END,
+    MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN,
+    MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
+    MCA_PML_OB1_EVENT_POSTED_INSERT,
+    MCA_PML_OB1_EVENT_POSTED_REMOVE,
+    MCA_PML_OB1_EVENT_UNEX_INSERT,
+    MCA_PML_OB1_EVENT_UNEX_REMOVE,
+    MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+    MCA_PML_OB1_EVENT_TRANSFER,
+    MCA_PML_OB1_EVENT_RECEIVE_CANCELED,
+    MCA_PML_OB1_EVENT_REQUEST_FREE,
+    MCA_PML_OB1_EVENT_MAX,
+};
+
+extern mca_base_event_list_item_t mca_pml_ob1_events[];
 
 extern mca_pml_ob1_t mca_pml_ob1;
 extern int mca_pml_ob1_output;

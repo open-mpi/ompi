@@ -15,11 +15,11 @@
 #if !defined(MPIT_INTERNAL_H)
 #define MPIT_INTERNAL_H
 
+#include "ompi/include/ompi_config.h"
 #include "opal/util/string_copy.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
-
-#include "ompi/include/ompi_config.h"
+#include "opal/mca/base/mca_base_event.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
