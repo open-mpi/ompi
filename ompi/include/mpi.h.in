@@ -2687,8 +2687,8 @@ OMPI_DECLSPEC  int PMPI_T_event_handle_alloc (int event_index, void *obj_handle,
                                               MPI_T_event_handle *event_handle);
 OMPI_DECLSPEC  int PMPI_T_event_handle_free (MPI_T_event_free_cb_function free_cb_function,
                                              MPI_T_event_handle *handle);
-OMPI_DECLSPEC  int PMPI_T_event_set_dropped_handler (MPI_T_event_dropped_cb_function dropped_cb_function,
-                                                     MPI_T_event_handle handle);
+OMPI_DECLSPEC  int PMPI_T_event_set_dropped_handler (MPI_T_event_handle handle,
+                                                     MPI_T_event_dropped_cb_function dropped_cb_function);
 OMPI_DECLSPEC  int PMPI_T_event_read (MPI_T_event event, int element_index, void *buffer);
 OMPI_DECLSPEC  int PMPI_T_event_read_some (MPI_T_event event, void *array_of_buffers[]);
 OMPI_DECLSPEC  int PMPI_T_event_read_all (MPI_T_event event, void *array_of_buffers[]);
@@ -2777,8 +2777,8 @@ OMPI_DECLSPEC  int MPI_T_event_handle_alloc (int event_index, void *obj_handle,
                                              MPI_T_event_handle *event_handle);
 OMPI_DECLSPEC  int MPI_T_event_handle_free (MPI_T_event_free_cb_function free_cb_function,
                                             MPI_T_event_handle *handle);
-OMPI_DECLSPEC  int MPI_T_event_set_dropped_handler (MPI_T_event_dropped_cb_function dropped_cb_function,
-                                                    MPI_T_event_handle handle);
+OMPI_DECLSPEC  int MPI_T_event_set_dropped_handler (MPI_T_event_handle handle,
+                                                    MPI_T_event_dropped_cb_function dropped_cb_function);
 OMPI_DECLSPEC  int MPI_T_event_read (MPI_T_event event, int element_index, void *buffer);
 OMPI_DECLSPEC  int MPI_T_event_read_some (MPI_T_event event, void *array_of_buffers[]);
 OMPI_DECLSPEC  int MPI_T_event_read_all (MPI_T_event event, void *array_of_buffers[]);
