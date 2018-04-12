@@ -232,8 +232,10 @@ int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
             }
         }
         if (NULL == job) {
-            OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
-            return OPAL_ERR_NOT_FOUND;
+            job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
+            (void)opal_snprintf_jobid(job->nspace, PMIX_MAX_NSLEN, proc->jobid);
+            job->jobid = proc->jobid;
+            opal_list_append(&mca_pmix_ext1x_component.jobids, &job->super);
         }
         (void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
         p.rank = proc->vpid;

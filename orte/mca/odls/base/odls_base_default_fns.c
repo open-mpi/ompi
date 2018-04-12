@@ -152,8 +152,9 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
 
     /* if we haven't already done so, provide the info on the
      * capabilities of each node */
-    if (!orte_node_info_communicated ||
-        orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
+    if (1 < orte_process_info.num_procs &&
+        (!orte_node_info_communicated ||
+         orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL))) {
         flag = 1;
         opal_dss.pack(buffer, &flag, 1, OPAL_INT8);
         if (ORTE_SUCCESS != (rc = orte_regx.encode_nodemap(buffer))) {

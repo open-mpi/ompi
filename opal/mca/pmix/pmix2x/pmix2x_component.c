@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
@@ -21,6 +21,7 @@
 #include "opal/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/pmix/pmix.h"
 #include "pmix2x.h"
 
@@ -74,6 +75,7 @@ mca_pmix_pmix2x_component_t mca_pmix_pmix2x_component = {
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         }
     },
+    .legacy_get = true,
     .native_launch = false
 };
 
