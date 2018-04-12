@@ -133,7 +133,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
 
     AC_MSG_CHECKING([if want wrapper compiler runpath support])
     AC_ARG_ENABLE([wrapper-runpath],
-                  [AS_HELP_STRING([--enable--wrapper-runpath],
+                  [AS_HELP_STRING([--enable-wrapper-runpath],
                   [enable runpath in the wrapper compilers if linker supports it (default: enabled,  unless wrapper-rpath is disabled).])])
     AS_IF([test "$enable_wrapper_runpath" != "no"], [enable_wrapper_runpath=yes])
     AC_MSG_RESULT([$enable_wrapper_runpath])
