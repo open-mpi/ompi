@@ -84,17 +84,6 @@ AS_IF([test "$host" != "$target"],
       [AC_MSG_WARN([Cross-compile detected])
        AC_MSG_WARN([Cross-compiling is only partially supported])
        AC_MSG_WARN([Proceed at your own risk!])])
-# Check for architectures that we explicitly no longer support
-case "${host}" in
-    powerpc-*|powerpc64-*|ppc-*)
-        AC_MSG_ERROR([Big endian PPC is no longer supported.])
-        ;;
-esac
-case "${target}" in
-    powerpc-*|powerpc64-*|ppc-*)
-        AC_MSG_ERROR([Big endian PPC is no longer supported.])
-        ;;
-esac
 
 # AC_USE_SYSTEM_EXTENSIONS alters CFLAGS (e.g., adds -g -O2)
 OPAL_VAR_SCOPE_PUSH([CFLAGS_save])
