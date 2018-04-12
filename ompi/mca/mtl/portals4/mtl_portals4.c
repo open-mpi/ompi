@@ -548,8 +548,10 @@ ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t *mtl,
 int
 ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
 {
-    opal_progress_unregister(ompi_mtl_portals4_progress);
-    while (0 != ompi_mtl_portals4_progress()) { }
+    if (0 == ompi_mtl_portals4.need_init) {
+        opal_progress_unregister(ompi_mtl_portals4_progress);
+        while (0 != ompi_mtl_portals4_progress()) { }
+    }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     ompi_mtl_portals4_flowctl_fini();
