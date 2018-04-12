@@ -148,125 +148,11 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
     }
-    /* Setup the communication infrastructure */
-    /* Routed system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_select";
-        goto error;
-    }
-    /*
-     * OOB Layer
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_oob_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_oob_base_select";
-        goto error;
-    }
-    /* Runtime Messaging Layer */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml_base_select";
-        goto error;
-    }
-    /* if we have info on the HNP and local daemon, process it */
-    if (NULL != orte_process_info.my_hnp_uri) {
-        /* we have to set the HNP's name, even though we won't route messages directly
-         * to it. This is required to ensure that we -do- send messages to the correct
-         * HNP name
-         */
-        if (ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
-                                                            ORTE_PROC_MY_HNP, NULL))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_rml_parse_HNP";
-            goto error;
-        }
-    }
-    if (NULL != orte_process_info.my_daemon_uri) {
-        opal_value_t val;
-
-        /* extract the daemon's name so we can update the routing table */
-        if (ORTE_SUCCESS != (ret = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
-                                                            ORTE_PROC_MY_DAEMON, NULL))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_rml_parse_daemon";
-            goto error;
-        }
-        /* Set the contact info in the database - this won't actually establish
-         * the connection, but just tells us how to reach the daemon
-         * if/when we attempt to send to it
-         */
-        OBJ_CONSTRUCT(&val, opal_value_t);
-        val.key = OPAL_PMIX_PROC_URI;
-        val.type = OPAL_STRING;
-        val.data.string = orte_process_info.my_daemon_uri;
-        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_DAEMON, &val))) {
-            ORTE_ERROR_LOG(ret);
-            val.key = NULL;
-            val.data.string = NULL;
-            OBJ_DESTRUCT(&val);
-            error = "store DAEMON URI";
-            goto error;
-        }
-        val.key = NULL;
-        val.data.string = NULL;
-        OBJ_DESTRUCT(&val);
-    }
 
     /* setup the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_select";
-        goto error;
-    }
-
-    /* get a conduit for our use - we never route IO over fabric */
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_mgmt_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_mgmt_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
-
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_coll_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_coll_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
-
-    /*
-     * Group communications
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_grpcomm_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_grpcomm_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_grpcomm_base_select";
         goto error;
     }
 
@@ -306,17 +192,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     if (ORTE_SUCCESS != (ret = orte_cr_init())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_cr_init";
-        goto error;
-    }
-    /* open the distributed file system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_dfs_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_dfs_base_select";
         goto error;
     }
     return ORTE_SUCCESS;
