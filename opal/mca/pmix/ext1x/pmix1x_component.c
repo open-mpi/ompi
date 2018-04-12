@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
@@ -34,6 +34,7 @@ const char *opal_pmix_ext1x_component_version_string =
 /*
  * Local function
  */
+static int external_register(void);
 static int external_open(void);
 static int external_close(void);
 static int external_component_query(mca_base_module_t **module, int *priority);
@@ -84,7 +85,7 @@ mca_pmix_ext1x_component_t mca_pmix_ext1x_component = {
 
 static int external_register(void)
 {
-    mca_base_component_t *component = &mca_pmix_pmix3x_component.super.base_version;
+    mca_base_component_t *component = &mca_pmix_ext1x_component.super.base_version;
 
     asprintf(&pmix_library_version, "PMIx library version %s", PMIx_Get_version());
     (void) mca_base_component_var_register(component, "library_version",
