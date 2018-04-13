@@ -14,7 +14,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_event_get_index_by_handle = MPI_T_event_get_index_by_handle
+#pragma weak MPI_T_event_get_index_by_handle = PMPI_T_event_get_index_by_handle
 #endif
 
 #if OMPI_PROFILING_DEFINES
