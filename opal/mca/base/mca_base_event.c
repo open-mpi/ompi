@@ -604,3 +604,8 @@ int mca_base_event_read_all (mca_base_raised_event_t *revent, void *array_of_buf
 
     return OPAL_SUCCESS;
 }
+
+void mca_base_event_handle_set_dropped_handler (mca_base_event_handle_t *handle, mca_base_event_dropped_cb_fn_t cbfn)
+{
+    handle->dropped_cb = cbfn;
+}
