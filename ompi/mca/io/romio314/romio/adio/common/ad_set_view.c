@@ -35,14 +35,14 @@ void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype,
 
         /* set new etypes and filetypes */
 
-	MPI_Type_get_envelope(etype, &i, &j, &k, &combiner);
+	ADIOI_Type_get_envelope(etype, &i, &j, &k, &combiner);
 	if (combiner == MPI_COMBINER_NAMED) fd->etype = etype;
 	else {
 	    MPI_Type_contiguous(1, etype, &copy_etype);
 	    MPI_Type_commit(&copy_etype);
 	    fd->etype = copy_etype;
 	}
-	MPI_Type_get_envelope(filetype, &i, &j, &k, &combiner);
+	ADIOI_Type_get_envelope(filetype, &i, &j, &k, &combiner);
 	if (combiner == MPI_COMBINER_NAMED)
 	    fd->filetype = filetype;
 	else {

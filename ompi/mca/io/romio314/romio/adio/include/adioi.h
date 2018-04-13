@@ -324,6 +324,12 @@ typedef struct {
 
 /* prototypes for ADIO internal functions */
 
+
+int ADIOI_Type_get_envelope (MPI_Datatype datatype, int *num_integers,
+                             int *num_addresses, int *num_datatypes, int *combiner);
+int ADIOI_Type_get_contents (MPI_Datatype datatype, int max_integers,
+                             int max_addresses, int max_datatypes, int array_of_integers[],
+                             MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[]);
 void ADIOI_SetFunctions(ADIO_File fd);
 void ADIOI_Flatten_datatype(MPI_Datatype type);
 void ADIOI_Flatten(MPI_Datatype type, ADIOI_Flatlist_node *flat,
