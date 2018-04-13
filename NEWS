@@ -55,20 +55,22 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-3.1.1 -- TBD
-------------
+3.1.0 -- April, 2018
+----------------------
 
-Bug fixes/minor improvements:
+- Various OpenSHMEM bug fixes.
+- Properly handle array_of_commands argument to Fortran version of
+  MPI_COMM_SPAWN_MULTIPLE.
+- Fix bug with MODE_SEQUENTIAL and the sharedfp MPI-IO component.
+- Use "javac -h" instead of "javah" when building the Java bindings
+  with a recent version of Java.
+- Fix mis-handling of jostepid under SLURM that could cause problems
+  with PathScale/OmniPath NICs.
 - Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
   still not a supported platform, but it is no longer automatically
   disabled.  See
   https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
   for more information.
-
-
-3.1.0 -- March, 2018
-----------------------
-
 - The output-filename option for mpirun is now converted to an
   absolute path before being passed to other nodes.
 - Add monitoring component for PML, OSC, and COLL to track data
