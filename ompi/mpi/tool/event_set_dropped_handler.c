@@ -14,7 +14,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_event_set_dropped_handle = PMPI_T_event_set_dropped_handle
+#pragma weak MPI_T_event_set_dropped_handler = PMPI_T_event_set_dropped_handler
 #endif
 
 #if OMPI_PROFILING_DEFINES
