@@ -230,7 +230,7 @@ OPAL_DECLSPEC void opal_datatype_dump( const opal_datatype_t* pData );
 OPAL_DECLSPEC int32_t opal_datatype_clone( const opal_datatype_t * src_type, opal_datatype_t * dest_type );
 OPAL_DECLSPEC int32_t opal_datatype_create_contiguous( int count, const opal_datatype_t* oldType, opal_datatype_t** newType );
 OPAL_DECLSPEC int32_t opal_datatype_resize( opal_datatype_t* type, ptrdiff_t lb, ptrdiff_t extent );
-OPAL_DECLSPEC int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtAdd, uint32_t count,
+OPAL_DECLSPEC int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtAdd, size_t count,
                                          ptrdiff_t disp, ptrdiff_t extent );
 
 static inline int32_t
