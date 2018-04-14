@@ -99,7 +99,6 @@ add_request_to_send_pending(mca_pml_ob1_send_request_t* sendreq,
         opal_list_prepend(&mca_pml_ob1.send_pending, item);
 
     OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-    mca_pml_ob1_enable_progress(1);
 }
 
 static inline mca_pml_ob1_send_request_t*
@@ -508,7 +507,7 @@ int mca_pml_ob1_send_request_put_frag(mca_pml_ob1_rdma_frag_t* frag);
  * available. bml_btl passed to the function doesn't represents sendreq
  * destination, it represents BTL on which resource was freed, so only this BTL
  * should be considered for sending packets */
-void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl);
+int mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl);
 
 void mca_pml_ob1_send_request_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
                 uint64_t send_offset, uint64_t send_length);

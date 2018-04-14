@@ -831,6 +831,7 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
         (btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV)) {
         void *strm = mca_common_cuda_get_htod_stream();
         opal_cuda_set_copy_function_async(&recvreq->req_recv.req_base.req_convertor, strm);
+        mca_pml_ob1_enable_progress(1);
     }
 #endif
 

@@ -302,7 +302,7 @@ void mca_pml_ob1_process_pending_rdma(void);
         if(opal_list_get_size(&mca_pml_ob1.recv_pending))       \
             mca_pml_ob1_recv_request_process_pending();         \
         if(opal_list_get_size(&mca_pml_ob1.send_pending))       \
-            mca_pml_ob1_send_request_process_pending(bml_btl);  \
+            (void)mca_pml_ob1_send_request_process_pending(bml_btl);  \
         if(opal_list_get_size(&mca_pml_ob1.rdma_pending))       \
             mca_pml_ob1_process_pending_rdma();                 \
     } while (0)

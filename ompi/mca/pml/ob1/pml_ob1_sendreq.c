@@ -43,9 +43,10 @@
 OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, opal_free_list_item_t,
         NULL, NULL);
 
-void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
+int mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 {
     int rc, i, s = opal_list_get_size(&mca_pml_ob1.send_pending);
+    int completed_requests = 0;
 
     /* advance pending requests */
     for(i = 0; i < s; i++) {
@@ -61,8 +62,9 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
         case MCA_PML_OB1_SEND_PENDING_SCHEDULE:
             rc = mca_pml_ob1_send_request_schedule_exclusive(sendreq);
             if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
-                return;
+                goto update_pending_and_return;
             }
+            completed_requests++;
             break;
         case MCA_PML_OB1_SEND_PENDING_START:
             send_dst = mca_bml_base_btl_array_find(
@@ -79,8 +81,9 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
                      * list to minimize reordering and give up for now. */
                     add_request_to_send_pending(sendreq,
                             MCA_PML_OB1_SEND_PENDING_START, false);
-                    return;
+                    goto update_pending_and_return;
                 }
+                completed_requests++;
             }
             break;
         default:
@@ -89,6 +92,12 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
             break;
         }
     }
+
+ update_pending_and_return:
+    if( 0 != completed_requests ) {
+        mca_pml_ob1_enable_progress(-completed_requests);
+    }
+    return completed_requests;
 }
 
 /*
@@ -938,7 +947,8 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
         if( OPAL_UNLIKELY(num_fail == range->range_btl_cnt) ) {
             /*TODO : assert(sendreq->req_pending == MCA_PML_OB1_SEND_PENDING_NONE); */
             add_request_to_send_pending(sendreq,
-                    MCA_PML_OB1_SEND_PENDING_SCHEDULE, true);
+                                        MCA_PML_OB1_SEND_PENDING_SCHEDULE, true);
+            mca_pml_ob1_enable_progress(1);
             /* Note that request remains locked. send_request_process_pending()
              * function will call shedule_exclusive() directly without taking
              * the lock */
