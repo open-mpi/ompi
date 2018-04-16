@@ -279,7 +279,7 @@ static inline int get_next_fr_off(ADIO_File fd,
 				  ADIO_Offset *fr_next_off_p,
 				  ADIO_Offset *fr_max_len_p)
 {
-    MPI_Aint fr_extent = -1;
+    MPI_Aint fr_extent = -1, lb;
     ADIO_Offset tmp_off, off_rem;
     ADIOI_Flatlist_node *fr_node_p = ADIOI_Flatlist;
     int i = -1, fr_dtype_ct = 0;
@@ -299,7 +299,7 @@ static inline int get_next_fr_off(ADIO_File fd,
 
     /* Calculate how many times to loop through the fr_type
      * and where the next fr_off is. */
-    MPI_Type_extent(*fr_type_p, &fr_extent);
+    MPI_Type_get_extent(*fr_type_p, &lb, &fr_extent);
     tmp_off = off - fr_st_off;
     fr_dtype_ct = tmp_off / fr_extent;
     off_rem = tmp_off % fr_extent;

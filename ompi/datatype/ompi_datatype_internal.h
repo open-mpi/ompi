@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -91,16 +91,13 @@
 #define OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX        0x2A
 #define OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX   0x2B
 
-#define OMPI_DATATYPE_MPI_LB                      0x2C
-#define OMPI_DATATYPE_MPI_UB                      0x2D
-
 /*
  * Datatypes from the MPI 3.0 standard
  */
-#define OMPI_DATATYPE_MPI_COUNT                   0x2E
+#define OMPI_DATATYPE_MPI_COUNT                   0x2C
 
 /* This should __ALWAYS__ stay last  */
-#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x2F
+#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x2D
 
 
 #define OMPI_DATATYPE_MPI_MAX_PREDEFINED          (OMPI_DATATYPE_MPI_UNAVAILABLE+1)

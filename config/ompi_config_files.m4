@@ -23,7 +23,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
 
         ompi/mpi/c/Makefile
         ompi/mpi/c/profile/Makefile
-        ompi/mpi/cxx/Makefile
         ompi/mpi/fortran/base/Makefile
         ompi/mpi/fortran/mpif-h/Makefile
         ompi/mpi/fortran/mpif-h/profile/Makefile

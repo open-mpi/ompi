@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -839,19 +839,17 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
                 return NULL;
             }
         }
-        if (current_predef != MPI_LB && current_predef != MPI_UB) {
-            if( NULL == predef ) {  /* This is the first iteration */
-                predef = current_predef;
-            } else {
-                /**
-                 *  What exactly should we consider as identical types?
-                 *  If they are the same MPI level type, or if they map
-                 *  to the same OPAL datatype? In other words, MPI_FLOAT
-                 *  and MPI_REAL4 are they identical?
-                 */
-                if( predef != current_predef ) {
-                    return NULL;
-                }
+        if( NULL == predef ) {  /* This is the first iteration */
+            predef = current_predef;
+        } else {
+            /**
+             *  What exactly should we consider as identical types?
+             *  If they are the same MPI level type, or if they map
+             *  to the same OPAL datatype? In other words, MPI_FLOAT
+             *  and MPI_REAL4 are they identical?
+             */
+            if( predef != current_predef ) {
+                return NULL;
             }
         }
     }

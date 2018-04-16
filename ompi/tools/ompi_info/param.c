@@ -168,7 +168,7 @@ void ompi_info_do_config(bool want_all)
     const int OMPI_BUILD_FORTRAN_F08_SUBARRAYS = 0;
 
     /* setup the strings that don't require allocations*/
-    cxx = OMPI_BUILD_CXX_BINDINGS ? "yes" : "no";
+    cxx = "no";
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) {
         if (OMPI_FORTRAN_HAVE_IGNORE_TKR) {
             fortran_usempi = "yes (full: ignore TKR)";
@@ -271,8 +271,8 @@ void ompi_info_do_config(bool want_all)
     debug = OPAL_ENABLE_DEBUG ? "yes" : "no";
     mpi_interface_warning = OMPI_WANT_MPI_INTERFACE_WARNING ? "yes" : "no";
     cprofiling = "yes";
-    cxxprofiling = OMPI_BUILD_CXX_BINDINGS ? "yes" : "no";
-    cxxexceptions = (OMPI_BUILD_CXX_BINDINGS && OMPI_HAVE_CXX_EXCEPTION_SUPPORT) ? "yes" : "no";
+    cxxprofiling = "no";
+    cxxexceptions = "no";
     fortran_mpifh_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) ? "yes" : "no";
     fortran_usempi_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
@@ -375,14 +375,7 @@ void ompi_info_do_config(bool want_all)
         opal_info_out_int("C double size", "compiler:c:sizeof:double", sizeof(double));
         opal_info_out_int("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
         opal_info_out_int("C char align", "compiler:c:align:char", OPAL_ALIGNMENT_CHAR);
-#if OMPI_BUILD_CXX_BINDINGS
-        /* JMS: See above for note about C++ bool size.  We don't have
-           the bool alignment the way configure currently runs -- need
-           to clean this up when we update for MPI-2.2. */
-        opal_info_out_int("C bool align", "compiler:c:align:bool", OPAL_ALIGNMENT_CXX_BOOL);
-#else
-        opal_info_out("C bool align", "compiler:c:align:bool", "skipped");
-#endif
+        opal_info_out_int("C bool align", "compiler:c:align:bool", OPAL_ALIGNMENT_BOOL);
         opal_info_out_int("C int align", "compiler:c:align:int", OPAL_ALIGNMENT_INT);
         opal_info_out_int("C float align", "compiler:c:align:float", OPAL_ALIGNMENT_FLOAT);
         opal_info_out_int("C double align", "compiler:c:align:double", OPAL_ALIGNMENT_DOUBLE);

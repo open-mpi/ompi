@@ -237,18 +237,18 @@ void ADIOI_Calc_file_realms_fsize (ADIO_File fd, int nprocs_for_coll,
 void ADIOI_Create_fr_simpletype (int size, int nprocs_for_coll,
 			      MPI_Datatype *simpletype)
 {
-    int count=2, blocklens[2];
-    MPI_Aint indices[2];
-    MPI_Datatype old_types[2];
+    int count=1, blocklens[1];
+    MPI_Aint indices[1];
+    MPI_Datatype old_types[1];
+    MPI_Datatype inttype;
 
     blocklens[0] = size;
-    blocklens[1] = 1;
     indices[0]   = 0;
-    indices[1]   = size*nprocs_for_coll;
     old_types[0] = MPI_BYTE;
-    old_types[1] = MPI_UB;
 
-    MPI_Type_struct (count, blocklens, indices, old_types, simpletype);
+    MPI_Type_create_struct (count, blocklens, indices, old_types, &inttype);
+    MPI_Type_create_resized (inttype, 0, size*nprocs_for_coll, simpletype);
+    MPI_Type_free (&inttype);
 
     MPI_Type_commit (simpletype);
 }

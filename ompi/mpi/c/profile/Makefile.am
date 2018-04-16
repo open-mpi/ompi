@@ -45,7 +45,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         padd_error_class.c \
         padd_error_code.c \
         padd_error_string.c \
-        paddress.c \
         pallgather.c \
         piallgather.c \
         pallgatherv.c \
@@ -59,9 +58,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pialltoallv.c \
         palltoallw.c \
         pialltoallw.c \
-        pattr_delete.c \
-        pattr_get.c \
-        pattr_put.c \
         pbarrier.c \
         pibarrier.c \
         pbcast.c \
@@ -124,11 +120,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 	pcompare_and_swap.c \
         pdims_create.c \
         perrhandler_c2f.c \
-        perrhandler_create.c \
         perrhandler_f2c.c \
         perrhandler_free.c \
-        perrhandler_get.c \
-        perrhandler_set.c \
         perror_class.c \
         perror_string.c \
         pexscan.c \
@@ -257,8 +250,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pis_thread_main.c \
         pisend.c \
         pissend.c \
-        pkeyval_create.c \
-        pkeyval_free.c \
         plookup_name.c \
         pmessage_f2c.c \
         pmessage_c2f.c \
@@ -350,7 +341,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_create_subarray.c \
         ptype_delete_attr.c \
         ptype_dup.c \
-        ptype_extent.c \
         ptype_f2c.c \
         ptype_free.c \
         ptype_free_keyval.c \
@@ -362,17 +352,12 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_get_name.c \
         ptype_get_true_extent.c \
         ptype_get_true_extent_x.c \
-        ptype_hindexed.c \
-        ptype_hvector.c \
         ptype_indexed.c \
-        ptype_lb.c \
         ptype_match_size.c \
         ptype_set_attr.c \
         ptype_set_name.c \
         ptype_size.c \
         ptype_size_x.c \
-        ptype_struct.c \
-        ptype_ub.c \
         ptype_vector.c  \
         punpack_external.c \
         punpack.c \

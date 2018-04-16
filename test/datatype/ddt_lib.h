@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
+ * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,9 +48,6 @@ extern void cache_trash( void );
  */
 ompi_datatype_t* create_inversed_vector( const ompi_datatype_t* type, int length );
 
-extern int mpich_typeub( void );
-extern int mpich_typeub2( void );
-extern int mpich_typeub3( void );
 extern void print_double_mat( unsigned int N, double* mat );
 extern int init_random_upper_matrix( unsigned int N, double* mat );
 extern int check_diag_matrix( unsigned int N, double* mat1, double* mat2 );

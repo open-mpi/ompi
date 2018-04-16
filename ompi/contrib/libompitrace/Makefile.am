@@ -27,13 +27,13 @@ libompitrace_la_SOURCES = \
         add_error_class.c \
         add_error_code.c \
         add_error_string.c \
-        address.c \
         allgather.c \
         allgatherv.c \
         alloc_mem.c \
         allreduce.c \
         barrier.c \
         bcast.c \
+	get_address.c \
         finalize.c \
         init.c \
         isend.c \
