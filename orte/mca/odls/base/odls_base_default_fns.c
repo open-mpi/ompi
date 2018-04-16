@@ -15,8 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -202,38 +202,60 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         wireup = OBJ_NEW(opal_buffer_t);
         /* always include data for mpirun as the daemons can't have it yet */
         val = NULL;
-        if (OPAL_SUCCESS != (rc = opal_pmix.get(ORTE_PROC_MY_NAME, NULL, NULL, &val)) || NULL == val) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(wireup);
-            return rc;
-        } else {
-            /* the data is returned as a list of key-value pairs in the opal_value_t */
-            if (OPAL_PTR != val->type) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                OBJ_RELEASE(wireup);
-                return ORTE_ERR_NOT_FOUND;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+        if (opal_pmix.legacy_get()) {
+            if (OPAL_SUCCESS != (rc = opal_pmix.get(ORTE_PROC_MY_NAME, OPAL_PMIX_PROC_URI, NULL, &val)) || NULL == val) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(wireup);
                 return rc;
-            }
-            modex = (opal_list_t*)val->data.ptr;
-            numbytes = (int32_t)opal_list_get_size(modex);
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(wireup);
-                return rc;
-            }
-            OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+            } else {
+                /* pack the name of the daemon */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(wireup);
                     return rc;
                 }
+                /* pack the URI */
+               if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &val->data.string, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(wireup);
+                    return rc;
+                }
+                OBJ_RELEASE(val);
             }
-            OPAL_LIST_RELEASE(modex);
-            OBJ_RELEASE(val);
+        } else {
+            if (OPAL_SUCCESS != (rc = opal_pmix.get(ORTE_PROC_MY_NAME, NULL, NULL, &val)) || NULL == val) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(wireup);
+                return rc;
+            } else {
+                /* the data is returned as a list of key-value pairs in the opal_value_t */
+                if (OPAL_PTR != val->type) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    OBJ_RELEASE(wireup);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(wireup);
+                    return rc;
+                }
+                modex = (opal_list_t*)val->data.ptr;
+                numbytes = (int32_t)opal_list_get_size(modex);
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(wireup);
+                    return rc;
+                }
+                OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(wireup);
+                        return rc;
+                    }
+                }
+                OPAL_LIST_RELEASE(modex);
+                OBJ_RELEASE(val);
+            }
         }
         /* if we didn't rollup the connection info, then we have
          * to provide a complete map of connection info */
@@ -243,41 +265,66 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
                     continue;
                 }
                 val = NULL;
-                if (OPAL_SUCCESS != (rc = opal_pmix.get(&dmn->name, NULL, NULL, &val)) || NULL == val) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_RELEASE(buffer);
-                    return rc;
-                } else {
-                    /* the data is returned as a list of key-value pairs in the opal_value_t */
-                    if (OPAL_PTR != val->type) {
-                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                        OBJ_RELEASE(buffer);
-                        return ORTE_ERR_NOT_FOUND;
-                    }
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &dmn->name, 1, ORTE_NAME))) {
+                if (opal_pmix.legacy_get()) {
+                    if (OPAL_SUCCESS != (rc = opal_pmix.get(&dmn->name, OPAL_PMIX_PROC_URI, NULL, &val)) || NULL == val) {
                         ORTE_ERROR_LOG(rc);
                         OBJ_RELEASE(buffer);
                         OBJ_RELEASE(wireup);
                         return rc;
-                    }
-                    modex = (opal_list_t*)val->data.ptr;
-                    numbytes = (int32_t)opal_list_get_size(modex);
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        OBJ_RELEASE(buffer);
-                        OBJ_RELEASE(wireup);
-                        return rc;
-                    }
-                    OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
-                        if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+                    } else {
+                        /* pack the name of the daemon */
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &dmn->name, 1, ORTE_NAME))) {
                             ORTE_ERROR_LOG(rc);
                             OBJ_RELEASE(buffer);
                             OBJ_RELEASE(wireup);
                             return rc;
                         }
+                        /* pack the URI */
+                       if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &val->data.string, 1, OPAL_STRING))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(buffer);
+                            OBJ_RELEASE(wireup);
+                            return rc;
+                        }
+                        OBJ_RELEASE(val);
                     }
-                    OPAL_LIST_RELEASE(modex);
-                    OBJ_RELEASE(val);
+                } else {
+                    if (OPAL_SUCCESS != (rc = opal_pmix.get(&dmn->name, NULL, NULL, &val)) || NULL == val) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(buffer);
+                        return rc;
+                    } else {
+                        /* the data is returned as a list of key-value pairs in the opal_value_t */
+                        if (OPAL_PTR != val->type) {
+                            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                            OBJ_RELEASE(buffer);
+                            return ORTE_ERR_NOT_FOUND;
+                        }
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &dmn->name, 1, ORTE_NAME))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(buffer);
+                            OBJ_RELEASE(wireup);
+                            return rc;
+                        }
+                        modex = (opal_list_t*)val->data.ptr;
+                        numbytes = (int32_t)opal_list_get_size(modex);
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &numbytes, 1, OPAL_INT32))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(buffer);
+                            OBJ_RELEASE(wireup);
+                            return rc;
+                        }
+                        OPAL_LIST_FOREACH(kv, modex, opal_value_t) {
+                            if (ORTE_SUCCESS != (rc = opal_dss.pack(wireup, &kv, 1, OPAL_VALUE))) {
+                                ORTE_ERROR_LOG(rc);
+                                OBJ_RELEASE(buffer);
+                                OBJ_RELEASE(wireup);
+                                return rc;
+                            }
+                        }
+                        OPAL_LIST_RELEASE(modex);
+                        OBJ_RELEASE(val);
+                    }
                 }
             }
         }
