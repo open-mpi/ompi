@@ -109,5 +109,5 @@ remote read of the GPU data.
 The receiver maintains a cache of remote memory that it has handles open on.
 This is because a call to cuIpcOpenMemHandle() can be very expensive (90usec) so
 we want to avoid it when we can.  The cache of remote memory is kept in a memory
-pool that is associated with each endpoint.  Note that we do not cache the loca
+pool that is associated with each endpoint.  Note that we do not cache the local
 memory handles because getting them is very cheap and there is no need.
