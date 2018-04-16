@@ -2,6 +2,7 @@
 #                         All rights reserved.
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
+# Copyright (c) 2016-2021 IBM Corporation. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,8 +30,8 @@ linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 # intentionally only link in the SHMEM and MPI libraries (OPAL,
 # etc. are pulled in implicitly) because we intend SHMEM/MPI
 # applications to only use the SHMEM and MPI APIs.
-libs=-loshmem -lmpi
-libs_static=-loshmem -lmpi -l@OPAL_LIB_NAME@ @OMPI_WRAPPER_EXTRA_LIBS@
+libs=-loshmem -l@OMPI_LIBMPI_NAME@
+libs_static=-loshmem -l@OMPI_LIBMPI_NAME@ -l@OPAL_LIB_NAME@ @OMPI_WRAPPER_EXTRA_LIBS@
 dyn_lib_file=liboshmem.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=liboshmem.a
 required_file=
