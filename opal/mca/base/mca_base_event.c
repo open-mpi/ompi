@@ -475,7 +475,7 @@ int mca_base_event_dump(int index, char ***out, mca_base_var_dump_type_t output_
         free(tmp);  // release tmp storage
     } else {
         /* there will be at most three lines in the pretty print case */
-        *out = (char **) calloc (3, sizeof (char *));
+        *out = (char **) calloc (4, sizeof (char *));
         if (NULL == *out) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
