@@ -16,11 +16,11 @@ int ADIO_Type_create_subarray(int ndims,
 			      MPI_Datatype oldtype,
 			      MPI_Datatype *newtype)
 {
-    MPI_Aint extent, disps[3], size;
-    int i, blklens[3];
-    MPI_Datatype tmp1, tmp2, types[3];
+    MPI_Aint extent, disp, size, lb, ub;
+    int i, blklen;
+    MPI_Datatype tmp1, tmp2, inttype;
 
-    MPI_Type_extent(oldtype, &extent);
+    MPI_Type_get_extent(oldtype, &lb, &extent);
 
     if (order == MPI_ORDER_FORTRAN) {
 	/* dimension 0 changes fastest */
@@ -35,18 +35,18 @@ int ADIO_Type_create_subarray(int ndims,
 	    size = (MPI_Aint)array_of_sizes[0]*extent;
 	    for (i=2; i<ndims; i++) {
 		size *= (MPI_Aint)array_of_sizes[i-1];
-		MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+		MPI_Type_create_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
 		MPI_Type_free(&tmp1);
 		tmp1 = tmp2;
 	    }
 	}
 
 	/* add displacement and UB */
-	disps[1] = array_of_starts[0];
+	disp = array_of_starts[0];
 	size = 1;
 	for (i=1; i<ndims; i++) {
 	    size *= (MPI_Aint)array_of_sizes[i-1];
-	    disps[1] += size*(MPI_Aint)array_of_starts[i];
+	    disp += size*(MPI_Aint)array_of_starts[i];
 	}
         /* rest done below for both Fortran and C order */
     }
@@ -64,33 +64,31 @@ int ADIO_Type_create_subarray(int ndims,
 	    size = (MPI_Aint)array_of_sizes[ndims-1]*extent;
 	    for (i=ndims-3; i>=0; i--) {
 		size *= (MPI_Aint)array_of_sizes[i+1];
-		MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+		MPI_Type_create_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
 		MPI_Type_free(&tmp1);
 		tmp1 = tmp2;
 	    }
 	}
 
 	/* add displacement and UB */
-	disps[1] = array_of_starts[ndims-1];
+	disp = array_of_starts[ndims-1];
 	size = 1;
 	for (i=ndims-2; i>=0; i--) {
 	    size *= (MPI_Aint)array_of_sizes[i+1];
-	    disps[1] += size*(MPI_Aint)array_of_starts[i];
+	    disp += size*(MPI_Aint)array_of_starts[i];
 	}
     }
 
-    disps[1] *= extent;
+    disp *= extent;
 
-    disps[2] = extent;
-    for (i=0; i<ndims; i++) disps[2] *= (MPI_Aint)array_of_sizes[i];
+    ub = extent;
+    for (i=0; i<ndims; i++) ub *= (MPI_Aint)array_of_sizes[i];
 
-    disps[0] = 0;
-    blklens[0] = blklens[1] = blklens[2] = 1;
-    types[0] = MPI_LB;
-    types[1] = tmp1;
-    types[2] = MPI_UB;
+    blklen = 1;
 
-    MPI_Type_struct(3, blklens, disps, types, newtype);
+    MPI_Type_create_struct(1, &blklen, &disp, &tmp1, &inttype);
+    MPI_Type_create_resized (inttype, 0, ub, newtype);
+    MPI_Type_free(&inttype);
 
     MPI_Type_free(&tmp1);
 
