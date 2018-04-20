@@ -106,6 +106,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     tuned_module->super.coll_gatherv    = NULL;
     tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_fixed;
     tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_fixed;
+    tuned_module->super.coll_reduce_scatter_block = ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed;
     tuned_module->super.coll_scan       = NULL;
     tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_fixed;
     tuned_module->super.coll_scatterv   = NULL;
@@ -238,6 +239,8 @@ tuned_module_enable( mca_coll_base_module_t *module,
                                       tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, REDUCESCATTER,
                                       tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, REDUCESCATTERBLOCK,
+                                      tuned_module->super.coll_reduce_scatter_block = ompi_coll_tuned_reduce_scatter_block_intra_dec_dynamic);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCAN,
                                       tuned_module->super.coll_scan       = NULL);
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCATTER,

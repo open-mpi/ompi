@@ -38,7 +38,8 @@ sources = \
         coll_tuned_reduce_decision.c \
         coll_tuned_bcast_decision.c \
         coll_tuned_reduce_scatter_decision.c \
-        coll_tuned_scatter_decision.c
+        coll_tuned_scatter_decision.c \
+        coll_tuned_reduce_scatter_block_decision.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

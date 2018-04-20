@@ -244,6 +244,9 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(REDUCESCATTER_ARGS);
 int ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(REDUCESCATTER_ARGS);
 int ompi_coll_base_reduce_scatter_intra_ring(REDUCESCATTER_ARGS);
 
+/* Reduce_scatter_block */
+int ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(REDUCESCATTERBLOCK_ARGS);
+
 /* Scan */
 
 /* Scatter */

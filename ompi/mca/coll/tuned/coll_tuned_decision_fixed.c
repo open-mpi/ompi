@@ -501,6 +501,26 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
 }
 
 /*
+ *	reduce_scatter_block_intra_dec
+ *
+ *	Function:	- seletects reduce_scatter_block algorithm to use
+ *	Accepts:	- same arguments as MPI_Reduce_scatter_block()
+ *	Returns:	- MPI_SUCCESS or error code (passed from
+ *                        the reduce scatter implementation)
+ */
+int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void *rbuf,
+                                                         int rcount,
+                                                         struct ompi_datatype_t *dtype,
+                                                         struct ompi_op_t *op,
+                                                         struct ompi_communicator_t *comm,
+                                                         mca_coll_base_module_t *module)
+{
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed"));
+    return ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(sbuf, rbuf, rcount,
+                                                                       dtype, op, comm, module);
+}
+
+/*
  *	allgather_intra_dec
  *
  *	Function:	- seletects allgather algorithm to use
