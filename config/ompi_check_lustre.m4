@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
-dnl Copyright (c) 2008-2017 University of Houston. All rights reserved.
+dnl Copyright (c) 2008-2018 University of Houston. All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -45,23 +45,26 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
              [Build Lustre support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([lustre], [$with_lustre], [include/lustre/lustreapi.h])
 
-    AS_IF([test -z "$with_lustre" || test "$with_lustre" = "yes"],
-          [ompi_check_lustre_dir="/usr"],
-          [ompi_check_lustre_dir=$with_lustre])
-
-    if test -e "$ompi_check_lustre_dir/lib64" ; then
-        ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib64"
-    else
-        ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib"
-    fi
-
-    # Add correct -I and -L flags
-    OPAL_CHECK_PACKAGE([$1], [lustre/lustreapi.h], [lustreapi], [llapi_file_create], [],
-                       [$ompi_check_lustre_dir], [$ompi_check_lustre_libdir], [ompi_check_lustre_happy="yes"],
-                       [ompi_check_lustre_happy="no"])
-
-    AC_MSG_CHECKING([for required lustre data structures])
-   cat > conftest.c <<EOF
+    AS_IF([test "$with_lustre" = "no"],
+        [ompi_check_lustre_happy="no"],
+        [AS_IF([test -z "$with_lustre" || test "$with_lustre" = "yes"],
+                [ompi_check_lustre_dir="/usr"],
+                [ompi_check_lustre_dir=$with_lustre])
+            
+            if test -e "$ompi_check_lustre_dir/lib64" ; then
+                ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib64"
+            else
+                ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib"
+            fi
+            
+            # Add correct -I and -L flags
+            OPAL_CHECK_PACKAGE([$1], [lustre/lustreapi.h], [lustreapi], [llapi_file_create], 
+                [], [$ompi_check_lustre_dir], [$ompi_check_lustre_libdir], 
+                [ompi_check_lustre_happy="yes"],
+                [ompi_check_lustre_happy="no"])
+            
+            AC_MSG_CHECKING([for required lustre data structures])
+            cat > conftest.c <<EOF
 #include "lustre/lustreapi.h"
 void alloc_lum()
 {
@@ -82,7 +85,7 @@ OPAL_LOG_COMMAND(
 )
     rm -f conftest.c conftest.o
     AC_MSG_RESULT([$ompi_check_lustre_struct_happy])
-
+    ])
 
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
           [$2],
