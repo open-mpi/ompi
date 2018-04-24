@@ -25,10 +25,10 @@
 #include "coll_base_util.h"
 
 /*
- * rounddown: Rounds a number down to nearest multiple.
+ * ompi_rounddown: Rounds a number down to nearest multiple.
  *     rounddown(10,4) = 8, rounddown(6,3) = 6, rounddown(14,3) = 12
  */
-static int rounddown(int num, int factor)
+static int ompi_rounddown(int num, int factor)
 {
     num /= factor;
     return num * factor;    /* floor(num / factor) * factor */
@@ -96,8 +96,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     int rdoubling_step = 0;
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
-        int cur_tree_root = rounddown(rank, mask);
-        int remote_tree_root = rounddown(remote, mask);
+        int cur_tree_root = ompi_rounddown(rank, mask);
+        int remote_tree_root = ompi_rounddown(remote, mask);
 
         /*
          * Let be m is a block size in bytes (rcount), p is a comm_size,
@@ -157,7 +157,7 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
             int nprocs_alldata = comm_size - cur_tree_root - mask;
             for (int rhalving_mask = mask >> 1; rhalving_mask > 0; rhalving_mask >>= 1) {
                 remote = rank ^ rhalving_mask;
-                int tree_root = rounddown(rank, rhalving_mask << 1);
+                int tree_root = ompi_rounddown(rank, rhalving_mask << 1);
                 /*
                  * Send only if:
                  * 1) current process has data: (remote > rank) && (rank < tree_root + nprocs_alldata)
