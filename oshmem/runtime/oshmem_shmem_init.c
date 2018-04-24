@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,7 +147,7 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
     OMPI_TIMING_INIT(32);
 
     if (!oshmem_shmem_initialized) {
-        if (!ompi_mpi_initialized && !ompi_mpi_finalized) {
+        if (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
             ret = ompi_mpi_init(argc, argv, requested, provided);
         }
         OMPI_TIMING_NEXT("ompi_mpi_init");

@@ -2,6 +2,7 @@
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -265,7 +266,7 @@ int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     size_t i;
 
-    if (ompi_mpi_finalized) {
+    if (ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
         PML_YALLA_VERBOSE(3, "%s", "using bulk powerdown");
         mxm_ep_powerdown(ompi_pml_yalla.mxm_ep);
     }

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -166,16 +166,20 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     /* If the RTE isn't setup yet/any more, then don't even try
        killing everyone.  Sorry, Charlie... */
+    int32_t state = ompi_mpi_state;
     if (!ompi_rte_initialized) {
         fprintf(stderr, "[%s:%05d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
-                host, (int) pid, ompi_mpi_finalized ?
+                host, (int) pid,
+                state >= OMPI_MPI_STATE_FINALIZE_STARTED ?
                 "after MPI_FINALIZE started" : "before MPI_INIT completed");
         _exit(errcode == 0 ? 1 : errcode);
     }
 
     /* If OMPI is initialized and we have a non-NULL communicator,
        then try to kill just that set of processes */
-    if (ompi_mpi_initialized && !ompi_mpi_finalized && NULL != comm) {
+    if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
+        state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT &&
+        NULL != comm) {
         try_kill_peers(comm, errcode);
     }
 

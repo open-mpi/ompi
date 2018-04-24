@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +70,7 @@ mca_io_romio314_file_close (ompi_file_t *fh)
        which we obviously can't do if we've started to MPI_Finalize).
        The user didn't close the file, so they should expect
        unexpected behavior. */
-    if (ompi_mpi_finalized) {
+    if (ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
         return OMPI_SUCCESS;
     }
 
