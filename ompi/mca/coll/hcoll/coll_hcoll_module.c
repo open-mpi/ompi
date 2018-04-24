@@ -1,11 +1,15 @@
 /**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  Copyright (c) 2016      IBM Corporation.  All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
- $HEADER$
+ * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
 
 #include "ompi_config.h"
@@ -238,7 +242,7 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
 
 int mca_coll_hcoll_progress(void)
 {
-    if (ompi_mpi_finalized){
+    if (ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
         hcoll_rte_p2p_disabled_notify();
     }
 
