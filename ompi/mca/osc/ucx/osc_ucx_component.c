@@ -243,7 +243,10 @@ static inline int mem_map(void **base, size_t size, ucp_mem_h *memh_ptr,
     ucs_status_t status;
     int ret = OMPI_SUCCESS;
 
-    assert(flavor == MPI_WIN_FLAVOR_ALLOCATE || flavor == MPI_WIN_FLAVOR_CREATE);
+    if (!(flavor == MPI_WIN_FLAVOR_ALLOCATE || flavor == MPI_WIN_FLAVOR_CREATE)
+        || size == 0) {
+        return ret;
+    }
 
     memset(&mem_params, 0, sizeof(ucp_mem_map_params_t));
     mem_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
@@ -312,6 +315,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     size_t my_info_len;
     int disps[comm_size];
     int rkey_sizes[comm_size];
+    uint64_t zero = 0;
 
     /* the osc/sm component is the exclusive provider for support for
      * shared memory windows */
@@ -376,9 +380,13 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         goto error;
     }
 
+    *model = MPI_WIN_UNIFIED;
     asprintf(&name, "ucx window %d", ompi_comm_get_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
+
+    module->flavor = flavor;
+    module->size = size;
 
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
@@ -497,14 +505,18 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         goto error;
     }
 
-    status = ucp_rkey_pack(mca_osc_ucx_component.ucp_context, module->memh,
-                           &rkey_buffer, &rkey_buffer_size);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_rkey_pack failed: %d\n",
-                            __FILE__, __LINE__, status);
-        ret = OMPI_ERROR;
-        goto error;
+    if (size > 0 && (flavor == MPI_WIN_FLAVOR_ALLOCATE || flavor == MPI_WIN_FLAVOR_CREATE)) {
+        status = ucp_rkey_pack(mca_osc_ucx_component.ucp_context, module->memh,
+                               &rkey_buffer, &rkey_buffer_size);
+        if (status != UCS_OK) {
+            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                                "%s:%d: ucp_rkey_pack failed: %d\n",
+                                __FILE__, __LINE__, status);
+            ret = OMPI_ERROR;
+            goto error;
+        }
+    } else {
+        rkey_buffer_size = 0;
     }
 
     status = ucp_rkey_pack(mca_osc_ucx_component.ucp_context, module->state_memh,
@@ -524,7 +536,11 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         goto error;
     }
 
-    memcpy(my_info, base, sizeof(uint64_t));
+    if (flavor == MPI_WIN_FLAVOR_ALLOCATE || flavor == MPI_WIN_FLAVOR_CREATE) {
+        memcpy(my_info, base, sizeof(uint64_t));
+    } else {
+        memcpy(my_info, &zero, sizeof(uint64_t));
+    }
     memcpy((void *)((char *)my_info + sizeof(uint64_t)), &state_base, sizeof(uint64_t));
     memcpy((void *)((char *)my_info + 2 * sizeof(uint64_t)), rkey_buffer, rkey_buffer_size);
     memcpy((void *)((char *)my_info + 2 * sizeof(uint64_t) + rkey_buffer_size),
@@ -550,14 +566,18 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         memcpy(&(module->state_info_array[i]).addr, &recv_buf[disps[i] + sizeof(uint64_t)], 
                sizeof(uint64_t));
 
-        status = ucp_ep_rkey_unpack(ep, &(recv_buf[disps[i] + 2 * sizeof(uint64_t)]),
-                                    &((module->win_info_array[i]).rkey));
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_rkey_unpack failed: %d\n",
-                                __FILE__, __LINE__, status);
-            ret = OMPI_ERROR;
-            goto error;
+        (module->win_info_array[i]).rkey_init = false;
+        if (size > 0 && (flavor == MPI_WIN_FLAVOR_ALLOCATE || flavor == MPI_WIN_FLAVOR_CREATE)) {
+            status = ucp_ep_rkey_unpack(ep, &(recv_buf[disps[i] + 2 * sizeof(uint64_t)]),
+                                        &((module->win_info_array[i]).rkey));
+            if (status != UCS_OK) {
+                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                                    "%s:%d: ucp_ep_rkey_unpack failed: %d\n",
+                                    __FILE__, __LINE__, status);
+                ret = OMPI_ERROR;
+                goto error;
+            }
+            (module->win_info_array[i]).rkey_init = true;
         }
 
         status = ucp_ep_rkey_unpack(ep, &(recv_buf[disps[i] + 2 * sizeof(uint64_t) + rkey_sizes[i]]),
@@ -569,12 +589,15 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
             ret = OMPI_ERROR;
             goto error;
         }
+        (module->state_info_array[i]).rkey_init = true;
     }
 
     free(my_info);
     free(recv_buf);
 
-    ucp_rkey_buffer_release(rkey_buffer);
+    if (rkey_buffer_size != 0) {
+        ucp_rkey_buffer_release(rkey_buffer);
+    }
     ucp_rkey_buffer_release(state_rkey_buffer);
 
     module->state.lock = TARGET_LOCK_UNLOCKED;
@@ -583,6 +606,10 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     module->state.complete_count = 0;
     module->state.req_flag = 0;
     module->state.acc_lock = TARGET_LOCK_UNLOCKED;
+    module->state.dynamic_win_count = 0;
+    for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
+        module->local_dynamic_win_info[i].refcnt = 0;
+    }
     module->epoch_type.access = NONE_EPOCH;
     module->epoch_type.exposure = NONE_EPOCH;
     module->lock_count = 0;
@@ -643,11 +670,116 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     return ret;
 }
 
+int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_wins,
+                                           int min_index, int max_index,
+                                           uint64_t base, size_t len, int *insert) {
+    int mid_index = (max_index + min_index) >> 1;
+
+    if (min_index > max_index) {
+        (*insert) = min_index;
+        return -1;
+    }
+
+    if (dynamic_wins[mid_index].base > base) {
+        return ompi_osc_find_attached_region_position(dynamic_wins, min_index, mid_index-1,
+                                                      base, len, insert);
+    } else if (base + len < dynamic_wins[mid_index].base + dynamic_wins[mid_index].size) {
+        return mid_index;
+    } else {
+        return ompi_osc_find_attached_region_position(dynamic_wins, mid_index+1, max_index,
+                                                      base, len, insert);
+    }
+}
+
 int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
-    return OMPI_SUCCESS;
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+    int insert_index = -1, contain_index;
+    void *rkey_buffer;
+    size_t rkey_buffer_size;
+    int ret = OMPI_SUCCESS;
+    ucs_status_t status;
+
+    if (module->state.dynamic_win_count >= OMPI_OSC_UCX_ATTACH_MAX) {
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    if (module->state.dynamic_win_count > 0) {
+        contain_index = ompi_osc_find_attached_region_position((ompi_osc_dynamic_win_info_t *)module->state.dynamic_wins,
+                                                               0, (int)module->state.dynamic_win_count,
+                                                               (uint64_t)base, len, &insert_index);
+        if (contain_index >= 0) {
+            module->local_dynamic_win_info[contain_index].refcnt++;
+            return ret;
+        }
+
+        assert(insert_index >= 0 && insert_index < module->state.dynamic_win_count);
+
+        memmove((void *)&module->local_dynamic_win_info[insert_index+1],
+                (void *)&module->local_dynamic_win_info[insert_index],
+                (OMPI_OSC_UCX_ATTACH_MAX - (insert_index + 1)) * sizeof(ompi_osc_local_dynamic_win_info_t));
+        memmove((void *)&module->state.dynamic_wins[insert_index+1],
+                (void *)&module->state.dynamic_wins[insert_index],
+                (OMPI_OSC_UCX_ATTACH_MAX - (insert_index + 1)) * sizeof(ompi_osc_dynamic_win_info_t));
+    } else {
+        insert_index = 0;
+    }
+
+    ret = mem_map(&base, len, &(module->local_dynamic_win_info[insert_index].memh),
+                  module, MPI_WIN_FLAVOR_CREATE);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
+    }
+
+    module->state.dynamic_wins[insert_index].base = (uint64_t)base;
+    module->state.dynamic_wins[insert_index].size = len;
+
+    status = ucp_rkey_pack(mca_osc_ucx_component.ucp_context,
+                           module->local_dynamic_win_info[insert_index].memh,
+                           &rkey_buffer, (size_t *)&rkey_buffer_size);
+    if (status != UCS_OK) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: ucp_rkey_pack failed: %d\n",
+                            __FILE__, __LINE__, status);
+        return OMPI_ERROR;
+    }
+
+    assert(rkey_buffer_size <= OMPI_OSC_UCX_RKEY_BUF_MAX);
+    memcpy((char *)(module->state.dynamic_wins[insert_index].rkey_buffer),
+           (char *)rkey_buffer, rkey_buffer_size);
+
+    module->local_dynamic_win_info[insert_index].refcnt++;
+    module->state.dynamic_win_count++;
+
+    ucp_rkey_buffer_release(rkey_buffer);
+
+    return ret;
 }
 
 int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+    int insert, contain;
+
+    assert(module->state.dynamic_win_count > 0);
+
+    contain = ompi_osc_find_attached_region_position((ompi_osc_dynamic_win_info_t *)module->state.dynamic_wins,
+                                                     0, (int)module->state.dynamic_win_count,
+                                                     (uint64_t)base, 1, &insert);
+    assert(contain >= 0 && contain < module->state.dynamic_win_count);
+
+    module->local_dynamic_win_info[contain].refcnt--;
+    if (module->local_dynamic_win_info[contain].refcnt == 0) {
+        ucp_mem_unmap(mca_osc_ucx_component.ucp_context,
+                      module->local_dynamic_win_info[contain].memh);
+        memmove((void *)&(module->local_dynamic_win_info[contain]),
+                (void *)&(module->local_dynamic_win_info[contain+1]),
+                (OMPI_OSC_UCX_ATTACH_MAX - (contain + 1)) * sizeof(ompi_osc_local_dynamic_win_info_t));
+        memmove((void *)&module->state.dynamic_wins[contain],
+                (void *)&module->state.dynamic_wins[contain+1],
+                (OMPI_OSC_UCX_ATTACH_MAX - (contain + 1)) * sizeof(ompi_osc_dynamic_win_info_t));
+
+        module->state.dynamic_win_count--;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -679,7 +811,10 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
                                              module->comm->c_coll->coll_barrier_module);
 
     for (i = 0; i < ompi_comm_size(module->comm); i++) {
-        ucp_rkey_destroy((module->win_info_array[i]).rkey);
+        if ((module->win_info_array[i]).rkey_init == true) {
+            ucp_rkey_destroy((module->win_info_array[i]).rkey);
+            (module->win_info_array[i]).rkey_init == false;
+        }
         ucp_rkey_destroy((module->state_info_array[i]).rkey);
     }
     free(module->win_info_array);
@@ -687,7 +822,10 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
 
     free(module->per_target_ops_nums);
 
-    ucp_mem_unmap(mca_osc_ucx_component.ucp_context, module->memh);
+    if ((module->flavor == MPI_WIN_FLAVOR_ALLOCATE || module->flavor == MPI_WIN_FLAVOR_CREATE)
+        && module->size > 0) {
+        ucp_mem_unmap(mca_osc_ucx_component.ucp_context, module->memh);
+    }
     ucp_mem_unmap(mca_osc_ucx_component.ucp_context, module->state_memh);
 
     if (module->disp_units) free(module->disp_units);
