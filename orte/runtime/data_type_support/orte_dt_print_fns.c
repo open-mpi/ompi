@@ -14,8 +14,6 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
- *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -312,14 +310,12 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
             tmp3 = NULL;
             if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)&tmp3, OPAL_STRING)) {
                 alias = opal_argv_split(tmp3, ',');
-                if (NULL != alias) {
-                    for (i=0; NULL != alias[i]; i++) {
-                        asprintf(&tmp2, "%s%s\tresolved from %s\n", tmp, pfx2, alias[i]);
-                        free(tmp);
-                        tmp = tmp2;
-                    }
-                    opal_argv_free(alias);
+                for (i=0; NULL != alias[i]; i++) {
+                    asprintf(&tmp2, "%s%s\tresolved from %s\n", tmp, pfx2, alias[i]);
+                    free(tmp);
+                    tmp = tmp2;
                 }
+                opal_argv_free(alias);
             }
             if (NULL != tmp3) {
                 free(tmp3);
@@ -335,14 +331,12 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         tmp3 = NULL;
         if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)&tmp3, OPAL_STRING)) {
             alias = opal_argv_split(tmp3, ',');
-            if (NULL != alias) {
-                for (i=0; NULL != alias[i]; i++) {
-                    asprintf(&tmp2, "%s%s\tresolved from %s\n", tmp, pfx2, alias[i]);
-                    free(tmp);
-                    tmp = tmp2;
-                }
-                opal_argv_free(alias);
+            for (i=0; NULL != alias[i]; i++) {
+                asprintf(&tmp2, "%s%s\tresolved from %s\n", tmp, pfx2, alias[i]);
+                free(tmp);
+                tmp = tmp2;
             }
+            opal_argv_free(alias);
         }
         if (NULL != tmp3) {
             free(tmp3);
