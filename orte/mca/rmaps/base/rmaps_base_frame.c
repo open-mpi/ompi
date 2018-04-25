@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -427,51 +427,36 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (orte_rmaps_base_pernode) {
-        /* there is no way to resolve this conflict, so if something else was
-         * given, we have no choice but to error out
-         */
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
-                           "bynode", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-            return ORTE_ERR_SILENT;
+        /* if the user didn't specify a mapping directive, then match it */
+        if (!(ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+            /* ensure we set the mapping policy to ppr */
+            ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
+            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+            /* define the ppr */
+            orte_rmaps_base.ppr = strdup("1:node");
         }
-        /* ensure we set the mapping policy to ppr */
-        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
-        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
-        /* define the ppr */
-        orte_rmaps_base.ppr = strdup("1:node");
     }
 
     if (0 < orte_rmaps_base_n_pernode) {
-        /* there is no way to resolve this conflict, so if something else was
-         * given, we have no choice but to error out
-         */
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
-                           "bynode", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-            return ORTE_ERR_SILENT;
-        }
-        /* ensure we set the mapping policy to ppr */
-        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
-        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
-        /* define the ppr */
-        asprintf(&orte_rmaps_base.ppr, "%d:node", orte_rmaps_base_n_pernode);
+         /* if the user didn't specify a mapping directive, then match it */
+         if (!(ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+             /* ensure we set the mapping policy to ppr */
+             ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
+             ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+             /* define the ppr */
+             asprintf(&orte_rmaps_base.ppr, "%d:node", orte_rmaps_base_n_pernode);
+         }
     }
 
     if (0 < orte_rmaps_base_n_persocket) {
-        /* there is no way to resolve this conflict, so if something else was
-         * given, we have no choice but to error out
-         */
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
-                           "bynode", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-            return ORTE_ERR_SILENT;
+        /* if the user didn't specify a mapping directive, then match it */
+        if (!(ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+            /* ensure we set the mapping policy to ppr */
+            ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
+            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+            /* define the ppr */
+            asprintf(&orte_rmaps_base.ppr, "%d:socket", orte_rmaps_base_n_persocket);
         }
-        /* ensure we set the mapping policy to ppr */
-        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
-        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
-        /* define the ppr */
-        asprintf(&orte_rmaps_base.ppr, "%d:socket", orte_rmaps_base_n_persocket);
     }
 
     /* Should we schedule on the local node or not? */
