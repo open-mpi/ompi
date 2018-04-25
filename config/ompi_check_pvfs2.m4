@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2016 University of Houston. All rights reserved.
+dnl Copyright (c) 2008-2018 University of Houston. All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -42,27 +42,30 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
              [Build Pvfs2 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([pvfs2], [$with_pvfs2], [include/pvfs2.h])
 
-    AS_IF([test -z "$with_pvfs2"],
-          [ompi_check_pvfs2_dir="/usr/local"],
-          [ompi_check_pvfs2_dir=$with_pvfs2])
+    AS_IF([test "$with_pvfs2" = "no"],
+        [ompi_check_pvfs2_happy="no"],
+        [AS_IF([test -z "$with_pvfs2"],
+                [ompi_check_pvfs2_dir="/usr/local"],
+                [ompi_check_pvfs2_dir=$with_pvfs2])
 
-    if test -e "$ompi_check_pvfs2_dir/lib64" ; then
-        ompi_check_pvfs2_libdir="$ompi_check_pvfs2_dir/lib64"
-    else
-        ompi_check_pvfs2_libdir="$ompi_check_pvfs2_dir/lib"
-    fi
+            if test -e "$ompi_check_pvfs2_dir/lib64" ; then
+                ompi_check_pvfs2_libdir="$ompi_check_pvfs2_dir/lib64"
+            else
+                ompi_check_pvfs2_libdir="$ompi_check_pvfs2_dir/lib"
+            fi
 
-    # Add correct -I and -L flags
-    OPAL_CHECK_PACKAGE([$1], [pvfs2.h], [pvfs2], [PVFS_util_resolve], [],
-                       [$ompi_check_pvfs2_dir], [$ompi_check_pvfs2_libdir], [ompi_check_pvfs2_happy="yes"],
-                       [ompi_check_pvfs2_happy="no"])
-
+            # Add correct -I and -L flags
+            OPAL_CHECK_PACKAGE([$1], [pvfs2.h], [pvfs2], [PVFS_util_resolve], [],
+                [$ompi_check_pvfs2_dir], [$ompi_check_pvfs2_libdir], 
+                [ompi_check_pvfs2_happy="yes"],
+                [ompi_check_pvfs2_happy="no"])
+            ])
 
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
-          [$2],
-          [AS_IF([test ! -z "$with_pvfs2" && test "$with_pvfs2" != "no"],
-                  [echo PVFS2 support not found])
-              $3])
-
-])
+        [$2],
+        [AS_IF([test ! -z "$with_pvfs2" && test "$with_pvfs2" != "no"],
+                [echo PVFS2 support not found])
+            $3])
+    
+    ])
 
