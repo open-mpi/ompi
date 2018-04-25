@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2014-2016 Research Organization for Information Science
@@ -89,9 +89,8 @@ if BUILD_FORTRAN_SIZEOF
 nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES += \
      mpi-tkr-sizeof.h \
      mpi-tkr-sizeof.f90
-
-mpi.lo: mpi-tkr-sizeof.h
 endif
+mpi.lo: $(nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES)
 
 # Note that we invoke some OPAL functions directly in
 # libmpi_usempi.la, so we need to link in the OPAL library directly
