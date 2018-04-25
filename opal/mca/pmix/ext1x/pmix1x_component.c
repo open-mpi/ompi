@@ -78,12 +78,14 @@ mca_pmix_ext1x_component_t mca_pmix_ext1x_component = {
 static int external_open(void)
 {
     OBJ_CONSTRUCT(&mca_pmix_ext1x_component.jobids, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pmix_ext1x_component.values, opal_list_t);
     return OPAL_SUCCESS;
 }
 
 static int external_close(void)
 {
     OPAL_LIST_DESTRUCT(&mca_pmix_ext1x_component.jobids);
+    OPAL_LIST_DESTRUCT(&mca_pmix_ext1x_component.values);
     return OPAL_SUCCESS;
 }
 
