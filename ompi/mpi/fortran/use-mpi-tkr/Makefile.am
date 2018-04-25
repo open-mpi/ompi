@@ -89,6 +89,8 @@ if BUILD_FORTRAN_SIZEOF
 nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES += \
      mpi-tkr-sizeof.h \
      mpi-tkr-sizeof.f90
+
+mpi.lo: mpi-tkr-sizeof.h
 endif
 
 # Note that we invoke some OPAL functions directly in
