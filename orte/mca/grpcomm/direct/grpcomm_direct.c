@@ -275,7 +275,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     size_t inlen, cmplen;
     uint8_t *packed_data, *cmpdata;
     int32_t nvals, i;
-    opal_value_t *kv;
+    opal_value_t kv, *kval;
     orte_process_name_t dmn;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
@@ -461,33 +461,57 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                         OBJ_CONSTRUCT(&wireup, opal_buffer_t);
                         opal_dss.load(&wireup, bo->bytes, bo->size);
                         /* decode it, pushing the info into our database */
-                        cnt=1;
-                        while (OPAL_SUCCESS == (ret = opal_dss.unpack(&wireup, &dmn, &cnt, ORTE_NAME))) {
-                            cnt = 1;
-                            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&wireup, &nvals, &cnt, OPAL_INT32))) {
-                                ORTE_ERROR_LOG(ret);
-                                break;
-                            }
-                            for (i=0; i < nvals; i++) {
+                        if (opal_pmix.legacy_get()) {
+                            OBJ_CONSTRUCT(&kv, opal_value_t);
+                            kv.key = OPAL_PMIX_PROC_URI;
+                            kv.type = OPAL_STRING;
+                            cnt=1;
+                            while (OPAL_SUCCESS == (ret = opal_dss.unpack(&wireup, &dmn, &cnt, ORTE_NAME))) {
                                 cnt = 1;
-                                if (ORTE_SUCCESS != (ret = opal_dss.unpack(&wireup, &kv, &cnt, OPAL_VALUE))) {
+                                if (ORTE_SUCCESS != (ret = opal_dss.unpack(&wireup, &kv.data.string, &cnt, OPAL_STRING))) {
+                                    ORTE_ERROR_LOG(ret);
+                                    break;
+                                }
+                                if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&dmn, &kv))) {
+                                    ORTE_ERROR_LOG(ret);
+                                    free(kv.data.string);
+                                    break;
+                                }
+                                free(kv.data.string);
+                                kv.data.string = NULL;
+                            }
+                            if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != ret) {
+                                ORTE_ERROR_LOG(ret);
+                            }
+                        } else {
+                           cnt=1;
+                           while (OPAL_SUCCESS == (ret = opal_dss.unpack(&wireup, &dmn, &cnt, ORTE_NAME))) {
+                               cnt = 1;
+                               if (ORTE_SUCCESS != (ret = opal_dss.unpack(&wireup, &nvals, &cnt, OPAL_INT32))) {
+                                   ORTE_ERROR_LOG(ret);
+                                   break;
+                               }
+                               for (i=0; i < nvals; i++) {
+                                cnt = 1;
+                                if (ORTE_SUCCESS != (ret = opal_dss.unpack(&wireup, &kval, &cnt, OPAL_VALUE))) {
                                     ORTE_ERROR_LOG(ret);
                                     break;
                                 }
                                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                                    "%s STORING MODEX DATA FOR PROC %s KEY %s",
-                                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                    ORTE_NAME_PRINT(&dmn), kv->key));
-                                if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&dmn, kv))) {
+                                                     "%s STORING MODEX DATA FOR PROC %s KEY %s",
+                                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                                     ORTE_NAME_PRINT(&dmn), kval->key));
+                                if (OPAL_SUCCESS != (ret = opal_pmix.store_local(&dmn, kval))) {
                                     ORTE_ERROR_LOG(ret);
-                                    OBJ_RELEASE(kv);
+                                    OBJ_RELEASE(kval);
                                     break;
                                 }
-                                OBJ_RELEASE(kv);
+                                OBJ_RELEASE(kval);
                             }
-                        }
-                        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != ret) {
-                            ORTE_ERROR_LOG(ret);
+                            }
+                            if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != ret) {
+                                ORTE_ERROR_LOG(ret);
+                            }
                         }
                         /* done with the wireup buffer - dump it */
                         OBJ_DESTRUCT(&wireup);
