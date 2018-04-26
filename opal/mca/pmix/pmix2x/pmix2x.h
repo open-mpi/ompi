@@ -48,6 +48,7 @@ BEGIN_C_DECLS
 
 typedef struct {
   opal_pmix_base_component_t super;
+  bool legacy_get;
   opal_list_t jobids;
   bool native_launch;
   size_t evindex;
