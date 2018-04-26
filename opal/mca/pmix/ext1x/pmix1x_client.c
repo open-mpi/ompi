@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -711,7 +711,7 @@ int pmix1_lookup(opal_list_t *data, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
             pmix1_value_load(&pinfo[n].value, iptr);
             ++n;
         }
@@ -881,7 +881,7 @@ int pmix1_unpublish(char **keys, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
             pmix1_value_load(&pinfo[n].value, iptr);
             ++n;
         }
