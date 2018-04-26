@@ -49,7 +49,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_node_t *node;
     int rc, i, ppx = 0;
-    bool did_map, given, pernode = false;
+    bool did_map, given, pernode = false, persocket = false;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_vpid_t nprocs;
@@ -75,6 +75,17 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         } else {
             pernode = false;
         }
+    } else {
+        if (orte_rmaps_base_pernode) {
+            ppx = 1;
+            pernode = true;
+        } else if (0 < orte_rmaps_base_n_pernode) {
+            ppx = orte_rmaps_base_n_pernode;
+            pernode = true;
+        } else if (0 < orte_rmaps_base_n_persocket) {
+            ppx = orte_rmaps_base_n_persocket;
+            persocket = true;
+        }
     }
     if (0 == jdata->map->cpus_per_rank) {
         jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
@@ -89,18 +100,15 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 orte_std_cntr_t slots;
                 OBJ_CONSTRUCT(&nodes, opal_list_t);
                 orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
-                if (NULL != jdata->map->ppr) {
-                    if (pernode) {
-                        nprocs += ppx * opal_list_get_size(&nodes);
-                    } else {
-                        /* must be procs/socket, so add in #sockets for each node */
-                        slots = 0;
-                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
-                            slots += ppx * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
-                                                                              HWLOC_OBJ_SOCKET, 0,
-                                                                              OPAL_HWLOC_AVAILABLE);
-                        }
-                        nprocs += slots;
+                slots = 0;
+                if (pernode) {
+                    slots = ppx * opal_list_get_size(&nodes);
+                } else if (persocket) {
+                    /* add in #sockets for each node */
+                    OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+                        slots += ppx * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
+                                                                          HWLOC_OBJ_SOCKET, 0,
+                                                                          OPAL_HWLOC_AVAILABLE);
                     }
                 } else {
                     /* if we are in a managed allocation, then all is good - otherwise,
@@ -126,13 +134,15 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
                             return;
                         }
+                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+                            slots += node->slots;
+                        }
                     }
-                    nprocs += slots;
                 }
+                app->num_procs = slots;
                 OPAL_LIST_DESTRUCT(&nodes);
-            } else {
-                nprocs += app->num_procs;
             }
+            nprocs += app->num_procs;
         }
     }
 
