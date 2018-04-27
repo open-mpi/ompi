@@ -7,8 +7,8 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015-2017 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2018 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -560,10 +560,10 @@ subroutine pompi_type_create_subarray_f(ndims,array_of_sizes, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_create_subarray_f
 
-subroutine pompi_type_dup_f(type,newtype,ierror) &
+subroutine pompi_type_dup_f(oldtype,newtype,ierror) &
    BIND(C, name="pompi_type_dup_f")
    implicit none
-   INTEGER, INTENT(IN) :: type
+   INTEGER, INTENT(IN) :: oldtype
    INTEGER, INTENT(OUT) :: newtype
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_dup_f
@@ -1370,10 +1370,10 @@ subroutine pompi_type_create_keyval_f(type_copy_attr_fn,type_delete_attr_fn, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_create_keyval_f
 
-subroutine pompi_type_delete_attr_f(type,type_keyval,ierror) &
+subroutine pompi_type_delete_attr_f(datatype,type_keyval,ierror) &
    BIND(C, name="pompi_type_delete_attr_f")
    implicit none
-   INTEGER, INTENT(IN) :: type
+   INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: type_keyval
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_delete_attr_f
@@ -1385,32 +1385,32 @@ subroutine pompi_type_free_keyval_f(type_keyval,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_free_keyval_f
 
-subroutine pompi_type_get_name_f(type,type_name,resultlen,ierror,type_name_len) &
+subroutine pompi_type_get_name_f(datatype,type_name,resultlen,ierror,type_name_len) &
    BIND(C, name="pompi_type_get_name_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
-   INTEGER, INTENT(IN) :: type
+   INTEGER, INTENT(IN) :: datatype
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(OUT) :: type_name
    INTEGER, INTENT(OUT) :: resultlen
    INTEGER, INTENT(OUT) :: ierror
    INTEGER, VALUE, INTENT(IN) :: type_name_len
 end subroutine pompi_type_get_name_f
 
-subroutine pompi_type_set_attr_f(type,type_keyval,attribute_val,ierror) &
+subroutine pompi_type_set_attr_f(datatype,type_keyval,attribute_val,ierror) &
    BIND(C, name="pompi_type_set_attr_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
-   INTEGER, INTENT(IN) :: type
+   INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: type_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: attribute_val
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_set_attr_f
 
-subroutine pompi_type_set_name_f(type,type_name,ierror,type_name_len) &
+subroutine pompi_type_set_name_f(datatype,type_name,ierror,type_name_len) &
    BIND(C, name="pompi_type_set_name_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
-   INTEGER, INTENT(IN) :: type
+   INTEGER, INTENT(IN) :: datatype
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: type_name
    INTEGER, INTENT(OUT) :: ierror
    INTEGER, VALUE, INTENT(IN) :: type_name_len
@@ -3029,11 +3029,11 @@ subroutine pompi_type_create_f90_real_f(p,r,newtype,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_create_f90_real_f
 
-subroutine pompi_type_match_size_f(typeclass,size,type,ierror) &
+subroutine pompi_type_match_size_f(typeclass,size,datatype,ierror) &
    BIND(C, name="pompi_type_match_size_f")
    implicit none
    INTEGER, INTENT(IN) :: typeclass, size
-   INTEGER, INTENT(OUT) :: type
+   INTEGER, INTENT(OUT) :: datatype
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_match_size_f
 
