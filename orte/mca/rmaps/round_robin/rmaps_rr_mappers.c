@@ -90,6 +90,11 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         } else if (0 < orte_rmaps_base_n_pernode) {
             num_procs_to_assign = orte_rmaps_base_n_pernode;
         } else if (0 < orte_rmaps_base_n_persocket) {
+            if (NULL == node->topology) {
+                orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
+                               true, node->name);
+                return ORTE_ERR_SILENT;
+            }
             num_procs_to_assign = orte_rmaps_base_n_persocket * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PACKAGE, 0, OPAL_HWLOC_AVAILABLE);
         } else {
             /* assign a number of procs equal to the number of available slots */
