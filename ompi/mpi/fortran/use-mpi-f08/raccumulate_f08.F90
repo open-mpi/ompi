@@ -1,7 +1,7 @@
 ! -*- f90 -*-
 !
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2009-2014 Los Alamos National Security, LLC.
+! Copyright (c) 2009-2018 Los Alamos National Security, LLC.
 !               All Rights reserved.
 ! $COPYRIGHT$
 
@@ -13,7 +13,7 @@ subroutine MPI_Raccumulate_f08(origin_addr,origin_count,origin_datatype,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_Request, MPI_ADDRESS_KIND
    use :: mpi_f08, only : ompi_raccumulate_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN),ASYNCHRONOUS :: origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
