@@ -2,8 +2,8 @@
 ! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015-2017 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2018 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -23,13 +23,13 @@ END INTERFACE
 
 !Example of a user defined callback function
 !
-!  subroutine my_user_function( invec, inoutvec, len, type )   bind(c)
+!  subroutine my_user_function( invec, inoutvec, len, datatype )   bind(c)
 !    use, intrinsic :: iso_c_binding, only : c_ptr, c_f_pointer
 !    type(c_ptr), value :: invec, inoutvec
 !    integer, intent(in) :: len
-!    type(MPI_Datatype) :: type
+!    type(MPI_Datatype) :: datatype
 !    real, pointer :: invec_r(:), inoutvec_r(:)
-!    if (type%MPI_VAL == MPI_REAL%MPI_VAL) then
+!    if (datatype%MPI_VAL == MPI_REAL%MPI_VAL) then
 !       call c_f_pointer(invec, invec_r, (/ len /) )
 !       call c_f_pointer(inoutvec, inoutvec_r, (/ len /) )
 !       inoutvec_r = invec_r + inoutvec_r
