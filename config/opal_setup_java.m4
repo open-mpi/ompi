@@ -93,18 +93,29 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
         # hard-code a few of the common ones so that users don't have to
         # specify --with-java-<foo>=LONG_ANNOYING_DIRECTORY.
         AS_IF([test -z "$with_jdk_bindir"],
-              [ # OS X Snow Leopard and Lion (10.6 and 10.7 -- did not
-                # check prior versions)
+              [ # OS X/macOS
                opal_java_found=0
+               # The following logic was deliberately decided upon in https://github.com/open-mpi/ompi/pull/5015 specifically to prevent this script and the
+               # rest of Open MPI's build system from getting confused by the somewhat unorthodox Java toolchain layout present on OS X/macOS systems, described
+               # in depth by https://github.com/open-mpi/ompi/pull/5015#issuecomment-379324639, and mishandling OS X/macOS Java toolchain path
+               # detection as a result.
                AS_IF([test -x /usr/libexec/java_home],
-                    [opal_java_dir=`/usr/libexec/java_home`/include],
-                    [opal_java_dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers])
-               AC_MSG_CHECKING([OSX locations])
+                     [opal_java_dir=`/usr/libexec/java_home`],
+                     [opal_java_dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current])
+               AC_MSG_CHECKING([OS X/macOS locations])
                AS_IF([test -d $opal_java_dir],
                      [AC_MSG_RESULT([found ($opal_java_dir)])
                       opal_java_found=1
-                      with_jdk_headers=$opal_java_dir
-                      with_jdk_bindir=/usr/bin],
+                      if test -d "$opal_java_dir/Headers" && test -d "$opal_java_dir/Commands"; then
+                          with_jdk_headers=$opal_java_dir/Headers
+                          with_jdk_bindir=$opal_java_dir/Commands
+                      elif test -d "$opal_java_dir/include" && test -d "$opal_java_dir/bin"; then
+                          with_jdk_headers=$opal_java_dir/include
+                          with_jdk_bindir=$opal_java_dir/bin
+                      else
+                          AC_MSG_WARN([No recognized directory structure found under $opal_java_dir])
+                          AC_MSG_ERROR([Cannot continue])
+                      fi],
                      [AC_MSG_RESULT([not found])])
 
                if test "$opal_java_found" = "0"; then
