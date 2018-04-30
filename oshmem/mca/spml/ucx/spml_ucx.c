@@ -271,7 +271,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     dump_address(my_rank, (char *)wk_local_addr, wk_addr_len);
 
     rc = oshmem_shmem_xchng(wk_local_addr, wk_addr_len, nprocs,
-            (void **)&wk_raddrs, &wk_roffs, &wk_rsizes);
+                            (void **)&wk_raddrs, &wk_roffs, &wk_rsizes);
     if (rc != OSHMEM_SUCCESS) {
         goto error;
     }
@@ -286,13 +286,14 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
         ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
         ep_params.address    = (ucp_address_t *)(wk_raddrs + wk_roffs[i]);
 
-        err = ucp_ep_create(mca_spml_ucx.ucp_worker, 
-                            &ep_params,
+        err = ucp_ep_create(mca_spml_ucx.ucp_worker, &ep_params,
                             &mca_spml_ucx.ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
-            SPML_ERROR("ucp_ep_create failed: %s", ucs_status_string(err));
+            SPML_ERROR("ucp_ep_create(proc=%d/%d) failed: %s", n, nprocs,
+                       ucs_status_string(err));
             goto error2;
         }
+
         OSHMEM_PROC_DATA(procs[i])->num_transports = 1;
         OSHMEM_PROC_DATA(procs[i])->transport_ids = spml_ucx_transport_ids;
     }
