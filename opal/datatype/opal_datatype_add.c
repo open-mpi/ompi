@@ -103,7 +103,7 @@ static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
  * set to ZERO if it's a empty datatype.
  */
 int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtAdd,
-                           uint32_t count, ptrdiff_t disp, ptrdiff_t extent )
+                           size_t count, ptrdiff_t disp, ptrdiff_t extent )
 {
     uint32_t newLength, place_needed = 0, i;
     short localFlags = 0;  /* no specific options yet */
