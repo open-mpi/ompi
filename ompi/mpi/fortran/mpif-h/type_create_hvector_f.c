@@ -73,7 +73,7 @@ void ompi_type_create_hvector_f(MPI_Fint *count, MPI_Fint *blocklength,
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    c_ierr = PMPI_Type_hvector(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Type_create_hvector(OMPI_FINT_2_INT(*count),
                               OMPI_FINT_2_INT(*blocklength),
                               *stride,
                               c_old, &c_new);
