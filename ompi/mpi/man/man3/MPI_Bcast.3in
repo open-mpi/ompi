@@ -51,13 +51,6 @@ MPI_Ibcast(\fIbuffer\fP, \fIcount\fP, \fIdatatype\fP, \fIroot\fP, \fIcomm\fP, \f
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Bcast(void* \fIbuffer\fP, int \fIcount\fP,
-	const MPI::Datatype& \fIdatatype\fP, int \fIroot\fP) const = 0
-
-.fi
 .SH INPUT/OUTPUT PARAMETERS
 .ft R
 .TP 1i

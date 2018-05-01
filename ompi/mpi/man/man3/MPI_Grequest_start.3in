@@ -42,16 +42,6 @@ MPI_Grequest_start(\fIquery_fn\fP, \fIfree_fn\fP, \fIcancel_fn\fP, \fIextra_stat
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static MPI::Grequest
-             MPI::Grequest::Start(const MPI::Grequest::Query_function
-             \fIquery_fn\fP, const MPI::Grequest::Free_function \fIfree_fn\fP,
-             const MPI::Grequest::Cancel_function \fIcancel_fn\fP,
-             void \fI*extra_state\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -38,13 +38,6 @@ MPI_Irecv(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIsource\fP, \fItag\fP, \fIco
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-Request Comm::Irecv(void* \fIbuf\fP, int \fIcount\fP, const Datatype&
-	\fIdatatype\fP, int \fIsource\fP, int \fItag\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -42,15 +42,6 @@ MPI_Type_create_struct(\fIcount\fP, \fIarray_of_blocklengths\fP,
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static MPI::Datatype MPI::Datatype::Create_struct(int \fIcount\fP,
-	const int \fIarray_of_blocklengths\fP[], const MPI::Aint
-	\fIarray_of_displacements\fP[], const MPI::Datatype
-	\fIarray_of_types\fP[])
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

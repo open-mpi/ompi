@@ -66,15 +66,6 @@ MPI_Rput(\fIorigin_addr\fP, \fIorigin_count\fP, \fIorigin_datatype\fP, \fItarget
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Win::Put(const void* \fIorigin_addr\fP, int \fIorigin_count\fP, const
-	MPI::Datatype& \fIorigin_datatype\fP, int \fItarget_rank\fP, MPI::Aint
-	\fItarget_disp\fP, int \fItarget_count\fP, const MPI::Datatype&
-	\fItarget_datatype\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

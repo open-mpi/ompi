@@ -44,17 +44,6 @@ MPI_File_write_at_all(\fIfh\fP, \fIoffset\fP, \fIbuf\fP, \fIcount\fP, \fIdatatyp
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::File::Write_at_all(MPI::Offset \fIoffset\fP, const void* \fIbuf\fP,
-	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP,
-	MPI::Status& \fIstatus\fP)
-
-void MPI::File::Write_at_all(MPI::Offset \fIoffset\fP, const void* \fIbuf\fP,
-	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

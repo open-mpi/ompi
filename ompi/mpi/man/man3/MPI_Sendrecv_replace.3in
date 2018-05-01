@@ -42,18 +42,6 @@ MPI_Sendrecv_replace(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIdest\fP, \fIsend
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void Comm::Sendrecv_replace(void* \fIbuf\fP, int \fIcount\fP, const
-	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fIsendtag\fP, int \fIsource\fP,
-	int \fIrecvtag\fP, Status& \fIstatus\fP) const
-
-void Comm::Sendrecv_replace(void* \fIbuf\fP, int \fIcount\fP, const
-	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fIsendtag\fP, int \fIsource\fP,
-	int \fIrecvtag\fP) const
-
-.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

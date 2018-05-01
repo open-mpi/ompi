@@ -62,15 +62,6 @@ MPI_Iscatterv(\fIsendbuf\fP, \fIsendcounts\fP, \fIdispls\fP, \fIsendtype\fP, \fI
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Scatterv(const void* \fIsendbuf\fP, const int \fIsendcounts\fP[],
-	const int \fIdispls\fP[], const MPI::Datatype& \fIsendtype\fP,
-	void* \fIrecvbuf\fP, int \fIrecvcount\fP, const MPI::Datatype&
-	\fIrecvtype\fP, int \fIroot\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

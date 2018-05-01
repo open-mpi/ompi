@@ -37,16 +37,6 @@ MPI_Testany(\fIcount\fP, \fIarray_of_requests\fP, \fIindex\fP, \fIflag\fP, \fIst
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[],
-	int& \fIindex\fP, Status& \fIstatus\fP)
-
-static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[],
-	int& \fIindex\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

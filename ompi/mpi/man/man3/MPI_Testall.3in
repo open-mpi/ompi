@@ -38,15 +38,6 @@ MPI_Testall(\fIcount\fP, \fIarray_of_requests\fP, \fIflag\fP, \fIarray_of_status
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static bool Request::Testall(int \fIcount\fP, Request
-	\fIarray_of_requests\fP[], Status \fIarray_of_statuses\fP[])
-
-static bool Request::Testall(int \fIcount\fP, Request \fIarray_of_requests\fP[])
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

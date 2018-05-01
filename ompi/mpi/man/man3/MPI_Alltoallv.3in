@@ -74,16 +74,6 @@ MPI_Ialltoallv(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtype\fP, \
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Alltoallv(const void* \fIsendbuf\fP,
-	const int \fIsendcounts\fP[], const int \fIdispls\fP[],
-	const MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP,
-	const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
-	const MPI::Datatype& \fIrecvtype\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.2i

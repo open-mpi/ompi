@@ -61,14 +61,6 @@ MPI_Ireduce(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP,
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Intracomm::Reduce(const void* \fIsendbuf\fP, void* \fIrecvbuf\fP,
-	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP, const MPI::Op& \fIop\fP,
-	int \fIroot\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

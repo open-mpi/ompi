@@ -41,13 +41,6 @@ MPI_File_iwrite(\fIfh\fP, \fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIrequest\fP,
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Request MPI::File::Iwrite(const void* \fIbuf\fP, int \fIcount\fP,
-	const MPI::Datatype& \fIdatatype\fP)
-
-.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

@@ -64,15 +64,6 @@ MPI_Iallgatherv(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Allgatherv(const void* \fIsendbuf\fP, int \fIsendcount\fP,
-	const MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP,
-	const int \fIrecvcounts\fP[], const int \fIdispls\fP[],
-	const MPI::Datatype& \fIrecvtype\fP) const = 0
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

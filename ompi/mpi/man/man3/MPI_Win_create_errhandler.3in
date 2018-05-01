@@ -34,13 +34,6 @@ MPI_Win_create_errhandler(\fIwin_errhandler_fn\fP, \fIerrhandler\fP, \fIierror\f
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static MPI::Errhandler MPI::Win::Create_errhandler(MPI::Win::
-	errhandler_function* \fIfunction\fP)
-
-.fi
 .SH DEPRECATED TYPE NAME NOTE
 .ft R
 MPI-2.2 deprecated the MPI_Win_errhandler_fn and

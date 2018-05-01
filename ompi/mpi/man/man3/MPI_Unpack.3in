@@ -43,14 +43,6 @@ MPI_Unpack(\fIinbuf\fP, \fIinsize\fP, \fIposition\fP, \fIoutbuf\fP, \fIoutcount\
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void Datatype::Unpack(const void* \fIinbuf\fP, int \fIinsize\fP,
-	void *\fIoutbuf\fP, int \fIoutcount\fP, int& \fIposition\fP,
-	const Comm& \fIcomm\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

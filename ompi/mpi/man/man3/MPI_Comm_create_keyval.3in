@@ -42,15 +42,6 @@ MPI_Comm_create_keyval(\fIcomm_copy_attr_fn\fP, \fIcomm_delete_attr_fn\fP, \fIco
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static in MPI::Comm::Create_keyval(MPI::Comm::Copy_attr_function*
-	\fIcomm_copy_attr_fn\fP,
-	MPI::Comm::Delete_attr_function* \fIcomm_delete_attr_fn\fP,
-	void* \fIextra_state\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

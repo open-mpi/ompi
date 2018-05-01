@@ -47,20 +47,6 @@ MPI_Comm_spawn_multiple(\fIcount\fP, \fIarray_of_commands\fP, \fIarray_of_argv\f
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Intercomm MPI::Intracomm::Spawn_multiple(int \fIcount\fP,
-	const char* \fIarray_of_commands\fP[], const char** \fIarray_of_argv\fP[],
-	const int \fIarray_of_maxprocs\fP[], const MPI::Info \fIarray_of_info\fP[],
-	int \fIroot\fP, int \fIarray_of_errcodes\fP[])
-
-MPI::Intercomm MPI::Intracomm::Spawn_multiple(int \fIcount\fP,
-	const char* \fIarray_of_commands\fP[], const char** \fIarray_of_argv\fP[],
-	const int \fIarray_of_maxprocs\fP[], const MPI::Info \fIarray_of_info\fP[],
-	int \fIroot\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

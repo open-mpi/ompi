@@ -53,16 +53,6 @@ MPI_Type_create_hindexed_block(\fIcount\fP, \fIblocklength\fP, \fIarray_of_displ
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Datatype MPI::Datatype::Create_indexed_block( int \fIcount\fP,
-	int \fIblocklength\fP, const int \fIarray_of_displacements\fP[]) const
-
-MPI::Datatype MPI::Datatype::Create_hindexed_block( int \fIcount\fP,
-	int \fIblocklength\fP, const int \fIarray_of_displacements\fP[]) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

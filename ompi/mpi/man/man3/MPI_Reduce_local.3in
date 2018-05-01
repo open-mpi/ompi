@@ -38,13 +38,6 @@ MPI_Reduce_local(\fIinbuf\fP, \fIinoutbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Op::Reduce_local(const void* \fIinbuf\fP, void* \fIinoutbuf\fP,
-	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP, const MPI::Op& \fIop\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -40,14 +40,6 @@ MPI_Type_create_keyval(\fItype_copy_attr_fn\fP, \fItype_delete_attr_fn\fP, \fIty
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static int MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function*
-	\fItype_copy_attr_fn\fP, MPI::Datatype::Delete_attr_function*
-	\fItype_delete_attr_fn\fP, void* \fIextra_state\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

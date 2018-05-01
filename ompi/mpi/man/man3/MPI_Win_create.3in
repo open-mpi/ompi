@@ -41,14 +41,6 @@ MPI_Win_create(\fIbase\fP, \fIsize\fP, \fIdisp_unit\fP, \fIinfo\fP, \fIcomm\fP, 
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static MPI::Win MPI::Win::Create(const void* \fIbase\fP,
-	MPI::Aint \fIsize\fP, int \fIdisp_unit\fP, const
-	MPI::Info& \fIinfo\fP, const MPI::Intracomm& \fIcomm\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

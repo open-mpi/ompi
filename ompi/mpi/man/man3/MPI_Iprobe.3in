@@ -36,14 +36,6 @@ MPI_Iprobe(\fIsource\fP, \fItag\fP, \fIcomm\fP, \fIflag\fP, \fIstatus\fP, \fIier
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-bool Comm::Iprobe(int \fIsource\fP, int \fItag\fP, Status& \fIstatus\fP) const
-
-bool Comm::Iprobe(int \fIsource\fP, int \fItag\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

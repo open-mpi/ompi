@@ -40,17 +40,6 @@ MPI_Testsome(\fIincount\fP, \fIarray_of_requests\fP, \fIoutcount\fP, \fIarray_of
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static int Request::Testsome(int \fIincount\fP, Request
-	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[],
-	Status \fIarray_of_statuses\fP[])
-
-static int Request::Testsome(int \fIincount\fP, Request
-	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[])
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

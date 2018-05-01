@@ -43,15 +43,6 @@ MPI_Type_get_contents(\fIdatatype\fP, \fImax_integers\fP, \fImax_addresses\fP, \
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Datatype::Get_contents(int \fImax_integers\fP, int \fImax_addresses\fP,
-	int \fImax_datatypes\fP, int \fIarray_of_integers\fP[],
-	MPI::Aint \fIarray_of_addresses\fP[],
-	MPI::Datatype \fIarray_of_datatypes\fP[]) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

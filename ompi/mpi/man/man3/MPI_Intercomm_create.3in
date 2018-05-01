@@ -37,13 +37,6 @@ MPI_Intercomm_create(\fIlocal_comm\fP, \fIlocal_leader\fP, \fIpeer_comm\fP, \fIr
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-Intercomm Intracomm::Create_intercomm(int \fIlocal_leader\fP, const
-	Comm& \fIpeer_comm\fP, int \fIremote_leader\fP, int \fItag\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

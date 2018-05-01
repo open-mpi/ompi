@@ -62,18 +62,6 @@ MPI_Type_create_hindexed(\fIcount\fP, \fIarray_of_blocklengths\fP,
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-Datatype Datatype::Create_indexed(int \fIcount\fP,
-	const int \fIarray_of_blocklengths\fP[],
-	const int \fIarray_of_displacements\fP[]) const
-
-Datatype Datatype::Create_hindexed(int \fIcount\fP,
-	const int \fIarray_of_blocklengths\fP[],
-	const MPI::Aint \fIarray_of_displacements\fP[]) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

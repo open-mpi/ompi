@@ -38,13 +38,6 @@ MPI_Comm_connect(\fIport_name\fP, \fIinfo\fP, \fIroot\fP, \fIcomm\fP, \fInewcomm
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Intercomm MPI::Intracomm::Connect(const char* \fIport_name\fP,
-	const MPI::Info& \fIinfo\fP, int \fIroot\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -35,15 +35,6 @@ MPI_Waitall(\fIcount\fP, \fIarray_of_requests\fP, \fIarray_of_statuses\fP, \fIie
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-static void Request::Waitall(int \fIcount\fP, Request \fIarray_of_requests\fP[],
-	Status \fIarray_of_statuses\fP[])
-
-static void Request::Waitall(int \fIcount\fP, Request \fIarray_of_requests\fP[])
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

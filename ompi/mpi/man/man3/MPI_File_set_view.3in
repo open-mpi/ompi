@@ -43,15 +43,6 @@ MPI_File_set_view(\fIfh\fP, \fIdisp\fP, \fIetype\fP, \fIfiletype\fP, \fIdatarep\
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::File::Set_view(MPI::Offset \fIdisp\fP,
-	const MPI::Datatype& \fIetype\fP,
-	const MPI::Datatype& \fIfiletype\fP, const char* \fIdatarep\fP,
-	const MPI::Info& \fIinfo\fP)
-
-.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

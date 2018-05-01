@@ -44,18 +44,6 @@ MPI_Comm_spawn(\fIcommand\fP, \fIargv\fP, \fImaxprocs\fP, \fIinfo\fP, \fIroot\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Intercomm MPI::Intracomm::Spawn(const char* \fIcommand\fP,
-	const char* \fIargv\fP[], int \fImaxprocs\fP, const MPI::Info& \fIinfo\fP,
-	int \fIroot\fP, int \fIarray_of_errcodes\fP[]) const
-
-MPI::Intercomm MPI::Intracomm::Spawn(const char* \fIcommand\fP,
-	const char* \fIargv\fP[], int \fImaxprocs\fP, const MPI::Info& \fIinfo\fP,
-	int \fIroot\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

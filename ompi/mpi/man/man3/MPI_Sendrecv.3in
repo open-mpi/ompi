@@ -47,20 +47,6 @@ MPI_Sendrecv(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIdest\fP, \fIsend
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void Comm::Sendrecv(const void *\fIsendbuf\fP, int \fIsendcount\fP, const
-	Datatype& \fIsendtype\fP, int \fIdest\fP, int \fIsendtag\fP, void *\fIrecvbuf\fP,
-	int \fIrecvcount\fP, const Datatype& \fIrecvtype\fP, int \fIsource\fP,
-	int \fIrecvtag\fP, Status& \fIstatus\fP) const
-
-void Comm::Sendrecv(const void *\fIsendbuf\fP, int \fIsendcount\fP, const
-	Datatype& \fIsendtype\fP, int \fIdest\fP, int \fIsendtag\fP, void *\fIrecvbuf\fP,
-	int \fIrecvcount\fP, const Datatype& \fIrecvtype\fP, int \fIsource\fP,
-	int \fIrecvtag\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -43,13 +43,6 @@ MPI_File_iread_at(\fIfh\fP, \fIoffset\fP, \fIbuf\fP, \fIcount\fP, \fIdatatype\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-MPI::Request MPI::File::Iread_at(MPI::Offset \fIoffset\fP, void* \fIbuf\fP,
-	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

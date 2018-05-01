@@ -34,14 +34,6 @@ MPI_Request_get_status(\fIrequest\fP, \fIflag\fP, \fIstatus\fP, \fIierror\fP)
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-bool MPI::Request::Get_status(MPI::Status& \fIstatus\fP) const
-
-bool MPI::Request::Get_status() const
-
-.fi
 .SH INPUT PARAMETER
 .ft
 .TP 1i

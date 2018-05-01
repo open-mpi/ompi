@@ -42,16 +42,6 @@ MPI_File_write_all(\fIfh\fP, \fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIstatus\f
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::File::Write_all(const void* \fIbuf\fP, int \fIcount\fP,
-	const MPI::Datatype& \fIdatatype\fP, MPI::Status& \fIstatus\fP)
-
-void MPI::File::Write_all(const void* \fIbuf\fP, int \fIcount\fP,
-	const MPI::Datatype& \fIdatatype\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

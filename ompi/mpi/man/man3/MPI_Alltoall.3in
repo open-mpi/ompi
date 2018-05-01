@@ -68,14 +68,6 @@ MPI_Ialltoall(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fI
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Comm::Alltoall(const void* \fIsendbuf\fP, int \fIsendcount\fP,
-	const MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP,
-	int \fIrecvcount\fP, const MPI::Datatype& \fIrecvtype\fP)
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.2i

@@ -49,15 +49,6 @@ MPI_Pack_external(\fIdatarep\fP, \fIinbuf\fP, \fIincount\fP, \fIdatatype\fP, \fI
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
-.SH C++ Syntax
-.nf
-#include <mpi.h>
-void MPI::Datatype::Pack_external(const char* \fIdatarep\fP,
-	const void* \fIinbuf\fP, int \fIincount\fP,
-	void* \fIoutbuf\fP, MPI::Aint \fIoutsize\fP,
-	MPI::Aint& \fIposition\fP) const
-
-.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
