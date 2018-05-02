@@ -136,16 +136,6 @@ void mca_pml_ucx_request_init(void *request);
 void mca_pml_ucx_request_cleanup(void *request);
 
 
-static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int dst)
-{
-    ucp_ep_h ep = ompi_comm_peer_lookup(comm,dst)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
-    if (OPAL_UNLIKELY(NULL == ep)) {
-        ep = mca_pml_ucx_add_proc(comm, dst);
-    }
-
-    return ep;
-}
-
 static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
 {
     req->req_complete          = REQUEST_PENDING;
