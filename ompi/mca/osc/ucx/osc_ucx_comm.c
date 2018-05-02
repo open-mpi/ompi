@@ -325,13 +325,68 @@ static inline int end_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, int 
     return OMPI_SUCCESS;
 }
 
+static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module_t *module,
+                                       ucp_ep_h ep, int target) {
+    ucp_rkey_h state_rkey = (module->state_info_array)[target].rkey;
+    uint64_t remote_state_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET;
+    size_t len = sizeof(uint64_t) + sizeof(ompi_osc_dynamic_win_info_t) * OMPI_OSC_UCX_ATTACH_MAX;
+    char *temp_buf = malloc(len);
+    ompi_osc_dynamic_win_info_t *temp_dynamic_wins;
+    int win_count, contain, insert = -1;
+    ucs_status_t status;
+
+    if ((module->win_info_array[target]).rkey_init == true) {
+        ucp_rkey_destroy((module->win_info_array[target]).rkey);
+        (module->win_info_array[target]).rkey_init == false;
+    }
+
+    status = ucp_get_nbi(ep, (void *)temp_buf, len, remote_state_addr, state_rkey);
+    if (status != UCS_OK && status != UCS_INPROGRESS) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: ucp_get_nbi failed: %d\n",
+                            __FILE__, __LINE__, status);
+        return OMPI_ERROR;
+    }
+
+    status = ucp_ep_flush(ep);
+    if (status != UCS_OK) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: ucp_ep_flush failed: %d\n",
+                            __FILE__, __LINE__, status);
+        return OMPI_ERROR;
+    }
+
+    memcpy(&win_count, temp_buf, sizeof(uint64_t));
+    assert(win_count > 0 && win_count <= OMPI_OSC_UCX_ATTACH_MAX);
+
+    temp_dynamic_wins = (ompi_osc_dynamic_win_info_t *)(temp_buf + sizeof(uint64_t));
+    contain = ompi_osc_find_attached_region_position(temp_dynamic_wins, 0, win_count,
+                                                     remote_addr, 1, &insert);
+    assert(contain >= 0 && contain < win_count);
+
+    status = ucp_ep_rkey_unpack(ep, temp_dynamic_wins[contain].rkey_buffer,
+                                &((module->win_info_array[target]).rkey));
+    if (status != UCS_OK) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: ucp_ep_rkey_unpack failed: %d\n",
+                            __FILE__, __LINE__, status);
+        return OMPI_ERROR;
+    }
+
+    (module->win_info_array[target]).rkey_init = true;
+
+    free(temp_buf);
+
+    return status;
+}
+
 int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
                      int target, ptrdiff_t target_disp, int target_count,
                      struct ompi_datatype_t *target_dt, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-    ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     bool is_origin_contig = false, is_target_contig = false;
     ptrdiff_t origin_lb, origin_extent, target_lb, target_extent;
     ucs_status_t status;
@@ -341,6 +396,15 @@ int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_data
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     ompi_datatype_get_true_extent(origin_dt, &origin_lb, &origin_extent);
     ompi_datatype_get_true_extent(target_dt, &target_lb, &target_extent);
@@ -378,7 +442,7 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-    ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     ptrdiff_t origin_lb, origin_extent, target_lb, target_extent;
     bool is_origin_contig = false, is_target_contig = false;
     ucs_status_t status;
@@ -388,6 +452,15 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     ompi_datatype_get_true_extent(origin_dt, &origin_lb, &origin_extent);
     ompi_datatype_get_true_extent(target_dt, &target_lb, &target_extent);
@@ -557,10 +630,11 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-    ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     size_t dt_bytes;
     ompi_osc_ucx_internal_request_t *req = NULL;
     int ret = OMPI_SUCCESS;
+    ucs_status_t status;
 
     ret = check_sync_state(module, target, false);
     if (ret != OMPI_SUCCESS) {
@@ -571,6 +645,15 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     ompi_datatype_type_size(dt, &dt_bytes);
     memcpy(result_addr, origin_addr, dt_bytes);
@@ -604,16 +687,26 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
         op == &ompi_mpi_op_sum.op) {
         ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
         uint64_t remote_addr = (module->win_info_array[target]).addr + target_disp * OSC_UCX_GET_DISP(module, target);
-        ucp_rkey_h rkey = (module->win_info_array[target]).rkey;
+        ucp_rkey_h rkey;
         uint64_t value = *(uint64_t *)origin_addr;
         ucp_atomic_fetch_op_t opcode;
         size_t dt_bytes;
         ompi_osc_ucx_internal_request_t *req = NULL;
+        ucs_status_t status;
 
         ret = start_atomicity(module, ep, target);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
+
+        if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+            status = get_dynamic_win_info(remote_addr, module, ep, target);
+            if (status != UCS_OK) {
+                return OMPI_ERROR;
+            }
+        }
+
+        rkey = (module->win_info_array[target]).rkey;
 
         ompi_datatype_type_size(dt, &dt_bytes);
 
@@ -789,7 +882,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->state_info_array[target]).addr + OSC_UCX_STATE_REQ_FLAG_OFFSET;
-    ucp_rkey_h rkey = (module->state_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     ompi_osc_ucx_request_t *ucx_req = NULL;
     ompi_osc_ucx_internal_request_t *internal_req = NULL;
     ucs_status_t status;
@@ -799,6 +892,15 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
     if (NULL == ucx_req) {
@@ -843,7 +945,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     uint64_t remote_addr = (module->state_info_array[target]).addr + OSC_UCX_STATE_REQ_FLAG_OFFSET;
-    ucp_rkey_h rkey = (module->state_info_array[target]).rkey;
+    ucp_rkey_h rkey;
     ompi_osc_ucx_request_t *ucx_req = NULL;
     ompi_osc_ucx_internal_request_t *internal_req = NULL;
     ucs_status_t status;
@@ -853,6 +955,15 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        status = get_dynamic_win_info(remote_addr, module, ep, target);
+        if (status != UCS_OK) {
+            return OMPI_ERROR;
+        }
+    }
+
+    rkey = (module->win_info_array[target]).rkey;
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
     if (NULL == ucx_req) {
