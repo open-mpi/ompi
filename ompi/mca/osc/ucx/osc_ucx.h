@@ -29,6 +29,7 @@ typedef struct ompi_osc_ucx_component {
     bool enable_mpi_threads;
     opal_free_list_t requests; /* request free list for the r* communication variants */
     int num_incomplete_req_ops;
+    unsigned int priority;
 } ompi_osc_ucx_component_t;
 
 OMPI_DECLSPEC extern ompi_osc_ucx_component_t mca_osc_ucx_component;
