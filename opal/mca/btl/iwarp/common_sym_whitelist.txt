@@ -1,0 +1,4 @@
+# Ignore symbols in this component that are auto-generated and we
+# can't do anything about them (e.g., flex/bison symbols).
+btl_openib_ini_yyleng
+btl_openib_ini_yytext
