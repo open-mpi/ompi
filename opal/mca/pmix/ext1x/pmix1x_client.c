@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -220,6 +220,7 @@ int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
     pmix_status_t rc;
     pmix_proc_t p;
     opal_pmix1_jobid_trkr_t *job, *jptr;
+    opal_value_t *hack;
 
     if (NULL != proc) {
         /* look thru our list of jobids and find the
@@ -232,8 +233,15 @@ int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
             }
         }
         if (NULL == job) {
-            OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
-            return OPAL_ERR_NOT_FOUND;
+            /* if we don't know about the job, then neither will the internal
+             * storage routine in PMIx. In this older version of PMIx, there
+             * is no way to insert an nspace into the client, and so we cannot
+             * get around the problem there. Instead, we need to hold such
+             * values locally in the component. Sadly, we cannot just use
+             * the input val param as it might not be dynamic, so copy it here */
+            opal_dss.copy((void**)&hack, val, OPAL_VALUE);
+            opal_list_append(&mca_pmix_ext1x_component.values, &hack->super);
+            return OPAL_SUCCESS;
         }
         (void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
         p.rank = proc->vpid;
@@ -445,6 +453,15 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
             }
         }
         if (NULL == job) {
+            /* see if we have this key on our local value list */
+            OPAL_LIST_FOREACH(ival, &mca_pmix_ext1x_component.values, opal_value_t) {
+                if (0 == strcmp(key, ival->key)) {
+                    /* got it */
+                    opal_dss.copy((void**)val, ival, OPAL_VALUE);
+                    return OPAL_SUCCESS;
+                }
+            }
+            /* otherwise, we can't find it */
             return OPAL_ERR_NOT_FOUND;
         }
         (void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
@@ -495,6 +512,9 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
             ret = OPAL_SUCCESS;
         } else {
             *val = OBJ_NEW(opal_value_t);
+            if (NULL != key) {
+                (*val)->key = strdup(key);
+            }
             ret = pmix1_value_unload(*val, kv);
             PMIX_VALUE_FREE(kv, 1);
         }
@@ -691,7 +711,7 @@ int pmix1_lookup(opal_list_t *data, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
             pmix1_value_load(&pinfo[n].value, iptr);
             ++n;
         }
@@ -861,7 +881,7 @@ int pmix1_unpublish(char **keys, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
             pmix1_value_load(&pinfo[n].value, iptr);
             ++n;
         }

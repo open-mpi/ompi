@@ -1,4 +1,4 @@
-# (c) 2013 Los Alamos National Security, LLC. All rights reserved.
+# (c) 2013-2018 Los Alamos National Security, LLC. All rights reserved.
 # Open MPI common optimized configuration for TOSS/TOSS2 v1.7.x/1.8.x
 
 enable_mem_debug=no

@@ -15,7 +15,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -505,12 +505,14 @@ static int rte_init(void)
     if (orte_retain_aliases) {
         aliases = NULL;
         opal_ifgetaliases(&aliases);
-        /* add our own local name to it */
-        opal_argv_append_nosize(&aliases, orte_process_info.nodename);
-        aptr = opal_argv_join(aliases, ',');
+        if (0 < opal_argv_count(aliases)) {
+            /* add our own local name to it */
+            opal_argv_append_nosize(&aliases, orte_process_info.nodename);
+            aptr = opal_argv_join(aliases, ',');
+            orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, aptr, OPAL_STRING);
+            free(aptr);
+        }
         opal_argv_free(aliases);
-        orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, aptr, OPAL_STRING);
-        free(aptr);
     }
     /* record that the daemon job is running */
     jdata->num_procs = 1;

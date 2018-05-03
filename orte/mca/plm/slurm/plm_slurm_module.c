@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
@@ -559,8 +559,9 @@ static void srun_wait_cb(int sd, short fd, void *cbdata){
          * that the daemon has failed so we exit
          */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
-                             "%s plm:slurm: daemon failed while running",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             "%s plm:slurm: srun returned non-zero exit status (%d) from launching the per-node daemon",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             proc->exit_code));
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ABORTED);
     } else {
         /* otherwise, check to see if this is the primary pid */

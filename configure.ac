@@ -1411,6 +1411,7 @@ AC_CONFIG_FILES([
     test/datatype/Makefile
     test/dss/Makefile
     test/class/Makefile
+    test/mpool/Makefile
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile

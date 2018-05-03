@@ -378,9 +378,9 @@ static int rank_by(orte_job_t *jdata,
              * algorithm, but this works for now.
              */
             i = 0;
-            while (cnt < app->num_procs) {
+            while (cnt < app->num_procs && i < (int)node->num_procs) {
                 /* get the next object */
-                obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i);
+                obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i % num_objs);
                 if (NULL == obj) {
                     break;
                 }

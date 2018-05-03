@@ -85,8 +85,21 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                                 node->name);
             continue;
         }
-        /* assign a number of procs equal to the number of available slots */
-        num_procs_to_assign = node->slots - node->slots_inuse;
+        if (orte_rmaps_base_pernode) {
+            num_procs_to_assign = 1;
+        } else if (0 < orte_rmaps_base_n_pernode) {
+            num_procs_to_assign = orte_rmaps_base_n_pernode;
+        } else if (0 < orte_rmaps_base_n_persocket) {
+            if (NULL == node->topology) {
+                orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
+                               true, node->name);
+                return ORTE_ERR_SILENT;
+            }
+            num_procs_to_assign = orte_rmaps_base_n_persocket * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PACKAGE, 0, OPAL_HWLOC_AVAILABLE);
+        } else {
+            /* assign a number of procs equal to the number of available slots */
+            num_procs_to_assign = node->slots - node->slots_inuse;
+        }
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot assigning %d procs to node %s",
                             (int)num_procs_to_assign, node->name);
@@ -292,7 +305,13 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 opal_pointer_array_add(jdata->map->nodes, node);
                 ++(jdata->map->num_nodes);
             }
-            if (oversubscribed) {
+            if (orte_rmaps_base_pernode) {
+                num_procs_to_assign = 1;
+            } else if (0 < orte_rmaps_base_n_pernode) {
+                num_procs_to_assign = orte_rmaps_base_n_pernode;
+            } else if (0 < orte_rmaps_base_n_persocket) {
+                num_procs_to_assign = orte_rmaps_base_n_persocket * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PACKAGE, 0, OPAL_HWLOC_AVAILABLE);
+            } else  if (oversubscribed) {
                 /* compute the number of procs to go on this node */
                 if (add_one) {
                     if (0 == nxtra_nodes) {
@@ -518,7 +537,19 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 start = (jdata->bkmark_obj + 1) % nobjs;
             }
             /* compute the number of procs to go on this node */
-            nprocs = node->slots - node->slots_inuse;
+            if (orte_rmaps_base_pernode) {
+                nprocs = 1;
+            } else if (0 < orte_rmaps_base_n_pernode) {
+                nprocs = orte_rmaps_base_n_pernode;
+            } else if (0 < orte_rmaps_base_n_persocket) {
+                if (HWLOC_OBJ_PACKAGE == target) {
+                    nprocs = orte_rmaps_base_n_persocket * nobjs;
+                } else {
+                    nprocs = orte_rmaps_base_n_persocket * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PACKAGE, 0, OPAL_HWLOC_AVAILABLE);
+                }
+            } else {
+                nprocs = node->slots - node->slots_inuse;
+            }
             opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rr: calculated nprocs %d", nprocs);
             if (nprocs < 1) {
@@ -708,7 +739,19 @@ static int byobj_span(orte_job_t *jdata,
                 return ORTE_ERR_SILENT;
             }
             /* determine how many to map */
-            nprocs = navg;
+            if (orte_rmaps_base_pernode) {
+                nprocs = 1;
+            } else if (0 < orte_rmaps_base_n_pernode) {
+                nprocs = orte_rmaps_base_n_pernode;
+            } else if (0 < orte_rmaps_base_n_persocket) {
+                if (HWLOC_OBJ_PACKAGE == target) {
+                    nprocs = orte_rmaps_base_n_persocket * nobjs;
+                } else {
+                    nprocs = orte_rmaps_base_n_persocket * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo, HWLOC_OBJ_PACKAGE, 0, OPAL_HWLOC_AVAILABLE);
+                }
+            } else {
+                nprocs = navg;
+            }
             if (0 < nxtra_objs) {
                 nprocs++;
                 nxtra_objs--;

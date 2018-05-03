@@ -1124,10 +1124,12 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 opal_argv_append_nosize(&atmp, alias);
                 free(alias);
             }
-            alias = opal_argv_join(atmp, ',');
+            if (0 < naliases) {
+                alias = opal_argv_join(atmp, ',');
+                orte_set_attribute(&daemon->node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, alias, OPAL_STRING);
+                free(alias);
+            }
             opal_argv_free(atmp);
-            orte_set_attribute(&daemon->node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, alias, OPAL_STRING);
-            free(alias);
         }
 
         /* unpack the topology signature for that node */
