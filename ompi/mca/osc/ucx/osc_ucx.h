@@ -16,10 +16,13 @@
 #include "ompi/communicator/communicator.h"
 
 #define OMPI_OSC_UCX_POST_PEER_MAX 32
+#define OMPI_OSC_UCX_ATTACH_MAX    32
+#define OMPI_OSC_UCX_RKEY_BUF_MAX  1024
 
 typedef struct ompi_osc_ucx_win_info {
     ucp_rkey_h rkey;
     uint64_t addr;
+    bool rkey_init;
 } ompi_osc_ucx_win_info_t;
 
 typedef struct ompi_osc_ucx_component {
@@ -59,6 +62,18 @@ typedef struct ompi_osc_ucx_epoch_type {
 #define OSC_UCX_STATE_COMPLETE_COUNT_OFFSET (sizeof(uint64_t) * 3)
 #define OSC_UCX_STATE_POST_INDEX_OFFSET (sizeof(uint64_t) * 4)
 #define OSC_UCX_STATE_POST_STATE_OFFSET (sizeof(uint64_t) * 5)
+#define OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET (sizeof(uint64_t) * (5 + OMPI_OSC_UCX_POST_PEER_MAX))
+
+typedef struct ompi_osc_dynamic_win_info {
+    uint64_t base;
+    size_t size;
+    char rkey_buffer[OMPI_OSC_UCX_RKEY_BUF_MAX];
+} ompi_osc_dynamic_win_info_t;
+
+typedef struct ompi_osc_local_dynamic_win_info {
+    ucp_mem_h memh;
+    int refcnt;
+} ompi_osc_local_dynamic_win_info_t;
 
 typedef struct ompi_osc_ucx_state {
     volatile uint64_t lock;
@@ -67,12 +82,16 @@ typedef struct ompi_osc_ucx_state {
     volatile uint64_t complete_count; /* # msgs received from complete processes */
     volatile uint64_t post_index;
     volatile uint64_t post_state[OMPI_OSC_UCX_POST_PEER_MAX];
+    volatile uint64_t dynamic_win_count;
+    volatile ompi_osc_dynamic_win_info_t dynamic_wins[OMPI_OSC_UCX_ATTACH_MAX];
 } ompi_osc_ucx_state_t;
 
 typedef struct ompi_osc_ucx_module {
     ompi_osc_base_module_t super;
     struct ompi_communicator_t *comm;
     ucp_mem_h memh; /* remote accessible memory */
+    int flavor;
+    size_t size;
     ucp_mem_h state_memh;
     ompi_osc_ucx_win_info_t *win_info_array;
     ompi_osc_ucx_win_info_t *state_info_array;
@@ -82,6 +101,7 @@ typedef struct ompi_osc_ucx_module {
     int *disp_units;
 
     ompi_osc_ucx_state_t state; /* remote accessible flags */
+    ompi_osc_local_dynamic_win_info_t local_dynamic_win_info[OMPI_OSC_UCX_ATTACH_MAX];
     ompi_osc_ucx_epoch_type_t epoch_type;
     ompi_group_t *start_group;
     ompi_group_t *post_group;
@@ -183,6 +203,10 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win);
 int ompi_osc_ucx_flush_all(struct ompi_win_t *win);
 int ompi_osc_ucx_flush_local(int target, struct ompi_win_t *win);
 int ompi_osc_ucx_flush_local_all(struct ompi_win_t *win);
+
+int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_wins,
+                                           int min_index, int max_index,
+                                           uint64_t base, size_t len, int *insert);
 
 void req_completion(void *request, ucs_status_t status);
 void internal_req_init(void *request);
