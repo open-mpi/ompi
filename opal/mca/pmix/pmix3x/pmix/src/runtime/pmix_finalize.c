@@ -51,11 +51,6 @@ extern bool pmix_init_called;
 
 static void __pmix_attribute_destructor__ pmix_cleanup (void)
 {
-    if (!pmix_initialized) {
-        /* nothing to do */
-        return;
-    }
-
     /* finalize the class/object system */
     pmix_class_finalize();
 }
