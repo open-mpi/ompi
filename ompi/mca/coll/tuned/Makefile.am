@@ -41,6 +41,7 @@ sources = \
         coll_tuned_bcast_decision.c \
         coll_tuned_reduce_scatter_decision.c \
         coll_tuned_scatter_decision.c \
+        coll_tuned_reduce_scatter_block_decision.c \
         coll_tuned_exscan_decision.c \
         coll_tuned_scan_decision.c
 

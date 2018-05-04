@@ -387,6 +387,58 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbu
 }
 
 /*
+ *    reduce_scatter_block_intra_dec
+ *
+ *    Function:   - seletects reduce_scatter_block algorithm to use
+ *    Accepts:    - same arguments as MPI_Reduce_scatter_block()
+ *    Returns:    - MPI_SUCCESS or error code (passed from
+ *                  the reduce_scatter implementation)
+ *
+ */
+int ompi_coll_tuned_reduce_scatter_block_intra_dec_dynamic(const void *sbuf, void *rbuf,
+                                                           int rcount,
+                                                           struct ompi_datatype_t *dtype,
+                                                           struct ompi_op_t *op,
+                                                           struct ompi_communicator_t *comm,
+                                                           mca_coll_base_module_t *module)
+{
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_scatter_block_intra_dec_dynamic"));
+
+    /* check to see if we have some filebased rules */
+    if (tuned_module->com_rules[REDUCESCATTERBLOCK]) {
+        /* we do, so calc the message size or what ever we need and use
+           this for the evaluation */
+        int alg, faninout, segsize, ignoreme, size;
+        size_t dsize;
+        size = ompi_comm_size(comm);
+        ompi_datatype_type_size (dtype, &dsize);
+        dsize *= rcount * size;
+
+        alg = ompi_coll_tuned_get_target_method_params(tuned_module->com_rules[REDUCESCATTERBLOCK],
+                                                       dsize, &faninout,
+                                                       &segsize, &ignoreme);
+        if (alg) {
+            /* we have found a valid choice from the file based rules for this message size */
+            return  ompi_coll_tuned_reduce_scatter_block_intra_do_this (sbuf, rbuf, rcount, dtype,
+                                                                        op, comm, module,
+                                                                        alg, faninout, segsize);
+        } /* found a method */
+    } /* end if any com rules to check */
+
+    if (tuned_module->user_forced[REDUCESCATTERBLOCK].algorithm) {
+        return ompi_coll_tuned_reduce_scatter_block_intra_do_this(sbuf, rbuf, rcount, dtype,
+                                                                  op, comm, module,
+                                                                  tuned_module->user_forced[REDUCESCATTERBLOCK].algorithm,
+                                                                  tuned_module->user_forced[REDUCESCATTERBLOCK].chain_fanout,
+                                                                  tuned_module->user_forced[REDUCESCATTERBLOCK].segsize);
+    }
+    return ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed (sbuf, rbuf, rcount,
+                                                                 dtype, op, comm, module);
+}
+
+/*
  *    allgather_intra_dec
  *
  *    Function:    - seletects allgather algorithm to use
