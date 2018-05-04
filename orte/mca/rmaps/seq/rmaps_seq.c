@@ -105,7 +105,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t node_list, *seq_list, sq_list;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
-    char *hosts = NULL, *sep, *eptr;
+    char *hosts = NULL, *sep, *eptr, *membind_opt;
     FILE *fp;
     opal_hwloc_resource_type_t rtype;
 
@@ -189,6 +189,23 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                     eptr--;
                 }
                 *(eptr+1) = 0;
+                /*
+                 * If the submitted LSF job has memory binding related resource requirement, after
+                 * the cpu id list there are memory binding options.
+                 *
+                 * The following is the format of LSB_AFFINITY_HOSTFILE file:
+                 *
+                 * Host1 0,1,2,3 0 2
+                 * Host1 4,5,6,7 1 2
+                 *
+                 * Each line includes: host_name, cpu_id_list, NUMA_node_id_list, and memory_policy.
+                 * In this fix we will drop the last two sections (NUMA_node_id_list and memory_policy)
+                 * of each line and keep them in 'membind_opt' for future use.
+                 */ 
+                if (NULL != (membind_opt = strchr(sep, ' '))) {
+                    *membind_opt = '\0';
+                    membind_opt++;
+                }
                 sq->cpuset = strdup(sep);
             }
 
