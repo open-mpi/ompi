@@ -787,7 +787,7 @@ int ompi_coll_base_reduce_intra_redscat_gather(
     assert(nsteps >= 0);
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
-    if (count < nprocs_pof2 || !ompi_op_is_commute(op)) {
+    if (nprocs_pof2 < 2 || count < nprocs_pof2 || !ompi_op_is_commute(op)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_intra_redscat_gather: rank %d/%d count %d "
                      "switching to basic linear reduce", rank, comm_size, count));
