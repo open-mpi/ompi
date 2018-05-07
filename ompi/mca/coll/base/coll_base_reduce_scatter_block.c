@@ -1,5 +1,20 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Siberian State University of Telecommunications
  *                         and Information Sciences. All rights reserved.
  * $COPYRIGHT$
@@ -18,12 +33,81 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_base_topo.h"
 #include "coll_base_util.h"
 
+/*
+ *	ompi_reduce_scatter_block_basic
+ *
+ *	Function:	- reduce then scatter
+ *	Accepts:	- same as MPI_Reduce_scatter_block()
+ *	Returns:	- MPI_SUCCESS or error code
+ *
+ * Algorithm:
+ *     reduce and scatter (needs to be cleaned
+ *     up at some point)
+ */
+int
+ompi_coll_base_reduce_scatter_block_basic(const void *sbuf, void *rbuf, int rcount,
+                                          struct ompi_datatype_t *dtype,
+                                          struct ompi_op_t *op,
+                                          struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module)
+{
+    int rank, size, count, err = OMPI_SUCCESS;
+    ptrdiff_t gap, span;
+    char *recv_buf = NULL, *recv_buf_free = NULL;
+
+    /* Initialize */
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    /* short cut the trivial case */
+    count = rcount * size;
+    if (0 == count) {
+        return OMPI_SUCCESS;
+    }
+
+    /* get datatype information */
+    span = opal_datatype_span(&dtype->super, count, &gap);
+
+    /* Handle MPI_IN_PLACE */
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+    }
+
+    if (0 == rank) {
+        /* temporary receive buffer.  See coll_basic_reduce.c for
+           details on sizing */
+        recv_buf_free = (char*) malloc(span);
+        if (NULL == recv_buf_free) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
+        recv_buf = recv_buf_free - gap;
+    }
+
+    /* reduction */
+    err =
+        comm->c_coll->coll_reduce(sbuf, recv_buf, count, dtype, op, 0,
+                                 comm, comm->c_coll->coll_reduce_module);
+
+    /* scatter */
+    if (MPI_SUCCESS == err) {
+        err = comm->c_coll->coll_scatter(recv_buf, rcount, dtype,
+                                        rbuf, rcount, dtype, 0,
+                                        comm, comm->c_coll->coll_scatter_module);
+    }
+
+ cleanup:
+    if (NULL != recv_buf_free) free(recv_buf_free);
+
+    return err;
+}
 /*
  * ompi_rounddown: Rounds a number down to nearest multiple.
  *     rounddown(10,4) = 8, rounddown(6,3) = 6, rounddown(14,3) = 12
