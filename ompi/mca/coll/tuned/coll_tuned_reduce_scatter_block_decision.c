@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2018      Siberian State University of Telecommunications
  *                         and Information Sciences. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,8 @@ static int coll_tuned_reduce_scatter_block_tree_fanout;
 /* valid values for coll_tuned_reduce_scatter_blokc_forced_algorithm */
 static mca_base_var_enum_value_t reduce_scatter_block_algorithms[] = {
     {0, "ignore"},
-    {1, "recursive_doubling"},
+    {1, "basic"},
+    {2, "recursive_doubling"},
     {0, NULL}
 };
 
@@ -118,7 +121,9 @@ int ompi_coll_tuned_reduce_scatter_block_intra_do_this(const void *sbuf, void *r
     switch (algorithm) {
     case (0): return ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(sbuf, rbuf, rcount,
                                                                           dtype, op, comm, module);
-    case (1): return ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(sbuf, rbuf, rcount,
+    case (1): return ompi_coll_base_reduce_scatter_block_basic(sbuf, rbuf, rcount,
+                                                               dtype, op, comm, module);
+    case (2): return ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(sbuf, rbuf, rcount,
                                                                                  dtype, op, comm, module);
     } /* switch */
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_scatter_block_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",

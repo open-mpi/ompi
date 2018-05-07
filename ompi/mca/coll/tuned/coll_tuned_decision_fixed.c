@@ -13,7 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -516,8 +516,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void 
                                                          mca_coll_base_module_t *module)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed"));
-    return ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(sbuf, rbuf, rcount,
-                                                                       dtype, op, comm, module);
+    return ompi_coll_base_reduce_scatter_block_basic(sbuf, rbuf, rcount,
+                                                     dtype, op, comm, module);
 }
 
 /*
