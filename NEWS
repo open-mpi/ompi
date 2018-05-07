@@ -55,8 +55,8 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-3.1.0 -- April, 2018
-----------------------
+3.1.0 -- May, 2018
+------------------
 
 - Various OpenSHMEM bug fixes.
 - Properly handle array_of_commands argument to Fortran version of
