@@ -57,7 +57,7 @@ mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcou
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module)
 {
-    return ompi_coll_base_reduce_scatter_block_basic(sbuf, rbuf, rcount, dtype, op, comm, module);
+    return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount, dtype, op, comm, module);
 }
 
 /*
