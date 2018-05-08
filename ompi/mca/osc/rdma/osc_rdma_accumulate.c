@@ -575,8 +575,7 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
     address = target_address & ~7;
     offset = target_address & ~address;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating fetch-and-op using compare-and-swap. origin: 0x%" PRIx64,
-                     *((int64_t *) origin_addr));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating fetch-and-op using compare-and-swap");
 
     ret = ompi_osc_get_data_blocking (module, peer->data_endpoint, address, target_handle, &old_value, 8);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
