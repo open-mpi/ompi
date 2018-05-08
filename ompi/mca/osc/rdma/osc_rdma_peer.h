@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -22,7 +22,7 @@ struct ompi_osc_rdma_module_t;
  * This object is used as a cache for information associated with a peer.
  */
 struct ompi_osc_rdma_peer_t {
-    opal_object_t super;
+    opal_list_item_t super;
 
     /** rdma data endpoint for this peer */
     struct mca_btl_base_endpoint_t *data_endpoint;
@@ -36,11 +36,14 @@ struct ompi_osc_rdma_peer_t {
     /** registration handle associated with the state */
     mca_btl_base_registration_handle_t *state_handle;
 
+    /** lock to protrct peer structure */
+    opal_mutex_t lock;
+
     /** rank of this peer in the window */
     int rank;
 
     /** peer flags */
-    int flags;
+    volatile int32_t flags;
 
     /** aggregation support */
     ompi_osc_rdma_aggregation_t *aggregate;
@@ -134,6 +137,8 @@ enum {
     OMPI_OSC_RDMA_PEER_STATE_FREE           = 0x20,
     /** peer base handle should be freed */
     OMPI_OSC_RDMA_PEER_BASE_FREE            = 0x40,
+    /** peer was demand locked as part of lock-all (when in demand locking mode) */
+    OMPI_OSC_RDMA_PEER_DEMAND_LOCKED        = 0x80,
 };
 
 /**
@@ -188,13 +193,40 @@ static inline bool ompi_osc_rdma_peer_is_exclusive (ompi_osc_rdma_peer_t *peer)
 }
 
 /**
- * @brief check if this process is currently accumulating on a peer
+ * @brief try to set a flag on a peer object
  *
- * @param[in] peer            peer object to check
+ * @param[in] peer            peer object to modify
+ * @param[in] flag            flag to set
+ *
+ * @returns true if the flag was not already set
+ * @returns flase otherwise
  */
-static inline bool ompi_osc_rdma_peer_is_accumulating (ompi_osc_rdma_peer_t *peer)
+static inline bool ompi_osc_rdma_peer_test_set_flag (ompi_osc_rdma_peer_t *peer, int flag)
 {
-    return !!(peer->flags & OMPI_OSC_RDMA_PEER_ACCUMULATING);
+    int32_t flags;
+
+    opal_atomic_mb ();
+    flags = peer->flags;
+
+    do {
+        if (flags & flag) {
+            return false;
+        }
+    } while (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32 (&peer->flags, &flags, flags | flag));
+
+    return true;
+}
+
+/**
+ * @brief clear a flag from a peer object
+ *
+ * @param[in] peer            peer object to modify
+ * @param[in] flag            flag to set
+ */
+static inline void ompi_osc_rdma_peer_clear_flag (ompi_osc_rdma_peer_t *peer, int flag)
+{
+    OPAL_ATOMIC_AND_FETCH32(&peer->flags, ~flag);
+    opal_atomic_mb ();
 }
 
 /**
@@ -221,5 +253,15 @@ static inline bool ompi_osc_rdma_peer_local_state (ompi_osc_rdma_peer_t *peer)
     return !!(peer->flags & OMPI_OSC_RDMA_PEER_LOCAL_STATE);
 }
 
+/**
+ * @brief check if the peer has been demand locked as part of the current epoch
+ *
+ * @param[in] peer            peer object to check
+ *
+ */
+static inline bool ompi_osc_rdma_peer_is_demand_locked (ompi_osc_rdma_peer_t *peer)
+{
+    return !!(peer->flags & OMPI_OSC_RDMA_PEER_DEMAND_LOCKED);
+}
 
 #endif /* OMPI_OSC_RDMA_PEER_H */

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -25,26 +25,22 @@ enum ompi_osc_rdma_request_type_t {
 };
 typedef enum ompi_osc_rdma_request_type_t ompi_osc_rdma_request_type_t;
 
+struct ompi_osc_rdma_request_t;
+
+typedef void (*ompi_osc_rdma_request_cleanup_fn_t) (struct ompi_osc_rdma_request_t *);
+
 struct ompi_osc_rdma_request_t {
     ompi_request_t super;
 
     ompi_osc_rdma_peer_t *peer;
+    ompi_osc_rdma_request_cleanup_fn_t cleanup;
 
     ompi_osc_rdma_request_type_t type;
+    void *to_free;
     void *origin_addr;
-    int origin_count;
-    struct ompi_datatype_t *origin_dt;
-
-    void *result_addr;
-    int result_count;
-    struct ompi_datatype_t *result_dt;
-
-    const void *compare_addr;
-
-    ompi_op_t *op;
 
     ompi_osc_rdma_module_t *module;
-    int32_t outstanding_requests;
+    volatile int32_t outstanding_requests;
     bool internal;
 
     ptrdiff_t offset;
@@ -69,35 +65,45 @@ OBJ_CLASS_DECLARATION(ompi_osc_rdma_request_t);
    rdma_rget, etc.), so it's ok to spin here... */
 #define OMPI_OSC_RDMA_REQUEST_ALLOC(rmodule, rpeer, req)                \
     do {                                                                \
-        opal_free_list_item_t *item;                                    \
-        do {                                                            \
-            item = opal_free_list_get (&mca_osc_rdma_component.requests); \
-            if (NULL == item) {                                         \
-                ompi_osc_rdma_progress (rmodule);                       \
-            }                                                           \
-        } while (NULL == item);                                         \
-        req = (ompi_osc_rdma_request_t*) item;                          \
-        OMPI_REQUEST_INIT(&req->super, false);                          \
-        req->super.req_mpi_object.win = module->win;                    \
-        req->super.req_state = OMPI_REQUEST_ACTIVE;                     \
-        req->module = rmodule;                                          \
-        req->peer = (rpeer);                                            \
+        (req) = OBJ_NEW(ompi_osc_rdma_request_t);                       \
+        OMPI_REQUEST_INIT(&(req)->super, false);                        \
+        (req)->super.req_mpi_object.win = (rmodule)->win;               \
+        (req)->super.req_state = OMPI_REQUEST_ACTIVE;                   \
+        (req)->module = rmodule;                                        \
+        (req)->peer = (rpeer);                                          \
     } while (0)
 
 #define OMPI_OSC_RDMA_REQUEST_RETURN(req)                               \
     do {                                                                \
         OMPI_REQUEST_FINI(&(req)->super);                               \
         free ((req)->buffer);                                           \
-        (req)->buffer = NULL;                                           \
-        (req)->parent_request = NULL;                                   \
-        (req)->internal = false;                                        \
-        (req)->outstanding_requests = 0;                                \
-        opal_free_list_return (&mca_osc_rdma_component.requests,        \
-                               (opal_free_list_item_t *) (req));        \
+        free (req);                                                     \
     } while (0)
+
+static inline void ompi_osc_rdma_request_complete (ompi_osc_rdma_request_t *request, int mpi_error);
+
+
+static inline void ompi_osc_rdma_request_deref (ompi_osc_rdma_request_t *request)
+{
+    if (1 == OPAL_THREAD_FETCH_ADD32 (&request->outstanding_requests, -1)) {
+        ompi_osc_rdma_request_complete (request, OMPI_SUCCESS);
+    }
+}
 
 static inline void ompi_osc_rdma_request_complete (ompi_osc_rdma_request_t *request, int mpi_error)
 {
+    ompi_osc_rdma_request_t *parent_request = request->parent_request;
+
+    if (request->cleanup) {
+        request->cleanup (request);
+    }
+
+    free (request->to_free);
+
+    if (parent_request) {
+        ompi_osc_rdma_request_deref (parent_request);
+    }
+
     if (!request->internal) {
         request->super.req_status.MPI_ERROR = mpi_error;
 
