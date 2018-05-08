@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -32,6 +32,13 @@ enum ompi_osc_rdma_sync_type_t {
 typedef enum ompi_osc_rdma_sync_type_t ompi_osc_rdma_sync_type_t;
 
 struct ompi_osc_rdma_module_t;
+
+struct ompi_osc_rdma_sync_aligned_counter_t {
+    volatile osc_rdma_counter_t counter;
+    /* pad out to next cache line */
+    uint64_t padding[7];
+};
+typedef struct ompi_osc_rdma_sync_aligned_counter_t ompi_osc_rdma_sync_aligned_counter_t;
 
 /**
  * @brief synchronization object
@@ -78,6 +85,9 @@ struct ompi_osc_rdma_sync_t {
 	struct ompi_osc_rdma_peer_t *peer;
     } peer_list;
 
+    /** demand locked peers (lock-all) */
+    opal_list_t demand_locked_peers;
+
     /** number of peers */
     int num_peers;
 
@@ -85,7 +95,7 @@ struct ompi_osc_rdma_sync_t {
     bool epoch_active;
 
     /** outstanding rdma operations on epoch */
-    osc_rdma_counter_t outstanding_rdma;
+    ompi_osc_rdma_sync_aligned_counter_t outstanding_rdma __opal_attribute_aligned__(64);
 
     /** aggregated operations in this epoch */
     opal_list_t aggregations;
@@ -129,30 +139,10 @@ void ompi_osc_rdma_sync_return (ompi_osc_rdma_sync_t *rdma_sync);
  */
 bool ompi_osc_rdma_sync_pscw_peer (struct ompi_osc_rdma_module_t *module, int target, struct ompi_osc_rdma_peer_t **peer);
 
-/**
- * @brief increment the outstanding rdma operation counter (atomic)
- *
- * @param[in] rdma_sync         osc rdma synchronization object
- */
-static inline void ompi_osc_rdma_sync_rdma_inc (ompi_osc_rdma_sync_t *rdma_sync)
+
+static inline int64_t ompi_osc_rdma_sync_get_count (ompi_osc_rdma_sync_t *rdma_sync)
 {
-    ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma, 1);
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "inc: there are %ld outstanding rdma operations",
-                     (unsigned long) rdma_sync->outstanding_rdma);
-}
-
-/**
- * @brief decrement the outstanding rdma operation counter (atomic)
- *
- * @param[in] rdma_sync         osc rdma synchronization object
- */
-static inline void ompi_osc_rdma_sync_rdma_dec (ompi_osc_rdma_sync_t *rdma_sync)
-{
-    ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma, -1);
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "dec: there are %ld outstanding rdma operations",
-                     (unsigned long) rdma_sync->outstanding_rdma);
+    return rdma_sync->outstanding_rdma.counter;
 }
 
 #endif /* OSC_RDMA_SYNC_H */
