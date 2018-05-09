@@ -113,8 +113,8 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                           with_jdk_headers=$opal_java_dir/include
                           with_jdk_bindir=$opal_java_dir/bin
                       else
-                          AC_MSG_WARN([No recognized directory structure found under $opal_java_dir])
-                          AC_MSG_ERROR([Cannot continue])
+                          AC_MSG_WARN([No recognized OS X/macOS JDK directory structure found under $opal_java_dir])
+                          opal_java_found=0
                       fi],
                      [AC_MSG_RESULT([not found])])
 
