@@ -10,9 +10,9 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2016      Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2016-2018 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -1481,8 +1481,8 @@ end interface
 
 interface PMPI_Type_commit
 
-subroutine PMPI_Type_commit(type, ierror)
-  integer, intent(inout) :: type
+subroutine PMPI_Type_commit(datatype, ierror)
+  integer, intent(inout) :: datatype
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_commit
 
@@ -1666,8 +1666,8 @@ end interface
 
 interface PMPI_Type_delete_attr
 
-subroutine PMPI_Type_delete_attr(type, type_keyval, ierror)
-  integer, intent(in) :: type
+subroutine PMPI_Type_delete_attr(datatype, type_keyval, ierror)
+  integer, intent(in) :: datatype
   integer, intent(in) :: type_keyval
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_delete_attr
@@ -1677,8 +1677,8 @@ end interface
 
 interface PMPI_Type_dup
 
-subroutine PMPI_Type_dup(type, newtype, ierror)
-  integer, intent(in) :: type
+subroutine PMPI_Type_dup(datatype, newtype, ierror)
+  integer, intent(in) :: datatype
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_dup
@@ -1688,8 +1688,8 @@ end interface
 
 interface PMPI_Type_extent
 
-subroutine PMPI_Type_extent(type, extent, ierror)
-  integer, intent(in) :: type
+subroutine PMPI_Type_extent(datatype, extent, ierror)
+  integer, intent(in) :: datatype
   integer, intent(out) :: extent
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_extent
@@ -1699,8 +1699,8 @@ end interface
 
 interface PMPI_Type_free
 
-subroutine PMPI_Type_free(type, ierror)
-  integer, intent(inout) :: type
+subroutine PMPI_Type_free(datatype, ierror)
+  integer, intent(inout) :: datatype
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_free
 
@@ -1719,9 +1719,9 @@ end interface
 
 interface PMPI_Type_get_attr
 
-subroutine PMPI_Type_get_attr(type, type_keyval, attribute_val, flag, ierror)
+subroutine PMPI_Type_get_attr(datatype, type_keyval, attribute_val, flag, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: type
+  integer, intent(in) :: datatype
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
   logical, intent(out) :: flag
@@ -1733,10 +1733,10 @@ end interface
 
 interface PMPI_Type_get_contents
 
-subroutine PMPI_Type_get_contents(mtype, max_integers, max_addresses, max_datatypes, array_of_integers, &
+subroutine PMPI_Type_get_contents(datatype, max_integers, max_addresses, max_datatypes, array_of_integers, &
         array_of_addresses, array_of_datatypes, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: mtype
+  integer, intent(in) :: datatype
   integer, intent(in) :: max_integers
   integer, intent(in) :: max_addresses
   integer, intent(in) :: max_datatypes
@@ -1751,9 +1751,9 @@ end interface
 
 interface PMPI_Type_get_envelope
 
-subroutine PMPI_Type_get_envelope(type, num_integers, num_addresses, num_datatypes, combiner&
+subroutine PMPI_Type_get_envelope(datatype, num_integers, num_addresses, num_datatypes, combiner&
         , ierror)
-  integer, intent(in) :: type
+  integer, intent(in) :: datatype
   integer, intent(out) :: num_integers
   integer, intent(out) :: num_addresses
   integer, intent(out) :: num_datatypes
@@ -1766,9 +1766,9 @@ end interface
 
 interface PMPI_Type_get_extent
 
-subroutine PMPI_Type_get_extent(type, lb, extent, ierror)
+subroutine PMPI_Type_get_extent(datatype, lb, extent, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: type
+  integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: lb
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: extent
   integer, intent(out) :: ierror
@@ -1779,9 +1779,9 @@ end interface
 
 interface PMPI_Type_get_extent_x
 
-subroutine PMPI_Type_get_extent_x(type, lb, extent, ierror)
+subroutine PMPI_Type_get_extent_x(datatype, lb, extent, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: type
+  integer, intent(in) :: datatype
   integer(kind=MPI_COUNT_KIND), intent(out) :: lb
   integer(kind=MPI_COUNT_KIND), intent(out) :: extent
   integer, intent(out) :: ierror
@@ -1792,8 +1792,8 @@ end interface
 
 interface PMPI_Type_get_name
 
-subroutine PMPI_Type_get_name(type, type_name, resultlen, ierror)
-  integer, intent(in) :: type
+subroutine PMPI_Type_get_name(datatype, type_name, resultlen, ierror)
+  integer, intent(in) :: datatype
   character(len=*), intent(out) :: type_name
   integer, intent(out) :: resultlen
   integer, intent(out) :: ierror
@@ -1875,8 +1875,8 @@ end interface
 
 interface PMPI_Type_lb
 
-subroutine PMPI_Type_lb(type, lb, ierror)
-  integer, intent(in) :: type
+subroutine PMPI_Type_lb(datatype, lb, ierror)
+  integer, intent(in) :: datatype
   integer, intent(out) :: lb
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_lb
@@ -1886,10 +1886,10 @@ end interface
 
 interface PMPI_Type_match_size
 
-subroutine PMPI_Type_match_size(typeclass, size, type, ierror)
+subroutine PMPI_Type_match_size(typeclass, size, datatype, ierror)
   integer, intent(in) :: typeclass
   integer, intent(in) :: size
-  integer, intent(out) :: type
+  integer, intent(out) :: datatype
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_match_size
 
@@ -1898,9 +1898,9 @@ end interface
 
 interface PMPI_Type_set_attr
 
-subroutine PMPI_Type_set_attr(type, type_keyval, attr_val, ierror)
+subroutine PMPI_Type_set_attr(datatype, type_keyval, attr_val, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: type
+  integer, intent(in) :: datatype
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attr_val
   integer, intent(out) :: ierror
@@ -1911,8 +1911,8 @@ end interface
 
 interface PMPI_Type_set_name
 
-subroutine PMPI_Type_set_name(type, type_name, ierror)
-  integer, intent(in) :: type
+subroutine PMPI_Type_set_name(datatype, type_name, ierror)
+  integer, intent(in) :: datatype
   character(len=*), intent(in) :: type_name
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_set_name
@@ -1922,8 +1922,8 @@ end interface
 
 interface PMPI_Type_size
 
-subroutine PMPI_Type_size(type, size, ierror)
-  integer, intent(in) :: type
+subroutine PMPI_Type_size(datatype, size, ierror)
+  integer, intent(in) :: datatype
   integer, intent(out) :: size
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_size
@@ -1933,9 +1933,9 @@ end interface
 
 interface PMPI_Type_size_x
 
-subroutine PMPI_Type_size_x(type, size, ierror)
+subroutine PMPI_Type_size_x(datatype, size, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: type
+  integer, intent(in) :: datatype
   integer(kind=MPI_COUNT_KIND), intent(out) :: size
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_size_x
@@ -1960,8 +1960,8 @@ end interface
 
 interface PMPI_Type_ub
 
-subroutine PMPI_Type_ub(mtype, ub, ierror)
-  integer, intent(in) :: mtype
+subroutine PMPI_Type_ub(datatype, ub, ierror)
+  integer, intent(in) :: datatype
   integer, intent(out) :: ub
   integer, intent(out) :: ierror
 end subroutine PMPI_Type_ub
