@@ -118,7 +118,10 @@ static int nbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendty
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } else if (alg == NBC_A2A_DISS) {
-    /* only A2A_DISS needs buffers */
+    /* persistent operation is not supported currently for this algorithm;
+     * we need to replace PMPI_Pack, PMPI_Unpack, and mempcy */
+    assert(! persistent);
+
     if(NBC_Type_intrinsic(sendtype)) {
       datasize = sndext * sendcount;
     } else {
