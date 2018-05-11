@@ -106,6 +106,8 @@ static void flush_and_invalidate_cache (unsigned long a)
     __asm__ volatile("mfence;clflush %0;mfence" : :"m" (*(char*)a));
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
     __asm__ volatile ("fc %0;; sync.i;; srlz.i;;" : : "r"(a) : "memory");
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+    __asm__ volatile ("dsb sy");
 #endif
 }
 
