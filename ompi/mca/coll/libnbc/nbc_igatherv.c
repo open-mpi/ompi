@@ -29,10 +29,10 @@
  * would not be sufficient ... we simply do not cache it */
 
 
-static int nbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                        void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
-                        int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                        struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
+static int nbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                            void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+                            int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                            struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
   int rank, p, res;
   MPI_Aint rcvext = 0;
   NBC_Schedule *schedule;
@@ -109,8 +109,8 @@ int ompi_coll_libnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype s
                               void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
-                           comm, request, module, false);
+    int res = nbc_gatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
+                               comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -125,10 +125,10 @@ int ompi_coll_libnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype s
     return OMPI_SUCCESS;
 }
 
-static int nbc_igatherv_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                               void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
-                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
+static int nbc_gatherv_inter_init (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                                   void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+                                   int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                   struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
   int res, rsize;
   MPI_Aint rcvext;
   NBC_Schedule *schedule;
@@ -189,8 +189,8 @@ int ompi_coll_libnbc_igatherv_inter(const void* sendbuf, int sendcount, MPI_Data
                                     void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                                     int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                     struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_igatherv_inter(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
-                                 comm, request, module, false);
+    int res = nbc_gatherv_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
+                                     comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -209,8 +209,8 @@ int ompi_coll_libnbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Dataty
                                   void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                                   int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
-                           comm, request, module, true);
+    int res = nbc_gatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
+                               comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -222,8 +222,8 @@ int ompi_coll_libnbc_gatherv_inter_init(const void* sendbuf, int sendcount, MPI_
                                         void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                                         int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                         struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_igatherv_inter(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
-                                 comm, request, module, true);
+    int res = nbc_gatherv_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
+                                     comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }

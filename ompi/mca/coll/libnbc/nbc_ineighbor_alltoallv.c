@@ -44,10 +44,10 @@ int NBC_Ineighbor_alltoallv_args_compare(NBC_Ineighbor_alltoallv_args *a, NBC_In
 #endif
 
 
-static int nbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
-                                   void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
-                                   struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                   struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
+static int nbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
+                                       void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
+                                       struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                       struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
   int res, indegree, outdegree, *srcs, *dsts;
   MPI_Aint sndext, rcvext;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -175,8 +175,8 @@ int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, c
                                          void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ineighbor_alltoallv(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,
-                                      comm, request, module, false);
+    int res = nbc_neighbor_alltoallv_init(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,
+                                          comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -194,8 +194,8 @@ int ompi_coll_libnbc_neighbor_alltoallv_init(const void *sbuf, const int *scount
                                              void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
                                              struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                              struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_ineighbor_alltoallv(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,
-                                      comm, request, module, true);
+    int res = nbc_neighbor_alltoallv_init(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,
+                                          comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }

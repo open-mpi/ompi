@@ -46,9 +46,9 @@ int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
  * 3. all but rank p-1 do sends to it's right neigbor and exits
  *
  */
-static int nbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                       struct ompi_communicator_t *comm, ompi_request_t ** request,
-                       struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
+static int nbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                           struct ompi_communicator_t *comm, ompi_request_t ** request,
+                           struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
     int rank, p, res;
     ptrdiff_t gap, span;
     NBC_Schedule *schedule;
@@ -197,8 +197,8 @@ static int nbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Dataty
 int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iexscan(sendbuf, recvbuf, count, datatype, op,
-                          comm, request, module, false);
+    int res = nbc_exscan_init(sendbuf, recvbuf, count, datatype, op,
+                              comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
@@ -216,8 +216,8 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
 int ompi_coll_libnbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                  struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                  struct mca_coll_base_module_2_2_0_t *module) {
-    int res = nbc_iexscan(sendbuf, recvbuf, count, datatype, op,
-                          comm, request, module, true);
+    int res = nbc_exscan_init(sendbuf, recvbuf, count, datatype, op,
+                              comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
