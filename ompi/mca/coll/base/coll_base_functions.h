@@ -252,6 +252,7 @@ int ompi_coll_base_reduce_scatter_intra_ring(REDUCESCATTER_ARGS);
 /* Reduce_scatter_block */
 int ompi_coll_base_reduce_scatter_block_basic(REDUCESCATTERBLOCK_ARGS);
 int ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(REDUCESCATTERBLOCK_ARGS);
+int ompi_coll_base_reduce_scatter_block_intra_recursivehalving(REDUCESCATTERBLOCK_ARGS);
 
 /* Scan */
 int ompi_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);

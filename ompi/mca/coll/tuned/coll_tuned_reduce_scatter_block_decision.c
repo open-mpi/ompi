@@ -35,6 +35,7 @@ static mca_base_var_enum_value_t reduce_scatter_block_algorithms[] = {
     {0, "ignore"},
     {1, "basic"},
     {2, "recursive_doubling"},
+    {3, "recursive_halving"},
     {0, NULL}
 };
 
@@ -125,6 +126,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_do_this(const void *sbuf, void *r
                                                                dtype, op, comm, module);
     case (2): return ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(sbuf, rbuf, rcount,
                                                                                  dtype, op, comm, module);
+    case (3): return ompi_coll_base_reduce_scatter_block_intra_recursivehalving(sbuf, rbuf, rcount,
+                                                                                dtype, op, comm, module);
     } /* switch */
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_scatter_block_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCESCATTERBLOCK]));
