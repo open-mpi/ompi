@@ -58,6 +58,48 @@ included in the vX.Y.Z section and be denoted as:
 Master (not on release branches yet)
 ------------------------------------
 
+- Fix rank-by algorithms to properly rank by object and span
+
+3.1.0 -- May, 2018
+------------------
+
+- Various OpenSHMEM bug fixes.
+- Properly handle array_of_commands argument to Fortran version of
+  MPI_COMM_SPAWN_MULTIPLE.
+- Fix bug with MODE_SEQUENTIAL and the sharedfp MPI-IO component.
+- Use "javac -h" instead of "javah" when building the Java bindings
+  with a recent version of Java.
+- Fix mis-handling of jostepid under SLURM that could cause problems
+  with PathScale/OmniPath NICs.
+- Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
+  still not a supported platform, but it is no longer automatically
+  disabled.  See
+  https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
+  for more information.
+- The output-filename option for mpirun is now converted to an
+  absolute path before being passed to other nodes.
+- Add monitoring component for PML, OSC, and COLL to track data
+  movement of MPI applications.  See
+  ompi/mca/commmon/monitoring/HowTo_pml_monitoring.tex for more
+  information about the monitoring framework.
+- Add support for communicator assertions: mpi_assert_no_any_tag,
+  mpi_assert_no_any_source, mpi_assert_exact_length, and
+  mpi_assert_allow_overtaking.
+- Update PMIx to version 2.1.1.
+- Update hwloc to 1.11.7.
+- Many one-sided behavior fixes.
+- Improved performance for Reduce and Allreduce using Rabenseifner's algorithm.
+- Revamped mpirun --help output to make it a bit more manageable.
+- Portals4 MTL improvements: Fix race condition in rendezvous protocol and
+  retry logic.
+- UCX OSC: initial implementation.
+- UCX PML improvements: add multi-threading support.
+- Yalla PML improvements: Fix error with irregular contiguous datatypes.
+- Openib BTL: disable XRC support by default.
+- TCP BTL: Add check to detect and ignore connections from processes
+  that aren't MPI (such as IDS probes) and verify that source and
+  destination are using the same version of Open MPI, fix issue with very
+  large message transfer.
 - ompi_info parsable output now escapes double quotes in values, and
   also quotes values can contains colons.  Thanks to Lev Givon for the
   suggestion.
@@ -68,13 +110,14 @@ Master (not on release branches yet)
   orte daemon, rather than the mpirun process.   This may be useful to set to
   true when using SLURM, as it improves interoperability with SLURM's signal
   propagation tools.  By default it is set to false, except for Cray XC systems.
+- Remove LoadLeveler RAS support.
 - Remove IB XRC support from the OpenIB BTL due to lack of support.
-- Fix rank-by algorithms to properly rank by object and span
-- Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
-  still not a supported platform, but it is no longer automatically
-  disabled.  See
-  https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
-  for more information.
+- Add functionality for IBM s390 platforms.  Note that regular
+  regression testing does not occur on the s390 and it is not
+  considered a supported platform.
+- Remove support for big endian PowerPC.
+- Remove support for XL compilers older than v13.1.
+- Remove support for atomic operations using MacOS atomics library.
 
 3.0.1 -- March, 2018
 ----------------------
