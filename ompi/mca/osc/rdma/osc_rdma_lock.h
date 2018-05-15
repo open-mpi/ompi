@@ -361,7 +361,7 @@ static inline int ompi_osc_rdma_lock_try_acquire_exclusive (ompi_osc_rdma_module
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "exclusive lock acquired");
         } else {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "could not acquire exclusive lock. lock state 0x%" PRIx64,
-                             (unsigned long) lock_state);
+                             (uint64_t) lock_state);
         }
 #endif
 

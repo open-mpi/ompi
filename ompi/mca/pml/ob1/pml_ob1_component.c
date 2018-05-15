@@ -110,6 +110,7 @@ static inline unsigned int mca_pml_ob1_param_register_uint(
     return *storage;
 }
 
+#if 0
 static inline size_t mca_pml_ob1_param_register_sizet(
     const char* param_name,
     size_t default_value,
@@ -122,6 +123,7 @@ static inline size_t mca_pml_ob1_param_register_sizet(
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
+#endif
 
 static int mca_pml_ob1_comm_size_notify (mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj_handle, int *count)
 {
