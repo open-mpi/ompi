@@ -42,7 +42,7 @@
 
 
 /*
- *	ompi_reduce_scatter_block_basic
+ *	ompi_reduce_scatter_block_basic_linear
  *
  *	Function:	- reduce then scatter
  *	Accepts:	- same as MPI_Reduce_scatter_block()
@@ -53,11 +53,11 @@
  *     up at some point)
  */
 int
-ompi_coll_base_reduce_scatter_block_basic(const void *sbuf, void *rbuf, int rcount,
-                                          struct ompi_datatype_t *dtype,
-                                          struct ompi_op_t *op,
-                                          struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module)
+ompi_coll_base_reduce_scatter_block_basic_linear(const void *sbuf, void *rbuf, int rcount,
+                                                 struct ompi_datatype_t *dtype,
+                                                 struct ompi_op_t *op,
+                                                 struct ompi_communicator_t *comm,
+                                                 mca_coll_base_module_t *module)
 {
     int rank, size, count, err = OMPI_SUCCESS;
     ptrdiff_t gap, span;

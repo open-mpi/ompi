@@ -516,8 +516,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void 
                                                          mca_coll_base_module_t *module)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed"));
-    return ompi_coll_base_reduce_scatter_block_basic(sbuf, rbuf, rcount,
-                                                     dtype, op, comm, module);
+    return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount,
+                                                            dtype, op, comm, module);
 }
 
 /*

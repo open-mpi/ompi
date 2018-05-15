@@ -33,7 +33,7 @@ static int coll_tuned_reduce_scatter_block_tree_fanout;
 /* valid values for coll_tuned_reduce_scatter_blokc_forced_algorithm */
 static mca_base_var_enum_value_t reduce_scatter_block_algorithms[] = {
     {0, "ignore"},
-    {1, "basic"},
+    {1, "basic_linear"},
     {2, "recursive_doubling"},
     {3, "recursive_halving"},
     {0, NULL}
@@ -75,7 +75,7 @@ int ompi_coll_tuned_reduce_scatter_block_intra_check_forced_init (coll_tuned_for
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "reduce_scatter_block_algorithm",
                                         "Which reduce reduce_scatter_block algorithm is used. "
-                                        "Can be locked down to choice of: 0 ignore, 1 recursive doubling",
+                                        "Can be locked down to choice of: 0 ignore, 1 basic_linear, 2 recursive_doubling",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
@@ -122,8 +122,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_do_this(const void *sbuf, void *r
     switch (algorithm) {
     case (0): return ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(sbuf, rbuf, rcount,
                                                                           dtype, op, comm, module);
-    case (1): return ompi_coll_base_reduce_scatter_block_basic(sbuf, rbuf, rcount,
-                                                               dtype, op, comm, module);
+    case (1): return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount,
+                                                                      dtype, op, comm, module);
     case (2): return ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(sbuf, rbuf, rcount,
                                                                                  dtype, op, comm, module);
     case (3): return ompi_coll_base_reduce_scatter_block_intra_recursivehalving(sbuf, rbuf, rcount,
