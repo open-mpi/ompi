@@ -354,8 +354,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_scatter_block_intra_recursivehalving: rank %d/%d "
                      "switching to basic reduce_scatter_block", rank, comm_size));
-        return ompi_coll_base_reduce_scatter_block_basic(sbuf, rbuf, rcount, dtype,
-                                                         op, comm, module);
+        return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount, dtype,
+                                                                op, comm, module);
     }
     totalcount = comm_size * rcount;
     ompi_datatype_type_extent(dtype, &extent);
