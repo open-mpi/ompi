@@ -13,6 +13,12 @@
 
 #include <inttypes.h>
 
+typedef struct pml_ucx_unodered_item {
+    size_t offset;
+    size_t length;
+    char   data[];
+} pml_ucx_unodered_item_t;
+
 
 static void* pml_ucx_generic_datatype_start_pack(void *context, const void *buffer,
                                                  size_t count)
@@ -24,6 +30,7 @@ static void* pml_ucx_generic_datatype_start_pack(void *context, const void *buff
 
     OMPI_DATATYPE_RETAIN(datatype);
     convertor->datatype = datatype;
+    convertor->unordered = NULL;
     opal_convertor_copy_and_prepare_for_send(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buffer, 0,
                                              &convertor->opal_conv);
@@ -43,6 +50,8 @@ static void* pml_ucx_generic_datatype_start_unpack(void *context, void *buffer,
     opal_convertor_copy_and_prepare_for_recv(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buffer, 0,
                                              &convertor->opal_conv);
+    convertor->unordered = NULL;
+    convertor->offset = 0;
     return convertor;
 }
 
@@ -53,6 +62,12 @@ static size_t pml_ucx_generic_datatype_packed_size(void *state)
 
     opal_convertor_get_packed_size(&convertor->opal_conv, &size);
     return size;
+}
+
+static int pml_ucx_offset_cmp(const void *offset1, const void *offset2)
+{
+    return offset1 > offset2 ? 1 :
+           offset1 < offset2 ? -1 : 0;
 }
 
 static size_t pml_ucx_generic_datatype_pack(void *state, size_t offset,
@@ -73,8 +88,9 @@ static size_t pml_ucx_generic_datatype_pack(void *state, size_t offset,
     return length;
 }
 
-static ucs_status_t pml_ucx_generic_datatype_unpack(void *state, size_t offset,
-                                                    const void *src, size_t length)
+static ucs_status_t
+pml_ucx_generic_datatype_unpack_chunk(void *state, size_t offset,
+                                      const void *src, size_t length)
 {
     mca_pml_ucx_convertor_t *convertor = state;
 
@@ -90,9 +106,74 @@ static ucs_status_t pml_ucx_generic_datatype_unpack(void *state, size_t offset,
     return UCS_OK;
 }
 
+static ucs_status_t pml_ucx_generic_datatype_unpack(void *state, size_t offset,
+                                                    const void *src, size_t length)
+{
+    mca_pml_ucx_convertor_t *convertor = state;
+    pml_ucx_unodered_item_t *item;
+    hb_itor                 *itor;
+
+    PML_UCX_ASSERT(offset >= convertor->offset);
+
+    if (offset != convertor->offset) {
+        /* got unordered item, do not unpack it, just save for future usage
+           when previous portions of data arrived */
+        if (!convertor->unordered) {
+            /* create balanced tree for unordered messages. key
+             * for this tree is offset of message */
+            convertor->unordered = hb_tree_new(pml_ucx_offset_cmp, NULL, free);
+        }
+
+        item = malloc(sizeof(*item) + length);
+        if (!item) {
+            return UCS_ERR_NO_MEMORY;
+        }
+        item->offset = offset;
+        item->length = length;
+        memcpy(item->data, src, length);
+
+        hb_tree_insert(convertor->unordered, (void*)offset, item, 0);
+
+        return UCS_OK;
+    }
+
+    convertor->offset += length;
+    pml_ucx_generic_datatype_unpack_chunk(state, offset, src, length);
+
+    if (convertor->unordered) {
+        /* ok, current message is unpacked, let's look for
+         * unordered messages saved before */
+        itor = hb_itor_new(convertor->unordered);
+
+        /* take messages from tree one-by-one (sorted by offset), in case
+         * if offset fit expectation - unpack message, else - break loop */
+        while (hb_itor_valid(itor)) {
+            if (convertor->offset == (size_t)hb_itor_key(itor)) {
+                item = hb_itor_data(itor);
+                pml_ucx_generic_datatype_unpack_chunk(state, item->offset,
+                                                      item->data, item->length);
+                convertor->offset += item->length;
+                hb_tree_remove(convertor->unordered, (void*)item->offset, 1);
+                hb_itor_first(itor);
+            } else {
+                break;
+            }
+        }
+
+        hb_itor_destroy(itor);
+    }
+
+    return UCS_OK;
+}
+
 static void pml_ucx_generic_datatype_finish(void *state)
 {
     mca_pml_ucx_convertor_t *convertor = state;
+
+    if (convertor->unordered) {
+        PML_UCX_ASSERT(!hb_tree_count(convertor->unordered));
+        hb_tree_destroy(convertor->unordered, 0);
+    }
 
     opal_convertor_cleanup(&convertor->opal_conv);
     OMPI_DATATYPE_RELEASE(convertor->datatype);
