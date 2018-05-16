@@ -6,6 +6,8 @@ dnl Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved
 dnl Copyright (c) 2014-2015 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
+dnl                         All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -25,27 +27,22 @@ AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 AC_MSG_CHECKING([if want oshmem])
 AC_ARG_ENABLE([oshmem],
               [AC_HELP_STRING([--enable-oshmem],
-                              [Enable building the OpenSHMEM interface (available on Linux only, where it is enabled by default)])],
-              [oshmem_arg_given=yes],
-              [oshmem_arg_given=no])
-if test "$oshmem_arg_given" = "yes"; then
-    if test "$enable_oshmem" = "yes"; then
-        AC_MSG_RESULT([yes])
-        if test "$opal_found_linux" != "yes"; then
-            AC_MSG_WARN([OpenSHMEM support was requested, but currently])
-            AC_MSG_WARN([only supports Linux.])
-            AC_MSG_ERROR([Cannot continue])
-        fi
-    else
-        AC_MSG_RESULT([no])
-    fi
-else
+                              [Enable building the OpenSHMEM interface (available on Linux only, where it is enabled by default)])])
+if test "$enable_oshmem" = "no"; then
+    AC_MSG_RESULT([no])
+elif test "$enable_oshmem" = ""; then
     if test "$opal_found_linux" = "yes"; then
-        enable_oshmem=yes
         AC_MSG_RESULT([yes])
     else
         enable_oshmem=no
         AC_MSG_RESULT([not supported on this platform])
+    fi
+else
+    AC_MSG_RESULT([yes])
+    if test "$opal_found_linux" != "yes"; then
+        AC_MSG_WARN([OpenSHMEM support was requested, but currently])
+        AC_MSG_WARN([only supports Linux.])
+        AC_MSG_ERROR([Cannot continue])
     fi
 fi
 
@@ -56,7 +53,7 @@ AC_MSG_CHECKING([if want SGI/Quadrics compatibility mode])
 AC_ARG_ENABLE(oshmem-compat,
         AC_HELP_STRING([--enable-oshmem-compat],
             [enable compatibility mode (default: enabled)]))
-if test "$enable_oshmem" != "no" && test "$enable_oshmem_compat" != "no"; then
+if test "$enable_oshmem_compat" != "no"; then
     AC_MSG_RESULT([yes])
     OSHMEM_SPEC_COMPAT=1
 else
@@ -75,26 +72,21 @@ AC_MSG_CHECKING([if want OSHMEM API parameter checking])
 AC_ARG_WITH(oshmem-param-check,
     AC_HELP_STRING([--with-oshmem-param-check(=VALUE)],
                    [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).]))
-if test "$enable_oshmem" != "no"; then
-    if test "$with_oshmem_param_check" = "no" || \
-       test "$with_oshmem_param_check" = "never"; then
-        shmem_param_check=0
-        AC_MSG_RESULT([never])
-    elif test "$with_oshmem_param_check" = "yes" || \
-         test "$with_oshmem_param_check" = "always" || \
-         test -z "$with_oshmem_param_check"; then
-        shmem_param_check=1
-        AC_MSG_RESULT([always])
-    else
-        shmem_param_check=1
-        AC_MSG_RESULT([unknown])
-        AC_MSG_WARN([*** Unrecognized --with-oshmem-param-check value])
-        AC_MSG_WARN([*** See "configure --help" output])
-        AC_MSG_WARN([*** Defaulting to "always"])
-    fi
-else
+if test "$with_oshmem_param_check" = "no" || \
+	test "$with_oshmem_param_check" = "never"; then
     shmem_param_check=0
-    AC_MSG_RESULT([no])
+    AC_MSG_RESULT([never])
+elif test "$with_oshmem_param_check" = "yes" || \
+        test "$with_oshmem_param_check" = "always" || \
+        test -z "$with_oshmem_param_check"; then
+    shmem_param_check=1
+    AC_MSG_RESULT([always])
+else
+    shmem_param_check=1
+    AC_MSG_RESULT([unknown])
+    AC_MSG_WARN([*** Unrecognized --with-oshmem-param-check value])
+    AC_MSG_WARN([*** See "configure --help" output])
+    AC_MSG_WARN([*** Defaulting to "always"])
 fi
 AC_DEFINE_UNQUOTED(OSHMEM_PARAM_CHECK, $shmem_param_check,
     [Whether we want to check OSHMEM parameters always or never])
@@ -132,7 +124,7 @@ AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AC_ARG_ENABLE(oshmem-fortran,
 AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
-if test "$enable_oshmem" != "no" && test "$enable_oshmem_fortran" != "no"; then
+if test "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail
    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -eq $OMPI_FORTRAN_NO_BINDINGS && \
           test "$enable_oshmem_fortran" = "yes"],
