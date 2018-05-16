@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
@@ -138,7 +138,7 @@ ompi__v_JAVADOC_QUIET_0 = -quiet
 # in.  This, along with the fact that the .java files seem to have
 # circular references, prevents us from using a .foo.bar: generic
 # Makefile rule. :-(
-if OPAL_HAVE_JAVAH_SUPPORT
+if OMPI_HAVE_JAVAH_SUPPORT
 mpi/MPI.class: $(JAVA_SRC_FILES)
 	$(OMPI_V_JAVAC) CLASSPATH=. ; \
 	export CLASSPATH ; \
@@ -158,7 +158,7 @@ mpi/MPI.class: $(JAVA_SRC_FILES)
 	$(OMPI_V_JAVAC) CLASSPATH=. ; \
 	export CLASSPATH ; \
 	$(JAVAC) -h . -d . $(top_srcdir)/ompi/mpi/java/java/*.java
-endif # OPAL_HAVE_JAVAH_SUPPORT
+endif # OMPI_HAVE_JAVAH_SUPPORT
 
 # Generate the .jar file from all the class files.  List mpi/MPI.class
 # as a dependency so that it fires the rule above that will generate
@@ -177,7 +177,7 @@ java_DATA = mpi.jar
 # List all the header files in BUILT_SOURCES so that Automake's "all"
 # target will build them.  This will also force the building of the
 # mpi/*.class files (for the jar file).
-if OPAL_HAVE_JAVAH_SUPPORT
+if OMPI_HAVE_JAVAH_SUPPORT
 BUILT_SOURCES = $(JAVA_H) doc
 else
 BUILT_SOURCES = mpi/MPI.class doc
