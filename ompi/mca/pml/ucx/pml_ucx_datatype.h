@@ -17,6 +17,7 @@ struct pml_ucx_convertor {
     opal_free_list_item_t     super;
     ompi_datatype_t           *datatype;
     opal_convertor_t          opal_conv;
+    size_t                    offset;
 };
 
 

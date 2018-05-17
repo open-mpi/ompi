@@ -40,6 +40,7 @@ static void* pml_ucx_generic_datatype_start_unpack(void *context, void *buffer,
 
     OMPI_DATATYPE_RETAIN(datatype);
     convertor->datatype = datatype;
+    convertor->offset = 0;
     opal_convertor_copy_and_prepare_for_recv(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buffer, 0,
                                              &convertor->opal_conv);
@@ -80,13 +81,31 @@ static ucs_status_t pml_ucx_generic_datatype_unpack(void *state, size_t offset,
 
     uint32_t iov_count;
     struct iovec iov;
+    opal_convertor_t conv;
 
     iov_count    = 1;
     iov.iov_base = (void*)src;
     iov.iov_len  = length;
 
-    opal_convertor_set_position(&convertor->opal_conv, &offset);
-    opal_convertor_unpack(&convertor->opal_conv, &iov, &iov_count, &length);
+    /* in case if unordered message arrived - create separate convertor to
+     * unpack data. */
+    if (offset != convertor->offset) {
+        OBJ_CONSTRUCT(&conv, opal_convertor_t);
+        opal_convertor_copy_and_prepare_for_recv(ompi_proc_local_proc->super.proc_convertor,
+                                                 &convertor->datatype->super,
+                                                 convertor->opal_conv.count,
+                                                 convertor->opal_conv.pBaseBuf, 0,
+                                                 &conv);
+        opal_convertor_set_position(&conv, &offset);
+        opal_convertor_unpack(&conv, &iov, &iov_count, &length);
+        opal_convertor_cleanup(&conv);
+        OBJ_DESTRUCT(&conv);
+        /* permanently switch to un-ordered mode */
+        convertor->offset = 0;
+    } else {
+        opal_convertor_unpack(&convertor->opal_conv, &iov, &iov_count, &length);
+        convertor->offset += length;
+    }
     return UCS_OK;
 }
 
