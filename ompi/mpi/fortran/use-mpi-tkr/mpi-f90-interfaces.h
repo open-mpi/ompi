@@ -1336,9 +1336,9 @@ interface MPI_Testall
 subroutine MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE, count), intent(out) :: array_of_statuses
+  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Testall
 
@@ -1351,7 +1351,7 @@ subroutine MPI_Testany(count, array_of_requests, index, flag, status&
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -1367,7 +1367,7 @@ subroutine MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
@@ -1830,7 +1830,7 @@ interface MPI_Waitall
 subroutine MPI_Waitall(count, array_of_requests, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Waitall
@@ -1843,7 +1843,7 @@ interface MPI_Waitany
 subroutine MPI_Waitany(count, array_of_requests, index, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierror
@@ -1858,7 +1858,7 @@ subroutine MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
@@ -2341,10 +2341,10 @@ subroutine MPI_Dist_graph_create(comm_old, n, sources, degrees, destinations, &
         weights, info, reorder, comm_dist_graph, ierror)
   integer, intent(in) :: comm_old
   integer, intent(in) :: n
-  integer, dimension(n), intent(in) :: sources
-  integer, dimension(n), intent(in) :: degrees
-  integer, dimension(n), intent(in) :: destinations
-  integer, dimension(n), intent(in) :: weights
+  integer, dimension(*), intent(in) :: sources
+  integer, dimension(*), intent(in) :: degrees
+  integer, dimension(*), intent(in) :: destinations
+  integer, dimension(*), intent(in) :: weights
   integer, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
@@ -2361,11 +2361,11 @@ subroutine MPI_Dist_graph_create_adjacent(comm_old, indegree, sources, sourcewei
        comm_dist_graph, ierror)
   integer, intent(in) :: comm_old
   integer, intent(in) :: indegree
-  integer, dimension(indegree), intent(in) :: sources
-  integer, dimension(indegree), intent(in) :: sourceweights
+  integer, dimension(*), intent(in) :: sources
+  integer, dimension(*), intent(in) :: sourceweights
   integer, intent(in) :: outdegree
-  integer, dimension(outdegree), intent(in) :: destinations
-  integer, dimension(outdegree), intent(in) :: destweights
+  integer, dimension(*), intent(in) :: destinations
+  integer, dimension(*), intent(in) :: destweights
   integer, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
@@ -2394,11 +2394,11 @@ subroutine MPI_Dist_graph_neighbors(comm, maxindegree, sources, sourceweights, &
        maxoutdegree, destinations, destweights, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: maxindegree
-  integer, dimension(maxindegree), intent(out) :: sources
-  integer, dimension(maxindegree), intent(out) :: sourceweights
+  integer, dimension(*), intent(out) :: sources
+  integer, dimension(*), intent(out) :: sourceweights
   integer, intent(in) :: maxoutdegree
-  integer, dimension(maxoutdegree), intent(out) :: destinations
-  integer, dimension(maxoutdegree), intent(out) :: destweights
+  integer, dimension(*), intent(out) :: destinations
+  integer, dimension(*), intent(out) :: destweights
   integer, intent(out) :: ierror
 end subroutine MPI_Dist_graph_neighbors
 
