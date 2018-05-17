@@ -342,11 +342,6 @@ opal_convertor_set_position( opal_convertor_t* convertor,
 /*
  *
  */
-OPAL_DECLSPEC int32_t
-opal_convertor_reset_stack_at_beginning( opal_convertor_t* convertor );
-/*
- *
- */
 static inline int32_t
 opal_convertor_personalize( opal_convertor_t* convertor,
                             uint32_t flags,
