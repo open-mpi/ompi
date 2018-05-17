@@ -59,6 +59,9 @@ Master (not on release branches yet)
 ------------------------------------
 
 - Fix rank-by algorithms to properly rank by object and span
+- Do not build Open SHMEM layer when there are no SPMLs available.
+  Currently, this means the Open SHMEM layer will only build if
+  a MXM or UCX library is found.
 
 3.1.0 -- May, 2018
 ------------------
