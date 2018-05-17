@@ -272,8 +272,8 @@ m4_ifndef([project_ompi], [project_ompi_amc=false])
 AS_IF([test "$enable_orte" != "no"], [project_orte_amc=true], [project_orte_amc=false])
 m4_ifndef([project_orte], [project_orte_amc=false])
 
-AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc=false])
-m4_ifndef([project_oshmem], [project_oshmem_amc=false])
+AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc="no (disabled)"])
+m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 if test "$enable_binaries" = "no" && test "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
@@ -1105,6 +1105,23 @@ AC_MSG_RESULT([$opal_subdir_args])
 OPAL_MCA
 
 m4_ifdef([project_ompi], [OMPI_REQUIRE_ENDPOINT_TAG_FINI])
+
+# Last minute disable of OpenSHMEM if we didn't find any oshmem SPMLs
+if test "$project_oshmem_amc" = "true" && test $OSHMEM_FOUND_WORKING_SPML -eq 0 ; then
+    # We don't have an spml that will work, so oshmem wouldn't be able
+    # to run an application.  Therefore, don't build the oshmem layer.
+    if test "$enable_oshmem" != "no" && test -n "$enable_oshmem"; then
+	AC_MSG_WARN([No spml found, so OpenSHMEM layer will be non functional.])
+	AC_MSG_ERROR([Aborting because OpenSHMEM requested, but can not build.])
+    else
+	AC_MSG_WARN([No spml found.  Will not build OpenSHMEM layer.])
+	project_oshmem_amc="false (no spml)"
+	# now for the hard part, remove project from list that will
+	# run.  This is a hack, but it works as long as the project
+	# remains named "oshmem".
+	MCA_PROJECT_SUBDIRS=`echo "$MCA_PROJECT_SUBDIRS" | sed -e 's/oshmem//'`
+    fi
+fi
 
 # checkpoint results
 AC_CACHE_SAVE
