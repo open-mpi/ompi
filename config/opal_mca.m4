@@ -12,6 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
+dnl                         All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -225,16 +227,19 @@ AC_DEFUN([OPAL_MCA],[
     # now configure all the projects, frameworks, and components.  Most
     # of the hard stuff is in here
     MCA_PROJECT_SUBDIRS=
+    MCA_PROJECT_DIST_SUBDIRS=
     m4_foreach(mca_project, [mca_project_list],
                [# BWB: Until projects have separate configure scripts
                 # and can skip running all of ORTE, just avoid recursing
                 # into orte sub directory if orte disabled
                 if (test "mca_project" = "ompi" && test "$enable_mpi" != "no") || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem"; then
                    MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
+                   MCA_PROJECT_DIST_SUBDIRS="$MCA_PROJECT_DIST_SUBDIRS mca_project"
                 fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
 
     AC_SUBST(MCA_PROJECT_SUBDIRS)
+    AC_SUBST(MCA_PROJECT_DIST_SUBDIRS)
 
     m4_undefine([mca_component_configure_active])
 ])
