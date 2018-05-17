@@ -409,6 +409,12 @@ int opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
 }
 
 
+int32_t opal_convertor_reset_stack_at_beginning( opal_convertor_t* convertor )
+{
+    return opal_convertor_create_stack_at_begining( convertor, opal_datatype_local_sizes );
+}
+
+
 int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
                                              size_t* position )
 {

@@ -40,6 +40,7 @@ static void* pml_ucx_generic_datatype_start_unpack(void *context, void *buffer,
 
     OMPI_DATATYPE_RETAIN(datatype);
     convertor->datatype = datatype;
+    convertor->offset = 0;
     opal_convertor_copy_and_prepare_for_recv(ompi_proc_local_proc->super.proc_convertor,
                                              &datatype->super, count, buffer, 0,
                                              &convertor->opal_conv);
@@ -85,8 +86,15 @@ static ucs_status_t pml_ucx_generic_datatype_unpack(void *state, size_t offset,
     iov.iov_base = (void*)src;
     iov.iov_len  = length;
 
+    /* if we detected out-of-order message - apply hack: reset datatype stack
+     * of convertor to allow re-build it on set_position call */
+    if ((offset != convertor->offset) &&
+        !(convertor->opal_conv.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) {
+        opal_convertor_reset_stack_at_beginning(&convertor->opal_conv);
+    }
     opal_convertor_set_position(&convertor->opal_conv, &offset);
     opal_convertor_unpack(&convertor->opal_conv, &iov, &iov_count, &length);
+    convertor->offset = offset + length;
     return UCS_OK;
 }
 
