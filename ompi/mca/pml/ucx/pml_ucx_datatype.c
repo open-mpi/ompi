@@ -103,7 +103,6 @@ static ucs_status_t pml_ucx_generic_datatype_unpack(void *state, size_t offset,
         /* permanently switch to un-ordered mode */
         convertor->offset = 0;
     } else {
-        opal_convertor_set_position(&convertor->opal_conv, &offset);
         opal_convertor_unpack(&convertor->opal_conv, &iov, &iov_count, &length);
         convertor->offset += length;
     }
