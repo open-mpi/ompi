@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -258,6 +258,9 @@ int ompi_mpiinfo_finalize(void)
     opal_list_item_t *item;
     opal_info_entry_t *entry;
     bool found = false;
+
+    OBJ_DESTRUCT(&ompi_mpi_info_null);
+    OBJ_DESTRUCT(&ompi_mpi_info_env);
 
     /* Go through the f2c table and see if anything is left.  Free them
        all. */
