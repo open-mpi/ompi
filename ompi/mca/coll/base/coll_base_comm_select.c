@@ -53,7 +53,7 @@ struct avail_coll_t {
     opal_list_item_t super;
 
     int ac_priority;
-    mca_coll_base_module_2_2_0_t *ac_module;
+    mca_coll_base_module_2_3_0_t *ac_module;
     const char * ac_component_name;
 };
 typedef struct avail_coll_t avail_coll_t;
@@ -66,16 +66,16 @@ static opal_list_t *check_components(opal_list_t * components,
                                      ompi_communicator_t * comm);
 static int check_one_component(ompi_communicator_t * comm,
                                const mca_base_component_t * component,
-                               mca_coll_base_module_2_2_0_t ** module);
+                               mca_coll_base_module_2_3_0_t ** module);
 
 static int query(const mca_base_component_t * component,
                  ompi_communicator_t * comm, int *priority,
-                 mca_coll_base_module_2_2_0_t ** module);
+                 mca_coll_base_module_2_3_0_t ** module);
 
 static int query_2_0_0(const mca_coll_base_component_2_0_0_t *
                        coll_component, ompi_communicator_t * comm,
                        int *priority,
-                       mca_coll_base_module_2_2_0_t ** module);
+                       mca_coll_base_module_2_3_0_t ** module);
 
 /*
  * Stuff for the OBJ interface
@@ -330,7 +330,7 @@ static opal_list_t *check_components(opal_list_t * components,
     int priority;
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
-    mca_coll_base_module_2_2_0_t *module;
+    mca_coll_base_module_2_3_0_t *module;
     opal_list_t *selectable;
     avail_coll_t *avail;
 
@@ -386,7 +386,7 @@ static opal_list_t *check_components(opal_list_t * components,
  */
 static int check_one_component(ompi_communicator_t * comm,
                                const mca_base_component_t * component,
-                               mca_coll_base_module_2_2_0_t ** module)
+                               mca_coll_base_module_2_3_0_t ** module)
 {
     int err;
     int priority = -1;
@@ -420,7 +420,7 @@ static int check_one_component(ompi_communicator_t * comm,
  */
 static int query(const mca_base_component_t * component,
                  ompi_communicator_t * comm,
-                 int *priority, mca_coll_base_module_2_2_0_t ** module)
+                 int *priority, mca_coll_base_module_2_3_0_t ** module)
 {
     *module = NULL;
     if (2 == component->mca_type_major_version &&
@@ -440,9 +440,9 @@ static int query(const mca_base_component_t * component,
 
 static int query_2_0_0(const mca_coll_base_component_2_0_0_t * component,
                        ompi_communicator_t * comm, int *priority,
-                       mca_coll_base_module_2_2_0_t ** module)
+                       mca_coll_base_module_2_3_0_t ** module)
 {
-    mca_coll_base_module_2_2_0_t *ret;
+    mca_coll_base_module_2_3_0_t *ret;
 
     /* There's currently no need for conversion */
 

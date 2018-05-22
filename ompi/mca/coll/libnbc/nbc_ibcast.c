@@ -47,7 +47,7 @@ int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param) {
 
 static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
                           struct ompi_communicator_t *comm, ompi_request_t ** request,
-                          struct mca_coll_base_module_2_2_0_t *module, bool persistent)
+                          struct mca_coll_base_module_2_3_0_t *module, bool persistent)
 {
   int rank, p, res, segsize;
   size_t size;
@@ -173,7 +173,7 @@ static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int ro
 
 int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
-                            struct mca_coll_base_module_2_2_0_t *module)
+                            struct mca_coll_base_module_2_3_0_t *module)
 {
     int res = nbc_bcast_init(buffer, count, datatype, root,
                              comm, request, module, false);
@@ -344,7 +344,7 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
 
 static int nbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, int root,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_2_0_t *module, bool persistent) {
+                                struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
   int res;
   NBC_Schedule *schedule;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -396,7 +396,7 @@ static int nbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, 
 
 int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
                                   struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                  struct mca_coll_base_module_2_2_0_t *module) {
+                                  struct mca_coll_base_module_2_3_0_t *module) {
     int res = nbc_bcast_inter_init(buffer, count, datatype, root,
                                    comm, request, module, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -415,7 +415,7 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
 
 int ompi_coll_libnbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
                                 struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                struct mca_coll_base_module_2_2_0_t *module) {
+                                struct mca_coll_base_module_2_3_0_t *module) {
     int res = nbc_bcast_init(buffer, count, datatype, root,
                              comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -427,7 +427,7 @@ int ompi_coll_libnbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, 
 
 int ompi_coll_libnbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, int root,
                                       struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                                      struct mca_coll_base_module_2_2_0_t *module) {
+                                      struct mca_coll_base_module_2_3_0_t *module) {
     int res = nbc_bcast_inter_init(buffer, count, datatype, root,
                                    comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
