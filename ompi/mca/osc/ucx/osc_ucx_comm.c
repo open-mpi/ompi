@@ -332,7 +332,8 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
     size_t len = sizeof(uint64_t) + sizeof(ompi_osc_dynamic_win_info_t) * OMPI_OSC_UCX_ATTACH_MAX;
     char *temp_buf = malloc(len);
     ompi_osc_dynamic_win_info_t *temp_dynamic_wins;
-    int win_count, contain, insert = -1;
+    uint64_t win_count;
+    int contain, insert = -1;
     ucs_status_t status;
 
     if ((module->win_info_array[target]).rkey_init == true) {
