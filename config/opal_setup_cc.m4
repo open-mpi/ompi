@@ -29,9 +29,9 @@ AC_DEFUN([OPAL_CC_HELPER],[
 
     opal_prog_cc_c11_helper_tmp=0
 
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$3],[$4])],[
-                          $2=yes
-                          opal_prog_cc_c11_helper_tmp=1], [$2=no])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([$3],[$4])],[
+                       $2=yes
+                       opal_prog_cc_c11_helper_tmp=1], [$2=no])
 
     AC_DEFINE_UNQUOTED([$5], [$opal_prog_cc_c11_helper_tmp], [$6])
 
