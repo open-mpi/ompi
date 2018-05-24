@@ -106,6 +106,9 @@ struct ompi_osc_rdma_component_t {
 
     /** aggregation free list */
     opal_free_list_t aggregate;
+
+    /** directory where to place backing files */
+    char *backing_directory;
 };
 typedef struct ompi_osc_rdma_component_t ompi_osc_rdma_component_t;
 
