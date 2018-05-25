@@ -275,11 +275,18 @@ typedef int (*mca_spml_base_module_send_fn_t)(void *buf,
                                               mca_spml_base_put_mode_t mode);
 
 /**
- * Wait for completion of all outstanding put() requests
+ * Assures ordering of delivery of put() requests
  *
  * @return         - OSHMEM_SUCCESS or failure status.
  */
 typedef int (*mca_spml_base_module_fence_fn_t)(void);
+
+/**
+ * Wait for completion of all outstanding put() requests
+ *
+ * @return         - OSHMEM_SUCCESS or failure status.
+ */
+typedef int (*mca_spml_base_module_quiet_fn_t)(void);
 
 /**
  * Waits for completion of a non-blocking put or get issued by the calling PE.
@@ -321,6 +328,7 @@ struct mca_spml_base_module_1_0_0_t {
     mca_spml_base_module_wait_fn_t spml_wait;
     mca_spml_base_module_wait_nb_fn_t spml_wait_nb;
     mca_spml_base_module_fence_fn_t spml_fence;
+    mca_spml_base_module_quiet_fn_t spml_quiet;
 
     mca_spml_base_module_mkey_unpack_fn_t spml_rmkey_unpack;
     mca_spml_base_module_mkey_free_fn_t   spml_rmkey_free;
