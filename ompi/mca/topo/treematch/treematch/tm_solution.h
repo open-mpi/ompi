@@ -14,7 +14,7 @@ int in_tab(int *tab, int n, int val);
 void map_Packed(tm_topology_t *topology, int N, int *sigma);
 void map_RR(tm_topology_t *topology, int N, int *sigma);
 int hash_asc(const void* x1,const void* x2);
-int *generate_random_sol(tm_topology_t *topology,int N,int level,int seed);
+int *generate_random_sol(tm_topology_t *topology,int N, int seed);
 double eval_sol(int *sol,int N,double **comm, double **arch);
 void exchange(int *sol,int i,int j);
 double gain_exchange(int *sol,int l,int m,double eval1,int N,double **comm, double **arch);

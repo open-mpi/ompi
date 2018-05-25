@@ -23,7 +23,6 @@ static thread_pool_t *create_threads(void);
 
 static void f1 (int nb_args, void **args, int thread_id);
 static void f2 (int nb_args, void **args, int thread_id);
-static void destroy_work(work_t *work);
 
 #define MIN(a, b) ((a)<(b)?(a):(b))
 #define MAX(a, b) ((a)>(b)?(a):(b))

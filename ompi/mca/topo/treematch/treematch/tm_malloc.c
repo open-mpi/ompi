@@ -36,7 +36,7 @@ static void init_extra_data(void);
 
 
 
-static char *my_strdup(char* string){
+char *my_strdup(char* string){
   int size = 1+strlen(string);
   char *res = (char*)malloc(size*sizeof(char));
 
@@ -55,7 +55,7 @@ void save_ptr(void *ptr, size_t size, char *file, int line) {
   elem -> line = line;
   elem -> file = my_strdup(file);
   if(tm_get_verbose_level() >= DEBUG)
-    printf("Storing (%p,%ld)\n",ptr,size);
+    printf("Storing (%p,%ld)\n", (void *)ptr,size);
   HASH_ADD_PTR( size_hash, key, elem );
 }
 
@@ -66,14 +66,14 @@ size_t retreive_size(void *someaddr){
   HASH_FIND_PTR(size_hash, &someaddr, elem);
   if(!elem){
     if(tm_get_verbose_level() >= CRITICAL)
-      fprintf(stderr,"Cannot find ptr %p to free!\n",someaddr);
+      fprintf(stderr,"Cannot find ptr %p to free!\n", (void *)someaddr);
     abort();
     return 0;
   }
 
   res  = elem->size;
   if(tm_get_verbose_level()>=DEBUG)
-    printf("Retreiving (%p,%ld)\n",someaddr, res);
+    printf("Retreiving (%p,%ld)\n",(void *)someaddr, res);
 
   free(elem->file);
   HASH_DEL( size_hash, elem);
@@ -86,7 +86,7 @@ void tm_mem_check(void){
     int nb_errors = 0;
     for(s=size_hash; s != NULL; s=s->hh.next) {
       if(tm_get_verbose_level()>=ERROR)
-        printf("pointer %p of size %ld (%s: %d) has not been freed!\n", s->key, s->size, s->file, s->line);
+        printf("pointer %p of size %ld (%s: %d) has not been freed!\n", (void *)s->key + EXTRA_BYTE, s->size, s->file, s->line);
 	nb_errors ++;
     }
 
@@ -119,7 +119,7 @@ void *tm_malloc(size_t size, char *file, int line){
   ptr = malloc(size);
 
   if(tm_get_verbose_level()>=DEBUG)
-    printf("tm_malloc of size %ld: %p (%s: %d)\n",size-2*EXTRA_BYTE,(void*)ptr,file,line);
+    printf("tm_malloc of size %ld: %p (%s: %d)\n",size-2*EXTRA_BYTE, (void *)ptr,file,line);
 
   save_ptr(ptr, size, file, line);
 
@@ -128,7 +128,7 @@ void *tm_malloc(size_t size, char *file, int line){
 
 
   if(tm_get_verbose_level()>=DEBUG)
-    printf("tm_malloc returning: %p\n",(void*)(ptr+EXTRA_BYTE));
+    printf("tm_malloc returning: %p\n",(void *)(ptr+EXTRA_BYTE));
 
   return (void *)(ptr + EXTRA_BYTE);
 }
@@ -147,14 +147,14 @@ void *tm_calloc(size_t count, size_t size, char *file, int line){
   save_ptr(ptr, full_size, file, line);
 
   if(tm_get_verbose_level()>=DEBUG)
-    printf("tm_calloc of size %ld: %p (%s: %d)\n",full_size-2*EXTRA_BYTE,(void*)ptr, file, line);
+    printf("tm_calloc of size %ld: %p (%s: %d)\n",full_size-2*EXTRA_BYTE,(void *)ptr, file, line);
 
 
   memcpy(ptr, extra_data, EXTRA_BYTE);
   memcpy(ptr + full_size - EXTRA_BYTE, extra_data, EXTRA_BYTE);
 
   if(tm_get_verbose_level()>=DEBUG)
-    printf("tm_calloc returning: %p\n", (void*)(ptr+EXTRA_BYTE));
+    printf("tm_calloc returning: %p\n",(void *)(ptr+EXTRA_BYTE));
 
   return (void *)(ptr+EXTRA_BYTE);
 }
@@ -172,7 +172,7 @@ void *tm_realloc(void *old_ptr, size_t size, char *file, int line){
   save_ptr(ptr, full_size, file, line);
 
   if(tm_get_verbose_level()>=DEBUG)
-    printf("tm_realloc of size %ld: %p (%s: %d)\n",full_size-2*EXTRA_BYTE, (void*)ptr, file, line);
+    printf("tm_realloc of size %ld: %p (%s: %d)\n",full_size-2*EXTRA_BYTE, (void *)ptr, file, line);
 
 
   memcpy(ptr, extra_data, EXTRA_BYTE);
@@ -185,17 +185,17 @@ void *tm_realloc(void *old_ptr, size_t size, char *file, int line){
     memcpy(ptr + EXTRA_BYTE, old_ptr, MIN(old_ptr_size - 2 * EXTRA_BYTE, size));
 
     if((bcmp(original_ptr ,extra_data, EXTRA_BYTE)) && ((tm_get_verbose_level()>=ERROR))){
-      fprintf(stderr,"Realloc: cannot find special string ***before*** %p!\n",  (void*)original_ptr);
+      fprintf(stderr,"Realloc: cannot find special string ***before*** %p!\n", (void *)original_ptr);
       fprintf(stderr,"memory is probably corrupted here!\n");
     }
 
     if((bcmp(original_ptr + old_ptr_size -EXTRA_BYTE ,extra_data, EXTRA_BYTE)) && ((tm_get_verbose_level()>=ERROR))){
-      fprintf(stderr,"Realloc: cannot find special string ***after*** %p!\n",  (void*)original_ptr);
+      fprintf(stderr,"Realloc: cannot find special string ***after*** %p!\n", (void *)original_ptr);
       fprintf(stderr,"memory is probably corrupted here!\n");
     }
 
     if(tm_get_verbose_level()>=DEBUG)
-      printf("tm_free freeing: %p\n", (void*)original_ptr);
+      printf("tm_free freeing: %p\n",(void *)original_ptr);
 
 
     free(original_ptr);
@@ -203,7 +203,7 @@ void *tm_realloc(void *old_ptr, size_t size, char *file, int line){
 
 
   if(tm_get_verbose_level()>=DEBUG)
-    printf("tm_realloc returning: %p (----- %p)\n",(void*)(ptr+EXTRA_BYTE),(void*)(((byte *)ptr) - EXTRA_BYTE));
+    printf("tm_realloc returning: %p (----- %p)\n", (void *)(ptr+EXTRA_BYTE), (void *)(ptr - EXTRA_BYTE));
 
 
   return (void *)(ptr+EXTRA_BYTE);
@@ -219,17 +219,17 @@ void tm_free(void *ptr){
   size = retreive_size(original_ptr);
 
   if((bcmp(original_ptr ,extra_data, EXTRA_BYTE)) && ((tm_get_verbose_level()>=ERROR))){
-    fprintf(stderr,"Free: cannot find special string ***before*** %p!\n", (void*)original_ptr);
+    fprintf(stderr,"Free: cannot find special string ***before*** %p!\n", (void *)original_ptr);
     fprintf(stderr,"memory is probably corrupted here!\n");
   }
 
   if((bcmp(original_ptr + size -EXTRA_BYTE ,extra_data, EXTRA_BYTE)) && ((tm_get_verbose_level()>=ERROR))){
-    fprintf(stderr,"Free: cannot find special string ***after*** %p!\n", (void*)original_ptr);
+    fprintf(stderr,"Free: cannot find special string ***after*** %p!\n", (void *)original_ptr);
     fprintf(stderr,"memory is probably corrupted here!\n");
   }
 
   if(tm_get_verbose_level()>=DEBUG)
-    printf("tm_free freeing: %p\n", (void*)original_ptr);
+    printf("tm_free freeing: %p\n", (void *)original_ptr);
 
 
   free(original_ptr);

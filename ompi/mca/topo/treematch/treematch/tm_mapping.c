@@ -1,3 +1,7 @@
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +22,15 @@
 #include <winbase.h>
 #endif
 
+#if HAVE_LIBSCOTCH
+#include <scotch.h>
+#endif
+
+#include <sys/mman.h>
+
+
+#define MIN(a,b) (a)<(b)?(a):(b)
+
 #define TEST_ERROR(n) do{ \
     if( (n) != 0 ){       \
        fprintf(stderr,"Error %d Line %d\n",n,__LINE__); \
@@ -34,6 +47,8 @@ typedef struct {
 } hash2_t;
 
 
+static tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order);
+
 /* compute the number of leaves of any subtree starting froma node of depth depth*/
 int compute_nb_leaves_from_level(int depth,tm_topology_t *topology)
 {
@@ -45,15 +60,11 @@ int compute_nb_leaves_from_level(int depth,tm_topology_t *topology)
   return res;
 }
 
-void tm_finalize(){
+void tm_finalize(void){
   terminate_thread_pool();
   tm_mem_check();
 }
 
-int nb_processing_units(tm_topology_t *topology)
-{
-  return topology->nb_proc_units;
-}
 
 
 void print_1D_tab(int *tab,int N)
@@ -89,14 +100,15 @@ int nb_lines(char *filename)
   return N;
 }
 
-void init_mat(char *filename,int N, double **mat, double *sum_row)
-{
+
+
+long int  init_mat(char *filename,int N, double **mat, double *sum_row){
   FILE *pf = NULL;
   char *ptr= NULL;
   char line[LINE_SIZE];
   int i,j;
   unsigned int vl = tm_get_verbose_level();
-
+  long int nnz = 0;
 
   if(!(pf=fopen(filename,"r"))){
     if(vl >= CRITICAL)
@@ -107,7 +119,6 @@ void init_mat(char *filename,int N, double **mat, double *sum_row)
   j = -1;
   i = 0;
 
-
   while(fgets(line,LINE_SIZE,pf)){
     char *l = line;
     j = 0;
@@ -116,6 +127,7 @@ void init_mat(char *filename,int N, double **mat, double *sum_row)
       l = NULL;
       if((ptr[0]!='\n')&&(!isspace(ptr[0]))&&(*ptr)){
   	mat[i][j] = atof(ptr);
+	if(mat[i][j]) nnz++;
   	sum_row[i] += mat [i][j];
   	if(mat[i][j]<0){
   	  if(vl >= WARNING)
@@ -140,15 +152,124 @@ void init_mat(char *filename,int N, double **mat, double *sum_row)
   }
 
   fclose (pf);
+  return nnz;
 }
 
-tm_affinity_mat_t * new_affinity_mat(double **mat, double *sum_row, int order){
+
+size_t get_filesize(char* filename) {
+    struct stat st;
+    stat(filename, &st);
+    return st.st_size;
+}
+
+
+char *parse_line(int i, double **mat, double *sum_row, int N, char *data, char *filename, long int *nnz){
+  /* now parse the buffer byte per byte for the current line i until we reach '\n'*/
+  unsigned int vl = tm_get_verbose_level();
+  long val;
+  sum_row[i] = 0;
+  int j = 0;
+  while(*data != '\n'){
+    while(*data ==' ' || *data == '\t')
+      data++;
+    if(*data != '\n'){
+      val = 0;
+      while(*data !=' ' && *data != '\t' && *data != '\n'){
+	val = val*10 + *data-'0';
+	data++;
+      }
+      mat[i][j] = val;
+      /* printf("mat[%d][%d] = %ld\n",i,j, val); */
+      if (val){
+	(*nnz)++; 
+	sum_row[i] += val;
+      }
+      j++;
+    }
+  }
+  if( j != N){
+    if(vl >= CRITICAL)
+      fprintf(stderr,"Error at %d %d (%d!=%d). Wrong number of columns line %d for file %s\n",i ,j ,j ,N ,i+1, filename);
+    exit(-1);
+  }
+  data++;
+  return data;
+}
+
+
+
+/* buffered read with mmap of teh file */
+long int init_mat_mmap(char *filename,int N, double **mat, double *sum_row){
+  int i;
+  unsigned int vl = tm_get_verbose_level();
+  size_t filesize = get_filesize(filename);
+  int fd = open(filename, O_RDONLY, 0);
+  long int nnz = 0;
+
+  if(fd == -1){
+    if(vl >= CRITICAL)
+      fprintf(stderr,"Cannot open %s\n",filename);
+    exit(-1);
+  }
+
+  char* data = (char*) mmap(NULL, filesize, PROT_READ, MAP_SHARED, fd, 0);
+  
+  if(data == MAP_FAILED){
+    if(vl >= CRITICAL)
+      fprintf(stderr,"Cannot mmap %s\n",filename);
+    exit(-1);
+  }
+   
+  i = 0;
+  while(i<N){
+    data = parse_line(i, mat, sum_row, N, data, filename, &nnz);
+    i++;
+  }
+
+  munmap(data, filesize);
+  /* fprintf(stderr,"DONE!\n"); */
+  close (fd);
+  return nnz;
+}
+
+
+
+
+long int init_mat_long(char *filename,int N, double **mat, double *sum_row){
+  int i;
+  unsigned int vl = tm_get_verbose_level();
+  char line[LINE_SIZE];
+  FILE *pf;
+  long int nnz = 0;
+  
+  if(!(pf=fopen(filename,"r"))){
+    if(vl >= CRITICAL)
+      fprintf(stderr,"Cannot open %s\n",filename);
+    exit(-1);
+  }
+
+  i = 0;
+  while(i<N){
+    fgets(line,LINE_SIZE,pf);    
+    parse_line(i, mat, sum_row, N, line, filename, &nnz);
+    i++;
+  }
+
+
+  /* fprintf(stderr,"DONE!\n"); */
+  fclose (pf);
+  return nnz;
+}
+
+
+tm_affinity_mat_t * new_affinity_mat(double **mat, double *sum_row, int order, long int nnz){
   tm_affinity_mat_t * aff_mat;
 
   aff_mat = (tm_affinity_mat_t *) MALLOC(sizeof(tm_affinity_mat_t));
   aff_mat -> mat     = mat;
   aff_mat -> sum_row = sum_row;
   aff_mat -> order   = order;
+  aff_mat -> nnz      = nnz;
 
   return aff_mat;
 }
@@ -157,15 +278,20 @@ tm_affinity_mat_t * new_affinity_mat(double **mat, double *sum_row, int order){
 tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order){
   double *sum_row = NULL;
   int i,j;
+  long int nnz = 0;
   sum_row = (double*)MALLOC(order*sizeof(double));
 
   for( i = 0 ; i < order ; i++){
     sum_row[i] = 0;
-    for(j = 0 ; j < order ; j++)
-      sum_row[i] += mat [i][j];
+    for(j = 0 ; j < order ; j++){
+      if(mat[i][j]){
+	nnz++;
+	sum_row[i] += mat [i][j];
+      }
+    }
   }
 
-  return new_affinity_mat(mat, sum_row, order);
+  return new_affinity_mat(mat, sum_row, order, nnz);
 }
 
 
@@ -190,7 +316,8 @@ tm_affinity_mat_t *tm_load_aff_mat(char *filename)
   double **mat = NULL;
   double *sum_row = NULL;
   int i, order;
-
+  long int nnz;
+  
   if(tm_get_verbose_level() >= INFO)
     printf("Reading matrix file: %s\n",filename);
 
@@ -201,13 +328,34 @@ tm_affinity_mat_t *tm_load_aff_mat(char *filename)
   for( i = 0 ; i < order ; i++)
     /* the last column stores the sum of the line*/
     mat[i] = (double*)MALLOC((order)*sizeof(double));
-  init_mat(filename,order, mat, sum_row);
+  /* on my mac  parsing large file is better done with fopen than mmap */
+  #ifdef __MACH__ 
+  if (get_filesize(filename) > 1024*1024*1014) {
+    nnz = init_mat_long(filename,order, mat, sum_row); 
+    if(tm_get_verbose_level() >= DEBUG)
+      printf("New parser\n");
+  }else{
+    nnz = init_mat_mmap(filename,order, mat, sum_row);
+    if(tm_get_verbose_level() >= DEBUG)
+      printf("MMap parser\n");
+  }
+  #else
+    nnz = init_mat_mmap(filename,order, mat, sum_row); 
+    if(tm_get_verbose_level() >= DEBUG)
+      printf("MMap parser\n");
+ #endif
+  
+  /* TIC; */
+  /* init_mat(filename,order, mat, sum_row); */
+  /* double duration_fl = TOC; */
+  /* printf("Old parser = %.3f\n",duration_fl); */
 
 
-  if(tm_get_verbose_level() >= INFO)
+
+    if(tm_get_verbose_level() >= INFO)
     printf("Affinity matrix built from %s!\n",filename);
 
-  return new_affinity_mat(mat, sum_row, order);
+    return new_affinity_mat(mat, sum_row, order, nnz);
 
 
 }
@@ -261,7 +409,7 @@ int nb_leaves(tm_tree_t *comm_tree)
 }
 
 /* find the first '-1 in the array of size n and put the value there*/
-static void set_val(int *tab, int val, int n){
+void set_val(int *tab, int val, int n){
   int i = 0;
 
   while (i < n ){
@@ -300,7 +448,7 @@ void map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
 
   unsigned int vl = tm_get_verbose_level();
   M = nb_leaves(comm_tree);
-  nodes_id = topology->node_id[level];
+  nodes_id = topology->node_id;
   N = topology->nb_nodes[level];
 
   if(vl >= INFO){
