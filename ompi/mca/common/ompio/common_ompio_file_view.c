@@ -172,7 +172,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
        }
     }
 
-    if ( SIMPLE != mca_io_ompio_grouping_option || SIMPLE_PLUS != mca_io_ompio_grouping_option ) {
+    if ( SIMPLE != mca_io_ompio_grouping_option && SIMPLE_PLUS != mca_io_ompio_grouping_option ) {
 
         ret = mca_io_ompio_fview_based_grouping(fh,
                                                 &num_groups,
