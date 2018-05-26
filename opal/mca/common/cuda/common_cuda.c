@@ -429,8 +429,10 @@ int mca_common_cuda_stage_one_init(void)
 
     if (true != stage_one_init_passed) {
         errmsg = opal_argv_join(errmsgs, '\n');
-        opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
-                       errmsg);
+        if (opal_warn_on_missing_libcuda) {
+            opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
+                           errmsg);
+        }
         opal_cuda_support = 0;
     }
     opal_argv_free(errmsgs);
