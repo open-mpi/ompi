@@ -36,7 +36,7 @@ void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync)
 
 #if OSHMEM_SPEC_COMPAT == 1
     /* all outstanding puts must be completed */
-    shmem_fence();
+    shmem_quiet();
 #endif
 
     /* Create group basing PE_start, logPE_stride and PE_size */
@@ -54,7 +54,7 @@ void shmem_barrier_all(void)
 
 #if OSHMEM_SPEC_COMPAT == 1
     /* all outstanding puts must be completed */
-    shmem_fence();
+    shmem_quiet();
 #endif
 
     if (mca_scoll_sync_array) {
