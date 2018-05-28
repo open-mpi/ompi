@@ -63,15 +63,6 @@
 #include "btl_iwarp_ip.h"
 #include "btl_iwarp_ini.h"
 
-#if BTL_IWARP_RDMACM_IB_ADDR
-#include <stdio.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <sys/types.h>
-#include <rdma/rsocket.h>
-#include <infiniband/ib.h>
-#endif
-
 #define mymin(a, b) ((a) < (b) ? (a) : (b))
 
 static void rdmacm_component_register(void);
@@ -99,13 +90,8 @@ typedef struct {
     /* Dummy QP only used when we expect the connection to be
        rejected */
     struct ibv_cq *dummy_cq;
-#if BTL_IWARP_RDMACM_IB_ADDR
-    union ibv_gid gid;
-    uint64_t service_id;
-#else
     uint32_t ipaddr;
     uint16_t tcp_port;
-#endif
     /* server==false means that this proc initiated the connection;
        server==true means that this proc accepted the incoming
        connection.  Note that this may be different than the "one way"
@@ -133,13 +119,8 @@ OBJ_CLASS_INSTANCE(rdmacm_contents_t, opal_list_item_t,
 typedef struct {
     int device_max_qp_rd_atom;
     int device_max_qp_init_rd_atom;
-#if BTL_IWARP_RDMACM_IB_ADDR
-    uint8_t  gid[16];
-    uint64_t service_id;
-#else
     uint32_t ipaddr;
     uint16_t tcp_port;
-#endif
     uint8_t end;
 } modex_message_t;
 
@@ -170,25 +151,12 @@ OBJ_CLASS_INSTANCE(id_context_t, opal_list_item_t,
                    id_context_destructor);
 
 typedef struct {
-#if BTL_IWARP_RDMACM_IB_ADDR
-    /*
-     * According to infiniband spec a "Consumer Private Data" begings from 36th up
-     * to 91th byte (so the limit is 56 bytes) and first 36 bytes
-     * intended for lib RDMA CM header (sometimes not all of these bytes are used)
-     * so we must take into account that in case of AF_IB user private data pointer
-     * points to a header and not to a "Consumer Private Data".
-     */
-    uint8_t  librdmacm_header[36];
-    uint64_t rem_port;
-#else
     uint16_t rem_port;
-#endif
     uint32_t rem_index;
     uint8_t qpnum;
     opal_process_name_t rem_name;
 } __opal_attribute_packed__ private_data_t;
 
-#if !BTL_IWARP_RDMACM_IB_ADDR
 /* Used to send a specific show_help message from the service_thread
    to the main thread (because we can't call show_help from the
    service_thread) */
@@ -197,7 +165,6 @@ typedef struct {
     uint32_t peer_ip_addr;
     uint32_t peer_tcp_port;
 } cant_find_endpoint_context_t;
-#endif
 
 static opal_list_t server_listener_list;
 static opal_list_t client_list;
@@ -206,9 +173,7 @@ static struct rdma_event_channel *event_channel = NULL;
 static int rdmacm_priority = 30;
 static unsigned int rdmacm_port = 0;
 
-#if !BTL_IWARP_RDMACM_IB_ADDR
 static uint32_t rdmacm_addr = 0;
-#endif
 
 static int rdmacm_resolve_timeout = 30000;
 static int rdmacm_resolve_max_retry_count = 20;
@@ -256,12 +221,8 @@ static void rdmacm_contents_constructor(rdmacm_contents_t *contents)
     contents->endpoint = NULL;
     contents->iwarp_btl = NULL;
     contents->dummy_cq = NULL;
-#if BTL_IWARP_RDMACM_IB_ADDR
-    contents->service_id = 0;
-#else
     contents->ipaddr = 0;
     contents->tcp_port = 0;
-#endif
     contents->server = false;
     contents->on_client_list = false;
     OBJ_CONSTRUCT(&(contents->ids), opal_list_t);
@@ -524,91 +485,32 @@ out:
  * node), then the process with the lower TCP port wins.
  */
 static bool i_initiate(uint64_t local_port, uint64_t remote_port,
-#if BTL_IWARP_RDMACM_IB_ADDR
-                       union ibv_gid *local_gid, union ibv_gid *remote_gid)
-{
-#else
                        uint32_t local_ipaddr, uint32_t remote_ipaddr)
 {
 #if OPAL_ENABLE_DEBUG
     char *a = stringify(local_ipaddr);
     char *b = stringify(remote_ipaddr);
 #endif
-#endif
 
-#if BTL_IWARP_RDMACM_IB_ADDR
-    if (local_gid->global.subnet_prefix < remote_gid->global.subnet_prefix ||
-        (local_gid->global.subnet_prefix == remote_gid->global.subnet_prefix &&
-         local_gid->global.interface_id < remote_gid->global.interface_id) ||
-        (local_gid->global.subnet_prefix == remote_gid->global.subnet_prefix &&
-         local_gid->global.interface_id == remote_gid->global.interface_id &&
-#else
     if (local_ipaddr > remote_ipaddr ||
         (local_ipaddr == remote_ipaddr &&
-#endif
               local_port < remote_port)) {
-#if !BTL_IWARP_RDMACM_IB_ADDR
         OPAL_OUTPUT((-1, "i_initiate (I WIN): local ipaddr %s, remote ipaddr %s",
                      a, b));
 #if OPAL_ENABLE_DEBUG
         free(a);
         free(b);
 #endif
-#endif
         return true;
     }
-#if !BTL_IWARP_RDMACM_IB_ADDR
     OPAL_OUTPUT((-1, "i_initiate (I lose): local ipaddr %s, remote ipaddr %s",
                  a, b));
 #if OPAL_ENABLE_DEBUG
     free(a);
     free(b);
 #endif
-#endif
     return false;
 }
-
-#if BTL_IWARP_RDMACM_IB_ADDR
-static int get_rdma_addr(char *src, char *dst,
-                         struct rdma_addrinfo **rdma_addr,
-                         int server)
-{
-    int rc;
-    struct rdma_addrinfo hints, *sres, *dres;
-
-    memset(&hints, 0, sizeof hints);
-
-    hints.ai_family = AF_IB;
-    hints.ai_port_space = RDMA_PS_TCP;
-    hints.ai_flags = RAI_NUMERICHOST | RAI_FAMILY | RAI_PASSIVE;
-
-    rc = rdma_getaddrinfo(src, NULL, &hints, &sres);
-    if (0 != rc) {
-        return OPAL_ERROR;
-    }
-
-    if (server) {
-        *rdma_addr = sres;
-        return OPAL_SUCCESS;
-    }
-
-    hints.ai_src_len  = sres->ai_src_len;
-    hints.ai_src_addr = sres->ai_src_addr;
-
-    hints.ai_flags &= ~RAI_PASSIVE;
-
-    rc = rdma_getaddrinfo(dst, NULL, &hints, &dres);
-    if (0 != rc) {
-        rdma_freeaddrinfo(sres);
-        return OPAL_ERROR;
-    }
-
-    rdma_freeaddrinfo(sres);
-    *rdma_addr = dres;
-
-    return OPAL_SUCCESS;
-}
-#endif
 
 /*
  * Invoked by main thread
@@ -619,15 +521,10 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
 {
     int rc;
     id_context_t *context;
-#if BTL_IWARP_RDMACM_IB_ADDR
-    char src_addr[32], dst_addr[32];
-    struct rdma_addrinfo *rdma_addr;
-#else
     struct sockaddr_in src_in, dest_in;
 
 #if OPAL_ENABLE_DEBUG
     char *a, *b;
-#endif
 #endif
 
     /* We'll need to access some data in the event handler.  We can
@@ -651,7 +548,6 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
         BTL_ERROR(("Failed to create a rdma id with %d", rc));
         goto out1;
     }
-#if !BTL_IWARP_RDMACM_IB_ADDR
     /* Source address (we must specify this to ensure that the traffic
        goes out on the device+port that we expect it go out). */
     memset(&src_in, 0, sizeof(src_in));
@@ -677,7 +573,6 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
 #if OPAL_ENABLE_DEBUG
     free(a);
     free(b);
-#endif
 #endif
     /* This is odd an worth explaining: when we place the context on
        the ids list, we need to add an extra RETAIN to the context.
@@ -716,46 +611,14 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
      */
     OBJ_RETAIN(context);
     opal_list_append(&(contents->ids), &(context->super));
-#if BTL_IWARP_RDMACM_IB_ADDR
-    if (NULL == inet_ntop(AF_INET6, contents->gid.raw,
-                               src_addr, sizeof src_addr)) {
-        BTL_ERROR(("local addr string creating fail"));
-        goto out1;
-    }
-
-    if (NULL == inet_ntop(AF_INET6, message->gid,
-                               dst_addr, sizeof dst_addr)) {
-        BTL_ERROR(("remote addr string creating fail"));
-        goto out1;
-    }
-
-    rc = get_rdma_addr(src_addr, dst_addr, &rdma_addr, 0);
-    if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("server: create rdma addr error"));
-        goto out1;
-    }
-
-    ((struct sockaddr_ib *) (rdma_addr->ai_dst_addr))->sib_sid = message->service_id;
-#endif
     rc = rdma_resolve_addr(context->id,
-#if BTL_IWARP_RDMACM_IB_ADDR
-                           rdma_addr->ai_src_addr,
-                           rdma_addr->ai_dst_addr,
-#else
                            (struct sockaddr *) &src_in,
                            (struct sockaddr *) &dest_in,
-#endif
                            rdmacm_resolve_timeout);
     if (0 != rc) {
         BTL_ERROR(("Failed to resolve the remote address with %d", rc));
-#if BTL_IWARP_RDMACM_IB_ADDR
-        rdma_freeaddrinfo(rdma_addr);
-#endif
         goto out1;
     }
-#if BTL_IWARP_RDMACM_IB_ADDR
-    rdma_freeaddrinfo(rdma_addr);
-#endif
 
     return OPAL_SUCCESS;
 
@@ -779,10 +642,8 @@ static int rdmacm_module_start_connect(opal_btl_iwarp_connect_base_module_t *cpc
     modex_message_t *message, *local_message;
     int rc, qp;
     opal_list_item_t *item;
-#if !BTL_IWARP_RDMACM_IB_ADDR
 #if OPAL_ENABLE_DEBUG
     char *a, *b;
-#endif
 #endif
     /* Don't use the CPC to get the message, because this function is
        invoked from the event_handler (to intitiate connections in the
@@ -792,7 +653,6 @@ static int rdmacm_module_start_connect(opal_btl_iwarp_connect_base_module_t *cpc
         (modex_message_t *) endpoint->endpoint_local_cpc->data.cbm_modex_message;
     message = (modex_message_t *)
         endpoint->endpoint_remote_cpc_data->cbm_modex_message;
-#if !BTL_IWARP_RDMACM_IB_ADDR
     OPAL_OUTPUT((-1, "Connecting from IP %s:%d to remote IP %s:%d  ep state = %d",
                  a = stringify(local_message->ipaddr), local_message->tcp_port,
                  b = stringify(message->ipaddr), message->tcp_port, endpoint->endpoint_state));
@@ -802,7 +662,6 @@ static int rdmacm_module_start_connect(opal_btl_iwarp_connect_base_module_t *cpc
 #endif
     BTL_VERBOSE(("Connecting to remote ip addr = %x, port = %d  ep state = %d",
                  message->ipaddr, message->tcp_port, endpoint->endpoint_state));
-#endif
     if (MCA_BTL_IB_CONNECTED == endpoint->endpoint_state ||
         MCA_BTL_IB_CONNECTING == endpoint->endpoint_state ||
         MCA_BTL_IB_CONNECT_ACK == endpoint->endpoint_state) {
@@ -830,25 +689,15 @@ static int rdmacm_module_start_connect(opal_btl_iwarp_connect_base_module_t *cpc
      * is being connected from, in the case where there are multiple
      * listeners on the local system.
      */
-#if BTL_IWARP_RDMACM_IB_ADDR
-    memcpy(contents->gid.raw, local_message->gid, sizeof(contents->gid));
-    contents->service_id = local_message->service_id;
-#else
     contents->ipaddr = local_message->ipaddr;
     contents->tcp_port = local_message->tcp_port;
-#endif
 
     /* Are we the initiator?  Or do we expect this connect request to
        be rejected? */
     endpoint->endpoint_initiator =
         i_initiate(
-#if BTL_IWARP_RDMACM_IB_ADDR
-                   contents->service_id, message->service_id,
-                   &contents->gid, (union ibv_gid *) message->gid);
-#else
                    contents->tcp_port, message->tcp_port,
                    contents->ipaddr, message->ipaddr);
-#endif
     OPAL_OUTPUT((-1, "MAIN Start connect; ep=%p (%p), I %s the initiator to %s",
                  (void*) endpoint,
                  (void*) endpoint->endpoint_local_cpc,
@@ -893,7 +742,6 @@ out:
     return rc;
 }
 
-#if !BTL_IWARP_RDMACM_IB_ADDR
 static void *show_help_cant_find_endpoint(void *context)
 {
     char *msg;
@@ -920,7 +768,6 @@ static void *show_help_cant_find_endpoint(void *context)
     mca_btl_iwarp_endpoint_invoke_error(NULL);
     return NULL;
 }
-#endif
 
 /*
  * Invoked by service thread
@@ -945,11 +792,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     private_data_t msg;
     int rc = -1, qpnum;
     uint32_t rem_index;
-#if BTL_IWARP_RDMACM_IB_ADDR
-    uint64_t rem_port;
-#else
     uint16_t rem_port;
-#endif
 
     qpnum = ((private_data_t *)event->param.conn.private_data)->qpnum;
     rem_port = ((private_data_t *)event->param.conn.private_data)->rem_port;
@@ -960,7 +803,6 @@ static int handle_connect_request(struct rdma_cm_event *event)
        to; use the listener's context->contents to figure it out */
     endpoint = rdmacm_find_endpoint(contents, rem_name);
     if (NULL == endpoint) {
-#if !BTL_IWARP_RDMACM_IB_ADDR
         struct sockaddr *peeraddr = rdma_get_peer_addr(event->id);
         cant_find_endpoint_context_t *c = (cant_find_endpoint_context_t *) calloc(1, sizeof(*c));
         if (NULL != c) {
@@ -973,25 +815,17 @@ static int handle_connect_request(struct rdma_cm_event *event)
             c->peer_tcp_port = rdma_get_dst_port(event->id);
         }
         show_help_cant_find_endpoint (c);
-#else
-        BTL_ERROR(("Cannot find endpoint."));
-#endif
         goto out;
     }
 
     message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     endpoint->endpoint_initiator =
         i_initiate(
-#if BTL_IWARP_RDMACM_IB_ADDR
-                  contents->service_id, rem_port,
-                  &contents->gid, (union ibv_gid *) message->gid);
-#else
                   contents->tcp_port, rem_port,
                   contents->ipaddr, message->ipaddr);
     BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x, local port = %d, remote port = %d",
                   endpoint->endpoint_state, contents->ipaddr, message->ipaddr,
                   contents->tcp_port, rem_port));
-#endif
     OPAL_OUTPUT((-1, "SERVICE in handle_connect_request; ep=%p (%p), I still %s the initiator to %s",
                  (void*) endpoint,
                  (void*) endpoint->endpoint_local_cpc,
@@ -1267,9 +1101,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
 
     mca_btl_iwarp_endpoint_t *endpoint;
 #if OPAL_ENABLE_DEBUG
-#if !BTL_IWARP_RDMACM_IB_ADDR
     modex_message_t *message;
-#endif
 #endif
 
     if (contents->server) {
@@ -1310,14 +1142,12 @@ static int rdmacm_connect_endpoint(id_context_t *context,
     }
 
 #if OPAL_ENABLE_DEBUG
-#if !BTL_IWARP_RDMACM_IB_ADDR
     message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     BTL_VERBOSE(("%s connected!!! local %x remote %x state = %d",
                  contents->server?"server":"client",
                  contents->ipaddr,
                  message->ipaddr,
                  endpoint->endpoint_state));
-#endif
 #endif
 
     /* Ensure that all the writes back to the endpoint and associated
@@ -1499,20 +1329,16 @@ static int finish_connect(id_context_t *context)
     private_data_t msg;
     int rc;
 #if OPAL_ENABLE_DEBUG
-#if !BTL_IWARP_RDMACM_IB_ADDR
     struct sockaddr *peeraddr;
     uint32_t remoteipaddr;
     uint16_t remoteport;
 #endif
-#endif
     modex_message_t *message;
 
 #if OPAL_ENABLE_DEBUG
-#if !BTL_IWARP_RDMACM_IB_ADDR
     peeraddr = rdma_get_peer_addr(context->id);
     remoteport = rdma_get_dst_port(context->id);
     remoteipaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
-#endif
 #endif
 
     message = (modex_message_t *)
@@ -1590,10 +1416,6 @@ static int finish_connect(id_context_t *context)
     msg.qpnum = context->qpnum;
     msg.rem_index = contents->endpoint->index;
     msg.rem_name = OPAL_PROC_MY_NAME;
-#if BTL_IWARP_RDMACM_IB_ADDR
-    memset(msg.librdmacm_header, 0, sizeof(msg.librdmacm_header));
-    msg.rem_port = contents->service_id;
-#else
     msg.rem_port = contents->tcp_port;
     if (contents->endpoint->endpoint_initiator) {
 #if OPAL_ENABLE_DEBUG
@@ -1610,7 +1432,6 @@ static int finish_connect(id_context_t *context)
         free(a);
 #endif
     }
-#endif
 
     /* Now all of the local setup has been done.  The remote system
        should now get a RDMA_CM_EVENT_CONNECT_REQUEST event to further
@@ -1672,14 +1493,12 @@ static void *show_help_rdmacm_event_error (struct rdma_cm_event *event)
 static int event_handler(struct rdma_cm_event *event)
 {
     id_context_t *context = (id_context_t*) event->id->context;
-#if !BTL_IWARP_RDMACM_IB_ADDR
     rdmacm_contents_t *contents;
     struct sockaddr *localaddr;
     uint32_t localipaddr;
 #if OPAL_ENABLE_DEBUG
     struct sockaddr *peeraddr;
     uint32_t peeripaddr;
-#endif
 #endif
     int rc = -1;
     opal_btl_iwarp_ini_values_t ini;
@@ -1689,7 +1508,6 @@ static int event_handler(struct rdma_cm_event *event)
         return rc;
     }
 
-#if !BTL_IWARP_RDMACM_IB_ADDR
     contents = context->contents;
 
     localaddr = rdma_get_local_addr(event->id);
@@ -1704,7 +1522,6 @@ static int event_handler(struct rdma_cm_event *event)
                 rdma_event_str(event->event),
                 event->status,
                 peeripaddr));
-#endif
 
     switch (event->event) {
     case RDMA_CM_EVENT_ADDR_RESOLVED:
@@ -1714,9 +1531,7 @@ static int event_handler(struct rdma_cm_event *event)
 
     case RDMA_CM_EVENT_ROUTE_RESOLVED:
         OPAL_OUTPUT((-1, "SERVICE Got ROUTE_RESOLVED: ID %p", (void*) context->id));
-#if !BTL_IWARP_RDMACM_IB_ADDR
         contents->ipaddr = localipaddr;
-#endif
         rc = finish_connect(context);
         break;
 
@@ -1891,7 +1706,6 @@ static int rdmacm_init(mca_btl_iwarp_endpoint_t *endpoint)
     return OPAL_SUCCESS;
 }
 
-#if !BTL_IWARP_RDMACM_IB_ADDR
 static int ipaddrcheck(id_context_t *context,
                        mca_btl_iwarp_module_t *iwarp_btl)
 {
@@ -1953,17 +1767,14 @@ static int ipaddrcheck(id_context_t *context,
 
     return already_exists ? OPAL_ERROR : OPAL_SUCCESS;
 }
-#endif
 
 static int create_message(rdmacm_contents_t *server,
                           mca_btl_iwarp_module_t *iwarp_btl,
                           opal_btl_iwarp_connect_base_module_data_t *data)
 {
     modex_message_t *message;
-#if !BTL_IWARP_RDMACM_IB_ADDR
 #if OPAL_ENABLE_DEBUG
     char *a;
-#endif
 #endif
 
     message = (modex_message_t *) malloc(sizeof(modex_message_t));
@@ -1977,10 +1788,6 @@ static int create_message(rdmacm_contents_t *server,
     message->device_max_qp_init_rd_atom =
         iwarp_btl->device->ib_dev_attr.max_qp_init_rd_atom;
 
-#if BTL_IWARP_RDMACM_IB_ADDR
-    memcpy(message->gid, server->gid.raw, sizeof(server->gid));
-    message->service_id = server->service_id;
-#else
     message->ipaddr = server->ipaddr;
     message->tcp_port = server->tcp_port;
 
@@ -1988,7 +1795,6 @@ static int create_message(rdmacm_contents_t *server,
                  a = stringify(message->ipaddr), message->tcp_port));
 #if OPAL_ENABLE_DEBUG
     free(a);
-#endif
 #endif
     data->cbm_modex_message = message;
     data->cbm_modex_message_len = message_len;
@@ -2009,12 +1815,7 @@ static int rdmacm_component_query(mca_btl_iwarp_module_t *iwarp_btl, opal_btl_iw
     id_context_t *context;
     rdmacm_contents_t *server = NULL;
 
-#if BTL_IWARP_RDMACM_IB_ADDR
-    char rdmacm_addr_str[32];
-    struct rdma_addrinfo *rdma_addr;
-#else
     struct sockaddr_in sin;
-#endif
 
     /* RDMACM is not supported for MPI_THREAD_MULTIPLE */
     if (opal_using_threads()) {
@@ -2025,14 +1826,6 @@ static int rdmacm_component_query(mca_btl_iwarp_module_t *iwarp_btl, opal_btl_iw
         goto out;
     }
 
-    /* RDMACM is not supported if we have any XRC QPs */
-    if (mca_btl_iwarp_component.num_xrc_qps > 0) {
-        BTL_VERBOSE(("rdmacm CPC not supported with XRC receive queues, please try xoob CPC; skipped on %s:%d",
-                     ibv_get_device_name(iwarp_btl->device->ib_dev),
-                     iwarp_btl->port_num));
-        rc = OPAL_ERR_NOT_SUPPORTED;
-        goto out;
-    }
     if (!BTL_IWARP_QP_TYPE_PP(0)) {
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "rdmacm CPC only supported when the first QP is a PP QP; skipped");
@@ -2089,53 +1882,21 @@ static int rdmacm_component_query(mca_btl_iwarp_module_t *iwarp_btl, opal_btl_iw
         rc = OPAL_ERR_OUT_OF_RESOURCE;
         goto out4;
     }
-#if !BTL_IWARP_RDMACM_IB_ADDR
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = rdmacm_addr;
     sin.sin_port = (uint16_t) rdmacm_port;
-#else
-    rc = ibv_query_gid(iwarp_btl->device->ib_pd->context, iwarp_btl->port_num,
-                       mca_btl_iwarp_component.gid_index, &server->gid);
-    if (0 != rc) {
-        BTL_ERROR(("local gid query failed"));
-        goto out4;
-    }
-
-    if (NULL == inet_ntop(AF_INET6, server->gid.raw,
-                         rdmacm_addr_str, sizeof rdmacm_addr_str)) {
-        BTL_ERROR(("local gaddr string creating fail"));
-        goto out4;
-    }
-
-    rc = get_rdma_addr(rdmacm_addr_str, NULL, &rdma_addr, 1);
-    if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("server: create rdma addr error"));
-        goto out4;
-    }
-#endif
     /* Bind the rdmacm server to the local IP address and an ephemerial
      * port or one specified by a comand arg.
      */
     rc = rdma_bind_addr(context->id,
-#if BTL_IWARP_RDMACM_IB_ADDR
-                        rdma_addr->ai_src_addr);
-#else
                        (struct sockaddr *)&sin);
-#endif
     if (0 != rc) {
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "iwarp BTL: rdmacm CPC unable to bind to address");
         rc = OPAL_ERR_UNREACH;
-#if BTL_IWARP_RDMACM_IB_ADDR
-        rdma_freeaddrinfo(rdma_addr);
-#endif
         goto out5;
     }
-#if BTL_IWARP_RDMACM_IB_ADDR
-    server->service_id = ((struct sockaddr_ib *) (&context->id->route.addr.src_addr))->sib_sid;
-    rdma_freeaddrinfo(rdma_addr);
-#else
     /* Verify that the device has a valid IP address on it, or we
        cannot use the cpc */
     rc = ipaddrcheck(context, iwarp_btl);
@@ -2145,7 +1906,6 @@ static int rdmacm_component_query(mca_btl_iwarp_module_t *iwarp_btl, opal_btl_iw
         rc = OPAL_ERR_NOT_SUPPORTED;
         goto out5;
     }
-#endif
     /* Listen on the specified address/port with the rdmacm, limit the
        amount of incoming connections to 1024 */
     /* FIXME - 1024 should be (num of connectors *
@@ -2255,21 +2015,6 @@ static int rdmacm_component_finalize(void)
     return OPAL_SUCCESS;
 }
 
-#if BTL_IWARP_RDMACM_IB_ADDR
-static int rdmacm_check_ibaddr_support(void)
-{
-    int rsock;
-    rsock = rsocket(AF_IB, SOCK_STREAM, 0);
-    if (rsock < 0) {
-        return OPAL_ERROR;
-    }
-
-    rclose(rsock);
-
-    return OPAL_SUCCESS;
-}
-#endif
-
 static int rdmacm_component_init(void)
 {
     int rc;
@@ -2278,21 +2023,12 @@ static int rdmacm_component_init(void)
     OBJ_CONSTRUCT(&client_list, opal_list_t);
     OBJ_CONSTRUCT(&client_list_lock, opal_mutex_t);
 
-#if !BTL_IWARP_RDMACM_IB_ADDR
     rc = mca_btl_iwarp_build_rdma_addr_list();
     if (OPAL_SUCCESS != rc) {
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "iwarp BTL: rdmacm CPC unable to find any valid IP address");
         return OPAL_ERR_NOT_SUPPORTED;
     }
-#else
-    rc = rdmacm_check_ibaddr_support();
-    if (OPAL_SUCCESS != rc) {
-        opal_output_verbose(5, opal_btl_base_framework.framework_output,
-                            "There is no IB_AF addressing support by lib rdmacm");
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
-#endif
 
     event_channel = rdma_create_event_channel();
     if (NULL == event_channel) {

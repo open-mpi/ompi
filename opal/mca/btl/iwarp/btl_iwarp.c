@@ -328,36 +328,11 @@ static int create_srq(mca_btl_iwarp_module_t *iwarp_btl)
                 mca_btl_iwarp_component.qp_infos[qp].u.srq_qp.sd_max;
             attr.attr.max_sge = 1;
             iwarp_btl->qps[qp].u.srq_qp.rd_posted = 0;
-#if HAVE_XRC
-            if(BTL_IWARP_QP_TYPE_XRC(qp)) {
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-                struct ibv_srq_init_attr_ex attr_ex;
-                memset(&attr_ex, 0, sizeof(struct ibv_srq_init_attr_ex));
-                attr_ex.attr.max_wr = attr.attr.max_wr;
-                attr_ex.attr.max_sge = attr.attr.max_sge;
-                attr_ex.comp_mask = IBV_SRQ_INIT_ATTR_TYPE | IBV_SRQ_INIT_ATTR_XRCD |
-                                    IBV_SRQ_INIT_ATTR_CQ | IBV_SRQ_INIT_ATTR_PD;
-                attr_ex.srq_type = IBV_SRQT_XRC;
-                attr_ex.xrcd = iwarp_btl->device->xrcd;
-                attr_ex.cq = iwarp_btl->device->ib_cq[qp_cq_prio(qp)];
-                attr_ex.pd = iwarp_btl->device->ib_pd;
-
-                iwarp_btl->qps[qp].u.srq_qp.srq =
-                ibv_create_srq_ex(iwarp_btl->device->ib_dev_context, &attr_ex);
-#else
-                iwarp_btl->qps[qp].u.srq_qp.srq =
-                    ibv_create_xrc_srq(iwarp_btl->device->ib_pd,
-                            iwarp_btl->device->xrc_domain,
-                            iwarp_btl->device->ib_cq[qp_cq_prio(qp)], &attr);
-#endif
-            } else
-#endif
-            {
-               opal_mutex_lock(&iwarp_btl->device->device_lock);
-               iwarp_btl->qps[qp].u.srq_qp.srq =
+            opal_mutex_lock(&iwarp_btl->device->device_lock);
+            iwarp_btl->qps[qp].u.srq_qp.srq =
                    ibv_create_srq(iwarp_btl->device->ib_pd, &attr);
-               opal_mutex_unlock(&iwarp_btl->device->device_lock);
-            }
+            opal_mutex_unlock(&iwarp_btl->device->device_lock);
+
             if (NULL == iwarp_btl->qps[qp].u.srq_qp.srq) {
                 mca_btl_iwarp_show_init_error(__FILE__, __LINE__,
                                                "ibv_create_srq",
@@ -365,22 +340,21 @@ static int create_srq(mca_btl_iwarp_module_t *iwarp_btl)
                 return OPAL_ERROR;
             }
 
-            {
-                opal_mutex_t *lock = &mca_btl_iwarp_component.srq_manager.lock;
-                opal_hash_table_t *srq_addr_table = &mca_btl_iwarp_component.srq_manager.srq_addr_table;
+            opal_mutex_t *lock = &mca_btl_iwarp_component.srq_manager.lock;
+            opal_hash_table_t *srq_addr_table = &mca_btl_iwarp_component.srq_manager.srq_addr_table;
 
-                opal_mutex_lock(lock);
-                if (OPAL_SUCCESS != opal_hash_table_set_value_ptr(
-                                srq_addr_table, &iwarp_btl->qps[qp].u.srq_qp.srq,
-                                sizeof(struct ibv_srq*), (void*) iwarp_btl)) {
-                    BTL_ERROR(("SRQ Internal error."
-                            " Failed to add element to mca_btl_iwarp_component.srq_manager.srq_addr_table\n"));
+            opal_mutex_lock(lock);
+            if (OPAL_SUCCESS != opal_hash_table_set_value_ptr(
+                            srq_addr_table, &iwarp_btl->qps[qp].u.srq_qp.srq,
+                            sizeof(struct ibv_srq*), (void*) iwarp_btl)) {
+                 BTL_ERROR(("SRQ Internal error."
+                        " Failed to add element to mca_btl_iwarp_component.srq_manager.srq_addr_table\n"));
 
-                    opal_mutex_unlock(lock);
-                    return OPAL_ERROR;
+                 opal_mutex_unlock(lock);
+                return OPAL_ERROR;
                 }
-                opal_mutex_unlock(lock);
-            }
+            opal_mutex_unlock(lock);
+
             rd_num = mca_btl_iwarp_component.qp_infos[qp].rd_num;
             rd_curr_num = iwarp_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_iwarp_component.qp_infos[qp].u.srq_qp.rd_init;
 
@@ -412,8 +386,7 @@ static int iwarp_btl_prepare(struct mca_btl_iwarp_module_t* iwarp_btl)
     int rc = OPAL_SUCCESS;
     opal_mutex_lock(&iwarp_btl->ib_lock);
     if (!iwarp_btl->srqs_created &&
-            (mca_btl_iwarp_component.num_srq_qps > 0 ||
-             mca_btl_iwarp_component.num_xrc_qps > 0)) {
+            (mca_btl_iwarp_component.num_srq_qps > 0)) {
         rc = create_srq(iwarp_btl);
     }
     opal_mutex_unlock(&iwarp_btl->ib_lock);
@@ -678,31 +651,6 @@ static int prepare_device_for_use (mca_btl_iwarp_device_t *device)
     device->progress = false;
 #endif
 
-#if HAVE_XRC
-    /* if user configured to run with XRC qp and the device doesn't
-     * support it - we should ignore this device. Maybe we have another
-     * one that has XRC support
-     */
-    if (!(device->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
-            MCA_BTL_XRC_ENABLED) {
-        opal_show_help("help-mpi-btl-iwarp.txt",
-                "XRC on device without XRC support", true,
-                mca_btl_iwarp_component.num_xrc_qps,
-                ibv_get_device_name(device->ib_dev),
-                opal_process_info.nodename);
-        rc = OPAL_ERROR;
-        goto exit;
-    }
-
-    if (MCA_BTL_XRC_ENABLED) {
-        if (OPAL_SUCCESS != mca_btl_iwarp_open_xrc_domain(device)) {
-            BTL_ERROR(("XRC Internal error. Failed to open xrc domain"));
-            rc = OPAL_ERROR;
-            goto exit;
-        }
-    }
-#endif
-
     device->endpoints = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(device->endpoints, 10, INT_MAX, 10);
     opal_pointer_array_add(&mca_btl_iwarp_component.devices, device);
@@ -923,38 +871,6 @@ static int init_ib_proc_nolock(mca_btl_iwarp_module_t* iwarp_btl, mca_btl_iwarp_
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-
-#if HAVE_XRC
-    if (MCA_BTL_XRC_ENABLED) {
-        int rem_port_cnt = 0;
-        for(j = 0; j < (int) ib_proc->proc_port_count; j++) {
-            if(ib_proc->proc_ports[j].pm_port_info.subnet_id ==
-                    iwarp_btl->port_info.subnet_id) {
-                if (rem_port_cnt == btl_rank)
-                    break;
-                else
-                    rem_port_cnt ++;
-            } else {
-                if (mca_btl_iwarp_component.allow_different_subnets) {
-                    if (rem_port_cnt == btl_rank)
-                        break;
-                    else
-                        rem_port_cnt ++;
-                }
-            }
-        }
-
-        assert(rem_port_cnt == btl_rank);
-        /* Push the subnet/lid/jobid to xrc hash */
-        rc = mca_btl_iwarp_ib_address_add_new(
-                ib_proc->proc_ports[j].pm_port_info.lid,
-                ib_proc->proc_ports[j].pm_port_info.subnet_id,
-                ib_proc->proc_opal->proc_name.jobid, endpoint);
-        if (OPAL_SUCCESS != rc ) {
-            return OPAL_ERROR;
-        }
-    }
-#endif
     mca_btl_iwarp_endpoint_init(iwarp_btl, endpoint,
                                  local_cpc,
                                  &(ib_proc->proc_ports[matching_port]),
@@ -1043,17 +959,6 @@ int mca_btl_iwarp_add_procs(
     if( 0 > btl_rank ){
         return OPAL_ERR_NOT_FOUND;
     }
-
-#if HAVE_XRC
-    if(MCA_BTL_XRC_ENABLED &&
-            NULL == mca_btl_iwarp_component.ib_addr_table.ht_table) {
-        if(OPAL_SUCCESS != opal_hash_table_init(
-                    &mca_btl_iwarp_component.ib_addr_table, nprocs)) {
-            BTL_ERROR(("XRC internal error. Failed to allocate ib_table"));
-            return OPAL_ERROR;
-        }
-    }
-#endif
 
     rc = prepare_device_for_use (iwarp_btl->device);
     if (OPAL_SUCCESS != rc) {

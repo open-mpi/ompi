@@ -102,7 +102,6 @@ typedef struct mca_btl_iwarp_rem_info_t {
     uint32_t                    rem_index;
     /* Remote QPs */
     mca_btl_iwarp_rem_qp_info_t *rem_qps;
-    /* Remote xrc_srq info, used only with XRC connections */
     mca_btl_iwarp_rem_srq_info_t *rem_srqs;
     /* Vendor id of remote HCA */
     uint32_t rem_vendor_id;
@@ -213,12 +212,6 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_lazy_frags;
 
     mca_btl_iwarp_endpoint_qp_t *qps;
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-    struct ibv_qp *xrc_recv_qp;
-#else
-    uint32_t xrc_recv_qp_num; /* in xrc we will use it as recv qp */
-#endif
-    uint32_t xrc_recv_psn;
 
     /** list of pending rget ops */
     opal_list_t                 pending_get_frags;
@@ -599,15 +592,6 @@ static inline int post_send(mca_btl_iwarp_endpoint_t *ep,
         }
     }
 
-#if HAVE_XRC
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-    if(BTL_IWARP_QP_TYPE_XRC(qp))
-        sr_desc->qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
-#else
-    if(BTL_IWARP_QP_TYPE_XRC(qp))
-        sr_desc->xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
-#endif
-#endif
     assert(sg->addr == (uint64_t)(uintptr_t)frag->hdr);
 
     if (sr_desc->send_flags & IBV_SEND_SIGNALED) {

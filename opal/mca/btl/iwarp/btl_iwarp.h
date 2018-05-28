@@ -55,7 +55,6 @@
 
 BEGIN_C_DECLS
 
-#define HAVE_XRC (OPAL_HAVE_CONNECTX_XRC || OPAL_HAVE_CONNECTX_XRC_DOMAINS)
 #define ENABLE_DYNAMIC_SL OPAL_ENABLE_DYNAMIC_SL
 
 #define MCA_BTL_IB_LEAVE_PINNED 1
@@ -98,8 +97,7 @@ typedef enum {
 
 typedef enum {
     MCA_BTL_IWARP_PP_QP,
-    MCA_BTL_IWARP_SRQ_QP,
-    MCA_BTL_IWARP_XRC_QP
+    MCA_BTL_IWARP_SRQ_QP
 } mca_btl_iwarp_qp_type_t;
 
 struct mca_btl_iwarp_pp_qp_info_t {
@@ -133,8 +131,6 @@ struct mca_btl_iwarp_qp_info_t {
     (BTL_IWARP_QP_TYPE(Q) == MCA_BTL_IWARP_PP_QP)
 #define BTL_IWARP_QP_TYPE_SRQ(Q) \
     (BTL_IWARP_QP_TYPE(Q) == MCA_BTL_IWARP_SRQ_QP)
-#define BTL_IWARP_QP_TYPE_XRC(Q) \
-    (BTL_IWARP_QP_TYPE(Q) == MCA_BTL_IWARP_XRC_QP)
 
 typedef enum {
     BTL_IWARP_RQ_SOURCE_DEVICE_INI = MCA_BASE_VAR_SOURCE_MAX,
@@ -199,7 +195,6 @@ struct mca_btl_iwarp_component_t {
 
     uint8_t num_pp_qps;          /**< number of pp qp's */
     uint8_t num_srq_qps;         /**< number of srq qp's */
-    uint8_t num_xrc_qps;         /**< number of xrc qp's */
     uint8_t num_qps;             /**< total number of qp's */
 
     opal_hash_table_t ib_addr_table; /**< used only for xrc.hash-table that
@@ -395,14 +390,6 @@ typedef struct mca_btl_iwarp_device_t {
     bool pollme;
     volatile bool got_fatal_event;
     volatile bool got_port_event;
-#if HAVE_XRC
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-    struct ibv_xrcd *xrcd;
-#else
-    struct ibv_xrc_domain *xrc_domain;
-#endif
-    int xrc_fd;
-#endif
     int32_t non_eager_rdma_endpoints;
     int32_t eager_rdma_buffers_count;
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;

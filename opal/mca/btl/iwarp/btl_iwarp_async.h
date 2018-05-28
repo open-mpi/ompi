@@ -19,9 +19,6 @@
 #include "btl_iwarp_endpoint.h"
 
 void       mca_btl_iwarp_load_apm(struct ibv_qp *qp, mca_btl_iwarp_endpoint_t *ep);
-#if OPAL_HAVE_CONNECTX_XRC
-void       mca_btl_iwarp_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_iwarp_endpoint_t *ep);
-#endif
 
 #define APM_ENABLED (0 != mca_btl_iwarp_component.apm_lmc || 0 != mca_btl_iwarp_component.apm_ports)
 

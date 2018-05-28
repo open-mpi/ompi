@@ -1144,7 +1144,7 @@ static int get_var_source (const char *var_name, mca_base_var_source_t *source)
 static int setup_qps(void)
 {
     char **queues, **params = NULL;
-    int num_xrc_qps = 0, num_pp_qps = 0, num_srq_qps = 0, qp = 0;
+    int num_pp_qps = 0, num_srq_qps = 0, qp = 0;
     uint32_t max_qp_size, max_size_needed;
     int32_t min_freelist_size = 0;
     int smallest_pp_qp = INT_MAX, ret = OPAL_ERROR;
@@ -1187,8 +1187,7 @@ static int setup_qps(void)
 
     mca_btl_iwarp_component.num_pp_qps = num_pp_qps;
     mca_btl_iwarp_component.num_srq_qps = num_srq_qps;
-    mca_btl_iwarp_component.num_xrc_qps = num_xrc_qps;
-    mca_btl_iwarp_component.num_qps = num_pp_qps + num_srq_qps + num_xrc_qps;
+    mca_btl_iwarp_component.num_qps = num_pp_qps + num_srq_qps;
 
     mca_btl_iwarp_component.qp_infos = (mca_btl_iwarp_qp_info_t*)
         malloc(sizeof(mca_btl_iwarp_qp_info_t) *
@@ -2809,12 +2808,10 @@ btl_iwarp_component_init(int *num_btl_modules,
     if (OPAL_SUCCESS != setup_qps()) {
         goto no_btls;
     }
-    if (mca_btl_iwarp_component.num_srq_qps > 0 ||
-                     mca_btl_iwarp_component.num_xrc_qps > 0) {
+    if (mca_btl_iwarp_component.num_srq_qps > 0) {
         opal_hash_table_t *srq_addr_table = &mca_btl_iwarp_component.srq_manager.srq_addr_table;
         if(OPAL_SUCCESS != opal_hash_table_init(
-                srq_addr_table, (mca_btl_iwarp_component.num_srq_qps +
-                                 mca_btl_iwarp_component.num_xrc_qps) *
+                srq_addr_table, (mca_btl_iwarp_component.num_srq_qps) *
                                  mca_btl_iwarp_component.ib_num_btls)) {
             BTL_ERROR(("SRQ internal error. Failed to allocate SRQ addr hash table"));
             goto no_btls;

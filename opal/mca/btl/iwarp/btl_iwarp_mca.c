@@ -380,7 +380,7 @@ int btl_iwarp_register_mca_params(void)
 
     CHECK(reg_uint("ib_rnr_retry", NULL,
                    "InfiniBand \"receiver not ready\" "
-                   "retry count; applies *only* to SRQ/XRC queues.  PP queues "
+                   "retry count; applies *only* to SRQ queues.  PP queues "
                    "use RNR retry values of 0 because Open MPI performs "
                    "software flow control to guarantee that RNRs never occur "
                    "(must be >= 0 and <= 7; 7 = \"infinite\")",

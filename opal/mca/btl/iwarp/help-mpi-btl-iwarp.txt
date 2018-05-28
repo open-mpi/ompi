@@ -171,7 +171,7 @@ problem fixed.
 #
 [srq rnr retry exceeded]
 The OpenFabrics "receiver not ready" retry count on a shared receive
-queue or XRC receive queue has been exceeded.  This error can occur if
+queue receive queue has been exceeded.  This error can occur if
 the mca_btl_openib_ib_rnr_retry is set to a value less than 7 (where 7
 the default value and effectively means "infinite retry").  If your
 rnr_retry value is 7, there might be something awry within the network
@@ -474,47 +474,6 @@ bit larger than this for performance reasons.
   Local host: %s
   Specified freelist size: %d
   Minimum required freelist size: %d
-#
-[XRC with PP or SRQ]
-WARNING: An invalid queue pair type was specified in the
-btl_openib_receive_queues MCA parameter.  The OpenFabrics (openib) BTL
-will be deactivated for this run.
-
-Note that XRC ("X") queue pairs cannot be used with per-peer ("P") and
-SRQ ("S") queue pairs.  This restriction may be removed in future
-versions of Open MPI.
-
-  Local host: %s
-  btl_openib_receive_queues: %s
-#
-[XRC with BTLs per LID]
-WARNING: An invalid queue pair type was specified in the
-btl_openib_receive_queues MCA parameter.  The OpenFabrics (openib) BTL
-will be deactivated for this run.
-
-XRC ("X") queue pairs can not be used when (btls_per_lid > 1).  This
-restriction may be removed in future versions of Open MPI.
-
-  Local host: %s
-  btl_openib_receive_queues: %s
-  btls_per_lid: %d
-#
-[XRC on device without XRC support]
-WARNING: You configured the OpenFabrics (openib) BTL to run with %d
-XRC queues.  The device %s does not have XRC capabilities; the
-OpenFabrics btl will ignore this device.  If no devices are found with
-XRC capabilities, the OpenFabrics BTL will be disabled.
-
-  Local host: %s
-#
-[No XRC support]
-WARNING: The Open MPI build was compiled without XRC support, but XRC
-("X") queues were specified in the btl_openib_receive_queues MCA
-parameter.  The OpenFabrics (openib) BTL will therefore be deactivated
-for this run.
-
-  Local host: %s
-  btl_openib_receive_queues: %s
 #
 [non optimal rd_win]
 WARNING: rd_win specification is non optimal. For maximum performance it is
