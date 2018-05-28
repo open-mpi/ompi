@@ -23,5 +23,5 @@
 void shmem_quiet(void)
 {
 
-    MCA_SPML_CALL(fence());
+    MCA_SPML_CALL(quiet());
 }
