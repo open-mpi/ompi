@@ -445,46 +445,6 @@ static int iwarp_btl_size_queues(struct mca_btl_iwarp_module_t* iwarp_btl)
     return rc;
 }
 
-mca_btl_iwarp_transport_type_t mca_btl_iwarp_get_transport_type(mca_btl_iwarp_module_t* iwarp_btl)
-{
-/* If we have a driver with RDMAoE supporting as the device struct contains the same type (IB) for
-   IBV_LINK_LAYER_INFINIBAND and IBV_LINK_LAYER_ETHERNET link layers and the single way
-   to detect this fact is to check their link_layer fields in a port_attr struct.
-   If our driver doesn't support this feature => the checking of transport type in device struct will be enough.
-   If the driver doesn't support completely transport types =>
-   our assumption that it is very old driver - that supports IB devices only */
-
-#ifdef HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE
-    switch(iwarp_btl->device->ib_dev->transport_type) {
-        case IBV_TRANSPORT_IB:
-#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
-            switch(iwarp_btl->ib_port_attr.link_layer) {
-                case IBV_LINK_LAYER_ETHERNET:
-                    return MCA_BTL_IWARP_TRANSPORT_RDMAOE;
-
-                case IBV_LINK_LAYER_INFINIBAND:
-                    return MCA_BTL_IWARP_TRANSPORT_IB;
-            /* It is not possible that a device struct contains
-               IB transport and port was configured to IBV_LINK_LAYER_UNSPECIFIED */
-                case IBV_LINK_LAYER_UNSPECIFIED:
-                default:
-                    return MCA_BTL_IWARP_TRANSPORT_UNKNOWN;
-            }
-#endif
-            return MCA_BTL_IWARP_TRANSPORT_IB;
-
-        case IBV_TRANSPORT_IWARP:
-            return MCA_BTL_IWARP_TRANSPORT_IWARP;
-
-        case IBV_TRANSPORT_UNKNOWN:
-        default:
-            return MCA_BTL_IWARP_TRANSPORT_UNKNOWN;
-    }
-#else
-    return MCA_BTL_IWARP_TRANSPORT_IB;
-#endif
-}
-
 static int mca_btl_iwarp_tune_endpoint(mca_btl_iwarp_module_t* iwarp_btl,
                                             mca_btl_base_endpoint_t* endpoint)
 {
@@ -492,14 +452,14 @@ static int mca_btl_iwarp_tune_endpoint(mca_btl_iwarp_module_t* iwarp_btl,
     char* recv_qps = NULL;
     int ret;
 
-    if(mca_btl_iwarp_get_transport_type(iwarp_btl) != endpoint->rem_info.rem_transport_type) {
+    if(MCA_BTL_IWARP_TRANSPORT_IWARP != endpoint->rem_info.rem_transport_type) {
         opal_show_help("help-mpi-btl-iwarp.txt",
                        "conflicting transport types", true,
                        opal_process_info.nodename,
                        ibv_get_device_name(iwarp_btl->device->ib_dev),
                        (iwarp_btl->device->ib_dev_attr).vendor_id,
                        (iwarp_btl->device->ib_dev_attr).vendor_part_id,
-                       mca_btl_iwarp_transport_name_strings[mca_btl_iwarp_get_transport_type(iwarp_btl)],
+                       mca_btl_iwarp_transport_name_strings[MCA_BTL_IWARP_TRANSPORT_IWARP],
                        opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
                        endpoint->rem_info.rem_vendor_id,
                        endpoint->rem_info.rem_vendor_part_id,

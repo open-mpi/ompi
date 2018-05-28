@@ -86,9 +86,7 @@ enum {
 };
 
 typedef enum {
-    MCA_BTL_IWARP_TRANSPORT_IB,
     MCA_BTL_IWARP_TRANSPORT_IWARP,
-    MCA_BTL_IWARP_TRANSPORT_RDMAOE,
     MCA_BTL_IWARP_TRANSPORT_UNKNOWN,
     MCA_BTL_IWARP_TRANSPORT_SIZE
 } mca_btl_iwarp_transport_type_t;
@@ -874,11 +872,6 @@ const char* btl_iwarp_get_transport_name(mca_btl_iwarp_transport_type_t transpor
 struct mca_btl_base_endpoint_t *mca_btl_iwarp_get_ep (struct mca_btl_base_module_t *btl,
                                                        struct opal_proc_t *proc);
 
-/**
- * Get a transport type of btl.
- */
-
-mca_btl_iwarp_transport_type_t mca_btl_iwarp_get_transport_type(mca_btl_iwarp_module_t* iwarp_btl);
 
 static inline int qp_cq_prio(const int qp)
 {

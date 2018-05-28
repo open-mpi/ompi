@@ -296,7 +296,7 @@ static int btl_iwarp_modex_send(void)
             (mca_btl_iwarp_component.iwarp_btls[i]->device->ib_dev_attr).vendor_part_id;
 
         (mca_btl_iwarp_component.iwarp_btls[i]->port_info).transport_type =
-            mca_btl_iwarp_get_transport_type(mca_btl_iwarp_component.iwarp_btls[i]);
+            MCA_BTL_IWARP_TRANSPORT_IWARP;
 
         memcpy(offset,
                &(mca_btl_iwarp_component.iwarp_btls[i]->port_info),
