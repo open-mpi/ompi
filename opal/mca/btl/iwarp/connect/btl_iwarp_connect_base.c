@@ -20,9 +20,7 @@
 #include "btl_iwarp_proc.h"
 #include "connect/base.h"
 #include "connect/btl_iwarp_connect_empty.h"
-#if OPAL_HAVE_RDMACM
 #include "connect/btl_iwarp_connect_rdmacm.h"
-#endif
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -46,11 +44,7 @@ static opal_btl_iwarp_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
-#if OPAL_HAVE_RDMACM
     &opal_btl_iwarp_connect_rdmacm,
-#else
-    &opal_btl_iwarp_connect_empty,
-#endif
     &opal_btl_iwarp_connect_empty,
     NULL
 };

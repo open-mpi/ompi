@@ -301,24 +301,12 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
 ])
 
 AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM_ARGS],[
-    #
-    # ConnectX XRC support - disabled see issue #3890
-    #
-dnl    AC_ARG_ENABLE([openib-connectx-xrc],
-dnl        [AC_HELP_STRING([--enable-openib-connectx-xrc],
-dnl                        [Enable ConnectX XRC support in the openib BTL. (default: disabled)])],
-dnl                        [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="no"])
+dnl only support iWarp now, so no xrc and no udcm support
+dnl keep these around though till we remove the openib btl,
+dnl which will be done after we can test against iWarp equipment
     enable_connectx_xrc="no"
-    #
-    # Unconnect Datagram (UD) based connection manager
-    #
-    AC_ARG_ENABLE([openib-udcm],
-        [AC_HELP_STRING([--enable-openib-udcm],
-                        [Enable datagram connection support in openib BTL (default: enabled)])],
-                        [enable_openib_udcm="$enableval"], [enable_openib_udcm="yes"])
-    # Per discussion with Ralph and Nathan, disable UDCM for now.
-    # It's borked and needs some surgery to get back on its feet.
-    # enable_openib_udcm=no
+    enable_openib_udcm="no"
+    enable_openib_rdmacm_ibaddr="no"
 
     #
     # Openfabrics RDMACM
@@ -326,10 +314,6 @@ dnl                        [enable_connectx_xrc="$enableval"], [enable_connectx_
     AC_ARG_ENABLE([openib-rdmacm],
         [AC_HELP_STRING([--enable-openib-rdmacm],
                         [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])])
-    AC_ARG_ENABLE([openib-rdmacm-ibaddr],
-        [AC_HELP_STRING([--enable-openib-rdmacm-ibaddr],
-                        [Enable Open Fabrics RDMACM with IB addressing support in openib BTL (default: disabled)])],
-        [enable_openib_rdmacm=yes])
 ])dnl
 
 AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM],[

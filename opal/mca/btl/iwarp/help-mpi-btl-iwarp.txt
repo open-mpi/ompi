@@ -21,18 +21,18 @@
 # $HEADER$
 #
 # This is the US/English help file for Open MPI's OpenFabrics support
-# (the openib BTL).
+# (the iwarp BTL).
 #
 [ini file:file not found]
-The Open MPI OpenFabrics (openib) BTL component was unable to find or
+The Open MPI OpenFabrics (iwarp) BTL component was unable to find or
 read an INI file that was requested via the
-btl_openib_device_param_files MCA parameter.  Please check this file
-and/or modify the btl_openib_evice_param_files MCA parameter:
+btl_iwarp_device_param_files MCA parameter.  Please check this file
+and/or modify the btl_iwarp_evice_param_files MCA parameter:
 
     %s
 #
 [ini file:not in a section]
-In parsing the OpenFabrics (openib) BTL parameter file, values were
+In parsing the OpenFabrics (iwarp) BTL parameter file, values were
 found that were not in a valid INI section.  These values will be
 ignored.  Please re-check this file:
 
@@ -43,7 +43,7 @@ At line %d, near the following text:
     %s
 #
 [ini file:unexpected token]
-In parsing the OpenFabrics (openib) BTL parameter file, unexpected
+In parsing the OpenFabrics (iwarp) BTL parameter file, unexpected
 tokens were found (this may cause significant portions of the INI file
 to be ignored).  Please re-check this file:
 
@@ -54,7 +54,7 @@ At line %d, near the following text:
     %s
 #
 [ini file:expected equals]
-In parsing the OpenFabrics (openib) BTL parameter file, unexpected
+In parsing the OpenFabrics (iwarp) BTL parameter file, unexpected
 tokens were found (this may cause significant portions of the INI file
 to be ignored).  An equals sign ("=") was expected but was not found.
 Please re-check this file:
@@ -66,7 +66,7 @@ At line %d, near the following text:
     %s
 #
 [ini file:expected newline]
-In parsing the OpenFabrics (openib) BTL parameter file, unexpected
+In parsing the OpenFabrics (iwarp) BTL parameter file, unexpected
 tokens were found (this may cause significant portions of the INI file
 to be ignored).  A newline was expected but was not found.  Please
 re-check this file:
@@ -78,7 +78,7 @@ At line %d, near the following text:
     %s
 #
 [ini file:unknown field]
-In parsing the OpenFabrics (openib) BTL parameter file, an
+In parsing the OpenFabrics (iwarp) BTL parameter file, an
 unrecognized field name was found.  Please re-check this file:
 
     %s
@@ -100,14 +100,14 @@ detected:
 
 Default device parameters will be used, which may result in lower
 performance.  You can edit any of the files specified by the
-btl_openib_device_param_files MCA parameter to set values for your
+btl_iwarp_device_param_files MCA parameter to set values for your
 device.
 
 NOTE: You can turn off this warning by setting the MCA parameter
-      btl_openib_warn_no_device_params_found to 0.
+      btl_iwarp_warn_no_device_params_found to 0.
 #
 [init-fail-no-mem]
-The OpenFabrics (openib) BTL failed to initialize while trying to
+The OpenFabrics (iwarp) BTL failed to initialize while trying to
 allocate some locked memory.  This typically can indicate that the
 memlock limits are set too low.  For most HPC installations, the
 memlock limits should be set to "unlimited".  The failure occured
@@ -126,12 +126,12 @@ helpful:
     http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
 #
 [init-fail-create-q]
-The OpenFabrics (openib) BTL failed to initialize while trying to
+The OpenFabrics (iwarp) BTL failed to initialize while trying to
 create an internal queue.  This typically indicates a failed
 OpenFabrics installation, faulty hardware, or that Open MPI is
 attempting to use a feature that is not supported on your hardware
 (i.e., is a shared receive queue specified in the
-btl_openib_receive_queues MCA parameter with a device that does not
+btl_iwarp_receive_queues MCA parameter with a device that does not
 support it?).  The failure occured here:
 
   Local host:  %s
@@ -172,7 +172,7 @@ problem fixed.
 [srq rnr retry exceeded]
 The OpenFabrics "receiver not ready" retry count on a shared receive
 queue receive queue has been exceeded.  This error can occur if
-the mca_btl_openib_ib_rnr_retry is set to a value less than 7 (where 7
+the mca_btl_iwarp_ib_rnr_retry is set to a value less than 7 (where 7
 the default value and effectively means "infinite retry").  If your
 rnr_retry value is 7, there might be something awry within the network
 fabric itself.  In this case, you should note the hosts on which this
@@ -206,12 +206,12 @@ particular host from the job can sometimes resolve this issue.
 Two MCA parameters can be used to control Open MPI's behavior with
 respect to the retry count:
 
-* btl_openib_ib_retry_count - The number of times the sender will
+* btl_iwarp_ib_retry_count - The number of times the sender will
   attempt to retry (defaulted to 7, the maximum value).
-* btl_openib_ib_timeout - The local ACK timeout parameter (defaulted
+* btl_iwarp_ib_timeout - The local ACK timeout parameter (defaulted
   to 20).  The actual timeout value used is calculated as:
 
-     4.096 microseconds * (2^btl_openib_ib_timeout)
+     4.096 microseconds * (2^btl_iwarp_ib_timeout)
 
   See the InfiniBand spec 1.2 (section 12.7.34) for more details.
 
@@ -229,7 +229,7 @@ problem fixed.
 WARNING: There is at least non-excluded one OpenFabrics device found,
 but there are no active ports detected (or Open MPI was unable to use
 them).  This is most certainly not what you wanted.  Check your
-cables, subnet manager configuration, etc.  The openib BTL will be
+cables, subnet manager configuration, etc.  The iwarp BTL will be
 ignored for this job.
 
   Local host: %s
@@ -265,15 +265,15 @@ Please see this FAQ entry for more details:
   http://www.open-mpi.org/faq/?category=openfabrics#ofa-default-subnet-gid
 
 NOTE: You can turn off this warning by setting the MCA parameter
-      btl_openib_warn_default_gid_prefix to 0.
+      btl_iwarp_warn_default_gid_prefix to 0.
 #
 [ibv_fork requested but not supported]
-WARNING: fork() support was requested for the OpenFabrics (openib)
+WARNING: fork() support was requested for the OpenFabrics (iwarp)
 BTL, but it is not supported on the host %s.  Deactivating the
 OpenFabrics BTL.
 #
 [ibv_fork_init fail]
-WARNING: fork() support was requested for the OpenFabrics (openib)
+WARNING: fork() support was requested for the OpenFabrics (iwarp)
 BTL, but the library call ibv_fork_init() failed on the host %s.
 Deactivating the OpenFabrics BTL.
 #
@@ -306,17 +306,17 @@ recompiling Open MPI against your OpenFabrics library installation to
 get more information.
 #
 [specified include and exclude]
-ERROR: You have specified more than one of the btl_openib_if_include,
-btl_openib_if_exclude, btl_openib_ipaddr_include, or btl_openib_ipaddr_exclude
+ERROR: You have specified more than one of the btl_iwarp_if_include,
+btl_iwarp_if_exclude, btl_iwarp_ipaddr_include, or btl_iwarp_ipaddr_exclude
 MCA parameters.  These four parameters are mutually exclusive; you can only
 specify one.
 
 For reference, the values that you specified are:
 
-  btl_openib_if_include: %s
-  btl_openib_if_exclude: %s
-  btl_openib_ipaddr_include: %s
-  btl_openib_ipaddr_exclude: %s
+  btl_iwarp_if_include: %s
+  btl_iwarp_if_exclude: %s
+  btl_iwarp_ipaddr_include: %s
+  btl_iwarp_ipaddr_exclude: %s
 #
 [nonexistent port]
 WARNING: One or more nonexistent OpenFabrics devices/ports were
@@ -327,38 +327,38 @@ specified:
   Nonexistent entities: %s
 
 These entities will be ignored.  You can disable this warning by
-setting the btl_openib_warn_nonexistent_if MCA parameter to 0.
+setting the btl_iwarp_warn_nonexistent_if MCA parameter to 0.
 #
 [invalid mca param value]
 WARNING: An invalid MCA parameter value was found for the OpenFabrics
-(openib) BTL.
+(iwarp) BTL.
 
   Problem:    %s
   Resolution: %s
 #
 [no qps in receive_queues]
-WARNING: No queue pairs were defined in the btl_openib_receive_queues
+WARNING: No queue pairs were defined in the btl_iwarp_receive_queues
 MCA parameter.  At least one queue pair must be defined.  The
-OpenFabrics (openib) BTL will therefore be deactivated for this run.
+OpenFabrics (iwarp) BTL will therefore be deactivated for this run.
 
   Local host: %s
 #
 [invalid qp type in receive_queues]
 WARNING: An invalid queue pair type was specified in the
-btl_openib_receive_queues MCA parameter.  The OpenFabrics (openib) BTL
+btl_iwarp_receive_queues MCA parameter.  The OpenFabrics (iwarp) BTL
 will be deactivated for this run.
 
 Valid queue pair types are "P" for per-peer and "S" for shared receive
 queue.
 
   Local host: %s
-  btl_openib_receive_queues: %s
+  btl_iwarp_receive_queues: %s
   Bad specification: %s
 #
 [invalid pp qp specification]
 WARNING: An invalid per-peer receive queue specification was detected
-as part of the btl_openib_receive_queues MCA parameter.  The
-OpenFabrics (openib) BTL will therefore be deactivated for this run.
+as part of the btl_iwarp_receive_queues MCA parameter.  The
+OpenFabrics (iwarp) BTL will therefore be deactivated for this run.
 
 Per-peer receive queues require between 2 and 5 parameters:
 
@@ -385,8 +385,8 @@ Per-peer receive queues require between 2 and 5 parameters:
 #
 [invalid srq specification]
 WARNING: An invalid shared receive queue specification was detected as
-part of the btl_openib_receive_queues MCA parameter.  The OpenFabrics
-(openib) BTL will therefore be deactivated for this run.
+part of the btl_iwarp_receive_queues MCA parameter.  The OpenFabrics
+(iwarp) BTL will therefore be deactivated for this run.
 
 Shared receive queues can take between 2 and 6 parameters:
 
@@ -414,8 +414,8 @@ Shared receive queues can take between 2 and 6 parameters:
 #
 [rd_num must be > rd_low]
 WARNING: The number of buffers for a queue pair specified via the
-btl_openib_receive_queues MCA parameter must be greater than the low
-buffer count watermark.  The OpenFabrics (openib) BTL will therefore
+btl_iwarp_receive_queues MCA parameter must be greater than the low
+buffer count watermark.  The OpenFabrics (iwarp) BTL will therefore
 be deactivated for this run.
 
   Local host: %s
@@ -423,17 +423,17 @@ be deactivated for this run.
 #
 [rd_num must be >= rd_init]
 WARNING: The number of buffers for a queue pair specified via the
-btl_openib_receive_queues MCA parameter (parameter #2) must be
+btl_iwarp_receive_queues MCA parameter (parameter #2) must be
 greater or equal to the initial SRQ size (parameter #5).
-The OpenFabrics (openib) BTL will therefore be deactivated for this run.
+The OpenFabrics (iwarp) BTL will therefore be deactivated for this run.
 
   Local host: %s
   Bad queue specification: %s
 #
 [srq_limit must be > rd_num]
 WARNING: The number of buffers for a queue pair specified via the
-btl_openib_receive_queues MCA parameter (parameter #2) must be greater than the limit
-buffer count (parameter #6).  The OpenFabrics (openib) BTL will therefore
+btl_iwarp_receive_queues MCA parameter (parameter #2) must be greater than the limit
+buffer count (parameter #6).  The OpenFabrics (iwarp) BTL will therefore
 be deactivated for this run.
 
   Local host: %s
@@ -441,10 +441,10 @@ be deactivated for this run.
 #
 [biggest qp size is too small]
 WARNING: The largest queue pair buffer size specified in the
-btl_openib_receive_queues MCA parameter is smaller than the maximum
-send size (i.e., the btl_openib_max_send_size MCA parameter), meaning
+btl_iwarp_receive_queues MCA parameter is smaller than the maximum
+send size (i.e., the btl_iwarp_max_send_size MCA parameter), meaning
 that no queue is large enough to receive the largest possible incoming
-message fragment.  The OpenFabrics (openib) BTL will therefore be
+message fragment.  The OpenFabrics (iwarp) BTL will therefore be
 deactivated for this run.
 
   Local host: %s
@@ -453,8 +453,8 @@ deactivated for this run.
 #
 [biggest qp size is too big]
 WARNING: The largest queue pair buffer size specified in the
-btl_openib_receive_queues MCA parameter is larger than the maximum
-send size (i.e., the btl_openib_max_send_size MCA parameter).  This
+btl_iwarp_receive_queues MCA parameter is larger than the maximum
+send size (i.e., the btl_iwarp_max_send_size MCA parameter).  This
 means that memory will be wasted because the largest possible incoming
 message fragment will not fill a buffer allocated for incoming
 fragments.
@@ -493,7 +493,7 @@ only single active port was found. Disabling APM over ports
 #
 [locally conflicting receive_queues]
 Open MPI detected two devices on a single server that have different
-"receive_queues" parameter values (in the openib BTL).  Open MPI
+"receive_queues" parameter values (in the iwarp BTL).  Open MPI
 currently only supports one OpenFabrics receive_queues value in an MPI
 job, even if you have different types of OpenFabrics adapters on the
 same host.
@@ -503,9 +503,9 @@ of this MPI job.
 
 You can fix this issue by one or more of the following:
 
-  1. Set the MCA parameter btl_openib_receive_queues to a value that
+  1. Set the MCA parameter btl_iwarp_receive_queues to a value that
      is usable by all the OpenFabrics devices that you will use.
-  2. Use the btl_openib_if_include or btl_openib_if_exclue MCA
+  2. Use the btl_iwarp_if_include or btl_iwarp_if_exclue MCA
      parameters to select exactly which OpenFabrics devices to use in
      your MPI job.
 
@@ -514,7 +514,7 @@ the Open MPI device default settings file.  You may want to look in
 this file and see if your devices are getting receive_queues values
 from this file:
 
-    %s/mca-btl-openib-device-params.ini
+    %s/mca-btl-iwarp-device-params.ini
 
 Here is more detailed information about the recieive_queus value
 conflict:
@@ -526,8 +526,8 @@ conflict:
   Receive queues: %s
 #
 [eager RDMA and progress threads]
-WARNING: The openib BTL was directed to use "eager RDMA" for short
-messages, but the openib BTL was compiled with progress threads
+WARNING: The iwarp BTL was directed to use "eager RDMA" for short
+messages, but the iwarp BTL was compiled with progress threads
 support.  Short eager RDMA is not yet supported with progress threads;
 its use has been disabled in this job.
 
@@ -536,8 +536,8 @@ This is a warning only; you job will attempt to continue.
 [ptmalloc2 with no threads]
 WARNING: It appears that ptmalloc2 was compiled into this process via
 -lopenmpi-malloc, but there is no thread support.  This combination is
-known to cause memory corruption in the openib BTL.  Open MPI is
-therefore disabling the use of the openib BTL in this process for this
+known to cause memory corruption in the iwarp BTL.  Open MPI is
+therefore disabling the use of the iwarp BTL in this process for this
 run.
 
   Local host: %s
@@ -559,10 +559,10 @@ You need to upgrade to a later version of OFED (1.3 or later) for Open
 MPI to support iWARP devices.
 
 (This message is being displayed because you told Open MPI to use
-iWARP devices via the btl_openib_device_type MCA parameter)
+iWARP devices via the btl_iwarp_device_type MCA parameter)
 #
 [invalid ipaddr_inexclude]
-WARNING: An invalid value was given for btl_openib_ipaddr_%s.  This
+WARNING: An invalid value was given for btl_iwarp_ipaddr_%s.  This
 value will be ignored.
 
   Local host: %s
@@ -575,7 +575,7 @@ on two nodes are incompatible, meaning that MPI processes on two
 specific nodes were unable to communicate with each other.  This
 generally happens when you are using OpenFabrics devices from
 different vendors on the same network.  You should be able to use the
-mca_btl_openib_receive_queues MCA parameter to set a uniform receive
+mca_btl_iwarp_receive_queues MCA parameter to set a uniform receive
 queue configuration for all the devices in the MPI job, and therefore
 be able to run successfully.
 
@@ -608,7 +608,7 @@ device).
   Local adapter:           %s
   Local port:              %d
 
-  Requested GID index:     %d (specified by the btl_openib_gid_index MCA param)
+  Requested GID index:     %d (specified by the btl_iwarp_gid_index MCA param)
   Max allowable GID index: %d
 
 Use "ibv_devinfo -v" on the local host to see the GID table of this
@@ -648,7 +648,7 @@ out how to get an OFED stack with that support.
   Local host:              %s
 [no_fork_with_gdr]
 You cannot have fork support and CUDA GPU Direct RDMA support on at the
-same time.  Please disable one of them.  Deactivating the openib BTL.
+same time.  Please disable one of them.  Deactivating the iwarp BTL.
 
   Local host:              %s
 #
@@ -656,12 +656,12 @@ same time.  Please disable one of them.  Deactivating the openib BTL.
 You requested to run with CUDA GPU Direct RDMA support but also with
 "leave pinned" turned off. This will result in very poor performance
 with CUDA GPU Direct RDMA. Either disable GPU Direct RDMA support or
-enable "leave pinned" support. Deactivating the openib BTL.
+enable "leave pinned" support. Deactivating the iwarp BTL.
 
   Local host:              %s
 #
-[do_not_set_openib_value]
-Open MPI has detected that you have attempted to set the btl_openib_cuda_max_send_size
+[do_not_set_iwarp_value]
+Open MPI has detected that you have attempted to set the btl_iwarp_cuda_max_send_size
 value. This is not supported. Setting back to default value of 0.
 
   Local host:              %s

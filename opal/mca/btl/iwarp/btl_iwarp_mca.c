@@ -391,10 +391,6 @@ int btl_iwarp_register_mca_params(void)
                   "(must be >= 0)",
                   4, &mca_btl_iwarp_component.ib_max_rdma_dst_ops, 0));
 
-    CHECK(reg_uint("ib_service_level", NULL, "InfiniBand service level "
-                   "(must be >= 0 and <= 15)",
-                   0, &mca_btl_iwarp_component.ib_service_level, 0));
-
     CHECK(reg_int("use_eager_rdma", NULL, "Use RDMA for eager messages "
                   "(-1 = use device default, 0 = do not use eager RDMA, "
                   "1 = use eager RDMA)",
@@ -627,13 +623,6 @@ int btl_iwarp_verify_mca_params (void)
                        true, "btl_iwarp_ib_rnr_retry > 7",
                        "btl_iwarp_ib_rnr_retry reset to 7");
         mca_btl_iwarp_component.ib_rnr_retry = 7;
-    }
-
-    if (mca_btl_iwarp_component.ib_service_level > 15) {
-        opal_show_help("help-mpi-btl-iwarp.txt", "invalid mca param value",
-                       true, "btl_iwarp_ib_service_level > 15",
-                       "btl_iwarp_ib_service_level reset to 15");
-        mca_btl_iwarp_component.ib_service_level = 15;
     }
 
     if(mca_btl_iwarp_component.buffer_alignment <= 1 ||

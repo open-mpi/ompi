@@ -18,7 +18,6 @@
 
 #include <infiniband/verbs.h>
 
-#if OPAL_HAVE_RDMACM
 #include <rdma/rdma_cma.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,11 +28,9 @@
 #include "opal/util/show_help.h"
 
 #include "connect/connect.h"
-#endif
 /* Always want to include this file */
 #include "btl_iwarp_endpoint.h"
 #include "btl_iwarp_ip.h"
-#if OPAL_HAVE_RDMACM
 
 /*
  * The cruft below maintains the linked list of rdma ipv4 addresses and their
@@ -406,28 +403,3 @@ void mca_btl_iwarp_free_rdma_addr_list(void)
         myaddrs = NULL;
     }
 }
-
-#else
-/* !OPAL_HAVE_RDMACM case */
-
-uint64_t mca_btl_iwarp_get_ip_subnet_id(struct ibv_device *ib_dev,
-                                            uint8_t port)
-{
-    return 0;
-}
-
-uint32_t mca_btl_iwarp_rdma_get_ipv4addr(struct ibv_context *verbs,
-                                          uint8_t port)
-{
-    return 0;
-}
-
-int mca_btl_iwarp_build_rdma_addr_list(void)
-{
-    return OPAL_SUCCESS;
-}
-
-void mca_btl_iwarp_free_rdma_addr_list(void)
-{
-}
-#endif

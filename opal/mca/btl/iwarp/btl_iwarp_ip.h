@@ -28,7 +28,7 @@ extern uint64_t mca_btl_iwarp_get_ip_subnet_id(struct ibv_device *ib_dev,
                                                    uint8_t port);
 
 /**
- * Get the IPv4 address of the specified HCA/RNIC device and physical port.
+ * Get the IPv4 address of the specified RNIC device and physical port.
  *
  * @param verbs (IN)   cm_id verbs of the IBV device
  * @param port (IN)    physical port of the IBV device

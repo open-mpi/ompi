@@ -215,7 +215,6 @@ struct mca_btl_iwarp_component_t {
     unsigned int ib_retry_count;
     unsigned int ib_rnr_retry;
     unsigned int ib_max_rdma_dst_ops;
-    unsigned int ib_service_level;
     int     use_eager_rdma;
     int     eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
     int     eager_rdma_num;
