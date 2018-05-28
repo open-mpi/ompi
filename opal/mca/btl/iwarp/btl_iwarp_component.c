@@ -585,7 +585,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_iwarp_device_t *device,
     uint16_t lid, i, lmc, lmc_step;
     mca_btl_iwarp_module_t *iwarp_btl;
     mca_btl_base_selected_module_t *ib_selected;
-    union ibv_gid gid;
     uint64_t subnet_id;
 
     /* Ensure that the requested GID index (via the

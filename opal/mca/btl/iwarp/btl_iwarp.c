@@ -121,9 +121,7 @@ mca_btl_iwarp_module_t mca_btl_iwarp_module = {
 };
 
 char* const mca_btl_iwarp_transport_name_strings[MCA_BTL_IWARP_TRANSPORT_SIZE] = {
-    "MCA_BTL_IWARP_TRANSPORT_IB",
     "MCA_BTL_IWARP_TRANSPORT_IWARP",
-    "MCA_BTL_IWARP_TRANSPORT_RDMAOE",
     "MCA_BTL_IWARP_TRANSPORT_UNKNOWN"
 };
 

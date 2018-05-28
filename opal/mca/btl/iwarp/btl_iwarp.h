@@ -302,9 +302,6 @@ struct mca_btl_iwarp_component_t {
     bool driver_have_gdr;
     bool cuda_want_gdr;
 #endif /* OPAL_CUDA_SUPPORT */
-#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
-    bool rroce_enable;
-#endif
     unsigned int num_default_gid_btls; /* numbers of btl in the default subnet */
 }; typedef struct mca_btl_iwarp_component_t mca_btl_iwarp_component_t;
 

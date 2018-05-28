@@ -445,13 +445,6 @@ int btl_iwarp_register_mca_params(void)
                    "(0 = without resizing, nonzero = with resizing)", 1,
                    &mca_btl_iwarp_component.enable_srq_resize));
 
-#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
-    CHECK(reg_bool("rroce_enable", NULL,
-                   "Enable/Disable routing between different subnets"
-                   "(0 = disable, nonzero = enable)", false,
-                   &mca_btl_iwarp_component.rroce_enable));
-#endif
-
     CHECK(reg_uint("buffer_alignment", NULL,
                    "Preferred communication buffer alignment, in bytes "
                    "(must be > 0 and power of two)",
