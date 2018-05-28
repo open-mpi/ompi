@@ -941,17 +941,9 @@ int mca_btl_iwarp_add_procs(
         struct opal_proc_t* proc = procs[i];
         mca_btl_iwarp_proc_t* ib_proc;
 
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-        /* Most current iWARP adapters (June 2008) cannot handle
-           talking to other processes on the same host (!) -- so mark
-           them as unreachable (need to use sm).  So for the moment,
-           we'll just mark any local peer on an iWARP NIC as
-           unreachable.  See trac ticket #1352. */
-        if (IBV_TRANSPORT_IWARP == iwarp_btl->device->ib_dev->transport_type &&
-            OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+        if ( OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             continue;
         }
-#endif
 
         if(NULL == (ib_proc = mca_btl_iwarp_proc_get_locked(proc)) ) {
             /* if we don't have connection info for this process, it's
@@ -1014,17 +1006,9 @@ int mca_btl_iwarp_add_procs(
 
         opal_output(-1, "add procs: adding proc %d", i);
 
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-        /* Most current iWARP adapters (June 2008) cannot handle
-           talking to other processes on the same host (!) -- so mark
-           them as unreachable (need to use sm).  So for the moment,
-           we'll just mark any local peer on an iWARP NIC as
-           unreachable.  See trac ticket #1352. */
-        if (IBV_TRANSPORT_IWARP == iwarp_btl->device->ib_dev->transport_type &&
-            OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+        if ( OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             continue;
         }
-#endif
 
         if(NULL == (ib_proc = mca_btl_iwarp_proc_get_locked(proc)) ) {
             /* if we don't have connection info for this process, it's

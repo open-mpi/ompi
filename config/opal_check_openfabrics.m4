@@ -146,7 +146,8 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
                AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])
 
                # struct ibv_device.transport_type was added in OFED v1.2
-               AC_CHECK_MEMBERS([struct ibv_device.transport_type], [], [],
+               AC_CHECK_MEMBERS([struct ibv_device.transport_type], [], 
+                                [AC_MSG_ERROR([OFED installation too old.  Open MPI requires v1.2 or higher])],
 				[#include <infiniband/verbs.h>])
 
                # We have to check functions both exits *and* are declared

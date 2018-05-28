@@ -465,7 +465,6 @@ void mca_btl_iwarp_endpoint_cpc_complete(mca_btl_iwarp_endpoint_t *endpoint)
 {
     /* If the CPC uses the CTS protocol, then start it up */
     if (endpoint->endpoint_local_cpc->cbm_uses_cts) {
-        int transport_type_ib_p = 0;
         /* Post our receives, which will make credit management happy
            (i.e., rd_credits will be 0) */
         if (OPAL_SUCCESS != mca_btl_iwarp_endpoint_post_recvs(endpoint)) {
@@ -481,16 +480,11 @@ void mca_btl_iwarp_endpoint_cpc_complete(mca_btl_iwarp_endpoint_t *endpoint)
            receives this side's CTS).  Also send the CTS if we already
            received the peer's CTS (e.g., if this process was slow to
            call cpc_complete(). */
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-        transport_type_ib_p = (IBV_TRANSPORT_IB == endpoint->endpoint_btl->device->ib_dev->transport_type);
-#endif
-        OPAL_OUTPUT((-1, "cpc_complete to peer %s: is IB %d, initiatior %d, cts received: %d",
+        OPAL_OUTPUT((-1, "cpc_complete to peer %s: initiatior %d, cts received: %d",
                      opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
-                     transport_type_ib_p,
                      endpoint->endpoint_initiator,
                      endpoint->endpoint_cts_received));
-        if (transport_type_ib_p ||
-            endpoint->endpoint_initiator ||
+        if ( endpoint->endpoint_initiator ||
             endpoint->endpoint_cts_received) {
             mca_btl_iwarp_endpoint_send_cts(endpoint);
 

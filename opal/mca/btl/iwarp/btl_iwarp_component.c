@@ -604,49 +604,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_iwarp_device_t *device,
                  ibv_get_device_name(device->ib_dev), port_num,
                  mca_btl_iwarp_component.gid_index));
 
-    /* If we have struct ibv_device.transport_type, then we're >= OFED
-       v1.2, and the transport could be iWarp or IB.  If we don't have
-       that member, then we're < OFED v1.2, and it can only be IB. */
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-    if (IBV_TRANSPORT_IWARP == device->ib_dev->transport_type) {
-        subnet_id = mca_btl_iwarp_get_ip_subnet_id(device->ib_dev, port_num);
-        BTL_VERBOSE(("my iWARP subnet_id is %016" PRIx64, subnet_id));
-    } else {
-        memset(&gid, 0, sizeof(gid));
-        if (0 != ibv_query_gid(device->ib_dev_context, port_num,
-                               mca_btl_iwarp_component.gid_index, &gid)) {
-            BTL_ERROR(("ibv_query_gid failed (%s:%d, %d)\n",
-                       ibv_get_device_name(device->ib_dev), port_num,
-                       mca_btl_iwarp_component.gid_index));
-            return OPAL_ERR_NOT_FOUND;
-        }
-
-#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
-        if (IBV_LINK_LAYER_ETHERNET == ib_port_attr->link_layer) {
-            subnet_id = mca_btl_iwarp_component.rroce_enable ? 0 :
-                   mca_btl_iwarp_get_ip_subnet_id(device->ib_dev, port_num);
-        } else {
-            subnet_id = ntoh64(gid.global.subnet_prefix);
-        }
-#else
-        subnet_id = ntoh64(gid.global.subnet_prefix);
-#endif
-
-        BTL_VERBOSE(("my IB subnet_id for HCA %s port %d is %016" PRIx64,
-                     ibv_get_device_name(device->ib_dev), port_num, subnet_id));
-    }
-#else
-    if (0 != ibv_query_gid(device->ib_dev_context, port_num,
-                           mca_btl_iwarp_component.gid_index, &gid)) {
-        BTL_ERROR(("ibv_query_gid failed (%s:%d, %d)\n",
-                   ibv_get_device_name(device->ib_dev), port_num,
-                   mca_btl_iwarp_component.gid_index));
-        return OPAL_ERR_NOT_FOUND;
-    }
-    subnet_id = ntoh64(gid.global.subnet_prefix);
-    BTL_VERBOSE(("my IB-only subnet_id for HCA %s port %d is %016" PRIx64,
-                 ibv_get_device_name(device->ib_dev), port_num, subnet_id));
-#endif
+    subnet_id = mca_btl_iwarp_get_ip_subnet_id(device->ib_dev, port_num);
 
     if(mca_btl_iwarp_component.num_default_gid_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet_id &&
@@ -2737,16 +2695,11 @@ btl_iwarp_component_init(int *num_btl_modules,
            btl_iwarp_device_type */
         switch (mca_btl_iwarp_component.device_type) {
         case BTL_IWARP_DT_IWARP:
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
             if (IBV_TRANSPORT_IB == dev_sorted[i].ib_dev->transport_type) {
                 BTL_VERBOSE(("iwarp: only taking iwarp devices -- skipping %s",
                              ibv_get_device_name(dev_sorted[i].ib_dev)));
                 continue;
             }
-#else
-            opal_show_help("help-mpi-btl-iwarp.txt", "no iwarp support",
-                           true);
-#endif
             break;
         }
 
@@ -3429,12 +3382,10 @@ error:
      * disconnecting first).  In both cases, all pending non-completed
      * SQ and RQ WRs will automatically be flushed.
      */
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_WC_WR_FLUSH_ERR == wc->status &&
         IBV_TRANSPORT_IWARP == device->ib_dev->transport_type) {
         return;
     }
-#endif
 
     if(IBV_WC_WR_FLUSH_ERR != wc->status || !flush_err_printed[cq]++) {
         BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
