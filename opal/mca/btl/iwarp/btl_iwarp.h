@@ -55,8 +55,6 @@
 
 BEGIN_C_DECLS
 
-#define ENABLE_DYNAMIC_SL OPAL_ENABLE_DYNAMIC_SL
-
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
 #define MCA_BTL_IB_PKEY_MASK 0x7fff
@@ -220,9 +218,6 @@ struct mca_btl_iwarp_component_t {
     unsigned int ib_rnr_retry;
     unsigned int ib_max_rdma_dst_ops;
     unsigned int ib_service_level;
-#if (ENABLE_DYNAMIC_SL)
-    unsigned int ib_path_record_service_level;
-#endif
     int     use_eager_rdma;
     int     eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
     int     eager_rdma_num;
