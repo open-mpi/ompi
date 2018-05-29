@@ -60,8 +60,8 @@ mca_spml_ucx_t mca_spml_ucx = {
         mca_spml_ucx_send,
         mca_spml_base_wait,
         mca_spml_base_wait_nb,
-        mca_spml_ucx_quiet, /* At the moment fence is the same as quite for 
-                               every spml */
+        mca_spml_ucx_fence,
+        mca_spml_ucx_quiet,
         mca_spml_ucx_rmkey_unpack,
         mca_spml_ucx_rmkey_free,
         mca_spml_ucx_rmkey_ptr,
@@ -520,7 +520,7 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
     spml_ucx_mkey_t   *ucx_mkey;
     map_segment_t *mem_seg;
 
-    MCA_SPML_CALL(fence());
+    MCA_SPML_CALL(quiet());
     if (!mkeys)
         return OSHMEM_SUCCESS;
 
@@ -598,7 +598,7 @@ int mca_spml_ucx_fence(void)
 {
     ucs_status_t err;
 
-    err = ucp_worker_flush(mca_spml_ucx.ucp_worker);
+    err = ucp_worker_fence(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
          SPML_ERROR("fence failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);

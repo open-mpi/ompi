@@ -61,6 +61,7 @@ bool opal_timing_overhead = true;
 
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool opal_cuda_support = false;
+bool opal_warn_on_missing_libcuda = true;
 #if OPAL_ENABLE_FT_CR == 1
 bool opal_base_distill_checkpoint_ready = false;
 #endif
@@ -241,6 +242,16 @@ int opal_register_params(void)
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
                                  &opal_cuda_support);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_warn_on_missing_libcuda = true;
+    ret = mca_base_var_register ("opal", "opal", NULL, "warn_on_missing_libcuda",
+                                 "Whether to print a message when CUDA support is enabled but libcuda is not found",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                 &opal_warn_on_missing_libcuda);
     if (0 > ret) {
         return ret;
     }

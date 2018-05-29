@@ -76,8 +76,10 @@ EOF
 
     if test "$project_oshmem_amc" = "true" ; then
         echo "Build Open SHMEM support: yes"
-    else
+    elif test -z "$project_oshmem_amc" ; then
         echo "Build Open SHMEM support: no"
+    else
+	echo "Build Open SHMEM support: $project_oshmem_amc"
     fi
 
     if test $WANT_DEBUG = 0 ; then
