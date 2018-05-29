@@ -57,6 +57,7 @@ int mca_atomic_ucx_cswap(void *target,
                 break;
             default:
                 assert(0); /* should not be here */
+                status = UCS_ERR_INVALID_PARAM;
                 break;
         }
     }

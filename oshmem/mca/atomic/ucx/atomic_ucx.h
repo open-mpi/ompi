@@ -62,8 +62,33 @@ OBJ_CLASS_DECLARATION(mca_atomic_ucx_module_t);
 
 
 void mca_atomic_ucx_complete_cb(void *request, ucs_status_t status);
-ucs_status_t mca_atomic_ucx_wait_request(ucs_status_ptr_t request);
 
+static inline
+ucs_status_t mca_atomic_ucx_wait_request(ucs_status_ptr_t request)
+{
+    ucs_status_t status;
+    int i;
+
+    /* check for request completed or failed */
+    if (UCS_OK == request) {
+        return UCS_OK;
+    } else if (UCS_PTR_IS_ERR(request)) {
+        return UCS_PTR_STATUS(request);
+    }
+
+    while (1) {
+        /* call UCX progress */
+        for (i = 0; i < 100; i++) {
+            if (UCS_INPROGRESS != (status = ucp_request_check_status(request))) {
+                ucp_request_free(request);
+                return status;
+            }
+            ucp_worker_progress(mca_spml_self->ucp_worker);
+        }
+        /* call OPAL progress on every 100 call to UCX progress */
+        opal_progress();
+    }
+}
 END_C_DECLS
 
-#endif /* MCA_ATOMIC_MXM_H */
+#endif /* MCA_ATOMIC_UCX_H */
