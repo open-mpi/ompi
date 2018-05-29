@@ -98,6 +98,24 @@ struct mca_atomic_base_module_1_0_0_t {
                         const void *value,
                         size_t nlong,
                         int pe);
+    int (*atomic_fand)(void *target,
+                       void *prev,
+                       const void *value,
+                       size_t nlong,
+                       int pe,
+                       struct oshmem_op_t *op);
+    int (*atomic_for)(void *target,
+                      void *prev,
+                      const void *value,
+                      size_t nlong,
+                      int pe,
+                      struct oshmem_op_t *op);
+    int (*atomic_fxor)(void *target,
+                       void *prev,
+                       const void *value,
+                       size_t nlong,
+                       int pe,
+                       struct oshmem_op_t *op);
 };
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_1_0_0_t;
 

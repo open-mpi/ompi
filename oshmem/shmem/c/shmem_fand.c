@@ -19,12 +19,12 @@
 
 /*
  * These routines perform an atomic fetch-and-add operation.
- * The fetch and add routines retrieve the value at address target on PE pe, and update
- * target with the result of adding value to the retrieved value. The operation must be completed
+ * The fetch and and routines retrieve the value at address target on PE pe, and update
+ * target with the result of "and" value to the retrieved value. The operation must be completed
  * without the possibility of another process updating target between the time of the
  * fetch and the update.
  */
-#define SHMEM_TYPE_FADD(type_name, type, prefix, suffix)                \
+#define SHMEM_TYPE_FAND(type_name, type, prefix, suffix)                \
     type prefix##type_name##_##suffix(type *target, type value, int pe) \
     {                                                                   \
         int rc = OSHMEM_SUCCESS;                                        \
@@ -37,7 +37,7 @@
         RUNTIME_CHECK_ADDR(target);                                     \
                                                                         \
         size = sizeof(out_value);                                       \
-        rc = MCA_ATOMIC_CALL(fadd(                                      \
+        rc = MCA_ATOMIC_CALL(fand(                                      \
             (void*)target,                                              \
             (void*)&out_value,                                          \
             (const void*)&value,                                        \
@@ -51,27 +51,16 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_int_atomic_fadd = pshmem_int_atomic_fadd
-#pragma weak shmem_long_atomic_fadd = pshmem_long_atomic_fadd
-#pragma weak shmem_longlong_atomic_fadd = pshmem_longlong_atomic_fadd
-#pragma weak shmemx_int32_fadd = pshmemx_int32_fadd
-#pragma weak shmemx_int64_fadd = pshmemx_int64_fadd
-/* backward compatibility */
-#pragma weak shmem_int_fadd = pshmem_int_atomic_fadd
-#pragma weak shmem_long_fadd = pshmem_long_atomic_fadd
-#pragma weak shmem_longlong_fadd = pshmem_longlong_atomic_fadd
-#pragma weak pshmem_int_fadd = pshmem_int_atomic_fadd
-#pragma weak pshmem_long_fadd = pshmem_long_atomic_fadd
-#pragma weak pshmem_longlong_fadd = pshmem_longlong_atomic_fadd
+#pragma weak shmem_int_atomic_fand = pshmem_int_atomic_fand
+#pragma weak shmem_long_atomic_fand = pshmem_long_atomic_fand
+#pragma weak shmem_longlong_atomic_fand = pshmem_longlong_atomic_fand
+#pragma weak shmemx_int32_fand = pshmemx_int32_fand
+#pragma weak shmemx_int64_fand = pshmemx_int64_fand
 #include "oshmem/shmem/c/profile/defines.h"
-#else
-#pragma weak shmem_int_fadd = shmem_int_atomic_fadd
-#pragma weak shmem_long_fadd = shmem_long_atomic_fadd
-#pragma weak shmem_longlong_fadd = shmem_longlong_atomic_fadd
 #endif
 
-SHMEM_TYPE_FADD(_int, int, shmem, atomic_fadd)
-SHMEM_TYPE_FADD(_long, long, shmem, atomic_fadd)
-SHMEM_TYPE_FADD(_longlong, long long, shmem, atomic_fadd)
-SHMEM_TYPE_FADD(_int32, int32_t, shmemx, fadd)
-SHMEM_TYPE_FADD(_int64, int64_t, shmemx, fadd)
+SHMEM_TYPE_FAND(_int, int, shmem, atomic_fand)
+SHMEM_TYPE_FAND(_long, long, shmem, atomic_fand)
+SHMEM_TYPE_FAND(_longlong, long long, shmem, atomic_fand)
+SHMEM_TYPE_FAND(_int32, int32_t, shmemx, fand)
+SHMEM_TYPE_FAND(_int64, int64_t, shmemx, fand)

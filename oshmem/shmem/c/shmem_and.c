@@ -18,11 +18,11 @@
 
 /*
  * These routines perform an atomic add operation.
- * The atomic add routines add value to the data at address target on PE pe. The operation
- * must be completed without the possibility of another process updating target between the
- * time of the fetch and the update.
+ * The atomic "and" routines cwoperates "and" value to the data at address target on PE pe.
+ * The operation must be completed without the possibility of another process updating
+ * target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_ADD(type_name, type, prefix, suffix)                   \
+#define SHMEM_TYPE_AND(type_name, type, prefix, suffix)                   \
     void prefix##type_name##_##suffix(type *target, type value, int pe)   \
     {                                                                     \
         int rc = OSHMEM_SUCCESS;                                          \
@@ -35,7 +35,7 @@
         RUNTIME_CHECK_ADDR(target);                                       \
                                                                           \
         size = sizeof(out_value);                                         \
-        rc = MCA_ATOMIC_CALL(fadd(                                        \
+        rc = MCA_ATOMIC_CALL(fand(                                        \
             (void*)target,                                                \
             NULL,                                                         \
             (const void*)&value,                                          \
@@ -49,27 +49,16 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_int_atomic_add = pshmem_int_atomic_add
-#pragma weak shmem_long_atomic_add = pshmem_long_atomic_add
-#pragma weak shmem_longlong_atomic_add = pshmem_longlong_atomic_add
-#pragma weak shmemx_int32_add = pshmemx_int32_add
-#pragma weak shmemx_int64_add = pshmemx_int64_add
-/* backward compatibility */
-#pragma weak shmem_int_add = pshmem_int_atomic_add
-#pragma weak shmem_long_add = pshmem_long_atomic_add
-#pragma weak shmem_longlong_add = pshmem_longlong_atomic_add
-#pragma weak pshmem_int_add = pshmem_int_atomic_add
-#pragma weak pshmem_long_add = pshmem_long_atomic_add
-#pragma weak pshmem_longlong_add = pshmem_longlong_atomic_add
+#pragma weak shmem_int_atomic_and = pshmem_int_atomic_and
+#pragma weak shmem_long_atomic_and = pshmem_long_atomic_and
+#pragma weak shmem_longlong_atomic_and = pshmem_longlong_atomic_and
+#pragma weak shmemx_int32_and = pshmemx_int32_and
+#pragma weak shmemx_int64_and = pshmemx_int64_and
 #include "oshmem/shmem/c/profile/defines.h"
-#else
-#pragma weak shmem_int_add = shmem_int_atomic_add
-#pragma weak shmem_long_add = shmem_long_atomic_add
-#pragma weak shmem_longlong_add = shmem_longlong_atomic_add
 #endif
 
-SHMEM_TYPE_ADD(_int, int, shmem, atomic_add)
-SHMEM_TYPE_ADD(_long, long, shmem, atomic_add)
-SHMEM_TYPE_ADD(_longlong, long long, shmem, atomic_add)
-SHMEM_TYPE_ADD(_int32, int32_t, shmemx, add)
-SHMEM_TYPE_ADD(_int64, int64_t, shmemx, add)
+SHMEM_TYPE_AND(_int, int, shmem, atomic_and)
+SHMEM_TYPE_AND(_long, long, shmem, atomic_and)
+SHMEM_TYPE_AND(_longlong, long long, shmem, atomic_and)
+SHMEM_TYPE_AND(_int32, int32_t, shmemx, and)
+SHMEM_TYPE_AND(_int64, int64_t, shmemx, and)
