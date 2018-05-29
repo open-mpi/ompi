@@ -63,7 +63,7 @@ int mca_atomic_ucx_cswap(void *target,
     return ucx_status_to_oshmem(status);
 
 err_size:
-    ATOMIC_ERROR("[#%d] Type size must be 1/2/4 or 8 bytes.", my_pe);
+    ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
     return OSHMEM_ERROR;
 }
 
