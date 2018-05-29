@@ -50,22 +50,14 @@ int mca_atomic_ucx_cswap(void *target,
         status = mca_atomic_ucx_wait_request(status_ptr);
     }
     else {
-        if (8 == nlong) {
-            cmp = *(uint64_t*)cond;
-        } else {
-            cmp = *(uint32_t*)cond;
-        }
+        cmp = (4 == nlong) ? *(uint32_t*)cond : *(uint64_t*)cond;
         status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                          UCP_ATOMIC_FETCH_OP_CSWAP, cmp, &val, nlong,
                                          rva, ucx_mkey->rkey, mca_atomic_ucx_complete_cb);
         status = mca_atomic_ucx_wait_request(status_ptr);
         if (UCS_OK == status) {
             assert(NULL != prev);
-            if (8 == nlong) {
-                *(uint64_t*)prev = val;
-            } else {
-                *(uint32_t*)prev = val;
-            }
+            memcpy(prev, &val, nlong);
         }
     }
     return ucx_status_to_oshmem(status);
