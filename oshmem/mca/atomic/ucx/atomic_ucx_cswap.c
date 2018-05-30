@@ -19,12 +19,15 @@
 
 #include "atomic_ucx.h"
 
-int mca_atomic_ucx_cswap(void *target,
-                         void *prev,
-                         const void *cond,
-                         const void *value,
-                         size_t nlong,
-                         int pe)
+/* nlong argument should be constant to hint compiler
+ * to calculate nlong relative branches in compile time */
+static inline
+int mca_atomic_ucx_cswap_inner(void *target,
+                               void *prev,
+                               const void *cond,
+                               const void *value,
+                               size_t nlong,
+                               int pe)
 {
     ucs_status_t status;
     ucs_status_ptr_t status_ptr;
@@ -33,15 +36,7 @@ int mca_atomic_ucx_cswap(void *target,
     uint64_t val;
     uint64_t cmp;
 
-    if (8 == nlong) {
-        val = *(uint64_t*)value;
-    } else if (4 == nlong) {
-        val = *(uint32_t*)value;
-    } else {
-        ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
-        return OSHMEM_ERROR;
-    }
-
+    val = (4 == nlong) ? *(uint32_t*)value : *(uint64_t*)value;
     ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva); 
     if (NULL == cond) {
         status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
@@ -58,9 +53,29 @@ int mca_atomic_ucx_cswap(void *target,
         if (UCS_OK == status) {
             assert(NULL != prev);
             memcpy(prev, &val, nlong);
+            if (4 == nlong) {
+                *(uint32_t*)prev = val;
+            } else {
+                *(uint64_t*)prev = val;
+            }
         }
     }
     return ucx_status_to_oshmem(status);
 }
 
-
+int mca_atomic_ucx_cswap(void *target,
+                         void *prev,
+                         const void *cond,
+                         const void *value,
+                         size_t nlong,
+                         int pe)
+{
+    if (8 == nlong) {
+        return mca_atomic_ucx_cswap_inner(target, prev, cond, value, 8, pe);
+    } else if (4 == nlong) {
+        return mca_atomic_ucx_cswap_inner(target, prev, cond, value, 4, pe);
+    } else {
+        ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
+        return OSHMEM_ERROR;
+    }
+}
