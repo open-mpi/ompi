@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@
 #include "src/util/name_fns.h"
 #include "src/util/printf.h"
 
-#define PMIX_PRINT_NAME_ARGS_MAX_SIZE   50
+#define PMIX_PRINT_NAME_ARGS_MAX_SIZE   300
 #define PMIX_PRINT_NAME_ARG_NUM_BUFS    16
 
 #define PMIX_SCHEMA_DELIMITER_CHAR      '.'
