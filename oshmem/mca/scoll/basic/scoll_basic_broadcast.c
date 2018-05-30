@@ -146,10 +146,10 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
                 rc = MCA_SPML_CALL(put(target, nlong, (void *)source, pe_cur));
             }
         }
-        /* fence (which currently acts as quiet) is needed
-         * because scoll level barrier does not guarantee put completion 
+        /* quiet is needed because scoll level barrier does not
+         * guarantee put completion
          */
-        MCA_SPML_CALL(fence());
+        MCA_SPML_CALL(quiet());
     }
 
     if (rc == OSHMEM_SUCCESS) {

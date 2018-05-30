@@ -72,10 +72,10 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
        return rc;
     }
 
-    /* fence (which currently acts as quiet) is needed
-     * because scoll level barrier does not guarantee put completion
+    /* quiet is needed because scoll level barrier does not
+     * guarantee put completion
      */
-    MCA_SPML_CALL(fence());
+    MCA_SPML_CALL(quiet());
 
     /* Wait for operation completion */
     SCOLL_VERBOSE(14, "[#%d] Wait for operation completion", group->my_pe);

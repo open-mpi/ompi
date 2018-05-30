@@ -167,8 +167,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
          The root could leave the first barrier and in the second barrier it could get SHMEM_SYNC_WAIT value on
          remote node before the remote node receives its SHMEM_SYNC_RUN value in the first barrier
          */
-        /* TODO: actually it must be quiet */
-        MCA_SPML_CALL(fence());
+        MCA_SPML_CALL(quiet());
     }
     /* Wait for RUN signal */
     else {

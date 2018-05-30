@@ -168,6 +168,7 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_ikrit_send,
         mca_spml_base_wait,
         mca_spml_base_wait_nb,
+        mca_spml_ikrit_fence, /* fence is implemented as quiet */
         mca_spml_ikrit_fence,
         mca_spml_ikrit_cache_mkeys,
         mca_spml_base_rmkey_free,
