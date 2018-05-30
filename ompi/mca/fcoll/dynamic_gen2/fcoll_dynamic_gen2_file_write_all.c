@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1162,7 +1163,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
         int block_index       = -1;
         int blocklength_size  = INIT_LEN;
 
-        ptrdiff_t send_mem_address  = NULL;
+        ptrdiff_t send_mem_address  = (ptrdiff_t) NULL;
         ompi_datatype_t *newType    = MPI_DATATYPE_NULL;
         blocklength_proc            = (int *)       calloc (blocklength_size, sizeof (int));
         displs_proc                 = (ptrdiff_t *) calloc (blocklength_size, sizeof (ptrdiff_t));
