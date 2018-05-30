@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2018 IBM Corporation. All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -259,9 +259,10 @@ save_original_key_val(opal_info_t *info, char *key, char *val, int overwrite)
 
     // Checking strlen, even though it should be unnecessary.
     // This should only happen on predefined keys with short lengths.
-    if (strlen(key) + 5 < OPAL_MAX_INFO_KEY) {
-        sprintf(modkey, "__IN_%s", key);
-
+    if (strlen(key) + strlen(OPAL_INFO_SAVE_PREFIX) < OPAL_MAX_INFO_KEY) {
+        snprintf(modkey, OPAL_MAX_INFO_KEY,
+            OPAL_INFO_SAVE_PREFIX "%s", key);
+// (the prefix macro is a string, so the unreadable part above is a string concatenation)
         flag = 0;
         opal_info_get(info, modkey, 0, NULL, &flag);
         if (!flag || overwrite) {
@@ -347,6 +348,15 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
     opal_list_t *list = NULL;
     opal_hash_table_t *table = &object->s_subscriber_table;
     opal_callback_list_item_t *callback_list_item;
+
+    if (strlen(key) > OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)) {
+        fprintf(stderr, "DEVELOPER WARNING: Unexpected key length [%s]: "
+            "OMPI internal callback keys are limited to %d chars\n",
+            key, OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX));
+#if OPAL_ENABLE_DEBUG
+        assert(!(strlen(key) > OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)));
+#endif
+    }
 
     if (table) {
         opal_hash_table_get_value_ptr(table, key, strlen(key), (void**) &list);

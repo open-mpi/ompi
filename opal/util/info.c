@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2018 IBM Corporation. All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -191,7 +191,9 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
          exists_IN_key = 0;
          exists_reg_key = 0;
          pkey = iterator->ie_key;
-         if (0 == strncmp(iterator->ie_key, "__IN_", 5)) {
+         if (0 == strncmp(iterator->ie_key, OPAL_INFO_SAVE_PREFIX,
+             strlen(OPAL_INFO_SAVE_PREFIX)))
+        {
              pkey += 5;
 
              is_IN_key = 1;
@@ -206,7 +208,9 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 
 // see if there is an __IN_<key> for the current <key>
              if (strlen(iterator->ie_key) + 5 < OPAL_MAX_INFO_KEY) {
-                 sprintf(savedkey, "__IN_%s", iterator->ie_key);
+                 snprintf(savedkey, OPAL_MAX_INFO_KEY,
+                     OPAL_INFO_SAVE_PREFIX "%s", iterator->ie_key);
+// (the prefix macro is a string, so the unreadable part above is a string concatenation)
                  opal_info_get_nolock (info, savedkey, OPAL_MAX_INFO_VAL,
                                        savedval, &flag);
              } else {
