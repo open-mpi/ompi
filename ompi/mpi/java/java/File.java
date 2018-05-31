@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -153,7 +153,7 @@ public final class File
 
 	/**
 	 * Java binding of {@code MPI_FILE_GET_GROUP}.
-	 * @return group wich opened the file
+	 * @return group which opened the file
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public Group getGroup() throws MPIException
