@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2014-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -205,7 +205,7 @@ opal_event_base_t *opal_progress_thread_init(const char *name)
     ret = opal_thread_start(&agent_thread);
     if (OPAL_SUCCESS != ret) {
         OPAL_ERROR_LOG(ret);
-        ABORT("Failed to start usNIC agent thread");
+        opal_btl_usnic_util_abort("Failed to start usNIC agent thread", __FILE__, __LINE__);
         /* Will not return */
     }
 
@@ -338,8 +338,8 @@ pack_chunk_seg_chain_with_reserve(
            first_pass) {
         seg = opal_btl_usnic_chunk_segment_alloc(module);
         if (OPAL_UNLIKELY(NULL == seg)) {
-            BTL_ERROR(("chunk segment allocation error"));
-            abort(); /* XXX */
+            opal_btl_usnic_util_abort("chunk segment allocation error",
+                                      __FILE__, __LINE__);
         }
         ++n_segs;
 
@@ -446,8 +446,8 @@ prepare_src_large(
             rc = opal_convertor_clone(convertor, &frag->sf_convertor,
                                       /*copy_stack=*/true);
             if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-                BTL_ERROR(("unexpected convertor clone error"));
-                abort(); /* XXX */
+                opal_btl_usnic_util_abort("unexpected convertor clone error",
+                                          __FILE__, __LINE__);
             }
         }
         else {

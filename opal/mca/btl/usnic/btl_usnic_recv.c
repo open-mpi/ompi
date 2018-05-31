@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -231,7 +231,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
                     fip->rfi_data_in_pool = false;
                 }
                 if (fip->rfi_data == NULL) {
-                    abort();
+                    opal_btl_usnic_util_abort("malloc failed", __FILE__, __LINE__);
                 }
 #if MSGDEBUG1
                 opal_output(0, "Start large recv to %p, size=%"PRIu32"\n",

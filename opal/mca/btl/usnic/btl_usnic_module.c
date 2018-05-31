@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
@@ -808,8 +808,8 @@ pack_chunk_seg_from_frag(
         /* TODO look at ways to deal with this case more gracefully, possibly as
          * part of capping the overall BTL memory consumption.  Watch out for
          * possible MPI-layer deadlock. */
-        BTL_ERROR(("chunk segment allocation error"));
-        abort(); /* XXX */
+        opal_btl_usnic_util_abort("chunk segment allocation error",
+                                  __FILE__, __LINE__);
     }
 
     seg_space = module->max_chunk_payload;
@@ -1008,8 +1008,7 @@ usnic_do_resends(
         ret = opal_hotel_checkin(&endpoint->endpoint_hotel,
                 sseg, &sseg->ss_hotel_room);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
-            BTL_ERROR(("hotel checkin failed\n"));
-            abort();    /* should not be possible */
+            opal_btl_usnic_util_abort("hotel checkin failed\n", __FILE__, __LINE__);
         }
     }
 }
@@ -2149,7 +2148,8 @@ static void init_connectivity_checker(opal_btl_usnic_module_t *module)
     int rc = opal_btl_usnic_connectivity_listen(module);
     if (OPAL_SUCCESS != rc) {
         OPAL_ERROR_LOG(rc);
-        ABORT("Failed to notify connectivity agent to listen");
+        opal_btl_usnic_util_abort("Failed to notify connectivity agent to listen",
+                                  __FILE__, __LINE__);
     }
 }
 
@@ -2539,7 +2539,8 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
         int rc = opal_btl_usnic_connectivity_listen(module);
         if (OPAL_SUCCESS != rc) {
             OPAL_ERROR_LOG(rc);
-            ABORT("Failed to notify connectivity agent to listen");
+            opal_btl_usnic_util_abort("Failed to notify connectivity agent to listen",
+                                      __FILE__, __LINE__);
         }
     } else {
         /* If we're not doing a connectivity check, just set the port
