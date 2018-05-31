@@ -308,15 +308,15 @@ OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(_rel_)
 
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_LLSC_32
 
-#define opal_atomic_ll_ptr(addr) (void *) opal_atomic_ll_32((int32_t *) addr)
-#define opal_atomic_sc_ptr(addr, newval) opal_atomic_sc_32((int32_t *) addr, (int32_t) newval)
+#define opal_atomic_ll_ptr(addr, ret) opal_atomic_ll_32((volatile int32_t *) (addr), ret)
+#define opal_atomic_sc_ptr(addr, value, ret) opal_atomic_sc_32((volatile int32_t *) (addr), (intptr_t) (value), ret)
 
 #define OPAL_HAVE_ATOMIC_LLSC_PTR 1
 
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_LLSC_64
 
-#define opal_atomic_ll_ptr(addr) (void *) opal_atomic_ll_64((int64_t *) addr)
-#define opal_atomic_sc_ptr(addr, newval) opal_atomic_sc_64((int64_t *) addr, (int64_t) newval)
+#define opal_atomic_ll_ptr(addr, ret) opal_atomic_ll_64((volatile int64_t *) (addr), ret)
+#define opal_atomic_sc_ptr(addr, value, ret) opal_atomic_sc_64((volatile int64_t *) (addr), (intptr_t) (value), ret)
 
 #define OPAL_HAVE_ATOMIC_LLSC_PTR 1
 
