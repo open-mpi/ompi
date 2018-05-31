@@ -424,7 +424,28 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwin_test.c \
         pwin_unlock.c \
 	pwin_unlock_all.c \
-        pwin_wait.c
+        pwin_wait.c \
+        piallgather_init.c \
+        piallgatherv_init.c \
+        piallreduce_init.c \
+        pialltoall_init.c \
+        pialltoallv_init.c \
+        pibarrier_init.c \
+        pibcast_init.c \
+        pigather_init.c \
+        pigatherv_init.c \
+        pireduce_init.c \
+        pireduce_scatter_init.c \
+        pireduce_scatter_block_init.c \
+        piscan_init.c \
+        piscatter_init.c \
+        piscatterv_init.c \
+        pineighbor_allgather_init.c \
+        pineighbor_allgatherv_init.c \
+        pineighbor_alltoall_init.c \
+        pineighbor_alltoallv_init.c \
+        pineighbor_alltoallw_init.c \
+        plibpnbc_start.c
 
 #
 # Sym link in the sources from the real MPI directory
