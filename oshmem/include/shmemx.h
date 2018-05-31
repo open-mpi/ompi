@@ -1,6 +1,6 @@
 /* oshmem/include/shmemx.h. This file contains vendor extension functions  */
 /*
- * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *

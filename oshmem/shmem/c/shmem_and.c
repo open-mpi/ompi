@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -18,7 +18,7 @@
 
 /*
  * These routines perform an atomic add operation.
- * The atomic "and" routines cwoperates "and" value to the data at address target on PE pe.
+ * The atomic "and" routines operates "and" value to the data at address target on PE pe.
  * The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
  */

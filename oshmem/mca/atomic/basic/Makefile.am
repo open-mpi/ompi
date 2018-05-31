@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2013-2018 Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$

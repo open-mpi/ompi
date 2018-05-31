@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
