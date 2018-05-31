@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
@@ -33,13 +33,8 @@
 
 #include "opal/constants.h"
 
-#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#else
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"
@@ -204,7 +199,6 @@ int opal_btl_usnic_component_register(void)
                   0, &stats_relative, 0, OPAL_INFO_LVL_4));
     mca_btl_usnic_component.stats_relative = (bool) stats_relative;
 
-#if RCACHE_VERSION == 30
     CHECK(reg_string("mpool_hints", "Hints to use when selecting mpool",
                      NULL, &mca_btl_usnic_component.usnic_mpool_hints,
                      REGSTR_EMPTY_OK,
@@ -213,13 +207,8 @@ int opal_btl_usnic_component_register(void)
     CHECK(reg_string("rcache", "Name of the registration cache to be used",
                      "grdma", &mca_btl_usnic_component.usnic_rcache_name, 0,
                      OPAL_INFO_LVL_5));
-#else
-    CHECK(reg_string("mpool", "Name of the memory pool to be used",
-                     "grdma", &mca_btl_usnic_component.usnic_mpool_name, 0,
-                     OPAL_INFO_LVL_5));
-#endif
 
-    want_numa_device_assignment = OPAL_HAVE_HWLOC ? 1 : -1;
+    want_numa_device_assignment = 1;
     CHECK(reg_int("want_numa_device_assignment",
                   "If 1, use only Cisco VIC ports thare are a minimum NUMA distance from the MPI process for short messages.  If 0, use all available Cisco VIC ports for short messages.  This parameter is meaningless (and ignored) unless MPI proceses are bound to processor cores.  Defaults to 1 if NUMA support is included in Open MPI; -1 otherwise.",
                   want_numa_device_assignment,

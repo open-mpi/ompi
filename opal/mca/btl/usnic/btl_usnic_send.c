@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -27,13 +27,8 @@
 
 #include "opal/constants.h"
 
-#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#else
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"

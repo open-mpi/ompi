@@ -29,13 +29,8 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/constants.h"
 
-#if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#else
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-#endif
 
 #include "btl_usnic.h"
 #include "btl_usnic_frag.h"

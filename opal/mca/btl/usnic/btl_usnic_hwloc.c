@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -13,11 +13,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/constants.h"
 
-#if BTL_IN_OPAL
 #include "opal/mca/btl/base/base.h"
-#else
-#include "ompi/mca/btl/base/base.h"
-#endif
 
 #include "btl_usnic_hwloc.h"
 

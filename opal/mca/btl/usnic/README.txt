@@ -290,9 +290,18 @@ November 2014 / SC 2014
 Update February 2015
 
 The usnic BTL code has been unified across master and the v1.8
-branches.  That is, you can copy the code from
-v1.8:ompi/mca/btl/usnic/* to master:opal/mca/btl/usnic*, and then only
-have to make 3 changes in the resulting code in master:
+branches.
+
+   NOTE: As of May 2018, this is no longer true.  This was generally
+   only necessary back when the BTLs were moved from the OMPI layer to
+   the OPAL layer.  Now that the BTLs have been down in OPAL for
+   several years, this tomfoolery is no longer necessary.  This note
+   is kept for historical purposes, just in case someone needs to go
+   back and look at the v1.8 series.
+
+That is, you can copy the code from v1.8:ompi/mca/btl/usnic/* to
+master:opal/mca/btl/usnic*, and then only have to make 3 changes in
+the resulting code in master:
 
 1. Edit Makefile.am: s/ompi/opal/gi
 2. Edit configure.m4: s/ompi/opal/gi

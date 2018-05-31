@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2019 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -15,11 +15,7 @@
 
 #include "opal/util/show_help.h"
 
-#if BTL_IN_OPAL
 #include "opal/util/proc.h"
-#else
-#include "ompi/proc/proc.h"
-#endif
 
 #include "btl_usnic_compat.h"
 #include "btl_usnic_module.h"
