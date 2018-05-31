@@ -49,3 +49,7 @@ mca_atomic_ucx_query(int *priority)
     return NULL ;
 }
 
+void mca_atomic_ucx_complete_cb(void *request, ucs_status_t status)
+{
+}
+

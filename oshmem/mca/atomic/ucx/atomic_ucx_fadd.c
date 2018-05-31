@@ -26,43 +26,32 @@ int mca_atomic_ucx_fadd(void *target,
                         struct oshmem_op_t *op)
 {
     ucs_status_t status;
+    ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
+    uint64_t val;
+
+    if (8 == nlong) {
+        val = *(uint64_t*)value;
+    } else if (4 == nlong) {
+        val = *(uint32_t*)value;
+    } else {
+        ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
+        return OSHMEM_ERROR;
+    }
 
     ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
-
     if (NULL == prev) {
-        switch (nlong) {
-            case 4:
-                status = ucp_atomic_add32(mca_spml_self->ucp_peers[pe].ucp_conn, 
-                        *(uint32_t *)value, rva, ucx_mkey->rkey);
-                break;
-            case 8:
-                status = ucp_atomic_add64(mca_spml_self->ucp_peers[pe].ucp_conn, 
-                        *(uint64_t *)value, rva, ucx_mkey->rkey);
-                break;
-            default:
-                goto err_size;
-        }
+        status = ucp_atomic_post(mca_spml_self->ucp_peers[pe].ucp_conn, 
+                                 UCP_ATOMIC_POST_OP_ADD, val, nlong, rva,
+                                 ucx_mkey->rkey);
     }
     else {
-        switch (nlong) {
-            case 4:
-                status = ucp_atomic_fadd32(mca_spml_self->ucp_peers[pe].ucp_conn, 
-                        *(uint32_t *)value, rva, ucx_mkey->rkey, prev);
-                break;
-            case 8:
-                status = ucp_atomic_fadd64(mca_spml_self->ucp_peers[pe].ucp_conn, 
-                        *(uint64_t *)value, rva, ucx_mkey->rkey, prev);
-                break;
-            default:
-                goto err_size;
-        }
+        status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn, 
+                                         UCP_ATOMIC_FETCH_OP_FADD, val, prev, nlong,
+                                         rva, ucx_mkey->rkey, mca_atomic_ucx_complete_cb);
+        status = mca_atomic_ucx_wait_request(status_ptr);
     }
 
     return ucx_status_to_oshmem(status);
-
-err_size:
-    ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
-    return OSHMEM_ERROR;
 }
