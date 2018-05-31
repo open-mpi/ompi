@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reseved.
  * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -206,8 +206,8 @@ static inline void _opal_lifo_release_cpu (void)
  */
 static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 {
-    opal_list_item_t *item, *next;
-    int attempt = 0;
+    register opal_list_item_t *item, *next;
+    int attempt = 0, ret;
 
     do {
         if (++attempt == 5) {
@@ -217,13 +217,14 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
             attempt = 0;
         }
 
-        item = (opal_list_item_t *) opal_atomic_ll_ptr (&lifo->opal_lifo_head.data.item);
+        opal_atomic_ll_ptr(&lifo->opal_lifo_head.data.item, item);
         if (&lifo->opal_lifo_ghost == item) {
             return NULL;
         }
 
         next = (opal_list_item_t *) item->opal_list_next;
-    } while (!opal_atomic_sc_ptr (&lifo->opal_lifo_head.data.item, next));
+        opal_atomic_sc_ptr(&lifo->opal_lifo_head.data.item, next, ret);
+    } while (!ret);
 
     opal_atomic_wmb ();
 
