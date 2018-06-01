@@ -36,9 +36,11 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
-3.0.2 -- May, 2018
-------------------
+3.0.2 -- June, 2018
+-------------------
 
+- Disable osc/pt2pt when using MPI_THREAD_MULTIPLE due to numerous
+  race conditions in the component.
 - Fix dummy variable names for the mpi and mpi_f08 Fortran bindings to
   match the MPI standard.  This may break applications which use
   name-based parameters in Fortran which used our internal names
