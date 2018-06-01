@@ -15,7 +15,7 @@
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2017 Research Organization for Information Science
+# Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -393,7 +393,7 @@ linked_files = \
         pwin_flush_local_all_f.c
 
 if OMPI_ENABLE_MPI1_COMPAT
-linked_files = \
+linked_files += \
         paddress_f.c \
         pattr_delete_f.c \
         pattr_get_f.c \
