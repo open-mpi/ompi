@@ -110,8 +110,6 @@ int ompi_mpi_finalize(void)
     volatile bool active;
     uint32_t key;
     ompi_datatype_t * datatype;
-    //OPAL_TIMING_DECLARE(tm);
-    //OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
     ompi_hook_base_mpi_finalize_top();
 
@@ -173,9 +171,6 @@ int ompi_mpi_finalize(void)
     /* Redo ORTE calling opal_progress_event_users_increment() during
        MPI lifetime, to get better latency when not using TCP */
     opal_progress_event_users_increment();
-
-    /* check to see if we want timing information */
-    //OPAL_TIMING_MSTART((&tm,"time to execute finalize barrier"));
 
     /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
        *all* connected processes.  This only means that all processes
@@ -276,10 +271,6 @@ int ompi_mpi_finalize(void)
             opal_pmix.fence(NULL, 0);
         }
     }
-
-    /* check for timing request - get stop time and report elapsed
-     time if so */
-    //OPAL_TIMING_DELTAS(ompi_enable_timing, &tm);
 
     /*
      * Shutdown the Checkpoint/Restart Mech.
