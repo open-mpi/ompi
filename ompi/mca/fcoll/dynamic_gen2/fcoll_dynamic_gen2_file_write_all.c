@@ -1379,7 +1379,8 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *mem_iov, int mem_coun
     }
     
     /* Step 1: separate the local_iov_array per aggregator */
-    int owner, rest, len, temp_len, blocklen, memlen=0;
+    int owner;
+    size_t rest, len, temp_len, blocklen, memlen=0;
     off_t offset, temp_offset, start_offset, memoffset=0;
 
     i=j=0;
