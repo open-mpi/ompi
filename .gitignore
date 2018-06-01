@@ -216,6 +216,7 @@ ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.f90
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-sizeof.h
+ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-removed-interfaces.h
 
 ompi/mpi/fortran/use-mpi-tkr/fortran_kinds.sh
 ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
