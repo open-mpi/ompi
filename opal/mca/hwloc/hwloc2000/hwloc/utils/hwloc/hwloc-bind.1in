@@ -1,0 +1,319 @@
+.\" -*- nroff -*-
+.\" Copyright © 2009-2017 Inria.  All rights reserved.
+.\" Copyright © 2010 Université of Bordeaux
+.\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-BIND "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-bind \- Launch a command that is bound to specific processors
+and/or memory, or consult the binding of an existing program
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-bind
+[\fIoptions\fR] \fI<location1> [<location2> [...] ] [--] <command> \fR...
+.
+.PP
+Note that hwloc(7) provides a detailed explanation of the hwloc system
+and of valid <location> formats;
+it should be read before reading this man page.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-\-cpubind\fR
+Use following arguments for CPU binding (default).
+.TP
+\fB\-\-membind\fR
+Use following arguments for memory binding.
+If \fB\-\-mempolicy\fR is not also given,
+the default policy is bind.
+.TP
+\fB\-\-mempolicy\fR <policy>
+Change the memory binding policy.
+The available policies are default, firsttouch, bind, interleave
+and nexttouch.
+This option is only meaningful when an actual binding is also given
+with \fB\-\-membind\fR.
+If \fB\-\-membind\fR is given without \fB\-\-mempolicy\fR,
+the default policy is bind.
+
+.TP
+\fB\-\-get\fR
+Report the current bindings.
+The output is an opaque bitmask that may be translated into objects with hwloc-calc
+(see EXAMPLES below).
+.TP
+\ 
+When a command is given, the binding is displayed before executing
+the command. When no command is given, the program exits after
+displaying the current binding.
+.TP
+\ 
+When combined with \fB\-\-membind\fR, report the memory binding
+instead of CPU binding.
+.TP
+\ 
+No location may be given since no binding is performed.
+
+.TP
+\fB\-\-nodeset\fR
+Report binding as a NUMA memory node set instead of a CPU set
+if \-\-get was given.
+This is useful for manipulating CPU-less NUMA nodes since their
+cpuset is empty while their nodeset is correct.
+.TP
+\ 
+Also parse input bitmasks as nodesets instead of cpusets.
+
+.TP
+\fB\-e\fR \fB\-\-get-last-cpu-location\fR
+Report the last processors where the process ran.
+The output is an opaque bitmask that may be translated into objects with hwloc-calc
+(see EXAMPLES below).
+.TP
+\ 
+Note that the result may already be outdated when reported since
+the operating system may move the process to other processors
+at any time according to the binding.
+.TP
+\ 
+When a command is given, the last processors is displayed before
+executing the command. When no command is given, the program exits
+after displaying the last processors.
+.TP
+\ 
+This option cannot be combined with \fB\-\-membind\fR.
+.TP
+\ 
+No location may be given since no binding is performed.
+
+.TP
+\fB\-\-single\fR
+Bind on a single CPU to prevent migration.
+.TP
+\fB\-\-strict\fR
+Require strict binding.
+.TP
+\fB\-\-pid\fR <pid>
+Operate on pid <pid>
+.TP
+\fB\-\-tid\fR <tid>
+Operate on thread <tid> instead of on an entire process.
+The feature is only supported on Linux for thread CPU binding,
+or for reporting the last processor where the thread ran if \fB\-e\fR was also passed.
+.TP
+\fB\-p\fR \fB\-\-physical\fR
+Interpret input locations with OS/physical indexes instead of logical indexes.
+This option does not apply to the output, see \fB\-\-get\fR above.
+.TP
+\fB\-l\fR \fB\-\-logical\fR
+Interpret input locations with logical indexes instead of physical/OS indexes (default).
+This option does not apply to the output, see \fB\-\-get\fR above.
+.TP
+\fB\-\-taskset\fR
+Display CPU set strings in the format recognized by the taskset command-line
+program instead of hwloc-specific CPU set string format.
+This option has no impact on the format of input CPU set strings,
+both formats are always accepted.
+.TP
+\fB\-\-restrict\fR <cpuset>
+Restrict the topology to the given cpuset.
+.TP
+\fB\-\-whole\-system\fR
+Do not consider administration limitations.
+.TP
+\fB--hbm\fR
+Only take high bandwidth memory nodes (such as KNL's MCDRAM)
+in account when looking for NUMA nodes in the input locations.
+
+This option must be combined with NUMA node locations,
+such as \fI--hbm numa:1\fR for binding on the second HBM node.
+It may also be written as \fIhbm:1\fR.
+.TP
+\fB--no-hbm\fR
+Ignore high bandwidth memory nodes (such as KNL's MCDRAM)
+when looking for NUMA nodes in the input locations.
+.TP
+\fB\-f\fR \fB\-\-force\fR
+Launch the executable even if binding failed.
+.TP
+\fB\-q\fR \fB\-\-quiet\fR
+Hide non-fatal error messages.
+It includes locations pointing to non-existing objects,
+as well as failure to bind.
+This is usually useful in addition to \fB\-\-force\fR.
+.TP
+\fB\-v\fR \fB\-\-verbose\fR
+Verbose output.
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-bind execs an executable (with optional command line arguments)
+that is bound to the specified location (or list of locations).  Upon
+successful execution, hwloc-bind simply sets bindings and then execs
+the executable over itself.
+.
+.PP
+If multiple locations are given, they are combined in the sense that
+the binding will be wider. The process will be allowed to run on every
+location inside the combination.
+.
+.PP
+The list of input locations may be explicitly ended with "--".
+.
+.PP
+If binding fails, or if the binding set is empty, and \fB\-\-force\fR
+was not given, hwloc-bind returns with an error instead of launching
+the executable.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-bind utility.
+.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-bind's operation is best described through several examples.
+More details about how locations are specified on the hwloc-bind
+command line are described in hwloc(7).
+.
+.PP
+To run the echo command on the first logical processor of the second
+package:
+
+    $ hwloc-bind package:1.pu:0 -- echo hello
+
+which is exactly equivalent to the following line as long as there is
+no ambiguity between hwloc-bind option names and the executed command name:
+
+    $ hwloc-bind package:1.pu:0 echo hello
+
+To bind the "echo" command to the first core of the second package and
+the second core of the first package:
+
+    $ hwloc-bind package:1.core:0 package:0.core:1 -- echo hello
+
+To bind memory on the first high-bandwidth memory node:
+
+    $ hwloc-bind --membind hbm:0 -- echo hello
+    $ hwloc-bind --membind --hbm numa:0 -- echo hello
+
+Note that binding the "echo" command to multiple processors is
+probably meaningless (because "echo" is likely implemented as a
+single-threaded application); these examples just serve to show what
+hwloc-bind can do.
+.
+.PP
+To run on the first three packages on the second and third nodes:
+
+    $ hwloc-bind node:1-2.package:0:3 -- echo hello
+
+which is also equivalent to:
+
+    $ hwloc-bind node:1-2.package:0-2 -- echo hello
+
+Note that if you attempt to bind to objects that do not exist,
+hwloc-bind will not warn unless
+.I -v
+was specified.
+
+To run on processor with physical index 2 in package with physical index 1:
+
+    $ hwloc-bind --physical package:1.core:2 -- echo hello
+
+To run on odd cores within even packages:
+
+    $ hwloc-bind package:even.core:odd -- echo hello
+
+To run on the first package, except on its second and fifth cores:
+
+    $ hwloc-bind package:0 ~package:0.core:1 ~package:0.core:4 -- echo hello
+
+To run anywhere except on the first package:
+
+    $ hwloc-bind all ~package:0 -- echo hello
+
+To run on a core near the network interface named eth0:
+
+    $ hwloc-bind os=eth0 -- echo hello
+
+To run on a core near the PCI device whose bus ID is 0000:01:02.0:
+
+    $ hwloc-bind pci=0000:01:02.0 -- echo hello
+
+To bind memory on second memory node and run on first node (when supported by the OS):
+
+    $ hwloc-bind --cpubind node:1 --membind node:0 -- echo hello
+
+The --get option can report current bindings.  This example shows
+nesting hwloc-bind invocations to set a binding and then report it:
+
+    $ hwloc-bind node:1.package:2 -- hwloc-bind --get
+    0x00004444,0x44000000
+
+hwloc-calc may convert this output into actual objects, either with logical or physical indexes:
+
+    $ hwloc-calc --physical -I pu `hwloc-bind --get`
+    26,30,34,38,42,46
+    $ hwloc-calc --logical -I pu `hwloc-bind --get` --sep " "
+    24 25 26 27 28 29
+
+.
+.PP
+Locations may also be specified as a hex bit mask (typically generated
+by hwloc-calc).  For example:
+
+    $ hwloc-bind 0x00004444,0x44000000 -- echo hello
+    $ hwloc-bind `hwloc-calc node:1.package:2` -- echo hello
+
+The current memory binding may also be reported:
+
+    $ hwloc-bind --membind node:1 --mempolicy interleave -- hwloc-bind --get --membind
+    0x000000f0 (interleave)
+
+.SH HINT
+If the graphics-enabled lstopo is available, use for instance
+
+    $ hwloc-bind core:2 -- lstopo --pid 0
+
+to check what the result of your binding command actually is.
+lstopo will graphically show where it is bound to by hwloc-bind.
+.
+.\" **************************
+.\"    Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-bind execs the command over itself.
+The return value is therefore whatever the return value of the command
+is.
+.
+.PP
+hwloc-bind will return nonzero if any kind of error occurs, such as
+(but not limited to): failure to parse the command line, failure to
+retrieve process bindings, or lack of a command to execute.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-calc(1), hwloc-distrib(1)
+.sp

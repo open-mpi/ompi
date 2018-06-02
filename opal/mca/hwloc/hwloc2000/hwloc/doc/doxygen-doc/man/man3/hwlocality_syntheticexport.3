@@ -1,0 +1,75 @@
+.TH "hwlocality_syntheticexport" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_syntheticexport
+.SH SYNOPSIS
+.br
+.PP
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_topology_export_synthetic_flags_e\fP { \fBHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_NO_EXTENDED_TYPES\fP, \fBHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_NO_ATTRS\fP, \fBHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_V1\fP, \fBHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_IGNORE_MEMORY\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_topology_export_synthetic\fP (\fBhwloc_topology_t\fP topology, char *buffer, size_t buflen, unsigned long flags)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_topology_export_synthetic_flags_e\fP"
+
+.PP
+Flags for exporting synthetic topologies\&. Flags to be given as a OR'ed set to \fBhwloc_topology_export_synthetic()\fP\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_NO_EXTENDED_TYPES \fP\fP
+Export extended types such as L2dcache as basic types such as Cache\&. This is required if loading the synthetic description with hwloc < 1\&.9\&. 
+.TP
+\fB\fIHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_NO_ATTRS \fP\fP
+Do not export level attributes\&. Ignore level attributes such as memory/cache sizes or PU indexes\&. This is required if loading the synthetic description with hwloc < 1\&.10\&. 
+.TP
+\fB\fIHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_V1 \fP\fP
+Export the memory hierarchy as expected in hwloc 1\&.x\&. Instead of attaching memory children to levels, export single NUMA node child as normal intermediate levels, when possible\&. This is required if loading the synthetic description with hwloc 1\&.x\&. However this may fail if some objects have multiple local NUMA nodes\&. 
+.TP
+\fB\fIHWLOC_TOPOLOGY_EXPORT_SYNTHETIC_FLAG_IGNORE_MEMORY \fP\fP
+Do not export memory information\&. Only export the actual hierarchy of normal CPU-side objects and ignore where memory is attached\&. This is useful for when the hierarchy of CPUs is what really matters, but it behaves as if there was a single machine-wide NUMA node\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_topology_export_synthetic (\fBhwloc_topology_t\fP topology, char * buffer, size_t buflen, unsigned long flags)"
+
+.PP
+Export the topology as a synthetic string\&. At most \fCbuflen\fP characters will be written in \fCbuffer\fP, including the terminating \\0\&.
+.PP
+This exported string may be given back to \fBhwloc_topology_set_synthetic()\fP\&.
+.PP
+\fCflags\fP is a OR'ed set of \fBhwloc_topology_export_synthetic_flags_e\fP\&.
+.PP
+\fBReturns:\fP
+.RS 4
+The number of characters that were written, not including the terminating \\0\&.
+.PP
+-1 if the topology could not be exported, for instance if it is not symmetric\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+I/O and Misc children are ignored, the synthetic string only describes normal children\&.
+.PP
+A 1024-byte buffer should be large enough for exporting topologies in the vast majority of cases\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

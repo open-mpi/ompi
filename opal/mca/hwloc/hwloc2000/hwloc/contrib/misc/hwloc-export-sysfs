@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Copyright © 2016-2017 Inria.  All rights reserved.
+# See COPYING in top-level directory.
+
+# This tool exports a topology as a Linux sysfs filesystem inside the
+# output directory given as the first argument.
+# The goal is to test the Linux import code back from there.
+#
+# It may be used to export from XML by setting HWLOC_XMLFILE=file.xml in the environment,
+# or from synthetic by setting HWLOC_SYNTHETIC="node:4 core:4 pu:2".
+#
+# The export isn't complete. It lacks /proc/cpuinfo and several other files (see below).
+# But at least it takes care of generating the annoying files (bitmasks for each cpu and node).
+
+if test "x$1" = "x"; then
+  echo "Missing output directory argument."
+  exit 1
+fi
+
+outdir="$1"
+
+Ppus=$(hwloc-calc -I pu --po --sep " " root)
+
+for Ppu in $Ppus; do
+  Lpu=$(hwloc-calc --pi --lo -I pu pu:$Ppu)
+  echo "Exporting PU L#${Lpu} = P#${Ppu}..."
+  mkdir -p "$outdir/sys/devices/system/cpu/cpu${Ppu}/topology"
+
+  Lcore=$(hwloc-calc -I core pu:$Lpu)
+  Pcore=$(hwloc-calc --po -I core pu:$Lpu)
+  if test "x$Lcore" != x; then
+    echo " Adding core L#${Lcore} = P#${Pcore}..."
+    echo $Pcore > "$outdir/sys/devices/system/cpu/cpu${Ppu}/topology/core_id"
+    hwloc-calc core:$Lcore | sed -e 's/0x//g' -e 's/,,/,00000000,/g' > "$outdir/sys/devices/system/cpu/cpu${Ppu}/topology/thread_siblings"
+    # FIXME: thread_siblings_list isn't used so far
+  else
+    echo " No core."
+  fi
+
+  Lpack=$(hwloc-calc -I pack pu:$Lpu)
+  Ppack=$(hwloc-calc --po -I pack pu:$Lpu)
+  if test "x$Lpack" != x; then
+    echo " Adding package L#${Lpack} = P#${Ppack}..."
+    echo $Ppack > "$outdir/sys/devices/system/cpu/cpu${Ppu}/topology/physical_package_id"
+    hwloc-calc pack:$Lpack | sed -e 's/0x//g' -e 's/,,/,00000000,/g' > "$outdir/sys/devices/system/cpu/cpu${Ppu}/topology/core_siblings"
+    # FIXME: core_siblings_list isn't used so far
+  else
+    echo "No package."
+  fi
+
+  Lnumas=$(hwloc-calc -I numanode pu:$Lpu --sep " ")
+  if test "x$Lnumas" != x; then
+    # 2.0 with always NUMA node but possibly multiple of them
+    for Lnuma in $Lnumas; do
+      Pnuma=$(hwloc-calc --po -I numanode numa:$Lnuma)
+      echo " Adding NUMAnode L#${Lnuma} = P#${Pnuma}..."
+      mkdir -p "$outdir/sys/devices/system/node/node${Pnuma}"
+      hwloc-calc numanode:$Lnuma | sed -e 's/0x//g' -e 's/,,/,00000000,/g' > "$outdir/sys/devices/system/node/node${Pnuma}/cpumap"
+      bytes=$(hwloc-info numanode:$Lnuma | sed -rn -e 's/^ local memory = //p')
+      echo "Node $Pnuma MemTotal:       "$((bytes/1024))" kB" > "$outdir/sys/devices/system/node/node${Pnuma}/meminfo"
+    done
+  else
+    # 1.x with single local NUMA node but possibly none
+    echo " Adding single NUMAnode L#0 = P#0..."
+    mkdir -p "$outdir/sys/devices/system/node/node0"
+    hwloc-calc all | sed -e 's/0x//g' -e 's/,,/,00000000,/g' > "$outdir/sys/devices/system/node/node0/cpumap"
+    bytes=$(hwloc-info root | sed -rn -e 's/^ local memory = //p')
+    echo "Node 0 MemTotal:       "$((bytes/1024))" kB" > "$outdir/sys/devices/system/node/node0/meminfo"
+  fi
+# FIXME: symlinks between cpu and node aren't needed so far
+
+  cachetypes=$(hwloc-info --ancestors pu:$Lpu | sed -nre 's/^ full type = //p' | grep -i Cache)
+  index=0
+  for cachetype in $cachetypes; do
+    mkdir -p "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}"
+    hwloc-info --ancestor $cachetype pu:${Lpu} | sed -rn -e 's/^ cpuset = //p' | sed -e 's/0x//g' -e 's/,,/,00000000,/g' > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/shared_cpu_map"
+    hwloc-info --ancestor $cachetype pu:${Lpu} | sed -rn -e 's/^ attr cache depth = //p' > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/level"
+    hwloc-info --ancestor $cachetype pu:${Lpu} | sed -rn -e 's/^ attr cache type = //p' > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/type"
+    bytes=$(hwloc-info --ancestor $cachetype pu:${Lpu} | sed -rn -e 's/^ attr cache size = //p')
+    echo $((bytes/1024))K > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/size"
+    hwloc-info --ancestor $cachetype pu:${Lpu} | sed -rn -e 's/^ attr cache line size = //p' > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/coherency_line_size"
+    ways=$(hwloc-info --ancestor $cachetype pu:${Lpu} | sed -rn -e 's/^ attr cache ways = //p')
+    echo 1 > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/physical_line_partition"
+    echo $((bytes/ways)) > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/number_of_sets"
+    echo $ways > "$outdir/sys/devices/system/cpu/cpu${Ppu}/cache/index${index}/ways_of_associativity"
+    index=$((index+1))
+  done
+done
+
+# FIXME: /sys/devices/system/cpu/{online,offline,possible,present,kernel_max}
+
+# command-line tools look for /proc to autoguess that -i means fake fsroot
+mkdir -p "$outdir/proc"
+# FIXME: /proc/cpuinfo

@@ -1,0 +1,110 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2012 for Windows Desktop
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhwloc", "libhwloc.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB8D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lstopo-no-graphics", "lstopo-no-graphics.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB8E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-annotate", "hwloc-annotate.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB8F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-bind", "hwloc-bind.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB91}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-calc", "hwloc-calc.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB92}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-diff", "hwloc-diff.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB93}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-distrib", "hwloc-distrib.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB95}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-info", "hwloc-info.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB96}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-patch", "hwloc-patch.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB97}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lstopo", "lstopo.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB98}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lstopo-win", "lstopo-win.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB99}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hwloc-gather-cpuid", "hwloc-gather-cpuid.vcxproj", "{9DE76C6D-4773-4766-9F93-69C56166CB9A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D} = {9DE76C6D-4773-4766-9F93-69C56166CB8D}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|x64 = Release|x64
+		ReleaseStatic|x64 = ReleaseStatic|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D}.ReleaseStatic|x64.ActiveCfg = ReleaseStatic|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8D}.ReleaseStatic|x64.Build.0 = ReleaseStatic|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8E}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8E}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8E}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8F}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8F}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB8F}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB91}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB91}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB91}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB92}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB92}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB92}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB93}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB93}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB93}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB95}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB95}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB95}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB96}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB96}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB96}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB97}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB97}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB97}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB98}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB98}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB98}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB99}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB99}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB99}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB99}.ReleaseStatic|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB9A}.Release|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB9A}.Release|x64.Build.0 = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB9A}.ReleaseStatic|x64.ActiveCfg = Release|x64
+		{9DE76C6D-4773-4766-9F93-69C56166CB9A}.ReleaseStatic|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

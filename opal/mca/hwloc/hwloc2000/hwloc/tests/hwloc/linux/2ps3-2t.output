@@ -1,0 +1,10 @@
+Machine (P#0 PlatformName=PS3 PlatformModel=SonyPS3 Backend=Linux Architecture=ppc)
+  Core L#0
+    NUMANode L#0 (P#0)
+    PU L#0 (P#0)
+    PU L#1 (P#1)
+depth 0:           1 Machine (type #0)
+ depth 1:          1 Core (type #2)
+  depth 2:         2 PU (type #3)
+Special depth -3:  1 NUMANode (type #13)
+Topology not from this system

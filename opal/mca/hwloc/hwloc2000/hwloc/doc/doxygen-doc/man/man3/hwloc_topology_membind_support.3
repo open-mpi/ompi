@@ -1,0 +1,100 @@
+.TH "hwloc_topology_membind_support" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_topology_membind_support
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned char \fBset_thisproc_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_thisproc_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBset_proc_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_proc_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBset_thisthread_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_thisthread_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBset_area_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_area_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBalloc_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBfirsttouch_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBbind_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBinterleave_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBnexttouch_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBmigrate_membind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_area_memlocation\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Flags describing actual memory binding support for this topology\&. 
+
+A flag may be set even if the feature isn't supported in all cases (e\&.g\&. binding to random sets of non-contiguous objects)\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned char hwloc_topology_membind_support::alloc_membind"
+Allocating a bound memory area is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::bind_membind"
+Bind policy is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::firsttouch_membind"
+First-touch policy is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::get_area_membind"
+Getting the binding of a given memory area is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::get_area_memlocation"
+Getting the last NUMA nodes where a memory area was allocated is supported 
+.SS "unsigned char hwloc_topology_membind_support::get_proc_membind"
+Getting the binding of a whole given process is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::get_thisproc_membind"
+Getting the binding of the whole current process is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::get_thisthread_membind"
+Getting the binding of the current thread only is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::interleave_membind"
+Interleave policy is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::migrate_membind"
+Migration flags is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::nexttouch_membind"
+Next-touch migration policy is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::set_area_membind"
+Binding a given memory area is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::set_proc_membind"
+Binding a whole given process is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::set_thisproc_membind"
+Binding the whole current process is supported\&. 
+.SS "unsigned char hwloc_topology_membind_support::set_thisthread_membind"
+Binding the current thread only is supported\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

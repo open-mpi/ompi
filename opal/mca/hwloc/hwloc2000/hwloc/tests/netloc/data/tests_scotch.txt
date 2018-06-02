@@ -1,0 +1,7 @@
+scotch_arch:
+  testset: scotch
+  copy: scotch=txz plafrim2=txz
+  needed: % plafrim2/netloc/*txt plafrim2/hwloc
+  command:  ./%/test_scotch_get_arch.sh
+  checkfiles: ./%/subarch.scotch ./%/arch.scotch
+

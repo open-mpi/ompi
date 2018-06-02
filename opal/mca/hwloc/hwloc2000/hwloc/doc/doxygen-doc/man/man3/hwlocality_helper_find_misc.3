@@ -1,0 +1,91 @@
+.TH "hwlocality_helper_find_misc" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_helper_find_misc
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_pu_obj_by_os_index\fP (\fBhwloc_topology_t\fP topology, unsigned os_index)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_numanode_obj_by_os_index\fP (\fBhwloc_topology_t\fP topology, unsigned os_index)"
+.br
+.ti -1c
+.RI "unsigned \fBhwloc_get_closest_objs\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP src, \fBhwloc_obj_t\fP *restrict objs, unsigned max)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_obj_below_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type1, unsigned idx1, \fBhwloc_obj_type_t\fP type2, unsigned idx2)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_obj_below_array_by_type\fP (\fBhwloc_topology_t\fP topology, int nr, \fBhwloc_obj_type_t\fP *typev, unsigned *idxv)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Be sure to see the figure in \fBTerms and Definitions\fP that shows a complete topology tree, including depths, child/sibling/cousin relationships, and an example of an asymmetric topology where one package has fewer caches than its peers\&. 
+.SH "Function Documentation"
+.PP 
+.SS "unsigned hwloc_get_closest_objs (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP src, \fBhwloc_obj_t\fP *restrict objs, unsigned max)"
+
+.PP
+Do a depth-first traversal of the topology to find and sort\&. all objects that are at the same depth than \fCsrc\fP\&. Report in \fCobjs\fP up to \fCmax\fP physically closest ones to \fCsrc\fP\&.
+.PP
+\fBReturns:\fP
+.RS 4
+the number of objects returned in \fCobjs\fP\&.
+.PP
+0 if \fCsrc\fP is an I/O object\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+This function requires the \fCsrc\fP object to have a CPU set\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_numanode_obj_by_os_index (\fBhwloc_topology_t\fP topology, unsigned os_index)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Returns the object of type \fBHWLOC_OBJ_NUMANODE\fP with \fCos_index\fP\&. This function is useful for converting a nodeset into the NUMA node objects it contains\&. When retrieving the current binding (e\&.g\&. with \fBhwloc_get_membind()\fP with HWLOC_MEMBIND_BYNODESET), one may iterate over the bits of the resulting nodeset with \fBhwloc_bitmap_foreach_begin()\fP, and find the corresponding NUMA nodes with this function\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_get_obj_below_array_by_type (\fBhwloc_topology_t\fP topology, int nr, \fBhwloc_obj_type_t\fP * typev, unsigned * idxv)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Find an object below a chain of objects specified by types and indexes\&. This is a generalized version of \fBhwloc_get_obj_below_by_type()\fP\&.
+.PP
+Arrays \fCtypev\fP and \fCidxv\fP must contain \fCnr\fP types and indexes\&.
+.PP
+Start from the top system object and walk the arrays \fCtypev\fP and \fCidxv\fP\&. For each type and logical index couple in the arrays, look under the previously found object to find the index-th object of the given type\&. Indexes are specified within the parent, not withing the entire system\&.
+.PP
+For instance, if nr is 3, typev contains NODE, PACKAGE and CORE, and idxv contains 0, 1 and 2, return the third core object below the second package below the first NUMA node\&.
+.PP
+\fBNote:\fP
+.RS 4
+This function requires all these objects and the root object to have a CPU set\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_obj_below_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type1, unsigned idx1, \fBhwloc_obj_type_t\fP type2, unsigned idx2)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Find an object below another object, both specified by types and indexes\&. Start from the top system object and find object of type \fCtype1\fP and logical index \fCidx1\fP\&. Then look below this object and find another object of type \fCtype2\fP and logical index \fCidx2\fP\&. Indexes are specified within the parent, not withing the entire system\&.
+.PP
+For instance, if type1 is PACKAGE, idx1 is 2, type2 is CORE and idx2 is 3, return the fourth core object below the third package\&.
+.PP
+\fBNote:\fP
+.RS 4
+This function requires these objects to have a CPU set\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_pu_obj_by_os_index (\fBhwloc_topology_t\fP topology, unsigned os_index)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Returns the object of type \fBHWLOC_OBJ_PU\fP with \fCos_index\fP\&. This function is useful for converting a CPU set into the PU objects it contains\&. When retrieving the current binding (e\&.g\&. with \fBhwloc_get_cpubind()\fP), one may iterate over the bits of the resulting CPU set with \fBhwloc_bitmap_foreach_begin()\fP, and find the corresponding PUs with this function\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

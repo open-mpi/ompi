@@ -1,0 +1,361 @@
+depth 0:           1 Machine (type #0)
+ depth 1:          2 Group0 (type #12)
+  depth 2:         6 Core (type #2)
+   depth 3:        24 PU (type #3)
+Special depth -3:  2 NUMANode (type #13)
+
+depth 0:           1 Machine (type #0)
+ depth 1:          2 Group0 (type #12)
+  depth 2:         6 Core (type #2)
+   depth 3:        24 PU (type #3)
+Special depth -3:  2 NUMANode (type #13)
+
+discovery:pu = 1
+discovery:numa = 1
+discovery:numa_memory = 1
+cpubind:set_thisproc_cpubind = 0
+cpubind:get_thisproc_cpubind = 0
+cpubind:set_proc_cpubind = 0
+cpubind:get_proc_cpubind = 0
+cpubind:set_thisthread_cpubind = 0
+cpubind:get_thisthread_cpubind = 0
+cpubind:set_thread_cpubind = 0
+cpubind:get_thread_cpubind = 0
+cpubind:get_thisproc_last_cpu_location = 0
+cpubind:get_proc_last_cpu_location = 0
+cpubind:get_thisthread_last_cpu_location = 0
+membind:set_thisproc_membind = 0
+membind:get_thisproc_membind = 0
+membind:set_proc_membind = 0
+membind:get_proc_membind = 0
+membind:set_thisthread_membind = 0
+membind:get_thisthread_membind = 0
+membind:set_area_membind = 0
+membind:get_area_membind = 0
+membind:alloc_membind = 0
+membind:firsttouch_membind = 0
+membind:bind_membind = 0
+membind:interleave_membind = 0
+membind:nexttouch_membind = 0
+membind:migrate_membind = 0
+membind:get_area_memlocation = 0
+
+
+Core L#2
+ type = Core
+ full type = Core
+ logical index = 2
+ os index = 2
+ gp index = 16
+ depth = 2
+ sibling rank = 2
+ children = 4
+ memory children = 0
+ i/o children = 0
+ misc children = 0
+ cpuset = 0x00000f00
+ complete cpuset = 0x00000f00
+ allowed cpuset = 0x00000f00
+ nodeset = 0x00000001
+ complete nodeset = 0x00000001
+ allowed nodeset = 0x00000001
+ symmetric subtree = 1
+Core L#3
+ type = Core
+ full type = Core
+ logical index = 3
+ os index = 3
+ gp index = 23
+ depth = 2
+ sibling rank = 0
+ children = 4
+ memory children = 0
+ i/o children = 0
+ misc children = 0
+ cpuset = 0x0000f000
+ complete cpuset = 0x0000f000
+ allowed cpuset = 0x0000f000
+ nodeset = 0x00000002
+ complete nodeset = 0x00000002
+ allowed nodeset = 0x00000002
+ symmetric subtree = 1
+Core L#4
+ type = Core
+ full type = Core
+ logical index = 4
+ os index = 4
+ gp index = 28
+ depth = 2
+ sibling rank = 1
+ children = 4
+ memory children = 0
+ i/o children = 0
+ misc children = 0
+ cpuset = 0x000f0000
+ complete cpuset = 0x000f0000
+ allowed cpuset = 0x000f0000
+ nodeset = 0x00000002
+ complete nodeset = 0x00000002
+ allowed nodeset = 0x00000002
+ symmetric subtree = 1
+
+0.0: PU L#10
+0.0:  type = PU
+0.0:  full type = PU
+0.0:  logical index = 10
+0.0:  os index = 10
+0.0:  gp index = 14
+0.0:  depth = 3
+0.0:  sibling rank = 2
+0.0:  children = 0
+0.0:  memory children = 0
+0.0:  i/o children = 0
+0.0:  misc children = 0
+0.0:  cpuset = 0x00000400
+0.0:  complete cpuset = 0x00000400
+0.0:  allowed cpuset = 0x00000400
+0.0:  nodeset = 0x00000001
+0.0:  complete nodeset = 0x00000001
+0.0:  allowed nodeset = 0x00000001
+0.0:  symmetric subtree = 1
+0.1: Core L#2 = parent #1 of PU L#10
+0.1:  type = Core
+0.1:  full type = Core
+0.1:  logical index = 2
+0.1:  os index = 2
+0.1:  gp index = 16
+0.1:  depth = 2
+0.1:  sibling rank = 2
+0.1:  children = 4
+0.1:  memory children = 0
+0.1:  i/o children = 0
+0.1:  misc children = 0
+0.1:  cpuset = 0x00000f00
+0.1:  complete cpuset = 0x00000f00
+0.1:  allowed cpuset = 0x00000f00
+0.1:  nodeset = 0x00000001
+0.1:  complete nodeset = 0x00000001
+0.1:  allowed nodeset = 0x00000001
+0.1:  symmetric subtree = 1
+0.2: Group0 L#0 = parent #2 of PU L#10
+0.2:  type = Group
+0.2:  full type = Group0
+0.2:  logical index = 0
+0.2:  gp index = 18
+0.2:  depth = 1
+0.2:  sibling rank = 0
+0.2:  children = 3
+0.2:  memory children = 1
+0.2:  i/o children = 0
+0.2:  misc children = 0
+0.2:  total memory = 1073741824
+0.2:  cpuset = 0x00000fff
+0.2:  complete cpuset = 0x00000fff
+0.2:  allowed cpuset = 0x00000fff
+0.2:  nodeset = 0x00000001
+0.2:  complete nodeset = 0x00000001
+0.2:  allowed nodeset = 0x00000001
+0.2:  attr group depth = 0
+0.2:  symmetric subtree = 1
+0.3: Machine L#0 = parent #3 of PU L#10
+0.3:  type = Machine
+0.3:  full type = Machine
+0.3:  logical index = 0
+0.3:  os index = 0
+0.3:  gp index = 1
+0.3:  depth = 0
+0.3:  sibling rank = 0
+0.3:  children = 2
+0.3:  memory children = 0
+0.3:  i/o children = 0
+0.3:  misc children = 0
+0.3:  total memory = 2147483648
+0.3:  cpuset = 0x00ffffff
+0.3:  complete cpuset = 0x00ffffff
+0.3:  allowed cpuset = 0x00ffffff
+0.3:  nodeset = 0x00000003
+0.3:  complete nodeset = 0x00000003
+0.3:  allowed nodeset = 0x00000003
+0.3:  symmetric subtree = 1
+0.3:  info Backend = Synthetic
+0.3:  info SyntheticDescription = node:2 core:3 pu:4
+1.0: PU L#11
+1.0:  type = PU
+1.0:  full type = PU
+1.0:  logical index = 11
+1.0:  os index = 11
+1.0:  gp index = 15
+1.0:  depth = 3
+1.0:  sibling rank = 3
+1.0:  children = 0
+1.0:  memory children = 0
+1.0:  i/o children = 0
+1.0:  misc children = 0
+1.0:  cpuset = 0x00000800
+1.0:  complete cpuset = 0x00000800
+1.0:  allowed cpuset = 0x00000800
+1.0:  nodeset = 0x00000001
+1.0:  complete nodeset = 0x00000001
+1.0:  allowed nodeset = 0x00000001
+1.0:  symmetric subtree = 1
+1.1: Core L#2 = parent #1 of PU L#11
+1.1:  type = Core
+1.1:  full type = Core
+1.1:  logical index = 2
+1.1:  os index = 2
+1.1:  gp index = 16
+1.1:  depth = 2
+1.1:  sibling rank = 2
+1.1:  children = 4
+1.1:  memory children = 0
+1.1:  i/o children = 0
+1.1:  misc children = 0
+1.1:  cpuset = 0x00000f00
+1.1:  complete cpuset = 0x00000f00
+1.1:  allowed cpuset = 0x00000f00
+1.1:  nodeset = 0x00000001
+1.1:  complete nodeset = 0x00000001
+1.1:  allowed nodeset = 0x00000001
+1.1:  symmetric subtree = 1
+1.2: Group0 L#0 = parent #2 of PU L#11
+1.2:  type = Group
+1.2:  full type = Group0
+1.2:  logical index = 0
+1.2:  gp index = 18
+1.2:  depth = 1
+1.2:  sibling rank = 0
+1.2:  children = 3
+1.2:  memory children = 1
+1.2:  i/o children = 0
+1.2:  misc children = 0
+1.2:  total memory = 1073741824
+1.2:  cpuset = 0x00000fff
+1.2:  complete cpuset = 0x00000fff
+1.2:  allowed cpuset = 0x00000fff
+1.2:  nodeset = 0x00000001
+1.2:  complete nodeset = 0x00000001
+1.2:  allowed nodeset = 0x00000001
+1.2:  attr group depth = 0
+1.2:  symmetric subtree = 1
+1.3: Machine L#0 = parent #3 of PU L#11
+1.3:  type = Machine
+1.3:  full type = Machine
+1.3:  logical index = 0
+1.3:  os index = 0
+1.3:  gp index = 1
+1.3:  depth = 0
+1.3:  sibling rank = 0
+1.3:  children = 2
+1.3:  memory children = 0
+1.3:  i/o children = 0
+1.3:  misc children = 0
+1.3:  total memory = 2147483648
+1.3:  cpuset = 0x00ffffff
+1.3:  complete cpuset = 0x00ffffff
+1.3:  allowed cpuset = 0x00ffffff
+1.3:  nodeset = 0x00000003
+1.3:  complete nodeset = 0x00000003
+1.3:  allowed nodeset = 0x00000003
+1.3:  symmetric subtree = 1
+1.3:  info Backend = Synthetic
+1.3:  info SyntheticDescription = node:2 core:3 pu:4
+
+Core L#1 = parent of PU L#7
+ type = Core
+ full type = Core
+ logical index = 1
+ os index = 1
+ gp index = 11
+ depth = 2
+ sibling rank = 1
+ children = 4
+ memory children = 0
+ i/o children = 0
+ misc children = 0
+ cpuset = 0x000000f0
+ complete cpuset = 0x000000f0
+ allowed cpuset = 0x000000f0
+ nodeset = 0x00000001
+ complete nodeset = 0x00000001
+ allowed nodeset = 0x00000001
+ symmetric subtree = 1
+Core L#2 = parent of PU L#8
+ type = Core
+ full type = Core
+ logical index = 2
+ os index = 2
+ gp index = 16
+ depth = 2
+ sibling rank = 2
+ children = 4
+ memory children = 0
+ i/o children = 0
+ misc children = 0
+ cpuset = 0x00000f00
+ complete cpuset = 0x00000f00
+ allowed cpuset = 0x00000f00
+ nodeset = 0x00000001
+ complete nodeset = 0x00000001
+ allowed nodeset = 0x00000001
+ symmetric subtree = 1
+Core L#2 = parent of PU L#9
+ type = Core
+ full type = Core
+ logical index = 2
+ os index = 2
+ gp index = 16
+ depth = 2
+ sibling rank = 2
+ children = 4
+ memory children = 0
+ i/o children = 0
+ misc children = 0
+ cpuset = 0x00000f00
+ complete cpuset = 0x00000f00
+ allowed cpuset = 0x00000f00
+ nodeset = 0x00000001
+ complete nodeset = 0x00000001
+ allowed nodeset = 0x00000001
+ symmetric subtree = 1
+
+L2Cache L#3 = parent of PU L#12
+ type = L2Cache
+ full type = L2Cache
+ logical index = 3
+ gp index = 30
+ depth = 3
+ sibling rank = 1
+ children = 2
+ memory children = 0
+ i/o children = 0
+ misc children = 0
+ cpuset = 0x0000f000
+ complete cpuset = 0x0000f000
+ allowed cpuset = 0x0000f000
+ nodeset = 0x00000001
+ complete nodeset = 0x00000001
+ allowed nodeset = 0x00000001
+ attr cache depth = 2
+ attr cache type = Unified
+ attr cache size = 4194304
+ attr cache line size = 64
+ symmetric subtree = 1
+
+L1dCache:3
+L1dCache:4
+L1dCache:4
+L1dCache:5
+
+L1dCache:2
+L1dCache:3
+L2Cache:6
+L2Cache:7
+
+L1dCache:4
+L1dCache:5
+L1dCache:6
+L1dCache:7
+L1dCache:8
+L1dCache:9
+L1dCache:10
+L1dCache:11

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topology SYSTEM "hwloc.dtd">
+<topology>
+  <object type="NUMANode" os_index="0" cpuset="0x00000003" complete_cpuset="0x00000003" online_cpuset="0x00000003" allowed_cpuset="0x00000003" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001" local_memory="2147074048">
+    <page_type size="4096" count="0"/>
+    <info name="hwlocVersion" value="v1.11-20170902.0906.git16cb39b"/>
+    <info name="ProcessName" value="lstopo-no-graphics"/>
+    <object type="Package" os_index="0" cpuset="0x00000001" complete_cpuset="0x00000001" online_cpuset="0x00000001" allowed_cpuset="0x00000001" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001">
+      <info name="CPUModel" value="QEMU Virtual CPU version (cpu64-rhel6)"/>
+      <info name="CPUVendor" value="GenuineIntel"/>
+      <info name="CPUFamilyNumber" value="6"/>
+      <info name="CPUModelNumber" value="13"/>
+      <info name="CPUStepping" value="3"/>
+      <object type="Cache" os_index="0" cpuset="0x00000001" complete_cpuset="0x00000001" online_cpuset="0x00000001" allowed_cpuset="0x00000001" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001" cache_size="4194304" depth="2" cache_linesize="64" cache_associativity="16" cache_type="0">
+        <info name="Inclusive" value="0"/>
+        <object type="Cache" os_index="0" cpuset="0x00000001" complete_cpuset="0x00000001" online_cpuset="0x00000001" allowed_cpuset="0x00000001" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001" cache_size="32768" depth="1" cache_linesize="64" cache_associativity="8" cache_type="1">
+          <info name="Inclusive" value="0"/>
+          <object type="Cache" os_index="0" cpuset="0x00000001" complete_cpuset="0x00000001" online_cpuset="0x00000001" allowed_cpuset="0x00000001" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001" cache_size="32768" depth="1" cache_linesize="64" cache_associativity="8" cache_type="2">
+            <info name="Inclusive" value="0"/>
+            <object type="Core" os_index="0" cpuset="0x00000001" complete_cpuset="0x00000001" online_cpuset="0x00000001" allowed_cpuset="0x00000001" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001">
+              <object type="PU" os_index="0" cpuset="0x00000001" complete_cpuset="0x00000001" online_cpuset="0x00000001" allowed_cpuset="0x00000001" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001"/>
+            </object>
+          </object>
+        </object>
+      </object>
+    </object>
+    <object type="Package" os_index="1" cpuset="0x00000002" complete_cpuset="0x00000002" online_cpuset="0x00000002" allowed_cpuset="0x00000002" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001">
+      <info name="CPUModel" value="QEMU Virtual CPU version (cpu64-rhel6)"/>
+      <info name="CPUVendor" value="GenuineIntel"/>
+      <info name="CPUFamilyNumber" value="6"/>
+      <info name="CPUModelNumber" value="13"/>
+      <info name="CPUStepping" value="3"/>
+      <object type="Cache" os_index="1" cpuset="0x00000002" complete_cpuset="0x00000002" online_cpuset="0x00000002" allowed_cpuset="0x00000002" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001" cache_size="4194304" depth="2" cache_linesize="64" cache_associativity="16" cache_type="0">
+        <info name="Inclusive" value="0"/>
+        <object type="Cache" os_index="1" cpuset="0x00000002" complete_cpuset="0x00000002" online_cpuset="0x00000002" allowed_cpuset="0x00000002" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001" cache_size="32768" depth="1" cache_linesize="64" cache_associativity="8" cache_type="1">
+          <info name="Inclusive" value="0"/>
+          <object type="Cache" os_index="1" cpuset="0x00000002" complete_cpuset="0x00000002" online_cpuset="0x00000002" allowed_cpuset="0x00000002" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001" cache_size="32768" depth="1" cache_linesize="64" cache_associativity="8" cache_type="2">
+            <info name="Inclusive" value="0"/>
+            <object type="Core" os_index="1" cpuset="0x00000002" complete_cpuset="0x00000002" online_cpuset="0x00000002" allowed_cpuset="0x00000002" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001">
+              <object type="PU" os_index="1" cpuset="0x00000002" complete_cpuset="0x00000002" online_cpuset="0x00000002" allowed_cpuset="0x00000002" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001"/>
+            </object>
+          </object>
+        </object>
+      </object>
+    </object>
+  </object>
+</topology>

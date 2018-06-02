@@ -1,0 +1,145 @@
+Machine (P#0 total=67106960KB DMIBoardVendor="TYAN Computer Corp" DMIBoardName="S4881 " DMIBoardVersion=S4881 DMIBoardAssetTag= Backend=Linux Architecture=x86_64 hwlocVersion=1.11.4 ProcessName=lstopo)
+  Group0 L#0 (total=33552528KB)
+    Package L#0 (P#0 total=8388608KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#0 (P#1 local=8388608KB total=8388608KB)
+      L2Cache L#0 (size=1024KB linesize=64 ways=16)
+        L1dCache L#0 (size=64KB linesize=64 ways=2)
+          L1iCache L#0 (size=64KB linesize=64 ways=2)
+            Core L#0 (P#0)
+              PU L#0 (P#0)
+      L2Cache L#1 (size=1024KB linesize=64 ways=16)
+        L1dCache L#1 (size=64KB linesize=64 ways=2)
+          L1iCache L#1 (size=64KB linesize=64 ways=2)
+            Core L#1 (P#1)
+              PU L#1 (P#1)
+    Package L#1 (P#1 total=8386704KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#1 (P#0 local=8386704KB total=8386704KB)
+      L2Cache L#2 (size=1024KB linesize=64 ways=16)
+        L1dCache L#2 (size=64KB linesize=64 ways=2)
+          L1iCache L#2 (size=64KB linesize=64 ways=2)
+            Core L#2 (P#2)
+              PU L#2 (P#2)
+      L2Cache L#3 (size=1024KB linesize=64 ways=16)
+        L1dCache L#3 (size=64KB linesize=64 ways=2)
+          L1iCache L#3 (size=64KB linesize=64 ways=2)
+            Core L#3 (P#3)
+              PU L#3 (P#3)
+    Package L#2 (P#2 total=8388608KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#2 (P#2 local=8388608KB total=8388608KB)
+      L2Cache L#4 (size=1024KB linesize=64 ways=16)
+        L1dCache L#4 (size=64KB linesize=64 ways=2)
+          L1iCache L#4 (size=64KB linesize=64 ways=2)
+            Core L#4 (P#4)
+              PU L#4 (P#4)
+      L2Cache L#5 (size=1024KB linesize=64 ways=16)
+        L1dCache L#5 (size=64KB linesize=64 ways=2)
+          L1iCache L#5 (size=64KB linesize=64 ways=2)
+            Core L#5 (P#5)
+              PU L#5 (P#5)
+    Package L#3 (P#3 total=8388608KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#3 (P#5 local=8388608KB total=8388608KB)
+      L2Cache L#6 (size=1024KB linesize=64 ways=16)
+        L1dCache L#6 (size=64KB linesize=64 ways=2)
+          L1iCache L#6 (size=64KB linesize=64 ways=2)
+            Core L#6 (P#6)
+              PU L#6 (P#6)
+      L2Cache L#7 (size=1024KB linesize=64 ways=16)
+        L1dCache L#7 (size=64KB linesize=64 ways=2)
+          L1iCache L#7 (size=64KB linesize=64 ways=2)
+            Core L#7 (P#7)
+              PU L#7 (P#7)
+  Group0 L#1 (total=33554432KB)
+    Package L#4 (P#4 total=8388608KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#4 (P#4 local=8388608KB total=8388608KB)
+      L2Cache L#8 (size=1024KB linesize=64 ways=16)
+        L1dCache L#8 (size=64KB linesize=64 ways=2)
+          L1iCache L#8 (size=64KB linesize=64 ways=2)
+            Core L#8 (P#8)
+              PU L#8 (P#8)
+      L2Cache L#9 (size=1024KB linesize=64 ways=16)
+        L1dCache L#9 (size=64KB linesize=64 ways=2)
+          L1iCache L#9 (size=64KB linesize=64 ways=2)
+            Core L#9 (P#9)
+              PU L#9 (P#9)
+    Package L#5 (P#5 total=8388608KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#5 (P#3 local=8388608KB total=8388608KB)
+      L2Cache L#10 (size=1024KB linesize=64 ways=16)
+        L1dCache L#10 (size=64KB linesize=64 ways=2)
+          L1iCache L#10 (size=64KB linesize=64 ways=2)
+            Core L#10 (P#10)
+              PU L#10 (P#10)
+      L2Cache L#11 (size=1024KB linesize=64 ways=16)
+        L1dCache L#11 (size=64KB linesize=64 ways=2)
+          L1iCache L#11 (size=64KB linesize=64 ways=2)
+            Core L#11 (P#11)
+              PU L#11 (P#11)
+    Package L#6 (P#6 total=8388608KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#6 (P#6 local=8388608KB total=8388608KB)
+      L2Cache L#12 (size=1024KB linesize=64 ways=16)
+        L1dCache L#12 (size=64KB linesize=64 ways=2)
+          L1iCache L#12 (size=64KB linesize=64 ways=2)
+            Core L#12 (P#12)
+              PU L#12 (P#12)
+      L2Cache L#13 (size=1024KB linesize=64 ways=16)
+        L1dCache L#13 (size=64KB linesize=64 ways=2)
+          L1iCache L#13 (size=64KB linesize=64 ways=2)
+            Core L#13 (P#13)
+              PU L#13 (P#13)
+    Package L#7 (P#7 total=8388608KB CPUVendor=AuthenticAMD CPUFamilyNumber=15 CPUModelNumber=33 CPUModel="Dual Core AMD Opteron(tm) Processor 865" CPUStepping=0)
+      NUMANode L#7 (P#7 local=8388608KB total=8388608KB)
+      L2Cache L#14 (size=1024KB linesize=64 ways=16)
+        L1dCache L#14 (size=64KB linesize=64 ways=2)
+          L1iCache L#14 (size=64KB linesize=64 ways=2)
+            Core L#14 (P#14)
+              PU L#14 (P#14)
+      L2Cache L#15 (size=1024KB linesize=64 ways=16)
+        L1dCache L#15 (size=64KB linesize=64 ways=2)
+          L1iCache L#15 (size=64KB linesize=64 ways=2)
+            Core L#15 (P#15)
+              PU L#15 (P#15)
+depth 0:           1 Machine (type #0)
+ depth 1:          2 Group0 (type #12)
+  depth 2:         8 Package (type #1)
+   depth 3:        16 L2Cache (type #5)
+    depth 4:       16 L1dCache (type #4)
+     depth 5:      16 L1iCache (type #9)
+      depth 6:     16 Core (type #2)
+       depth 7:    16 PU (type #3)
+Special depth -3:  8 NUMANode (type #13)
+Relative latency matrix (kind 5) between 8 NUMANodes (depth -3) by logical indexes:
+  index     0     1     2     3     4     5     6     7
+      0    10    20    20    20    20    20    20    20
+      1    20    10    20    20    20    20    20    20
+      2    20    20    10    20    20    20    20    20
+      3    20    20    20    10    20    20    20    20
+      4    20    20    20    20    10    20    20    20
+      5    20    20    20    20    20    10    20    20
+      6    20    20    20    20    20    20    10    20
+      7    20    20    20    20    20    20    20    10
+Relative latency matrix (kind 5) between 8 Packages (depth 2) by logical indexes:
+  index     1     0     3     6     4     7     2     5
+      1    10    20    40    40    80    80    80    80
+      0    20    10    40    40    80    80    80    80
+      3    40    40    10    20    80    80    80    80
+      6    40    40    20    10    80    80    80    80
+      4    80    80    80    80    10    20    40    40
+      7    80    80    80    80    20    10    40    40
+      2    80    80    80    80    40    40    10    20
+      5    80    80    80    80    40    40    20    10
+Relative latency matrix (kind 5) between 4 PUs (depth 7) by logical indexes:
+  index     0     1     2     3
+      0   145   200   300   400
+      1   567   687   457  2300
+      2   450  12300    45    67
+      3  4600  345600   100   100
+Relative latency matrix (kind 5) between 8 Cores (depth 6) by logical indexes:
+  index     0     1     2     3     4     5     6     7
+      0    10    20    40    40    80    80    80    80
+      1    20    10    40    40    80    80    80    80
+      2    40    40    10    20    80    80    80    80
+      3    40    40    20    10    80    80    80    80
+      4    80    80    80    80    10    20    40    40
+      5    80    80    80    80    20    10    40    40
+      6    80    80    80    80    40    40    10    20
+      7    80    80    80    80    40    40    20    10
+Topology not from this system

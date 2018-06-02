@@ -1,0 +1,56 @@
+.TH "hwlocality_object_sets" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_object_sets
+.SH SYNOPSIS
+.br
+.PP
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBhwloc_bitmap_t\fP \fBhwloc_cpuset_t\fP"
+.br
+.ti -1c
+.RI "typedef \fBhwloc_const_bitmap_t\fP \fBhwloc_const_cpuset_t\fP"
+.br
+.ti -1c
+.RI "typedef \fBhwloc_bitmap_t\fP \fBhwloc_nodeset_t\fP"
+.br
+.ti -1c
+.RI "typedef \fBhwloc_const_bitmap_t\fP \fBhwloc_const_nodeset_t\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Hwloc uses bitmaps to represent two distinct kinds of object sets: CPU sets (\fBhwloc_cpuset_t\fP) and NUMA node sets (\fBhwloc_nodeset_t\fP)\&. These types are both typedefs to a common back end type (\fBhwloc_bitmap_t\fP), and therefore all the hwloc bitmap functions are applicable to both \fBhwloc_cpuset_t\fP and \fBhwloc_nodeset_t\fP (see \fBThe bitmap API\fP)\&.
+.PP
+The rationale for having two different types is that even though the actions one wants to perform on these types are the same (e\&.g\&., enable and disable individual items in the set/mask), they're used in very different contexts: one for specifying which processors to use and one for specifying which NUMA nodes to use\&. Hence, the name difference is really just to reflect the intent of where the type is used\&. 
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef \fBhwloc_const_bitmap_t\fP \fBhwloc_const_cpuset_t\fP"
+
+.PP
+A non-modifiable \fBhwloc_cpuset_t\fP\&. 
+.SS "typedef \fBhwloc_const_bitmap_t\fP \fBhwloc_const_nodeset_t\fP"
+
+.PP
+A non-modifiable \fBhwloc_nodeset_t\fP\&. 
+.SS "typedef \fBhwloc_bitmap_t\fP \fBhwloc_cpuset_t\fP"
+
+.PP
+A CPU set is a bitmap whose bits are set according to CPU physical OS indexes\&. It may be consulted and modified with the bitmap API as any \fBhwloc_bitmap_t\fP (see \fBhwloc/bitmap\&.h\fP)\&.
+.PP
+Each bit may be converted into a PU object using \fBhwloc_get_pu_obj_by_os_index()\fP\&. 
+.SS "typedef \fBhwloc_bitmap_t\fP \fBhwloc_nodeset_t\fP"
+
+.PP
+A node set is a bitmap whose bits are set according to NUMA memory node physical OS indexes\&. It may be consulted and modified with the bitmap API as any \fBhwloc_bitmap_t\fP (see \fBhwloc/bitmap\&.h\fP)\&. Each bit may be converted into a NUMA node object using \fBhwloc_get_numanode_obj_by_os_index()\fP\&.
+.PP
+When binding memory on a system without any NUMA node, the single main memory bank is considered as NUMA node #0\&.
+.PP
+See also \fBConverting between CPU sets and node sets\fP\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

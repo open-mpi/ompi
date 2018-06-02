@@ -1,0 +1,85 @@
+.TH "hwlocality_cuda" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_cuda
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBhwloc_cuda_get_device_pci_ids\fP (\fBhwloc_topology_t\fP topology, CUdevice cudevice, int *domain, int *bus, int *dev)"
+.br
+.ti -1c
+.RI "static int \fBhwloc_cuda_get_device_cpuset\fP (\fBhwloc_topology_t\fP topology, CUdevice cudevice, \fBhwloc_cpuset_t\fP set)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_cuda_get_device_pcidev\fP (\fBhwloc_topology_t\fP topology, CUdevice cudevice)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_cuda_get_device_osdev\fP (\fBhwloc_topology_t\fP topology, CUdevice cudevice)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_cuda_get_device_osdev_by_index\fP (\fBhwloc_topology_t\fP topology, unsigned idx)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This interface offers ways to retrieve topology information about CUDA devices when using the CUDA Driver API\&. 
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_cuda_get_device_cpuset (\fBhwloc_topology_t\fP topology, CUdevice cudevice, \fBhwloc_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the CPU set of logical processors that are physically close to device \fCcudevice\fP\&. Return the CPU set describing the locality of the CUDA device \fCcudevice\fP\&.
+.PP
+Topology \fCtopology\fP and device \fCcudevice\fP must match the local machine\&. I/O devices detection and the CUDA component are not needed in the topology\&.
+.PP
+The function only returns the locality of the device\&. If more information about the device is needed, OS objects should be used instead, see \fBhwloc_cuda_get_device_osdev()\fP and \fBhwloc_cuda_get_device_osdev_by_index()\fP\&.
+.PP
+This function is currently only implemented in a meaningful way for Linux; other systems will simply get a full cpuset\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_cuda_get_device_osdev (\fBhwloc_topology_t\fP topology, CUdevice cudevice)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc OS device object corresponding to CUDA device \fCcudevice\fP\&. Return the hwloc OS device object that describes the given CUDA device \fCcudevice\fP\&. Return NULL if there is none\&.
+.PP
+Topology \fCtopology\fP and device \fCcudevice\fP must match the local machine\&. I/O devices detection and the CUDA component must be enabled in the topology\&. If not, the locality of the object may still be found using \fBhwloc_cuda_get_device_cpuset()\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+This function cannot work if PCI devices are filtered out\&.
+.PP
+The corresponding hwloc PCI device may be found by looking at the result parent pointer (unless PCI devices are filtered out)\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_cuda_get_device_osdev_by_index (\fBhwloc_topology_t\fP topology, unsigned idx)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc OS device object corresponding to the CUDA device whose index is \fCidx\fP\&. Return the OS device object describing the CUDA device whose index is \fCidx\fP\&. Return NULL if there is none\&.
+.PP
+The topology \fCtopology\fP does not necessarily have to match the current machine\&. For instance the topology may be an XML import of a remote host\&. I/O devices detection and the CUDA component must be enabled in the topology\&.
+.PP
+\fBNote:\fP
+.RS 4
+The corresponding PCI device object can be obtained by looking at the OS device parent object (unless PCI devices are filtered out)\&.
+.PP
+This function is identical to \fBhwloc_cudart_get_device_osdev_by_index()\fP\&. 
+.RE
+.PP
+
+.SS "static int hwloc_cuda_get_device_pci_ids (\fBhwloc_topology_t\fP topology, CUdevice cudevice, int * domain, int * bus, int * dev)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Return the domain, bus and device IDs of the CUDA device \fCcudevice\fP\&. Device \fCcudevice\fP must match the local machine\&. 
+.SS "static \fBhwloc_obj_t\fP hwloc_cuda_get_device_pcidev (\fBhwloc_topology_t\fP topology, CUdevice cudevice)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the hwloc PCI device object corresponding to the CUDA device \fCcudevice\fP\&. Return the PCI device object describing the CUDA device \fCcudevice\fP\&. Return NULL if there is none\&.
+.PP
+Topology \fCtopology\fP and device \fCcudevice\fP must match the local machine\&. I/O devices detection must be enabled in topology \fCtopology\fP\&. The CUDA component is not needed in the topology\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

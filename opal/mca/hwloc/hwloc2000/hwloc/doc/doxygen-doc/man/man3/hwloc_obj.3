@@ -1,0 +1,334 @@
+.TH "hwloc_obj" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_obj
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "\fBhwloc_obj_type_t\fP \fBtype\fP"
+.br
+.ti -1c
+.RI "char * \fBsubtype\fP"
+.br
+.ti -1c
+.RI "unsigned \fBos_index\fP"
+.br
+.ti -1c
+.RI "char * \fBname\fP"
+.br
+.ti -1c
+.RI "hwloc_uint64_t \fBtotal_memory\fP"
+.br
+.ti -1c
+.RI "union \fBhwloc_obj_attr_u\fP * \fBattr\fP"
+.br
+.ti -1c
+.RI "int \fBdepth\fP"
+.br
+.ti -1c
+.RI "unsigned \fBlogical_index\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBnext_cousin\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBprev_cousin\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBparent\fP"
+.br
+.ti -1c
+.RI "unsigned \fBsibling_rank\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBnext_sibling\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBprev_sibling\fP"
+.br
+.ti -1c
+.RI "int \fBsymmetric_subtree\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_cpuset_t\fP \fBcpuset\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_cpuset_t\fP \fBcomplete_cpuset\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_nodeset_t\fP \fBnodeset\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_nodeset_t\fP \fBcomplete_nodeset\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_info_s\fP * \fBinfos\fP"
+.br
+.ti -1c
+.RI "unsigned \fBinfos_count\fP"
+.br
+.ti -1c
+.RI "void * \fBuserdata\fP"
+.br
+.ti -1c
+.RI "hwloc_uint64_t \fBgp_index\fP"
+.br
+.in -1c
+.PP
+.RI "\fBList and array of normal children below this object (except Memory, I/O and Misc children)\&.\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "unsigned \fBarity\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP ** \fBchildren\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBfirst_child\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBlast_child\fP"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBList of Memory children below this object\&.\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "unsigned \fBmemory_arity\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBmemory_first_child\fP"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBList of I/O children below this object\&.\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "unsigned \fBio_arity\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBio_first_child\fP"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBList of Misc children below this object\&.\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "unsigned \fBmisc_arity\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_obj\fP * \fBmisc_first_child\fP"
+.br
+.in -1c
+.in -1c
+.SH "Detailed Description"
+.PP 
+Structure of a topology object\&. 
+
+Applications must not modify any field except \fC\fBhwloc_obj\&.userdata\fP\fP\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned hwloc_obj::arity"
+
+.PP
+Number of normal children\&. Memory, Misc and I/O children are not listed here but rather in their dedicated children list\&. 
+.SS "union \fBhwloc_obj_attr_u\fP* hwloc_obj::attr"
+
+.PP
+Object type-specific Attributes, may be \fCNULL\fP if no attribute value was found\&. 
+.SS "struct \fBhwloc_obj\fP** hwloc_obj::children"
+
+.PP
+Normal children, \fCchildren\fP[0 \&.\&. arity -1]\&. 
+.SS "\fBhwloc_cpuset_t\fP hwloc_obj::complete_cpuset"
+
+.PP
+The complete CPU set of logical processors of this object,\&. This may include not only the same as the cpuset field, but also some CPUs for which topology information is unknown or incomplete, some offlines CPUs, and the CPUs that are ignored when the \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP flag is not set\&. Thus no corresponding PU object may be found in the topology, because the precise position is undefined\&. It is however known that it would be somewhere under this object\&.
+.PP
+\fBNote:\fP
+.RS 4
+Its value must not be changed, \fBhwloc_bitmap_dup()\fP must be used instead\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_nodeset_t\fP hwloc_obj::complete_nodeset"
+
+.PP
+The complete NUMA node set of this object,\&. This may include not only the same as the nodeset field, but also some NUMA nodes for which topology information is unknown or incomplete, some offlines nodes, and the nodes that are ignored when the \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP flag is not set\&. Thus no corresponding NUMA node object may be found in the topology, because the precise position is undefined\&. It is however known that it would be somewhere under this object\&.
+.PP
+If there are no NUMA nodes in the machine, all the memory is close to this object, so only the first bit is set in \fCcomplete_nodeset\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+Its value must not be changed, \fBhwloc_bitmap_dup()\fP must be used instead\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_cpuset_t\fP hwloc_obj::cpuset"
+
+.PP
+CPUs covered by this object\&. This is the set of CPUs for which there are PU objects in the topology under this object, i\&.e\&. which are known to be physically contained in this object and known how (the children path between this object and the PU objects)\&.
+.PP
+If the \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP configuration flag is set, some of these CPUs may not be allowed for binding, see \fBhwloc_topology_get_allowed_cpuset()\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+All objects have non-NULL CPU and node sets except Misc and I/O objects\&.
+.PP
+Its value must not be changed, \fBhwloc_bitmap_dup()\fP must be used instead\&. 
+.RE
+.PP
+
+.SS "int hwloc_obj::depth"
+
+.PP
+Vertical index in the hierarchy\&. For normal objects, this is the depth of the horizontal level that contains this object and its cousins of the same type\&. If the topology is symmetric, this is equal to the parent depth plus one, and also equal to the number of parent/child links from the root object to here\&.
+.PP
+For special objects (NUMA nodes, I/O and Misc) that are not in the main tree, this is a special negative value that corresponds to their dedicated level, see \fBhwloc_get_type_depth()\fP and \fBhwloc_get_type_depth_e\fP\&. Those special values can be passed to hwloc functions such \fBhwloc_get_nbobjs_by_depth()\fP as usual\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::first_child"
+
+.PP
+First normal child\&. 
+.SS "hwloc_uint64_t hwloc_obj::gp_index"
+
+.PP
+Global persistent index\&. Generated by hwloc, unique across the topology (contrary to os_index) and persistent across topology changes (contrary to logical_index)\&. Mostly used internally, but could also be used by application to identify objects\&. 
+.SS "struct \fBhwloc_info_s\fP* hwloc_obj::infos"
+
+.PP
+Array of stringified info type=name\&. 
+.SS "unsigned hwloc_obj::infos_count"
+
+.PP
+Size of infos array\&. 
+.SS "unsigned hwloc_obj::io_arity"
+
+.PP
+Number of I/O children\&. These children are listed in \fCio_first_child\fP\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::io_first_child"
+
+.PP
+First I/O child\&. Bridges, PCI and OS devices are listed here (\fCio_arity\fP and \fCio_first_child\fP) instead of in the normal children list\&. See also \fBhwloc_obj_type_is_io()\fP\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::last_child"
+
+.PP
+Last normal child\&. 
+.SS "unsigned hwloc_obj::logical_index"
+
+.PP
+Horizontal index in the whole list of similar objects, hence guaranteed unique across the entire machine\&. Could be a 'cousin_rank' since it's the rank within the 'cousin' list below Note that this index may change when restricting the topology or when inserting a group\&. 
+.SS "unsigned hwloc_obj::memory_arity"
+
+.PP
+Number of Memory children\&. These children are listed in \fCmemory_first_child\fP\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::memory_first_child"
+
+.PP
+First Memory child\&. NUMA nodes are listed here (\fCmemory_arity\fP and \fCmemory_first_child\fP) instead of in the normal children list\&. See also \fBhwloc_obj_type_is_memory()\fP\&. 
+.SS "unsigned hwloc_obj::misc_arity"
+
+.PP
+Number of Misc children\&. These children are listed in \fCmisc_first_child\fP\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::misc_first_child"
+
+.PP
+First Misc child\&. Misc objects are listed here (\fCmisc_arity\fP and \fCmisc_first_child\fP) instead of in the normal children list\&. 
+.SS "char* hwloc_obj::name"
+
+.PP
+Object-specific name if any\&. Mostly used for identifying OS devices and Misc objects where a name string is more useful than numerical indexes\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::next_cousin"
+
+.PP
+Next object of same type and depth\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::next_sibling"
+
+.PP
+Next object below the same parent (inside the same list of children)\&. 
+.SS "\fBhwloc_nodeset_t\fP hwloc_obj::nodeset"
+
+.PP
+NUMA nodes covered by this object or containing this object\&. This is the set of NUMA nodes for which there are NUMA node objects in the topology under or above this object, i\&.e\&. which are known to be physically contained in this object or containing it and known how (the children path between this object and the NUMA node objects)\&.
+.PP
+In the end, these nodes are those that are close to the current object\&.
+.PP
+If the \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP configuration flag is set, some of these nodes may not be allowed for allocation, see \fBhwloc_topology_get_allowed_nodeset()\fP\&.
+.PP
+If there are no NUMA nodes in the machine, all the memory is close to this object, so only the first bit may be set in \fCnodeset\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+All objects have non-NULL CPU and node sets except Misc and I/O objects\&.
+.PP
+Its value must not be changed, \fBhwloc_bitmap_dup()\fP must be used instead\&. 
+.RE
+.PP
+
+.SS "unsigned hwloc_obj::os_index"
+
+.PP
+OS-provided physical index number\&. It is not guaranteed unique across the entire machine, except for PUs and NUMA nodes\&. Set to HWLOC_UNKNOWN_INDEX if unknown or irrelevant for this object\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::parent"
+
+.PP
+Parent, \fCNULL\fP if root (Machine object) 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::prev_cousin"
+
+.PP
+Previous object of same type and depth\&. 
+.SS "struct \fBhwloc_obj\fP* hwloc_obj::prev_sibling"
+
+.PP
+Previous object below the same parent (inside the same list of children)\&. 
+.SS "unsigned hwloc_obj::sibling_rank"
+
+.PP
+Index in parent's \fCchildren\fP[] array\&. Or the index in parent's Memory, I/O or Misc children list\&. 
+.SS "char* hwloc_obj::subtype"
+
+.PP
+Subtype string to better describe the type field\&. 
+.SS "int hwloc_obj::symmetric_subtree"
+
+.PP
+Set if the subtree of normal objects below this object is symmetric, which means all normal children and their children have identical subtrees\&. Memory, I/O and Misc children are ignored\&.
+.PP
+If set in the topology root object, lstopo may export the topology as a synthetic string\&. 
+.SS "hwloc_uint64_t hwloc_obj::total_memory"
+
+.PP
+Total memory (in bytes) in NUMA nodes below this object\&. 
+.SS "\fBhwloc_obj_type_t\fP hwloc_obj::type"
+
+.PP
+Type of object\&. 
+.SS "void* hwloc_obj::userdata"
+
+.PP
+Application-given private data pointer, initialized to \fCNULL\fP, use it as you wish\&. See \fBhwloc_topology_set_userdata_export_callback()\fP in \fBhwloc/export\&.h\fP if you wish to export this field to XML\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

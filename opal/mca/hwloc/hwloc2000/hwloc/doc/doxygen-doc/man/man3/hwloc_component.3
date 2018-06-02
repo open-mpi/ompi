@@ -1,0 +1,92 @@
+.TH "hwloc_component" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_component
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <plugins\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned \fBabi\fP"
+.br
+.ti -1c
+.RI "int(* \fBinit\fP )(unsigned long \fBflags\fP)"
+.br
+.ti -1c
+.RI "void(* \fBfinalize\fP )(unsigned long \fBflags\fP)"
+.br
+.ti -1c
+.RI "\fBhwloc_component_type_t\fP \fBtype\fP"
+.br
+.ti -1c
+.RI "unsigned long \fBflags\fP"
+.br
+.ti -1c
+.RI "void * \fBdata\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Generic component structure\&. 
+
+Generic components structure, either statically listed by configure in static-components\&.h or dynamically loaded as a plugin\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned hwloc_component::abi"
+
+.PP
+Component ABI version, set to \fBHWLOC_COMPONENT_ABI\fP\&. 
+.SS "void* hwloc_component::data"
+
+.PP
+Component data, pointing to a struct \fBhwloc_disc_component\fP or struct hwloc_xml_component\&. 
+.SS "void(* hwloc_component::finalize) (unsigned long \fBflags\fP)"
+
+.PP
+Process-wide component termination callback\&. This optional callback is called after unregistering the component from the hwloc core (before unloading the plugin)\&.
+.PP
+\fCflags\fP is always 0 for now\&.
+.PP
+\fBNote:\fP
+.RS 4
+If the component uses ltdl for loading its own plugins, it should load/unload them only in \fBinit()\fP and \fBfinalize()\fP, to avoid race conditions with hwloc's use of ltdl\&. 
+.RE
+.PP
+
+.SS "unsigned long hwloc_component::flags"
+
+.PP
+Component flags, unused for now\&. 
+.SS "int(* hwloc_component::init) (unsigned long \fBflags\fP)"
+
+.PP
+Process-wide component initialization callback\&. This optional callback is called when the component is registered to the hwloc core (after loading the plugin)\&.
+.PP
+When the component is built as a plugin, this callback should call hwloc_check_plugin_namespace() and return an negative error code on error\&.
+.PP
+\fCflags\fP is always 0 for now\&.
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, or a negative code on error\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+If the component uses ltdl for loading its own plugins, it should load/unload them only in \fBinit()\fP and \fBfinalize()\fP, to avoid race conditions with hwloc's use of ltdl\&. 
+.RE
+.PP
+
+.SS "\fBhwloc_component_type_t\fP hwloc_component::type"
+
+.PP
+Component type\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

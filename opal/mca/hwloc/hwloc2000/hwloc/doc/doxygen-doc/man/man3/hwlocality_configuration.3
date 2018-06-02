@@ -1,0 +1,219 @@
+.TH "hwlocality_configuration" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_configuration
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBhwloc_topology_discovery_support\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_topology_cpubind_support\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_topology_membind_support\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_topology_support\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_topology_flags_e\fP { \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP, \fBHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM\fP, \fBHWLOC_TOPOLOGY_FLAG_THISSYSTEM_ALLOWED_RESOURCES\fP }"
+.br
+.ti -1c
+.RI "enum \fBhwloc_type_filter_e\fP { \fBHWLOC_TYPE_FILTER_KEEP_ALL\fP, \fBHWLOC_TYPE_FILTER_KEEP_NONE\fP, \fBHWLOC_TYPE_FILTER_KEEP_STRUCTURE\fP, \fBHWLOC_TYPE_FILTER_KEEP_IMPORTANT\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_topology_set_flags\fP (\fBhwloc_topology_t\fP topology, unsigned long flags)"
+.br
+.ti -1c
+.RI "unsigned long \fBhwloc_topology_get_flags\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_is_thissystem\fP (\fBhwloc_topology_t\fP restrict topology)"
+.br
+.ti -1c
+.RI "const struct \fBhwloc_topology_support\fP * \fBhwloc_topology_get_support\fP (\fBhwloc_topology_t\fP restrict topology)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_type_filter\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, enum \fBhwloc_type_filter_e\fP filter)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_get_type_filter\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, enum \fBhwloc_type_filter_e\fP *filter)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_all_types_filter\fP (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_cache_types_filter\fP (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_icache_types_filter\fP (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+.br
+.ti -1c
+.RI "int \fBhwloc_topology_set_io_types_filter\fP (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+.br
+.ti -1c
+.RI "void \fBhwloc_topology_set_userdata\fP (\fBhwloc_topology_t\fP topology, const void *userdata)"
+.br
+.ti -1c
+.RI "void * \fBhwloc_topology_get_userdata\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Several functions can optionally be called between \fBhwloc_topology_init()\fP and \fBhwloc_topology_load()\fP to configure how the detection should be performed, e\&.g\&. to ignore some objects types, define a synthetic topology, etc\&. 
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_topology_flags_e\fP"
+
+.PP
+Flags to be set onto a topology context before load\&. Flags should be given to \fBhwloc_topology_set_flags()\fP\&. They may also be returned by \fBhwloc_topology_get_flags()\fP\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM \fP\fP
+Detect the whole system, ignore reservations\&. Gather all resources, even if some were disabled by the administrator\&. For instance, ignore Linux Cgroup/Cpusets and gather all processors and memory nodes\&.
+.PP
+When this flag is not set, PUs and NUMA nodes that are disallowed are not added to the topology\&. Parent objects (package, core, cache, etc\&.) are added only if some of their children are allowed\&.
+.PP
+When this flag is set, the actual sets of allowed PUs and NUMA nodes are given by \fBhwloc_topology_get_allowed_cpuset()\fP and \fBhwloc_topology_get_allowed_nodeset()\fP\&. They may be smaller than the root object cpuset and nodeset\&.
+.PP
+When this flag is not set, all existing PUs and NUMA nodes in the topology are allowed\&. \fBhwloc_topology_get_allowed_cpuset()\fP and \fBhwloc_topology_get_allowed_nodeset()\fP are equal to the root object cpuset and nodeset\&.
+.PP
+If the current topology is exported to XML and reimported later, this flag should be set again in the reimported topology so that disallowed resources are reimported as well\&. 
+.TP
+\fB\fIHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM \fP\fP
+Assume that the selected backend provides the topology for the system on which we are running\&. This forces \fBhwloc_topology_is_thissystem()\fP to return 1, i\&.e\&. makes hwloc assume that the selected backend provides the topology for the system on which we are running, even if it is not the OS-specific backend but the XML backend for instance\&. This means making the binding functions actually call the OS-specific system calls and really do binding, while the XML backend would otherwise provide empty hooks just returning success\&.
+.PP
+Setting the environment variable HWLOC_THISSYSTEM may also result in the same behavior\&.
+.PP
+This can be used for efficiency reasons to first detect the topology once, save it to an XML file, and quickly reload it later through the XML backend, but still having binding functions actually do bind\&. 
+.TP
+\fB\fIHWLOC_TOPOLOGY_FLAG_THISSYSTEM_ALLOWED_RESOURCES \fP\fP
+Get the set of allowed resources from the local operating system even if the topology was loaded from XML or synthetic description\&. If the topology was loaded from XML or from a synthetic string, restrict it by applying the current process restrictions such as Linux Cgroup/Cpuset\&.
+.PP
+This is useful when the topology is not loaded directly from the local machine (e\&.g\&. for performance reason) and it comes with all resources, while the running process is restricted to only parts of the machine\&.
+.PP
+This flag is ignored unless \fBHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM\fP is also set since the loaded topology must match the underlying machine where restrictions will be gathered from\&.
+.PP
+Setting the environment variable HWLOC_THISSYSTEM_ALLOWED_RESOURCES would result in the same behavior\&. 
+.SS "enum \fBhwloc_type_filter_e\fP"
+
+.PP
+Type filtering flags\&. By default, most objects are kept (\fBHWLOC_TYPE_FILTER_KEEP_ALL\fP)\&. Instruction caches, I/O and Misc objects are ignored by default (\fBHWLOC_TYPE_FILTER_KEEP_NONE\fP)\&. Group levels are ignored unless they bring structure (\fBHWLOC_TYPE_FILTER_KEEP_STRUCTURE\fP)\&.
+.PP
+Note that group objects are also ignored individually (without the entire level) when they do not bring structure\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_TYPE_FILTER_KEEP_ALL \fP\fP
+Keep all objects of this type\&. Cannot be set for \fBHWLOC_OBJ_GROUP\fP (groups are designed only to add more structure to the topology)\&. 
+.TP
+\fB\fIHWLOC_TYPE_FILTER_KEEP_NONE \fP\fP
+Ignore all objects of this type\&. The bottom-level type \fBHWLOC_OBJ_PU\fP, the \fBHWLOC_OBJ_NUMANODE\fP type, and the top-level type \fBHWLOC_OBJ_MACHINE\fP may not be ignored\&. 
+.TP
+\fB\fIHWLOC_TYPE_FILTER_KEEP_STRUCTURE \fP\fP
+Only ignore objects if their entire level does not bring any structure\&. Keep the entire level of objects if at least one of these objects adds structure to the topology\&. An object brings structure when it has multiple children and it is not the only child of its parent\&.
+.PP
+If all objects in the level are the only child of their parent, and if none of them has multiple children, the entire level is removed\&.
+.PP
+Cannot be set for I/O and Misc objects since the topology structure does not matter there\&. 
+.TP
+\fB\fIHWLOC_TYPE_FILTER_KEEP_IMPORTANT \fP\fP
+Only keep likely-important objects of the given type\&. It is only useful for I/O object types\&. For \fBHWLOC_OBJ_PCI_DEVICE\fP and \fBHWLOC_OBJ_OS_DEVICE\fP, it means that only objects of major/common kinds are kept (storage, network, OpenFabrics, Intel MICs, CUDA, OpenCL, NVML, and displays)\&. Also, only OS devices directly attached on PCI (e\&.g\&. no USB) are reported\&. For \fBHWLOC_OBJ_BRIDGE\fP, it means that bridges are kept only if they have children\&.
+.PP
+This flag equivalent to \fBHWLOC_TYPE_FILTER_KEEP_ALL\fP for Normal, Memory and Misc types since they are likely important\&. 
+.SH "Function Documentation"
+.PP 
+.SS "unsigned long hwloc_topology_get_flags (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Get OR'ed flags of a topology\&. Get the OR'ed set of \fBhwloc_topology_flags_e\fP of a topology\&.
+.PP
+\fBReturns:\fP
+.RS 4
+the flags previously set with \fBhwloc_topology_set_flags()\fP\&. 
+.RE
+.PP
+
+.SS "const struct \fBhwloc_topology_support\fP* hwloc_topology_get_support (\fBhwloc_topology_t\fP restrict topology)"
+
+.PP
+Retrieve the topology support\&. Each flag indicates whether a feature is supported\&. If set to 0, the feature is not supported\&. If set to 1, the feature is supported, but the corresponding call may still fail in some corner cases\&.
+.PP
+These features are also listed by hwloc-info --support 
+.SS "int hwloc_topology_get_type_filter (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, enum \fBhwloc_type_filter_e\fP * filter)"
+
+.PP
+Get the current filtering for the given object type\&. 
+.SS "void* hwloc_topology_get_userdata (\fBhwloc_topology_t\fP topology)"
+
+.PP
+Retrieve the topology-specific userdata pointer\&. Retrieve the application-given private data pointer that was previously set with \fBhwloc_topology_set_userdata()\fP\&. 
+.SS "int hwloc_topology_is_thissystem (\fBhwloc_topology_t\fP restrict topology)"
+
+.PP
+Does the topology context come from this system? 
+.PP
+\fBReturns:\fP
+.RS 4
+1 if this topology context was built using the system running this program\&. 
+.PP
+0 instead (for instance if using another file-system root, a XML topology file, or a synthetic topology)\&. 
+.RE
+.PP
+
+.SS "int hwloc_topology_set_all_types_filter (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+
+.PP
+Set the filtering for all object types\&. If some types do not support this filtering, they are silently ignored\&. 
+.SS "int hwloc_topology_set_cache_types_filter (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+
+.PP
+Set the filtering for all cache object types\&. 
+.SS "int hwloc_topology_set_flags (\fBhwloc_topology_t\fP topology, unsigned long flags)"
+
+.PP
+Set OR'ed flags to non-yet-loaded topology\&. Set a OR'ed set of \fBhwloc_topology_flags_e\fP onto a topology that was not yet loaded\&.
+.PP
+If this function is called multiple times, the last invokation will erase and replace the set of flags that was previously set\&.
+.PP
+The flags set in a topology may be retrieved with \fBhwloc_topology_get_flags()\fP 
+.SS "int hwloc_topology_set_icache_types_filter (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+
+.PP
+Set the filtering for all instruction cache object types\&. 
+.SS "int hwloc_topology_set_io_types_filter (\fBhwloc_topology_t\fP topology, enum \fBhwloc_type_filter_e\fP filter)"
+
+.PP
+Set the filtering for all I/O object types\&. 
+.SS "int hwloc_topology_set_type_filter (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, enum \fBhwloc_type_filter_e\fP filter)"
+
+.PP
+Set the filtering for the given object type\&. 
+.SS "void hwloc_topology_set_userdata (\fBhwloc_topology_t\fP topology, const void * userdata)"
+
+.PP
+Set the topology-specific userdata pointer\&. Each topology may store one application-given private data pointer\&. It is initialized to \fCNULL\fP\&. hwloc will never modify it\&.
+.PP
+Use it as you wish, after \fBhwloc_topology_init()\fP and until hwloc_topolog_destroy()\&.
+.PP
+This pointer is not exported to XML\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topology SYSTEM "hwloc2.dtd">
+<topology version="2.0">
+  <object type="Machine" os_index="0" cpuset="0x00000003" complete_cpuset="0x00000003" allowed_cpuset="0x00000003" nodeset="0x00000001" complete_nodeset="0x00000001" allowed_nodeset="0x00000001">
+    <info name="DMIProductName" value="PowerEdge 1850"/>
+    <info name="DMIProductVersion" value=""/>
+    <info name="DMIBoardVendor" value="Dell Computer Corporation"/>
+    <info name="DMIBoardName" value="0RC130"/>
+    <info name="DMIBoardVersion" value="A03"/>
+    <info name="DMIBoardAssetTag" value=""/>
+    <info name="DMIChassisVendor" value="Dell Computer Corporation"/>
+    <info name="DMIChassisType" value="23"/>
+    <info name="DMIChassisVersion" value=""/>
+    <info name="DMIChassisAssetTag" value=""/>
+    <info name="DMIBIOSVendor" value="Dell Computer Corporation"/>
+    <info name="DMIBIOSVersion" value="A06"/>
+    <info name="DMIBIOSDate" value="10/03/2006"/>
+    <info name="DMISysVendor" value="Dell Computer Corporation"/>
+    <info name="Backend" value="Linux"/>
+    <object type="Package" os_index="0" cpuset="0x00000003" complete_cpuset="0x00000003" nodeset="0x00000001" complete_nodeset="0x00000001">
+      <info name="CPUModel" value="Intel(R) Xeon(TM) CPU 3.00GHz"/>
+      <object type="NUMANode" os_index="0" cpuset="0x00000003" complete_cpuset="0x00000003" nodeset="0x00000001" complete_nodeset="0x00000001" local_memory="409617181966336">
+        <page_type size="4096" count="100000000000"/>
+        <page_type size="2097152" count="1"/>
+        <page_type size="17179869184" count="1"/>
+      </object>
+      <object type="L2Cache" cpuset="0x00000003" complete_cpuset="0x00000003" nodeset="0x00000001" complete_nodeset="0x00000001" cache_size="2097152" depth="2" cache_linesize="64" cache_associativity="8" cache_type="0">
+        <object type="L1Cache" cpuset="0x00000003" complete_cpuset="0x00000003" nodeset="0x00000001" complete_nodeset="0x00000001" cache_size="16384" depth="1" cache_linesize="64" cache_associativity="8" cache_type="1">
+          <object type="Core" os_index="0" cpuset="0x00000003" complete_cpuset="0x00000003" nodeset="0x00000001" complete_nodeset="0x00000001">
+            <object type="PU" os_index="0" cpuset="0x00000001" complete_cpuset="0x00000001" nodeset="0x00000001" complete_nodeset="0x00000001"/>
+            <object type="PU" os_index="1" cpuset="0x00000002" complete_cpuset="0x00000002" nodeset="0x00000001" complete_nodeset="0x00000001"/>
+          </object>
+        </object>
+      </object>
+    </object>
+  </object>
+</topology>

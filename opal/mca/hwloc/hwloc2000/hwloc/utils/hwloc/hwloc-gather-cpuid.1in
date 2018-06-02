@@ -1,0 +1,99 @@
+.\" -*- nroff -*-
+.\" Copyright © 2015-2016 Inria.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-GATHER-CPUID "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-gather-cpuid \- Dumps the relevant x86 cpuid values
+for later (possibly offline) usage
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-gather-cpuid [\fIoptions\fR] [\fI<outdir>\fR]
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP
+\fB\-c <idx>
+Only gather cpuid values for logical processor whose OS/physical index
+is <idx>.
+.TP
+\fB\-h\fR \fB\-\-help\fR
+Display help message and exit
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+\fBhwloc-gather-cpuid\fR dumps all the relevant x86 cpuid values into
+subdirectory \fIcpuid\fR of current directory,
+or in \fB<outdir>\fR if specified.
+.
+.PP
+These files can be used later to explore the machine topology offline,
+for instance by setting the environment variable \fIHWLOC_CPUID_PATH\fR
+to the directory containing all output files,
+and by forcing the x86 backend with \fIHWLOC_COMPONENTS=x86,stop\fR.
+.
+.PP
+The directory contents may also be submitted to hwloc developers
+to debug issues remotely.
+.
+.PP
+If \fB-\fR is used as <outdir>, the output is dumped to the standard
+output, but a unique logical processor must have been given with \fB-c\fR.
+.
+.PP
+\fBhwloc-gather-cpuid\fR is a x86 specific tool, it cannot be used
+on other platforms.
+.
+.PP
+.B NOTE:
+\fBhwloc-gather-cpuid\fR gathers many hardware details about the platform.
+Output files should not be posted on public lists or websites
+unless it is clear that they contain no sensitive information.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+To store cpuid information of all logical processors of the current machine:
+
+        $ hwloc-gather-cpuid
+        Gathering in directory ./cpuid ...
+        Gathering CPUID of PU P#0 in path ./hwloc-x86-cpuid/pu0 ...
+        Gathering CPUID of PU P#1 in path ./hwloc-x86-cpuid/pu1 ...
+        Gathering CPUID of PU P#2 in path ./hwloc-x86-cpuid/pu2 ...
+        Gathering CPUID of PU P#3 in path ./hwloc-x86-cpuid/pu3 ...
+        Summary written to ./cpuid/hwloc-cpuid-info
+.
+.\" **************************
+.\"    Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, \fBhwloc-gather-cpuid\fR will exit with the code 0.
+.
+.PP
+\fBhwloc-gather-cpuid\fR will return nonzero exit status if any kind of error occurs,
+such as (but not limited to) failure to create the output files.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1)
+.sp

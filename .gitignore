@@ -67,7 +67,7 @@ vc70.pdb
 .hg
 .hgignore_local
 stamp-h?
-AUTHORS
+./AUTHORS
 
 ar-lib
 ylwrap

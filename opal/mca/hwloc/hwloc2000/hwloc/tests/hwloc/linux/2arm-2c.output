@@ -1,0 +1,13 @@
+Machine (P#0 total=280840KB CPUModel="ARMv7 Processor rev 1 (v7l)" CPUImplementer=0x41 CPUArchitecture=7 CPUVariant=0x2 CPUPart=0xc09 CPURevision=1 HardwareName="ST-Ericsson MOP500 platform" HardwareRevision=0000 HardwareSerial=0000000000000000 Backend=Linux Architecture=arm)
+  Package L#0 (P#3 total=280840KB)
+    NUMANode L#0 (P#0 local=280840KB total=280840KB)
+    Core L#0 (P#0)
+      PU L#0 (P#0)
+    Core L#1 (P#1)
+      PU L#1 (P#1)
+depth 0:           1 Machine (type #0)
+ depth 1:          1 Package (type #1)
+  depth 2:         2 Core (type #2)
+   depth 3:        2 PU (type #3)
+Special depth -3:  1 NUMANode (type #13)
+Topology not from this system

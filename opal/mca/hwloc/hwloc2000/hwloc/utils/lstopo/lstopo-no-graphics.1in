@@ -1,0 +1,573 @@
+.\" -*- nroff -*-
+.\" Copyright © 2009-2018 Inria.  All rights reserved.
+.\" Copyright © 2009-2010 Université of Bordeaux
+.\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH LSTOPO "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+lstopo, lstopo-no-graphics, hwloc-ls \- Show the topology of the system
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B lstopo
+[ \fIoptions \fR]... [ \fIfilename \fR]
+.
+.PP
+.B lstopo-no-graphics
+[ \fIoptions \fR]... [ \fIfilename \fR]
+.
+.PP
+.B hwloc-ls
+[ \fIoptions \fR]... [ \fIfilename \fR]
+.
+.PP
+Note that hwloc(7) provides a detailed explanation of the hwloc system; it
+should be read before reading this man page
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP
+\fB\-\-of\fR <format>, \fB\-\-output\-format\fR <format>
+Enforce the output in the given format.
+See the OUTPUT FORMATS section below.
+.TP
+\fB\-i\fR <file>, \fB\-\-input\fR <file>
+Read topology from XML file <file> (instead of discovering the
+topology on the local machine).  If <file> is "\-", the standard input
+is used.  XML support must have been compiled in to hwloc for this
+option to be usable.
+.TP
+\fB\-i\fR <directory>, \fB\-\-input\fR <directory>
+Read topology from <directory> instead of discovering the topology
+of the local machine.
+On Linux, the directory may contain the topology files
+gathered from another machine topology with hwloc-gather-topology.
+On x86, the directory may contain a cpuid dump gathered
+with hwloc-gather-cpuid.
+.TP
+\fB\-i\fR <specification>, \fB\-\-input\fR <specification>
+Simulate a fake hierarchy (instead of discovering the topology on the
+local machine). If <specification> is "node:2 pu:3", the topology will
+contain two NUMA nodes with 3 processing units in each of them.
+The <specification> string must end with a number of PUs.
+.TP
+\fB\-\-if\fR <format>, \fB\-\-input\-format\fR <format>
+Enforce the input in the given format, among \fBxml\fR, \fBfsroot\fR,
+\fBcpuid\fR and \fBsynthetic\fR.
+.TP
+\fB\-\-export\-synthetic\-flags\fR <flags>
+Enforce flags when exporting to the XML format.
+These flags are passed to \fIhwloc_topology_export_xml()\fR.
+A value of 1 reverts to the format of hwloc v1.x.
+.TP
+\fB\-\-export\-synthetic\-flags\fR <flags>
+Enforce flags when exporting to the synthetic format.
+These flags are passed to \fIhwloc_topology_export_synthetic()\fR.
+A value of 2 reverts to the format of hwloc v1.9.
+A value of 3 reverts to the original minimalistic format (before v1.9).
+.TP
+\fB\-v\fR \fB\-\-verbose\fR
+Include additional detail.
+The hwloc-info tool may be used to display even more information
+about specific objects.
+.TP
+\fB\-s\fR \fB\-\-silent\fR
+Reduce the amount of details to show.
+.TP
+\fB\-\-distances\fR
+Only display distance matrices.
+.TP
+\fB\-f\fR \fB\-\-force\fR
+If the destination file already exists, overwrite it.
+.TP
+\fB\-l\fR \fB\-\-logical\fR
+Display hwloc logical indexes instead of physical/OS indexes (default for console output).
+These indexes are prefixed with "L#".
+The physical indexes of some objects (PU and Node by default, all
+objects if verbose) will appear as object attribute "P#...".
+.TP
+\fB\-p\fR \fB\-\-physical\fR
+Display OS/physical indexes instead of hwloc logical indexes (default for graphical output).
+These indexes are prefixed with "P#" instead of "L#" in the console output.
+.TP
+\fB\-c\fR \fB\-\-cpuset\fR
+Display the cpuset of each object.
+.TP
+\fB\-C\fR \fB\-\-cpuset\-only\fR
+Only display the cpuset of each object; do not display anything else
+about the object.
+.TP
+\fB\-\-taskset\fR
+Show CPU set strings in the format recognized by the taskset command-line
+program instead of hwloc-specific CPU set string format.
+This option should be combined with \fB\-\-cpuset\fR or \fB\-\-cpuset\-only\fR,
+otherwise it will imply \fB\-\-cpuset\fR.
+.TP
+\fB\-\-only\fR <type>
+Only show objects of the given type in the textual output.
+.TP
+\fB\-\-filter\fR <type>:<kind>, \fB\-\-filter\fR <type>
+Filter objects of type <type>, or of any type if <type> is "all".
+"io", "cache" and "icache" are also supported.
+
+<kind> specifies the filtering behavior.
+If "none" or not specified, all objects of the given type are removed.
+If "all", all objects are kept as usual.
+If "structure", objects are kept when they bring structure to the topology.
+If "important" (only applicable to I/O), only important objects are kept.
+See hwloc_topology_set_type_filter() for more details.
+
+hwloc supports filtering any type except PUs and NUMA nodes.
+lstopo also offers PU and NUMA node filtering by hiding them in the graphical and textual outputs,
+but any object included in them (for instance Misc) will be hidden as well.
+Note that PUs and NUMA nodes may not be ignored in the XML output.
+Note also that the top-level object type cannot be ignored (usually Machine or System).
+.TP
+\fB\-\-ignore\fR <type>
+This is the old way to specify \fB-\-filter <type>:none\fR.
+.TP
+\fB\-\-no\-caches\fR
+Do not show caches.
+This is identical to \fB-\-filter cache:none\fR.
+.TP
+\fB\-\-no\-useless\-caches\fR
+This is identical to \fB-\-filter cache:structure\fR.
+.TP
+\fB\-\-no\-icaches\fR
+This is identical to \fB-\-filter icache:none\fR.
+.TP
+\fB\-\-whole\-system\fR
+Do not consider administration limitations.
+.TP
+\fB\-\-flags\fR <flags>
+Enforce topology flags.
+The default is \fB0\fR.
+These flags are passed to \fIhwloc_topology_set_flags()\fR.
+.TP
+\fB\-\-merge\fR
+Do not show levels that do not have a hierarchical impact.
+This sets HWLOC_TYPE_FILTER_KEEP_STRUCTURE for all object types.
+This is identical to \fB\-\-filter all:structure\fR.
+.TP
+\fB\-\-no\-collapse\fR
+Do not collapse identical PCI devices.
+By default, identical sibling PCI devices (such as many virtual functions
+inside a single physical device) are collapsed.
+.TP
+\fB\-\-restrict\fR <cpuset>
+Restrict the topology to the given cpuset.
+.TP
+\fB\-\-restrict\fR binding
+Restrict the topology to the current process binding.
+This option requires the use of the actual current machine topology
+(or any other topology with \fB\-\-thissystem\fR or with
+HWLOC_THISSYSTEM set to 1 in the environment).
+.TP
+\fB\-\-restrict\-flags\fR <flags>
+Enforce flags when restricting the topology.
+The default is \fB0\fR.
+These flags are passed to \fIhwloc_topology_restrict()\fR.
+.TP
+\fB\-\-no\-io\fB
+Do not show any I/O device or bridge.
+This is identical to \fB\-\-filter io:none\fR.
+By default, common devices (GPUs, NICs, block devices, ...) and
+interesting bridges are shown.
+.TP
+\fB\-\-no\-bridges\fB
+Do not show any I/O bridge except hostbridges.
+This is identical to \fB\-\-filter bridge:none\fR.
+By default, common devices (GPUs, NICs, block devices, ...) and
+interesting bridges are shown.
+.TP
+\fB\-\-whole\-io\fB
+Show all I/O devices and bridges.
+This is identical to \fB\-\-filter io:all\fR.
+By default, only common devices (GPUs, NICs, block devices, ...) and
+interesting bridges are shown.
+.TP
+\fB\-\-thissystem\fR
+Assume that the selected backend provides the topology for the
+system on which we are running.
+This is useful when using \fB\-\-restrict\fR binding and loading
+a custom topology such as an XML file.
+.TP
+\fB\-\-pid\fR <pid>
+Detect topology as seen by process <pid>, i.e. as if process <pid> did the
+discovery itself.
+Note that this can for instance change the set of allowed processors.
+Also show this process current CPU and Memory binding by marking the corresponding
+PUs and NUMA nodes (in Green in the graphical output, see the COLORS section below,
+or by appending \fI(binding)\fR to the verbose text output).
+If 0 is given as pid, the current binding for the lstopo process will be shown.
+.TP
+\fB\-\-ps\fR \fB\-\-top\fR
+Show existing processes as misc objects in the output. To avoid uselessly
+cluttering the output, only processes that are restricted to some part of the
+machine are shown.  On Linux, kernel threads are not shown.
+If many processes appear, the output may become hard to read anyway,
+making the hwloc-ps program more practical.
+.TP
+\fB\-\-children\-order=<order>\fR
+Change the order of the different kinds of children with respect to
+their parent in the graphical output.
+
+The default order is \fImemoryabove\fR:
+it displays memory children above other children
+(and above the parent if it is a cache).
+PUs are therefore below their local NUMA nodes, like hwloc 1.x did.
+
+If the order is changed to \fIplain\fR, lstopo displays the topology
+in a basic manner that strictly matches the actual tree:
+memory children are listed below their parent just like any other child.
+PUs are therefore on the side of their local NUMA nodes,
+below a common ancestor.
+.TP
+\fB\-\-fontsize\fR <size>
+Set size of text font.
+.TP
+\fB\-\-gridsize\fR <size>
+Set size of margin between elements.
+.TP
+\fB\-\-horiz\fR, \fB\-\-horiz\fR=<type1,...>
+Horizontal graphical layout instead of nearly 4/3 ratio.
+If a comma-separated list of types is given, the layout only
+applies to the corresponding containers.
+Ignored for bridges since their children are always vertically aligned.
+.TP
+\fB\-\-vert\fR, \fB\-\-vert\fR=<type1,...>
+Vertical graphical layout instead of nearly 4/3 ratio.
+If a comma-separated list of types is given, the layout only
+applies to the corresponding containers.
+.TP
+\fB\-\-rect\fR, \fB\-\-rect\fR=<type1,...>
+Rectangular graphical layout with nearly 4/3 ratio.
+If a comma-separated list of types is given, the layout only
+applies to the corresponding containers.
+Ignored for bridges since their children are always vertically aligned.
+.TP
+\fB\-\-no-index\fR, \fB\-\-no-index=<type1,...>\fR
+Do not show object indexes in the graphical output.
+If a comma-separated list of types is given, indexes are only
+disabled for the given object.
+.TP
+\fB\-\-index\fR, \fB\-\-index=<type1,...>\fR
+Show object indexes in the graphical output (default).
+If a comma-separated list of types is given, indexes are only
+enabled for the given object.
+.TP
+\fB\-\-no-attrs\fR, \fB\-\-no-attrs=<type1,...>\fR
+Do not show object attributes (such as memory size, cache size, PCI bus ID, PCI link speed, etc.)
+in the graphical output.
+If a comma-separated list of types is given, attributes are only
+disabled for the given object.
+.TP
+\fB\-\-attrs\fR, \fB\-\-attrs=<type1,...>\fR
+Show object attributes (such as memory size, cache size, PCI bus ID, PCI link speed, etc.)
+in the graphical output (default).
+If a comma-separated list of types is given, attributes are only
+enabled for the given object.
+.TP
+\fB\-\-no\-legend\fR
+Remove the text legend at the bottom.
+.TP
+\fB\-\-append\-legend\fB <line>
+Append the line of text to the bottom of the legend in graphical mode.
+If the line is too long, it will be truncated in the output.
+If adding multiple lines, each line should be given separately by
+passing this option multiple times.
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+lstopo and lstopo-no-graphics are capable of displaying a topological map of
+the system in a variety of different output formats.  The only difference
+between lstopo and lstopo-no-graphics is that graphical outputs are only
+supported by lstopo, to reduce dependencies on external libraries.
+hwloc-ls is identical to lstopo-no-graphics.
+.
+.PP
+The filename specified directly implies the output format that will be
+used; see the OUTPUT FORMATS section, below.  Output formats that
+support color will indicate specific characteristics about individual
+CPUs by their color; see the COLORS section, below.
+.
+.\" **************************
+.\"    Output Formats Section
+.\" **************************
+.SH OUTPUT FORMATS
+.
+.PP
+By default, if no output filename is specific, the output is sent
+to a graphical window if possible in the current environment
+(DISPLAY environment variable set on Unix, etc.).
+Otherwise, a text summary is displayed in the console.
+.
+.PP
+The filename on the command line usually determines the format of the output.
+There are a few filenames that indicate specific output formats and
+devices (e.g., a filename of "-" will output a text summary to
+stdout), but most filenames indicate the desired output format by
+their suffix (e.g., "topo.png" will output a PNG-format file).
+.PP
+The format of the output may also be changed with "\-\-of".
+For instance, "\-\-of pdf" will generate a PDF-format file on the standard
+output, while "\-\-of fig toto" will output a Xfig-format file named "toto".
+.
+.PP
+The list of currently supported formats is given below. Any of them may
+be used with "\-\-of" or as a filename suffix.
+.TP
+.B default
+Send the output to a window or to the console depending on the environment.
+.
+.TP
+.B console
+Send a text summary to stdout.
+Binding or unallowed processors are only annotated in this mode
+if verbose; see the COLORS section, below.
+.
+.TP
+.B ascii
+Output an ASCII art representation of the map
+(formerly called \fBtxt\fR).
+If outputting to stdout and if colors are supported on the terminal,
+the output will be colorized.
+.
+.TP
+.B fig
+Output a representation of the map that can be loaded in Xfig.
+.
+.TP
+.B pdf
+If lstopo was compiled with the proper
+support, lstopo outputs a PDF representation of the map.
+.
+.TP
+.B ps
+If lstopo was compiled with the proper
+support, lstopo outputs a Postscript representation of the map.
+.
+.TP
+.B png
+If lstopo was compiled with the proper
+support, lstopo outputs a PNG representation of the map.
+.
+.TP
+.B svg
+If lstopo was compiled with the proper
+support, lstopo outputs an SVG representation of the map.
+.
+.TP
+.B synthetic
+If the topology is symmetric
+(which requires that the root object has its symmetric_subtree field set),
+lstopo outputs a synthetic description string.
+This output may be reused as an input synthetic topology
+description later.
+See also the Synthetic topologies section in the documentation.
+Note that Misc and I/O devices are ignored during this export.
+.
+.TP
+.B xml
+If lstopo was compiled with the proper
+support, lstopo outputs an XML representation of the map.
+It may be reused later, even on another machine, with lstopo \-\-input,
+the HWLOC_XMLFILE environment variable, or the hwloc_topology_set_xml()
+function.
+
+.PP
+The following special names may be used:
+.TP
+.B \-
+Send a text summary to stdout.
+.
+.TP
+.B /dev/stdout
+Send a text summary to stdout.  It is effectively the same as
+specifying "\-".
+.
+.TP
+.B \-.<format>
+If the entire filename is "\-.<format>", lstopo behaves as if
+"\-\-of <format> -" was given, which means a file of the given format
+is sent to the standard output.
+
+.PP
+See the output of "lstopo \-\-help" for a specific list of what
+graphical output formats are supported in your hwloc installation.
+.
+.\" **************************
+.\"    Colors Section
+.\" **************************
+.SH COLORS
+Individual CPUs and NUMA nodes are colored in the graphical output
+formats to indicate different characteristics:
+.TP
+Green
+The topology is reported as seen by a specific process (see \fB\-\-pid\fR),
+and the given CPU or NUMA node is in this process CPU or Memory binding mask.
+.TP
+White
+The CPU or NUMA node is in the allowed set (see below).
+If the topology is reported as seen by a specific process (see \fB\-\-pid\fR),
+the object is also not in this process binding mask.
+.TP
+Red
+The CPU or NUMA node is not in the allowed set (see below).
+.
+.PP
+The "allowed set" is the set of CPUs or NUMA nodes to which the current process is
+allowed to bind.  The allowed set is usually either inherited from the
+parent process or set by administrative qpolicies on the system.  Linux
+cpusets are one example of limiting the allowed set for a process and
+its children to be less than the full set of CPUs or NUMA nodes on the system.
+.PP
+Different processes may therefore have different CPUs or NUMA nodes in the allowed
+set.  Hence, invoking lstopo in different contexts and/or as different
+users may display different colors for the same individual CPUs (e.g.,
+running lstopo in one context may show a specific CPU as red, but
+running lstopo in a different context may show the same CPU as white).
+.PP
+Some lstopo output modes, e.g. the console mode (default non-graphical output),
+do not support colors at all.
+The console mode displays the above characteristics by appending text
+to each PU line if verbose messages are enabled.
+.
+.SH CUSTOM COLORS
+The color of each object in the graphical output may be enforced by
+specifying a "lstopoStyle" info attribute in that object.
+Its value should be a semi-colon separated list of "<attribute>=#rrggbb"
+where rr, gg and bb are the RGB components of a color,
+each between 0 and 255, in hexadecimal (00 to ff).
+.
+<attribute> may be
+.TP
+\fBBackground\fR
+Sets the background color of the main object box.
+.TP
+\fBText\fR
+Sets the color of the text showing the object name, type, index, etc.
+.TP
+\fBText2\fB
+Sets the color of the additional text near the object,
+for instance the link speed behind a PCI bridge.
+.PP
+The "lstopoStyle" info may be added to a temporarily-saved XML topologies
+with hwloc-annotate, or with hwloc_obj_add_info().
+.
+For instance, to display all core objects in blue (with white names):
+
+    lstopo save.xml
+    hwloc-annotate save.xml save.xml core:all info lstopoStyle "Background=#0000ff;Text=#ffffff"
+    lstopo -i save.xml
+.
+.\" **************************
+.\"    Layout Section
+.\" **************************
+.SH LAYOUT
+In its graphical output, lstopo uses simple rectangular heuristics
+to try to achieve a 4/3 ratio between width and height.
+Although the hierarchy of resources is properly reflected,
+the exact physical organization (NUMA distances, rings,
+complete graphs, etc.) is currently ignored.
+.
+The layout of a level may be changed with \-\-vert, \-\-horiz,
+and \-\-rect.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.
+To display the machine topology in textual mode:
+
+    lstopo-no-graphics
+
+To display the machine topology in ascii-art mode:
+
+    lstopo-no-graphics -.ascii
+
+To display in graphical mode (assuming that the DISPLAY environment
+variable is set to a relevant value):
+
+    lstopo
+
+To export the topology to a PNG file:
+
+    lstopo file.png
+
+To export an XML file on a machine and later display the corresponding
+graphical output on another machine:
+
+    machine1$ lstopo file.xml
+    <transfer file.xml from machine1 to machine2>
+    machine2$ lstopo --input file.xml
+
+To save the current machine topology to XML and later reload it faster
+while still considering it as the current machine:
+
+   $ lstopo file.xml
+   <...>
+   $ lstopo --input file.xml --thissystem
+
+To restrict an XML topology to only physical processors 0, 1, 4 and 5:
+
+    lstopo --input file.xml --restrict 0x33 newfile.xml
+
+To restrict an XML topology to only numa node whose logical index is 1:
+
+    lstopo --input file.xml --restrict $(hwloc-calc --input file.xml node:1) newfile.xml
+
+To display a summary of the topology:
+
+    lstopo -s
+
+To get more details about the topology:
+
+    lstopo -v
+
+To only show cores:
+
+    lstopo --only core
+
+To show cpusets:
+
+    lstopo --cpuset
+
+To only show the cpusets of package:
+
+    lstopo --only package --cpuset-only
+
+Simulate a fake hierarchy; this example shows with 2 NUMA nodes of 2
+processor units:
+
+    lstopo --input "node:2 2"
+
+To count the number of logical processors in the system
+
+   lstopo --only pu | wc -l
+
+To append the kernel release and version to the graphical legend:
+
+   lstopo --append-legend "Kernel release: $(uname -r)" --append-legend "Kernel version: $(uname -v)"
+
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), hwloc-info(1), hwloc-bind(1), hwloc-annotate(1), hwloc-ps(1), hwloc-gather-topology(1), hwloc-gather-cpuid(1)
+.sp

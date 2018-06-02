@@ -1,0 +1,57 @@
+.TH "hwlocality_info_attr" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_info_attr
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static const char * \fBhwloc_obj_get_info_by_name\fP (\fBhwloc_obj_t\fP obj, const char *name)"
+.br
+.ti -1c
+.RI "int \fBhwloc_obj_add_info\fP (\fBhwloc_obj_t\fP obj, const char *name, const char *value)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_obj_add_info (\fBhwloc_obj_t\fP obj, const char * name, const char * value)"
+
+.PP
+Add the given info name and value pair to the given object\&. The info is appended to the existing info array even if another key with the same name already exists\&.
+.PP
+The input strings are copied before being added in the object infos\&.
+.PP
+\fBReturns:\fP
+.RS 4
+\fC0\fP on success, \fC-1\fP on error\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+This function may be used to enforce object colors in the lstopo graphical output by using 'lstopoStyle' as a name and 'Background=#rrggbb' as a value\&. See CUSTOM COLORS in the lstopo(1) manpage for details\&.
+.PP
+If \fCvalue\fP contains some non-printable characters, they will be dropped when exporting to XML, see \fBhwloc_topology_export_xml()\fP in \fBhwloc/export\&.h\fP\&. 
+.RE
+.PP
+
+.SS "static const char* hwloc_obj_get_info_by_name (\fBhwloc_obj_t\fP obj, const char * name)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Search the given key name in object infos and return the corresponding value\&. If multiple keys match the given name, only the first one is returned\&.
+.PP
+\fBReturns:\fP
+.RS 4
+\fCNULL\fP if no such key exists\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

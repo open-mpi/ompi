@@ -1,0 +1,95 @@
+.TH "hwlocality_distances_get" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_distances_get
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBhwloc_distances_s\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_distances_kind_e\fP { \fBHWLOC_DISTANCES_KIND_FROM_OS\fP, \fBHWLOC_DISTANCES_KIND_FROM_USER\fP, \fBHWLOC_DISTANCES_KIND_MEANS_LATENCY\fP, \fBHWLOC_DISTANCES_KIND_MEANS_BANDWIDTH\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_distances_get\fP (\fBhwloc_topology_t\fP topology, unsigned *nr, struct \fBhwloc_distances_s\fP **distances, unsigned long kind, unsigned long flags)"
+.br
+.ti -1c
+.RI "int \fBhwloc_distances_get_by_depth\fP (\fBhwloc_topology_t\fP topology, int depth, unsigned *nr, struct \fBhwloc_distances_s\fP **distances, unsigned long kind, unsigned long flags)"
+.br
+.ti -1c
+.RI "static int \fBhwloc_distances_get_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, unsigned *nr, struct \fBhwloc_distances_s\fP **distances, unsigned long kind, unsigned long flags)"
+.br
+.ti -1c
+.RI "void \fBhwloc_distances_release\fP (\fBhwloc_topology_t\fP topology, struct \fBhwloc_distances_s\fP *distances)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_distances_kind_e\fP"
+
+.PP
+Kinds of distance matrices\&. The \fCkind\fP attribute of struct \fBhwloc_distances_s\fP is a OR'ed set of kinds\&.
+.PP
+A kind of format HWLOC_DISTANCES_KIND_FROM_* specifies where the distance information comes from, if known\&.
+.PP
+A kind of format HWLOC_DISTANCES_KIND_MEANS_* specifies whether values are latencies or bandwidths, if applicable\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_DISTANCES_KIND_FROM_OS \fP\fP
+These distances were obtained from the operating system or hardware\&. 
+.TP
+\fB\fIHWLOC_DISTANCES_KIND_FROM_USER \fP\fP
+These distances were provided by the user\&. 
+.TP
+\fB\fIHWLOC_DISTANCES_KIND_MEANS_LATENCY \fP\fP
+Distance values are similar to latencies between objects\&. Values are smaller for closer objects, hence minimal on the diagonal of the matrix (distance between an object and itself)\&. It could also be the number of network hops between objects, etc\&. 
+.TP
+\fB\fIHWLOC_DISTANCES_KIND_MEANS_BANDWIDTH \fP\fP
+Distance values are similar to bandwidths between objects\&. Values are higher for closer objects, hence maximal on the diagonal of the matrix (distance between an object and itself)\&. Such values are currently ignored for distance-based grouping\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_distances_get (\fBhwloc_topology_t\fP topology, unsigned * nr, struct \fBhwloc_distances_s\fP ** distances, unsigned long kind, unsigned long flags)"
+
+.PP
+Retrieve distance matrices\&. Retrieve distance matrices from the topology into the \fCdistances\fP array\&.
+.PP
+\fCflags\fP is currently unused, should be \fC0\fP\&.
+.PP
+\fCkind\fP serves as a filter\&. If \fC0\fP, all distance matrices are returned\&. If it contains some HWLOC_DISTANCES_KIND_FROM_*, only distances whose kind matches one of these are returned\&. If it contains some HWLOC_DISTANCES_KIND_MEANS_*, only distances whose kind matches one of these are returned\&.
+.PP
+On input, \fCnr\fP points to the number of distances that may be stored in \fCdistances\fP\&. On output, \fCnr\fP points to the number of distances that were actually found, even if some of them couldn't be stored in \fCdistances\fP\&. Distances that couldn't be stored are ignored, but the function still returns success (\fC0\fP)\&. The caller may find out by comparing the value pointed by \fCnr\fP before and after the function call\&.
+.PP
+Each distance structure returned in the \fCdistances\fP array should be released by the caller using \fBhwloc_distances_release()\fP\&. 
+.SS "int hwloc_distances_get_by_depth (\fBhwloc_topology_t\fP topology, int depth, unsigned * nr, struct \fBhwloc_distances_s\fP ** distances, unsigned long kind, unsigned long flags)"
+
+.PP
+Retrieve distance matrices for object at a specific depth in the topology\&. Identical to \fBhwloc_distances_get()\fP with the additional \fCdepth\fP filter\&. 
+.SS "static int hwloc_distances_get_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, unsigned * nr, struct \fBhwloc_distances_s\fP ** distances, unsigned long kind, unsigned long flags)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Retrieve distance matrices for object of a specific type\&. Identical to \fBhwloc_distances_get()\fP with the additional \fCtype\fP filter\&. 
+.SS "void hwloc_distances_release (\fBhwloc_topology_t\fP topology, struct \fBhwloc_distances_s\fP * distances)"
+
+.PP
+Release a distance structure previously returned by \fBhwloc_distances_get()\fP\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

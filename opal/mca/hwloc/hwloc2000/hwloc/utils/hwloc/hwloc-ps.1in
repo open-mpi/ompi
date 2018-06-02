@@ -1,0 +1,145 @@
+.\" -*- nroff -*-
+.\" Copyright © 2010-2017 Inria.  All rights reserved.
+.\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-PS "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-ps \- List currently-running processes or threads that are bound
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-ps
+[\fIoptions\fR]
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-a\fR
+List all processes, even those that are not bound to any
+specific part of the machine.
+.TP
+\fB\-\-pid <pid>\fR
+Only show process of PID \fI<pid>\fR,
+even if it is not bound to any specific part of the machine.
+.TP
+\fB\-\-name <name>\fR
+Only show processes whose name contains \fI<name>\fR,
+even if they are not bound to any specific part of the machine.
+This is not supported on all operating systems.
+.TP
+\fB\-p\fR \fB\-\-physical\fR
+Report OS/physical indexes instead of logical indexes
+.TP
+\fB\-l\fR \fB\-\-logical\fR
+Report logical indexes instead of physical/OS indexes (default)
+.TP
+\fB\-c\fR \fB\-\-cpuset\fR
+Show process bindings as cpusets instead of objects.
+.TP
+\fB\-t\fR \fB\-\-threads\fR
+Show threads inside processes.
+If \fB\-a\fR is given as well, list all threads within each process.
+Otherwise, show all threads inside each process where at least one
+thread is bound.
+This is currently only supported on Linux.
+.TP
+\fB\-e\fR \fB\-\-get\-last\-cpu\-location\fR
+Report  the last processors where the process/thread ran.
+Note that the result may already be outdated when reported
+since the operating system may move the tasks to other processors
+at any time according to the binding.
+.TP
+\fB\-\-whole\-system\fR
+Do not consider administration limitations.
+.TP
+\fB\-\-pid\-cmd <cmd>\fR
+Append the output of the given command to each PID line.
+For each displayed process ID, execute the command \fI<cmd> <pid>\fR
+and append \fBthe first line\fR of its output to the regular hwloc-ps
+line.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+By default, hwloc-ps lists only those currently-running processes that
+are bound. If \fB-t\fR is given, processes that are not bound but contain
+at least one bound thread are also displayed, as well as all their threads.
+.
+.PP
+hwloc-ps displays process identifier, command-line and
+binding.  The binding may be reported as objects or cpusets.
+.
+.PP
+By default, process bindings are restricted to the currently available
+topology. If some processes are bound to processors that are not available
+to the current process, they are ignored unless \fB\-\-whole\-system\fR
+is given.
+.
+.PP
+The output is a plain list. If you wish to annotate the hierarchical
+topology with processes so as to see how they are actual distributed
+on the machine, you might want to use lstopo --ps instead (which also
+only shows processes that are bound).
+.
+.PP
+The
+.I -a
+switch can be used to show
+.I all
+processes, if desired.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+If a process is bound, it appears in the default output:
+
+    $ utils/hwloc-ps
+    4759	Core:0		myprogram
+
+If a process is not bound but 3 of his 4 threads are bound,
+it only appears in the thread-aware output (or if explicitly selected):
+
+    $ utils/hwloc-ps
+
+    $ utils/hwloc-ps -t
+    4759	Machine:0		myprogram
+     4759	Machine:0
+     4761	PU:0
+     4762	PU:2
+     4765	PU:1
+
+    $ utils/hwloc-ps --pid 4759
+    4759	Machine:0		myprogram
+
+To display the binding of already running MPI processes (launched by
+Open MPI) and append their MPI rank (in MPI_COMM_WORLD) to each line:
+
+    $ utils/hwloc-ps --pid-cmd myscript
+    29093	L1dCache:0	myprogram	OMPI_COMM_WORLD_RANK=0
+    29094	L1dCache:2	myprogram	OMPI_COMM_WORLD_RANK=1
+    29095	L1dCache:1	myprogram	OMPI_COMM_WORLD_RANK=2
+    29096	L1dCache:3	myprogram	OMPI_COMM_WORLD_RANK=3
+
+where \fBmyscript\fR is a bash script doing:
+
+    #!/bin/sh
+    cat /proc/$1/environ 2>/dev/null | xargs --null --max-args=1 echo | grep OMPI_COMM_WORLD_RANK
+
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-calc(1), hwloc-distrib(1)
+.sp

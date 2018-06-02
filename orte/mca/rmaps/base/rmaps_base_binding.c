@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
@@ -915,39 +915,60 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
             }
         } else {
             /* determine the relative depth on this node */
+
+            /* Get the binding depth */
+            bool happy = true;
 #if HWLOC_API_VERSION < 0x20000
             if (HWLOC_OBJ_CACHE == hwb) {
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
                 bind_depth = hwloc_get_cache_type_depth(node->topology->topo, clvl, (hwloc_obj_cache_type_t)-1);
-            } else
+                if (0 > bind_depth) {
+                    happy = false;
+                }
+            }
+#else // HWLOC_API_VERSION >= 0x20000
+            bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
+            if (0 > bind_depth && HWLOC_TYPE_DEPTH_NUMANODE != bind_depth) {
+                happy = false;
+            }
 #endif
-                bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
-            if (0 > bind_depth) {
+
+            if (!happy) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
                                true, hwloc_obj_type_string(hwb), node->name);
                 return ORTE_ERR_SILENT;
             }
+
+            /* Get the mapping depth */
+            happy = true;
 #if HWLOC_API_VERSION < 0x20000
             if (HWLOC_OBJ_CACHE == hwm) {
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
                 map_depth = hwloc_get_cache_type_depth(node->topology->topo, clvm, (hwloc_obj_cache_type_t)-1);
-            } else
-#else
-                /* do something with clvm to silence compiler warnings */
-                ++clvm;
+                if (0 > map_depth) {
+                    happy = false;
+                }
+            }
+#else // HWLOC_API_VERSION >= 0x20000
+            /* do something with clvm to silence compiler warnings */
+            ++clvm;
+            map_depth = hwloc_get_type_depth(node->topology->topo, hwm);
+            if (0 > bind_depth && HWLOC_TYPE_DEPTH_NUMANODE != bind_depth) {
+                happy = false;
+            }
 #endif
-                map_depth = hwloc_get_type_depth(node->topology->topo, hwm);
-            if (0 > map_depth) {
+            if (!happy) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
                                true, hwloc_obj_type_string(hwm), node->name);
                 return ORTE_ERR_SILENT;
             }
+
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s bind_depth: %d map_depth %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

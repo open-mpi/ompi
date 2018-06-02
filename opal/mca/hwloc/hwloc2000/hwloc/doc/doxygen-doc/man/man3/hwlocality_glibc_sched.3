@@ -1,0 +1,45 @@
+.TH "hwlocality_glibc_sched" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_glibc_sched
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBhwloc_cpuset_to_glibc_sched_affinity\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP hwlocset, cpu_set_t *schedset, size_t schedsetsize)"
+.br
+.ti -1c
+.RI "static int \fBhwloc_cpuset_from_glibc_sched_affinity\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP hwlocset, const cpu_set_t *schedset, size_t schedsetsize)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This interface offers ways to convert between hwloc cpusets and glibc cpusets such as those manipulated by sched_getaffinity() or pthread_attr_setaffinity_np()\&.
+.PP
+\fBNote:\fP
+.RS 4
+Topology \fCtopology\fP must match the current machine\&. 
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "static int hwloc_cpuset_from_glibc_sched_affinity (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP hwlocset, const cpu_set_t * schedset, size_t schedsetsize)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Convert glibc sched affinity CPU set \fCschedset\fP into hwloc CPU set\&. This function may be used before calling sched_setaffinity or any other function that takes a cpu_set_t as input parameter\&.
+.PP
+\fCschedsetsize\fP should be sizeof(cpu_set_t) unless \fCschedset\fP was dynamically allocated with CPU_ALLOC 
+.SS "static int hwloc_cpuset_to_glibc_sched_affinity (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP hwlocset, cpu_set_t * schedset, size_t schedsetsize)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Convert hwloc CPU set \fCtoposet\fP into glibc sched affinity CPU set \fCschedset\fP\&. This function may be used before calling sched_setaffinity or any other function that takes a cpu_set_t as input parameter\&.
+.PP
+\fCschedsetsize\fP should be sizeof(cpu_set_t) unless \fCschedset\fP was dynamically allocated with CPU_ALLOC 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

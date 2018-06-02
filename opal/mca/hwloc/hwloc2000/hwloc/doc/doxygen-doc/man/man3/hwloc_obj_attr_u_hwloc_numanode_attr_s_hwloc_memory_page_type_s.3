@@ -1,0 +1,39 @@
+.TH "hwloc_obj_attr_u::hwloc_numanode_attr_s::hwloc_memory_page_type_s" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_obj_attr_u::hwloc_numanode_attr_s::hwloc_memory_page_type_s
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "hwloc_uint64_t \fBsize\fP"
+.br
+.ti -1c
+.RI "hwloc_uint64_t \fBcount\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Array of local memory page types, \fCNULL\fP if no local memory and \fCpage_types\fP is 0\&. 
+
+The array is sorted by increasing \fCsize\fP fields\&. It contains \fCpage_types_len\fP slots\&. 
+.SH "Field Documentation"
+.PP 
+.SS "hwloc_uint64_t hwloc_obj_attr_u::hwloc_numanode_attr_s::hwloc_memory_page_type_s::count"
+
+.PP
+Number of pages of this size\&. 
+.SS "hwloc_uint64_t hwloc_obj_attr_u::hwloc_numanode_attr_s::hwloc_memory_page_type_s::size"
+
+.PP
+Size of pages\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

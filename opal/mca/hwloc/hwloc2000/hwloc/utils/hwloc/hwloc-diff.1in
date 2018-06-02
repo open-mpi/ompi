@@ -1,0 +1,126 @@
+.\" -*- nroff -*-
+.\" Copyright © 2013-2016 Inria.  All rights reserved.
+.\" See COPYING in top-level directory.
+.TH HWLOC-DIFF "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-diff \- Compute differences between two XML topologies
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.PP
+.B hwloc-diff
+[\fIoptions\fR]
+\fI<input1.xml>\fR
+\fI<input2.xml>\fR
+.PP
+.B hwloc-diff
+[\fIoptions\fR]
+\fI<input1.xml>\fR
+\fI<input2.xml>\fR
+\fI<output.xml>\fR
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-\-refname\fR <name>
+Use <name> as the identifier for the reference topology
+in the output XML difference.
+It is meant to tell which topology should be used when applying
+the resulting difference.
+hwloc-patch may use that name to automatically load the relevant
+reference topology XML.
+By default, <input1.xml> is used without its full path.
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-diff computes the difference between two XML topologies
+and stores the result into <output.xml> if any, or dumps it
+to stdout otherwise.
+.
+.PP
+The output difference may later be applied to another topology
+with hwloc-patch.
+.
+.PP
+hwloc-compress-dir may be used for computing the diffs between
+all XML files in a directory.
+.
+.PP
+.B NOTE:
+If some application-specific userdata were been exported to the input XMLs,
+they will be ignored and discarded from the output because hwloc has no way
+to understand and compare them.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-diff utility.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-diff's operation is best described through several examples.
+.
+.PP
+Compute the difference between two XML topologies and output it to stdout:
+
+    $ hwloc-diff fourmi023.xml fourmi024.xml
+    Found 11 differences, exporting to stdout
+    <?xml version="1.0" encoding="UTF-8"?>
+    ...
+
+Output the difference to file diff.xml instead:
+
+    $ hwloc-diff fourmi023.xml fourmi024.xml diff.xml
+    Found 11 differences, exporting to diff.xml
+
+When the difference is too complex to be represented:
+
+    $ hwloc-diff fourmi023.xml avakas-frontend1.xml
+    Found 1 differences, including 1 too complex ones.
+    Cannot export differences to stdout
+
+Directly compute the difference between two topologies and apply it
+to another one:
+
+    $ hwloc-diff fourmi023.xml fourmi024.xml | hwloc-patch fourmi025.xml -
+
+.
+.\" **************************
+.\" Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-diff outputs the difference.
+The return value is 0.
+.
+.PP
+If the difference is too complex to be represented, an error is returned
+and the output is not generated.
+.
+.PP
+hwloc-diff also returns nonzero if any kind of error occurs, such as
+(but not limited to) failure to parse the command line.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-patch(1), hwloc-compress-dir(1)
+.sp

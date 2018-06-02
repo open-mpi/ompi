@@ -1,0 +1,18 @@
+Machine (P#0 total=16777216KB Backend=Linux)
+  Group0 L#0 (total=8388608KB)
+    NUMANode L#0 (P#0 local=8388608KB total=8388608KB)
+    PU L#0 (P#0)
+    PU L#1 (P#1)
+  Group0 L#1 (total=8388608KB)
+    NUMANode L#1 (P#1 local=8388608KB total=8388608KB)
+    PU L#2 (P#2)
+    PU L#3 (P#3)
+depth 0:           1 Machine (type #0)
+ depth 1:          2 Group0 (type #12)
+  depth 2:         4 PU (type #3)
+Special depth -3:  2 NUMANode (type #13)
+Relative latency matrix (kind 5) between 2 NUMANodes (depth -3) by logical indexes:
+  index     0     1
+      0    10    20
+      1    20    10
+Topology not from this system

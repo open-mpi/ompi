@@ -1,0 +1,229 @@
+.TH "hwlocality_object_types" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_object_types
+.SH SYNOPSIS
+.br
+.PP
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBHWLOC_OBJ_TYPE_MIN\fP   \fBHWLOC_OBJ_MACHINE\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef enum \fBhwloc_obj_cache_type_e\fP \fBhwloc_obj_cache_type_t\fP"
+.br
+.ti -1c
+.RI "typedef enum \fBhwloc_obj_bridge_type_e\fP \fBhwloc_obj_bridge_type_t\fP"
+.br
+.ti -1c
+.RI "typedef enum \fBhwloc_obj_osdev_type_e\fP \fBhwloc_obj_osdev_type_t\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_obj_type_t\fP { \fBHWLOC_OBJ_MACHINE\fP, \fBHWLOC_OBJ_PACKAGE\fP, \fBHWLOC_OBJ_CORE\fP, \fBHWLOC_OBJ_PU\fP, \fBHWLOC_OBJ_L1CACHE\fP, \fBHWLOC_OBJ_L2CACHE\fP, \fBHWLOC_OBJ_L3CACHE\fP, \fBHWLOC_OBJ_L4CACHE\fP, \fBHWLOC_OBJ_L5CACHE\fP, \fBHWLOC_OBJ_L1ICACHE\fP, \fBHWLOC_OBJ_L2ICACHE\fP, \fBHWLOC_OBJ_L3ICACHE\fP, \fBHWLOC_OBJ_GROUP\fP, \fBHWLOC_OBJ_NUMANODE\fP, \fBHWLOC_OBJ_BRIDGE\fP, \fBHWLOC_OBJ_PCI_DEVICE\fP, \fBHWLOC_OBJ_OS_DEVICE\fP, \fBHWLOC_OBJ_MISC\fP }"
+.br
+.ti -1c
+.RI "enum \fBhwloc_obj_cache_type_e\fP { \fBHWLOC_OBJ_CACHE_UNIFIED\fP, \fBHWLOC_OBJ_CACHE_DATA\fP, \fBHWLOC_OBJ_CACHE_INSTRUCTION\fP }"
+.br
+.ti -1c
+.RI "enum \fBhwloc_obj_bridge_type_e\fP { \fBHWLOC_OBJ_BRIDGE_HOST\fP, \fBHWLOC_OBJ_BRIDGE_PCI\fP }"
+.br
+.ti -1c
+.RI "enum \fBhwloc_obj_osdev_type_e\fP { \fBHWLOC_OBJ_OSDEV_BLOCK\fP, \fBHWLOC_OBJ_OSDEV_GPU\fP, \fBHWLOC_OBJ_OSDEV_NETWORK\fP, \fBHWLOC_OBJ_OSDEV_OPENFABRICS\fP, \fBHWLOC_OBJ_OSDEV_DMA\fP, \fBHWLOC_OBJ_OSDEV_COPROC\fP }"
+.br
+.ti -1c
+.RI "enum \fBhwloc_compare_types_e\fP { \fBHWLOC_TYPE_UNORDERED\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBhwloc_compare_types\fP (\fBhwloc_obj_type_t\fP type1, \fBhwloc_obj_type_t\fP type2)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define HWLOC_OBJ_TYPE_MIN   \fBHWLOC_OBJ_MACHINE\fP"
+
+.PP
+Type of topology object\&. 
+.PP
+\fBNote:\fP
+.RS 4
+Do not rely on the ordering or completeness of the values as new ones may be defined in the future! If you need to compare types, use \fBhwloc_compare_types()\fP instead\&.Sentinel value 
+.RE
+.PP
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef enum \fBhwloc_obj_bridge_type_e\fP  \fBhwloc_obj_bridge_type_t\fP"
+
+.PP
+Type of one side (upstream or downstream) of an I/O bridge\&. 
+.SS "typedef enum \fBhwloc_obj_cache_type_e\fP  \fBhwloc_obj_cache_type_t\fP"
+
+.PP
+Cache type\&. 
+.SS "typedef enum \fBhwloc_obj_osdev_type_e\fP  \fBhwloc_obj_osdev_type_t\fP"
+
+.PP
+Type of a OS device\&. 
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_compare_types_e\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_TYPE_UNORDERED \fP\fP
+Value returned by \fBhwloc_compare_types()\fP when types can not be compared\&. 
+.SS "enum \fBhwloc_obj_bridge_type_e\fP"
+
+.PP
+Type of one side (upstream or downstream) of an I/O bridge\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_OBJ_BRIDGE_HOST \fP\fP
+Host-side of a bridge, only possible upstream\&. 
+.TP
+\fB\fIHWLOC_OBJ_BRIDGE_PCI \fP\fP
+PCI-side of a bridge\&. 
+.SS "enum \fBhwloc_obj_cache_type_e\fP"
+
+.PP
+Cache type\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_OBJ_CACHE_UNIFIED \fP\fP
+Unified cache\&. 
+.TP
+\fB\fIHWLOC_OBJ_CACHE_DATA \fP\fP
+Data cache\&. 
+.TP
+\fB\fIHWLOC_OBJ_CACHE_INSTRUCTION \fP\fP
+Instruction cache (filtered out by default)\&. 
+.SS "enum \fBhwloc_obj_osdev_type_e\fP"
+
+.PP
+Type of a OS device\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_OBJ_OSDEV_BLOCK \fP\fP
+Operating system block device\&. For instance 'sda' on Linux\&. 
+.TP
+\fB\fIHWLOC_OBJ_OSDEV_GPU \fP\fP
+Operating system GPU device\&. For instance ':0\&.0' for a GL display, 'card0' for a Linux DRM device\&. 
+.TP
+\fB\fIHWLOC_OBJ_OSDEV_NETWORK \fP\fP
+Operating system network device\&. For instance the 'eth0' interface on Linux\&. 
+.TP
+\fB\fIHWLOC_OBJ_OSDEV_OPENFABRICS \fP\fP
+Operating system openfabrics device\&. For instance the 'mlx4_0' InfiniBand HCA, or 'hfi1_0' Omni-Path interface on Linux\&. 
+.TP
+\fB\fIHWLOC_OBJ_OSDEV_DMA \fP\fP
+Operating system dma engine device\&. For instance the 'dma0chan0' DMA channel on Linux\&. 
+.TP
+\fB\fIHWLOC_OBJ_OSDEV_COPROC \fP\fP
+Operating system co-processor device\&. For instance 'mic0' for a Xeon Phi (MIC) on Linux, 'opencl0d0' for a OpenCL device, 'cuda0' for a CUDA device\&. 
+.SS "enum \fBhwloc_obj_type_t\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIHWLOC_OBJ_MACHINE \fP\fP
+Machine\&. The root object type\&. A set of processors and memory with cache coherency\&. 
+.TP
+\fB\fIHWLOC_OBJ_PACKAGE \fP\fP
+Physical package\&. The physical package that usually gets inserted into a socket on the motherboard\&. A processor package usually contains multiple cores\&. 
+.TP
+\fB\fIHWLOC_OBJ_CORE \fP\fP
+Core\&. A computation unit (may be shared by several logical processors)\&. 
+.TP
+\fB\fIHWLOC_OBJ_PU \fP\fP
+Processing Unit, or (Logical) Processor\&. An execution unit (may share a core with some other logical processors, e\&.g\&. in the case of an SMT core)\&. Objects of this kind are always reported and can thus be used as fallback when others are not\&. 
+.TP
+\fB\fIHWLOC_OBJ_L1CACHE \fP\fP
+Level 1 Data (or Unified) Cache\&. 
+.TP
+\fB\fIHWLOC_OBJ_L2CACHE \fP\fP
+Level 2 Data (or Unified) Cache\&. 
+.TP
+\fB\fIHWLOC_OBJ_L3CACHE \fP\fP
+Level 3 Data (or Unified) Cache\&. 
+.TP
+\fB\fIHWLOC_OBJ_L4CACHE \fP\fP
+Level 4 Data (or Unified) Cache\&. 
+.TP
+\fB\fIHWLOC_OBJ_L5CACHE \fP\fP
+Level 5 Data (or Unified) Cache\&. 
+.TP
+\fB\fIHWLOC_OBJ_L1ICACHE \fP\fP
+Level 1 instruction Cache (filtered out by default)\&. 
+.TP
+\fB\fIHWLOC_OBJ_L2ICACHE \fP\fP
+Level 2 instruction Cache (filtered out by default)\&. 
+.TP
+\fB\fIHWLOC_OBJ_L3ICACHE \fP\fP
+Level 3 instruction Cache (filtered out by default)\&. 
+.TP
+\fB\fIHWLOC_OBJ_GROUP \fP\fP
+Group objects\&. Objects which do not fit in the above but are detected by hwloc and are useful to take into account for affinity\&. For instance, some operating systems expose their arbitrary processors aggregation this way\&. And hwloc may insert such objects to group NUMA nodes according to their distances\&. See also \fBWhat are these Group objects in my topology?\fP\&. These objects are removed when they do not bring any structure\&. 
+.TP
+\fB\fIHWLOC_OBJ_NUMANODE \fP\fP
+NUMA node\&. An object that contains memory that is directly and byte-accessible to the host processors\&. It is usually close to some cores (the corresponding objects are descendants of the NUMA node object in the hwloc tree)\&. There is always at one such object in the topology even if the machine is not NUMA\&.
+.PP
+Memory objects are not listed in the main children list, but rather in the dedicated Memory children list\&.
+.PP
+NUMA nodes have a special depth \fBHWLOC_TYPE_DEPTH_NUMANODE\fP instead of a normal depth just like other objects in the main tree\&. 
+.TP
+\fB\fIHWLOC_OBJ_BRIDGE \fP\fP
+Bridge (filtered out by default)\&. Any bridge that connects the host or an I/O bus, to another I/O bus\&. They are not added to the topology unless I/O discovery is enabled with \fBhwloc_topology_set_flags()\fP\&. I/O objects are not listed in the main children list, but rather in the dedicated io children list\&. I/O objects have NULL CPU and node sets\&. 
+.TP
+\fB\fIHWLOC_OBJ_PCI_DEVICE \fP\fP
+PCI device (filtered out by default)\&. They are not added to the topology unless I/O discovery is enabled with \fBhwloc_topology_set_flags()\fP\&. I/O objects are not listed in the main children list, but rather in the dedicated io children list\&. I/O objects have NULL CPU and node sets\&. 
+.TP
+\fB\fIHWLOC_OBJ_OS_DEVICE \fP\fP
+Operating system device (filtered out by default)\&. They are not added to the topology unless I/O discovery is enabled with \fBhwloc_topology_set_flags()\fP\&. I/O objects are not listed in the main children list, but rather in the dedicated io children list\&. I/O objects have NULL CPU and node sets\&. 
+.TP
+\fB\fIHWLOC_OBJ_MISC \fP\fP
+Miscellaneous objects (filtered out by default)\&. Objects without particular meaning, that can e\&.g\&. be added by the application for its own use, or by hwloc for miscellaneous objects such as MemoryModule (DIMMs)\&. These objects are not listed in the main children list, but rather in the dedicated misc children list\&. Misc objects may only have Misc objects as children, and those are in the dedicated misc children list as well\&. Misc objects have NULL CPU and node sets\&. 
+.SH "Function Documentation"
+.PP 
+.SS "int hwloc_compare_types (\fBhwloc_obj_type_t\fP type1, \fBhwloc_obj_type_t\fP type2)"
+
+.PP
+Compare the depth of two object types\&. Types shouldn't be compared as they are, since newer ones may be added in the future\&. This function returns less than, equal to, or greater than zero respectively if \fCtype1\fP objects usually include \fCtype2\fP objects, are the same as \fCtype2\fP objects, or are included in \fCtype2\fP objects\&. If the types can not be compared (because neither is usually contained in the other), \fBHWLOC_TYPE_UNORDERED\fP is returned\&. Object types containing CPUs can always be compared (usually, a system contains machines which contain nodes which contain packages which contain caches, which contain cores, which contain processors)\&.
+.PP
+\fBNote:\fP
+.RS 4
+\fBHWLOC_OBJ_PU\fP will always be the deepest, while \fBHWLOC_OBJ_MACHINE\fP is always the highest\&.
+.PP
+This does not mean that the actual topology will respect that order: e\&.g\&. as of today cores may also contain caches, and packages may also contain nodes\&. This is thus just to be seen as a fallback comparison method\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

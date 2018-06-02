@@ -1,0 +1,83 @@
+.TH "hwlocality_helper_find_covering" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_helper_find_covering
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_child_covering_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_obj_covering_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_covering_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, int depth, \fBhwloc_obj_t\fP prev)"
+.br
+.ti -1c
+.RI "static \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_covering_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "static \fBhwloc_obj_t\fP hwloc_get_child_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the child covering at least CPU set \fCset\fP\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+\fCNULL\fP if no child matches or if \fCset\fP is empty\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+This function cannot work if parent does not have a CPU set (I/O or Misc objects)\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_next_obj_covering_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, int depth, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Iterate through same-depth objects covering at least CPU set \fCset\fP\&. If object \fCprev\fP is \fCNULL\fP, return the first object at depth \fCdepth\fP covering at least part of CPU set \fCset\fP\&. The next invokation should pass the previous return value in \fCprev\fP so as to obtain the next object covering at least another part of \fCset\fP\&.
+.PP
+\fBNote:\fP
+.RS 4
+This function cannot work if objects at the given depth do not have CPU sets (I/O or Misc objects)\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_next_obj_covering_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Iterate through same-type objects covering at least CPU set \fCset\fP\&. If object \fCprev\fP is \fCNULL\fP, return the first object of type \fCtype\fP covering at least part of CPU set \fCset\fP\&. The next invokation should pass the previous return value in \fCprev\fP so as to obtain the next object of type \fCtype\fP covering at least another part of \fCset\fP\&.
+.PP
+If there are no or multiple depths for type \fCtype\fP, \fCNULL\fP is returned\&. The caller may fallback to \fBhwloc_get_next_obj_covering_cpuset_by_depth()\fP for each depth\&.
+.PP
+\fBNote:\fP
+.RS 4
+This function cannot work if objects of the given type do not have CPU sets (I/O or Misc objects)\&. 
+.RE
+.PP
+
+.SS "static \fBhwloc_obj_t\fP hwloc_get_obj_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Get the lowest object covering at least CPU set \fCset\fP\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+\fCNULL\fP if no object matches or if \fCset\fP is empty\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

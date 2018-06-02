@@ -1,0 +1,55 @@
+.TH "hwloc_distances_s" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_distances_s
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <distances\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned \fBnbobjs\fP"
+.br
+.ti -1c
+.RI "\fBhwloc_obj_t\fP * \fBobjs\fP"
+.br
+.ti -1c
+.RI "unsigned long \fBkind\fP"
+.br
+.ti -1c
+.RI "hwloc_uint64_t * \fBvalues\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Matrix of distances between a set of objects\&. 
+
+This matrix often contains latencies between NUMA nodes (as reported in the System Locality Distance Information Table (SLIT) in the ACPI specification), which may or may not be physically accurate\&. It corresponds to the latency for accessing the memory of one node from a core in another node\&. The corresponding kind is \fBHWLOC_DISTANCES_KIND_FROM_OS\fP | \fBHWLOC_DISTANCES_KIND_FROM_USER\fP\&.
+.PP
+The matrix may also contain bandwidths between random sets of objects, possibly provided by the user, as specified in the \fCkind\fP attribute\&. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned long hwloc_distances_s::kind"
+
+.PP
+OR'ed set of \fBhwloc_distances_kind_e\fP\&. 
+.SS "unsigned hwloc_distances_s::nbobjs"
+
+.PP
+Number of objects described by the distance matrix\&. 
+.SS "\fBhwloc_obj_t\fP* hwloc_distances_s::objs"
+
+.PP
+Array of objects described by the distance matrix\&. These objects are not in any particular order, see \fBhwloc_distances_obj_index()\fP and \fBhwloc_distances_obj_pair_values()\fP for easy ways to find objects in this array and their corresponding values\&. 
+.SS "hwloc_uint64_t* hwloc_distances_s::values"
+
+.PP
+Matrix of distances between objects, stored as a one-dimension array\&. Distance from i-th to j-th object is stored in slot i*nbobjs+j\&. The meaning of the value depends on the \fCkind\fP attribute\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

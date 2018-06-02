@@ -1,0 +1,41 @@
+.TH "hwlocality_disc_backends" 3 "Mon Feb 5 2018" "Version 2.0.0" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwlocality_disc_backends
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBhwloc_backend\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "struct \fBhwloc_backend\fP * \fBhwloc_backend_alloc\fP (struct \fBhwloc_disc_component\fP *component)"
+.br
+.ti -1c
+.RI "int \fBhwloc_backend_enable\fP (struct hwloc_topology *topology, struct \fBhwloc_backend\fP *backend)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.SH "Function Documentation"
+.PP 
+.SS "struct \fBhwloc_backend\fP* hwloc_backend_alloc (struct \fBhwloc_disc_component\fP * component)"
+
+.PP
+Allocate a backend structure, set good default values, initialize backend->component and topology, etc\&. The caller will then modify whatever needed, and call \fBhwloc_backend_enable()\fP\&. 
+.SS "int hwloc_backend_enable (struct hwloc_topology * topology, struct \fBhwloc_backend\fP * backend)"
+
+.PP
+Enable a previously allocated and setup backend\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code\&.

@@ -1,0 +1,64 @@
+#!/bin/sh
+#-*-sh-*-
+
+#
+# Copyright © 2009 CNRS
+# Copyright © 2009-2017 Inria.  All rights reserved.
+# Copyright © 2009, 2011 Université Bordeaux
+# See COPYING in top-level directory.
+#
+
+HWLOC_top_srcdir="@HWLOC_top_srcdir@"
+HWLOC_top_builddir="@HWLOC_top_builddir@"
+srcdir="$HWLOC_top_srcdir/utils/lstopo"
+builddir="$HWLOC_top_builddir/utils/lstopo"
+ls="$builddir/lstopo-no-graphics"
+
+HWLOC_PLUGINS_PATH=${HWLOC_top_builddir}/hwloc
+export HWLOC_PLUGINS_PATH
+
+HWLOC_DEBUG_CHECK=1
+export HWLOC_DEBUG_CHECK
+
+: ${TMPDIR=/tmp}
+{
+  tmp=`
+    (umask 077 && mktemp -d "$TMPDIR/fooXXXXXX") 2>/dev/null
+  ` &&
+  test -n "$tmp" && test -d "$tmp"
+} || {
+  tmp=$TMPDIR/foo$$-$RANDOM
+  (umask 077 && mkdir "$tmp")
+} || exit $?
+file="$tmp/test-lstopo.output"
+
+unset DISPLAY
+
+set -e
+$ls
+(
+  $ls > $tmp/test.console
+  $ls -v > $tmp/test.console_verbose
+  $ls -c -v > $tmp/test.cpuset_verbose
+  $ls --taskset -v > $tmp/test.taskset
+
+  $ls --merge > $tmp/test.merge
+  $ls --filter all:none > $tmp/test.none
+  $ls --filter all:all > $tmp/test.all
+
+  $ls --no-io > $tmp/test.no-io
+  $ls --no-bridges > $tmp/test.no-bridges
+  $ls --whole-io > $tmp/test.whole-io
+  $ls -v --whole-io > $tmp/test.wholeio_verbose
+
+  $ls --whole-system > $tmp/test.whole-system
+  $ls --ps > $tmp/test.
+  $ls $tmp/test.txt
+  $ls $tmp/test.fig
+  $ls -f $tmp/test.xml
+  HWLOC_LIBXML_EXPORT=0 $ls -f $tmp/test.xml
+  $ls --export-xml-flags 1 -f $tmp/test.v1.xml
+  $ls --input "pa:1 no:2 co:1 l2:2 2" $tmp/test.synthetic
+) > "$file"
+diff @HWLOC_DIFF_U@ $srcdir/test-lstopo.output "$file"
+rm -rf "$tmp"

@@ -1,0 +1,10 @@
+Normal way to use this:
+* get some hwloc outputs from some nodes (at least enough nodes to make all subnets available)
+  and store them as <hostname>.xml in a single directory
+* run netloc-ib-gather-raw.pl --hwloc-dir <hwloc XML directory> --raw-dir <raw IB output directory>
+  - If you cannot run the entire script as root, add --sudo to run ib* programs as root.
+  - If some subnets are not accessible from the local node, they will be skipped.
+    Add --verbose to see where you could run the same command to discover other subnets.
+  - If one subnet doesn't work for some reason, use --force-subnet instead of --hwloc-dir.
+* make sure netloc_ib_reader and friends are in PATH
+* run netloc-ib-extract-dats.pl --raw-dir <output directory> --out-dir <netloc output directory>

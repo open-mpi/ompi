@@ -1,0 +1,30 @@
+Machine
+  NUMANode L#0 (P#0)
+  Package L#0 + L3 L#0 (4096KB)
+    L2 L#0 (1024KB) + L1d L#0 (16KB) + Core L#0
+      PU L#0 (P#0)
+      PU L#1 (P#8)
+    L2 L#1 (1024KB) + L1d L#1 (16KB) + Core L#1
+      PU L#2 (P#4)
+      PU L#3 (P#12)
+  Package L#1 + L3 L#1 (4096KB)
+    L2 L#2 (1024KB) + L1d L#2 (16KB) + Core L#2
+      PU L#4 (P#1)
+      PU L#5 (P#9)
+    L2 L#3 (1024KB) + L1d L#3 (16KB) + Core L#3
+      PU L#6 (P#5)
+      PU L#7 (P#13)
+  Package L#2 + L3 L#2 (4096KB)
+    L2 L#4 (1024KB) + L1d L#4 (16KB) + Core L#4
+      PU L#8 (P#2)
+      PU L#9 (P#10)
+    L2 L#5 (1024KB) + L1d L#5 (16KB) + Core L#5
+      PU L#10 (P#6)
+      PU L#11 (P#14)
+  Package L#3 + L3 L#3 (4096KB)
+    L2 L#6 (1024KB) + L1d L#6 (16KB) + Core L#6
+      PU L#12 (P#3)
+      PU L#13 (P#11)
+    L2 L#7 (1024KB) + L1d L#7 (16KB) + Core L#7
+      PU L#14 (P#7)
+      PU L#15 (P#15)

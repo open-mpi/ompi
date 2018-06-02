@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2017-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -8,6 +8,10 @@
  *
  * $HEADER$
  */
+
+// Need to tell hwloc (>=v2.0) that we need hwloc/shmem.h.  Must do
+// this before including orte_config.h.
+#define OPAL_HWLOC_WANT_SHMEM 1
 
 #include "orte_config.h"
 #include "orte/constants.h"

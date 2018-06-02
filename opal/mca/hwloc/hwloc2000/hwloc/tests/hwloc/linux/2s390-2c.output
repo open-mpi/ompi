@@ -1,0 +1,10 @@
+Machine (P#0 total=1025408KB Backend=Linux)
+  Package L#0 (total=1025408KB)
+    NUMANode L#0 (P#0 local=1025408KB total=1025408KB)
+    PU L#0 (P#0)
+    PU L#1 (P#1)
+depth 0:           1 Machine (type #0)
+ depth 1:          1 Package (type #1)
+  depth 2:         2 PU (type #3)
+Special depth -3:  1 NUMANode (type #13)
+Topology not from this system
