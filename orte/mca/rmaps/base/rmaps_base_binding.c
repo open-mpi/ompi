@@ -165,20 +165,20 @@ static int bind_generic(orte_job_t *jdata,
 
         /* use the min_bound object that intersects locale->cpuset at target_depth */
         tmp_obj = NULL;
-	trg_obj = NULL;
-	min_bound = UINT_MAX;
-        while (tmp_obj = hwloc_get_next_obj_by_depth(node->topology->topo, target_depth, tmp_obj)) {
+        trg_obj = NULL;
+        min_bound = UINT_MAX;
+        while (NULL != (tmp_obj = hwloc_get_next_obj_by_depth(node->topology->topo, target_depth, tmp_obj))) {
             if (!hwloc_bitmap_intersects(locale->cpuset, tmp_obj->cpuset))
                 continue;
-	    data = (opal_hwloc_obj_data_t*)tmp_obj->userdata;
-	    if (NULL == data) {
+            data = (opal_hwloc_obj_data_t*)tmp_obj->userdata;
+            if (NULL == data) {
                 data = OBJ_NEW(opal_hwloc_obj_data_t);
                 tmp_obj->userdata = data;
             }
-	    if (data->num_bound < min_bound) {
-	        min_bound = data->num_bound;
-		trg_obj = tmp_obj;
-	    }
+            if (data->num_bound < min_bound) {
+                min_bound = data->num_bound;
+                trg_obj = tmp_obj;
+            }
         }
         if (NULL == trg_obj) {
             /* there aren't any such targets under this object */
@@ -580,7 +580,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     orte_node_t *node;
     int i, rc;
     struct hwloc_topology_support *support;
-    bool force_down = false;
     int bind_depth;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -701,7 +700,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
             }
         } else if (OPAL_BIND_TO_NUMA < bind) {
             /* bind every proc downwards */
-            force_down = true;
             goto execute;
         }
         /* if the binding policy is less than numa, then we are unbound - so
@@ -803,33 +801,33 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 
         /* determine the relative depth on this node */
 #if HWLOC_API_VERSION < 0x20000
-	if (HWLOC_OBJ_CACHE == hwb) {
-	    /* must use a unique function because blasted hwloc
-	     * just doesn't deal with caches very well...sigh
-	     */
-	    bind_depth = hwloc_get_cache_type_depth(node->topology->topo, clvl, (hwloc_obj_cache_type_t)-1);
-	} else
+        if (HWLOC_OBJ_CACHE == hwb) {
+            /* must use a unique function because blasted hwloc
+             * just doesn't deal with caches very well...sigh
+             */
+            bind_depth = hwloc_get_cache_type_depth(node->topology->topo, clvl, (hwloc_obj_cache_type_t)-1);
+        } else
 #endif
-	    bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
+            bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
 #if HWLOC_API_VERSION < 0x20000
-	if (0 > bind_depth)
+        if (0 > bind_depth)
 #else
         if (0 > bind_depth && HWLOC_TYPE_DEPTH_NUMANODE != bind_depth)
 #endif
         {
-	    /* didn't find such an object */
-	    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
-			   true, hwloc_obj_type_string(hwb), node->name);
-	    return ORTE_ERR_SILENT;
-	}
-	opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-			    "%s bind_depth: %d",
-			    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-			    bind_depth);
-	if (ORTE_SUCCESS != (rc = bind_generic(jdata, node, bind_depth))) {
-	    ORTE_ERROR_LOG(rc);
-	    return rc;
-	}
+            /* didn't find such an object */
+            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
+                           true, hwloc_obj_type_string(hwb), node->name);
+            return ORTE_ERR_SILENT;
+        }
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "%s bind_depth: %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            bind_depth);
+        if (ORTE_SUCCESS != (rc = bind_generic(jdata, node, bind_depth))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     return ORTE_SUCCESS;
