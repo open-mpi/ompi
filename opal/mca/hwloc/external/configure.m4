@@ -4,6 +4,7 @@
 # Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
+# Copyright (c) 2018      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -63,7 +64,7 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            # the MCA_hwloc_external_openfabrics_helper define).
            AS_IF([test "$opal_hwloc_dir" != ""],
                  [opal_hwloc_include="$opal_hwloc_dir/include/hwloc.h"
-                  opal_hwloc_shmem_include="$opal_hwloc_dir/include/hwloc/shmem.h",
+                  opal_hwloc_shmem_include="$opal_hwloc_dir/include/hwloc/shmem.h"
                   opal_hwloc_openfabrics_include="$opal_hwloc_dir/include/hwloc/openfabrics-verbs.h"],
                  [opal_hwloc_include="hwloc.h"
                   opal_hwloc_shmem_include="hwloc/shmem.h"

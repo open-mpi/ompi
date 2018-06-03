@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -708,9 +708,7 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
                              opal_hwloc_resource_type_t rtype,
                              unsigned int *num_objs)
 {
-    unsigned k;
     hwloc_obj_t obj;
-    opal_hwloc_obj_data_t *data;
     int search_depth;
 
     search_depth = hwloc_get_type_depth(topo, target);
@@ -757,7 +755,7 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
         return found;
     }
     if (OPAL_HWLOC_AVAILABLE == rtype) {
-        int idx = 0;
+        unsigned idx = 0;
         if (num_objs)
             *num_objs = hwloc_get_nbobjs_inside_cpuset_by_depth(topo, start->cpuset, search_depth);
         obj = NULL;

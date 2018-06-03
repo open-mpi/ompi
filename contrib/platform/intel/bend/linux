@@ -23,8 +23,8 @@ with_memory_manager=no
 with_tm=no
 with_psm=no
 with_psm2=no
-with_libfabric=/home/common/libfabric/build
 with_devel_headers=yes
+with_libfabric=no
 with_portals=no
 with_valgrind=no
 if [ -n "$SLURMHOME" ] ; then
