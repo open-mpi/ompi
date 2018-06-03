@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2017-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -8,6 +8,8 @@
  *
  * $HEADER$
  */
+
+#define OPAL_HWLOC_WANT_SHMEM 1
 
 #include "orte_config.h"
 #include "orte/constants.h"

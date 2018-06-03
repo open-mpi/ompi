@@ -415,21 +415,14 @@ char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality)
 
 static void obj_data_const(opal_hwloc_obj_data_t *ptr)
 {
-    ptr->available = NULL;
     ptr->npus_calculated = false;
     ptr->npus = 0;
     ptr->idx = UINT_MAX;
     ptr->num_bound = 0;
 }
-static void obj_data_dest(opal_hwloc_obj_data_t *ptr)
-{
-    if (NULL != ptr->available) {
-        hwloc_bitmap_free(ptr->available);
-    }
-}
 OBJ_CLASS_INSTANCE(opal_hwloc_obj_data_t,
                    opal_object_t,
-                   obj_data_const, obj_data_dest);
+                   obj_data_const, NULL);
 
 static void sum_const(opal_hwloc_summary_t *ptr)
 {
