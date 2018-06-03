@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,13 +18,13 @@
  * this header represents the public interface to this static component.
  */
 
-#ifndef MCA_OPAL_HWLOC_EXTERNAL_H
-#define MCA_OPAL_HWLOC_EXTERNAL_H
+#ifndef MCA_OPAL_HWLOC_HWLOC201_H
+#define MCA_OPAL_HWLOC_HWLOC201_H
 
 BEGIN_C_DECLS
 
-#include <opal_config.h>
-#include MCA_hwloc_external_header
+#include "hwloc/include/hwloc.h"
+#include "hwloc/include/hwloc/shmem.h"
 
 /* If the including file requested it, also include the hwloc verbs
    helper file.  We can't just always include this file (even if we
@@ -37,26 +40,12 @@ BEGIN_C_DECLS
  */
 #if defined(OPAL_HWLOC_WANT_VERBS_HELPER) && OPAL_HWLOC_WANT_VERBS_HELPER
 #    if defined(HAVE_INFINIBAND_VERBS_H)
-#        include MCA_hwloc_external_openfabrics_header
+#        include "hwloc/include/hwloc/openfabrics-verbs.h"
 #    else
 #        error Tried to include hwloc verbs helper file, but hwloc was compiled with no OpenFabrics support
 #    endif
 #endif
 
-#if defined(OPAL_HWLOC_WANT_SHMEM) && OPAL_HWLOC_WANT_SHMEM
-#    if HWLOC_API_VERSION >= 0x20000
-#        include MCA_hwloc_external_shmem_header
-#    endif
-/* Do nothing in the 1.x case because the caller doesn't know HWLOC_API_VERSION when it sets OPAL_HWLOC_WANT_SHMEM.
- * Calls to hwloc/shmem.h are protected by HWLOC_API_VERSION >= 0x20000 in the actual code.
- */
-#endif
-
-#if HWLOC_API_VERSION < 0x00010b00
-#define HWLOC_OBJ_NUMANODE HWLOC_OBJ_NODE
-#define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET
-#endif
-
 END_C_DECLS
 
-#endif /* MCA_OPAL_HWLOC_EXTERNAL_H */
+#endif /* MCA_OPAL_HWLOC_HWLOC201_H */

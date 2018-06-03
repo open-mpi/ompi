@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Inria.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,142 +121,21 @@ static void unbind_procs(orte_job_t *jdata)
     }
 }
 
-static int bind_upwards(orte_job_t *jdata,
+static int bind_generic(orte_job_t *jdata,
                         orte_node_t *node,
-                        hwloc_obj_type_t target,
-                        unsigned cache_level)
-{
-    /* traverse the hwloc topology tree on each node upwards
-     * until we find an object of type target - and then bind
-     * the process to that target
-     */
-    int j;
-    orte_job_map_t *map;
-    orte_proc_t *proc;
-    hwloc_obj_t obj;
-    unsigned int idx, ncpus;
-    opal_hwloc_obj_data_t *data;
-    hwloc_obj_t locale;
-    char *cpu_bitmap;
-
-    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                        "mca:rmaps: bind upwards for job %s with bindings %s",
-                        ORTE_JOBID_PRINT(jdata->jobid),
-                        opal_hwloc_base_print_binding(jdata->map->binding));
-    /* initialize */
-    map = jdata->map;
-
-
-    /* cycle thru the procs */
-    for (j=0; j < node->procs->size; j++) {
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-            continue;
-        }
-        /* ignore procs from other jobs */
-        if (proc->name.jobid != jdata->jobid) {
-            continue;
-        }
-        /* bozo check */
-        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
-            orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-locale", true, ORTE_NAME_PRINT(&proc->name));
-            return ORTE_ERR_SILENT;
-        }
-        /* starting at the locale, move up thru the parents
-         * to find the target object type
-         */
-        cpu_bitmap = NULL;
-        for (obj = locale->parent; NULL != obj; obj = obj->parent) {
-            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                "%s bind:upward target %s type %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                hwloc_obj_type_string(target),
-                                hwloc_obj_type_string(obj->type));
-            if (target == obj->type) {
-#if HWLOC_API_VERSION < 0x20000
-                if (HWLOC_OBJ_CACHE == target && cache_level != obj->attr->cache.depth) {
-                    continue;
-                }
-#endif
-                /* get its index */
-                if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology->topo, obj, OPAL_HWLOC_AVAILABLE))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                    return ORTE_ERR_SILENT;
-                }
-                /* track the number bound */
-                data = (opal_hwloc_obj_data_t*)obj->userdata;
-                data->num_bound++;
-                /* get the number of cpus under this location */
-                if (0 == (ncpus = opal_hwloc_base_get_npus(node->topology->topo, obj))) {
-                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-available-cpus", true, node->name);
-                    return ORTE_ERR_SILENT;
-                }
-                /* error out if adding a proc would cause overload and that wasn't allowed,
-                 * and it wasn't a default binding policy (i.e., the user requested it)
-                 */
-                if (ncpus < data->num_bound &&
-                    !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)) {
-                    if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                        /* if the user specified a binding policy, then we cannot meet
-                         * it since overload isn't allowed, so error out - have the
-                         * message indicate that setting overload allowed will remove
-                         * this restriction */
-                        orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
-                                       opal_hwloc_base_print_binding(map->binding), node->name,
-                                       data->num_bound, ncpus);
-                        return ORTE_ERR_SILENT;
-                    } else {
-                        /* if we have the default binding policy, then just don't bind */
-                        OPAL_SET_BINDING_POLICY(map->binding, OPAL_BIND_TO_NONE);
-                        unbind_procs(jdata);
-                        return ORTE_SUCCESS;
-                    }
-                }
-                /* bind it here */
-                hwloc_bitmap_list_asprintf(&cpu_bitmap, obj->cpuset);
-                orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
-                /* record the location */
-                orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
-                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "%s BOUND PROC %s TO %s[%s:%u] on node %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&proc->name),
-                                    cpu_bitmap,
-                                    hwloc_obj_type_string(target),
-                                    idx, node->name);
-                break;
-            }
-        }
-        if (NULL == cpu_bitmap && OPAL_BINDING_REQUIRED(jdata->map->binding)) {
-            /* didn't find anyone to bind to - this is an error
-             * unless the user specified if-supported
-             */
-            orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-target-not-found", true,
-                           opal_hwloc_base_print_binding(map->binding), node->name);
-            return ORTE_ERR_SILENT;
-        }
-        if (NULL != cpu_bitmap) {
-            free(cpu_bitmap);
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-static int bind_downwards(orte_job_t *jdata,
-                          orte_node_t *node,
-                          hwloc_obj_type_t target,
-                          unsigned cache_level)
+                        int target_depth)
 {
     int j, rc;
     orte_job_map_t *map;
     orte_proc_t *proc;
-    hwloc_obj_t trg_obj, nxt_obj;
+    hwloc_obj_t trg_obj, tmp_obj, nxt_obj;
     unsigned int ncpus;
     opal_hwloc_obj_data_t *data;
     int total_cpus;
     hwloc_cpuset_t totalcpuset;
     hwloc_obj_t locale;
     char *cpu_bitmap;
+    unsigned min_bound;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind downward for job %s with bindings %s",
@@ -282,12 +162,24 @@ static int bind_downwards(orte_job_t *jdata,
             hwloc_bitmap_free(totalcpuset);
             return ORTE_ERR_SILENT;
         }
-        /* we don't know if the target is a direct child of this locale,
-         * or if it is some depth below it, so we have to conduct a bit
-         * of a search. Let hwloc find the min usage one for us.
-         */
-        trg_obj = opal_hwloc_base_find_min_bound_target_under_obj(node->topology->topo, locale,
-                                                                  target, cache_level);
+
+        /* use the min_bound object that intersects locale->cpuset at target_depth */
+        tmp_obj = NULL;
+	trg_obj = NULL;
+	min_bound = UINT_MAX;
+        while (tmp_obj = hwloc_get_next_obj_by_depth(node->topology->topo, target_depth, tmp_obj)) {
+            if (!hwloc_bitmap_intersects(locale->cpuset, tmp_obj->cpuset))
+                continue;
+	    data = (opal_hwloc_obj_data_t*)tmp_obj->userdata;
+	    if (NULL == data) {
+                data = OBJ_NEW(opal_hwloc_obj_data_t);
+                tmp_obj->userdata = data;
+            }
+	    if (data->num_bound < min_bound) {
+	        min_bound = data->num_bound;
+		trg_obj = tmp_obj;
+	    }
+        }
         if (NULL == trg_obj) {
             /* there aren't any such targets under this object */
             orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-available-cpus", true, node->name);
@@ -296,6 +188,7 @@ static int bind_downwards(orte_job_t *jdata,
         }
         /* record the location */
         orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, ORTE_ATTR_LOCAL, trg_obj, OPAL_PTR);
+
         /* start with a clean slate */
         hwloc_bitmap_zero(totalcpuset);
         total_cpus = 0;
@@ -688,7 +581,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     int i, rc;
     struct hwloc_topology_support *support;
     bool force_down = false;
-    int bind_depth, map_depth;
+    int bind_depth;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: compute bindings for job %s with policy %s[%x]",
@@ -908,62 +801,35 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
          */
         reset_usage(node, jdata->jobid);
 
-        if (force_down) {
-            if (ORTE_SUCCESS != (rc = bind_downwards(jdata, node, hwb, clvl))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        } else {
-            /* determine the relative depth on this node */
+        /* determine the relative depth on this node */
 #if HWLOC_API_VERSION < 0x20000
-            if (HWLOC_OBJ_CACHE == hwb) {
-                /* must use a unique function because blasted hwloc
-                 * just doesn't deal with caches very well...sigh
-                 */
-                bind_depth = hwloc_get_cache_type_depth(node->topology->topo, clvl, (hwloc_obj_cache_type_t)-1);
-            } else
+	if (HWLOC_OBJ_CACHE == hwb) {
+	    /* must use a unique function because blasted hwloc
+	     * just doesn't deal with caches very well...sigh
+	     */
+	    bind_depth = hwloc_get_cache_type_depth(node->topology->topo, clvl, (hwloc_obj_cache_type_t)-1);
+	} else
 #endif
-                bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
-            if (0 > bind_depth) {
-                /* didn't find such an object */
-                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
-                               true, hwloc_obj_type_string(hwb), node->name);
-                return ORTE_ERR_SILENT;
-            }
+	    bind_depth = hwloc_get_type_depth(node->topology->topo, hwb);
 #if HWLOC_API_VERSION < 0x20000
-            if (HWLOC_OBJ_CACHE == hwm) {
-                /* must use a unique function because blasted hwloc
-                 * just doesn't deal with caches very well...sigh
-                 */
-                map_depth = hwloc_get_cache_type_depth(node->topology->topo, clvm, (hwloc_obj_cache_type_t)-1);
-            } else
+	if (0 > bind_depth)
 #else
-                /* do something with clvm to silence compiler warnings */
-                ++clvm;
+        if (0 > bind_depth && HWLOC_TYPE_DEPTH_NUMANODE != bind_depth)
 #endif
-                map_depth = hwloc_get_type_depth(node->topology->topo, hwm);
-            if (0 > map_depth) {
-                /* didn't find such an object */
-                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
-                               true, hwloc_obj_type_string(hwm), node->name);
-                return ORTE_ERR_SILENT;
-            }
-            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                "%s bind_depth: %d map_depth %d",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                bind_depth, map_depth);
-            if (bind_depth > map_depth) {
-                if (ORTE_SUCCESS != (rc = bind_downwards(jdata, node, hwb, clvl))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            } else {
-                if (ORTE_SUCCESS != (rc = bind_upwards(jdata, node, hwb, clvl))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        }
+        {
+	    /* didn't find such an object */
+	    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
+			   true, hwloc_obj_type_string(hwb), node->name);
+	    return ORTE_ERR_SILENT;
+	}
+	opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+			    "%s bind_depth: %d",
+			    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+			    bind_depth);
+	if (ORTE_SUCCESS != (rc = bind_generic(jdata, node, bind_depth))) {
+	    ORTE_ERROR_LOG(rc);
+	    return rc;
+	}
     }
 
     return ORTE_SUCCESS;

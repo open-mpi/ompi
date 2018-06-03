@@ -175,10 +175,6 @@ OPAL_DECLSPEC unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t t
                                                               hwloc_obj_type_t target,
                                                               unsigned cache_level,
                                                               opal_hwloc_resource_type_t rtype);
-OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t topo,
-                                                                          hwloc_obj_t obj,
-                                                                          hwloc_obj_type_t target,
-                                                                          unsigned cache_leve);
 OPAL_DECLSPEC void opal_hwloc_base_clear_usage(hwloc_topology_t topo);
 
 OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
