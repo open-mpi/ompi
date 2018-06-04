@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -185,8 +187,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Datatype_getHVector(
 {
     MPI_Datatype type;
 
-    int rc = MPI_Type_hvector(count, blockLength, stride,
-                              (MPI_Datatype)oldType, &type);
+    int rc = MPI_Type_create_hvector(count, blockLength, stride,
+                                     (MPI_Datatype)oldType, &type);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)type;
@@ -267,7 +269,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Datatype_getStruct(
     }
 
     MPI_Datatype type;
-    int rc = MPI_Type_struct(count, cBlockLengths, cDisps, cTypes, &type);
+    int rc = MPI_Type_create_struct(count, cBlockLengths, cDisps, cTypes, &type);
     ompi_java_exceptionCheck(env, rc);
 
     free(cDisps);
