@@ -339,7 +339,7 @@ OSHMEM_DECLSPEC double pshmem_double_swap(double *target, double value, int pe);
 #endif
 OSHMEM_DECLSPEC int pshmem_int_atomic_swap(int *target, int value, int pe);
 OSHMEM_DECLSPEC long pshmem_long_atomic_swap(long *target, long value, int pe);
-OSHMEM_DECLSPEC long long pshmem_longlong_atomic_swap(long long*target, long long value, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_atomic_swap(long long *target, long long value, int pe);
 OSHMEM_DECLSPEC float pshmem_float_atomic_swap(float *target, float value, int pe);
 OSHMEM_DECLSPEC double pshmem_double_atomic_swap(double *target, double value, int pe);
 #if OSHMEMP_HAVE_C11

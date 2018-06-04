@@ -18,7 +18,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * These routines perform an atomic fetch-and-add operation.
+ * These routines perform an atomic fetch-and-or operation.
  * The fetch and or routines retrieve the value at address target on PE pe, and update
  * target with the result of "or" value to the retrieved value. The operation must be completed
  * without the possibility of another process updating target between the time of the

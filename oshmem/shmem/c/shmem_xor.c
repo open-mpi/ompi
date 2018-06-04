@@ -17,7 +17,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * These routines perform an atomic or operation.
+ * These routines perform an atomic xor operation.
  * The atomic "xor" routines operates "xor" value to the data at address target on PE pe.
  * The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
