@@ -184,7 +184,13 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
 
     /* Set up libfabric hints. */
     uint32_t libfabric_api;
-    libfabric_api = FI_VERSION(1, 5);       /* 1.5 because of the newer API */
+    libfabric_api = fi_version();
+
+    /* bail if OFI version is less than 1.5. */
+    if (libfabric_api < FI_VERSION(1, 5)) {
+        BTL_VERBOSE(("ofi btl disqualified because OFI version < 1.5."));
+        return NULL;
+    }
 
     struct fi_info *info, *info_list;
     struct fi_info hints = {0};
@@ -230,7 +236,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     mca_btl_ofi_component.module_count = 0;
 
     /* do the query. */
-    rc = fi_getinfo(libfabric_api, NULL, NULL, 0, &hints, &info_list);
+    rc = fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, &hints, &info_list);
     if (0 != rc) {
         BTL_VERBOSE(("fi_getinfo failed with code %d: %s",rc, fi_strerror(-rc)));
         return NULL;

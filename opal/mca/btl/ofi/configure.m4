@@ -30,16 +30,22 @@
 # support, otherwise executes action-if-not-found
 
 AC_DEFUN([MCA_opal_btl_ofi_CONFIG],[
+    OPAL_VAR_SCOPE_PUSH([opal_btl_ofi_happy CPPFLAGS_save])
+
     AC_CONFIG_FILES([opal/mca/btl/ofi/Makefile])
 
     AC_REQUIRE([MCA_opal_common_ofi_CONFIG])
 
+    opal_btl_ofi_happy=0
     AS_IF([test "$opal_common_ofi_happy" = "yes"],
+          [CPPFLAGS_save=$CPPFLAGS
+           CPPFLAGS="$opal_common_ofi_CPPFLAGS $CPPFLAGS"
+           AC_CHECK_DECL([FI_MR_VIRT_ADDR], [opal_btl_ofi_happy=1], [],
+                         [#include <rdma/fabric.h>])
+           CPPFLAGS=$CPPFLAGS_save])
+    AS_IF([test $opal_btl_ofi_happy -eq 1],
           [$1],
           [$2])
 
-    # substitute in the things needed to build ofi
-    AC_SUBST([btl_ofi_CPPFLAGS])
-    AC_SUBST([btl_ofi_LDFLAGS])
-    AC_SUBST([btl_ofi_LIBS])
+    OPAL_VAR_SCOPE_POP
 ])dnl
