@@ -139,6 +139,56 @@ OSHMEM_DECLSPEC extern mca_atomic_base_component_t mca_atomic_base_selected_comp
 OSHMEM_DECLSPEC extern mca_atomic_base_module_t mca_atomic;
 #define MCA_ATOMIC_CALL(a) mca_atomic.atomic_ ## a
 
+#define SHMEM_TYPE_OP(type_name, type, op, prefix, suffix)                \
+    void prefix##type_name##_##suffix(type *target, type value, int pe)   \
+    {                                                                     \
+        int rc = OSHMEM_SUCCESS;                                          \
+        size_t size = 0;                                                  \
+        type out_value;                                                   \
+        oshmem_op_t* op = oshmem_op_sum##type_name;                       \
+                                                                          \
+        RUNTIME_CHECK_INIT();                                             \
+        RUNTIME_CHECK_PE(pe);                                             \
+        RUNTIME_CHECK_ADDR(target);                                       \
+                                                                          \
+        size = sizeof(out_value);                                         \
+        rc = MCA_ATOMIC_CALL(op(                                          \
+            (void*)target,                                                \
+            NULL,                                                         \
+            (const void*)&value,                                          \
+            size,                                                         \
+            pe,                                                           \
+            op));                                                         \
+        RUNTIME_CHECK_RC(rc);                                             \
+                                                                          \
+        return ;                                                          \
+    }
+
+#define SHMEM_TYPE_FOP(type_name, type, fop, prefix, suffix)            \
+    type prefix##type_name##_##suffix(type *target, type value, int pe) \
+    {                                                                   \
+        int rc = OSHMEM_SUCCESS;                                        \
+        size_t size = 0;                                                \
+        type out_value;                                                 \
+        oshmem_op_t* op = oshmem_op_sum##type_name;                     \
+                                                                        \
+        RUNTIME_CHECK_INIT();                                           \
+        RUNTIME_CHECK_PE(pe);                                           \
+        RUNTIME_CHECK_ADDR(target);                                     \
+                                                                        \
+        size = sizeof(out_value);                                       \
+        rc = MCA_ATOMIC_CALL(fop(                                       \
+            (void*)target,                                              \
+            (void*)&out_value,                                          \
+            (const void*)&value,                                        \
+            size,                                                       \
+            pe,                                                         \
+            op));                                                       \
+        RUNTIME_CHECK_RC(rc);                                           \
+                                                                        \
+        return out_value;                                               \
+    }
+
 END_C_DECLS
 
 #endif /* OSHMEM_MCA_ATOMIC_H */

@@ -22,30 +22,6 @@
  * The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_XOR(type_name, type, prefix, suffix)                   \
-    void prefix##type_name##_##suffix(type *target, type value, int pe)   \
-    {                                                                     \
-        int rc = OSHMEM_SUCCESS;                                          \
-        size_t size = 0;                                                  \
-        type out_value;                                                   \
-        oshmem_op_t* op = oshmem_op_sum##type_name;                       \
-                                                                          \
-        RUNTIME_CHECK_INIT();                                             \
-        RUNTIME_CHECK_PE(pe);                                             \
-        RUNTIME_CHECK_ADDR(target);                                       \
-                                                                          \
-        size = sizeof(out_value);                                         \
-        rc = MCA_ATOMIC_CALL(fxor(                                        \
-            (void*)target,                                                \
-            NULL,                                                         \
-            (const void*)&value,                                          \
-            size,                                                         \
-            pe,                                                           \
-            op));                                                         \
-        RUNTIME_CHECK_RC(rc);                                             \
-                                                                          \
-        return ;                                                          \
-    }
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
@@ -57,8 +33,8 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_XOR(_int, int, shmem, atomic_xor)
-SHMEM_TYPE_XOR(_long, long, shmem, atomic_xor)
-SHMEM_TYPE_XOR(_longlong, long long, shmem, atomic_xor)
-SHMEM_TYPE_XOR(_int32, int32_t, shmemx, xor)
-SHMEM_TYPE_XOR(_int64, int64_t, shmemx, xor)
+SHMEM_TYPE_OP(_int, int, fxor, shmem, atomic_xor)
+SHMEM_TYPE_OP(_long, long, fxor, shmem, atomic_xor)
+SHMEM_TYPE_OP(_longlong, long long, fxor, shmem, atomic_xor)
+SHMEM_TYPE_OP(_int32, int32_t, fxor, shmemx, xor)
+SHMEM_TYPE_OP(_int64, int64_t, fxor, shmemx, xor)

@@ -24,30 +24,6 @@
  * without the possibility of another process updating target between the time of the
  * fetch and the update.
  */
-#define SHMEM_TYPE_FAND(type_name, type, prefix, suffix)                \
-    type prefix##type_name##_##suffix(type *target, type value, int pe) \
-    {                                                                   \
-        int rc = OSHMEM_SUCCESS;                                        \
-        size_t size = 0;                                                \
-        type out_value;                                                 \
-        oshmem_op_t* op = oshmem_op_sum##type_name;                     \
-                                                                        \
-        RUNTIME_CHECK_INIT();                                           \
-        RUNTIME_CHECK_PE(pe);                                           \
-        RUNTIME_CHECK_ADDR(target);                                     \
-                                                                        \
-        size = sizeof(out_value);                                       \
-        rc = MCA_ATOMIC_CALL(fxor(                                      \
-            (void*)target,                                              \
-            (void*)&out_value,                                          \
-            (const void*)&value,                                        \
-            size,                                                       \
-            pe,                                                         \
-            op));                                                       \
-        RUNTIME_CHECK_RC(rc);                                           \
-                                                                        \
-        return out_value;                                               \
-    }
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
@@ -59,8 +35,8 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_FAND(_int, int, shmem, atomic_fxor)
-SHMEM_TYPE_FAND(_long, long, shmem, atomic_fxor)
-SHMEM_TYPE_FAND(_longlong, long long, shmem, atomic_fxor)
-SHMEM_TYPE_FAND(_int32, int32_t, shmemx, fxor)
-SHMEM_TYPE_FAND(_int64, int64_t, shmemx, fxor)
+SHMEM_TYPE_FOP(_int, int, fxor, shmem, atomic_fxor)
+SHMEM_TYPE_FOP(_long, long, fxor, shmem, atomic_fxor)
+SHMEM_TYPE_FOP(_longlong, long long, fxor, shmem, atomic_fxor)
+SHMEM_TYPE_FOP(_int32, int32_t, fxor, shmemx, fxor)
+SHMEM_TYPE_FOP(_int64, int64_t, fxor, shmemx, fxor)
