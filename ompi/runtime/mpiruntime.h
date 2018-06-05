@@ -175,6 +175,8 @@ void ompi_mpi_thread_level(int requested, int *provided);
  * @param argv argv, typically from main() (IN)
  * @param requested Thread support that is requested (IN)
  * @param provided Thread support that is provided (OUT)
+ * @param reinit_ok Return successfully (with no error) if someone has
+ * already called ompi_mpi_init().
  *
  * @returns MPI_SUCCESS if successful
  * @returns Error code if unsuccessful
@@ -186,7 +188,8 @@ void ompi_mpi_thread_level(int requested, int *provided);
  *
  * It is permissable to pass in (0, NULL) for (argc, argv).
  */
-int ompi_mpi_init(int argc, char **argv, int requested, int *provided);
+int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
+                  bool reinit_ok);
 
 /**
  * Finalize the Open MPI MPI environment
