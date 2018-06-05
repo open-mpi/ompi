@@ -98,7 +98,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *decoded_iov, int iov_count,
                                         struct iovec ***broken_decoded_iovs, int **broken_iov_counts,
                                         struct iovec ***broken_iov_arrays, int **broken_counts, 
                                         MPI_Aint **broken_total_lengths,
-                                        int stripe_count, int stripe_size); 
+                                        int stripe_count, size_t stripe_size); 
 
 
 int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int *vulcan_num_io_procs, 
@@ -1353,7 +1353,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
                                         struct iovec ***ret_broken_mem_iovs, int **ret_broken_mem_counts,
                                         struct iovec ***ret_broken_file_iovs, int **ret_broken_file_counts, 
                                         MPI_Aint **ret_broken_total_lengths,
-                                        int stripe_count, int stripe_size)
+                                        int stripe_count, size_t stripe_size)
 {
     int i, j, ret=OMPI_SUCCESS;
     struct iovec **broken_mem_iovs=NULL; 
@@ -1406,7 +1406,8 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
     }
     
     /* Step 1: separate the local_iov_array per aggregator */
-    int owner, rest, len, temp_len, blocklen, memlen=0;
+    int owner;
+    size_t rest, len, temp_len, blocklen, memlen=0;
     off_t offset, temp_offset, start_offset, memoffset=0;
 
     i=j=0;
