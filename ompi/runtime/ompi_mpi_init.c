@@ -368,7 +368,8 @@ static void fence_release(int status, void *cbdata)
     OPAL_POST_OBJECT(active);
 }
 
-int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
+int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
+                  bool reinit_ok)
 {
     int ret;
     ompi_proc_t** procs;
@@ -384,28 +385,32 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
 
-    /* Ensure that we were not already initialized or finalized.
-
-       This lock is held for the duration of ompi_mpi_init() and
-       ompi_mpi_finalize().  Hence, if we get it, then no other thread
-       is inside the critical section (and we don't have to check the
-       *_started bool variables). */
-    opal_atomic_rmb();
-    int32_t state = ompi_mpi_state;
-
-    if (state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_init: already finalized", true);
-        return MPI_ERR_OTHER;
-    } else if (state >= OMPI_MPI_STATE_INIT_STARTED) {
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_init: invoked multiple times", true);
-        return MPI_ERR_OTHER;
-    }
-
-    /* Indicate that we have *started* MPI_INIT* */
+    /* Ensure that we were not already initialized or finalized. */
+    int32_t expected = OMPI_MPI_STATE_NOT_INITIALIZED;
+    int32_t desired  = OMPI_MPI_STATE_INIT_STARTED;
     opal_atomic_wmb();
-    opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_INIT_STARTED);
+    if (!opal_atomic_compare_exchange_strong_32(&ompi_mpi_state, &expected,
+                                                desired)) {
+        // If we failed to atomically transition ompi_mpi_state from
+        // NOT_INITIALIZED to INIT_STARTED, then someone else already
+        // did that, and we should return.
+        if (expected >= OMPI_MPI_STATE_FINALIZE_STARTED) {
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_init: already finalized", true);
+            return MPI_ERR_OTHER;
+        } else if (expected >= OMPI_MPI_STATE_INIT_STARTED) {
+            // In some cases (e.g., oshmem_shmem_init()), we may call
+            // ompi_mpi_init() multiple times.  In such cases, just
+            // silently return successfully.
+            if (reinit_ok) {
+                return MPI_SUCCESS;
+            }
+
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_init: invoked multiple times", true);
+            return MPI_ERR_OTHER;
+        }
+    }
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
