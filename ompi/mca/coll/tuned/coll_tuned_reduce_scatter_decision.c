@@ -36,8 +36,9 @@ static int coll_tuned_reduce_scatter_chain_fanout;
 static mca_base_var_enum_value_t reduce_scatter_algorithms[] = {
     {0, "ignore"},
     {1, "non-overlapping"},
-    {2, "recursive_halfing"},
+    {2, "recursive_halving"},
     {3, "ring"},
+    {4, "butterfly"},
     {0, NULL}
 };
 
@@ -76,7 +77,7 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "reduce_scatter_algorithm",
-                                        "Which reduce reduce_scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 non-overlapping (Reduce + Scatterv), 2 recursive halving, 3 ring",
+                                        "Which reduce reduce_scatter algorithm is used. Can be locked down to choice of: 0 ignore, 1 non-overlapping (Reduce + Scatterv), 2 recursive halving, 3 ring, 4 butterfly",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
@@ -139,6 +140,8 @@ int ompi_coll_tuned_reduce_scatter_intra_do_this(const void *sbuf, void* rbuf,
                                                                                 dtype, op, comm, module);
     case (3): return ompi_coll_base_reduce_scatter_intra_ring(sbuf, rbuf, rcounts,
                                                               dtype, op, comm, module);
+    case (4): return ompi_coll_base_reduce_scatter_intra_butterfly(sbuf, rbuf, rcounts,
+                                                                   dtype, op, comm, module);
     } /* switch */
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCESCATTER]));

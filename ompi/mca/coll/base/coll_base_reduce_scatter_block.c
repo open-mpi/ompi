@@ -511,22 +511,6 @@ cleanup_and_return:
     return err;
 }
 
-/*
- * ompi_mirror_perm: Returns mirror permutation of nbits low-order bits
- *                   of x [*].
- * [*] Warren Jr., Henry S. Hacker's Delight (2ed). 2013.
- *     Chapter 7. Rearranging Bits and Bytes.
- */
-static unsigned int ompi_mirror_perm(unsigned int x, int nbits)
-{
-    x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
-    x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
-    x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
-    x = (((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8));
-    x = ((x >> 16) | (x << 16));
-    return x >> (sizeof(x) * CHAR_BIT - nbits);
-}
-
 static int ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
     struct ompi_op_t *op, struct ompi_communicator_t *comm,
