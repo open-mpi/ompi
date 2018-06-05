@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +37,7 @@ static int coll_tuned_reduce_scatter_chain_fanout;
 static mca_base_var_enum_value_t reduce_scatter_algorithms[] = {
     {0, "ignore"},
     {1, "non-overlapping"},
-    {2, "recursive_halfing"},
+    {2, "recursive_halving"},
     {3, "ring"},
     {0, NULL}
 };
