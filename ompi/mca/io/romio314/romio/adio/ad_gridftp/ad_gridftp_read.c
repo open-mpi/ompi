@@ -195,9 +195,9 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
     char myname[]="ADIOI_GRIDFTP_ReadDiscontig";
     int myrank,nprocs;
     /* size and extent of buffer in memory */
-    MPI_Aint btype_size,btype_extent;
+    MPI_Aint btype_size,btype_extent,btype_lb;
     /* size and extent of file record layout */
-    MPI_Aint ftype_size,ftype_extent;
+    MPI_Aint ftype_size,ftype_extent,ftype_lb;
     /* size of file elemental type; seeks are done in units of this */
     MPI_Aint etype_size;
     MPI_Aint extent;
@@ -221,11 +221,11 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
 
     etype_size=fd->etype_size;
     MPI_Type_size_x(fd->filetype,&ftype_size);
-    MPI_Type_extent(fd->filetype,&ftype_extent);
+    MPI_Type_get_extent(fd->filetype,&ftype_lb,&ftype_extent);
     /* This is arguably unnecessary, as this routine assumes that the
        buffer in memory is contiguous */
     MPI_Type_size_x(datatype,&btype_size);
-    MPI_Type_extent(datatype,&btype_extent);
+    MPI_Type_get_extent(datatype,&btype_lb,&btype_extent);
     ADIOI_Datatype_iscontig(datatype,&buf_contig);
 
     if ( ( btype_extent!=btype_size ) || ( ! buf_contig ) )

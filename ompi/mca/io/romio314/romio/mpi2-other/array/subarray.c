@@ -43,7 +43,7 @@ int MPI_Type_create_subarray(int ndims, int *array_of_sizes,
                              int order, MPI_Datatype oldtype,
                              MPI_Datatype *newtype)
 {
-    MPI_Aint extent, size_with_aint;
+    MPI_Aint extent, lb, size_with_aint;
     int i, err, error_code;
     MPI_Offset size_with_offset;
 
@@ -128,7 +128,7 @@ int MPI_Type_create_subarray(int ndims, int *array_of_sizes,
 	return MPIO_Err_return_comm(MPI_COMM_SELF, error_code);
     }
 
-    MPI_Type_extent(oldtype, &extent);
+    MPI_Type_get_extent(oldtype, &lb, &extent);
 
 /* check if MPI_Aint is large enough for size of global array.
    if not, complain. */

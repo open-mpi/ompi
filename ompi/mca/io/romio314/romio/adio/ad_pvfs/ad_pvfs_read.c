@@ -115,7 +115,7 @@ void ADIOI_PVFS_ReadStridedListIO(ADIO_File fd, void *buf, int count,
     int n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
     MPI_Count filetype_size, etype_size, buftype_size;
-    MPI_Aint filetype_extent, buftype_extent;
+    MPI_Aint filetype_extent, buftype_extent, filetype_lb, buftype_lb;
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset userbuf_off;
     ADIO_Offset off, disp, start_off;
@@ -158,9 +158,9 @@ void ADIOI_PVFS_ReadStridedListIO(ADIO_File fd, void *buf, int count,
 	return;
     }
 
-    MPI_Type_extent(fd->filetype, &filetype_extent);
+    MPI_Type_get_extent(fd->filetype, &filetype_lb, &filetype_extent);
     MPI_Type_size_x(datatype, &buftype_size);
-    MPI_Type_extent(datatype, &buftype_extent);
+    MPI_Type_get_extent(datatype, &buftype_lb, &buftype_extent);
     etype_size = fd->etype_size;
 
     bufsize = buftype_size * count;

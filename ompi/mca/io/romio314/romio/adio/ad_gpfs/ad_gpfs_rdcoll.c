@@ -440,7 +440,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
     int req_len, flag, rank;
     MPI_Status status;
     ADIOI_Flatlist_node *flat_buf=NULL;
-    MPI_Aint buftype_extent;
+    MPI_Aint buftype_extent, buftype_lb;
     int coll_bufsize;
 #ifdef RDCOLL_DEBUG
     int iii;
@@ -523,7 +523,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 	flat_buf = ADIOI_Flatlist;
         while (flat_buf->type != datatype) flat_buf = flat_buf->next;
     }
-    MPI_Type_extent(datatype, &buftype_extent);
+    MPI_Type_get_extent(datatype, &buftype_lb, &buftype_extent);
 
     done = 0;
     off = st_loc;
