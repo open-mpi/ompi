@@ -501,8 +501,8 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, const void *buf,
 		    if (req_off < iter_st_off + max_size) {
 			recv_count[i]++;
                         ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)write_buf)+req_off-off) == (ADIO_Offset)(MPIR_Upint)(write_buf+req_off-off));
-			MPI_Address(write_buf + req_off - off,
-				    &(others_req[i].mem_ptrs[j]));
+			MPI_Get_address(write_buf + req_off - off,
+				        &(others_req[i].mem_ptrs[j]));
                         recv_size[i] += req_len;
 		    } else {
 			break;
