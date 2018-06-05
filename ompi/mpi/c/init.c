@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -63,9 +63,9 @@ int MPI_Init(int *argc, char ***argv)
        don't lose anything) */
 
     if (NULL != argc && NULL != argv) {
-        err = ompi_mpi_init(*argc, *argv, required, &provided);
+        err = ompi_mpi_init(*argc, *argv, required, &provided, false);
     } else {
-        err = ompi_mpi_init(0, NULL, required, &provided);
+        err = ompi_mpi_init(0, NULL, required, &provided, false);
     }
 
     /* Since we don't have a communicator to invoke an errorhandler on

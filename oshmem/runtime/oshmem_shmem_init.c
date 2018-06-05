@@ -144,8 +144,13 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
     int ret = OSHMEM_SUCCESS;
 
     if (!oshmem_shmem_initialized) {
-        if (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
-            ret = ompi_mpi_init(argc, argv, requested, provided);
+        ret = ompi_mpi_init(argc, argv, requested, provided, true);
+
+        // It's posible that another thread is initializing MPI and
+        // has not completed yet.  Keep checking until it is
+        // completed.
+        while (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
+            usleep(1);
         }
 
         if (OSHMEM_SUCCESS != ret) {
