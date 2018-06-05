@@ -61,6 +61,8 @@ typedef struct ompi_osc_sm_node_state_t ompi_osc_sm_node_state_t;
 
 struct ompi_osc_sm_component_t {
     ompi_osc_base_component_t super;
+
+    char *backing_directory;
 };
 typedef struct ompi_osc_sm_component_t ompi_osc_sm_component_t;
 OMPI_DECLSPEC extern ompi_osc_sm_component_t mca_osc_sm_component;
