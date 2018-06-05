@@ -70,5 +70,13 @@ ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatyp
                                            source, rtag, comm, status);
 }
 
+/**
+ * ompi_mirror_perm: Returns mirror permutation of nbits low-order bits
+ *                   of x [*].
+ * [*] Warren Jr., Henry S. Hacker's Delight (2ed). 2013.
+ *     Chapter 7. Rearranging Bits and Bytes.
+ */
+unsigned int ompi_mirror_perm(unsigned int x, int nbits);
+
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */
