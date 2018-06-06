@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,12 +30,12 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(DEBUGGER_CFLAGS)
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-man_pages = prun.1
+man_pages = ompi-prun.1
 EXTRA_DIST = $(man_pages:.1=.1in)
 
 if OPAL_INSTALL_BINARIES
 
-bin_PROGRAMS = prun
+bin_PROGRAMS = ompi-prun
 
 nodist_man_MANS = $(man_pages)
 
@@ -46,12 +46,12 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 endif # OPAL_INSTALL_BINARIES
 
-prun_SOURCES = \
+ompi_prun_SOURCES = \
         main.c \
         prun.c \
         prun.h
 
-prun_LDADD = \
+ompi_prun_LDADD = \
 	$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
