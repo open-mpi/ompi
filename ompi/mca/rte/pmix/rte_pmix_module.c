@@ -935,7 +935,7 @@ void ompi_rte_wait_for_debugger(void)
 bool ompi_rte_connect_accept_support(const char *port)
 {
     /* not sure how to support this yet */
-    return false;
+    return true;
 }
 
 static char* pre_condition_transports_print(uint64_t *unique_key)

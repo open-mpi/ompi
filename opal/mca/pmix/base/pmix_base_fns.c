@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -108,7 +108,7 @@ int opal_pmix_base_exchange(opal_value_t *indat,
     /* tell the server to delete upon read */
     info = OBJ_NEW(opal_value_t);
     info->key = strdup(OPAL_PMIX_PERSISTENCE);
-    info->type = OPAL_INT;
+    info->type = OPAL_PERSIST;
     info->data.integer = OPAL_PMIX_PERSIST_FIRST_READ;
     opal_list_append(&ilist, &info->super);
 
