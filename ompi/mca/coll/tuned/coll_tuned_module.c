@@ -259,6 +259,8 @@ tuned_module_enable( mca_coll_base_module_t *module,
     data->cached_bmtree = NULL;
     /* binomial tree */
     data->cached_in_order_bmtree = NULL;
+    /* k-nomial tree */
+    data->cached_kmtree = NULL;
     /* chains (fanout followed by pipelines) */
     data->cached_chain = NULL;
     /* standard pipeline */
