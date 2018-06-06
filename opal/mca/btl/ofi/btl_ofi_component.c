@@ -560,7 +560,15 @@ static int mca_btl_ofi_component_progress (void)
 
             MCA_BTL_OFI_ABORT();
 
-        } else if (OPAL_UNLIKELY(ret != -FI_EAGAIN && ret != -FI_EINTR)) {
+        }
+#ifdef FI_EINTR
+        /* sometimes, sockets provider complain about interupt. */
+        else if (OPAL_UNLIKELY(ret == -FI_EINTR)) {
+            continue;
+        }
+#endif
+        /* If the error is not FI_EAGAIN, report the error and abort. */
+        else if (OPAL_UNLIKELY(ret != -FI_EAGAIN)) {
             BTL_ERROR(("fi_cq_read returned error %d:%s", ret, fi_strerror(-ret)));
             MCA_BTL_OFI_ABORT();
         }
