@@ -268,6 +268,18 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_mtl_names);
     free(description_str);
 
+    if (0 == access ("/dev/shm", W_OK)) {
+        mca_osc_rdma_component.backing_directory = "/dev/shm";
+    } else {
+        mca_osc_rdma_component.backing_directory = ompi_process_info.proc_session_dir;
+    }
+
+    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "backing_directory",
+                                            "Directory to place backing files for memory windows. "
+                                            "This directory should be on a local filesystem such as /tmp or "
+                                            "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_rdma_component.backing_directory);
 
     /* register performance variables */
 
@@ -602,9 +614,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         }
 
         /* allocate the shared memory segment */
-        ret = asprintf (&data_file, "%s"OPAL_PATH_SEP"window_%d.%s",
-                        ompi_process_info.job_session_dir, ompi_comm_get_cid (module->comm),
-                        ompi_process_info.nodename);
+        ret = asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d",
+                        mca_osc_rdma_component.backing_directory, ompi_process_info.nodename,
+                        OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm));
         if (0 > ret) {
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             break;
