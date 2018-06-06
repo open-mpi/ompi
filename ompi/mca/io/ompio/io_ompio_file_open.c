@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <math.h>
 #include "io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 #include "ompi/mca/topo/topo.h"
 
 int mca_io_ompio_file_open (ompi_communicator_t *comm,
@@ -386,6 +387,15 @@ int mca_io_ompio_file_sync (ompi_file_t *fh)
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
+    if ( !opal_list_is_empty (&mca_common_ompio_pending_requests) ) {
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
+        return MPI_ERR_OTHER;
+    }
+
+    if ( data->ompio_fh.f_amode & MPI_MODE_RDONLY ) {
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
+        return MPI_ERR_ACCESS;
+    }        
     ret = data->ompio_fh.f_fs->fs_file_sync (&data->ompio_fh);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
 
