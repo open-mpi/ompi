@@ -43,6 +43,7 @@ const char *mca_fcoll_vulcan_component_version_string =
 int mca_fcoll_vulcan_priority = 10;
 int mca_fcoll_vulcan_num_groups = 1;
 int mca_fcoll_vulcan_write_chunksize = -1;
+int mca_fcoll_vulcan_async_io = 0;
 
 /*
  * Local function
@@ -101,6 +102,14 @@ vulcan_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_vulcan_write_chunksize);
+
+    mca_fcoll_vulcan_async_io = 0;
+    (void) mca_base_component_var_register(&mca_fcoll_vulcan_component.fcollm_version,
+                                           "async_io", "Asynchronous I/O support options. 0: Automatic choice (default) "
+                                           "1: Asynchronous I/O only. 2: Synchronous I/O only.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_vulcan_async_io);
 
     return OMPI_SUCCESS;
 }
