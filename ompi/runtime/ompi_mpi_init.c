@@ -401,8 +401,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         } else if (expected >= OMPI_MPI_STATE_INIT_STARTED) {
             // In some cases (e.g., oshmem_shmem_init()), we may call
             // ompi_mpi_init() multiple times.  In such cases, just
-            // silently return successfully.
+            // silently return successfully once the initializing
+            // thread has completed.
             if (reinit_ok) {
+                while (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
+                    usleep(1);
+                }
                 return MPI_SUCCESS;
             }
 
