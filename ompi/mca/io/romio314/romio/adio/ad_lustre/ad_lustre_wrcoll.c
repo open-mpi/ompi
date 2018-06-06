@@ -316,7 +316,7 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, const void *buf,
     char *write_buf = NULL;
     MPI_Status status;
     ADIOI_Flatlist_node *flat_buf = NULL;
-    MPI_Aint buftype_extent;
+    MPI_Aint buftype_extent, buftype_lb;
     int stripe_size = striping_info[0], avail_cb_nodes = striping_info[2];
     int data_sieving = 0;
     ADIO_Offset *srt_off = NULL;
@@ -420,7 +420,7 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, const void *buf,
 	while (flat_buf->type != datatype)
 	    flat_buf = flat_buf->next;
     }
-    MPI_Type_extent(datatype, &buftype_extent);
+    MPI_Type_get_extent(datatype, &buftype_lb, &buftype_extent);
     /* I need to check if there are any outstanding nonblocking writes to
      * the file, which could potentially interfere with the writes taking
      * place in this collective write call. Since this is not likely to be
@@ -501,8 +501,8 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, const void *buf,
 		    if (req_off < iter_st_off + max_size) {
 			recv_count[i]++;
                         ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)write_buf)+req_off-off) == (ADIO_Offset)(MPIR_Upint)(write_buf+req_off-off));
-			MPI_Address(write_buf + req_off - off,
-				    &(others_req[i].mem_ptrs[j]));
+			MPI_Get_address(write_buf + req_off - off,
+				        &(others_req[i].mem_ptrs[j]));
                         recv_size[i] += req_len;
 		    } else {
 			break;
