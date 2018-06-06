@@ -535,8 +535,8 @@ orte/tools/orted/orted
 orte/tools/orted/orted.1
 orte/tools/orterun/orterun
 orte/tools/orterun/orterun.1
-orte/tools/prun/prun
-orte/tools/prun/prun.1
+orte/tools/ompi-prun/ompi-prun
+orte/tools/ompi-prun/ompi-prun.1
 orte/tools/wrappers/ortecc-wrapper-data.txt
 orte/tools/wrappers/ortec++-wrapper-data.txt
 orte/tools/wrappers/ortecc.1
