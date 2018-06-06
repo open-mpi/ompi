@@ -58,7 +58,7 @@ typedef uint8_t ompi_rte_cmp_bitmask_t;
 #define OMPI_RTE_CMP_NONE   0x00
 #define OMPI_RTE_CMP_JOBID  0x02
 #define OMPI_RTE_CMP_VPID   0x04
-#define OMPI_RTE_CMP_ALL    0x04
+#define OMPI_RTE_CMP_ALL    0x0f
 #define OMPI_RTE_CMP_WILD   0x10
 
 OMPI_DECLSPEC char* ompi_pmix_print_name(const ompi_process_name_t *name);
