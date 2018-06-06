@@ -662,5 +662,54 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
     return err;
 }
 
-
 /* copied function (with appropriate renaming) ends here */
+
+/*
+ * ompi_coll_base_bcast_intra_knomial
+ *
+ * Function:  Bcast using k-nomial tree algorithm
+ * Accepts:   Same arguments as MPI_Bcast
+ * Returns:   MPI_SUCCESS or error code
+ * Parameters: radix -- k-nomial tree radix (>= 2)
+ *
+ * Time complexity: (radix - 1)O(\log_{radix}(comm_size))
+ *
+ * Example, comm_size=10
+ *    radix=2         radix=3             radix=4
+ *       0               0                   0
+ *    / / \ \       / /  |  \ \         /   / \ \ \
+ *   8 4   2 1     9 3   6   1 2       4   8  1 2 3
+ *   | |\  |         |\  |\           /|\  |
+ *   9 6 5 3         4 5 7 8         5 6 7 9
+ *     |
+ *     7
+ */
+int ompi_coll_base_bcast_intra_knomial(
+    void *buf, int count, struct ompi_datatype_t *datatype, int root,
+    struct ompi_communicator_t *comm, mca_coll_base_module_t *module,
+    uint32_t segsize, int radix)
+{
+    int segcount = count;
+    size_t typesize;
+    mca_coll_base_comm_t *data = module->base_data;
+
+    COLL_BASE_UPDATE_KMTREE(comm, module, root, radix);
+    if (NULL == data->cached_kmtree) {
+        /* Failed to build k-nomial tree for given radix */
+        return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module,
+                                                   segcount);
+    }
+
+    /**
+     * Determine number of elements sent per operation.
+     */
+    ompi_datatype_type_size(datatype, &typesize);
+    COLL_BASE_COMPUTED_SEGCOUNT(segsize, typesize, segcount);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:bcast_intra_knomial rank %d segsize %5d typesize %lu segcount %d",
+                 ompi_comm_rank(comm), segsize, (unsigned long)typesize, segcount));
+
+    return ompi_coll_base_bcast_intra_generic(buf, count, datatype, root, comm, module,
+                                              segcount, data->cached_kmtree);
+}

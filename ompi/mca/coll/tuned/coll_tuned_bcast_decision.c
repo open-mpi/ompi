@@ -30,6 +30,8 @@ static int coll_tuned_bcast_forced_algorithm = 0;
 static int coll_tuned_bcast_segment_size = 0;
 static int coll_tuned_bcast_tree_fanout;
 static int coll_tuned_bcast_chain_fanout;
+/* k-nomial tree radix for the bcast algorithm (>= 2) */
+static int coll_tuned_bcast_knomial_radix = 4;
 
 /* valid values for coll_tuned_bcast_forced_algorithm */
 static mca_base_var_enum_value_t bcast_algorithms[] = {
@@ -40,6 +42,7 @@ static mca_base_var_enum_value_t bcast_algorithms[] = {
     {4, "split_binary_tree"},
     {5, "binary_tree"},
     {6, "binomial"},
+    {7, "knomial"},
     {0, NULL}
 };
 
@@ -75,7 +78,7 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "bcast_algorithm",
-                                        "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: binomial tree.",
+                                        "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: binomial tree, 7: knomial tree.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
@@ -115,6 +118,14 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
                                       MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_bcast_chain_fanout);
 
+    coll_tuned_bcast_knomial_radix = 4;
+    mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                    "bcast_algorithm_knomial_radix",
+                                    "k-nomial tree radix for the bcast algorithm (radix > 1).",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &coll_tuned_bcast_knomial_radix);
+
     return (MPI_SUCCESS);
 }
 
@@ -143,6 +154,9 @@ int ompi_coll_tuned_bcast_intra_do_this(void *buf, int count,
         return ompi_coll_base_bcast_intra_bintree( buf, count, dtype, root, comm, module, segsize );
     case (6):
         return ompi_coll_base_bcast_intra_binomial( buf, count, dtype, root, comm, module, segsize );
+    case (7):
+        return ompi_coll_base_bcast_intra_knomial(buf, count, dtype, root, comm, module,
+                                                  segsize, coll_tuned_bcast_knomial_radix);
     } /* switch */
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[BCAST]));

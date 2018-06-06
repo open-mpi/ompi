@@ -221,6 +221,7 @@ int ompi_coll_base_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_binomial(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_bintree(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
+int ompi_coll_base_bcast_intra_knomial(BCAST_ARGS, uint32_t segsize, int radix);
 
 /* Exscan */
 int ompi_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
@@ -310,6 +311,22 @@ do {                                                                            
         }                                                                                    \
         coll_comm->cached_in_order_bmtree = ompi_coll_base_topo_build_in_order_bmtree( (OMPI_COMM), (ROOT) ); \
         coll_comm->cached_in_order_bmtree_root = (ROOT);                                     \
+    }                                                                                        \
+} while (0)
+
+#define COLL_BASE_UPDATE_KMTREE(OMPI_COMM, BASE_MODULE, ROOT, RADIX)	\
+do {                                                                                         \
+    mca_coll_base_comm_t* coll_comm = (BASE_MODULE)->base_data;                           \
+    if (!((coll_comm->cached_kmtree)                                                       \
+           && (coll_comm->cached_kmtree_root == (ROOT))                                     \
+           && (coll_comm->cached_kmtree_radix == (RADIX))))                                   \
+    {                                                                                        \
+        if (coll_comm->cached_kmtree ) { /* destroy previous k-nomial tree if defined */     \
+            ompi_coll_base_topo_destroy_tree(&(coll_comm->cached_kmtree));                  \
+        }                                                                                    \
+        coll_comm->cached_kmtree = ompi_coll_base_topo_build_kmtree((OMPI_COMM), (ROOT), (RADIX)); \
+        coll_comm->cached_kmtree_root = (ROOT);                                              \
+        coll_comm->cached_kmtree_radix = (RADIX);                                              \
     }                                                                                        \
 } while (0)
 
@@ -430,6 +447,11 @@ struct mca_coll_base_comm_t {
     /* binomial tree */
     ompi_coll_tree_t *cached_in_order_bmtree;
     int cached_in_order_bmtree_root;
+
+    /* k-nomial tree */
+    ompi_coll_tree_t *cached_kmtree;
+    int cached_kmtree_root;
+    int cached_kmtree_radix;
 
     /* chained tree (fanout followed by pipelines) */
     ompi_coll_tree_t *cached_chain;
