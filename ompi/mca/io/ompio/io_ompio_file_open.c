@@ -466,15 +466,18 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 {
     mca_io_ompio_data_t *data;
     int i, k, index;
-    size_t temp_offset;
+    long temp_offset;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
-    temp_offset = data->ompio_fh.f_view_extent *
+    temp_offset = (long) data->ompio_fh.f_view_extent *
         (offset*data->ompio_fh.f_etype_size / data->ompio_fh.f_view_size);
+    if ( 0 > temp_offset ) {
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
+        return MPI_ERR_ARG;
+    }
     
-
     i = (offset*data->ompio_fh.f_etype_size) % data->ompio_fh.f_view_size;
     index = 0;
     k = 0;
