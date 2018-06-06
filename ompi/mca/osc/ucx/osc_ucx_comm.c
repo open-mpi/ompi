@@ -338,7 +338,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
 
     if ((module->win_info_array[target]).rkey_init == true) {
         ucp_rkey_destroy((module->win_info_array[target]).rkey);
-        (module->win_info_array[target]).rkey_init == false;
+        (module->win_info_array[target]).rkey_init = false;
     }
 
     status = ucp_get_nbi(ep, (void *)temp_buf, len, remote_state_addr, state_rkey);
@@ -523,6 +523,7 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
     } else {
+        void *temp_addr_holder = NULL;
         void *temp_addr = NULL;
         uint32_t temp_count;
         ompi_datatype_t *temp_dt;
@@ -540,7 +541,7 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             }
         }
         ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-        temp_addr = malloc(temp_extent * temp_count);
+        temp_addr = temp_addr_holder = malloc(temp_extent * temp_count);
         if (temp_addr == NULL) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
@@ -616,7 +617,7 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return OMPI_ERROR;
         }
 
-        free(temp_addr);
+        free(temp_addr_holder);
     }
 
     ret = end_atomicity(module, ep, target);
@@ -774,6 +775,7 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
         } else {
+            void *temp_addr_holder = NULL;
             void *temp_addr = NULL;
             uint32_t temp_count;
             ompi_datatype_t *temp_dt;
@@ -791,7 +793,7 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 }
             }
             ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-            temp_addr = malloc(temp_extent * temp_count);
+            temp_addr = temp_addr_holder = malloc(temp_extent * temp_count);
             if (temp_addr == NULL) {
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             }
@@ -866,7 +868,7 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return OMPI_ERROR;
             }
 
-            free(temp_addr);
+            free(temp_addr_holder);
         }
     }
 
@@ -904,9 +906,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     rkey = (module->win_info_array[target]).rkey;
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_put(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
@@ -967,9 +967,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     rkey = (module->win_info_array[target]).rkey;
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_get(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
@@ -1016,9 +1014,7 @@ int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_accumulate(origin_addr, origin_count, origin_dt, target, target_disp,
                                   target_count, target_dt, op, win);
@@ -1050,9 +1046,7 @@ int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    if (NULL == ucx_req) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
+    assert(NULL != ucx_req);
 
     ret = ompi_osc_ucx_get_accumulate(origin_addr, origin_count, origin_datatype,
                                       result_addr, result_count, result_datatype,

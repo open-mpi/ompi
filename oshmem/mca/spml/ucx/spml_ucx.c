@@ -91,10 +91,10 @@ int mca_spml_ucx_enable(bool enable)
 }
 
 
-static void mca_spml_ucx_waitall(void **reqs, size_t *count_p)
+static void mca_spml_ucx_waitall(void **reqs, int *count_p)
 {
     ucs_status_t status;
-    size_t i;
+    int i;
 
     SPML_VERBOSE(10, "waiting for %d disconnect requests", *count_p);
     for (i = 0; i < *count_p; ++i) {
@@ -116,7 +116,8 @@ static void mca_spml_ucx_waitall(void **reqs, size_t *count_p)
 int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
     int my_rank = oshmem_my_proc_id();
-    size_t num_reqs, max_reqs;
+    int num_reqs;
+    size_t max_reqs;
     void *dreq, **dreqs;
     ucp_ep_h ep;
     size_t i, n;
@@ -146,24 +147,26 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
             continue;
         }
 
+        mca_spml_ucx.ucp_peers[n].ucp_conn = NULL;
+
         SPML_VERBOSE(10, "disconnecting from peer %d", n);
         dreq = ucp_disconnect_nb(ep);
         if (dreq != NULL) {
             if (UCS_PTR_IS_ERR(dreq)) {
                 SPML_ERROR("ucp_disconnect_nb(%d) failed: %s", n,
                            ucs_status_string(UCS_PTR_STATUS(dreq)));
+                continue;
             } else {
                 dreqs[num_reqs++] = dreq;
+                if (num_reqs >= mca_spml_ucx.num_disconnect) {
+                    mca_spml_ucx_waitall(dreqs, &num_reqs);
+                }
             }
         }
-
-        mca_spml_ucx.ucp_peers[n].ucp_conn = NULL;
-
-        if ((int)num_reqs >= mca_spml_ucx.num_disconnect) {
-            mca_spml_ucx_waitall(dreqs, &num_reqs);
-        }
     }
-
+    /* num_reqs == 0 is processed by mca_pml_ucx_waitall routine,
+     * so suppress coverity warning */
+    /* coverity[uninit_use_in_call] */
     mca_spml_ucx_waitall(dreqs, &num_reqs);
     free(dreqs);
 
@@ -255,8 +258,9 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     ucs_status_t err;
     ucp_address_t *wk_local_addr;
     size_t wk_addr_len;
-    int *wk_roffs, *wk_rsizes;
-    char *wk_raddrs;
+    int *wk_roffs = NULL;
+    int *wk_rsizes = NULL;
+    char *wk_raddrs = NULL;
     ucp_ep_params_t ep_params;
 
 
@@ -315,12 +319,9 @@ error2:
     }
     if (mca_spml_ucx.ucp_peers) 
         free(mca_spml_ucx.ucp_peers);
-    if (wk_raddrs)
-        free(wk_raddrs);
-    if (wk_rsizes)
-        free(wk_rsizes);
-    if (wk_roffs)
-        free(wk_roffs);
+    free(wk_raddrs);
+    free(wk_rsizes);
+    free(wk_roffs);
 error:
     rc = OSHMEM_ERR_OUT_OF_RESOURCE;
     SPML_ERROR("add procs FAILED rc=%d", rc);
@@ -531,6 +532,10 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
 
     mem_seg  = memheap_find_va(mkeys[0].va_base);
     ucx_mkey = (spml_ucx_mkey_t*)mkeys[0].spml_context;
+
+    if (OPAL_UNLIKELY(NULL == mem_seg)) {
+        return OSHMEM_ERROR;
+    }
     
     if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
         ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
