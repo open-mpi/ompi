@@ -43,6 +43,9 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
     mca_btl_ofi_completion_t *comp = NULL;
+    mca_btl_ofi_context_t *ofi_context;
+
+    ofi_context = get_ofi_context(ofi_btl);
 
     if (flags & MCA_BTL_ATOMIC_FLAG_32BIT) {
         fi_datatype = FI_UINT32;
@@ -51,6 +54,7 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
     fi_op = to_fi_op(op);
 
     comp = mca_btl_ofi_completion_alloc(btl, endpoint,
+                                        ofi_context,
                                         local_address,
                                         local_handle,
                                         cbfunc, cbcontext, cbdata,
@@ -61,7 +65,7 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
-    rc = fi_fetch_atomic(ofi_btl->ofi_endpoint,
+    rc = fi_fetch_atomic(ofi_context->tx_ctx,
                          (void*) &comp->operand, 1, NULL,       /* operand */
                          local_address, local_handle->desc,     /* results */
                          btl_endpoint->peer_addr,               /* remote addr */
@@ -76,6 +80,9 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
     }
 
     MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
+
+    /* force a bit of progress. */
+    mca_btl_ofi_component.super.btl_progress();
 
     return OPAL_SUCCESS;
 }
@@ -92,6 +99,9 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
     mca_btl_ofi_completion_t *comp = NULL;
+    mca_btl_ofi_context_t *ofi_context;
+
+    ofi_context = get_ofi_context(ofi_btl);
 
     if (flags & MCA_BTL_ATOMIC_FLAG_32BIT) {
         fi_datatype = FI_UINT32;
@@ -100,6 +110,7 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
     fi_op = to_fi_op(op);
 
     comp = mca_btl_ofi_completion_alloc(btl, endpoint,
+                                        ofi_context,
                                         NULL,
                                         NULL,
                                         cbfunc, cbcontext, cbdata,
@@ -110,7 +121,7 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
 
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
-    rc = fi_atomic(ofi_btl->ofi_endpoint,
+    rc = fi_atomic(ofi_context->tx_ctx,
                    (void*) &comp->operand, 1, NULL,       /* operand */
                    btl_endpoint->peer_addr,               /* remote addr */
                    remote_address, remote_handle->rkey,   /* remote buffer */
@@ -124,6 +135,7 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
     }
 
     MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
+    mca_btl_ofi_component.super.btl_progress();
 
     return OPAL_SUCCESS;
 }
@@ -139,12 +151,16 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
     mca_btl_ofi_completion_t *comp = NULL;
+    mca_btl_ofi_context_t *ofi_context;
+
+    ofi_context = get_ofi_context(ofi_btl);
 
     if (flags & MCA_BTL_ATOMIC_FLAG_32BIT) {
         fi_datatype = FI_UINT32;
     }
 
     comp = mca_btl_ofi_completion_alloc(btl, endpoint,
+                                        ofi_context,
                                         local_address,
                                         local_handle,
                                         cbfunc, cbcontext, cbdata,
@@ -157,7 +173,7 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
     /* perform atomic */
-    rc = fi_compare_atomic(ofi_btl->ofi_endpoint,
+    rc = fi_compare_atomic(ofi_context->tx_ctx,
                            (void*) &comp->operand, 1, NULL,
                            (void*) &comp->compare, NULL,
                            local_address, local_handle->desc,
@@ -175,6 +191,9 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     }
 
     MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
+
+    /* force a bit of progress. */
+    mca_btl_ofi_component.super.btl_progress();
 
     return OPAL_SUCCESS;
 }

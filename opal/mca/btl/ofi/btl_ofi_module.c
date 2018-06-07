@@ -242,14 +242,17 @@ int mca_btl_ofi_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg)
 
 int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
 {
+    int i;
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *endpoint, *next;
 
     assert(btl);
 
-    if (NULL != ofi_btl->cq) {
-        fi_close(&ofi_btl->cq->fid);
+    /* loop over all the contexts */
+    for (i=0; i < ofi_btl->num_contexts; i++) {
+        mca_btl_ofi_context_finalize(&ofi_btl->contexts[i], ofi_btl->is_scalable_ep);
     }
+    free(ofi_btl->contexts);
 
     if (NULL != ofi_btl->av) {
         fi_close(&ofi_btl->av->fid);
@@ -278,7 +281,6 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
     }
 
     OBJ_DESTRUCT(&ofi_btl->endpoints);
-    OBJ_DESTRUCT(&ofi_btl->comp_list);
 
     if (ofi_btl->rcache) {
         mca_rcache_base_module_destroy (ofi_btl->rcache);
