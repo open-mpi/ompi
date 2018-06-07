@@ -101,8 +101,8 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *decoded_iov, int iov_count,
                                         int stripe_count, size_t stripe_size); 
 
 
-int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int *vulcan_num_io_procs, 
-                                              int **ret_aggregators);
+int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_procs, 
+                                        int num_groups, size_t max_data);
 
 
 static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
@@ -146,11 +146,9 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     int *broken_iov_counts=NULL;
     MPI_Aint *broken_total_lengths=NULL;
 
-    int *aggregators=NULL;
     int aggr_index = NOT_AGGR_INDEX;
     int write_synch_type = 2;
     int write_chunksize, *result_counts=NULL;
-    int stripe_size_org;
     
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -201,15 +199,15 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     }
     
     
-    ret = mca_fcoll_vulcan_get_configuration (fh, &vulcan_num_io_procs, &aggregators);
+    ret = mca_fcoll_vulcan_get_configuration (fh, vulcan_num_io_procs, mca_fcoll_vulcan_num_groups, max_data);
     if (OMPI_SUCCESS != ret){
 	goto exit;
     }
     
-    aggr_data = (mca_io_ompio_aggregator_data **) malloc ( vulcan_num_io_procs * 
+    aggr_data = (mca_io_ompio_aggregator_data **) malloc ( fh->f_num_aggrs * 
                                                            sizeof(mca_io_ompio_aggregator_data*));
     
-    for ( i=0; i< vulcan_num_io_procs; i++ ) {
+    for ( i=0; i< fh->f_num_aggrs; i++ ) {
         // At this point we know the number of aggregators. If there is a correlation between
         // number of aggregators and number of IO nodes, we know how many aggr_data arrays we need
         // to allocate.
@@ -220,7 +218,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
         aggr_data[i]->buf  = (char *)buf;             // should not be used in the new version.
         // Identify if the process is an aggregator.
         // If so, aggr_index would be its index in "aggr_data" and "aggregators" arrays.
-        if(aggregators[i] == fh->f_rank) {
+        if(fh->f_aggr_list[i] == fh->f_rank) {
             aggr_index = i;
         }
     }
@@ -241,10 +239,8 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
      ** 2b. Separate the local_iov_array entries based on the number of aggregators
      *************************************************************************/
     // Modifications for the even distribution:
-    long new_stripe_size;
-    ret = mca_fcoll_vulcan_minmax ( fh, local_iov_array, local_count,  vulcan_num_io_procs, &new_stripe_size);
-    stripe_size_org = fh->f_stripe_size;
-    fh->f_stripe_size=new_stripe_size;
+    long domain_size;
+    ret = mca_fcoll_vulcan_minmax ( fh, local_iov_array, local_count,  fh->f_num_aggrs, &domain_size);
     
     // broken_iov_arrays[0] contains broken_counts[0] entries to aggregator 0,
     // broken_iov_arrays[1] contains broken_counts[1] entries to aggregator 1, etc.
@@ -253,14 +249,14 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
                                               &broken_decoded_iovs, &broken_iov_counts,
                                               &broken_iov_arrays, &broken_counts, 
                                               &broken_total_lengths,
-                                              vulcan_num_io_procs,  fh->f_stripe_size); 
+                                              fh->f_num_aggrs,  domain_size); 
 
 
     /**************************************************************************
      ** 3. Determine the total amount of data to be written and no. of cycles
      **************************************************************************/
     total_bytes_per_process = (MPI_Aint*)malloc
-        (vulcan_num_io_procs * fh->f_procs_per_group*sizeof(MPI_Aint));
+        (fh->f_num_aggrs * fh->f_procs_per_group*sizeof(MPI_Aint));
     if (NULL == total_bytes_per_process) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -272,20 +268,20 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
 #endif
     if ( 1 == mca_fcoll_vulcan_num_groups ) {
         ret = fh->f_comm->c_coll->coll_allgather (broken_total_lengths,
-						  vulcan_num_io_procs,
+						  fh->f_num_aggrs,
 						  MPI_LONG,
 						  total_bytes_per_process,
-						  vulcan_num_io_procs,
+						  fh->f_num_aggrs,
 						  MPI_LONG,
 						  fh->f_comm,
 						  fh->f_comm->c_coll->coll_allgather_module);
     }
     else {
         ret = ompi_fcoll_base_coll_allgather_array (broken_total_lengths,
-						    vulcan_num_io_procs,
+						    fh->f_num_aggrs,
 						    MPI_LONG,
 						    total_bytes_per_process,
-						    vulcan_num_io_procs,
+						    fh->f_num_aggrs,
 						    MPI_LONG,
 						    0,
 						    fh->f_procs_in_group,
@@ -302,10 +298,10 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
 #endif
     
     cycles=0;
-    for ( i=0; i<vulcan_num_io_procs; i++ ) {
+    for ( i=0; i<fh->f_num_aggrs; i++ ) {
         broken_total_lengths[i] = 0;
         for (j=0 ; j<fh->f_procs_per_group ; j++) {
-            broken_total_lengths[i] += total_bytes_per_process[j*vulcan_num_io_procs + i];
+            broken_total_lengths[i] += total_bytes_per_process[j*fh->f_num_aggrs + i];
         }
 #if DEBUG_ON
         printf("%d: Overall broken_total_lengths[%d] = %ld\n", fh->f_rank, i, broken_total_lengths[i]);
@@ -320,7 +316,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
         total_bytes_per_process = NULL;
     }
     
-    result_counts = (int *) malloc ( vulcan_num_io_procs * fh->f_procs_per_group * sizeof(int) );
+    result_counts = (int *) malloc ( fh->f_num_aggrs * fh->f_procs_per_group * sizeof(int) );
     if ( NULL == result_counts ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
@@ -331,20 +327,20 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
 #endif
     if ( 1 == mca_fcoll_vulcan_num_groups ) {
         ret = fh->f_comm->c_coll->coll_allgather(broken_counts,
-						 vulcan_num_io_procs,
+						 fh->f_num_aggrs,
 						 MPI_INT,
 						 result_counts,
-						 vulcan_num_io_procs,
+						 fh->f_num_aggrs,
 						 MPI_INT,
 						 fh->f_comm,
 						 fh->f_comm->c_coll->coll_allgather_module);            
     }
     else {
         ret = ompi_fcoll_base_coll_allgather_array (broken_counts,
-						    vulcan_num_io_procs,
+						    fh->f_num_aggrs,
 						    MPI_INT,
 						    result_counts,
-						    vulcan_num_io_procs,
+						    fh->f_num_aggrs,
 						    MPI_INT,
 						    0,
 						    fh->f_procs_in_group,
@@ -362,7 +358,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     /*************************************************************
      *** 4. Allgather the offset/lengths array from all processes
      *************************************************************/
-    for ( i=0; i< vulcan_num_io_procs; i++ ) {
+    for ( i=0; i< fh->f_num_aggrs; i++ ) {
         aggr_data[i]->total_bytes = broken_total_lengths[i];
         aggr_data[i]->decoded_iov = broken_decoded_iovs[i];
         aggr_data[i]->fview_count = (int *) malloc (fh->f_procs_per_group * sizeof (int));
@@ -372,7 +368,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
             goto exit;
         }
         for ( j=0; j <fh->f_procs_per_group; j++ ) {
-            aggr_data[i]->fview_count[j] = result_counts[vulcan_num_io_procs*j+i];
+            aggr_data[i]->fview_count[j] = result_counts[fh->f_num_aggrs*j+i];
         }
         displs = (int*) malloc (fh->f_procs_per_group * sizeof (int));
         if (NULL == displs) {
@@ -390,7 +386,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
         
 #if DEBUG_ON
         printf("total_fview_count : %d\n", total_fview_count);
-        if (aggregators[i] == fh->f_rank) {
+        if (fh->f_aggr_list[i] == fh->f_rank) {
             for (j=0 ; j<fh->f_procs_per_group ; i++) {
                 printf ("%d: PROCESS: %d  ELEMENTS: %d  DISPLS: %d\n",
                         fh->f_rank,
@@ -434,7 +430,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
 							 aggr_data[i]->fview_count,
 							 displs,
 							 fh->f_iov_type,
-							 aggregators[i],
+							 fh->f_aggr_list[i],
 							 fh->f_procs_in_group,
 							 fh->f_procs_per_group,
 							 fh->f_comm);
@@ -477,7 +473,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     
     
 #if DEBUG_ON
-        if (aggregators[i] == fh->f_rank) {
+        if (fh->f_aggr_list[i] == fh->f_rank) {
             uint32_t tv=0;
             for (tv=0 ; tv<total_fview_count ; tv++) {
                 printf("%d: OFFSET: %lld   LENGTH: %ld\n",
@@ -494,7 +490,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
         
         aggr_data[i]->bytes_per_cycle = bytes_per_cycle;
     
-        if (aggregators[i] == fh->f_rank) {
+        if (fh->f_aggr_list[i] == fh->f_rank) {
             aggr_data[i]->disp_index = (int *)malloc (fh->f_procs_per_group * sizeof (int));
             if (NULL == aggr_data[i]->disp_index) {
                 opal_output (1, "OUT OF MEMORY\n");
@@ -552,15 +548,14 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
 #endif
     }    
 
-    reqs = (ompi_request_t **)malloc ((fh->f_procs_per_group + 1 )*vulcan_num_io_procs *sizeof(ompi_request_t *));
-
+    reqs = (ompi_request_t **)malloc ((fh->f_procs_per_group + 1 )*fh->f_num_aggrs *sizeof(ompi_request_t *));
     if ( NULL == reqs ) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
 
-    for (l=0,i=0; i < vulcan_num_io_procs; i++ ) {
+    for (l=0,i=0; i < fh->f_num_aggrs; i++ ) {
         for ( j=0; j< (fh->f_procs_per_group+1); j++ ) {
             reqs[l] = MPI_REQUEST_NULL;
             l++;
@@ -575,8 +570,8 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     }
 
     if ( cycles > 0 ) {
-        for ( i=0; i<vulcan_num_io_procs; i++ ) {
-            ret = shuffle_init ( 0, cycles, aggregators[i], fh->f_rank, aggr_data[i],
+        for ( i=0; i<fh->f_num_aggrs; i++ ) {
+            ret = shuffle_init ( 0, cycles, fh->f_aggr_list[i], fh->f_rank, aggr_data[i],
                                  &reqs[i*(fh->f_procs_per_group + 1)] );
             if ( OMPI_SUCCESS != ret ) {
                 goto exit;
@@ -588,17 +583,17 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
         }
     }
 
-    ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*vulcan_num_io_procs,
+    ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
                                   reqs, MPI_STATUS_IGNORE);
 
     for (index = 1; index < cycles; index++) {
-        SWAP_AGGR_POINTERS(aggr_data, vulcan_num_io_procs);
+        SWAP_AGGR_POINTERS(aggr_data, fh->f_num_aggrs);
 
         if(NOT_AGGR_INDEX != aggr_index) {
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
             start_write_time = MPI_Wtime();
 #endif
-            ret = write_init (fh, aggregators[aggr_index], aggr_data[aggr_index],
+            ret = write_init (fh, fh->f_aggr_list[aggr_index], aggr_data[aggr_index],
                               write_chunksize, write_synch_type, &req_iwrite);
             if (OMPI_SUCCESS != ret){
                 goto exit;
@@ -609,15 +604,15 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
 #endif
         }
 
-        for ( i=0; i<vulcan_num_io_procs; i++ ) {
-            ret = shuffle_init ( index, cycles, aggregators[i], fh->f_rank, aggr_data[i],
+        for ( i=0; i<fh->f_num_aggrs; i++ ) {
+            ret = shuffle_init ( index, cycles, fh->f_aggr_list[i], fh->f_rank, aggr_data[i],
                                  &reqs[i*(fh->f_procs_per_group + 1)] );
             if ( OMPI_SUCCESS != ret ) {
                 goto exit;
             }
         }
 
-        ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*vulcan_num_io_procs,
+        ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
                                       reqs, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != ret){
             goto exit;
@@ -632,13 +627,13 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     } /* end  for (index = 0; index < cycles; index++) */
 
     if ( cycles > 0 ) {
-        SWAP_AGGR_POINTERS(aggr_data,vulcan_num_io_procs);
+        SWAP_AGGR_POINTERS(aggr_data,fh->f_num_aggrs);
 
         if(NOT_AGGR_INDEX != aggr_index) {
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
             start_write_time = MPI_Wtime();
 #endif
-            ret = write_init (fh, aggregators[aggr_index], aggr_data[aggr_index],
+            ret = write_init (fh, fh->f_aggr_list[aggr_index], aggr_data[aggr_index],
                               write_chunksize, write_synch_type, &req_iwrite);
             if (OMPI_SUCCESS != ret){
                 goto exit;
@@ -664,11 +659,11 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     nentry.time[1] = comm_time;
     nentry.time[2] = exch_write;
     nentry.aggregator = 0;
-    for ( i=0; i<vulcan_num_io_procs; i++ ) {
-        if (aggregators[i] == fh->f_rank)
+    for ( i=0; i<fh->f_num_aggrs; i++ ) {
+        if (fh->f_aggr_list[i] == fh->f_rank)
 	nentry.aggregator = 1;
     }
-    nentry.nprocs_for_coll = vulcan_num_io_procs;
+    nentry.nprocs_for_coll = fh->f_num_aggrs;
     if (!mca_common_ompio_full_print_queue(fh->f_coll_write_time)){
         mca_common_ompio_register_print_entry(fh->f_coll_write_time,
                                                nentry);
@@ -680,8 +675,8 @@ exit :
     
     if ( NULL != aggr_data ) {
         
-        for ( i=0; i< vulcan_num_io_procs; i++ ) {            
-            if (aggregators[i] == fh->f_rank) {
+        for ( i=0; i< fh->f_num_aggrs; i++ ) {            
+            if (fh->f_aggr_list[i] == fh->f_rank) {
                 if (NULL != aggr_data[i]->recvtype){
                     for (j =0; j< aggr_data[i]->procs_per_group; j++) {
                         if ( MPI_DATATYPE_NULL != aggr_data[i]->recvtype[j] ) {
@@ -724,18 +719,16 @@ exit :
     free(broken_iov_counts);
     free(broken_decoded_iovs); // decoded_iov arrays[i] were freed as aggr_data[i]->decoded_iov;
     if ( NULL != broken_iov_arrays ) {
-        for (i=0; i<vulcan_num_io_procs; i++ ) {
+        for (i=0; i<fh->f_num_aggrs; i++ ) {
             free(broken_iov_arrays[i]);
         }
     }
     free(broken_iov_arrays);
-    free(aggregators);
     free(fh->f_procs_in_group);
     fh->f_procs_in_group=NULL;
     fh->f_procs_per_group=0;
     free(result_counts);
     free(reqs);
-    fh->f_stripe_size=stripe_size_org;    
      
     return OMPI_SUCCESS;
 }
@@ -1202,8 +1195,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
         size_t remaining      = bytes_sent;
         int block_index       = -1;
         int blocklength_size  = INIT_LEN;
-
-        ptrdiff_t send_mem_address  = NULL;
+        ptrdiff_t send_mem_address  = 0;
         ompi_datatype_t *newType    = MPI_DATATYPE_NULL;
         blocklength_proc            = (int *)       calloc (blocklength_size, sizeof (int));
         displs_proc                 = (ptrdiff_t *) calloc (blocklength_size, sizeof (ptrdiff_t));
@@ -1621,50 +1613,25 @@ exit:
 }
 
 
-int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int *vulcan_num_io_procs, int **ret_aggregators)
+int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_procs, int num_groups, 
+                                        size_t max_data)
 {
-    int *aggregators=NULL;
-    int num_io_procs = *vulcan_num_io_procs;
-    int i;
+    int ret;
+    ret = fh->f_set_aggregator_props (fh, num_io_procs, max_data);
 
-    if ( num_io_procs < 1 ) {
-        num_io_procs = fh->f_stripe_count;
-        if ( num_io_procs < 1 ) {
-            num_io_procs = 1;
-        }
-    }
-    if ( num_io_procs > fh->f_size ) {
-        num_io_procs = fh->f_size;
-    }
-
-    fh->f_procs_per_group = fh->f_size;
-    fh->f_procs_in_group = (int *) malloc ( sizeof(int) * fh->f_size );
-    if ( NULL == fh->f_procs_in_group) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for (i=0; i<fh->f_size; i++ ) {
-        fh->f_procs_in_group[i]=i;
-    }
-
-
-    aggregators = (int *) malloc ( num_io_procs * sizeof(int));
-    if ( NULL == aggregators ) {
-        // fh->procs_in_group will be freed with the fh structure. No need to do it here.
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for ( i=0; i<num_io_procs; i++ ) {
-        aggregators[i] = i * fh->f_size / num_io_procs;
-    }
-
-    *vulcan_num_io_procs = num_io_procs;
-    *ret_aggregators = aggregators;
-
-    return OMPI_SUCCESS;
+    /* Note: as of this version of the vulcan component, we are not using yet
+       the num_groups parameter to split the aggregators (and processes) into
+       distinct subgroups. This will however hopefullty be done in a second step
+       as well, allowing to keep communication just to individual subgroups of processes,
+       each subgroup using however the classic two-phase collective I/O algorithm
+       with multiple aggregators and even partitioning internally. */
+    
+    return ret;
 }    
     
 
 int mca_fcoll_vulcan_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_array_t *io_array, int num_entries,
-                                             int *ret_array_pos, int *ret_pos,  int chunk_size )
+                                       int *ret_array_pos, int *ret_pos,  int chunk_size )
 {
 
     int array_pos = *ret_array_pos;

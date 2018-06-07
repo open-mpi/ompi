@@ -155,7 +155,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 				static_num_io_procs,
 				max_data);
 
-    my_aggregator = fh->f_procs_in_group[fh->f_aggregator_index];
+    my_aggregator = fh->f_procs_in_group[0];
 
     /* io_array datatype  for using in communication*/
     types[0] = &ompi_mpi_long.dt;
@@ -312,7 +312,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
                                            iovec_count_per_process,
                                            1,
                                            MPI_INT,
-                                           fh->f_aggregator_index,
+                                           0,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
                                            fh->f_comm);
@@ -357,7 +357,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
                                          iovec_count_per_process,
                                          displs,
                                          io_array_type,
-                                         fh->f_aggregator_index,
+                                         0,
                                          fh->f_procs_in_group,
                                          fh->f_procs_per_group,
                                          fh->f_comm);
@@ -517,7 +517,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
                                             bytes_per_process,
                                             1,
                                             MPI_INT,
-                                            fh->f_aggregator_index,
+                                            0,
                                             fh->f_procs_in_group,
                                             fh->f_procs_per_group,
                                             fh->f_comm);

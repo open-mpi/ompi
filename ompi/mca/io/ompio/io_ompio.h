@@ -238,10 +238,6 @@ struct mca_io_ompio_file_t {
     */
     void                  *f_sharedfp_data;
 
-    /* process grouping parameters */
-    int *f_procs_in_group;
-    int  f_procs_per_group;
-    int  f_aggregator_index;
 
     /* File View parameters */
     struct iovec     *f_decoded_iov;
@@ -250,7 +246,7 @@ struct mca_io_ompio_file_t {
     size_t            f_position_in_file_view; /* in bytes */
     size_t            f_total_bytes; /* total bytes read/written within 1 Fview*/
     int               f_index_in_file_view;
-    ptrdiff_t f_view_extent;
+    ptrdiff_t         f_view_extent;
     size_t            f_view_size;
     ompi_datatype_t  *f_etype;
     ompi_datatype_t  *f_filetype;
@@ -259,7 +255,7 @@ struct mca_io_ompio_file_t {
 
     /* contains IO requests that needs to be read/written */
     mca_io_ompio_io_array_t *f_io_array;
-    int                     f_num_of_io_entries;
+    int                      f_num_of_io_entries;
 
     /* Hooks for modules to hang things */
     mca_base_component_t *f_fs_component;
@@ -280,11 +276,14 @@ struct mca_io_ompio_file_t {
     /*initial list of aggregators and groups*/
     int *f_init_aggr_list;
     int  f_init_num_aggrs;
-
-    int f_init_procs_per_group;
+    int  f_init_procs_per_group;
     int *f_init_procs_in_group;
 
-    int f_final_num_aggrs;
+    /* final of aggregators and groups*/
+    int *f_aggr_list;
+    int  f_num_aggrs;
+    int *f_procs_in_group;
+    int  f_procs_per_group;
 
     /* internal ompio functions required by fbtl and fcoll */
     mca_io_ompio_decode_datatype_fn_t                       f_decode_datatype;

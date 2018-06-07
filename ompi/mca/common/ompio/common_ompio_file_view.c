@@ -62,8 +62,9 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
 {
     int ret=OMPI_SUCCESS;
     size_t max_data = 0;
-    int i;
+    int i, flag;
     int num_groups = 0;
+    int num_cb_nodes=-1;
     mca_io_ompio_contg *contg_groups=NULL;
 
     size_t ftype_size;
@@ -172,48 +173,76 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
        }
     }
 
-    if ( SIMPLE != mca_io_ompio_grouping_option && SIMPLE_PLUS != mca_io_ompio_grouping_option ) {
-
-        ret = mca_io_ompio_fview_based_grouping(fh,
-                                                &num_groups,
-                                                contg_groups);
-        if ( OMPI_SUCCESS != ret ) {
-            opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_fview_based_grouping failed\n");
-            goto exit;
-        }
+    char char_stripe[MPI_MAX_INFO_KEY];
+    /* Check the info object set during File_open */
+    opal_info_get (fh->f_info, "cb_nodes", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    if ( flag ) {
+        sscanf ( char_stripe, "%d", &num_cb_nodes );
     }
     else {
-        int done=0;
-        int ndims;
+        /* Check the info object set during file_set_view */
+        opal_info_get (info, "cb_nodes", MPI_MAX_INFO_VAL, char_stripe, &flag);
+        if ( flag ) {
+            sscanf ( char_stripe, "%d", &num_cb_nodes );
+        }
+    }
         
-        if ( fh->f_comm->c_flags & OMPI_COMM_CART ){
-            ret = fh->f_comm->c_topo->topo.cart.cartdim_get( fh->f_comm, &ndims);
-            if ( OMPI_SUCCESS != ret ){
+
+    if ( -1 != mca_io_ompio_num_aggregators || -1 != num_cb_nodes) {
+        /* The user requested a particular number of aggregators */
+        num_groups = mca_io_ompio_num_aggregators;                                       
+        if ( -1 != num_cb_nodes ) {
+            /* A hint through an  MPI Info object trumps an mca parameter value */
+            num_groups = num_cb_nodes;
+        }
+        if ( num_groups > fh->f_size ) {
+            num_groups = fh->f_size;
+        }
+        mca_io_ompio_forced_grouping ( fh, num_groups, contg_groups);
+    }
+    else {
+        if ( SIMPLE != mca_io_ompio_grouping_option && 
+             SIMPLE_PLUS != mca_io_ompio_grouping_option ) {
+            ret = mca_io_ompio_fview_based_grouping(fh,
+                                                    &num_groups,
+                                                    contg_groups);
+            if ( OMPI_SUCCESS != ret ) {
+                opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_fview_based_grouping failed\n");
                 goto exit;
-            }
-            if ( ndims > 1 ) { 
-                ret = mca_io_ompio_cart_based_grouping( fh, 
-                                                        &num_groups, 
-                                                        contg_groups);
-                if (OMPI_SUCCESS != ret ) {
-                    opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_cart_based_grouping failed\n");
-                    goto exit;
-                }
-                done=1;
             }
         }
-
-        if ( !done ) {
-            ret = mca_io_ompio_simple_grouping(fh,
-                                               &num_groups,
-                                               contg_groups);
-            if ( OMPI_SUCCESS != ret ){
-                opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_simple_grouping failed\n");
-                goto exit;
+        else {
+            int done=0;
+            int ndims;
+            
+            if ( fh->f_comm->c_flags & OMPI_COMM_CART ){
+                ret = fh->f_comm->c_topo->topo.cart.cartdim_get( fh->f_comm, &ndims);
+                if ( OMPI_SUCCESS != ret ){
+                    goto exit;
+                }
+                if ( ndims > 1 ) { 
+                    ret = mca_io_ompio_cart_based_grouping( fh, 
+                                                            &num_groups, 
+                                                            contg_groups);
+                    if (OMPI_SUCCESS != ret ) {
+                        opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_cart_based_grouping failed\n");
+                        goto exit;
+                    }
+                    done=1;
+                }
+            }
+            
+            if ( !done ) {
+                ret = mca_io_ompio_simple_grouping(fh,
+                                                   &num_groups,
+                                                   contg_groups);
+                if ( OMPI_SUCCESS != ret ){
+                    opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_simple_grouping failed\n");
+                    goto exit;
+                }
             }
         }
     }
-
 #ifdef DEBUG_OMPIO
     if ( fh->f_rank == 0) {
         int ii, jj;

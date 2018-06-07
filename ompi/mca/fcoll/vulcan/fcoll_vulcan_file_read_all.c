@@ -155,7 +155,7 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
     if (OMPI_SUCCESS != ret){
         goto exit;
     }
-    my_aggregator = fh->f_procs_in_group[fh->f_aggregator_index];
+    my_aggregator = fh->f_procs_in_group[0];
 
     /**************************************************************************
      ** 2. Determine the total amount of data to be written
@@ -175,7 +175,7 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
 						total_bytes_per_process,
 						1,
 						MPI_LONG,
-						fh->f_aggregator_index,
+						0,
 						fh->f_procs_in_group,
 						fh->f_procs_per_group,
 						fh->f_comm);
@@ -227,7 +227,7 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
 						fview_count,
 						1,
 						MPI_INT,
-						fh->f_aggregator_index,
+						0,
 						fh->f_procs_in_group,
 						fh->f_procs_per_group,
 						fh->f_comm);
@@ -286,7 +286,7 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
 						  fview_count,
 						  displs,
 						  fh->f_iov_type,
-						  fh->f_aggregator_index,
+						  0,
 						  fh->f_procs_in_group,
 						  fh->f_procs_per_group,
 						  fh->f_comm);

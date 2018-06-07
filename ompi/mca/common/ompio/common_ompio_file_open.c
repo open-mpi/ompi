@@ -163,13 +163,12 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 #endif
         goto fn_fail;
     }
-
+    
     if (OMPI_SUCCESS != (ret = mca_fcoll_base_file_select (ompio_fh,
                                                            NULL))) {
         opal_output(1, "mca_fcoll_base_file_select() failed\n");
         goto fn_fail;
     }
-
 
     if ( true == use_sharedfp ) {
 	/* open the file once more for the shared file pointer if required.           
@@ -305,6 +304,10 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         free (ompio_fh->f_init_aggr_list);
         ompio_fh->f_init_aggr_list = NULL;
     }
+    if (NULL != ompio_fh->f_aggr_list) {
+        free (ompio_fh->f_aggr_list);
+        ompio_fh->f_aggr_list = NULL;
+    }
     if (NULL != ompio_fh->f_init_procs_in_group) {
         free (ompio_fh->f_init_procs_in_group);
         ompio_fh->f_init_procs_in_group = NULL;
@@ -422,6 +425,8 @@ int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
         fh->f_init_num_aggrs = -1;
         fh->f_init_aggr_list = NULL;
 
+        fh->f_num_aggrs = -1;
+        fh->f_aggr_list = NULL;
 
         /* Default file View */
         fh->f_iov_type = MPI_DATATYPE_NULL;
