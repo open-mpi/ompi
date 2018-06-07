@@ -114,7 +114,8 @@ int mca_fcoll_vulcan_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_
                                              int chunk_size );
 
 
-static int mca_fcoll_vulcan_minmax ( mca_io_ompio_file_t *fh, struct iovec *iov, int iov_count,  int num_aggregators, long *new_stripe_size);
+static int mca_fcoll_vulcan_minmax ( mca_io_ompio_file_t *fh, struct iovec *iov, int iov_count,  int num_aggregators, 
+                                     long *new_stripe_size);
 
 
 int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
@@ -203,7 +204,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     if (OMPI_SUCCESS != ret){
 	goto exit;
     }
-    
+
     aggr_data = (mca_io_ompio_aggregator_data **) malloc ( fh->f_num_aggrs * 
                                                            sizeof(mca_io_ompio_aggregator_data*));
     
@@ -249,7 +250,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
                                               &broken_decoded_iovs, &broken_iov_counts,
                                               &broken_iov_arrays, &broken_counts, 
                                               &broken_total_lengths,
-                                              fh->f_num_aggrs,  domain_size); 
+                                              fh->f_num_aggrs, domain_size); 
 
 
     /**************************************************************************
@@ -549,6 +550,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     }    
 
     reqs = (ompi_request_t **)malloc ((fh->f_procs_per_group + 1 )*fh->f_num_aggrs *sizeof(ompi_request_t *));
+
     if ( NULL == reqs ) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1195,6 +1197,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
         size_t remaining      = bytes_sent;
         int block_index       = -1;
         int blocklength_size  = INIT_LEN;
+
         ptrdiff_t send_mem_address  = 0;
         ompi_datatype_t *newType    = MPI_DATATYPE_NULL;
         blocklength_proc            = (int *)       calloc (blocklength_size, sizeof (int));
@@ -1616,7 +1619,7 @@ exit:
 int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_procs, int num_groups, 
                                         size_t max_data)
 {
-    int ret;
+    int i, ret;
     ret = fh->f_set_aggregator_props (fh, num_io_procs, max_data);
 
     /* Note: as of this version of the vulcan component, we are not using yet
@@ -1624,14 +1627,28 @@ int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_proc
        distinct subgroups. This will however hopefullty be done in a second step
        as well, allowing to keep communication just to individual subgroups of processes,
        each subgroup using however the classic two-phase collective I/O algorithm
-       with multiple aggregators and even partitioning internally. */
+       with multiple aggregators and even partitioning internally. 
+    
+       For now, logically all processes are in a single group. */
+
+    fh->f_procs_per_group = fh->f_size;
+    if ( NULL != fh->f_procs_in_group ) {
+        free ( fh->f_procs_in_group );
+    }
+    fh->f_procs_in_group = (int *) malloc ( sizeof(int) * fh->f_size );
+    if ( NULL == fh->f_procs_in_group) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    for (i=0; i<fh->f_size; i++ ) {
+        fh->f_procs_in_group[i]=i;
+    }
     
     return ret;
 }    
     
 
 int mca_fcoll_vulcan_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_array_t *io_array, int num_entries,
-                                       int *ret_array_pos, int *ret_pos,  int chunk_size )
+                                             int *ret_array_pos, int *ret_pos,  int chunk_size )
 {
 
     int array_pos = *ret_array_pos;
