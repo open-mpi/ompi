@@ -28,7 +28,7 @@
 #include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 #include "ompi/mca/io/io.h"
-#include "ompi/mca/io/ompio/io_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 #include "math.h"
 #include "ompi/mca/pml/pml.h"
 #include <unistd.h>
@@ -583,9 +583,8 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
             }
         }
         // Register progress function that should be used by ompi_request_wait
-        if ((NOT_AGGR_INDEX != aggr_index) && (false == mca_io_ompio_progress_is_registered)) {
-            opal_progress_register (mca_io_ompio_component_progress);
-            mca_io_ompio_progress_is_registered=true;
+        if (NOT_AGGR_INDEX != aggr_index)  {
+            mca_common_ompio_register_progress ();
         }
     }
 
@@ -754,9 +753,7 @@ static int write_init (mca_io_ompio_file_t *fh,
     int last_pos = 0;
     mca_ompio_request_t *ompio_req = NULL;
 
-    ompio_req = OBJ_NEW(mca_ompio_request_t);
-    ompio_req->req_type = MCA_OMPIO_REQUEST_WRITE;
-    ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
+    mca_common_ompio_request_alloc ( &ompio_req, MCA_OMPIO_REQUEST_WRITE );
 
     if (aggr_data->prev_num_io_entries) {
         /*  In this case, aggr_data->prev_num_io_entries is always == 1.

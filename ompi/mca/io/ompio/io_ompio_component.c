@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -32,6 +32,7 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/fs/base/base.h"
 #include "io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
@@ -89,11 +90,6 @@ static int delete_priority_param = 30;
  */
 opal_mutex_t mca_io_ompio_mutex = {{0}};
 
-
-/*
- * Global list of requests for this component
- */
-opal_list_t mca_io_ompio_pending_requests = {{0}};
 
 
 /*
@@ -262,9 +258,7 @@ static int open_component(void)
     /* Create the mutex */
     OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
 
-    /* Create the list of pending requests */
-
-    OBJ_CONSTRUCT(&mca_io_ompio_pending_requests, opal_list_t);
+    mca_common_ompio_request_init ();
 
     return OMPI_SUCCESS;
 }
@@ -272,11 +266,7 @@ static int open_component(void)
 
 static int close_component(void)
 {
-    /* Destroy the list of pending requests */
-    /* JMS: Good opprotunity here to list out all the IO requests that
-       were not destroyed / completed upon MPI_FINALIZE */
-
-    OBJ_DESTRUCT(&mca_io_ompio_pending_requests);
+    mca_common_ompio_request_fini ();
 
     OBJ_DESTRUCT(&mca_io_ompio_mutex);
 

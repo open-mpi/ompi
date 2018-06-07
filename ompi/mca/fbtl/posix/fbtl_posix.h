@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +24,7 @@
 #include "ompi/mca/mca.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
-#include "ompi/mca/io/ompio/io_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
 
 extern int mca_fbtl_posix_priority;
 
