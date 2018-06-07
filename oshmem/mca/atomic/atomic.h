@@ -145,7 +145,7 @@ OSHMEM_DECLSPEC extern mca_atomic_base_module_t mca_atomic;
         int rc = OSHMEM_SUCCESS;                                          \
         size_t size = 0;                                                  \
         type out_value;                                                   \
-        oshmem_op_t* op = oshmem_op_sum##type_name;                       \
+        oshmem_op_t* shmem_op = oshmem_op_sum##type_name;                 \
                                                                           \
         RUNTIME_CHECK_INIT();                                             \
         RUNTIME_CHECK_PE(pe);                                             \
@@ -158,7 +158,7 @@ OSHMEM_DECLSPEC extern mca_atomic_base_module_t mca_atomic;
             (const void*)&value,                                          \
             size,                                                         \
             pe,                                                           \
-            op));                                                         \
+            shmem_op));                                                   \
         RUNTIME_CHECK_RC(rc);                                             \
                                                                           \
         return ;                                                          \

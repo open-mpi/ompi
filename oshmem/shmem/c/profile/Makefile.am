@@ -66,9 +66,15 @@ OSHMEM_API_SOURCES = \
 	pshmem_set.c \
 	pshmem_cswap.c \
 	pshmem_fadd.c \
+	pshmem_fand.c \
+	pshmem_for.c \
+	pshmem_fxor.c \
 	pshmem_fetch.c \
 	pshmem_finc.c \
 	pshmem_add.c \
+	pshmem_and.c \
+	pshmem_or.c \
+	pshmem_xor.c \
 	pshmem_inc.c \
 	pshmem_clear_lock.c \
 	pshmem_set_lock.c \

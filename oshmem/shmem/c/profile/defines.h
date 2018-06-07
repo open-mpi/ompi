@@ -251,16 +251,22 @@
 #define shmem_int_atomic_fand        pshmem_int_atomic_fand
 #define shmem_long_atomic_fand       pshmem_long_atomic_fand
 #define shmem_longlong_atomic_fand   pshmem_longlong_atomic_fand
+#define shmemx_int32_fand            pshmemx_int32_fand
+#define shmemx_int64_fand            pshmemx_int64_fand
 
 /* Atomic Fetch&Or */
 #define shmem_int_atomic_for         pshmem_int_atomic_for
 #define shmem_long_atomic_for        pshmem_long_atomic_for
 #define shmem_longlong_atomic_for    pshmem_longlong_atomic_for
+#define shmemx_int32_for             pshmemx_int32_for
+#define shmemx_int64_for             pshmemx_int64_for
 
 /* Atomic Fetch&Xor */
 #define shmem_int_atomic_fxor        pshmem_int_atomic_fxor
 #define shmem_long_atomic_fxor       pshmem_long_atomic_fxor
 #define shmem_longlong_atomic_fxor   pshmem_longlong_atomic_fxor
+#define shmemx_int32_fxor            pshmemx_int32_fxor
+#define shmemx_int64_fxor            pshmemx_int64_fxor
 
 /* Atomic Fetch */
 #define shmem_double_fetch            pshmem_double_fetch
