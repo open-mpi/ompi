@@ -9,10 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +20,7 @@
  */
 
 #include "ompi_config.h"
-#include "fcoll_dynamic.h"
+#include "fcoll_vulcan.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -50,7 +49,7 @@ static int read_heap_sort (mca_io_ompio_local_io_array *io_array,
 
 
 int
-mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
+mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
                                  void *buf,
                                  int count,
                                  struct ompi_datatype_t *datatype,
@@ -92,7 +91,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     /* array that contains the sorted indices of the global_iov */
     int *sorted = NULL;
     int *displs = NULL;
-    int dynamic_num_io_procs;
+    int vulcan_num_io_procs;
     size_t max_data = 0;
     MPI_Aint *total_bytes_per_process = NULL;
     ompi_datatype_t **sendtype = NULL;
@@ -144,13 +143,14 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
         status->_ucount = max_data;
     }
 
-    dynamic_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
-    if ( OMPI_ERR_MAX == dynamic_num_io_procs ) {
+    vulcan_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+    if ( OMPI_ERR_MAX == vulcan_num_io_procs ) {
         ret = OMPI_ERROR;
         goto exit;
     }
+
     ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
-                                      dynamic_num_io_procs,
+                                      vulcan_num_io_procs,
                                       max_data);
     if (OMPI_SUCCESS != ret){
         goto exit;
@@ -170,15 +170,15 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     start_rcomm_time = MPI_Wtime();
 #endif
     ret = ompi_fcoll_base_coll_allgather_array (&max_data,
-                                           1,
-                                           MPI_LONG,
-                                           total_bytes_per_process,
-                                           1,
-                                           MPI_LONG,
-                                           0,
-                                           fh->f_procs_in_group,
-                                           fh->f_procs_per_group,
-                                           fh->f_comm);
+						1,
+						MPI_LONG,
+						total_bytes_per_process,
+						1,
+						MPI_LONG,
+						0,
+						fh->f_procs_in_group,
+						fh->f_procs_per_group,
+						fh->f_comm);
     if (OMPI_SUCCESS != ret){
         goto exit;
     }
@@ -222,15 +222,15 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     start_rcomm_time = MPI_Wtime();
 #endif
     ret = ompi_fcoll_base_coll_allgather_array (&local_count,
-                                           1,
-                                           MPI_INT,
-                                           fview_count,
-                                           1,
-                                           MPI_INT,
-                                           0,
-                                           fh->f_procs_in_group,
-                                           fh->f_procs_per_group,
-                                           fh->f_comm);
+						1,
+						MPI_INT,
+						fview_count,
+						1,
+						MPI_INT,
+						0,
+						fh->f_procs_in_group,
+						fh->f_procs_per_group,
+						fh->f_comm);
     
     if (OMPI_SUCCESS != ret){
         goto exit;
@@ -280,16 +280,16 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     start_rcomm_time = MPI_Wtime();
 #endif
     ret =  ompi_fcoll_base_coll_allgatherv_array (local_iov_array,
-                                             local_count,
-                                             fh->f_iov_type,
-                                             global_iov_array,
-                                             fview_count,
-                                             displs,
-                                             fh->f_iov_type,
-                                             0,
-                                             fh->f_procs_in_group,
-                                             fh->f_procs_per_group,
-                                             fh->f_comm);
+						  local_count,
+						  fh->f_iov_type,
+						  global_iov_array,
+						  fview_count,
+						  displs,
+						  fh->f_iov_type,
+						  0,
+						  fh->f_procs_in_group,
+						  fh->f_procs_per_group,
+						  fh->f_comm);
     
     if (OMPI_SUCCESS != ret){
         goto exit;
@@ -342,7 +342,6 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
         ret = OMPI_ERROR;
         goto exit;
     }
-
     cycles = ceil((double)total_bytes/bytes_per_cycle);
 
     if ( my_aggregator == fh->f_rank) {
@@ -877,7 +876,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
         nentry.aggregator = 1;
     else
         nentry.aggregator = 0;
-    nentry.nprocs_for_coll = dynamic_num_io_procs;
+    nentry.nprocs_for_coll = vulcan_num_io_procs;
     if (!mca_common_ompio_full_print_queue(fh->f_coll_read_time)){
         mca_common_ompio_register_print_entry(fh->f_coll_read_time,
                                               nentry);

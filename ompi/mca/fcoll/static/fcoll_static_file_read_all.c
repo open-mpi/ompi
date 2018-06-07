@@ -152,7 +152,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
                                 static_num_io_procs,
                                 max_data);
-    my_aggregator = fh->f_procs_in_group[fh->f_aggregator_index];
+    my_aggregator = fh->f_procs_in_group[0];
 
     /*  printf("max_data %ld\n", max_data);  */
     ret = fh->f_generate_current_file_view((struct mca_io_ompio_file_t *)fh,
@@ -310,7 +310,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
                                            iovec_count_per_process,
                                            1,
                                            MPI_INT,
-                                           fh->f_aggregator_index,
+                                           0,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
                                            fh->f_comm);
@@ -354,7 +354,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
                                          iovec_count_per_process,
                                          displs,
                                          io_array_type,
-                                         fh->f_aggregator_index,
+                                         0,
                                          fh->f_procs_in_group,
                                          fh->f_procs_per_group,
                                          fh->f_comm);
@@ -512,7 +512,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
                                       bytes_per_process,
                                       1,
                                       MPI_INT,
-                                      fh->f_aggregator_index,
+                                      0,
                                       fh->f_procs_in_group,
                                       fh->f_procs_per_group,
                                       fh->f_comm);

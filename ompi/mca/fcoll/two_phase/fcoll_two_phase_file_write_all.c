@@ -235,7 +235,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
             goto exit;
 	}
 
-	two_phase_num_io_procs = fh->f_final_num_aggrs;
+	two_phase_num_io_procs = fh->f_num_aggrs;
 
     }
 

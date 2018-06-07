@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2018 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -30,8 +30,8 @@
 #include "ompi/mca/fbtl/base/base.h"
 
 #include "common_ompio.h"
+#include "common_ompio_request.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
-#include "ompi/mca/io/ompio/io_ompio_request.h"
 #include "math.h"
 #include <unistd.h>
 
@@ -185,9 +185,7 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
     mca_ompio_request_t *ompio_req=NULL;
     size_t spc=0;
 
-    ompio_req = OBJ_NEW(mca_ompio_request_t);
-    ompio_req->req_type = MCA_OMPIO_REQUEST_READ;
-    ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
+    mca_common_ompio_request_alloc ( &ompio_req, MCA_OMPIO_REQUEST_READ);
 
     if ( 0 == count ) {
 	ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
@@ -236,12 +234,7 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
 	  fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
 	}
 
-	if ( false == mca_io_ompio_progress_is_registered ) {
-            // Lazy initialization of progress function to minimize impact
-            // on other ompi functionality in case its not used.
-            opal_progress_register (mca_io_ompio_component_progress);
-            mca_io_ompio_progress_is_registered=true;
-        }
+        mca_common_ompio_register_progress ();
 
 	fh->f_num_of_io_entries = 0;
 	if (NULL != fh->f_io_array) {
