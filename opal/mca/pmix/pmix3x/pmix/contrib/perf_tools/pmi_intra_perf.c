@@ -67,6 +67,10 @@ void parse_options(int argc, char **argv)
         switch (c) {
         case 's':
             key_size = atoi(optarg);
+            /* Make sure that we transform it to int as
+             * this is what will be the key value type
+             */
+            key_size = key_size / 4 + !!(key_size % 4);
             break;
         case 'c':
             key_count = atoi(optarg);
@@ -159,9 +163,11 @@ int main(int argc, char **argv)
     int *local_ranks, local_cnt;
     int *remote_ranks, remote_cnt;
     double start, total_start, get_loc_time = 0, get_rem_time = 0, put_loc_time = 0,
-            put_rem_time = 0, commit_time = 0, fence_time = 0, init_time = 0, total_time = 0;
+           put_rem_time = 0, commit_time = 0, fence_time = 0, init_time = 0, total_time = 0;
     int get_loc_cnt = 0, get_rem_cnt = 0, put_loc_cnt = 0, put_rem_cnt = 0;
     double mem_pss = 0.0, mem_rss = 0.0;
+    char have_shmem;
+    size_t shmem_job_info, shmem_all;
 
     parse_options(argc, argv);
 
@@ -176,6 +182,14 @@ int main(int argc, char **argv)
         remote_ranks = calloc(remote_cnt, sizeof(int));
         fill_remote_ranks(local_ranks, local_cnt, remote_ranks, nproc);
     }
+
+    pmi_get_shmem_size(&have_shmem, &shmem_job_info);
+
+    /*
+     * Make sure that no other rank started publishing keys in the dstore
+     * before we finished with shmem size screening
+     */
+    pmi_fence( 0 );
 
     if( 0 == rank && debug_on ){
         int i;
@@ -302,6 +316,7 @@ int main(int argc, char **argv)
                 commit_time, fence_time);
     }
 
+    pmi_get_shmem_size(&have_shmem, &shmem_all);
     /*
      * The barrier ensures that all procs finished key fetching
      * we had issues with dstor/lockless case evaluation
@@ -501,10 +516,12 @@ int main(int argc, char **argv)
         fprintf(stderr,"total:         max %lf min %lf\n", max_total_time, min_total_time);
         fprintf(stderr,"mem:           loc %0.2lf avg %0.2lf min %0.2lf max %0.2lf total %0.2lf Kb\n",
                 mem_pss, cum_mem_pss / nproc, min_mem_pss, max_mem_pss, cum_mem_pss);
+        if( have_shmem ) {
+            fprintf(stderr,"shmem:         job_info: %0.2lf total %0.2lf Kb\n",
+                    (double)shmem_job_info / 1024, (double)shmem_all / 1024);
+        }
 
-
-        /* debug printout */
-/*
+        /* debug printout *//*
         for(i = 0; i < nproc; i++){
             double val;
             printf("%d: ", i);

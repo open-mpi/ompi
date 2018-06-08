@@ -4,7 +4,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -333,7 +333,8 @@ static int if_posix_open(void)
         }
         intf->ifmtu = ifr->ifr_mtu;
 #endif
-
+        pmix_output_verbose(1, pmix_pif_base_framework.framework_output,
+                            "adding interface %s", intf->if_name);
         pmix_list_append(&pmix_if_list, &(intf->super));
     }
     free(ifconf.ifc_req);

@@ -1773,7 +1773,6 @@ static void ocadcon(pmix3x_opalcaddy_t *p)
     p->odmdxfunc = NULL;
     p->infocbfunc = NULL;
     p->toolcbfunc = NULL;
-    p->cnctcbfunc = NULL;
     p->ocbdata = NULL;
 }
 static void ocaddes(pmix3x_opalcaddy_t *p)

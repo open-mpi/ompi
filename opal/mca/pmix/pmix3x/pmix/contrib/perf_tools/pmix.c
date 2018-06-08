@@ -10,9 +10,16 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <getopt.h>
+#include <limits.h>
+#include <string.h>
 #include <pmix.h>
 
 pmix_proc_t this_proc;
+static int _int_size = 0;
 
 void pmi_init(int *rank, int *size)
 {
@@ -40,7 +47,7 @@ void pmi_init(int *rank, int *size)
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get job size failed: %d", this_proc.nspace, this_proc.rank, rc);
         abort();
     }
-    *size = val->data.uint32;
+    _int_size = *size = val->data.uint32;
     *rank = this_proc.rank;
     PMIX_VALUE_RELEASE(val);
 }
@@ -78,6 +85,94 @@ void pmi_get_local_ranks(int **local_ranks, int *local_cnt)
         fprintf(stderr, "Client ns %s rank %d: number of local peers doesn't match",
                 this_proc.nspace, this_proc.rank);
         abort();
+    }
+}
+
+/* WARNING: should match one in
+ * src/mca/gds/ds12/gds_dstore.h
+ */
+typedef struct {
+    size_t rank;
+    size_t offset;
+    size_t count;
+} rank_meta_info;
+
+#define DSTORE_INIT_SEG "initial-pmix_shared-segment"
+#define DSTORE_META_SEG "smseg"
+#define DSTORE_DATA_SEG "smdataseg"
+
+typedef enum { other_seg, init_seg, meta_seg, data_seg } seg_type_t;
+
+struct {
+    char *sign;
+    seg_type_t type;
+} segments[] = {
+    {DSTORE_INIT_SEG, init_seg},
+    {DSTORE_META_SEG, meta_seg},
+    {DSTORE_DATA_SEG, data_seg},
+};
+
+static char *_get_maps_file(char *line)
+{
+    char *token = NULL;
+    char *saveptr = NULL;
+    int i = 0;
+
+    token = strtok_r(line, "-\n", &saveptr);
+    if(NULL == token) {
+        return NULL;
+    }
+    return (char*)strtoul(token, &saveptr, 16);
+}
+
+static seg_type_t
+is_dstor_region(char *line, char **base)
+{
+    int i;
+    seg_type_t type = other_seg;
+    for(i=0; i<3; i++){
+        if( strstr(line, segments[i].sign) ){
+            if(!(*base = _get_maps_file(line)) ){
+                return other_seg;
+            }
+            return segments[i].type;
+        }
+    }
+    return other_seg;
+}
+
+void pmi_get_shmem_size(char *is_avail, size_t *cum_size)
+{
+    char maps_path[PATH_MAX] = "/proc/self/maps";
+    FILE *maps_fp = NULL;
+    char *line = NULL;
+    size_t size = 0, meta_size = 0, data_size = 0;
+    char *base;
+
+    if (NULL == (maps_fp = fopen(maps_path, "r"))) {
+        abort();
+    }
+
+    while ((size = getline(&line, &size, maps_fp)) != -1) {
+        seg_type_t type = is_dstor_region(line, &base);
+        switch(type) {
+        case other_seg:
+        case init_seg:
+        case meta_seg:
+            break;
+        case data_seg:{
+            data_size += *((size_t*)base);
+            break;
+        }
+        }
+    }
+    free(line);
+    fclose(maps_fp);
+    *is_avail = 0;
+    *cum_size = data_size;
+    if( *cum_size > 0 ) {
+        *is_avail = 1;
+        *cum_size += sizeof(rank_meta_info) * _int_size;
     }
 }
 

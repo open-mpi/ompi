@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -33,6 +33,14 @@
 #define TEST_NAMESPACE "smoky_nspace"
 #define TEST_CREDENTIAL "dummy"
 
+#define PMIX_WAIT_FOR_COMPLETION(m) \
+    do {                            \
+        while ((m)) {               \
+            usleep(10);             \
+        }                           \
+    } while(0)
+
+
 /* WARNING: pmix_test_output_prepare is currently not threadsafe!
  * fix it once needed!
  */
@@ -48,7 +56,7 @@ extern FILE *file;
     fflush(file); \
 }
 
-// Write output wightout adding anything to it.
+// Write output without adding anything to it.
 // Need for automate tests to receive "OK" string
 #define TEST_OUTPUT_CLEAR(x) { \
     fprintf(file, "%s", pmix_test_output_prepare x ); \

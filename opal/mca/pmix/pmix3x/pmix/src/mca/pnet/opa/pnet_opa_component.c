@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,48 +29,85 @@
 #include <src/include/pmix_config.h>
 #include "pmix_common.h"
 
-
+#include "src/util/argv.h"
 #include "src/mca/pnet/pnet.h"
 #include "pnet_opa.h"
 
 static pmix_status_t component_open(void);
 static pmix_status_t component_close(void);
 static pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority);
+static pmix_status_t component_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-pmix_pnet_base_component_t mca_pnet_opa_component = {
-    .base = {
-        PMIX_PNET_BASE_VERSION_1_0_0,
+pmix_pnet_opa_component_t mca_pnet_opa_component = {
+    .super = {
+        .base = {
+            PMIX_PNET_BASE_VERSION_1_0_0,
 
-        /* Component name and version */
-        .pmix_mca_component_name = "opa",
-        PMIX_MCA_BASE_MAKE_VERSION(component,
-                                   PMIX_MAJOR_VERSION,
-                                   PMIX_MINOR_VERSION,
-                                   PMIX_RELEASE_VERSION),
+            /* Component name and version */
+            .pmix_mca_component_name = "opa",
+            PMIX_MCA_BASE_MAKE_VERSION(component,
+                                       PMIX_MAJOR_VERSION,
+                                       PMIX_MINOR_VERSION,
+                                       PMIX_RELEASE_VERSION),
 
-        /* Component open and close functions */
-        .pmix_mca_open_component = component_open,
-        .pmix_mca_close_component = component_close,
-        .pmix_mca_query_component = component_query,
+            /* Component open and close functions */
+            .pmix_mca_open_component = component_open,
+            .pmix_mca_close_component = component_close,
+            .pmix_mca_register_component_params = component_register,
+            .pmix_mca_query_component = component_query,
+        },
+        .data = {
+            /* The component is checkpoint ready */
+            PMIX_MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
     },
-    .data = {
-        /* The component is checkpoint ready */
-        PMIX_MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    .include = NULL,
+    .exclude = NULL
 };
 
+static char *includeparam;
+static char *excludeparam;
 
-static int component_open(void)
+static pmix_status_t component_register(void)
+{
+    pmix_mca_base_component_t *component = &mca_pnet_opa_component.super.base;
+
+    includeparam = "HFI_*,PSM2_*";
+    (void)pmix_mca_base_component_var_register(component, "include_envars",
+                                               "Comma-delimited list of envars to harvest (\'*\' and \'?\' supported)",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                               PMIX_INFO_LVL_2,
+                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
+                                               &includeparam);
+    if (NULL != includeparam) {
+        mca_pnet_opa_component.include = pmix_argv_split(includeparam, ',');
+    }
+
+    excludeparam = NULL;
+    (void)pmix_mca_base_component_var_register(component, "exclude_envars",
+                                               "Comma-delimited list of envars to exclude (\'*\' and \'?\' supported)",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                               PMIX_INFO_LVL_2,
+                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
+                                               &excludeparam);
+    if (NULL != excludeparam) {
+        mca_pnet_opa_component.exclude = pmix_argv_split(excludeparam, ',');
+    }
+
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t component_open(void)
 {
     return PMIX_SUCCESS;
 }
 
 
-static int component_query(pmix_mca_base_module_t **module, int *priority)
+static pmix_status_t component_query(pmix_mca_base_module_t **module, int *priority)
 {
     *priority = 10;
     *module = (pmix_mca_base_module_t *)&pmix_opa_module;
@@ -78,7 +115,7 @@ static int component_query(pmix_mca_base_module_t **module, int *priority)
 }
 
 
-static int component_close(void)
+static pmix_status_t component_close(void)
 {
     return PMIX_SUCCESS;
 }
