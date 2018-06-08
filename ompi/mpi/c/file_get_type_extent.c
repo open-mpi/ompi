@@ -54,7 +54,10 @@ int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
             fh = MPI_FILE_NULL;
         } else if (NULL == extent) {
             rc = MPI_ERR_ARG;
+        } else {
+            OMPI_CHECK_DATATYPE_FOR_SEND(rc, datatype, 1);
         }
+
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 

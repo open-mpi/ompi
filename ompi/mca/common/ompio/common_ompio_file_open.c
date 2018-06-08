@@ -277,8 +277,8 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
 	*/
 	ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
     }
-    if ( delete_flag && 0 == ompio_fh->f_rank ) {
-        mca_io_ompio_file_delete ( ompio_fh->f_filename, &(MPI_INFO_NULL->super) );
+    if ( delete_flag ) {
+        ret = mca_io_ompio_file_delete ( ompio_fh->f_filename, &(MPI_INFO_NULL->super) );
     }
 
     if ( NULL != ompio_fh->f_fs ) {
