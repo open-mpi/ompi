@@ -5,6 +5,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2018      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,7 +39,8 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-removed-interfaces.h
         ompi/mpi/fortran/use-mpi-f08/Makefile
         ompi/mpi/fortran/use-mpi-f08/mod/Makefile
-        ompi/mpi/fortran/mpiext/Makefile
+        ompi/mpi/fortran/mpiext-use-mpi/Makefile
+        ompi/mpi/fortran/mpiext-use-mpi-f08/Makefile
         ompi/mpi/tool/Makefile
         ompi/mpi/tool/profile/Makefile
 

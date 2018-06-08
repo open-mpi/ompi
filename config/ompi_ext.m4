@@ -10,6 +10,7 @@ dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2017      The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
+dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -154,7 +155,7 @@ EOF
     # modules it needs are already built).
 
     # remove any previously generated #include files
-    outdir=ompi/mpi/fortran/mpiext
+    outdir=ompi/mpi/fortran/mpiext-use-mpi
     mkdir -p $outdir
     mpiusempi_ext_h=$outdir/mpi-ext-module.F90
     rm -f $mpiusempi_ext_h
@@ -191,9 +192,11 @@ EOF
     ###############
 
     # See note above: we generate the mpi_f08_ext module in
-    # ompi/mpi/fortran/mpiext
+    # ompi/mpi/fortran/mpiext-use-mpi-f08
 
     # remove any previously generated #include files
+    outdir=ompi/mpi/fortran/mpiext-use-mpi-f08
+    mkdir -p $outdir
     mpiusempif08_ext_h=$outdir/mpi-f08-ext-module.F90
     rm -f $mpiusempif08_ext_h
 
