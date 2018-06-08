@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,6 +106,10 @@ int opal_mpiinfo_init(void*);
  *   'MPI_Info_free'.
  */
 int opal_info_dup (opal_info_t *info, opal_info_t **newinfo);
+
+// Comments might still say __IN_<key>, but the code should be using the
+// below macro instead.
+#define OPAL_INFO_SAVE_PREFIX "_OMPI_IN_"
 
 /**
  *   opal_info_dup_mpistandard - Duplicate an 'MPI_Info' object
