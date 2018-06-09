@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     int rc;
     pmix_value_t value;
     pmix_value_t *val = &value;
-    pmix_proc_t proc, newproc;
+    pmix_proc_t proc;
     uint32_t nprocs;
     char nsp2[PMIX_MAX_NSLEN+1];
     pmix_app_t *app;
@@ -135,13 +135,13 @@ int main(int argc, char **argv)
     /* just cycle the connect/disconnect functions */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
-    if (PMIX_SUCCESS != (rc = PMIx_Connect(&proc, 1, NULL, 0, newproc.nspace, &newproc.rank))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Connect(&proc, 1, NULL, 0))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Connect failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
-    fprintf(stderr, "Client ns %s rank %d: PMIx_Connect succeeded - new ID: %s:%d\n",
-            myproc.nspace, myproc.rank, newproc.nspace, newproc.rank);
-    if (PMIX_SUCCESS != (rc = PMIx_Disconnect(newproc.nspace, NULL, 0))) {
+    fprintf(stderr, "Client ns %s rank %d: PMIx_Connect succeeded\n",
+            myproc.nspace, myproc.rank);
+    if (PMIX_SUCCESS != (rc = PMIx_Disconnect(&proc, 1, NULL, 0))) {
         fprintf(stderr, "Client ns %s rank %d: PMIx_Disonnect failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }

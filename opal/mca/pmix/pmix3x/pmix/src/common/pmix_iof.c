@@ -83,7 +83,8 @@ PMIX_EXPORT pmix_status_t PMIx_IOF_pull(const pmix_proc_t procs[], size_t nprocs
     }
 
     /* if we are a server, we cannot do this */
-    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer) &&
+        !PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_NOT_SUPPORTED;
     }
@@ -236,7 +237,8 @@ pmix_status_t PMIx_IOF_push(const pmix_proc_t targets[], size_t ntargets,
 
     /* if we are not a server, then we send the provided
      * data to our server for processing */
-    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer) ||
+        PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer)) {
         msg = PMIX_NEW(pmix_buffer_t);
         if (NULL == msg) {
             return PMIX_ERR_NOMEM;
@@ -318,7 +320,7 @@ pmix_status_t PMIx_IOF_push(const pmix_proc_t targets[], size_t ntargets,
 pmix_status_t pmix_iof_write_output(const pmix_proc_t *name,
                                     pmix_iof_channel_t stream,
                                     const pmix_byte_object_t *bo,
-                                    pmix_iof_write_event_t *channel)
+                                    pmix_iof_flags_t *flags)
 {
     char starttag[PMIX_IOF_BASE_TAG_MAX], endtag[PMIX_IOF_BASE_TAG_MAX], *suffix;
     pmix_iof_write_output_t *output;
@@ -326,6 +328,25 @@ pmix_status_t pmix_iof_write_output(const pmix_proc_t *name,
     int j, k, starttaglen, endtaglen, num_buffered;
     bool endtagged;
     char qprint[10];
+    pmix_iof_write_event_t *channel;
+    pmix_iof_flags_t myflags;
+
+    if (PMIX_FWD_STDOUT_CHANNEL & stream) {
+        channel = &pmix_client_globals.iof_stdout.wev;
+    } else {
+        channel = &pmix_client_globals.iof_stderr.wev;
+    }
+    if (NULL == flags) {
+        myflags.xml = pmix_globals.xml_output;
+        if (pmix_globals.timestamp_output) {
+            time(&myflags.timestamp);
+        } else {
+            myflags.timestamp = 0;
+        }
+        myflags.tag = pmix_globals.tag_output;
+    } else {
+        myflags = *flags;
+    }
 
     PMIX_OUTPUT_VERBOSE((1, pmix_client_globals.iof_output,
                          "%s write:output setting up to write %lu bytes to %s for %s on fd %d",
@@ -337,6 +358,8 @@ pmix_status_t pmix_iof_write_output(const pmix_proc_t *name,
 
     /* setup output object */
     output = PMIX_NEW(pmix_iof_write_output_t);
+    memset(starttag, 0, PMIX_IOF_BASE_TAG_MAX);
+    memset(endtag, 0, PMIX_IOF_BASE_TAG_MAX);
 
     /* write output data to the corresponding tag */
     if (PMIX_FWD_STDIN_CHANNEL & stream) {
@@ -370,22 +393,20 @@ pmix_status_t pmix_iof_write_output(const pmix_proc_t *name,
     /* if this is to be xml tagged, create a tag with the correct syntax - we do not allow
      * timestamping of xml output
      */
-    if (pmix_globals.xml_output) {
+    if (myflags.xml) {
         snprintf(starttag, PMIX_IOF_BASE_TAG_MAX, "<%s rank=\"%s\">", suffix, PMIX_RANK_PRINT(name->rank));
         snprintf(endtag, PMIX_IOF_BASE_TAG_MAX, "</%s>", suffix);
         goto construct;
     }
 
     /* if we are to timestamp output, start the tag with that */
-    if (pmix_globals.timestamp_output) {
-        time_t mytime;
+    if (0 < myflags.timestamp) {
         char *cptr;
         /* get the timestamp */
-        time(&mytime);
-        cptr = ctime(&mytime);
+        cptr = ctime(&myflags.timestamp);
         cptr[strlen(cptr)-1] = '\0';  /* remove trailing newline */
 
-        if (pmix_globals.tag_output) {
+        if (myflags.tag) {
             /* if we want it tagged as well, use both */
             snprintf(starttag, PMIX_IOF_BASE_TAG_MAX, "%s[%s]<%s>:",
                      cptr, PMIX_NAME_PRINT(name), suffix);
@@ -398,7 +419,7 @@ pmix_status_t pmix_iof_write_output(const pmix_proc_t *name,
         goto construct;
     }
 
-    if (pmix_globals.tag_output) {
+    if (myflags.tag) {
         snprintf(starttag, PMIX_IOF_BASE_TAG_MAX, "[%s]<%s>:",
                  PMIX_NAME_PRINT(name), suffix);
         /* no endtag for this option */
@@ -431,7 +452,7 @@ pmix_status_t pmix_iof_write_output(const pmix_proc_t *name,
      * and replace those with the tag
      */
     for (i=0; i < bo->size && k < PMIX_IOF_BASE_TAGGED_OUT_MAX; i++) {
-        if (pmix_globals.xml_output) {
+        if (myflags.xml) {
             if ('&' == bo->bytes[i]) {
                 if (k+5 >= PMIX_IOF_BASE_TAGGED_OUT_MAX) {
                     PMIX_ERROR_LOG(PMIX_ERR_OUT_OF_RESOURCE);

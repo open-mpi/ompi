@@ -15,6 +15,7 @@
 
 void pmi_init(int *rank, int *size);
 void pmi_get_local_ranks(int **local_ranks, int *local_cnt);
+void pmi_get_shmem_size(char *is_avail, size_t *cum_size);
 void pmi_put_key_loc(char *key, int *key_val, int key_size);
 void pmi_put_key_rem(char *key, int *key_val, int key_size);
 void pmi_put_double(char *key, double val);

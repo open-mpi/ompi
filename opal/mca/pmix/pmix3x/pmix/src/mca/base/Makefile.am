@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +26,7 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libpmix_mca_base.la
 
-dist_pmixdata_DATA = help-mca-base.txt help-mca-var.txt
+dist_pmixdata_DATA = help-pmix-mca-base.txt help-pmix-mca-var.txt
 
 # Source code files
 

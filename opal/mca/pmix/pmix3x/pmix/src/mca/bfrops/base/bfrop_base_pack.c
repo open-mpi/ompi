@@ -454,6 +454,7 @@ pmix_status_t pmix_bfrops_base_pack_status(pmix_buffer_t *buffer, const void *sr
     for (i = 0; i < num_vals; ++i) {
         status = (int32_t)ssrc[i];
         if (PMIX_SUCCESS != (ret = pmix_bfrops_base_pack_int32(buffer, &status, 1, PMIX_INT32))) {
+            PMIX_ERROR_LOG(ret);
             return ret;
         }
     }
@@ -1310,5 +1311,5 @@ pmix_status_t pmix_bfrops_base_pack_envar(pmix_buffer_t *buffer, const void *src
             return ret;
         }
     }
-    return pmix_bfrops_base_pack_int16(buffer, src, num_vals, PMIX_UINT16);
+    return PMIX_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -353,9 +353,11 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
  * appropriate action. Note that different resource managers may respond to
  * failures in different manners.
  *
- * The host RM will assign a unique nspace to the resulting process group. The
- * new nspace must be provided when disconnecting from the group. All procs are
- * required to disconnect from the nspace prior to terminating.
+ * The callback function is to be called once all participating processes have
+ * called connect. The server is required to return any job-level info for the
+ * connecting processes that might not already have - i.e., if the connect
+ * request involves procs from different nspaces, then each proc shall receive
+ * the job-level info from those nspaces other than their own.
  *
  * Note: a process can only engage in _one_ connect operation involving the identical
  * set of processes at a time. However, a process _can_ be simultaneously engaged
@@ -364,61 +366,24 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t nin
  * As in the case of the fence operation, the info array can be used to pass
  * user-level directives regarding the algorithm to be used for the collective
  * operation involved in the "connect", timeout constraints, and other options
- * available from the host RM.
- *
- * The server is required to return any job-level info for the connecting
- * processes that they might not already have - i.e., if the connect request
- * involves procs from different nspaces, then each proc shall receive the
- * job-level info from those nspaces other than their own.
- */
-
-
-/* The blocking form of this call must provide a character array of size
- * PMIX_MAX_NSLEN+1 for the assigned nspace of the resulting group, and a pointer
- * to an pmix_rank_t location where the new rank of this process in the assigned
- * nspace can be returned. Calls will return once the specified operation
- * is complete (i.e., all participants have called PMIx_Connect).
- */
-
+ * available from the host RM */
 PMIX_EXPORT pmix_status_t PMIx_Connect(const pmix_proc_t procs[], size_t nprocs,
-                                       const pmix_info_t info[], size_t ninfo,
-                                       char nspace[], pmix_rank_t *newrank);
-
-/* The callback function for the non-blocking form of the PMIx_Connect
- * operation will be called once the operation is complete. Any participant
- * that fails to call "connect" prior to terminating will cause the
- * operation to return a "failed" status to all other participants. This
- * is the default behavior in the absence of any provided directive.
- *
- * Some additional info keys are provided for this operation:
- *
- * (a) PMIX_CONNECT_NOTIFY_EACH: generate a local event notification using
- *     the PMIX_PROC_HAS_CONNECTED event each time a process connects
- *
- * (b) PMIX_CONNECT_NOTIFY_REQ: notify each of the indicated procs that
- *     they are requested to connect using the PMIX_CONNECT_REQUESTED event
- *
- * (c) PMIX_CONNECT_OPTIONAL: participation is optional - do not return
- *     error if procs terminate without having connected
- */
+                                       const pmix_info_t info[], size_t ninfo);
 
 PMIX_EXPORT pmix_status_t PMIx_Connect_nb(const pmix_proc_t procs[], size_t nprocs,
                                           const pmix_info_t info[], size_t ninfo,
-                                          pmix_connect_cbfunc_t cbfunc, void *cbdata);
+                                          pmix_op_cbfunc_t cbfunc, void *cbdata);
 
-/* Disconnect this process from a specified nspace. An error will be returned
- * if the specified nspace is not recognized. The info array is used as above.
- *
- * Processes that terminate while connected to other processes will generate a
- * "termination error" event that will be reported to any process in the connected
- * group that has registered for such events. Calls to "disconnect" that include the
- * PMIX_CONNECT_NOTIFY_EACH info key will cause other processes in the nspace to receive
- * an event notification of the disconnect, if they are registered for such events.
- */
-PMIX_EXPORT pmix_status_t PMIx_Disconnect(const char nspace[],
+/* Disconnect a previously connected set of processes. An error will be returned
+ * if the specified set of procs was not previously "connected". As above, a process
+ * may be involved in multiple simultaneous disconnect operations. However, a process
+ * is not allowed to reconnect to a set of procs that has not fully completed
+ * disconnect - i.e., you have to fully disconnect before you can reconnect to the
+ * _same_ group of processes. The info array is used as above. */
+PMIX_EXPORT pmix_status_t PMIx_Disconnect(const pmix_proc_t procs[], size_t nprocs,
                                           const pmix_info_t info[], size_t ninfo);
 
-PMIX_EXPORT pmix_status_t PMIx_Disconnect_nb(const char nspace[],
+PMIX_EXPORT pmix_status_t PMIx_Disconnect_nb(const pmix_proc_t ranges[], size_t nprocs,
                                              const pmix_info_t info[], size_t ninfo,
                                              pmix_op_cbfunc_t cbfunc, void *cbdata);
 
@@ -468,6 +433,9 @@ PMIX_EXPORT pmix_status_t PMIx_Query_info_nb(pmix_query_t queries[], size_t nque
  * has been completed. The data array must be maintained until
  * the callback is provided
  */
+PMIX_EXPORT pmix_status_t PMIx_Log(const pmix_info_t data[], size_t ndata,
+                                   const pmix_info_t directives[], size_t ndirs);
+
 PMIX_EXPORT pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
                                       const pmix_info_t directives[], size_t ndirs,
                                       pmix_op_cbfunc_t cbfunc, void *cbdata);
@@ -504,6 +472,9 @@ PMIX_EXPORT pmix_status_t PMIx_Log_nb(const pmix_info_t data[], size_t ndata,
  *   lieue of preemption. A corresponding ability to "reacquire" resources
  *   previously released is included.
  */
+PMIX_EXPORT pmix_status_t PMIx_Allocation_request(pmix_alloc_directive_t directive,
+                                                  pmix_info_t *info, size_t ninfo);
+
 PMIX_EXPORT pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t directive,
                                                      pmix_info_t *info, size_t ninfo,
                                                      pmix_info_cbfunc_t cbfunc, void *cbdata);
@@ -522,6 +493,9 @@ PMIX_EXPORT pmix_status_t PMIx_Allocation_request_nb(pmix_alloc_directive_t dire
  * when the callback function completes - this will be used to release
  * any provided pmix_info_t array.
  */
+PMIX_EXPORT pmix_status_t PMIx_Job_control(const pmix_proc_t targets[], size_t ntargets,
+                                           const pmix_info_t directives[], size_t ndirs);
+
 PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_t ntargets,
                                               const pmix_info_t directives[], size_t ndirs,
                                               pmix_info_cbfunc_t cbfunc, void *cbdata);
@@ -553,6 +527,9 @@ PMIX_EXPORT pmix_status_t PMIx_Job_control_nb(const pmix_proc_t targets[], size_
  *
  * Note: a process can send a heartbeat to the server using the PMIx_Heartbeat
  * macro provided below*/
+PMIX_EXPORT pmix_status_t PMIx_Process_monitor(const pmix_info_t *monitor, pmix_status_t error,
+                                               const pmix_info_t directives[], size_t ndirs);
+
 PMIX_EXPORT pmix_status_t PMIx_Process_monitor_nb(const pmix_info_t *monitor, pmix_status_t error,
                                                   const pmix_info_t directives[], size_t ndirs,
                                                   pmix_info_cbfunc_t cbfunc, void *cbdata);

@@ -126,7 +126,6 @@ typedef struct {
     pmix_spawn_cbfunc_t spwncbfunc;
     pmix_info_cbfunc_t infocbfunc;
     pmix_tool_connection_cbfunc_t toolcbfunc;
-    pmix_connect_cbfunc_t cnctcbfunc;
     void *cbdata;
     opal_pmix_release_cbfunc_t odmdxfunc;
     void *ocbdata;

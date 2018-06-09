@@ -75,6 +75,11 @@ void pmi_get_local_ranks(int **local_ranks, int *local_cnt)
     free(pmapping);
 }
 
+void pmi_get_shmem_size(char *is_avail, size_t *size)
+{
+    *is_avail = 0;
+}
+
 void pmi_put_key_loc(char *key, int *key_val, int key_size)
 {
     char *encoded = pmi_encode(key_val, key_size * sizeof(int));
@@ -169,7 +174,7 @@ void pmi_get_key_rem(int rank, char *key_name, int **key_val, int *key_size)
     free(tmp);
 }
 
-float pmi_get_double(int rank, char *key)
+double pmi_get_double(int rank, char *key)
 {
     int len, rc;
     size_t tmp_size;

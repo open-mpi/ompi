@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_builddir)/include -I$(top_builddir)/include/pmix
 
-noinst_PROGRAMS = client client2 dmodex dynamic fault pub tool debugger debuggerd alloc jctrl
+noinst_PROGRAMS = client client2 dmodex dynamic fault pub pubi tool debugger debuggerd alloc jctrl
 if !WANT_HIDDEN
 # these examples use internal symbols
 # use --disable-visibility
@@ -67,6 +67,10 @@ fault_LDADD = $(top_builddir)/src/libpmix.la
 pub_SOURCES = pub.c
 pub_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 pub_LDADD = $(top_builddir)/src/libpmix.la
+
+pubi_SOURCES = pubi.c
+pubi_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+pubi_LDADD = $(top_builddir)/src/libpmix.la
 
 tool_SOURCES = tool.c
 tool_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
