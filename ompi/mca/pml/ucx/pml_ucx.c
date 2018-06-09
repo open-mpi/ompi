@@ -388,6 +388,7 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
     void *dreq, **dreqs;
     ucp_ep_h ep;
     size_t i;
+    ucs_status_t ret;
 
     max_reqs = ompi_pml_ucx.num_disconnect;
     if (max_reqs > nprocs) {
@@ -432,7 +433,11 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
     /* flush worker to allow all pending operations to complete.
      * ignore error (we can do nothing here), just try to
      * finalize gracefully */
-    ucp_worker_flush(ompi_pml_ucx.ucp_worker);
+    ret = ucp_worker_flush(ompi_pml_ucx.ucp_worker);
+    if (UCS_OK != ret) {
+        PML_UCX_ERROR("ucp_worker_flush failed: %s",
+                      ucs_status_string(ret));
+    }
 
     opal_pmix.fence(NULL, 0);
 
