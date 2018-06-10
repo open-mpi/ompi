@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +46,7 @@ typedef struct {
     bool disable_ipv6_family;
     struct sockaddr_storage connection;
     char *session_filename;
+    char *nspace_filename;
     char *system_filename;
     int wait_to_connect;
     int max_retries;

@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,17 +38,17 @@ AM_CFLAGS = \
 
 if PMIX_INSTALL_BINARIES
 
-bin_PROGRAMS = pinfo
+bin_PROGRAMS = pmix_info
 
-dist_pmixdata_DATA = help-pinfo.txt
+dist_pmixdata_DATA = help-pmix-info.txt
 
 endif # PMIX_INSTALL_BINARIES
 
-pinfo_SOURCES =  \
+pmix_info_SOURCES =  \
     pinfo.h  \
     support.h  \
-    pinfo.c  \
+    pmix_info.c  \
     support.c
 
-pinfo_LDADD = \
+pmix_info_LDADD = \
 	$(top_builddir)/src/libpmix.la

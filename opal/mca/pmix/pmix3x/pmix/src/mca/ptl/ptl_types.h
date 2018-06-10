@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,14 +63,20 @@ struct pmix_ptl_module_t;
 
 /* define a process type */
 typedef uint16_t pmix_proc_type_t;
-#define PMIX_PROC_UNDEF     0x0000
-#define PMIX_PROC_CLIENT    0x0001
-#define PMIX_PROC_SERVER    0x0002
-#define PMIX_PROC_TOOL      0x0004
-#define PMIX_PROC_V1        0x0008
-#define PMIX_PROC_V20       0x0010
-#define PMIX_PROC_V21       0x0020
-#define PMIX_PROC_V3        0x0040
+#define PMIX_PROC_UNDEF             0x0000
+#define PMIX_PROC_CLIENT            0x0001
+#define PMIX_PROC_SERVER            0x0002
+#define PMIX_PROC_TOOL              0x0004
+#define PMIX_PROC_V1                0x0008
+#define PMIX_PROC_V20               0x0010
+#define PMIX_PROC_V21               0x0020
+#define PMIX_PROC_V3                0x0040
+#define PMIX_PROC_LAUNCHER_ACT      0x1000
+#define PMIX_PROC_LAUNCHER          (PMIX_PROC_TOOL | PMIX_PROC_SERVER | PMIX_PROC_LAUNCHER_ACT)
+#define PMIX_PROC_CLIENT_TOOL_ACT   0x2000
+#define PMIX_PROC_CLIENT_TOOL       (PMIX_PROC_TOOL | PMIX_PROC_CLIENT | PMIX_PROC_CLIENT_TOOL_ACT)
+#define PMIX_PROC_GATEWAY_ACT       0x4000
+#define PMIX_PROC_GATEWAY           (PMIX_PROC_SERVER | PMIX_PROC_GATEWAY_ACT)
 
 /* defins some convenience macros for testing proc type */
 #define PMIX_PROC_IS_CLIENT(p)      (PMIX_PROC_CLIENT & (p)->proc_type)
@@ -80,6 +86,9 @@ typedef uint16_t pmix_proc_type_t;
 #define PMIX_PROC_IS_V20(p)         (PMIX_PROC_V20 & (p)->proc_type)
 #define PMIX_PROC_IS_V21(p)         (PMIX_PROC_V21 & (p)->proc_type)
 #define PMIX_PROC_IS_V3(p)          (PMIX_PROC_V3 & (p)->proc_type)
+#define PMIX_PROC_IS_LAUNCHER(p)    (PMIX_PROC_LAUNCHER_ACT & (p)->proc_type)
+#define PMIX_PROC_IS_CLIENT_TOOL(p) (PMIX_PROC_CLIENT_TOOL_ACT & (p)->proc_type)
+#define PMIX_PROC_IS_GATEWAY(p)     (PMIX_PROC_GATEWAY_ACT & (p)->proc_type)
 
 
 /****    MESSAGING STRUCTURES    ****/

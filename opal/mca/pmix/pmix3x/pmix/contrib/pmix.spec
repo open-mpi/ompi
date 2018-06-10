@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$

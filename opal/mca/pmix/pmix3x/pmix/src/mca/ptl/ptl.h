@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -171,6 +171,10 @@ extern pmix_status_t pmix_ptl_base_connect_to_peer(struct pmix_peer_t* peer,
 typedef pmix_status_t (*pmix_ptl_base_setup_listener_fn_t)(pmix_info_t info[], size_t ninfo,
                                                            bool *need_listener);
 
+/* define a component-level API for obtaining any envars that are to
+ * be passed to client procs upon fork */
+typedef pmix_status_t (*pmix_ptl_base_setup_fork_fn_t)(const pmix_proc_t *proc, char ***env);
+
 /*
  * the standard component data structure
  */
@@ -180,6 +184,8 @@ struct pmix_ptl_base_component_t {
     int                                             priority;
     char*                                           uri;
     pmix_ptl_base_setup_listener_fn_t               setup_listener;
+    pmix_ptl_base_setup_fork_fn_t                   setup_fork;
+
 };
 typedef struct pmix_ptl_base_component_t pmix_ptl_base_component_t;
 

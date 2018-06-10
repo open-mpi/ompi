@@ -3,6 +3,8 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2016-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -2268,6 +2270,10 @@ static void dstore_finalize(void)
     if (NULL != _clients_peer) {
         PMIX_RELEASE(_clients_peer->nptr);
         PMIX_RELEASE(_clients_peer);
+    }
+    /* close the pshmem framework */
+    if( PMIX_SUCCESS != (rc = pmix_mca_base_framework_close(&pmix_pshmem_base_framework)) ) {
+        PMIX_ERROR_LOG(rc);
     }
 }
 
