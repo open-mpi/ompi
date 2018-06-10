@@ -19,6 +19,9 @@
  */
 
 #include "common_ompio_request.h"
+#if OPAL_CUDA_SUPPORT
+#include "common_ompio_cuda.h"
+#endif
 
 static void mca_common_ompio_request_construct(mca_ompio_request_t* req);
 static void mca_common_ompio_request_destruct(mca_ompio_request_t *req);
@@ -34,6 +37,20 @@ opal_list_t mca_common_ompio_pending_requests = {{0}};
 static int mca_common_ompio_request_free ( struct ompi_request_t **req)
 {
     mca_ompio_request_t *ompio_req = ( mca_ompio_request_t *)*req;
+#if OPAL_CUDA_SUPPORT
+    if ( NULL != ompio_req->req_tbuf ) {
+        if ( MCA_OMPIO_REQUEST_READ == ompio_req->req_type ){
+            struct iovec decoded_iov;
+            uint32_t iov_count=1;
+            size_t pos=0;
+
+            decoded_iov.iov_base = ompio_req->req_tbuf;
+            decoded_iov.iov_len  = ompio_req->req_size;
+            opal_convertor_unpack (&ompio_req->req_convertor, &decoded_iov, &iov_count, &pos );
+        }
+        mca_common_ompio_unregister_buf ( NULL, ompio_req->req_tbuf );
+    }
+#endif
     if ( NULL != ompio_req->req_free_fn ) {
         ompio_req->req_free_fn (ompio_req );
     }
@@ -60,6 +77,10 @@ void mca_common_ompio_request_construct(mca_ompio_request_t* req)
     req->req_ompi.req_cancel = mca_common_ompio_request_cancel;
     req->req_ompi.req_type   = OMPI_REQUEST_IO;
     req->req_data            = NULL;
+#if OPAL_CUDA_SUPPORT
+    req->req_tbuf            = NULL;
+    req->req_size            = 0;
+#endif
     req->req_progress_fn     = NULL;
     req->req_free_fn         = NULL;
 
