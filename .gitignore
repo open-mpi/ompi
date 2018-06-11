@@ -202,6 +202,8 @@ ompi/mpi/c/profile/p*.c
 ompi/mpi/fortran/configure-fortran-output.h
 ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
+ompi/mpi/fortran/mpiext-use-mpi/mpi-ext-module.F90
+ompi/mpi/fortran/mpiext-use-mpi-f08/mpi-f08-ext-module.F90
 
 ompi/mpi/fortran/mpif-h/sizeof_f.f90
 ompi/mpi/fortran/mpif-h/profile/p*.c
