@@ -126,6 +126,24 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_int16;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_int32;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_int64;
 
+/* SWAP */
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_short;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_int;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_long;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_longlong;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_float;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_double;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_longdouble;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_fint2;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_fint4;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_fint8;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_freal4;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_freal8;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_freal16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_int64;
+
 /* MAX */
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_short;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_int;

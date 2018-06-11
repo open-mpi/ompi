@@ -37,9 +37,8 @@
         RUNTIME_CHECK_ADDR(target);                                 \
                                                                     \
         size = sizeof(out_value);                                   \
-        rc = MCA_ATOMIC_CALL(fadd(                                  \
+        rc = MCA_ATOMIC_CALL(add(                                   \
             (void*)target,                                          \
-            NULL,                                                   \
             (const void*)&value,                                    \
             size,                                                   \
             pe,                                                     \

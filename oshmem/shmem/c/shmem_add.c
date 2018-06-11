@@ -44,8 +44,8 @@
 #pragma weak shmem_longlong_add = shmem_longlong_atomic_add
 #endif
 
-SHMEM_TYPE_OP(_int, int, fadd, shmem, atomic_add)
-SHMEM_TYPE_OP(_long, long, fadd, shmem, atomic_add)
-SHMEM_TYPE_OP(_longlong, long long, fadd, shmem, atomic_add)
-SHMEM_TYPE_OP(_int32, int32_t, fadd, shmemx, add)
-SHMEM_TYPE_OP(_int64, int64_t, fadd, shmemx, add)
+SHMEM_TYPE_OP(_int, int, add, sum, shmem, atomic_add)
+SHMEM_TYPE_OP(_long, long, add, sum, shmem, atomic_add)
+SHMEM_TYPE_OP(_longlong, long long, add, sum, shmem, atomic_add)
+SHMEM_TYPE_OP(_int32, int32_t, add, sum, shmemx, add)
+SHMEM_TYPE_OP(_int64, int64_t, add, sum, shmemx, add)

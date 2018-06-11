@@ -33,8 +33,8 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_OP(_int, int, fxor, shmem, atomic_xor)
-SHMEM_TYPE_OP(_long, long, fxor, shmem, atomic_xor)
-SHMEM_TYPE_OP(_longlong, long long, fxor, shmem, atomic_xor)
-SHMEM_TYPE_OP(_int32, int32_t, fxor, shmemx, xor)
-SHMEM_TYPE_OP(_int64, int64_t, fxor, shmemx, xor)
+SHMEM_TYPE_OP(_int, int, xor, xor, shmem, atomic_xor)
+SHMEM_TYPE_OP(_long, long, xor, xor, shmem, atomic_xor)
+SHMEM_TYPE_OP(_longlong, long long, xor, xor, shmem, atomic_xor)
+SHMEM_TYPE_OP(_int32, int32_t, xor, xor, shmemx, xor)
+SHMEM_TYPE_OP(_int64, int64_t, xor, xor, shmemx, xor)

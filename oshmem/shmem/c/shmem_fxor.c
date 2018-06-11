@@ -35,8 +35,8 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_FOP(_int, int, fxor, shmem, atomic_fxor)
-SHMEM_TYPE_FOP(_long, long, fxor, shmem, atomic_fxor)
-SHMEM_TYPE_FOP(_longlong, long long, fxor, shmem, atomic_fxor)
-SHMEM_TYPE_FOP(_int32, int32_t, fxor, shmemx, fxor)
-SHMEM_TYPE_FOP(_int64, int64_t, fxor, shmemx, fxor)
+SHMEM_TYPE_FOP(_int, int, fxor, or, shmem, atomic_fxor)
+SHMEM_TYPE_FOP(_long, long, fxor, or, shmem, atomic_fxor)
+SHMEM_TYPE_FOP(_longlong, long long, fxor, or, shmem, atomic_fxor)
+SHMEM_TYPE_FOP(_int32, int32_t, fxor, or, shmemx, fxor)
+SHMEM_TYPE_FOP(_int64, int64_t, fxor, or, shmemx, fxor)

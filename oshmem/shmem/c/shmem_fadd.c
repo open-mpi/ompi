@@ -46,8 +46,8 @@
 #pragma weak shmem_longlong_fadd = shmem_longlong_atomic_fadd
 #endif
 
-SHMEM_TYPE_FOP(_int, int, fadd, shmem, atomic_fadd)
-SHMEM_TYPE_FOP(_long, long, fadd, shmem, atomic_fadd)
-SHMEM_TYPE_FOP(_longlong, long long, fadd, shmem, atomic_fadd)
-SHMEM_TYPE_FOP(_int32, int32_t, fadd, shmemx, fadd)
-SHMEM_TYPE_FOP(_int64, int64_t, fadd, shmemx, fadd)
+SHMEM_TYPE_FOP(_int, int, fadd, sum, shmem, atomic_fadd)
+SHMEM_TYPE_FOP(_long, long, fadd, sum, shmem, atomic_fadd)
+SHMEM_TYPE_FOP(_longlong, long long, fadd, sum, shmem, atomic_fadd)
+SHMEM_TYPE_FOP(_int32, int32_t, fadd, sum, shmemx, fadd)
+SHMEM_TYPE_FOP(_int64, int64_t, fadd, sum, shmemx, fadd)
