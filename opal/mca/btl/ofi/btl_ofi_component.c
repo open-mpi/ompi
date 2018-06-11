@@ -35,7 +35,7 @@
 
 
 #define MCA_BTL_OFI_REQUIRED_CAPS       (FI_RMA | FI_ATOMIC)
-#define MCA_BTL_OFI_REQUESTED_MR_MODE   (FI_MR_UNSPEC)
+#define MCA_BTL_OFI_REQUESTED_MR_MODE   (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
 
 static char *prov_include;
 static char *prov_exclude;
