@@ -20,8 +20,6 @@
 
 void       mca_btl_iwarp_load_apm(struct ibv_qp *qp, mca_btl_iwarp_endpoint_t *ep);
 
-#define APM_ENABLED (0 != mca_btl_iwarp_component.apm_lmc || 0 != mca_btl_iwarp_component.apm_ports)
-
 /**
  * Initialize the async event base
  */

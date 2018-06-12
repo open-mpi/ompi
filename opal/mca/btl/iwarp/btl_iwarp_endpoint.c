@@ -219,11 +219,9 @@ void mca_btl_iwarp_endpoint_init(mca_btl_iwarp_module_t *btl,
     ep->endpoint_local_cpc = local_cpc;
     ep->endpoint_remote_cpc_data = remote_cpc_data;
 
-    ep->rem_info.rem_lid = remote_proc_info->pm_port_info.lid;
     ep->rem_info.rem_subnet_id = remote_proc_info->pm_port_info.subnet_id;
     ep->rem_info.rem_mtu = remote_proc_info->pm_port_info.mtu;
-    opal_output(-1, "Got remote LID, subnet, MTU: %d, 0x%" PRIx64 ", %d",
-                ep->rem_info.rem_lid,
+    opal_output(-1, "Got remote subnet, MTU: 0x%" PRIx64 ", %d",
                 ep->rem_info.rem_subnet_id,
                 ep->rem_info.rem_mtu);
 
@@ -518,14 +516,6 @@ void mca_btl_iwarp_endpoint_connected(mca_btl_iwarp_endpoint_t *endpoint)
     mca_btl_iwarp_send_frag_t *frag;
 
     opal_output(-1, "Now we are CONNECTED");
-
-    /* Run over all qps and load alternative path */
-    if (APM_ENABLED) {
-        int i;
-            for(i = 0; i < mca_btl_iwarp_component.num_qps; i++) {
-                mca_btl_iwarp_load_apm(endpoint->qps[i].qp->lcl_qp, endpoint);
-            }
-    }
 
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
     endpoint->endpoint_btl->device->non_eager_rdma_endpoints++;

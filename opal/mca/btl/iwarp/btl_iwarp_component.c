@@ -301,10 +301,9 @@ static int btl_iwarp_modex_send(void)
         memcpy(offset,
                &(mca_btl_iwarp_component.iwarp_btls[i]->port_info),
                size);
-        opal_output(-1, "modex packed btl port modex message: 0x%" PRIx64 ", %d, %d (size: %d)",
+        opal_output(-1, "modex packed btl port modex message: 0x%" PRIx64 ", %d, (size: %d)",
                     mca_btl_iwarp_component.iwarp_btls[i]->port_info.subnet_id,
                     mca_btl_iwarp_component.iwarp_btls[i]->port_info.mtu,
-                    mca_btl_iwarp_component.iwarp_btls[i]->port_info.lid,
                     (int) size);
 
 #if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -581,10 +580,10 @@ static inline int param_register_uint(const char* param_name, unsigned int defau
 static int init_one_port(opal_list_t *btl_list, mca_btl_iwarp_device_t *device,
                          uint8_t port_num, struct ibv_port_attr *ib_port_attr)
 {
-    uint16_t lid, i, lmc, lmc_step;
     mca_btl_iwarp_module_t *iwarp_btl;
     mca_btl_base_selected_module_t *ib_selected;
     uint64_t subnet_id;
+    char param[40];
 
     /* Ensure that the requested GID index (via the
        btl_iwarp_gid_index MCA param) is within the GID table
@@ -615,178 +614,136 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_iwarp_device_t *device,
         mca_btl_iwarp_component.num_default_gid_btls++;
     }
 
-    lmc = (1 << ib_port_attr->lmc);
-    lmc_step = 1;
+    iwarp_btl = (mca_btl_iwarp_module_t *) calloc(1, sizeof(mca_btl_iwarp_module_t));
+    if(NULL == iwarp_btl) {
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    memcpy(iwarp_btl, &mca_btl_iwarp_module,
+            sizeof(mca_btl_iwarp_module));
+    memcpy(&iwarp_btl->ib_port_attr, ib_port_attr,
+            sizeof(struct ibv_port_attr));
+    ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
+    ib_selected->btl_module = (mca_btl_base_module_t*) iwarp_btl;
+    iwarp_btl->device = device;
+    iwarp_btl->port_num = (uint8_t) port_num;
 
-    if (0 != mca_btl_iwarp_component.max_lmc &&
-        mca_btl_iwarp_component.max_lmc < lmc) {
-        lmc = mca_btl_iwarp_component.max_lmc;
+    iwarp_btl->port_info.subnet_id = subnet_id;
+    iwarp_btl->port_info.mtu = device->mtu;
+
+    iwarp_btl->cpcs = NULL;
+    iwarp_btl->num_cpcs = 0;
+    iwarp_btl->local_procs = 0;
+
+    mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_iwarp_control;
+    mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
+
+    if (iwarp_btl->super.btl_get_limit > iwarp_btl->ib_port_attr.max_msg_sz) {
+        iwarp_btl->super.btl_get_limit = iwarp_btl->ib_port_attr.max_msg_sz;
     }
 
-    /* APM support -- only meaningful if async event support is
-       enabled.  If async events are not enabled, then there's nothing
-       to listen for the APM event to load the new path, so it's not
-       worth enabling APM.  */
-    if (lmc > 1){
-        if (-1 == mca_btl_iwarp_component.apm_lmc) {
-            lmc_step = lmc;
-            mca_btl_iwarp_component.apm_lmc = lmc - 1;
-        } else if (0 == lmc % (mca_btl_iwarp_component.apm_lmc + 1)) {
-            lmc_step = mca_btl_iwarp_component.apm_lmc + 1;
-        } else {
-            opal_show_help("help-mpi-btl-iwarp.txt", "apm with wrong lmc",true,
-                    mca_btl_iwarp_component.apm_lmc, lmc);
-            return OPAL_ERROR;
-        }
-    } else {
-        if (mca_btl_iwarp_component.apm_lmc) {
-            /* Disable apm and report warning */
-            mca_btl_iwarp_component.apm_lmc = 0;
-            opal_show_help("help-mpi-btl-iwarp.txt", "apm without lmc",true);
-        }
+    iwarp_btl->super.btl_get_alignment = 0;
+
+    if (iwarp_btl->super.btl_put_limit > iwarp_btl->ib_port_attr.max_msg_sz) {
+        iwarp_btl->super.btl_put_limit = iwarp_btl->ib_port_attr.max_msg_sz;
     }
 
-    for(lid = ib_port_attr->lid;
-            lid < ib_port_attr->lid + lmc; lid += lmc_step){
-        for(i = 0; i < mca_btl_iwarp_component.btls_per_lid; i++){
-            char param[40];
-
-            iwarp_btl = (mca_btl_iwarp_module_t *) calloc(1, sizeof(mca_btl_iwarp_module_t));
-            if(NULL == iwarp_btl) {
-                BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
-            memcpy(iwarp_btl, &mca_btl_iwarp_module,
-                    sizeof(mca_btl_iwarp_module));
-            memcpy(&iwarp_btl->ib_port_attr, ib_port_attr,
-                    sizeof(struct ibv_port_attr));
-            ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
-            ib_selected->btl_module = (mca_btl_base_module_t*) iwarp_btl;
-            iwarp_btl->device = device;
-            iwarp_btl->port_num = (uint8_t) port_num;
-            iwarp_btl->lid = lid;
-            iwarp_btl->apm_port = 0;
-            iwarp_btl->src_path_bits = lid - ib_port_attr->lid;
-
-            iwarp_btl->port_info.subnet_id = subnet_id;
-            iwarp_btl->port_info.mtu = device->mtu;
-            iwarp_btl->port_info.lid = lid;
-
-            iwarp_btl->cpcs = NULL;
-            iwarp_btl->num_cpcs = 0;
-            iwarp_btl->local_procs = 0;
-
-            mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_iwarp_control;
-            mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
-
-            if (iwarp_btl->super.btl_get_limit > iwarp_btl->ib_port_attr.max_msg_sz) {
-                iwarp_btl->super.btl_get_limit = iwarp_btl->ib_port_attr.max_msg_sz;
-            }
-
-            iwarp_btl->super.btl_get_alignment = 0;
-
-            if (iwarp_btl->super.btl_put_limit > iwarp_btl->ib_port_attr.max_msg_sz) {
-                iwarp_btl->super.btl_put_limit = iwarp_btl->ib_port_attr.max_msg_sz;
-            }
-
-            iwarp_btl->super.btl_put_local_registration_threshold = iwarp_btl->device->max_inline_data;
-            iwarp_btl->super.btl_get_local_registration_threshold = 0;
+    iwarp_btl->super.btl_put_local_registration_threshold = iwarp_btl->device->max_inline_data;
+    iwarp_btl->super.btl_get_local_registration_threshold = 0;
 
 #if HAVE_DECL_IBV_ATOMIC_HCA
-            iwarp_btl->atomic_ops_be = false;
+    iwarp_btl->atomic_ops_be = false;
 
 #ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXT_ATOM
-            /* check that 8-byte atomics are supported */
-            if (!(device->ib_exp_dev_attr.ext_atom.log_atomic_arg_sizes & (1<<3ull))) {
-                iwarp_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
-                iwarp_btl->super.btl_atomic_flags = 0;
-                iwarp_btl->super.btl_atomic_fop = NULL;
-                iwarp_btl->super.btl_atomic_cswap = NULL;
-            }
+    /* check that 8-byte atomics are supported */
+    if (!(device->ib_exp_dev_attr.ext_atom.log_atomic_arg_sizes & (1<<3ull))) {
+        iwarp_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
+        iwarp_btl->super.btl_atomic_flags = 0;
+        iwarp_btl->super.btl_atomic_fop = NULL;
+        iwarp_btl->super.btl_atomic_cswap = NULL;
+    }
 #endif
 
 #ifdef HAVE_STRUCT_IBV_EXP_DEVICE_ATTR_EXP_ATOMIC_CAP
-            switch (iwarp_btl->device->ib_exp_dev_attr.exp_atomic_cap)
+    switch (iwarp_btl->device->ib_exp_dev_attr.exp_atomic_cap)
 #else
-            switch (iwarp_btl->device->ib_dev_attr.atomic_cap)
+    switch (iwarp_btl->device->ib_dev_attr.atomic_cap)
 #endif
-            {
-            case IBV_ATOMIC_GLOB:
-                iwarp_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
-                break;
+    {
+    case IBV_ATOMIC_GLOB:
+        iwarp_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
+        break;
 #if HAVE_DECL_IBV_EXP_ATOMIC_HCA_REPLY_BE
-            case IBV_EXP_ATOMIC_HCA_REPLY_BE:
-                iwarp_btl->atomic_ops_be = true;
-                break;
+    case IBV_EXP_ATOMIC_HCA_REPLY_BE:
+        iwarp_btl->atomic_ops_be = true;
+        break;
 #endif
-            case IBV_ATOMIC_HCA:
-                break;
-            case IBV_ATOMIC_NONE:
-            default:
-                /* no atomics or an unsupported atomic type */
-                iwarp_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
-                iwarp_btl->super.btl_atomic_flags = 0;
-                iwarp_btl->super.btl_atomic_fop = NULL;
-                iwarp_btl->super.btl_atomic_cswap = NULL;
-            }
+    case IBV_ATOMIC_HCA:
+        break;
+    case IBV_ATOMIC_NONE:
+        default:
+        /* no atomics or an unsupported atomic type */
+        iwarp_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
+        iwarp_btl->super.btl_atomic_flags = 0;
+        iwarp_btl->super.btl_atomic_fop = NULL;
+        iwarp_btl->super.btl_atomic_cswap = NULL;
+    }
 #endif
 
-            iwarp_btl->super.btl_put_alignment = 0;
+    iwarp_btl->super.btl_put_alignment = 0;
 
-            iwarp_btl->super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
+    iwarp_btl->super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
 
-            /* Check bandwidth configured for this device */
-            sprintf(param, "bandwidth_%s", ibv_get_device_name(device->ib_dev));
-           param_register_uint(param, iwarp_btl->super.btl_bandwidth, &iwarp_btl->super.btl_bandwidth);
+    /* Check bandwidth configured for this device */
+    sprintf(param, "bandwidth_%s", ibv_get_device_name(device->ib_dev));
+    param_register_uint(param, iwarp_btl->super.btl_bandwidth, &iwarp_btl->super.btl_bandwidth);
 
-            /* Check bandwidth configured for this device/port */
-            sprintf(param, "bandwidth_%s:%d", ibv_get_device_name(device->ib_dev),
-                    port_num);
-           param_register_uint(param, iwarp_btl->super.btl_bandwidth, &iwarp_btl->super.btl_bandwidth);
+    /* Check bandwidth configured for this device/port */
+    sprintf(param, "bandwidth_%s:%d", ibv_get_device_name(device->ib_dev),
+            port_num);
+    param_register_uint(param, iwarp_btl->super.btl_bandwidth, &iwarp_btl->super.btl_bandwidth);
 
-            /* Check bandwidth configured for this device/port/LID */
-            sprintf(param, "bandwidth_%s:%d:%d",
-                    ibv_get_device_name(device->ib_dev), port_num, lid);
-           param_register_uint(param, iwarp_btl->super.btl_bandwidth, &iwarp_btl->super.btl_bandwidth);
+    /* Check bandwidth configured for this device/port/LID */
+    sprintf(param, "bandwidth_%s:%d:0",
+            ibv_get_device_name(device->ib_dev), port_num);
+    param_register_uint(param, iwarp_btl->super.btl_bandwidth, &iwarp_btl->super.btl_bandwidth);
 
-            /* Check latency configured for this device */
-            sprintf(param, "latency_%s", ibv_get_device_name(device->ib_dev));
-           param_register_uint(param, iwarp_btl->super.btl_latency, &iwarp_btl->super.btl_latency);
+    /* Check latency configured for this device */
+    sprintf(param, "latency_%s", ibv_get_device_name(device->ib_dev));
+    param_register_uint(param, iwarp_btl->super.btl_latency, &iwarp_btl->super.btl_latency);
 
-            /* Check latency configured for this device/port */
-            sprintf(param, "latency_%s:%d", ibv_get_device_name(device->ib_dev),
-                    port_num);
-           param_register_uint(param, iwarp_btl->super.btl_latency, &iwarp_btl->super.btl_latency);
+    /* Check latency configured for this device/port */
+    sprintf(param, "latency_%s:%d", ibv_get_device_name(device->ib_dev),
+                port_num);
+    param_register_uint(param, iwarp_btl->super.btl_latency, &iwarp_btl->super.btl_latency);
 
-            /* Check latency configured for this device/port/LID */
-            sprintf(param, "latency_%s:%d:%d", ibv_get_device_name(device->ib_dev),
-                    port_num, lid);
-           param_register_uint(param, iwarp_btl->super.btl_latency, &iwarp_btl->super.btl_latency);
+    /* Check latency configured for this device/port/LID */
+    sprintf(param, "latency_%s:%d:0", ibv_get_device_name(device->ib_dev),
+                port_num);
+    param_register_uint(param, iwarp_btl->super.btl_latency, &iwarp_btl->super.btl_latency);
 
-            /* Auto-detect the port bandwidth */
-            if (0 == iwarp_btl->super.btl_bandwidth) {
-                if (OPAL_SUCCESS !=
-                    opal_common_verbs_port_bw(ib_port_attr,
-                                              &iwarp_btl->super.btl_bandwidth)) {
-                    /* If we can't figure out the bandwidth, declare
-                       this port unreachable (do not* return
-                       ERR_VALUE_OF_OUT_OF_BOUNDS; that is reserved
-                       for when we exceed the number of allowable
-                       BTLs). */
-                    return OPAL_ERR_UNREACH;
-                }
-            }
-
-            opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
-            opal_pointer_array_add(device->device_btls, (void*) iwarp_btl);
-            ++device->btls;
-            ++mca_btl_iwarp_component.ib_num_btls;
-            if (-1 != mca_btl_iwarp_component.ib_max_btls &&
-                mca_btl_iwarp_component.ib_num_btls >=
-                mca_btl_iwarp_component.ib_max_btls) {
-                return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
-            }
+    /* Auto-detect the port bandwidth */
+    if (0 == iwarp_btl->super.btl_bandwidth) {
+        if (OPAL_SUCCESS !=
+            opal_common_verbs_port_bw(ib_port_attr,
+                                      &iwarp_btl->super.btl_bandwidth)) {
+            /* If we can't figure out the bandwidth, declare
+               this port unreachable (do not* return
+               ERR_VALUE_OF_OUT_OF_BOUNDS; that is reserved
+               for when we exceed the number of allowable
+               BTLs). */
+           return OPAL_ERR_UNREACH;
         }
+    }
+
+    opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
+    opal_pointer_array_add(device->device_btls, (void*) iwarp_btl);
+    ++device->btls;
+    ++mca_btl_iwarp_component.ib_num_btls;
+    if (-1 != mca_btl_iwarp_component.ib_max_btls &&
+        mca_btl_iwarp_component.ib_num_btls >=
+        mca_btl_iwarp_component.ib_max_btls) {
+        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
     return OPAL_SUCCESS;
@@ -1068,22 +1025,6 @@ static int32_t atoi_param(char *param, int32_t dflt)
     }
 
     return atoi(param);
-}
-
-static void init_apm_port(mca_btl_iwarp_device_t *device, int port, uint16_t lid)
-{
-    int index;
-    struct mca_btl_iwarp_module_t *btl;
-    for(index = 0; index < device->btls; index++) {
-        btl = (mca_btl_iwarp_module_t *) opal_pointer_array_get_item(device->device_btls, index);
-        /* Ok, we already have btl for the fist port,
-         * second one will be used for APM */
-        btl->apm_port = port;
-        btl->port_info.apm_lid = lid + btl->src_path_bits;
-        mca_btl_iwarp_component.apm_ports++;
-        BTL_VERBOSE(("APM-PORT: Setting alternative port - %d, lid - %d"
-                    ,port ,lid));
-    }
 }
 
 static int get_var_source (const char *var_name, mca_base_var_source_t *source)
@@ -1759,10 +1700,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             if (ib_port_attr.active_mtu < device->mtu){
                 device->mtu = ib_port_attr.active_mtu;
             }
-            if (mca_btl_iwarp_component.apm_ports && device->btls > 0) {
-                init_apm_port(device, i, ib_port_attr.lid);
-                break;
-            }
             ret = init_one_port(btl_list, device, i, &ib_port_attr);
             if (OPAL_SUCCESS != ret) {
                 /* Out of bounds error indicates that we hit max btl number
@@ -1780,12 +1717,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* If we made a BTL, check APM status and return.  Otherwise, fall
        through and destroy everything */
     if (device->btls > 0) {
-        /* if apm was enabled it should be > 1 */
-        if (1 == mca_btl_iwarp_component.apm_ports) {
-            opal_show_help("help-mpi-btl-iwarp.txt",
-                           "apm not enough ports", true);
-            mca_btl_iwarp_component.apm_ports = 0;
-        }
 
         /* Check to ensure that all devices used in this process have
            compatible receive_queues values (we check elsewhere to see

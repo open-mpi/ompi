@@ -104,20 +104,6 @@ static const char *iwarp_event_to_str (enum ibv_event_type event)
         return "UNKNOWN";
     }
 }
-/* QP to endpoint */
-static mca_btl_iwarp_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_iwarp_device_t *device)
-{
-    mca_btl_iwarp_endpoint_t *ep;
-    int  ep_i, qp_i;
-    for(ep_i = 0; ep_i < opal_pointer_array_get_size(device->endpoints); ep_i++) {
-        ep = opal_pointer_array_get_item(device->endpoints, ep_i);
-        for(qp_i = 0; qp_i < mca_btl_iwarp_component.num_qps; qp_i++) {
-            if (qp == ep->qps[qp_i].qp->lcl_qp)
-                return ep;
-        }
-    }
-    return NULL;
-}
 
 /* Function inits mca_btl_iwarp_async_poll */
 
@@ -195,14 +181,6 @@ static void btl_iwarp_async_device (int fd, short flags, void *arg)
 
     event_type = event.event_type;
     switch(event_type) {
-    case IBV_EVENT_PATH_MIG:
-        BTL_ERROR(("Alternative path migration event reported"));
-        if (APM_ENABLED) {
-            BTL_ERROR(("Trying to find additional path..."));
-            mca_btl_iwarp_load_apm(event.element.qp,
-                                    qp2endpoint(event.element.qp, device));
-        }
-        break;
     case IBV_EVENT_DEVICE_FATAL:
         /* Set the flag to fatal */
         device->got_fatal_event = true;
@@ -276,102 +254,6 @@ static void btl_iwarp_async_device (int fd, short flags, void *arg)
     }
 
     ibv_ack_async_event(&event);
-}
-
-static void apm_update_attr(struct ibv_qp_attr *attr, enum ibv_qp_attr_mask *mask)
-{
-    *mask = IBV_QP_ALT_PATH|IBV_QP_PATH_MIG_STATE;
-    attr->alt_ah_attr.dlid = attr->ah_attr.dlid + 1;
-    attr->alt_ah_attr.src_path_bits = attr->ah_attr.src_path_bits + 1;
-    attr->alt_ah_attr.static_rate = attr->ah_attr.static_rate;
-    attr->alt_ah_attr.sl = attr->ah_attr.sl;
-    attr->alt_pkey_index = attr->pkey_index;
-    attr->alt_port_num = attr->port_num;
-    attr->alt_timeout = attr->timeout;
-    attr->path_mig_state = IBV_MIG_REARM;
-    BTL_VERBOSE(("New APM LMC loaded: alt_src_port:%d, dlid: %d, src_bits %d, old_src_bits: %d, old_dlid %d",
-                attr->alt_port_num, attr->alt_ah_attr.dlid,
-                attr->alt_ah_attr.src_path_bits, attr->ah_attr.src_path_bits, attr->ah_attr.dlid));
-}
-
-static int apm_update_port(mca_btl_iwarp_endpoint_t *ep,
-        struct ibv_qp_attr *attr, enum ibv_qp_attr_mask *mask)
-{
-    size_t port_i;
-    uint16_t apm_lid = 0;
-
-    if (attr->port_num == ep->endpoint_btl->apm_port) {
-        /* all ports were used */
-        BTL_ERROR(("APM: already all ports were used port_num %d apm_port %d",
-                    attr->port_num, ep->endpoint_btl->apm_port));
-        return OPAL_ERROR;
-    }
-    /* looking for alternatve lid on remote site */
-    for(port_i = 0; port_i < ep->endpoint_proc->proc_port_count; port_i++) {
-        if (ep->endpoint_proc->proc_ports[port_i].pm_port_info.lid == attr->ah_attr.dlid - mca_btl_iwarp_component.apm_lmc) {
-            apm_lid = ep->endpoint_proc->proc_ports[port_i].pm_port_info.apm_lid;
-        }
-    }
-    if (0 == apm_lid) {
-        /* APM was disabled on one of site ? */
-        BTL_VERBOSE(("APM: Was disabled ? dlid %d %d %d", attr->ah_attr.dlid, attr->ah_attr.src_path_bits, ep->endpoint_btl->src_path_bits));
-        return OPAL_ERROR;
-    }
-    /* We guess cthat the LMC is the same on all ports */
-    attr->alt_ah_attr.static_rate = attr->ah_attr.static_rate;
-    attr->alt_ah_attr.sl = attr->ah_attr.sl;
-    attr->alt_pkey_index = attr->pkey_index;
-    attr->alt_timeout = attr->timeout;
-    attr->path_mig_state = IBV_MIG_REARM;
-    *mask = IBV_QP_ALT_PATH|IBV_QP_PATH_MIG_STATE;
-
-    attr->alt_port_num = ep->endpoint_btl->apm_port;
-    attr->alt_ah_attr.src_path_bits = ep->endpoint_btl->src_path_bits;
-    attr->alt_ah_attr.dlid = apm_lid;
-
-    BTL_VERBOSE(("New APM port loaded: alt_src_port:%d, dlid: %d, src_bits: %d:%d, old_dlid %d",
-                attr->alt_port_num, attr->alt_ah_attr.dlid,
-                attr->ah_attr.src_path_bits, attr->alt_ah_attr.src_path_bits,
-                attr->ah_attr.dlid));
-    return OPAL_SUCCESS;
-}
-
-/* Load new dlid to the QP */
-void mca_btl_iwarp_load_apm(struct ibv_qp *qp, mca_btl_iwarp_endpoint_t *ep)
-{
-    struct ibv_qp_init_attr qp_init_attr;
-    struct ibv_qp_attr attr;
-    enum ibv_qp_attr_mask mask = 0;
-    struct mca_btl_iwarp_module_t *btl;
-
-    BTL_VERBOSE(("APM: Loading alternative path"));
-    assert (NULL != ep);
-    btl = ep->endpoint_btl;
-
-    if (ibv_query_qp(qp, &attr, mask, &qp_init_attr))
-        BTL_ERROR(("Failed to ibv_query_qp, qp num: %d", qp->qp_num));
-
-    if (mca_btl_iwarp_component.apm_lmc &&
-            attr.ah_attr.src_path_bits - btl->src_path_bits < mca_btl_iwarp_component.apm_lmc) {
-        BTL_VERBOSE(("APM LMC: src: %d btl_src: %d lmc_max: %d",
-                    attr.ah_attr.src_path_bits,
-                    btl->src_path_bits,
-                    mca_btl_iwarp_component.apm_lmc));
-        apm_update_attr(&attr, &mask);
-    } else {
-        if (mca_btl_iwarp_component.apm_ports) {
-            /* Try to migrate to next port */
-            if (OPAL_SUCCESS != apm_update_port(ep, &attr, &mask))
-                return;
-        } else {
-            BTL_ERROR(("Failed to load alternative path, all %d were used",
-                        attr.ah_attr.src_path_bits - btl->src_path_bits));
-        }
-    }
-
-    if (ibv_modify_qp(qp, &attr, mask))
-        BTL_ERROR(("Failed to ibv_query_qp, qp num: %d, errno says: %s (%d)",
-                   qp->qp_num, strerror(errno), errno));
 }
 
 int mca_btl_iwarp_async_init (void)

@@ -193,8 +193,6 @@ struct mca_btl_iwarp_component_t {
     uint8_t num_srq_qps;         /**< number of srq qp's */
     uint8_t num_qps;             /**< total number of qp's */
 
-    opal_hash_table_t ib_addr_table; /**< used only for xrc.hash-table that
-                                       keeps table of all lids/subnets */
     mca_btl_iwarp_qp_info_t* qp_infos;
 
     size_t eager_limit;      /**< Eager send limit of first fragment, in Bytes */
@@ -219,10 +217,6 @@ struct mca_btl_iwarp_component_t {
     int     eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
     int     eager_rdma_num;
     int32_t max_eager_rdma;
-    unsigned int btls_per_lid;
-    unsigned int max_lmc;
-    int     apm_lmc;
-    int     apm_ports;
     unsigned int buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
     int32_t error_counter;           /**< Counts number on error events that we got on all devices */
     opal_event_base_t *async_evbase; /**< Async event base */
@@ -314,10 +308,6 @@ typedef mca_btl_base_recv_reg_t mca_btl_iwarp_recv_reg_t;
 typedef struct mca_btl_iwarp_modex_message_t {
     /** The subnet ID of this port */
     uint64_t subnet_id;
-    /** LID of this port */
-    uint16_t lid;
-    /** APM LID for this port */
-    uint16_t apm_lid;
     /** The MTU used by this port */
     uint8_t mtu;
     /** vendor id define device type and tuning */
@@ -333,12 +323,10 @@ typedef struct mca_btl_iwarp_modex_message_t {
 #define MCA_BTL_IWARP_MODEX_MSG_NTOH(hdr)     \
     do {                              \
         (hdr).subnet_id = ntoh64((hdr).subnet_id); \
-        (hdr).lid = ntohs((hdr).lid); \
     } while (0)
 #define MCA_BTL_IWARP_MODEX_MSG_HTON(hdr)     \
     do {                              \
         (hdr).subnet_id = hton64((hdr).subnet_id); \
-        (hdr).lid = htons((hdr).lid); \
     } while (0)
 
 typedef struct mca_btl_iwarp_device_qp_t {
@@ -458,9 +446,6 @@ struct mca_btl_iwarp_module_t {
     uint8_t port_num;                  /**< ID of the PORT */
     uint16_t pkey_index;
     struct ibv_port_attr ib_port_attr;
-    uint16_t lid;                      /**< lid that is actually used (for LMC) */
-    int apm_port;                      /**< Alternative port that may be used for APM */
-    uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
     int32_t num_peers;
 

@@ -415,23 +415,6 @@ int btl_iwarp_register_mca_params(void)
                   16, &mca_btl_iwarp_component.eager_rdma_num, REGINT_GE_ONE));
     mca_btl_iwarp_component.eager_rdma_num++;
 
-    CHECK(reg_uint("btls_per_lid", NULL, "Number of BTLs to create for each "
-                  "InfiniBand LID "
-                  "(must be >= 1)",
-                  1, &mca_btl_iwarp_component.btls_per_lid, REGINT_GE_ONE));
-
-    CHECK(reg_uint("max_lmc", NULL, "Maximum number of LIDs to use for each device port "
-                   "(must be >= 0, where 0 = use all available)",
-                   1, &mca_btl_iwarp_component.max_lmc, 0));
-
-    CHECK(reg_int("enable_apm_over_lmc", NULL, "Maximum number of alternative paths for each device port "
-                  "(must be >= -1, where 0 = disable apm, -1 = all available alternative paths )",
-                  0, &mca_btl_iwarp_component.apm_lmc, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
-
-    CHECK(reg_int("enable_apm_over_ports", NULL, "Enable alternative path migration (APM) over different ports of the same device "
-                  "(must be >= 0, where 0 = disable APM over ports, 1 = enable APM over ports of the same device)",
-                  0, &mca_btl_iwarp_component.apm_ports, REGINT_GE_ZERO));
-
     CHECK(reg_bool("use_async_event_thread", NULL,
                    "If nonzero, use the thread that will handle InfiniBand asynchronous events",
                    true, &mca_btl_iwarp_component.use_async_event_thread));
