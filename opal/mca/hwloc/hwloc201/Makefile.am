@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
@@ -25,7 +25,9 @@ EXTRA_DIST = \
         hwloc/doc/README.txt \
         hwloc/contrib/systemd/README.txt \
         hwloc/tests/README.txt \
-        hwloc/utils/README.txt
+        hwloc/utils/README.txt \
+        hwloc/netloc/README.txt \
+        hwloc/contrib/misc/README.txt
 
 SUBDIRS = hwloc
 
