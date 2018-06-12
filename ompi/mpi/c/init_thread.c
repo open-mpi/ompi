@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -26,6 +26,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/show_help.h"
+#include "ompi/runtime/ompi_spc.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
@@ -80,6 +81,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     }
 
     OPAL_CR_INIT_LIBRARY();
+
+    SPC_INIT();
 
     ompi_hook_base_mpi_init_thread_bottom(argc, argv, required, provided);
 

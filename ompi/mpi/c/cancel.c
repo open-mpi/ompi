@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -28,6 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -42,6 +43,8 @@ static const char FUNC_NAME[] = "MPI_Cancel";
 int MPI_Cancel(MPI_Request *request)
 {
     int rc;
+
+    SPC_RECORD(OMPI_SPC_CANCEL, 1);
 
     MEMCHECKER(
         memchecker_request(request);

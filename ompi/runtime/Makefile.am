@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2018 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -27,7 +27,8 @@ headers += \
         runtime/mpiruntime.h \
 	runtime/ompi_cr.h \
         runtime/params.h \
-	runtime/ompi_info_support.h
+	runtime/ompi_info_support.h \
+	runtime/ompi_spc.h
 
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
@@ -37,4 +38,5 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_params.c \
         runtime/ompi_mpi_preconnect.c \
 	runtime/ompi_cr.c \
-	runtime/ompi_info_support.c
+	runtime/ompi_info_support.c \
+	runtime/ompi_spc.c

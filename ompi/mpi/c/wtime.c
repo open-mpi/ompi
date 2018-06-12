@@ -34,6 +34,7 @@
 #include MCA_timer_IMPLEMENTATION_HEADER
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -61,6 +62,8 @@ extern struct timeval ompi_wtime_time_origin;
 double MPI_Wtime(void)
 {
     double wtime;
+
+    SPC_RECORD(OMPI_SPC_WTIME, 1);
 
     /*
      * See https://github.com/open-mpi/ompi/issues/3003 to find out
