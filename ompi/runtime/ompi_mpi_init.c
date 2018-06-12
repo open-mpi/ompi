@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -121,11 +121,7 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
  * Global variables and symbols for the MPI layer
  */
 
-opal_mutex_t ompi_mpi_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
-volatile bool ompi_mpi_init_started = false;
-volatile bool ompi_mpi_initialized = false;
-volatile bool ompi_mpi_finalize_started = false;
-volatile bool ompi_mpi_finalized = false;
+volatile int32_t ompi_mpi_state = OMPI_MPI_STATE_NOT_INITIALIZED;
 volatile bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
@@ -374,7 +370,8 @@ static void fence_release(int status, void *cbdata)
     *active = false;
 }
 
-int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
+int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
+                  bool reinit_ok)
 {
     int ret;
     ompi_proc_t** procs;
@@ -389,27 +386,35 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * for the modex in order to work in heterogeneous environments. */
     uint8_t threadlevel_bf;
 
-    /* Ensure that we were not already initialized or finalized.
+    /* Ensure that we were not already initialized or finalized. */
+    int32_t expected = OMPI_MPI_STATE_NOT_INITIALIZED;
+    int32_t desired  = OMPI_MPI_STATE_INIT_STARTED;
+    opal_atomic_wmb();
+    if (!opal_atomic_cmpset_32(&ompi_mpi_state, expected, desired)) {
+        // If we failed to atomically transition ompi_mpi_state from
+        // NOT_INITIALIZED to INIT_STARTED, then someone else already
+        // did that, and we should return.
+        if (expected >= OMPI_MPI_STATE_FINALIZE_STARTED) {
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_init: already finalized", true);
+            return MPI_ERR_OTHER;
+        } else if (expected >= OMPI_MPI_STATE_INIT_STARTED) {
+            // In some cases (e.g., oshmem_shmem_init()), we may call
+            // ompi_mpi_init() multiple times.  In such cases, just
+            // silently return successfully once the initializing
+            // thread has completed.
+            if (reinit_ok) {
+                while (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
+                    usleep(1);
+                }
+                return MPI_SUCCESS;
+            }
 
-       This lock is held for the duration of ompi_mpi_init() and
-       ompi_mpi_finalize().  Hence, if we get it, then no other thread
-       is inside the critical section (and we don't have to check the
-       *_started bool variables). */
-    opal_mutex_lock(&ompi_mpi_bootstrap_mutex);
-    if (ompi_mpi_finalized) {
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_init: already finalized", true);
-        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
-        return MPI_ERR_OTHER;
-    } else if (ompi_mpi_initialized) {
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_init: invoked multiple times", true);
-        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
-        return MPI_ERR_OTHER;
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_init: invoked multiple times", true);
+            return MPI_ERR_OTHER;
+        }
     }
-
-    /* Indicate that we have *started* MPI_INIT* */
-    ompi_mpi_init_started = true;
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
@@ -914,7 +919,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                            "mpi_init:startup:internal-failure", true,
                            "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         }
-        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         return ret;
     }
 
@@ -934,8 +938,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_hash_table_init(&ompi_mpi_f90_complex_hashtable, FLT_MAX_10_EXP);
 
     /* All done.  Wasn't that simple? */
-
-    ompi_mpi_initialized = true;
+    opal_atomic_wmb();
+    opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_INIT_COMPLETED);
 
     /* Finish last measurement, output results
      * and clear timing structure */
@@ -944,6 +948,5 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     OPAL_TIMING_REPORT(ompi_enable_timing_ext, &tm);
     OPAL_TIMING_RELEASE(&tm);
 
-    opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
     return MPI_SUCCESS;
 }
