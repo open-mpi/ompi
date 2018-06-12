@@ -1339,16 +1339,6 @@ static uint64_t calculate_total_mem (void)
         return mem;
     }
 
-    /* if not available, then ensure that the topology has been
-     * loaded and try to get it from there */
-    if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
-        machine = hwloc_get_next_obj_by_type (opal_hwloc_topology, HWLOC_OBJ_MACHINE, NULL);
-        if (NULL == machine) {
-            return 0;
-        }
-        return machine->memory.total_memory;
-    }
-
     /* couldn't find it */
     return 0;
 }
