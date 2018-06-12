@@ -30,8 +30,7 @@
  * Before diving into the CPC interface, let's discuss some
  * terminology and mappings of data structures:
  *
- * - a BTL module represents a network port (in the case of the iwarp
- *   BTL, a LID)
+ * - a BTL module represents a network port
  * - a CPC module represents one way to make connections to a BTL module
  * - hence, a BTL module has potentially multiple CPC modules
  *   associated with it
@@ -74,12 +73,10 @@
  * OPAL_ERR_NOT_SUPPORTED.
  *
  * - component_query(): The iwarp BTL's init_one_port() calls the
- * connect_base_select_for_local_port() function, which, for each LID
- * on that port, calls the component_query() function on every
- * available CPC on that LID.  This function is intended to see if a
- * CPC can run on a sepcific iwarp BTL module (i.e., LID).  If it
+ * connect_base_select_for_local_port() function.  This function is intended 
+ * to see if a * CPC can run on a sepcific iwarp BTL module.  If it
  * can, the CPC is supposed to create a CPC module that is specific to
- * that BTL/LID and return it.  If it cannot, it should return
+ * that BTL and return it.  If it cannot, it should return
  * OPAL_ERR_NOT_SUPPORTED and be gracefully skipped for this
  * OpenFabrics port.
  *
@@ -123,7 +120,7 @@
  *
  * cbm_finalize(): shut down all asynchronous handling and clean up
  * any state that was setup for this CPC module/BTL.  Some CPCs setup
- * asynchronous support on a per-HCA/NIC basis (vs. per-port/LID).  It
+ * asynchronous support on a per-RNIC basis.  It
  * is the reponsibility of the CPC to figure out such issues (e.g.,
  * via reference counting) -- there is no notification from the
  * upper-level BTL about when an entire HCA/NIC is no longer being

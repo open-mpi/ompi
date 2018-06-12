@@ -466,7 +466,7 @@ int btl_iwarp_register_mca_params(void)
                    0, &mca_btl_iwarp_component.max_hw_msg_size, 0));
 
     CHECK(reg_bool("allow_max_memory_registration", NULL,
-                  "Allow maximum possible memory to register with HCA",
+                  "Allow maximum possible memory to register with RNIC",
                    1, &mca_btl_iwarp_component.allow_max_memory_registration));
 
     /* Help debug memory registration issues */

@@ -607,7 +607,7 @@ struct mca_btl_iwarp_put_frag_t;
 struct mca_btl_iwarp_get_frag_t;
 
 /**
- * @brief Schedule a put fragment with the HCA (internal)
+ * @brief Schedule a put fragment with the RNIC (internal)
  *
  * @param btl (IN)               BTL instance
  * @param ep (IN)                BTL endpoint
@@ -621,7 +621,7 @@ int mca_btl_iwarp_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base_
                                  struct mca_btl_iwarp_put_frag_t *frag);
 
 /**
- * @brief Schedule an RDMA write with the HCA
+ * @brief Schedule an RDMA write with the RNIC
  *
  * @param btl (IN)               BTL instance
  * @param ep (IN)                BTL endpoint
@@ -639,7 +639,7 @@ int mca_btl_iwarp_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base_
  * @return OPAL_ERR_BAD_PARAM if a bad parameter was passed
  * @return OPAL_SUCCCESS if the operation was successfully scheduled
  *
- * This function will attempt to schedule a put operation with the HCA.
+ * This function will attempt to schedule a put operation with the RNIC.
  */
 int mca_btl_iwarp_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
                         uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
@@ -647,7 +647,7 @@ int mca_btl_iwarp_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_
                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
- * @brief Schedule a get fragment with the HCA (internal)
+ * @brief Schedule a get fragment with the RNIC (internal)
  *
  * @param btl (IN)               BTL instance
  * @param ep (IN)                BTL endpoint
@@ -662,7 +662,7 @@ int mca_btl_iwarp_get_internal (mca_btl_base_module_t *btl, struct mca_btl_base_
                                  struct mca_btl_iwarp_get_frag_t *frag);
 
 /**
- * @brief Schedule an RDMA read with the HCA
+ * @brief Schedule an RDMA read with the RNIC
  *
  * @param btl (IN)               BTL instance
  * @param ep (IN)                BTL endpoint
@@ -680,7 +680,7 @@ int mca_btl_iwarp_get_internal (mca_btl_base_module_t *btl, struct mca_btl_base_
  * @return OPAL_ERR_BAD_PARAM if a bad parameter was passed
  * @return OPAL_SUCCCESS if the operation was successfully scheduled
  *
- * This function will attempt to schedule a get operation with the HCA.
+ * This function will attempt to schedule a get operation with the RNIC.
  */
 int mca_btl_iwarp_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
                         uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,

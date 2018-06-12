@@ -103,9 +103,9 @@ typedef struct mca_btl_iwarp_rem_info_t {
     /* Remote QPs */
     mca_btl_iwarp_rem_qp_info_t *rem_qps;
     mca_btl_iwarp_rem_srq_info_t *rem_srqs;
-    /* Vendor id of remote HCA */
+    /* Vendor id of remote RNIC */
     uint32_t rem_vendor_id;
-    /* Vendor part id of remote HCA */
+    /* Vendor part id of remote RNIC */
     uint32_t rem_vendor_part_id;
     /* Transport type of remote port */
     mca_btl_iwarp_transport_type_t rem_transport_type;
