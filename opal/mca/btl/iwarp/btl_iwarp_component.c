@@ -579,8 +579,7 @@ static inline int param_register_uint(const char* param_name, unsigned int defau
 }
 
 static int init_one_port(opal_list_t *btl_list, mca_btl_iwarp_device_t *device,
-                         uint8_t port_num, uint16_t pkey_index,
-                         struct ibv_port_attr *ib_port_attr)
+                         uint8_t port_num, struct ibv_port_attr *ib_port_attr)
 {
     uint16_t lid, i, lmc, lmc_step;
     mca_btl_iwarp_module_t *iwarp_btl;
@@ -665,7 +664,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_iwarp_device_t *device,
             ib_selected->btl_module = (mca_btl_base_module_t*) iwarp_btl;
             iwarp_btl->device = device;
             iwarp_btl->port_num = (uint8_t) port_num;
-            iwarp_btl->pkey_index = pkey_index;
             iwarp_btl->lid = lid;
             iwarp_btl->apm_port = 0;
             iwarp_btl->src_path_bits = lid - ib_port_attr->lid;
@@ -1758,10 +1756,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             break;
         }
         if(IBV_PORT_ACTIVE == ib_port_attr.state) {
-            /* Select the lower of the HCA and port active speed. With QLogic
-               HCAs that are capable of 4K MTU we had an issue when connected
-               to switches with 2K MTU. This fix is valid for other IB vendors
-               as well. */
             if (ib_port_attr.active_mtu < device->mtu){
                 device->mtu = ib_port_attr.active_mtu;
             }
@@ -1769,23 +1763,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 init_apm_port(device, i, ib_port_attr.lid);
                 break;
             }
-            if (0 == mca_btl_iwarp_component.ib_pkey_val) {
-                ret = init_one_port(btl_list, device, i, 0, &ib_port_attr);
-            } else {
-                uint16_t pkey,j;
-                for (j = 0; j < device->ib_dev_attr.max_pkeys; j++) {
-                    if(ibv_query_pkey(device->ib_dev_context, i, j, &pkey)){
-                        BTL_ERROR(("error getting pkey for index %d, device %s "
-                                    "port number %d errno says %s",
-                                    j, ibv_get_device_name(device->ib_dev), i, strerror(errno)));
-                    }
-                    pkey = ntohs(pkey) & MCA_BTL_IB_PKEY_MASK;
-                    if(pkey == mca_btl_iwarp_component.ib_pkey_val){
-                        ret = init_one_port(btl_list, device, i, j, &ib_port_attr);
-                        break;
-                    }
-                }
-            }
+            ret = init_one_port(btl_list, device, i, &ib_port_attr);
             if (OPAL_SUCCESS != ret) {
                 /* Out of bounds error indicates that we hit max btl number
                  * don't propagate the error to the caller */
@@ -1966,16 +1944,16 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                   leaving this as explicitly documented for some
                   future implementer...
 
-               2. Conside a scenario with server 1 having HCA A/subnet
-                  X, and server 2 having HCA B/subnet X and HCA
+               2. Conside a scenario with server 1 having RNIC A/subnet
+                  X, and server 2 having RNIC B/subnet X and RNIC
                   C/subnet Y.  And let's assume:
 
                   Server 1:
-                  HCA A: no receive_queues in INI file
+                  RNIC A: no receive_queues in INI file
 
                   Server 2:
-                  HCA B: no receive_queues in INI file
-                  HCA C: receive_queues specified in INI file
+                  RNIC B: no receive_queues in INI file
+                  RNIC C: receive_queues specified in INI file
 
                   A will therefore use the default receive_queues
                   value.  B and C will use C's INI receive_queues.
@@ -1985,11 +1963,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                   including the final receive_queues string value in
                   the modex would dramatically increase the size of
                   the modex).  So processes on server 1 will get the
-                  vendor/part ID for HCA B, look it up in the INI
+                  vendor/part ID for RNIC B, look it up in the INI
                   file, see that it has no receive_queues value
                   specified, and then assume that it uses the default
                   receive_queues value.  Hence, procs on server 1 will
-                  try to connect HCA A-->HCA B with the wrong
+                  try to connect RNIC A-->RNIC B with the wrong
                   receive_queues value.  Bad.  Further, the error
                   won't be discovered by checks like this because A
                   won't check D's receive_queues because D is on a
