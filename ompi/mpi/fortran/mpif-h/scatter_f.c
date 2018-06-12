@@ -83,7 +83,7 @@ void ompi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
     recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Scatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Scatter)(sendbuf,OMPI_FINT_2_INT(*sendcount),
                          c_sendtype, recvbuf,
                          OMPI_FINT_2_INT(*recvcount),
                          c_recvtype,

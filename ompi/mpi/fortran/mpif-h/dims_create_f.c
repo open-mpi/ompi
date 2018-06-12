@@ -74,7 +74,7 @@ void ompi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims,
 
     OMPI_ARRAY_FINT_2_INT(dims, *ndims);
 
-    c_ierr = PMPI_Dims_create(OMPI_FINT_2_INT(*nnodes),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Dims_create)(OMPI_FINT_2_INT(*nnodes),
                              OMPI_FINT_2_INT(*ndims),
                              OMPI_ARRAY_NAME_CONVERT(dims));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

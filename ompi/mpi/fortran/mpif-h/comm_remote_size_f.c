@@ -71,7 +71,7 @@ void ompi_comm_remote_size_f(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
     MPI_Comm c_comm = PMPI_Comm_f2c ( *comm );
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_ierr = PMPI_Comm_remote_size(c_comm, OMPI_SINGLE_NAME_CONVERT(size ));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_remote_size)(c_comm, OMPI_SINGLE_NAME_CONVERT(size ));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

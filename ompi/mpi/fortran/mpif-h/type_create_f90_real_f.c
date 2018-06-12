@@ -72,7 +72,7 @@ void ompi_type_create_f90_real_f(MPI_Fint *p, MPI_Fint *r,
     int c_ierr;
     MPI_Datatype c_new = PMPI_Type_f2c(*newtype);
 
-    c_ierr = PMPI_Type_create_f90_real(OMPI_FINT_2_INT(*p),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_f90_real)(OMPI_FINT_2_INT(*p),
                                       OMPI_FINT_2_INT(*r),
                                       &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

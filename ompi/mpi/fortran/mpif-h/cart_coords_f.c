@@ -76,7 +76,7 @@ void ompi_cart_coords_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims,
     c_comm = PMPI_Comm_f2c(*comm);
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(coords, OMPI_FINT_2_INT(*maxdims));
-    c_ierr = PMPI_Cart_coords(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Cart_coords)(c_comm,
                              OMPI_FINT_2_INT(*rank),
                              OMPI_FINT_2_INT(*maxdims),
                              OMPI_ARRAY_NAME_CONVERT(coords));

@@ -72,7 +72,7 @@ void ompi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(errorclass);
 
-    c_ierr = PMPI_Error_class(OMPI_FINT_2_INT(*errorcode),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Error_class)(OMPI_FINT_2_INT(*errorcode),
                              OMPI_SINGLE_NAME_CONVERT(errorclass));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

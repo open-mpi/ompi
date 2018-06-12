@@ -83,7 +83,7 @@ void ompi_rput_f(char *origin_addr, MPI_Fint *origin_count,
     MPI_Win c_win = PMPI_Win_f2c(*win);
     MPI_Request c_req;
 
-    c_ierr = PMPI_Rput(OMPI_F2C_BOTTOM(origin_addr),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Rput)(OMPI_F2C_BOTTOM(origin_addr),
                       OMPI_FINT_2_INT(*origin_count),
                       c_origin_datatype,
                       OMPI_FINT_2_INT(*target_rank),

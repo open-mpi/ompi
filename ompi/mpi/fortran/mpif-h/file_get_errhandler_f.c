@@ -74,7 +74,7 @@ void ompi_file_get_errhandler_f(MPI_Fint *fh, MPI_Fint *errhandler, MPI_Fint *ie
 
     c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = PMPI_File_get_errhandler(c_fh, &c_errhandler);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_errhandler)(c_fh, &c_errhandler);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

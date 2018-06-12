@@ -73,6 +73,6 @@ void ompi_cancel_f(MPI_Fint *request, MPI_Fint *ierr)
     int c_ierr;
     MPI_Request c_req = PMPI_Request_f2c(*request);
 
-    c_ierr = PMPI_Cancel(&c_req);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Cancel)(&c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

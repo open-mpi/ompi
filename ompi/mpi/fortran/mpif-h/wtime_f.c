@@ -70,5 +70,5 @@ double mpi_wtime__(void) { return ompi_wtime_f(); }
 
 double ompi_wtime_f(void)
 {
-    return PMPI_Wtime();
+    return OMPI_FORTRAN_FPTR(MPI_Wtime)();
 }

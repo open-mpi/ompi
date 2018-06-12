@@ -194,7 +194,7 @@ void ompi_register_datarep_f(char *datarep,
     /* Now that the intercept data has been setup, call the C function
        with the setup intercept routines and the intercept-specific
        data/extra state. */
-    c_ierr = PMPI_Register_datarep(c_datarep,
+    c_ierr = ompi_fptr_MPI_Register_datarep(c_datarep,
                                   read_fn_c, write_fn_c,
                                   extent_intercept_fn,
                                   intercept);

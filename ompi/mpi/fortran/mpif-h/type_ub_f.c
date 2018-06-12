@@ -72,7 +72,7 @@ void ompi_type_ub_f(MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr)
     MPI_Datatype c_mtype = PMPI_Type_f2c(*mtype);
     MPI_Aint c_ub;
 
-    c_ierr = PMPI_Type_ub(c_mtype, &c_ub);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_ub)(c_mtype, &c_ub);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

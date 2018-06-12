@@ -68,5 +68,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PCONTROL,
 
 void ompi_pcontrol_f(MPI_Fint *level)
 {
-    PMPI_Pcontrol(OMPI_FINT_2_INT(*level));
+    OMPI_FORTRAN_FPTR(MPI_Pcontrol)(OMPI_FINT_2_INT(*level));
 }

@@ -81,7 +81,7 @@ void ompi_status_set_elements_f(MPI_Fint *status, MPI_Fint *datatype,
     } else {
         PMPI_Status_f2c( status, &c_status );
 
-        c_ierr = PMPI_Status_set_elements(&c_status, c_type,
+        c_ierr = OMPI_FORTRAN_FPTR(MPI_Status_set_elements)(&c_status, c_type,
                                          OMPI_FINT_2_INT(*count));
 
         /* If datatype is really being set, then that needs to be

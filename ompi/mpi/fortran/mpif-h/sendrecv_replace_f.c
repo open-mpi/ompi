@@ -79,7 +79,7 @@ void ompi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
    c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = PMPI_Sendrecv_replace(OMPI_F2C_BOTTOM(buf),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_Sendrecv_replace)(OMPI_F2C_BOTTOM(buf),
                                  OMPI_FINT_2_INT(*count),
                                  c_type,
                                  OMPI_FINT_2_INT(*dest),

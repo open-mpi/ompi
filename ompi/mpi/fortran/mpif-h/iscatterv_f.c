@@ -92,7 +92,7 @@ void ompi_iscatterv_f(char *sendbuf, MPI_Fint *sendcounts,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Iscatterv(sendbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Iscatterv)(sendbuf,
                            OMPI_ARRAY_NAME_CONVERT(sendcounts),
                            OMPI_ARRAY_NAME_CONVERT(displs),
                            c_sendtype, recvbuf,

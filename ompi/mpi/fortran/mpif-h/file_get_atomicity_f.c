@@ -73,7 +73,7 @@ void ompi_file_get_atomicity_f(MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_F
     OMPI_LOGICAL_NAME_DECL(flag);
 
     c_fh = PMPI_File_f2c(*fh);
-    c_ierr = PMPI_File_get_atomicity(c_fh,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_atomicity)(c_fh,
                                     OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

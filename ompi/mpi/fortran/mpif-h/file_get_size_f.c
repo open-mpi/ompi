@@ -72,7 +72,7 @@ void ompi_file_get_size_f(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr)
     MPI_File c_fh = PMPI_File_f2c(*fh);
     MPI_Offset c_size;
 
-    c_ierr = PMPI_File_get_size(c_fh, &c_size);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_size)(c_fh, &c_size);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

@@ -77,7 +77,7 @@ void ompi_comm_split_type_f(MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key,
 
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = OMPI_INT_2_FINT(PMPI_Comm_split_type(c_comm,
+    c_ierr = OMPI_INT_2_FINT(OMPI_FORTRAN_FPTR(MPI_Comm_split_type)(c_comm,
                                                   OMPI_FINT_2_INT(*split_type),
                                                   OMPI_FINT_2_INT(*key),
                                                   c_info,

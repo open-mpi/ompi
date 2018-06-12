@@ -88,7 +88,7 @@ void ompi_pack_external_size_f(char *datarep, MPI_Fint *incount,
         return;
     }
 
-    c_ierr = PMPI_Pack_external_size(c_datarep,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Pack_external_size)(c_datarep,
                                     OMPI_FINT_2_INT(*incount),
                                     type, size);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

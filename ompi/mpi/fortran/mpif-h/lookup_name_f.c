@@ -85,7 +85,7 @@ void ompi_lookup_name_f(char *service_name, MPI_Fint *info,
 	return;
     }
 
-    c_ierr = PMPI_Lookup_name(c_service_name, c_info, c_port_name);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Lookup_name)(c_service_name, c_info, c_port_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if ( MPI_SUCCESS == c_ierr) {

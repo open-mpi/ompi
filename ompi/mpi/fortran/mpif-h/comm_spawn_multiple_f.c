@@ -123,7 +123,7 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 	c_info[i] = PMPI_Info_f2c(array_info[i]);
     }
 
-    c_ierr = PMPI_Comm_spawn_multiple(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_spawn_multiple)(OMPI_FINT_2_INT(*count),
                                      c_array_commands,
                                      c_array_argv,
                                      OMPI_ARRAY_NAME_CONVERT(array_maxprocs),

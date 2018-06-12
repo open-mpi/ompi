@@ -96,7 +96,7 @@ void ompi_type_create_struct_f(MPI_Fint *count,
 
     OMPI_ARRAY_FINT_2_INT(array_of_block_lengths, *count);
 
-    c_ierr = PMPI_Type_create_struct(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_struct)(OMPI_FINT_2_INT(*count),
 			   OMPI_ARRAY_NAME_CONVERT(array_of_block_lengths),
                            array_of_displacements, c_type_old_array, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

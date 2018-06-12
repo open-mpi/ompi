@@ -86,7 +86,7 @@ void ompi_ireduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Ireduce(sendbuf, recvbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Ireduce)(sendbuf, recvbuf,
                          OMPI_FINT_2_INT(*count),
                          c_type, c_op,
                          OMPI_FINT_2_INT(*root),

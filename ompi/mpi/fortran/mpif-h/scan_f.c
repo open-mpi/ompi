@@ -84,7 +84,7 @@ void ompi_scan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Scan(sendbuf, recvbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Scan)(sendbuf, recvbuf,
                       OMPI_FINT_2_INT(*count),
                       c_type, c_op,
                       c_comm);

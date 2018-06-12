@@ -78,7 +78,7 @@ void ompi_file_write_at_all_end_f(MPI_Fint *fh, char *buf,
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = PMPI_File_write_at_all_end(c_fh, buf, c_status);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_write_at_all_end)(c_fh, buf, c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)

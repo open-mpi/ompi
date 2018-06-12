@@ -81,7 +81,7 @@ void ompi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root,
     ompi_fortran_string_f2c(port_name, port_name_len, &c_port_name);
 
 
-    c_ierr = PMPI_Comm_accept(c_port_name, c_info,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_accept)(c_port_name, c_info,
                              OMPI_FINT_2_INT(*root),
                              c_comm, &c_new_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

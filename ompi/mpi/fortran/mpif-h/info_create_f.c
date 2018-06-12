@@ -71,7 +71,7 @@ void ompi_info_create_f(MPI_Fint *info, MPI_Fint *ierr)
     int c_ierr;
     MPI_Info c_info;
 
-    c_ierr = PMPI_Info_create(&c_info);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Info_create)(&c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

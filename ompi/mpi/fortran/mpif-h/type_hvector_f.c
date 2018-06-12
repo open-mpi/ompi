@@ -75,7 +75,7 @@ void ompi_type_hvector_f(MPI_Fint *count, MPI_Fint *blocklength,
 
     c_oldtype = PMPI_Type_f2c(*oldtype);
 
-    c_ierr = PMPI_Type_hvector(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_hvector)(OMPI_FINT_2_INT(*count),
                               OMPI_FINT_2_INT(*blocklength),
                               (MPI_Aint)*stride,
                               c_oldtype, &c_newtype);

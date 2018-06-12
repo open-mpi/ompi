@@ -80,7 +80,7 @@ void ompi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank,
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(neighbors, *maxneighbors);
 
-    c_ierr = PMPI_Graph_neighbors(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Graph_neighbors)(c_comm,
                                  OMPI_FINT_2_INT(*rank),
                                  OMPI_FINT_2_INT(*maxneighbors),
                                  OMPI_ARRAY_NAME_CONVERT(neighbors)

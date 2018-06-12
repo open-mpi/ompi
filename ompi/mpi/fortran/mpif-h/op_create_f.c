@@ -75,7 +75,7 @@ void ompi_op_create_f(ompi_op_fortran_handler_fn_t* function, ompi_fortran_logic
     /* See the note in src/mpi/fortran/mpif-h/prototypes_mpi.h about
        the use of (void*) for function pointers in this function */
 
-    c_ierr = PMPI_Op_create((MPI_User_function *) function,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Op_create)((MPI_User_function *) function,
                            OMPI_LOGICAL_2_INT(*commute),
                            &c_op);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -71,7 +71,7 @@ void ompi_is_thread_main_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
     int c_ierr;
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = PMPI_Is_thread_main(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Is_thread_main)(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

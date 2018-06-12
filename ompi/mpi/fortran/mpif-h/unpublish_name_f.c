@@ -80,7 +80,7 @@ void ompi_unpublish_name_f(char *service_name, MPI_Fint *info,
     ompi_fortran_string_f2c(service_name, service_name_len, &c_service_name);
     ompi_fortran_string_f2c(port_name, port_name_len, &c_port_name);
 
-    c_ierr = PMPI_Unpublish_name(c_service_name, c_info, c_port_name);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Unpublish_name)(c_service_name, c_info, c_port_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free ( c_service_name);

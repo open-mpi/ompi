@@ -77,7 +77,7 @@ void ompi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype,
     c_comm = PMPI_Comm_f2c(*comm);
     c_type = PMPI_Type_f2c(*datatype);
 
-    c_ierr = PMPI_Pack_size(OMPI_FINT_2_INT(*incount),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Pack_size)(OMPI_FINT_2_INT(*incount),
                            c_type, c_comm,
                            OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

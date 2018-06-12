@@ -71,7 +71,7 @@ void ompi_request_free_f(MPI_Fint *request, MPI_Fint *ierr)
     int c_ierr;
 
     MPI_Request c_req = PMPI_Request_f2c( *request );
-    c_ierr = PMPI_Request_free(&c_req);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Request_free)(&c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

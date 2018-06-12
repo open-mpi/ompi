@@ -82,7 +82,7 @@ void ompi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_F
         c_ierr = PMPI_Status_f2c( status, &c_status );
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = PMPI_Test_cancelled(&c_status,
+            c_ierr = OMPI_FORTRAN_FPTR(MPI_Test_cancelled)(&c_status,
                                         OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
 
             OMPI_SINGLE_INT_2_LOGICAL(flag);

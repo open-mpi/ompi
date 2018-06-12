@@ -73,7 +73,7 @@ void ompi_file_get_position_shared_f(MPI_Fint *fh, MPI_Offset *offset,
     MPI_File c_fh = PMPI_File_f2c(*fh);
     MPI_Offset c_offset;
 
-    c_ierr = PMPI_File_get_position_shared(c_fh, &c_offset);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_position_shared)(c_fh, &c_offset);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

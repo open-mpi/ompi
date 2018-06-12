@@ -83,7 +83,7 @@ void ompi_get_elements_x_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Count *coun
         c_ierr = PMPI_Status_f2c(status, &c_status);
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = PMPI_Get_elements_x(&c_status, c_type, count);
+            c_ierr = OMPI_FORTRAN_FPTR(MPI_Get_elements_x)(&c_status, c_type, count);
         }
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -76,7 +76,7 @@ void ompi_file_iwrite_at_all_f(MPI_Fint *fh, MPI_Offset *offset, char *buf,
    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    MPI_Request c_request;
 
-   c_ierr = PMPI_File_iwrite_at_all(c_fh, (MPI_Offset) *offset,
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_File_iwrite_at_all)(c_fh, (MPI_Offset) *offset,
                                    OMPI_F2C_BOTTOM(buf),
                                    OMPI_FINT_2_INT(*count),
                                    c_type, &c_request);

@@ -73,7 +73,7 @@ void ompi_win_free_keyval_f(MPI_Fint *win_keyval, MPI_Fint *ierr)
 
     OMPI_SINGLE_FINT_2_INT(win_keyval);
 
-    c_ierr = PMPI_Win_free_keyval(OMPI_SINGLE_NAME_CONVERT(win_keyval));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_free_keyval)(OMPI_SINGLE_NAME_CONVERT(win_keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

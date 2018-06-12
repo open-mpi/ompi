@@ -92,7 +92,7 @@ void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
 #endif
     OMPI_ARRAY_LOGICAL_2_INT(remain_dims, ndims);
 
-    c_ierr = PMPI_Cart_sub(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Cart_sub)(c_comm,
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(remain_dims),
                           &c_new_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

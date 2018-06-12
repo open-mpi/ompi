@@ -74,7 +74,7 @@ void ompi_ibarrier_f(MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 
     c_comm = PMPI_Comm_f2c(*comm);
 
-    ierr_c = PMPI_Ibarrier(c_comm, &c_req);
+    ierr_c = OMPI_FORTRAN_FPTR(MPI_Ibarrier)(c_comm, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 
     if (MPI_SUCCESS == ierr_c) *request = PMPI_Request_c2f(c_req);

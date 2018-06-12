@@ -104,7 +104,7 @@ void ompi_alloc_mem_f(MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *i
     int ierr_c;
     MPI_Info c_info = PMPI_Info_f2c(*info);
 
-    ierr_c = PMPI_Alloc_mem(*size, c_info, baseptr);
+    ierr_c = OMPI_FORTRAN_FPTR(MPI_Alloc_mem)(*size, c_info, baseptr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 }
 

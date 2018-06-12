@@ -72,7 +72,7 @@ void ompi_get_address_f(char *location, MPI_Aint *address, MPI_Fint *ierr)
     int c_ierr;
     MPI_Aint c_address;
 
-    c_ierr = PMPI_Get_address(OMPI_F2C_BOTTOM(location), &c_address);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Get_address)(OMPI_F2C_BOTTOM(location), &c_address);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

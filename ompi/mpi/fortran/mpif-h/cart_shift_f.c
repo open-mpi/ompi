@@ -77,7 +77,7 @@ void ompi_cart_shift_f(MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp,
 
     c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = PMPI_Cart_shift(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Cart_shift)(c_comm,
                             OMPI_FINT_2_INT(*direction),
                             OMPI_FINT_2_INT(*disp),
                             OMPI_SINGLE_NAME_CONVERT(rank_source),

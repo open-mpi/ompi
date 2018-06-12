@@ -85,7 +85,7 @@ void ompi_iexscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     sendbuf = (char *) OMPI_F2C_BOTTOM (sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM (recvbuf);
 
-    c_ierr = PMPI_Iexscan(sendbuf, recvbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Iexscan)(sendbuf, recvbuf,
                          OMPI_FINT_2_INT(*count),
                          c_type, c_op, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

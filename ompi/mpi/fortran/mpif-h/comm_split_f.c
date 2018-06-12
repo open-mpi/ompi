@@ -73,7 +73,7 @@ void ompi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key,
     MPI_Comm c_newcomm;
     MPI_Comm c_comm = PMPI_Comm_f2c ( *comm );
 
-    c_ierr = PMPI_Comm_split(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_split)(c_comm,
                             OMPI_FINT_2_INT(*color),
                             OMPI_FINT_2_INT(*key),
                             &c_newcomm );

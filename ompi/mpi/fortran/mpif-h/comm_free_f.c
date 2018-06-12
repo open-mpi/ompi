@@ -71,7 +71,7 @@ void ompi_comm_free_f(MPI_Fint *comm, MPI_Fint *ierr)
     int c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = PMPI_Comm_free(&c_comm);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Comm_free)(&c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

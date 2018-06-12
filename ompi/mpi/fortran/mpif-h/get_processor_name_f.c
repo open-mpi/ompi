@@ -83,7 +83,7 @@ void ompi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr,
     char c_name[MPI_MAX_PROCESSOR_NAME];
     OMPI_SINGLE_NAME_DECL(resultlen);
 
-    ierr_c = PMPI_Get_processor_name(c_name,
+    ierr_c = OMPI_FORTRAN_FPTR(MPI_Get_processor_name)(c_name,
                                      OMPI_SINGLE_NAME_CONVERT(resultlen));
 
     if (MPI_SUCCESS == ierr_c) {

@@ -109,7 +109,7 @@ void ompi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 
     OMPI_ARRAY_FINT_2_INT(array_of_integers, *max_integers);
 
-    c_ierr = PMPI_Type_get_contents(c_mtype,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_get_contents)(c_mtype,
                                    OMPI_FINT_2_INT(*max_integers),
                                    OMPI_FINT_2_INT(*max_addresses),
                                    OMPI_FINT_2_INT(*max_datatypes),

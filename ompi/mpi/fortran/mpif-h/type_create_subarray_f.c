@@ -85,7 +85,7 @@ void ompi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array,
     OMPI_ARRAY_FINT_2_INT(subsize_array, *ndims);
     OMPI_ARRAY_FINT_2_INT(start_array, *ndims);
 
-    c_ierr = PMPI_Type_create_subarray(OMPI_FINT_2_INT(*ndims),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_create_subarray)(OMPI_FINT_2_INT(*ndims),
                                       OMPI_ARRAY_NAME_CONVERT(size_array),
                                       OMPI_ARRAY_NAME_CONVERT(subsize_array),
                                       OMPI_ARRAY_NAME_CONVERT(start_array),

@@ -85,7 +85,7 @@ void ompi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode,
         return;
     }
 
-    c_ierr = PMPI_File_open(c_comm, c_filename,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_open)(c_comm, c_filename,
                            OMPI_FINT_2_INT(*amode),
                            c_info, &c_fh);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -71,7 +71,7 @@ void ompi_query_thread_f(MPI_Fint *provided, MPI_Fint *ierr)
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(provided);
 
-    c_ierr = PMPI_Query_thread(OMPI_SINGLE_NAME_CONVERT(provided));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Query_thread)(OMPI_SINGLE_NAME_CONVERT(provided));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

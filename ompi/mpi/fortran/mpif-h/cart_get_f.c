@@ -82,7 +82,7 @@ void ompi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
     OMPI_ARRAY_FINT_2_INT_ALLOC(coords, size);
     OMPI_ARRAY_LOGICAL_2_INT_ALLOC(periods, size);
 
-    c_ierr = PMPI_Cart_get(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Cart_get)(c_comm,
                           size,
                           OMPI_ARRAY_NAME_CONVERT(dims),
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(periods),

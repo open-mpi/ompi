@@ -82,7 +82,7 @@ void ompi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
    /* Call the C function */
-   c_ierr = PMPI_Recv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+   c_ierr = OMPI_FORTRAN_FPTR(MPI_Recv)(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
                      c_type, OMPI_FINT_2_INT(*source),
                      OMPI_FINT_2_INT(*tag), c_comm,
                      c_status);

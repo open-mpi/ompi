@@ -72,7 +72,7 @@ void ompi_win_test_f(MPI_Fint *win, ompi_fortran_logical_t *flag, MPI_Fint *ierr
     MPI_Win c_win = PMPI_Win_f2c(*win);
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = PMPI_Win_test(c_win, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_test)(c_win, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

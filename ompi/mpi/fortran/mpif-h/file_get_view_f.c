@@ -78,7 +78,7 @@ void ompi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp,
     MPI_Offset c_disp;
     char c_datarep[MPI_MAX_DATAREP_STRING];
 
-    c_ierr = PMPI_File_get_view(c_fh, &c_disp, &c_etype,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_view)(c_fh, &c_disp, &c_etype,
                                &c_filetype, c_datarep);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

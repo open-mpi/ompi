@@ -76,7 +76,7 @@ void ompi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes,
 
     c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = PMPI_Graphdims_get(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Graphdims_get)(c_comm,
                                OMPI_SINGLE_NAME_CONVERT(nnodes),
                                OMPI_SINGLE_NAME_CONVERT(nedges)
                                );

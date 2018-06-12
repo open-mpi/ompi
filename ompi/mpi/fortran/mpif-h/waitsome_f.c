@@ -107,7 +107,7 @@ void ompi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     }
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_indices, *incount);
-    c_ierr = PMPI_Waitsome(OMPI_FINT_2_INT(*incount), c_req,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Waitsome)(OMPI_FINT_2_INT(*incount), c_req,
                           OMPI_SINGLE_NAME_CONVERT(outcount),
                           OMPI_ARRAY_NAME_CONVERT(array_of_indices),
                           c_status);

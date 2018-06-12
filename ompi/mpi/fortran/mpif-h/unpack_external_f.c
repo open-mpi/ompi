@@ -91,7 +91,7 @@ void ompi_unpack_external_f (char *datarep, char *inbuf, MPI_Aint *insize,
         return;
     }
 
-    c_ierr = PMPI_Unpack_external(c_datarep, inbuf,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Unpack_external)(c_datarep, inbuf,
                                  *insize,
                                  position,
                                  OMPI_F2C_BOTTOM(outbuf),

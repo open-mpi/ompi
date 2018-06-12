@@ -94,7 +94,7 @@ void ompi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
 
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
-    c_ierr = PMPI_Type_hindexed(OMPI_FINT_2_INT(*count),
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Type_hindexed)(OMPI_FINT_2_INT(*count),
                                OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                                c_disp_array, c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

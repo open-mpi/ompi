@@ -73,7 +73,7 @@ void ompi_close_port_f(char *port_name, MPI_Fint *ierr, int port_name_len)
     char *c_port_name;
 
     ompi_fortran_string_f2c(port_name, port_name_len, &c_port_name);
-    c_ierr = PMPI_Close_port(c_port_name);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Close_port)(c_port_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free ( c_port_name);

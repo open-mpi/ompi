@@ -83,7 +83,7 @@ void ompi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank,
     }
     OMPI_ARRAY_FINT_2_INT(coords, ndims);
 
-    c_ierr = PMPI_Cart_rank(c_comm,
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Cart_rank)(c_comm,
                            OMPI_ARRAY_NAME_CONVERT(coords),
                            OMPI_SINGLE_NAME_CONVERT(rank));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

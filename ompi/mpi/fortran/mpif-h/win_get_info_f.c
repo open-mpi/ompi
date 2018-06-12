@@ -62,7 +62,7 @@ void ompi_win_get_info_f(MPI_Fint *win, MPI_Fint *info, MPI_Fint *ierr)
     MPI_Info c_info;
 
     c_win = PMPI_Win_f2c(*win);
-    c_ierr = PMPI_Win_get_info(c_win, &c_info);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Win_get_info)(c_win, &c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     *info = PMPI_Info_c2f(c_info);
 }

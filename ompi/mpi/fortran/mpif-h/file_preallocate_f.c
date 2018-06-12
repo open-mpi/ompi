@@ -71,6 +71,6 @@ void ompi_file_preallocate_f(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr)
     int c_ierr;
     MPI_File c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = PMPI_File_preallocate(c_fh, (MPI_Offset) *size);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_preallocate)(c_fh, (MPI_Offset) *size);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

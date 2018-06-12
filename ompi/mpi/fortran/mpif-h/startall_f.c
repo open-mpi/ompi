@@ -90,7 +90,7 @@ void ompi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
         c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = PMPI_Startall(OMPI_FINT_2_INT(*count), c_req);
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_Startall)(OMPI_FINT_2_INT(*count), c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     for( i = 0; i < *count; i++ ) {

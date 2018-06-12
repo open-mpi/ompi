@@ -73,7 +73,7 @@ void ompi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
     OMPI_SINGLE_NAME_DECL(amode);
 
     c_fh = PMPI_File_f2c(*fh);
-    c_ierr = PMPI_File_get_amode(c_fh, OMPI_SINGLE_NAME_CONVERT(amode));
+    c_ierr = OMPI_FORTRAN_FPTR(MPI_File_get_amode)(c_fh, OMPI_SINGLE_NAME_CONVERT(amode));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
