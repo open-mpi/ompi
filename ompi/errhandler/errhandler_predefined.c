@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
@@ -149,7 +149,8 @@ void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
 
 static void out(char *str, char *arg)
 {
-    if (ompi_rte_initialized && !ompi_mpi_finalized) {
+    if (ompi_rte_initialized &&
+        ompi_mpi_state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
         if (NULL != arg) {
             opal_output(0, str, arg);
         } else {
@@ -280,7 +281,9 @@ static void backend_fatal_no_aggregate(char *type,
 {
     char *arg;
 
-    assert(!ompi_mpi_initialized || ompi_mpi_finalized);
+    int32_t state = ompi_mpi_state;
+    assert(state < OMPI_MPI_STATE_INIT_COMPLETED ||
+           state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
 
     fflush(stdout);
     fflush(stderr);
@@ -289,7 +292,7 @@ static void backend_fatal_no_aggregate(char *type,
 
     /* Per #2152, print out in plain english if something was invoked
        before MPI_INIT* or after MPI_FINALIZE */
-    if (!ompi_mpi_init_started && !ompi_mpi_initialized) {
+    if (state < OMPI_MPI_STATE_INIT_STARTED) {
         if (NULL != arg) {
             out("*** The %s() function was called before MPI_INIT was invoked.\n"
                 "*** This is disallowed by the MPI standard.\n", arg);
@@ -300,7 +303,7 @@ static void backend_fatal_no_aggregate(char *type,
                 "*** function was invoked, sorry.  :-(\n", NULL);
         }
         out("*** Your MPI job will now abort.\n", NULL);
-    } else if (ompi_mpi_finalized) {
+    } else if (state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
         if (NULL != arg) {
             out("*** The %s() function was called after MPI_FINALIZE was invoked.\n"
                 "*** This is disallowed by the MPI standard.\n", arg);
