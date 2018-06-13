@@ -40,7 +40,7 @@ void shmem_int4_inc_f(FORTRAN_POINTER_T target, MPI_Fint *pe)
 
     MCA_ATOMIC_CALL(add(FPTR_2_VOID_PTR(target),
         (const void*)&value,
-        sizeof(out_value),
+        sizeof(value),
         OMPI_FINT_2_INT(*pe),
         op));
 }
