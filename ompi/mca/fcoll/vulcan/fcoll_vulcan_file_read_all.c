@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -26,7 +26,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "math.h"
 #include "ompi/mca/pml/pml.h"
@@ -124,13 +124,13 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
 
 
     if (! recvbuf_is_contiguous ) {
-        ret = fh->f_decode_datatype ((struct mca_io_ompio_file_t *)fh,
-                                     datatype,
-                                     count,
-                                     buf,
-                                     &max_data,
-                                     &decoded_iov,
-                                     &iov_count);
+        ret = mca_common_ompio_decode_datatype ((struct mca_io_ompio_file_t *)fh,
+                                                datatype,
+                                                count,
+                                                buf,
+                                                &max_data,
+                                                &decoded_iov,
+                                                &iov_count);
         if (OMPI_SUCCESS != ret){
             goto exit;
         }
@@ -149,9 +149,9 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
         goto exit;
     }
 
-    ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
-                                      vulcan_num_io_procs,
-                                      max_data);
+    ret = mca_common_ompio_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
+                                                 vulcan_num_io_procs,
+                                                 max_data);
     if (OMPI_SUCCESS != ret){
         goto exit;
     }

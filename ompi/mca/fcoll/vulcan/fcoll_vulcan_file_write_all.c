@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -26,7 +26,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/common/ompio/common_ompio_request.h"
 #include "math.h"
@@ -184,13 +184,13 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     bytes_per_cycle =bytes_per_cycle/2;
     write_chunksize = bytes_per_cycle;
     
-    ret =   fh->f_decode_datatype ((struct mca_io_ompio_file_t *) fh,
-                                   datatype,
-                                   count,
-                                   buf,
-                                   &max_data,
-                                   &decoded_iov,
-                                   &iov_count);
+    ret =   mca_common_ompio_decode_datatype ((struct mca_io_ompio_file_t *) fh,
+                                              datatype,
+                                              count,
+                                              buf,
+                                              &max_data,
+                                              &decoded_iov,
+                                              &iov_count);
     if (OMPI_SUCCESS != ret ){
         goto exit;
     }
@@ -1620,7 +1620,7 @@ int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_proc
                                         size_t max_data)
 {
     int i, ret;
-    ret = fh->f_set_aggregator_props (fh, num_io_procs, max_data);
+    ret = mca_common_ompio_set_aggregator_props (fh, num_io_procs, max_data);
 
     /* Note: as of this version of the vulcan component, we are not using yet
        the num_groups parameter to split the aggregators (and processes) into

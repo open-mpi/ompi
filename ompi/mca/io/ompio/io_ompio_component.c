@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -260,7 +260,8 @@ static int open_component(void)
 
     mca_common_ompio_request_init ();
 
-    return OMPI_SUCCESS;
+    return mca_common_ompio_set_callbacks(ompi_io_ompio_generate_current_file_view,
+                                          mca_io_ompio_get_mca_parameter_value);
 }
 
 
@@ -367,7 +368,7 @@ static int delete_select(const char *filename, struct opal_info_t *info,
     int ret;
 
     OPAL_THREAD_LOCK (&mca_io_ompio_mutex);
-    ret = mca_io_ompio_file_delete (filename, info);
+    ret = mca_common_ompio_file_delete (filename, info);
     OPAL_THREAD_UNLOCK (&mca_io_ompio_mutex);
 
     return ret;

@@ -10,9 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -40,6 +40,9 @@
 #include <math.h>
 #include "common_ompio.h"
 #include "ompi/mca/topo/topo.h"
+
+static mca_io_ompio_generate_current_file_view_fn_t generate_current_file_view_fn;
+static mca_io_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value_fn;
 
 int mca_common_ompio_file_open (ompi_communicator_t *comm,
                               const char *filename,
@@ -92,6 +95,10 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_atomicity = 0;
     ompio_fh->f_fs_block_size = 4096;
 
+    /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
+    ompio_fh->f_generate_current_file_view=generate_current_file_view_fn;
+    ompio_fh->f_get_mca_parameter_value=get_mca_parameter_value_fn;
+
     mca_common_ompio_set_file_defaults (ompio_fh);
     ompio_fh->f_filename = filename;
 
@@ -102,16 +109,10 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_write_time);
     mca_common_ompio_initialize_print_queue(&ompio_fh->f_coll_read_time);
 
-    /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
-    ompio_fh->f_decode_datatype=ompi_io_ompio_decode_datatype;
-    ompio_fh->f_generate_current_file_view=ompi_io_ompio_generate_current_file_view;
-
-    ompio_fh->f_get_mca_parameter_value=mca_io_ompio_get_mca_parameter_value;
-    ompio_fh->f_set_aggregator_props=mca_io_ompio_set_aggregator_props;
-
     /* This fix is needed for data seiving to work with
        two-phase collective I/O */
-    if ( mca_io_ompio_overwrite_amode && !(amode & MPI_MODE_SEQUENTIAL) ) {
+    if ( OMPIO_MCA_GET(ompio_fh, overwrite_amode) && !(amode & MPI_MODE_SEQUENTIAL) ) {
+
         if ((amode & MPI_MODE_WRONLY)){
             amode -= MPI_MODE_WRONLY;
             amode += MPI_MODE_RDWR;
@@ -176,7 +177,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
         ** are used by his application.	
         */
 	if ( NULL != ompio_fh->f_sharedfp &&
-	     !mca_io_ompio_sharedfp_lazy_open ) {
+	     !OMPIO_MCA_GET(ompio_fh, sharedfp_lazy_open) ) {
 	    ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
 							   filename,
 							   amode,
@@ -201,7 +202,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
         mca_common_ompio_set_explicit_offset (ompio_fh, current_size);
         if ( true == use_sharedfp ) {
             if ( NULL != ompio_fh->f_sharedfp &&
-                 !mca_io_ompio_sharedfp_lazy_open  ) {                
+                 !OMPIO_MCA_GET(ompio_fh, sharedfp_lazy_open) ) {                
                 shared_fp_base_module = ompio_fh->f_sharedfp;
                 ret = shared_fp_base_module->sharedfp_seek(ompio_fh,current_size, MPI_SEEK_SET);
                 if ( MPI_SUCCESS != ret  ) {
@@ -241,7 +242,7 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     }
 
 
-    if(mca_io_ompio_coll_timing_info){
+    if(OMPIO_MCA_GET(ompio_fh, coll_timing_info)){
         strcpy (name, "WRITE");
         if (!mca_common_ompio_empty_print_queue(ompio_fh->f_coll_write_time)){
             ret = mca_common_ompio_print_time_info(ompio_fh->f_coll_write_time,
@@ -278,7 +279,7 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
 	ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
     }
     if ( delete_flag ) {
-        ret = mca_io_ompio_file_delete ( ompio_fh->f_filename, &(MPI_INFO_NULL->super) );
+        ret = mca_common_ompio_file_delete ( ompio_fh->f_filename, &(MPI_INFO_NULL->super) );
     }
 
     if ( NULL != ompio_fh->f_fs ) {
@@ -407,7 +408,7 @@ int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
         fh->f_io_array = NULL;
         fh->f_perm = OMPIO_PERM_NULL;
         fh->f_flags = 0;
-        fh->f_bytes_per_agg = mca_io_ompio_bytes_per_agg;
+        fh->f_bytes_per_agg = OMPIO_MCA_GET(fh, bytes_per_agg);
         fh->f_datarep = strdup ("native");
 
         fh->f_offset = 0;
@@ -472,3 +473,153 @@ int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 }
 
 
+int mca_common_ompio_file_delete (const char *filename,
+                                  struct opal_info_t *info)
+{
+    int ret = OMPI_SUCCESS;
+
+    /* No locking required for file_delete according to my understanding.
+       One thread will succeed, the other ones silently ignore the 
+       error that the file is already deleted.
+    */
+    ret = unlink(filename);
+
+    if (0 > ret ) {
+        if ( ENOENT == errno ) {
+            return MPI_ERR_NO_SUCH_FILE;
+        } else {
+            opal_output (0, "mca_common_ompio_file_delete: Could not remove file %s errno = %d %s\n", filename,
+                         errno, strerror(errno));
+            return MPI_ERR_ACCESS;
+        }
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int mca_common_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
+                                      ompi_datatype_t *datatype,
+                                      int count,
+                                      const void *buf,
+                                      size_t *max_data,
+                                      struct iovec **iov,
+                                      uint32_t *iovec_count)
+{
+
+
+
+    opal_convertor_t convertor;
+    size_t remaining_length = 0;
+    uint32_t i;
+    uint32_t temp_count;
+    struct iovec *temp_iov=NULL;
+    size_t temp_data;
+
+
+    opal_convertor_clone (fh->f_convertor, &convertor, 0);
+
+    if (OMPI_SUCCESS != opal_convertor_prepare_for_send (&convertor,
+                                                         &(datatype->super),
+                                                         count,
+                                                         buf)) {
+        opal_output (1, "Cannot attach the datatype to a convertor\n");
+        return OMPI_ERROR;
+    }
+
+    if ( 0 == datatype->super.size ) {
+	*max_data = 0;
+	*iovec_count = 0;
+	*iov = NULL;
+	return OMPI_SUCCESS;
+    }
+
+    remaining_length = count * datatype->super.size;
+
+    temp_count = OMPIO_IOVEC_INITIAL_SIZE;
+    temp_iov = (struct iovec*)malloc(temp_count * sizeof(struct iovec));
+    if (NULL == temp_iov) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    while (0 == opal_convertor_raw(&convertor,
+				   temp_iov,
+                                   &temp_count,
+                                   &temp_data)) {
+#if 0
+        printf ("%d: New raw extraction (iovec_count = %d, max_data = %lu)\n",
+                fh->f_rank,temp_count, (unsigned long)temp_data);
+        for (i = 0; i < temp_count; i++) {
+            printf ("%d: \t{%p, %lu}\n",fh->f_rank,
+		    temp_iov[i].iov_base,
+		    (unsigned long)temp_iov[i].iov_len);
+        }
+#endif
+
+        *iovec_count = *iovec_count + temp_count;
+        *max_data = *max_data + temp_data;
+        *iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
+        if (NULL == *iov) {
+            opal_output(1, "OUT OF MEMORY\n");
+            free(temp_iov);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        for (i=0 ; i<temp_count ; i++) {
+            (*iov)[i+(*iovec_count-temp_count)].iov_base = temp_iov[i].iov_base;
+            (*iov)[i+(*iovec_count-temp_count)].iov_len = temp_iov[i].iov_len;
+        }
+
+        remaining_length -= temp_data;
+        temp_count = OMPIO_IOVEC_INITIAL_SIZE;
+    }
+#if 0
+    printf ("%d: LAST raw extraction (iovec_count = %d, max_data = %d)\n",
+            fh->f_rank,temp_count, temp_data);
+    for (i = 0; i < temp_count; i++) {
+        printf ("%d: \t offset[%d]: %ld; length[%d]: %ld\n", fh->f_rank,i,temp_iov[i].iov_base, i,temp_iov[i].iov_len);
+    }
+#endif
+    *iovec_count = *iovec_count + temp_count;
+    *max_data = *max_data + temp_data;
+    if ( temp_count > 0 ) {
+	*iov = (struct iovec *) realloc (*iov, *iovec_count * sizeof(struct iovec));
+	if (NULL == *iov) {
+	    opal_output(1, "OUT OF MEMORY\n");
+            free(temp_iov);
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+    }
+    for (i=0 ; i<temp_count ; i++) {
+        (*iov)[i+(*iovec_count-temp_count)].iov_base = temp_iov[i].iov_base;
+        (*iov)[i+(*iovec_count-temp_count)].iov_len = temp_iov[i].iov_len;
+    }
+
+    remaining_length -= temp_data;
+
+#if 0
+    if (0 == fh->f_rank) {
+        printf ("%d Entries: \n",*iovec_count);
+        for (i=0 ; i<*iovec_count ; i++) {
+            printf ("\t{%p, %d}\n",
+                    (*iov)[i].iov_base,
+                    (*iov)[i].iov_len);
+        }
+    }
+#endif
+    if (remaining_length != 0) {
+        printf( "Not all raw description was been extracted (%lu bytes missing)\n",
+                (unsigned long) remaining_length );
+    }
+
+    free (temp_iov);
+
+    return OMPI_SUCCESS;
+}
+
+int mca_common_ompio_set_callbacks(mca_io_ompio_generate_current_file_view_fn_t generate_current_file_view,
+                                   mca_io_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value)
+{
+    generate_current_file_view_fn = generate_current_file_view;
+    get_mca_parameter_value_fn = get_mca_parameter_value;
+    return OMPI_SUCCESS;
+}

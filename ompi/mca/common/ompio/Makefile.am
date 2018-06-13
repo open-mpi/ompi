@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2016 University of Houston. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
+# Copyright (c) 2017-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -22,11 +22,13 @@
 #
 
 headers = \
+	common_ompio_aggregators.h \
 	common_ompio_print_queue.h \
 	common_ompio_request.h \
 	common_ompio.h
 
 sources = \
+	common_ompio_aggregators.c \
 	common_ompio_print_queue.c \
 	common_ompio_request.c \
 	common_ompio_file_open.c   \

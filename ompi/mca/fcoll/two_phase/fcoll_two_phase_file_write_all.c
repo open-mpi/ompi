@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -29,7 +29,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/fcoll/fcoll.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "opal/mca/base/base.h"
 #include "math.h"
@@ -180,13 +180,13 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 
     if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
 
-	ret =   fh->f_decode_datatype ((struct mca_io_ompio_file_t *)fh,
-				       datatype,
-				       count,
-				       buf,
-				       &max_data,
-				       &temp_iov,
-				       &iov_count);
+	ret =   mca_common_ompio_decode_datatype ((struct mca_io_ompio_file_t *)fh,
+				                  datatype,
+				                  count,
+				                  buf,
+				                  &max_data,
+				                  &temp_iov,
+				                  &iov_count);
 	if (OMPI_SUCCESS != ret ){
 	    goto exit;
 	}
@@ -228,9 +228,9 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
         goto exit;
     }
     if(-1 == two_phase_num_io_procs){
-	ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *)fh,
-					  two_phase_num_io_procs,
-					  max_data);
+	ret = mca_common_ompio_set_aggregator_props ((struct mca_io_ompio_file_t *)fh,
+					             two_phase_num_io_procs,
+					             max_data);
 	if ( OMPI_SUCCESS != ret){
             goto exit;
 	}

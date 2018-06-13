@@ -10,6 +10,8 @@
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
  *  Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ *  Copyright (c) 2018      Research Organization for Information Science
+ *                          and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -31,7 +33,6 @@
 
 #include "common_ompio.h"
 #include "common_ompio_request.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
 #include "math.h"
 #include <unistd.h>
 
@@ -85,19 +86,19 @@ int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
       return ret;
     }
 
-    ompi_io_ompio_decode_datatype (fh,
-                                   datatype,
-                                   count,
-                                   buf,
-                                   &max_data,
-                                   &decoded_iov,
-                                   &iov_count);
+    mca_common_ompio_decode_datatype (fh,
+                                      datatype,
+                                      count,
+                                      buf,
+                                      &max_data,
+                                      &decoded_iov,
+                                      &iov_count);
 
-    if ( -1 == mca_io_ompio_cycle_buffer_size ) {
+    if ( -1 == OMPIO_MCA_GET(fh, cycle_buffer_size) ) {
 	bytes_per_cycle = max_data;
     }
     else {
-	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+	bytes_per_cycle = OMPIO_MCA_GET(fh, cycle_buffer_size);
     }
     cycles = ceil((float)max_data/bytes_per_cycle);
 
@@ -207,13 +208,13 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
 	int i = 0; /* index into the decoded iovec of the buffer */
 	int j = 0; /* index into the file vie iovec */
 
-	ompi_io_ompio_decode_datatype (fh,
-				       datatype,
-				       count,
-				       buf,
-				       &max_data,
-				       &decoded_iov,
-				       &iov_count);
+	mca_common_ompio_decode_datatype (fh,
+				          datatype,
+				          count,
+				          buf,
+				          &max_data,
+				          &decoded_iov,
+				          &iov_count);
 
 	// Non-blocking operations have to occur in a single cycle
 	j = fh->f_index_in_file_view;
