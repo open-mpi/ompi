@@ -29,7 +29,7 @@
 #include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
 
-int mca_sharedfp_lockedfile_iwrite(mca_io_ompio_file_t *fh,
+int mca_sharedfp_lockedfile_iwrite(ompio_file_t *fh,
                                    const void *buf,
                                    int count,
                                    ompi_datatype_t *datatype,
@@ -88,7 +88,7 @@ int mca_sharedfp_lockedfile_iwrite(mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_sharedfp_lockedfile_write_ordered_begin(mca_io_ompio_file_t *fh,
+int mca_sharedfp_lockedfile_write_ordered_begin(ompio_file_t *fh,
                                        const void *buf,
                                        int count,
                                        struct ompi_datatype_t *datatype)
@@ -217,7 +217,7 @@ exit:
 
 
 
-int mca_sharedfp_lockedfile_write_ordered_end(mca_io_ompio_file_t *fh,
+int mca_sharedfp_lockedfile_write_ordered_end(ompio_file_t *fh,
                                               const void *buf,
                                               ompi_status_public_t *status)
 {

@@ -287,7 +287,7 @@ file_query(struct ompi_file_t *file,
            struct mca_io_base_file_t **private_data,
            int *priority)
 {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     char *tmp;
     int rank;
     int is_lustre=0; //false
@@ -324,7 +324,7 @@ file_query(struct ompi_file_t *file,
     /* Allocate a space for this module to hang private data (e.g.,
        the OMPIO file handle) */
 
-    data = calloc(1, sizeof(mca_io_ompio_data_t));
+    data = calloc(1, sizeof(mca_common_ompio_data_t));
     if (NULL == data) {
         return NULL;
     }

@@ -49,7 +49,7 @@ static int read_heap_sort (mca_io_ompio_local_io_array *io_array,
 
 
 int
-mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
+mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
                                  void *buf,
                                  int count,
                                  struct ompi_datatype_t *datatype,
@@ -124,7 +124,7 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
 
 
     if (! recvbuf_is_contiguous ) {
-        ret = mca_common_ompio_decode_datatype ((struct mca_io_ompio_file_t *)fh,
+        ret = mca_common_ompio_decode_datatype ((struct ompio_file_t *)fh,
                                                 datatype,
                                                 count,
                                                 buf,
@@ -149,7 +149,7 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
         goto exit;
     }
 
-    ret = mca_common_ompio_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
+    ret = mca_common_ompio_set_aggregator_props ((struct ompio_file_t *) fh,
                                                  vulcan_num_io_procs,
                                                  max_data);
     if (OMPI_SUCCESS != ret){
@@ -199,7 +199,7 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
     /*********************************************************************
      *** 3. Generate the File offsets/lengths corresponding to this write
      ********************************************************************/
-    ret = fh->f_generate_current_file_view ((struct mca_io_ompio_file_t *) fh,
+    ret = fh->f_generate_current_file_view ((struct ompio_file_t *) fh,
                                             max_data,
                                             &local_iov_array,
                                             &local_count);
@@ -662,8 +662,8 @@ mca_fcoll_vulcan_file_read_all (mca_io_ompio_file_t *fh,
              /**********************************************************
 	     *** 7e. Create the io array, and pass it to fbtl
 	     *********************************************************/
-            fh->f_io_array = (mca_io_ompio_io_array_t *) malloc
-                (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
+            fh->f_io_array = (mca_common_ompio_io_array_t *) malloc
+                (entries_per_aggregator * sizeof (mca_common_ompio_io_array_t));
             if (NULL == fh->f_io_array) {
                 opal_output(1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;

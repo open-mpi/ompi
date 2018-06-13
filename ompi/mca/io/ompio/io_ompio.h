@@ -116,12 +116,12 @@ OMPI_DECLSPEC int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_arr
                                              int *sorted);
 
 
-OMPI_DECLSPEC int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
+OMPI_DECLSPEC int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
                                                             size_t max_data,
                                                             struct iovec **f_iov,
                                                             int *iov_count);
 
-OMPI_DECLSPEC int ompi_io_ompio_generate_groups (mca_io_ompio_file_t *fh,
+OMPI_DECLSPEC int ompi_io_ompio_generate_groups (ompio_file_t *fh,
                                                  int num_aggregators,
                                                  int *root,
                                                  int *procs_per_group,

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -30,7 +30,7 @@
 #include <unistd.h>
 
 
-int mca_fcoll_individual_file_write_all (mca_io_ompio_file_t *fh,
+int mca_fcoll_individual_file_write_all (ompio_file_t *fh,
                                          const void *buf,
                                          int count,
                                          struct ompi_datatype_t *datatype,

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +61,7 @@ int mca_fs_ufs_component_init_query(bool enable_progress_threads,
 }
 
 struct mca_fs_base_module_1_0_0_t *
-mca_fs_ufs_component_file_query (mca_io_ompio_file_t *fh, int *priority)
+mca_fs_ufs_component_file_query (ompio_file_t *fh, int *priority)
 {
     /* UFS can always be used, will however have a low priority */
 
@@ -71,7 +73,7 @@ mca_fs_ufs_component_file_query (mca_io_ompio_file_t *fh, int *priority)
    return &ufs;
 }
 
-int mca_fs_ufs_component_file_unquery (mca_io_ompio_file_t *file)
+int mca_fs_ufs_component_file_unquery (ompio_file_t *file)
 {
    /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need
@@ -80,7 +82,7 @@ int mca_fs_ufs_component_file_unquery (mca_io_ompio_file_t *file)
    return OMPI_SUCCESS;
 }
 
-int mca_fs_ufs_module_init (mca_io_ompio_file_t *file)
+int mca_fs_ufs_module_init (ompio_file_t *file)
 {
     /* Make sure the file type is not overwritten by the last queried
 	 * component */
@@ -89,7 +91,7 @@ int mca_fs_ufs_module_init (mca_io_ompio_file_t *file)
 }
 
 
-int mca_fs_ufs_module_finalize (mca_io_ompio_file_t *file)
+int mca_fs_ufs_module_finalize (ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

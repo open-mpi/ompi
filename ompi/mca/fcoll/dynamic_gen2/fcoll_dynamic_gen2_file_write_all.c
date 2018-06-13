@@ -61,7 +61,7 @@ typedef struct mca_io_ompio_aggregator_data {
     int bytes_sent, prev_bytes_sent;
     struct iovec *decoded_iov;
     int bytes_to_write, prev_bytes_to_write;
-    mca_io_ompio_io_array_t *io_array, *prev_io_array;
+    mca_common_ompio_io_array_t *io_array, *prev_io_array;
     int num_io_entries, prev_num_io_entries;
 } mca_io_ompio_aggregator_data;
 
@@ -92,7 +92,7 @@ typedef struct mca_io_ompio_aggregator_data {
 static int shuffle_init ( int index, int cycles, int aggregator, int rank, 
                           mca_io_ompio_aggregator_data *data, 
                           ompi_request_t **reqs );
-static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data, int write_chunksize );
+static int write_init (ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data, int write_chunksize );
 
 int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *decoded_iov, int iov_count, 
                                         struct iovec *local_iov_array, int local_count, 
@@ -102,7 +102,7 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *decoded_iov, int iov_
                                         int stripe_count, int stripe_size); 
 
 
-int mca_fcoll_dynamic_gen2_get_configuration (mca_io_ompio_file_t *fh, int *dynamic_gen2_num_io_procs, 
+int mca_fcoll_dynamic_gen2_get_configuration (ompio_file_t *fh, int *dynamic_gen2_num_io_procs, 
                                               int **ret_aggregators);
 
 
@@ -110,12 +110,12 @@ static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
 			    int num_entries,
 			    int *sorted);
 
-int mca_fcoll_dynamic_gen2_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_array_t *work_array,
+int mca_fcoll_dynamic_gen2_split_iov_array ( ompio_file_t *fh, mca_common_ompio_io_array_t *work_array,
                                              int num_entries, int *last_array_pos, int *last_pos_in_field,
                                              int chunk_size );
 
 
-int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
+int mca_fcoll_dynamic_gen2_file_write_all (ompio_file_t *fh,
                                       const void *buf,
                                       int count,
                                       struct ompi_datatype_t *datatype,
@@ -168,7 +168,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
        the user requested */
     bytes_per_cycle =bytes_per_cycle/2;
         
-    ret =   mca_common_ompio_decode_datatype ((struct mca_io_ompio_file_t *) fh,
+    ret =   mca_common_ompio_decode_datatype ((struct ompio_file_t *) fh,
                                               datatype,
                                               count,
                                               buf,
@@ -234,7 +234,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
      *** 2. Generate the local offsets/lengths array corresponding to
      ***    this write operation
      ********************************************************************/
-    ret = fh->f_generate_current_file_view( (struct mca_io_ompio_file_t *) fh,
+    ret = fh->f_generate_current_file_view( (struct ompio_file_t *) fh,
 					    max_data,
 					    &local_iov_array,
 					    &local_count);
@@ -734,7 +734,7 @@ exit :
 }
 
 
-static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data, int write_chunksize )
+static int write_init (ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data, int write_chunksize )
 {
     int ret=OMPI_SUCCESS;
     int last_array_pos=0;
@@ -1258,8 +1258,8 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     if (aggregator == rank && entries_per_aggregator>0) {
         
         
-        data->io_array = (mca_io_ompio_io_array_t *) malloc
-            (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
+        data->io_array = (mca_common_ompio_io_array_t *) malloc
+            (entries_per_aggregator * sizeof (mca_common_ompio_io_array_t));
         if (NULL == data->io_array) {
             opal_output(1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1549,7 +1549,7 @@ exit:
 }
 
 
-int mca_fcoll_dynamic_gen2_get_configuration (mca_io_ompio_file_t *fh, int *dynamic_gen2_num_io_procs, int **ret_aggregators)
+int mca_fcoll_dynamic_gen2_get_configuration (ompio_file_t *fh, int *dynamic_gen2_num_io_procs, int **ret_aggregators)
 {
     int *aggregators=NULL;
     int num_io_procs = *dynamic_gen2_num_io_procs;
@@ -1591,7 +1591,7 @@ int mca_fcoll_dynamic_gen2_get_configuration (mca_io_ompio_file_t *fh, int *dyna
 }    
     
 
-int mca_fcoll_dynamic_gen2_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_array_t *io_array, int num_entries,
+int mca_fcoll_dynamic_gen2_split_iov_array ( ompio_file_t *fh, mca_common_ompio_io_array_t *io_array, int num_entries,
                                              int *ret_array_pos, int *ret_pos,  int chunk_size )
 {
 
@@ -1601,7 +1601,7 @@ int mca_fcoll_dynamic_gen2_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_omp
     size_t bytes_to_write = chunk_size;
 
     if ( 0 == array_pos && 0 == pos ) {
-        fh->f_io_array = (mca_io_ompio_io_array_t *) malloc ( num_entries * sizeof(mca_io_ompio_io_array_t));
+        fh->f_io_array = (mca_common_ompio_io_array_t *) malloc ( num_entries * sizeof(mca_common_ompio_io_array_t));
         if ( NULL == fh->f_io_array ){
             opal_output (1,"Could not allocate memory\n");
             return -1;

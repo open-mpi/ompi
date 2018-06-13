@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2017 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -40,27 +40,27 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 				       const char* filename,
 				       int amode,
 				       struct opal_info_t *info,
-				       mca_io_ompio_file_t *fh)
+				       ompio_file_t *fh)
 {
     int err = MPI_SUCCESS;
     char * lockedfilename;
     int handle, rank;
     struct mca_sharedfp_lockedfile_data * module_data = NULL;
     struct mca_sharedfp_base_data_t* sh;
-    mca_io_ompio_file_t * shfileHandle, *ompio_fh;
-    mca_io_ompio_data_t *data;
+    ompio_file_t * shfileHandle, *ompio_fh;
+    mca_common_ompio_data_t *data;
 
     /*------------------------------------------------------------*/
     /*Open the same file again without shared file pointer support*/
     /*------------------------------------------------------------*/
-    shfileHandle =  (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    shfileHandle =  (ompio_file_t *)malloc(sizeof(ompio_file_t));
     err = mca_common_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
     if ( OMPI_SUCCESS != err)  {
         opal_output(0, "mca_sharedfp_lockedfile_file_open: Error during file open\n");
         return err;
     }
     shfileHandle->f_fh = fh->f_fh;
-    data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_fh->f_io_selected_data;
     ompio_fh = &data->ompio_fh;
 
     err = mca_common_ompio_set_view (shfileHandle,
@@ -156,7 +156,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     return err;
 }
 
-int mca_sharedfp_lockedfile_file_close (mca_io_ompio_file_t *fh)
+int mca_sharedfp_lockedfile_file_close (ompio_file_t *fh)
 {
     int err = OMPI_SUCCESS;
     struct mca_sharedfp_lockedfile_data * module_data = NULL;

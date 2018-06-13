@@ -41,7 +41,7 @@
 #include "io_ompio.h"
 
 
-int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
+int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
                                               size_t max_data,
                                               struct iovec **f_iov,
                                               int *iov_count)

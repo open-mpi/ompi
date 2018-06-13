@@ -48,10 +48,10 @@
 ** routesin are used e.g. from the shared file pointer modules.
 ** The main difference is, that the first one takes an ompi_file_t
 ** as a file pointer argument, while the second uses the ompio internal
-** mca_io_ompio_file_t structure.
+** ompio_file_t structure.
 */
 
-int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_read (ompio_file_t *fh,
 			      void *buf,
 			      int count,
 			      struct ompi_datatype_t *datatype,
@@ -148,7 +148,7 @@ int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_read_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_read_at (ompio_file_t *fh,
 				 OMPI_MPI_OFFSET_TYPE offset,
 				 void *buf,
 				 int count,
@@ -176,7 +176,7 @@ int mca_common_ompio_file_read_at (mca_io_ompio_file_t *fh,
 }
 
 
-int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iread (ompio_file_t *fh,
 			       void *buf,
 			       int count,
 			       struct ompi_datatype_t *datatype,
@@ -263,7 +263,7 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
 }
 
 
-int mca_common_ompio_file_iread_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iread_at (ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE offset,
 				  void *buf,
 				  int count,
@@ -296,7 +296,7 @@ int mca_common_ompio_file_iread_at (mca_io_ompio_file_t *fh,
 
 
 /* Infrastructure for collective operations  */
-int mca_common_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
 				     OMPI_MPI_OFFSET_TYPE offset,
 				     void *buf,
 				     int count,
@@ -318,7 +318,7 @@ int mca_common_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
+int mca_common_ompio_file_iread_at_all (ompio_file_t *fp,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      void *buf,
 				      int count,
@@ -350,7 +350,7 @@ int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
     return ret;
 }
 
-int mca_common_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
+int mca_common_ompio_set_explicit_offset (ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE offset)
 {
     int i = 0;

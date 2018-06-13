@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
-int mca_sharedfp_sm_read ( mca_io_ompio_file_t *fh,
+int mca_sharedfp_sm_read ( ompio_file_t *fh,
                            void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
 {
     int ret = OMPI_SUCCESS;
@@ -83,7 +85,7 @@ int mca_sharedfp_sm_read ( mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_sharedfp_sm_read_ordered (mca_io_ompio_file_t *fh,
+int mca_sharedfp_sm_read_ordered (ompio_file_t *fh,
                                   void *buf,
                                   int count,
                                   struct ompi_datatype_t *datatype,

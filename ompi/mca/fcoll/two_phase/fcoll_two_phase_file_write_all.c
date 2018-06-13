@@ -56,10 +56,10 @@ typedef struct flat_list_node {
 
 
 /* local function declarations  */
-static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
+static int two_phase_exch_and_write(ompio_file_t *fh,
 				    const void *buf,
 				    MPI_Datatype datatype,
-				    mca_io_ompio_access_array_t *others_req,
+				    mca_common_ompio_access_array_t *others_req,
 				    struct iovec *offset_len,
 				    int contig_access_count,
 				    OMPI_MPI_OFFSET_TYPE min_st_offset,
@@ -72,7 +72,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 
 
 
-static int  two_phase_exchage_data(mca_io_ompio_file_t *fh,
+static int  two_phase_exchage_data(ompio_file_t *fh,
 				   const void *buf,
 				   char *write_buf,
 				   struct iovec *offset_length,
@@ -87,7 +87,7 @@ static int  two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE *fd_start,
 				   OMPI_MPI_OFFSET_TYPE *fd_end,
 				   Flatlist_node *flat_buf,
-				   mca_io_ompio_access_array_t *others_req,
+				   mca_common_ompio_access_array_t *others_req,
 				   int *send_buf_idx, int *curr_to_proc,
 				   int *done_to_proc, int iter,
 				   size_t *buf_idx, MPI_Aint buftype_extent,
@@ -95,7 +95,7 @@ static int  two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				   int *aggregator_list,  int *hole);
 
 
-static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
+static int two_phase_fill_send_buffer(ompio_file_t *fh,
 				      const void *buf,
 				      Flatlist_node *flat_buf,
 				      char **send_buf,
@@ -120,7 +120,7 @@ static int is_aggregator(int rank,
 			 int *aggregator_list);
 #endif
 
-void two_phase_heap_merge(mca_io_ompio_access_array_t *others_req,
+void two_phase_heap_merge(mca_common_ompio_access_array_t *others_req,
 			  int *count,
 			  OMPI_MPI_OFFSET_TYPE *srt_off,
 			  int *srt_len,
@@ -141,7 +141,7 @@ double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
 #endif
 
 int
-mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
+mca_fcoll_two_phase_file_write_all (ompio_file_t *fh,
                                     const void *buf,
                                     int count,
                                     struct ompi_datatype_t *datatype,
@@ -166,7 +166,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE *start_offsets=NULL, *end_offsets=NULL;
     OMPI_MPI_OFFSET_TYPE *fd_start=NULL, *fd_end=NULL, min_st_offset;
     Flatlist_node *flat_buf=NULL;
-    mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
+    mca_common_ompio_access_array_t *my_req=NULL, *others_req=NULL;
     MPI_Aint send_buf_addr;
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     mca_common_ompio_print_entry nentry;
@@ -180,7 +180,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 
     if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
 
-	ret =   mca_common_ompio_decode_datatype ((struct mca_io_ompio_file_t *)fh,
+	ret =   mca_common_ompio_decode_datatype ((struct ompio_file_t *)fh,
 				                  datatype,
 				                  count,
 				                  buf,
@@ -228,7 +228,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
         goto exit;
     }
     if(-1 == two_phase_num_io_procs){
-	ret = mca_common_ompio_set_aggregator_props ((struct mca_io_ompio_file_t *)fh,
+	ret = mca_common_ompio_set_aggregator_props ((struct ompio_file_t *)fh,
 					             two_phase_num_io_procs,
 					             max_data);
 	if ( OMPI_SUCCESS != ret){
@@ -264,7 +264,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
         }
     }        
 
-    ret = fh->f_generate_current_file_view ((struct mca_io_ompio_file_t*)fh,
+    ret = fh->f_generate_current_file_view ((struct ompio_file_t*)fh,
 					    max_data,
 					    &iov,
 					    &local_count);
@@ -590,10 +590,10 @@ exit :
 }
 
 
-static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
+static int two_phase_exch_and_write(ompio_file_t *fh,
 				    const void *buf,
 				    MPI_Datatype datatype,
-				    mca_io_ompio_access_array_t *others_req,
+				    mca_common_ompio_access_array_t *others_req,
 				    struct iovec *offset_len,
 				    int contig_access_count,
 				    OMPI_MPI_OFFSET_TYPE min_st_offset,
@@ -842,8 +842,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	    }
 #endif
 	    len = size * byte_size;
-	    fh->f_io_array = (mca_io_ompio_io_array_t *)malloc
-		(sizeof(mca_io_ompio_io_array_t));
+	    fh->f_io_array = (mca_common_ompio_io_array_t *)malloc
+		(sizeof(mca_common_ompio_io_array_t));
 	    if (NULL == fh->f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
 		ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -928,7 +928,7 @@ exit:
     return ret;
 }
 
-static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
+static int two_phase_exchage_data(ompio_file_t *fh,
 				  const void *buf,
 				  char *write_buf,
 				  struct iovec *offset_length,
@@ -943,7 +943,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE *fd_start,
 				  OMPI_MPI_OFFSET_TYPE *fd_end,
 				  Flatlist_node *flat_buf,
-				  mca_io_ompio_access_array_t *others_req,
+				  mca_common_ompio_access_array_t *others_req,
 				  int *send_buf_idx, int *curr_to_proc,
 				  int *done_to_proc, int iter,
 				  size_t *buf_idx,MPI_Aint buftype_extent,
@@ -1069,8 +1069,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     if (nprocs_recv){
 	if (*hole){
 	    if (off >= 0){
-		fh->f_io_array = (mca_io_ompio_io_array_t *)malloc
-		    (sizeof(mca_io_ompio_io_array_t));
+		fh->f_io_array = (mca_common_ompio_io_array_t *)malloc
+		    (sizeof(mca_common_ompio_io_array_t));
 		if (NULL == fh->f_io_array) {
 		    opal_output(1, "OUT OF MEMORY\n");
                     ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1287,7 +1287,7 @@ exit:
 
 
 
-static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
+static int two_phase_fill_send_buffer(ompio_file_t *fh,
 				      const void *buf,
 				      Flatlist_node *flat_buf,
 				      char **send_buf,
@@ -1407,7 +1407,7 @@ static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
 
 
 
-void two_phase_heap_merge( mca_io_ompio_access_array_t *others_req,
+void two_phase_heap_merge( mca_common_ompio_access_array_t *others_req,
 			   int *count,
 			   OMPI_MPI_OFFSET_TYPE *srt_off,
 			   int *srt_len,

@@ -26,8 +26,6 @@
 
 #include "mpi.h"
 
-struct mca_io_ompio_file_t;
-
 #define MCA_COMMON_OMPIO_QUEUESIZE 2048
 
 /*To extract time-information */
@@ -61,7 +59,7 @@ OMPI_DECLSPEC int mca_common_ompio_full_print_queue( struct mca_common_ompio_pri
 OMPI_DECLSPEC int mca_common_ompio_initialize_print_queue(struct mca_common_ompio_print_queue **q);
 
 OMPI_DECLSPEC int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
-                                                    char *name_operation, struct mca_io_ompio_file_t *fh);
+                                                    char *name_operation, struct ompio_file_t *fh);
 
 
 END_C_DECLS

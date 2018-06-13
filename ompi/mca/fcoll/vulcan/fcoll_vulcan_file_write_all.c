@@ -60,7 +60,7 @@ typedef struct mca_io_ompio_aggregator_data {
     int bytes_sent, prev_bytes_sent;
     struct iovec *decoded_iov;
     int bytes_to_write, prev_bytes_to_write;
-    mca_io_ompio_io_array_t *io_array, *prev_io_array;
+    mca_common_ompio_io_array_t *io_array, *prev_io_array;
     int num_io_entries, prev_num_io_entries;
 } mca_io_ompio_aggregator_data;
 
@@ -91,7 +91,7 @@ typedef struct mca_io_ompio_aggregator_data {
 static int shuffle_init ( int index, int cycles, int aggregator, int rank, 
                           mca_io_ompio_aggregator_data *data, 
                           ompi_request_t **reqs );
-static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data,
+static int write_init (ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data,
                         int write_chunksize, int write_synchType, ompi_request_t **request);
 int mca_fcoll_vulcan_break_file_view ( struct iovec *decoded_iov, int iov_count, 
                                         struct iovec *local_iov_array, int local_count, 
@@ -101,7 +101,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *decoded_iov, int iov_count,
                                         int stripe_count, size_t stripe_size); 
 
 
-int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_procs, 
+int mca_fcoll_vulcan_get_configuration (ompio_file_t *fh, int num_io_procs, 
                                         int num_groups, size_t max_data);
 
 
@@ -109,16 +109,16 @@ static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
 			    int num_entries,
 			    int *sorted);
 
-int mca_fcoll_vulcan_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_array_t *work_array,
+int mca_fcoll_vulcan_split_iov_array ( ompio_file_t *fh, mca_common_ompio_io_array_t *work_array,
                                              int num_entries, int *last_array_pos, int *last_pos_in_field,
                                              int chunk_size );
 
 
-static int mca_fcoll_vulcan_minmax ( mca_io_ompio_file_t *fh, struct iovec *iov, int iov_count,  int num_aggregators, 
+static int mca_fcoll_vulcan_minmax ( ompio_file_t *fh, struct iovec *iov, int iov_count,  int num_aggregators, 
                                      long *new_stripe_size);
 
 
-int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
+int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
                                       const void *buf,
                                       int count,
                                       struct ompi_datatype_t *datatype,
@@ -184,7 +184,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
     bytes_per_cycle =bytes_per_cycle/2;
     write_chunksize = bytes_per_cycle;
     
-    ret =   mca_common_ompio_decode_datatype ((struct mca_io_ompio_file_t *) fh,
+    ret =   mca_common_ompio_decode_datatype ((struct ompio_file_t *) fh,
                                               datatype,
                                               count,
                                               buf,
@@ -228,7 +228,7 @@ int mca_fcoll_vulcan_file_write_all (mca_io_ompio_file_t *fh,
      *** 2. Generate the local offsets/lengths array corresponding to
      ***    this write operation
      ********************************************************************/
-    ret = fh->f_generate_current_file_view( (struct mca_io_ompio_file_t *) fh,
+    ret = fh->f_generate_current_file_view( (struct ompio_file_t *) fh,
 					    max_data,
 					    &local_iov_array,
 					    &local_count);
@@ -735,7 +735,7 @@ exit :
     return OMPI_SUCCESS;
 }
 
-static int write_init (mca_io_ompio_file_t *fh,
+static int write_init (ompio_file_t *fh,
                        int aggregator,
                        mca_io_ompio_aggregator_data *aggr_data,
                        int write_chunksize,
@@ -1292,8 +1292,8 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     if (aggregator == rank && entries_per_aggregator>0) {
         
         
-        data->io_array = (mca_io_ompio_io_array_t *) malloc
-            (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
+        data->io_array = (mca_common_ompio_io_array_t *) malloc
+            (entries_per_aggregator * sizeof (mca_common_ompio_io_array_t));
         if (NULL == data->io_array) {
             opal_output(1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1353,7 +1353,7 @@ exit:
     return OMPI_SUCCESS;
 }
     
-static int mca_fcoll_vulcan_minmax ( mca_io_ompio_file_t *fh, struct iovec *iov, int iov_count,  int num_aggregators, long *new_stripe_size)
+static int mca_fcoll_vulcan_minmax ( ompio_file_t *fh, struct iovec *iov, int iov_count,  int num_aggregators, long *new_stripe_size)
 {
     long min, max, globalmin, globalmax;
     long stripe_size;
@@ -1616,7 +1616,7 @@ exit:
 }
 
 
-int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_procs, int num_groups, 
+int mca_fcoll_vulcan_get_configuration (ompio_file_t *fh, int num_io_procs, int num_groups, 
                                         size_t max_data)
 {
     int i, ret;
@@ -1647,7 +1647,7 @@ int mca_fcoll_vulcan_get_configuration (mca_io_ompio_file_t *fh, int num_io_proc
 }    
     
 
-int mca_fcoll_vulcan_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_array_t *io_array, int num_entries,
+int mca_fcoll_vulcan_split_iov_array ( ompio_file_t *fh, mca_common_ompio_io_array_t *io_array, int num_entries,
                                              int *ret_array_pos, int *ret_pos,  int chunk_size )
 {
 
@@ -1657,7 +1657,7 @@ int mca_fcoll_vulcan_split_iov_array ( mca_io_ompio_file_t *fh, mca_io_ompio_io_
     size_t bytes_to_write = chunk_size;
 
     if ( 0 == array_pos && 0 == pos ) {
-        fh->f_io_array = (mca_io_ompio_io_array_t *) malloc ( num_entries * sizeof(mca_io_ompio_io_array_t));
+        fh->f_io_array = (mca_common_ompio_io_array_t *) malloc ( num_entries * sizeof(mca_common_ompio_io_array_t));
         if ( NULL == fh->f_io_array ){
             opal_output (1,"Could not allocate memory\n");
             return -1;

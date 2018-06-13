@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -35,23 +35,23 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
 				       const char* filename,
 				       int amode,
 				       struct opal_info_t *info,
-				       mca_io_ompio_file_t *fh)
+				       ompio_file_t *fh)
 {
     int err = 0;
     int rank;
     char * datafilename;	/*The array size would change as it is based on the current path*/
     char * metadatafilename;	/*The array size would change as it is based on the current path*/
-    mca_io_ompio_file_t * datafilehandle;
-    mca_io_ompio_file_t * metadatafilehandle;
+    ompio_file_t * datafilehandle;
+    ompio_file_t * metadatafilehandle;
     mca_sharedfp_individual_header_record* headnode = NULL;
     struct mca_sharedfp_base_data_t* sh;
-    mca_io_ompio_file_t * shfileHandle;
+    ompio_file_t * shfileHandle;
     size_t len=0;
 
     /*-------------------------------------------------*/
     /*Open the same file again without shared file pointer*/
     /*-------------------------------------------------*/
-    shfileHandle =  (mca_io_ompio_file_t *) malloc ( sizeof(mca_io_ompio_file_t));
+    shfileHandle =  (ompio_file_t *) malloc ( sizeof(ompio_file_t));
     if ( NULL == shfileHandle ) {
         opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -104,7 +104,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     snprintf(datafilename, len, "%s%s%d",filename,".data.",rank);
 
 
-    datafilehandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    datafilehandle = (ompio_file_t *)malloc(sizeof(ompio_file_t));
     if ( NULL == datafilehandle ) {
         opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
         free ( shfileHandle );
@@ -145,7 +145,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     }
     snprintf ( metadatafilename, len, "%s%s%d", filename, ".metadata.",rank);
 
-    metadatafilehandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    metadatafilehandle = (ompio_file_t *)malloc(sizeof(ompio_file_t));
     if ( NULL == metadatafilehandle ) {
         free (shfileHandle );
         free (sh);
@@ -184,7 +184,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     return err;
 }
 
-int mca_sharedfp_individual_file_close (mca_io_ompio_file_t *fh)
+int mca_sharedfp_individual_file_close (ompio_file_t *fh)
 {
     mca_sharedfp_individual_header_record* headnode = NULL;
     struct mca_sharedfp_base_data_t *sh;

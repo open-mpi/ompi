@@ -34,7 +34,7 @@
 #include "math.h"
 #include <unistd.h>
 
-int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_write (ompio_file_t *fh,
 			       const void *buf,
 			       int count,
 			       struct ompi_datatype_t *datatype,
@@ -121,7 +121,7 @@ int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_write_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_write_at (ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE offset,
 				  const void *buf,
 				  int count,
@@ -145,7 +145,7 @@ int mca_common_ompio_file_write_at (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iwrite (ompio_file_t *fh,
 				const void *buf,
 				int count,
 				struct ompi_datatype_t *datatype,
@@ -228,7 +228,7 @@ int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iwrite_at (ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE offset,
 				   const void *buf,
 				   int count,
@@ -262,7 +262,7 @@ int mca_common_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
 /* Collective operations                                          */
 /******************************************************************/
 
-int mca_common_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_write_at_all (ompio_file_t *fh,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      const void *buf,
 				      int count,
@@ -284,7 +284,7 @@ int mca_common_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
+int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
 				       OMPI_MPI_OFFSET_TYPE offset,
 				       const void *buf,
 				       int count,
@@ -321,7 +321,7 @@ int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
 /* Helper function used by both read and write operations     */
 /**************************************************************/
 
-int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles,
+int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
                                       size_t bytes_per_cycle, int max_data, uint32_t iov_count,
                                       struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw, 
                                       size_t *spc)
@@ -347,8 +347,8 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
 	bytes_to_write_in_cycle = bytes_per_cycle;
     }
 
-    fh->f_io_array = (mca_io_ompio_io_array_t *)malloc
-	(OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_io_ompio_io_array_t));
+    fh->f_io_array = (mca_common_ompio_io_array_t *)malloc
+	(OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_common_ompio_io_array_t));
     if (NULL == fh->f_io_array) {
 	opal_output(1, "OUT OF MEMORY\n");
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -358,9 +358,9 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
 	/* reallocate if needed  */
 	if (OMPIO_IOVEC_INITIAL_SIZE*block <= k) {
 	    block ++;
-	    fh->f_io_array = (mca_io_ompio_io_array_t *)realloc
+	    fh->f_io_array = (mca_common_ompio_io_array_t *)realloc
 		(fh->f_io_array, OMPIO_IOVEC_INITIAL_SIZE *
-		 block * sizeof (mca_io_ompio_io_array_t));
+		 block * sizeof (mca_common_ompio_io_array_t));
 	    if (NULL == fh->f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
 		return OMPI_ERR_OUT_OF_RESOURCE;

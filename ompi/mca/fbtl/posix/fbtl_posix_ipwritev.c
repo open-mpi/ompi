@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,7 +32,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-ssize_t  mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
+ssize_t  mca_fbtl_posix_ipwritev (ompio_file_t *fh,
 				 ompi_request_t *request)
 {
 #if defined(FBTL_POSIX_HAVE_AIO)

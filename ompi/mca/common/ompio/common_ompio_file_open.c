@@ -41,14 +41,14 @@
 #include "common_ompio.h"
 #include "ompi/mca/topo/topo.h"
 
-static mca_io_ompio_generate_current_file_view_fn_t generate_current_file_view_fn;
-static mca_io_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value_fn;
+static mca_common_ompio_generate_current_file_view_fn_t generate_current_file_view_fn;
+static mca_common_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value_fn;
 
 int mca_common_ompio_file_open (ompi_communicator_t *comm,
                               const char *filename,
                               int amode,
                               opal_info_t *info,
-                              mca_io_ompio_file_t *ompio_fh, bool use_sharedfp)
+                              ompio_file_t *ompio_fh, bool use_sharedfp)
 {
     int ret = OMPI_SUCCESS;
     int remote_arch;
@@ -228,7 +228,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     return ret;
 }
 
-int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
+int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
 {
     int ret = OMPI_SUCCESS;
     int delete_flag = 0;
@@ -367,7 +367,7 @@ int mca_common_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     return ret;
 }
 
-int mca_common_ompio_file_get_size (mca_io_ompio_file_t *ompio_fh,
+int mca_common_ompio_file_get_size (ompio_file_t *ompio_fh,
                                   OMPI_MPI_OFFSET_TYPE *size)
 {
     int ret = OMPI_SUCCESS;
@@ -378,7 +378,7 @@ int mca_common_ompio_file_get_size (mca_io_ompio_file_t *ompio_fh,
 }
 
 
-int mca_common_ompio_file_get_position (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_get_position (ompio_file_t *fh,
                                       OMPI_MPI_OFFSET_TYPE *offset)
 {
     OMPI_MPI_OFFSET_TYPE off;
@@ -396,7 +396,7 @@ int mca_common_ompio_file_get_position (mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
+int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
 {
 
    if (NULL != fh) {
@@ -497,7 +497,7 @@ int mca_common_ompio_file_delete (const char *filename,
     return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
+int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
                                       ompi_datatype_t *datatype,
                                       int count,
                                       const void *buf,
@@ -616,8 +616,8 @@ int mca_common_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_set_callbacks(mca_io_ompio_generate_current_file_view_fn_t generate_current_file_view,
-                                   mca_io_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value)
+int mca_common_ompio_set_callbacks(mca_common_ompio_generate_current_file_view_fn_t generate_current_file_view,
+                                   mca_common_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value)
 {
     generate_current_file_view_fn = generate_current_file_view;
     get_mca_parameter_value_fn = get_mca_parameter_value;

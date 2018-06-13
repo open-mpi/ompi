@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -57,7 +57,7 @@ static double cost_calc (int P, int P_agg, size_t Data_proc, size_t coll_buffer,
 #define DIM1 1
 #define DIM2 2
 
-int mca_common_ompio_simple_grouping(mca_io_ompio_file_t *fh,
+int mca_common_ompio_simple_grouping(ompio_file_t *fh,
                                      int *num_groups_out,
                                      mca_common_ompio_contg *contg_groups)
 {
@@ -186,7 +186,7 @@ int mca_common_ompio_simple_grouping(mca_io_ompio_file_t *fh,
     return mca_common_ompio_forced_grouping ( fh, num_groups, contg_groups);
 }
 
-int  mca_common_ompio_forced_grouping ( mca_io_ompio_file_t *fh,
+int  mca_common_ompio_forced_grouping ( ompio_file_t *fh,
                                         int num_groups,
                                         mca_common_ompio_contg *contg_groups)
 {
@@ -224,7 +224,7 @@ int  mca_common_ompio_forced_grouping ( mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
+int mca_common_ompio_fview_based_grouping(ompio_file_t *fh,
                      		          int *num_groups,
 				          mca_common_ompio_contg *contg_groups)
 {
@@ -321,7 +321,7 @@ exit:
     return ret;
 }
 
-int mca_common_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh, 
+int mca_common_ompio_cart_based_grouping(ompio_file_t *ompio_fh, 
                                          int *num_groups,
                                          mca_common_ompio_contg *contg_groups)
 {
@@ -448,7 +448,7 @@ exit:
 
 
 
-int mca_common_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
+int mca_common_ompio_finalize_initial_grouping(ompio_file_t *fh,
 		                               int num_groups,
 					       mca_common_ompio_contg *contg_groups)
 {
@@ -501,7 +501,7 @@ int mca_common_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
 ** of aggregators.
 */
 
-int mca_common_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
+int mca_common_ompio_set_aggregator_props (struct ompio_file_t *fh,
                                            int num_aggregators,
                                            size_t bytes_per_proc)
 {
@@ -546,7 +546,7 @@ int mca_common_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 /*****************************************************************************************************/
-int mca_common_ompio_create_groups(mca_io_ompio_file_t *fh,
+int mca_common_ompio_create_groups(ompio_file_t *fh,
 		                   size_t bytes_per_proc)
 {
 
@@ -681,7 +681,7 @@ exit:
    return ret;
 }
 
-int mca_common_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
+int mca_common_ompio_merge_initial_groups(ompio_file_t *fh,
 		                          OMPI_MPI_OFFSET_TYPE *aggr_bytes_per_group,
 				          int *decision_list,
 	                                  int is_aggregator){
@@ -881,7 +881,7 @@ exit:
     return ret;
 }
 
-int mca_common_ompio_split_initial_groups(mca_io_ompio_file_t *fh,
+int mca_common_ompio_split_initial_groups(ompio_file_t *fh,
 		                          OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
 				          OMPI_MPI_OFFSET_TYPE *end_offsets,
 				          OMPI_MPI_OFFSET_TYPE bytes_per_group){
@@ -1018,7 +1018,7 @@ int mca_common_ompio_split_initial_groups(mca_io_ompio_file_t *fh,
 }
 
 
-int mca_common_ompio_retain_initial_groups(mca_io_ompio_file_t *fh){
+int mca_common_ompio_retain_initial_groups(ompio_file_t *fh){
 
     int i = 0;
 
@@ -1036,7 +1036,7 @@ int mca_common_ompio_retain_initial_groups(mca_io_ompio_file_t *fh){
     return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_merge_groups(mca_io_ompio_file_t *fh,
+int mca_common_ompio_merge_groups(ompio_file_t *fh,
 		                  int *merge_aggrs,
 			          int num_merge_aggrs)
 {
@@ -1125,7 +1125,7 @@ exit:
 
 
 
-int mca_common_ompio_split_a_group(mca_io_ompio_file_t *fh,
+int mca_common_ompio_split_a_group(ompio_file_t *fh,
      		                   OMPI_MPI_OFFSET_TYPE *start_offsets_lens,
 		                   OMPI_MPI_OFFSET_TYPE *end_offsets,
 		                   int size_new_group,
@@ -1186,7 +1186,7 @@ int mca_common_ompio_split_a_group(mca_io_ompio_file_t *fh,
      return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_finalize_split(mca_io_ompio_file_t *fh,
+int mca_common_ompio_finalize_split(ompio_file_t *fh,
                                     int size_new_group,
                                     int size_last_group)
 {
@@ -1240,7 +1240,7 @@ int mca_common_ompio_finalize_split(mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-int mca_common_ompio_prepare_to_group(mca_io_ompio_file_t *fh,
+int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
 		                      OMPI_MPI_OFFSET_TYPE **start_offsets_lens,
 				      OMPI_MPI_OFFSET_TYPE **end_offsets, // need it?
 				      OMPI_MPI_OFFSET_TYPE **aggr_bytes_per_group,

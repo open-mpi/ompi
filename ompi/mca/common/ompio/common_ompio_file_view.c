@@ -31,7 +31,7 @@
 #include "ompi/mca/fcoll/base/base.h"
 #include "ompi/mca/topo/topo.h"
 
-static OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *, int flag);
+static OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (ompio_file_t *, int flag);
 static int datatype_duplicate (ompi_datatype_t *oldtype, ompi_datatype_t **newtype );
 static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newtype )
 {
@@ -54,7 +54,7 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
 }
 
 
-int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
+int mca_common_ompio_set_view (ompio_file_t *fh,
                                OMPI_MPI_OFFSET_TYPE disp,
                                ompi_datatype_t *etype,
                                ompi_datatype_t *filetype,
@@ -290,7 +290,7 @@ exit:
     return ret;
 }
 
-OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh, int flag)
+OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (ompio_file_t *fh, int flag)
 {
     int uniform = 0;
     OMPI_MPI_OFFSET_TYPE avg[3] = {0,0,0};

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +65,7 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
  *    their module but were unfortunate to not get selected
  */
 
-int mca_sharedfp_base_file_select (struct mca_io_ompio_file_t *file,
+int mca_sharedfp_base_file_select (struct ompio_file_t *file,
                                    mca_base_component_t *preferred)
 {
     int priority;

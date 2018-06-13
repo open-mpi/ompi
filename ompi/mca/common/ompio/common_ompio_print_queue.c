@@ -99,7 +99,7 @@ int mca_common_ompio_full_print_queue( struct mca_common_ompio_print_queue *q)
 
 int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
                                       char *name,
-                                      struct mca_io_ompio_file_t *fh){
+                                      struct ompio_file_t *fh){
 
     int i = 0, j=0, nprocs_for_coll = 0, ret = OMPI_SUCCESS, count = 0;
     double *time_details = NULL, *final_sum = NULL;
