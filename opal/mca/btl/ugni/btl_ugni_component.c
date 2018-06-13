@@ -503,7 +503,7 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 int mca_btl_ugni_progress_datagram (mca_btl_ugni_device_t *device)
 {
     mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_component.modules;
-    mca_btl_base_endpoint_t *ep;
+    mca_btl_base_endpoint_t *ep = NULL;
     gni_ep_handle_t handle;
     int count = 0, rc;
 
