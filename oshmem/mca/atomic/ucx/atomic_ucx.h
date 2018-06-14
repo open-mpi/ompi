@@ -23,6 +23,16 @@
 
 BEGIN_C_DECLS
 
+#define MCA_ATOMIC_UCX_GTE_VAL(val, src, size, pe)                   \
+    if (8 == (size)) {                                               \
+        (val) = *(uint64_t*)(src);                                   \
+    } else if (4 == (size)) {                                        \
+        (val) = *(uint32_t*)(src);                                   \
+    } else {                                                         \
+        ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", (pe)); \
+        return OSHMEM_ERROR;                                         \
+    }
+
 /* Globally exported variables */
 
 OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t
@@ -41,7 +51,18 @@ int mca_atomic_ucx_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_ucx_query(int *priority);
 
+int mca_atomic_ucx_add(void *target,
+                       const void *value,
+                       size_t size,
+                       int pe,
+                       struct oshmem_op_t *op);
 int mca_atomic_ucx_fadd(void *target,
+                        void *prev,
+                        const void *value,
+                        size_t nlong,
+                        int pe,
+                        struct oshmem_op_t *op);
+int mca_atomic_ucx_swap(void *target,
                         void *prev,
                         const void *value,
                         size_t nlong,

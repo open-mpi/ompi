@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -86,17 +86,61 @@ struct mca_atomic_base_module_1_0_0_t {
     opal_object_t super;
 
     /* Collective function pointers */
+    int (*atomic_add)(void *target,
+                      const void *value,
+                      size_t size,
+                      int pe,
+                      struct oshmem_op_t *op);
+    int (*atomic_and)(void *target,
+                      const void *value,
+                      size_t size,
+                      int pe,
+                      struct oshmem_op_t *op);
+    int (*atomic_or)(void *target,
+                     const void *value,
+                     size_t size,
+                     int pe,
+                     struct oshmem_op_t *op);
+    int (*atomic_xor)(void *target,
+                      const void *value,
+                      size_t size,
+                      int pe,
+                      struct oshmem_op_t *op);
     int (*atomic_fadd)(void *target,
                        void *prev,
                        const void *value,
-                       size_t nlong,
+                       size_t size,
+                       int pe,
+                       struct oshmem_op_t *op);
+    int (*atomic_fand)(void *target,
+                       void *prev,
+                       const void *value,
+                       size_t size,
+                       int pe,
+                       struct oshmem_op_t *op);
+    int (*atomic_for)(void *target,
+                      void *prev,
+                      const void *value,
+                      size_t size,
+                      int pe,
+                      struct oshmem_op_t *op);
+    int (*atomic_fxor)(void *target,
+                       void *prev,
+                       const void *value,
+                       size_t size,
+                       int pe,
+                       struct oshmem_op_t *op);
+    int (*atomic_swap)(void *target,
+                       void *prev,
+                       const void *value,
+                       size_t size,
                        int pe,
                        struct oshmem_op_t *op);
     int (*atomic_cswap)(void *target,
                         void *prev,
                         const void *cond,
                         const void *value,
-                        size_t nlong,
+                        size_t size,
                         int pe);
 };
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_1_0_0_t;
@@ -120,6 +164,55 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_atomic_base_module_t);
 OSHMEM_DECLSPEC extern mca_atomic_base_component_t mca_atomic_base_selected_component;
 OSHMEM_DECLSPEC extern mca_atomic_base_module_t mca_atomic;
 #define MCA_ATOMIC_CALL(a) mca_atomic.atomic_ ## a
+
+#define SHMEM_TYPE_OP(type_name, type, op, obj, prefix, suffix)           \
+    void prefix##type_name##_##suffix(type *target, type value, int pe)   \
+    {                                                                     \
+        int rc = OSHMEM_SUCCESS;                                          \
+        size_t size = 0;                                                  \
+        type out_value;                                                   \
+        oshmem_op_t* shmem_op = oshmem_op_##obj##type_name;               \
+                                                                          \
+        RUNTIME_CHECK_INIT();                                             \
+        RUNTIME_CHECK_PE(pe);                                             \
+        RUNTIME_CHECK_ADDR(target);                                       \
+                                                                          \
+        size = sizeof(out_value);                                         \
+        rc = MCA_ATOMIC_CALL(op(                                          \
+            (void*)target,                                                \
+            (const void*)&value,                                          \
+            size,                                                         \
+            pe,                                                           \
+            shmem_op));                                                   \
+        RUNTIME_CHECK_RC(rc);                                             \
+                                                                          \
+        return ;                                                          \
+    }
+
+#define SHMEM_TYPE_FOP(type_name, type, fop, obj, prefix, suffix)       \
+    type prefix##type_name##_##suffix(type *target, type value, int pe) \
+    {                                                                   \
+        int rc = OSHMEM_SUCCESS;                                        \
+        size_t size = 0;                                                \
+        type out_value;                                                 \
+        oshmem_op_t* op = oshmem_op_##obj##type_name;                   \
+                                                                        \
+        RUNTIME_CHECK_INIT();                                           \
+        RUNTIME_CHECK_PE(pe);                                           \
+        RUNTIME_CHECK_ADDR(target);                                     \
+                                                                        \
+        size = sizeof(out_value);                                       \
+        rc = MCA_ATOMIC_CALL(fop(                                       \
+            (void*)target,                                              \
+            (void*)&out_value,                                          \
+            (const void*)&value,                                        \
+            size,                                                       \
+            pe,                                                         \
+            op));                                                       \
+        RUNTIME_CHECK_RC(rc);                                           \
+                                                                        \
+        return out_value;                                               \
+    }
 
 END_C_DECLS
 

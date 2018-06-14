@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,17 +34,22 @@ int mca_atomic_basic_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_basic_query(int *priority);
 
-int mca_atomic_basic_fadd(void *target,
-                          void *prev,
-                          const void *value,
-                          size_t nlong,
-                          int pe,
-                          struct oshmem_op_t *op);
+int mca_atomic_basic_op(void *target,
+                        const void *value,
+                        size_t size,
+                        int pe,
+                        struct oshmem_op_t *op);
+int mca_atomic_basic_fop(void *target,
+                         void *prev,
+                         const void *value,
+                         size_t size,
+                         int pe,
+                         struct oshmem_op_t *op);
 int mca_atomic_basic_cswap(void *target,
                            void *prev,
                            const void *cond,
                            const void *value,
-                           size_t nlong,
+                           size_t size,
                            int pe);
 
 struct mca_atomic_basic_module_t {

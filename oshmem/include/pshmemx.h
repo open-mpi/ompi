@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -89,6 +89,18 @@ OSHMEM_DECLSPEC int64_t pshmemx_int64_cswap(int64_t *target, int64_t cond, int64
 OSHMEM_DECLSPEC int32_t pshmemx_int32_fadd(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC int64_t pshmemx_int64_fadd(int64_t *target, int64_t value, int pe);
 
+/* Atomic Fetch&And */
+OSHMEM_DECLSPEC int32_t pshmemx_int32_fand(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC int64_t pshmemx_int64_fand(int64_t *target, int64_t value, int pe);
+
+/* Atomic Fetch&Or */
+OSHMEM_DECLSPEC int32_t pshmemx_int32_for(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC int64_t pshmemx_int64_for(int64_t *target, int64_t value, int pe);
+
+/* Atomic Fetch&Xor */
+OSHMEM_DECLSPEC int32_t pshmemx_int32_fxor(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC int64_t pshmemx_int64_fxor(int64_t *target, int64_t value, int pe);
+
 /* Atomic Fetch */
 OSHMEM_DECLSPEC int32_t pshmemx_int32_fetch(const int32_t *target, int pe);
 OSHMEM_DECLSPEC int64_t pshmemx_int64_fetch(const int64_t *target, int pe);
@@ -97,9 +109,21 @@ OSHMEM_DECLSPEC int64_t pshmemx_int64_fetch(const int64_t *target, int pe);
 OSHMEM_DECLSPEC int32_t pshmemx_int32_finc(int32_t *target, int pe);
 OSHMEM_DECLSPEC int64_t pshmemx_int64_finc(int64_t *target, int pe);
 
-/* Atomic Add*/
+/* Atomic Add */
 OSHMEM_DECLSPEC void pshmemx_int32_add(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC void pshmemx_int64_add(int64_t *target, int64_t value, int pe);
+
+/* Atomic And */
+OSHMEM_DECLSPEC void pshmemx_int32_and(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_int64_and(int64_t *target, int64_t value, int pe);
+
+/* Atomic Or */
+OSHMEM_DECLSPEC void pshmemx_int32_or(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_int64_or(int64_t *target, int64_t value, int pe);
+
+/* Atomic Xor */
+OSHMEM_DECLSPEC void pshmemx_int32_xor(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_int64_xor(int64_t *target, int64_t value, int pe);
 
 /* Atomic Inc */
 OSHMEM_DECLSPEC void pshmemx_int32_inc(int32_t *target, int pe);

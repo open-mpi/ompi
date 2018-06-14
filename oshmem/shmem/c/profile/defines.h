@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -211,6 +211,11 @@
 #define shmem_longlong_swap          pshmem_longlong_swap
 #define shmemx_int32_swap            pshmemx_int32_swap
 #define shmemx_int64_swap            pshmemx_int64_swap
+#define shmem_double_atomic_swap     pshmem_double_atomic_swap
+#define shmem_float_atomic_swap      pshmem_float_atomic_swap
+#define shmem_int_atomic_swap        pshmem_int_atomic_swap
+#define shmem_long_atomic_swap       pshmem_long_atomic_swap
+#define shmem_longlong_atomic_swap   pshmem_longlong_atomic_swap
 
 /* Atomic set */
 #define shmem_double_set            pshmem_double_set
@@ -222,19 +227,46 @@
 #define shmemx_int64_set            pshmemx_int64_set
 
 /* Atomic conditional swap */
-#define shmem_int_cswap              pshmem_int_cswap
-#define shmem_long_cswap             pshmem_long_cswap
-#define shmem_longlong_cswap         pshmem_longlong_cswap
-#define shmemx_int32_cswap           pshmemx_int32_cswap
-#define shmemx_int64_cswap           pshmemx_int64_cswap
+#define shmem_int_cswap                    pshmem_int_cswap
+#define shmem_long_cswap                   pshmem_long_cswap
+#define shmem_longlong_cswap               pshmem_longlong_cswap
+#define shmem_int_atomic_compare_swap      pshmem_int_atomic_compare_swap
+#define shmem_long_atomic_compare_swap     pshmem_long_atomic_compare_swap
+#define shmem_longlong_atomic_compare_swap pshmem_longlong_atomic_compare_swap
+#define shmemx_int32_cswap                 pshmemx_int32_cswap
+#define shmemx_int64_cswap                 pshmemx_int64_cswap
 
 
 /* Atomic Fetch&Add */
+#define shmem_int_atomic_fadd        pshmem_int_atomic_fadd
+#define shmem_long_atomic_fadd       pshmem_long_atomic_fadd
+#define shmem_longlong_atomic_fadd   pshmem_longlong_atomic_fadd
 #define shmem_int_fadd               pshmem_int_fadd
 #define shmem_long_fadd              pshmem_long_fadd
 #define shmem_longlong_fadd          pshmem_longlong_fadd
 #define shmemx_int32_fadd            pshmemx_int32_fadd
 #define shmemx_int64_fadd            pshmemx_int64_fadd
+
+/* Atomic Fetch&And */
+#define shmem_int_atomic_fand        pshmem_int_atomic_fand
+#define shmem_long_atomic_fand       pshmem_long_atomic_fand
+#define shmem_longlong_atomic_fand   pshmem_longlong_atomic_fand
+#define shmemx_int32_fand            pshmemx_int32_fand
+#define shmemx_int64_fand            pshmemx_int64_fand
+
+/* Atomic Fetch&Or */
+#define shmem_int_atomic_for         pshmem_int_atomic_for
+#define shmem_long_atomic_for        pshmem_long_atomic_for
+#define shmem_longlong_atomic_for    pshmem_longlong_atomic_for
+#define shmemx_int32_for             pshmemx_int32_for
+#define shmemx_int64_for             pshmemx_int64_for
+
+/* Atomic Fetch&Xor */
+#define shmem_int_atomic_fxor        pshmem_int_atomic_fxor
+#define shmem_long_atomic_fxor       pshmem_long_atomic_fxor
+#define shmem_longlong_atomic_fxor   pshmem_longlong_atomic_fxor
+#define shmemx_int32_fxor            pshmemx_int32_fxor
+#define shmemx_int64_fxor            pshmemx_int64_fxor
 
 /* Atomic Fetch */
 #define shmem_double_fetch            pshmem_double_fetch
@@ -252,12 +284,36 @@
 #define shmemx_int32_finc            pshmemx_int32_finc
 #define shmemx_int64_finc            pshmemx_int64_finc
 
-/* Atomic Add*/
+/* Atomic Add */
+#define shmem_int_atomic_add         pshmem_int_atomic_add
+#define shmem_long_atomic_add        pshmem_long_atomic_add
+#define shmem_longlong_atomic_add    pshmem_longlong_atomic_add
 #define shmem_int_add                pshmem_int_add
 #define shmem_long_add               pshmem_long_add
 #define shmem_longlong_add           pshmem_longlong_add
 #define shmemx_int32_add             pshmemx_int32_add
 #define shmemx_int64_add             pshmemx_int64_add
+
+/* Atomic And */
+#define shmem_int_atomic_and         pshmem_int_atomic_and
+#define shmem_long_atomic_and        pshmem_long_atomic_and
+#define shmem_longlong_atomic_and    pshmem_longlong_atomic_and
+#define shmemx_int32_and             pshmemx_int32_and
+#define shmemx_int64_and             pshmemx_int64_and
+
+/* Atomic Or */
+#define shmem_int_atomic_or          pshmem_int_atomic_or
+#define shmem_long_atomic_or         pshmem_long_atomic_or
+#define shmem_longlong_atomic_or     pshmem_longlong_atomic_or
+#define shmemx_int32_or              pshmemx_int32_or
+#define shmemx_int64_or              pshmemx_int64_or
+
+/* Atomic Xor */
+#define shmem_int_atomic_xor         pshmem_int_atomic_xor
+#define shmem_long_atomic_xor        pshmem_long_atomic_xor
+#define shmem_longlong_atomic_xor    pshmem_longlong_atomic_xor
+#define shmemx_int32_xor             pshmemx_int32_xor
+#define shmemx_int64_xor             pshmemx_int64_xor
 
 /* Atomic Inc */
 #define shmem_int_inc                pshmem_int_inc

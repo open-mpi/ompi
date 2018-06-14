@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2016      Research Organization for Information Science
@@ -337,6 +337,20 @@ OSHMEM_DECLSPEC double pshmem_double_swap(double *target, double value, int pe);
             float*:       pshmem_float_swap,               \
             double*:      pshmem_double_swap)(dst, val, pe)
 #endif
+OSHMEM_DECLSPEC int pshmem_int_atomic_swap(int *target, int value, int pe);
+OSHMEM_DECLSPEC long pshmem_long_atomic_swap(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_atomic_swap(long long *target, long long value, int pe);
+OSHMEM_DECLSPEC float pshmem_float_atomic_swap(float *target, float value, int pe);
+OSHMEM_DECLSPEC double pshmem_double_atomic_swap(double *target, double value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_swap(dst, val, pe)                      \
+    _Generic(&*(dst),                                         \
+            int*:         pshmem_int_atomic_swap,             \
+            long*:        pshmem_long_atomic_swap,            \
+            long long*:   pshmem_longlong_atomic_swap,        \
+            float*:       pshmem_float_atomic_swap,           \
+            double*:      pshmem_double_atomic_swap)(dst, val, pe)
+#endif
 
 /* Atomic set */
 OSHMEM_DECLSPEC void pshmem_int_set(int *target, int value, int pe);
@@ -365,6 +379,16 @@ OSHMEM_DECLSPEC long long pshmem_longlong_cswap(long long *target, long long con
             long*:        pshmem_long_cswap,                   \
             long long*:   pshmem_longlong_cswap)(dst, cond, val, pe)
 #endif
+OSHMEM_DECLSPEC int pshmem_int_atomic_compare_swap(int *target, int cond, int value, int pe);
+OSHMEM_DECLSPEC long pshmem_long_atomic_compare_swap(long *target, long cond, long value, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_atomic_compare_swap(long long *target, long long cond, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_compare_swap(dst, cond, val, pe)                       \
+    _Generic(&*(dst),                                                        \
+            int*:         pshmem_int_atomic_compare_swap,                    \
+            long*:        pshmem_long_atomic_compare_swap,                   \
+            long long*:   pshmem_longlong_atomic_compare_swap)(dst, cond, val, pe)
+#endif
 
 /* Atomic Fetch&Add */
 OSHMEM_DECLSPEC int pshmem_int_fadd(int *target, int value, int pe);
@@ -376,6 +400,52 @@ OSHMEM_DECLSPEC long long pshmem_longlong_fadd(long long *target, long long valu
             int*:         pshmem_int_fadd,                    \
             long*:        pshmem_long_fadd,                   \
             long long*:   pshmem_longlong_fadd)(dst, val, pe)
+#endif
+OSHMEM_DECLSPEC int pshmem_int_atomic_fadd(int *target, int value, int pe);
+OSHMEM_DECLSPEC long pshmem_long_atomic_fadd(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_atomic_fadd(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_fadd(dst, val, pe)                             \
+    _Generic(&*(dst),                                                \
+            int*:         pshmem_int_atomic_fadd,                    \
+            long*:        pshmem_long_atomic_fadd,                   \
+            long long*:   pshmem_longlong_atomic_fadd)(dst, val, pe)
+#endif
+
+/* Atomic And */
+OSHMEM_DECLSPEC int pshmem_int_atomic_fand(int *target, int value, int pe);
+OSHMEM_DECLSPEC long pshmem_long_atomic_fand(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_atomic_fand(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_fand(dst, val, pe)                             \
+    _Generic(&*(dst),                                                \
+            int*:         pshmem_int_atomic_fand,                    \
+            long*:        pshmem_long_atomic_fand,                   \
+            long long*:   pshmem_longlong_atomic_fand)(dst, val, pe)
+#endif
+
+/* Atomic Or */
+OSHMEM_DECLSPEC int pshmem_int_atomic_for(int *target, int value, int pe);
+OSHMEM_DECLSPEC long pshmem_long_atomic_for(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_atomic_for(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_for(dst, val, pe)                             \
+    _Generic(&*(dst),                                               \
+            int*:         pshmem_int_atomic_for,                    \
+            long*:        pshmem_long_atomic_for,                   \
+            long long*:   pshmem_longlong_atomic_for)(dst, val, pe)
+#endif
+
+/* Atomic Xor */
+OSHMEM_DECLSPEC int pshmem_int_atomic_fxor(int *target, int value, int pe);
+OSHMEM_DECLSPEC long pshmem_long_atomic_fxor(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long pshmem_longlong_atomic_fxor(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_fxor(dst, val, pe)                             \
+    _Generic(&*(dst),                                                \
+            int*:         pshmem_int_atomic_fxor,                    \
+            long*:        pshmem_long_atomic_fxor,                   \
+            long long*:   pshmem_longlong_atomic_fxor)(dst, val, pe)
 #endif
 
 /* Atomic Fetch */
@@ -406,7 +476,7 @@ OSHMEM_DECLSPEC long long pshmem_longlong_finc(long long *target, int pe);
             long long*:   pshmem_longlong_finc)(dst, val, pe)
 #endif
 
-/* Atomic Add*/
+/* Atomic Add */
 OSHMEM_DECLSPEC void pshmem_int_add(int *target, int value, int pe);
 OSHMEM_DECLSPEC void pshmem_long_add(long *target, long value, int pe);
 OSHMEM_DECLSPEC void pshmem_longlong_add(long long *target, long long value, int pe);
@@ -416,6 +486,52 @@ OSHMEM_DECLSPEC void pshmem_longlong_add(long long *target, long long value, int
             int*:         pshmem_int_add,                    \
             long*:        pshmem_long_add,                   \
             long long*:   pshmem_longlong_add)(dst, val, pe)
+#endif
+OSHMEM_DECLSPEC void pshmem_int_atomic_add(int *target, int value, int pe);
+OSHMEM_DECLSPEC void pshmem_long_atomic_add(long *target, long value, int pe);
+OSHMEM_DECLSPEC void pshmem_longlong_atomic_add(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_add(dst, val, pe)                             \
+    _Generic(&*(dst),                                               \
+            int*:         pshmem_int_atomic_add,                    \
+            long*:        pshmem_long_atomic_add,                   \
+            long long*:   pshmem_longlong_atomic_add)(dst, val, pe)
+#endif
+
+/* Atomic And */
+OSHMEM_DECLSPEC void pshmem_int_atomic_and(int *target, int value, int pe);
+OSHMEM_DECLSPEC void pshmem_long_atomic_and(long *target, long value, int pe);
+OSHMEM_DECLSPEC void pshmem_longlong_atomic_and(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_and(dst, val, pe)                             \
+    _Generic(&*(dst),                                               \
+            int*:         pshmem_int_atomic_and,                    \
+            long*:        pshmem_long_atomic_and,                   \
+            long long*:   pshmem_longlong_atomic_and)(dst, val, pe)
+#endif
+
+/* Atomic Or */
+OSHMEM_DECLSPEC void pshmem_int_atomic_or(int *target, int value, int pe);
+OSHMEM_DECLSPEC void pshmem_long_atomic_or(long *target, long value, int pe);
+OSHMEM_DECLSPEC void pshmem_longlong_atomic_or(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_or(dst, val, pe)                             \
+    _Generic(&*(dst),                                              \
+            int*:         pshmem_int_atomic_or,                    \
+            long*:        pshmem_long_atomic_or,                   \
+            long long*:   pshmem_longlong_atomic_or)(dst, val, pe)
+#endif
+
+/* Atomic Xor */
+OSHMEM_DECLSPEC void pshmem_int_atomic_xor(int *target, int value, int pe);
+OSHMEM_DECLSPEC void pshmem_long_atomic_xor(long *target, long value, int pe);
+OSHMEM_DECLSPEC void pshmem_longlong_atomic_xor(long long *target, long long value, int pe);
+#if OSHMEMP_HAVE_C11
+#define pshmem_atomic_xor(dst, val, pe)                             \
+    _Generic(&*(dst),                                               \
+            int*:         pshmem_int_atomic_xor,                    \
+            long*:        pshmem_long_atomic_xor,                   \
+            long long*:   pshmem_longlong_atomic_xor)(dst, val, pe)
 #endif
 
 /* Atomic Inc */

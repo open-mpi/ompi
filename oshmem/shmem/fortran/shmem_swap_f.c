@@ -17,6 +17,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "stdio.h"
+#include "oshmem/op/op.h"
 
 #if OSHMEM_PROFILING
 #include "oshmem/shmem/fortran/profile/pbindings.h"
@@ -36,14 +37,17 @@ MPI_Fint shmem_swap_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fin
 {
     size_t integer_type_size = 0;
     MPI_Fint out_value = 0;
+    oshmem_op_t* op;
     ompi_datatype_type_size(&ompi_mpi_integer.dt, &integer_type_size);
+    op = (integer_type_size == 2) ? oshmem_op_swap_fint2 :
+         (integer_type_size == 4) ? oshmem_op_swap_fint4 : oshmem_op_swap_fint8;
 
-    MCA_ATOMIC_CALL(cswap(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(swap(FPTR_2_VOID_PTR(target),
         (void *)&out_value,
-        NULL,
         FPTR_2_VOID_PTR(value),
         integer_type_size,
-        OMPI_FINT_2_INT(*pe)));
+        OMPI_FINT_2_INT(*pe),
+        op));
 
     return out_value;
 }

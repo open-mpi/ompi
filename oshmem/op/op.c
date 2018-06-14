@@ -80,6 +80,24 @@ oshmem_op_t* oshmem_op_xor_int16 = NULL;
 oshmem_op_t* oshmem_op_xor_int32 = NULL;
 oshmem_op_t* oshmem_op_xor_int64 = NULL;
 
+/* SWAP */
+oshmem_op_t* oshmem_op_swap_short = NULL;
+oshmem_op_t* oshmem_op_swap_int = NULL;
+oshmem_op_t* oshmem_op_swap_long = NULL;
+oshmem_op_t* oshmem_op_swap_longlong = NULL;
+oshmem_op_t* oshmem_op_swap_float = NULL;
+oshmem_op_t* oshmem_op_swap_double = NULL;
+oshmem_op_t* oshmem_op_swap_longdouble = NULL;
+oshmem_op_t* oshmem_op_swap_fint2 = NULL;
+oshmem_op_t* oshmem_op_swap_fint4 = NULL;
+oshmem_op_t* oshmem_op_swap_fint8 = NULL;
+oshmem_op_t* oshmem_op_swap_freal4 = NULL;
+oshmem_op_t* oshmem_op_swap_freal8 = NULL;
+oshmem_op_t* oshmem_op_swap_freal16 = NULL;
+oshmem_op_t* oshmem_op_swap_int16 = NULL;
+oshmem_op_t* oshmem_op_swap_int32 = NULL;
+oshmem_op_t* oshmem_op_swap_int64 = NULL;
+
 /* MAX */
 oshmem_op_t* oshmem_op_max_short = NULL;
 oshmem_op_t* oshmem_op_max_int = NULL;
@@ -218,6 +236,27 @@ FUNC_OP_CREATE(xor, fint8, ompi_fortran_integer8_t, __xor_op)
 FUNC_OP_CREATE(xor, int16, int16_t, __xor_op)
 FUNC_OP_CREATE(xor, int32, int32_t, __xor_op)
 FUNC_OP_CREATE(xor, int64, int64_t, __xor_op)
+
+/* SWAP */
+#define __swap_op(a, b) (a)
+FUNC_OP_CREATE(swap, short, short, __swap_op)
+FUNC_OP_CREATE(swap, int, int, __swap_op)
+FUNC_OP_CREATE(swap, long, long, __swap_op)
+FUNC_OP_CREATE(swap, longlong, long long, __swap_op)
+FUNC_OP_CREATE(swap, float, float, __swap_op)
+FUNC_OP_CREATE(swap, double, double, __swap_op)
+FUNC_OP_CREATE(swap, longdouble, long double, __swap_op)
+FUNC_OP_CREATE(swap, fint2, ompi_fortran_integer4_t, __swap_op)
+FUNC_OP_CREATE(swap, fint4, ompi_fortran_integer4_t, __swap_op)
+FUNC_OP_CREATE(swap, fint8, ompi_fortran_integer8_t, __swap_op)
+FUNC_OP_CREATE(swap, freal4, ompi_fortran_real4_t, __swap_op)
+FUNC_OP_CREATE(swap, freal8, ompi_fortran_real8_t, __swap_op)
+#if OMPI_HAVE_FORTRAN_REAL16
+FUNC_OP_CREATE(swap, freal16, ompi_fortran_real16_t, __swap_op)
+#endif
+FUNC_OP_CREATE(swap, int16, int16_t, __swap_op)
+FUNC_OP_CREATE(swap, int32, int32_t, __swap_op)
+FUNC_OP_CREATE(swap, int64, int64_t, __swap_op)
 
 /* MAX */
 #define __max_op(a, b) ((a) > (b) ? (a) : (b))

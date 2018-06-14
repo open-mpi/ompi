@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2013-2018 Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -13,7 +13,6 @@ sources = \
 	atomic_basic.h \
 	atomic_basic_module.c \
 	atomic_basic_component.c \
-	atomic_basic_fadd.c \
 	atomic_basic_cswap.c
 
 

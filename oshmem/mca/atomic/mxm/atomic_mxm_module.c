@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,6 +32,27 @@ int mca_atomic_mxm_finalize(void)
     return OSHMEM_SUCCESS;
 }
 
+static inline
+int mca_atomic_mxm_op_not_implemented(void *target,
+                                      const void *value,
+                                      size_t nlong,
+                                      int pe,
+                                      struct oshmem_op_t *op)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+static inline
+int mca_atomic_mxm_fop_not_implemented(void *target,
+                                       void *prev,
+                                       const void *value,
+                                       size_t nlong,
+                                       int pe,
+                                       struct oshmem_op_t *op)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
 mca_atomic_base_module_t *
 mca_atomic_mxm_query(int *priority)
 {
@@ -41,7 +62,15 @@ mca_atomic_mxm_query(int *priority)
 
     module = OBJ_NEW(mca_atomic_mxm_module_t);
     if (module) {
-        module->super.atomic_fadd = mca_atomic_mxm_fadd;
+        module->super.atomic_add   = mca_atomic_mxm_add;
+        module->super.atomic_and   = mca_atomic_mxm_op_not_implemented;
+        module->super.atomic_or    = mca_atomic_mxm_op_not_implemented;
+        module->super.atomic_xor   = mca_atomic_mxm_op_not_implemented;
+        module->super.atomic_fadd  = mca_atomic_mxm_fadd;
+        module->super.atomic_fand  = mca_atomic_mxm_fop_not_implemented;
+        module->super.atomic_for   = mca_atomic_mxm_fop_not_implemented;
+        module->super.atomic_fxor  = mca_atomic_mxm_fop_not_implemented;
+        module->super.atomic_cswap = mca_atomic_mxm_cswap;
         module->super.atomic_cswap = mca_atomic_mxm_cswap;
         return &(module->super);
     }

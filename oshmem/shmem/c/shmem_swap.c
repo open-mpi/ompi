@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -13,7 +13,7 @@
 #include "oshmem/include/shmem.h"
 
 #include "oshmem/runtime/runtime.h"
-
+#include "oshmem/op/op.h"
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
@@ -22,46 +22,35 @@
  * contents of target. The operation must be completed without the possibility of another
  * process updating target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_SWAP(type_name, type, prefix)    \
-    type prefix##type_name##_swap(type *target, type value, int pe) \
-    {                                                               \
-        int rc = OSHMEM_SUCCESS;                                    \
-        size_t size = 0;                                            \
-        type out_value;                                             \
-                                                                    \
-        RUNTIME_CHECK_INIT();                                       \
-        RUNTIME_CHECK_PE(pe);                                       \
-        RUNTIME_CHECK_ADDR(target);                                 \
-                                                                    \
-        size = sizeof(out_value);                                   \
-        rc = MCA_ATOMIC_CALL(cswap(                                 \
-            (void*)target,                                          \
-            (void*)&out_value,                                      \
-            NULL,                                                   \
-            (const void*)&value,                                    \
-            size,                                                   \
-            pe));                                                   \
-        RUNTIME_CHECK_RC(rc);                                       \
-                                                                    \
-        return out_value;                                           \
-    }
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_int_swap = pshmem_int_swap
-#pragma weak shmem_long_swap = pshmem_long_swap
-#pragma weak shmem_longlong_swap = pshmem_longlong_swap
-#pragma weak shmem_float_swap = pshmem_float_swap
-#pragma weak shmem_double_swap = pshmem_double_swap
-#pragma weak shmemx_int32_swap = pshmemx_int32_swap
-#pragma weak shmemx_int64_swap = pshmemx_int64_swap
+#pragma weak shmem_int_atomic_swap      = pshmem_int_atomic_swap
+#pragma weak shmem_long_atomic_swap     = pshmem_long_atomic_swap
+#pragma weak shmem_longlong_atomic_swap = pshmem_longlong_atomic_swap
+#pragma weak shmem_float_atomic_swap    = pshmem_float_atomic_swap
+#pragma weak shmem_double_atomic_swap   = pshmem_double_atomic_swap
+#pragma weak shmemx_int32_swap          = pshmemx_int32_swap
+#pragma weak shmemx_int64_swap          = pshmemx_int64_swap
+/* Backward compatibility */
+#pragma weak shmem_int_swap      = pshmem_int_atomic_swap
+#pragma weak shmem_long_swap     = pshmem_long_atomic_swap
+#pragma weak shmem_longlong_swap = pshmem_longlong_atomic_swap
+#pragma weak shmem_float_swap    = pshmem_float_atomic_swap
+#pragma weak shmem_double_swap   = pshmem_double_atomic_swap
 #include "oshmem/shmem/c/profile/defines.h"
+#else
+#pragma weak shmem_int_swap      = shmem_int_atomic_swap
+#pragma weak shmem_long_swap     = shmem_long_atomic_swap
+#pragma weak shmem_longlong_swap = shmem_longlong_atomic_swap
+#pragma weak shmem_float_swap    = shmem_float_atomic_swap
+#pragma weak shmem_double_swap   = shmem_double_atomic_swap
 #endif
 
-SHMEM_TYPE_SWAP(_int, int, shmem)
-SHMEM_TYPE_SWAP(_long, long, shmem)
-SHMEM_TYPE_SWAP(_longlong, long long, shmem)
-SHMEM_TYPE_SWAP(_float, float, shmem)
-SHMEM_TYPE_SWAP(_double, double, shmem)
-SHMEM_TYPE_SWAP(_int32, int32_t, shmemx)
-SHMEM_TYPE_SWAP(_int64, int64_t, shmemx)
+SHMEM_TYPE_FOP(_int, int, swap, swap, shmem, atomic_swap)
+SHMEM_TYPE_FOP(_long, long, swap, swap, shmem, atomic_swap)
+SHMEM_TYPE_FOP(_longlong, long long, swap, swap, shmem, atomic_swap)
+SHMEM_TYPE_FOP(_float, float, swap, swap, shmem, atomic_swap)
+SHMEM_TYPE_FOP(_double, double, swap, swap, shmem, atomic_swap)
+SHMEM_TYPE_FOP(_int32, int32_t, swap, swap, shmemx, swap)
+SHMEM_TYPE_FOP(_int64, int64_t, swap, swap, shmemx, swap)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2018 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "oshmem/constants.h"
+#include "oshmem/op/op.h"
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/memheap/memheap.h"
@@ -100,7 +101,15 @@ mca_atomic_basic_query(int *priority)
 
     module = OBJ_NEW(mca_atomic_basic_module_t);
     if (module) {
-        module->super.atomic_fadd = mca_atomic_basic_fadd;
+        module->super.atomic_add   = mca_atomic_basic_op;
+        module->super.atomic_and   = mca_atomic_basic_op;
+        module->super.atomic_or    = mca_atomic_basic_op;
+        module->super.atomic_xor   = mca_atomic_basic_op;
+        module->super.atomic_fadd  = mca_atomic_basic_fop;
+        module->super.atomic_fand  = mca_atomic_basic_fop;
+        module->super.atomic_for   = mca_atomic_basic_fop;
+        module->super.atomic_fxor  = mca_atomic_basic_fop;
+        module->super.atomic_swap  = mca_atomic_basic_fop;
         module->super.atomic_cswap = mca_atomic_basic_cswap;
         return &(module->super);
     }
@@ -177,3 +186,56 @@ void atomic_basic_unlock(int pe)
         MCA_SPML_CALL(get((void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
     } while (local_lock_sync[me] != lock_idle);
 }
+
+static inline
+int mca_atomic_basic_op_internal(void *target,
+                                 void *prev,
+                                 const void *value,
+                                 size_t size,
+                                 int pe,
+                                 struct oshmem_op_t *op)
+{
+    int rc = OSHMEM_SUCCESS;
+    long long temp_value = 0;
+
+    atomic_basic_lock(pe);
+
+    rc = MCA_SPML_CALL(get(target, size, (void*)&temp_value, pe));
+
+    if (prev) {
+        memcpy(prev, (void*) &temp_value, size);
+    }
+
+    op->o_func.c_fn((void*) value,
+            (void*) &temp_value,
+            size / op->dt_size);
+
+    if (rc == OSHMEM_SUCCESS) {
+        rc = MCA_SPML_CALL(put(target, size, (void*)&temp_value, pe));
+        shmem_quiet();
+    }
+
+    atomic_basic_unlock(pe);
+
+    return rc;
+}
+
+int mca_atomic_basic_op(void *target,
+                        const void *value,
+                        size_t size,
+                        int pe,
+                        struct oshmem_op_t *op)
+{
+    return mca_atomic_basic_op_internal(target, NULL, value, size, pe, op);
+}
+
+int mca_atomic_basic_fop(void *target,
+                         void *prev,
+                         const void *value,
+                         size_t size,
+                         int pe,
+                         struct oshmem_op_t *op)
+{
+    return mca_atomic_basic_op_internal(target, NULL, value, size, pe, op);
+}
+
