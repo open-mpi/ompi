@@ -46,7 +46,7 @@ AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
     opal_prog_cc_c11_helper_CFLAGS_save=$CFLAGS
     CFLAGS="$CFLAGS $1"
 
-    OPAL_CC_HELPER([if $CC $1 supports C11 thread local storage], [opal_prog_cc_c11_helper__Thread_local_available],
+    OPAL_CC_HELPER([if $CC $1 supports C11 _Thread_local], [opal_prog_cc_c11_helper__Thread_local_available],
                    [],[[static _Thread_local int  foo = 1;++foo;]], [OPAL_C_HAVE__THREAD_LOCAL],
                    [Whether C compiler supports __Thread_local])
 
@@ -159,6 +159,13 @@ AC_DEFUN([OPAL_SETUP_CC],[
         # changed
         OPAL_PROG_CC_C11_HELPER([],[],[])
     fi
+
+    # Check if compiler support __thread
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc__thread_available])
+    OPAL_CC_HELPER([if $CC $1 supports __thread], [opal_prog_cc__thread_available],
+               [],[[static __thread int  foo = 1;++foo;]], [OPAL_C_HAVE___THREAD],
+               [Whether C compiler supports __thread])
+    OPAL_VAR_SCOPE_POP
 
     OPAL_C_COMPILER_VENDOR([opal_c_vendor])
 
