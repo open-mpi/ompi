@@ -443,7 +443,8 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     ompi_osc_rdma_sync_t *sync = &module->all_sync;
     ompi_osc_rdma_peer_t **peers;
     ompi_group_t *group;
-    int group_size, ret;
+    int group_size;
+    int ret __opal_attribute_unused__;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "complete: %s", win->w_name);
 

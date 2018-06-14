@@ -1642,7 +1642,7 @@ int ompi_osc_pt2pt_process_receive (ompi_osc_pt2pt_receive_t *recv)
     ompi_osc_pt2pt_header_t *base_header = (ompi_osc_pt2pt_header_t *) recv->buffer;
     size_t incoming_length = recv->pml_request->req_status._ucount;
     int source = recv->pml_request->req_status.MPI_SOURCE;
-    int rc;
+    int rc __opal_attribute_unused__;
 
     assert(incoming_length >= sizeof(ompi_osc_pt2pt_header_base_t));
     (void)incoming_length;  // silence compiler warning
