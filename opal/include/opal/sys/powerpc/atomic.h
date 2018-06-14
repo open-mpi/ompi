@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
- * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -414,7 +414,7 @@ static inline int32_t opal_atomic_fetch_ ## type ## _32(volatile int32_t* v, int
                          : "r" (val), "r" OPAL_ASM_ADDR(v), "m" (*v)    \
                          : "cc");                                       \
                                                                         \
-    return t;                                                           \
+    return old;                                                         \
 }
 
 OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(add, add)
