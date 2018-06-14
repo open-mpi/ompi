@@ -63,7 +63,6 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
  */
 #define OMPIO_PREALLOC_MAX_BUF_SIZE   33554432
 #define OMPIO_DEFAULT_CYCLE_BUF_SIZE  536870912
-#define OMPIO_MAX_NAME                100
 #define OMPIO_TAG_GATHER              -100
 #define OMPIO_TAG_GATHERV             -101
 #define OMPIO_TAG_BCAST               -102

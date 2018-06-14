@@ -46,6 +46,8 @@ extern int mca_fs_pvfs2_IS_INITIALIZED;
 
 BEGIN_C_DECLS
 
+#define OMPIO_PVFS2_MAX_NAME 100
+
 struct mca_fs_pvfs2_s {
     PVFS_credentials credentials;
     PVFS_object_ref object_ref;
