@@ -676,6 +676,8 @@ test/runtime/start_shut
 test/runtime/opal_init_finalize
 test/runtime/orte_init_finalize
 
+test/spc/spc_test
+
 test/threads/opal_condition
 test/threads/opal_thread
 
