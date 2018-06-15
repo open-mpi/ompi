@@ -17,7 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 IBM Corporation. All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -352,7 +352,7 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
     if (strlen(key) > OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)) {
         fprintf(stderr, "DEVELOPER WARNING: Unexpected key length [%s]: "
             "OMPI internal callback keys are limited to %d chars\n",
-            key, OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX));
+            key, (int)(OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)));
 #if OPAL_ENABLE_DEBUG
         assert(!(strlen(key) > OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)));
 #endif
