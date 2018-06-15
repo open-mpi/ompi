@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -46,8 +46,8 @@ pmix_status_t spawn_fn(const pmix_proc_t *proc,
                        pmix_spawn_cbfunc_t cbfunc, void *cbdata);
 pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
                          const pmix_info_t info[], size_t ninfo,
-                         pmix_connect_cbfunc_t cbfunc, void *cbdata);
-pmix_status_t disconnect_fn(const char nspace[],
+                         pmix_op_cbfunc_t cbfunc, void *cbdata);
+pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                             const pmix_info_t info[], size_t ninfo,
                             pmix_op_cbfunc_t cbfunc, void *cbdata);
 pmix_status_t regevents_fn(pmix_status_t *codes, size_t ncodes,

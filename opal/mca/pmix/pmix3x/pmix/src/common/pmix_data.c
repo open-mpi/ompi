@@ -76,7 +76,12 @@ static pmix_peer_t* find_peer(const pmix_proc_t *proc)
     pmix_value_t *value;
     int i;
 
-    if (NULL == proc) {
+    if (NULL == proc ) {
+        return pmix_globals.mypeer;
+    }
+
+    /* if the target is someone in my nspace, then use my own peer */
+    if (0 == strncmp(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
         return pmix_globals.mypeer;
     }
 

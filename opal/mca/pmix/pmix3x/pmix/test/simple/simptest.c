@@ -40,11 +40,17 @@
 #include <signal.h>
 #include PMIX_EVENT_HEADER
 
+#if PMIX_HAVE_HWLOC
+#include <src/hwloc/hwloc-internal.h>
+#endif
+
 #include "src/class/pmix_list.h"
 #include "src/util/pmix_environ.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"
 #include "src/util/argv.h"
+
+#include "simptest.h"
 
 static pmix_status_t connected(const pmix_proc_t *proc, void *server_object,
                                pmix_op_cbfunc_t cbfunc, void *cbdata);
@@ -76,8 +82,8 @@ static pmix_status_t spawn_fn(const pmix_proc_t *proc,
                               pmix_spawn_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
                                 const pmix_info_t info[], size_t ninfo,
-                                pmix_connect_cbfunc_t cbfunc, void *cbdata);
-static pmix_status_t disconnect_fn(const char nspace[],
+                                pmix_op_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                                    const pmix_info_t info[], size_t ninfo,
                                    pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t register_event_fn(pmix_status_t *codes, size_t ncodes,
@@ -132,25 +138,28 @@ PMIX_CLASS_INSTANCE(pmix_locdat_t,
 
 typedef struct {
     pmix_object_t super;
-    volatile bool active;
+    mylock_t lock;
+    pmix_event_t ev;
     pmix_proc_t caller;
     pmix_info_t *info;
     size_t ninfo;
     pmix_op_cbfunc_t cbfunc;
     pmix_spawn_cbfunc_t spcbfunc;
+    pmix_release_cbfunc_t relcbfunc;
     void *cbdata;
 } myxfer_t;
 static void xfcon(myxfer_t *p)
 {
+    DEBUG_CONSTRUCT_LOCK(&p->lock);
     p->info = NULL;
     p->ninfo = 0;
-    p->active = true;
     p->cbfunc = NULL;
     p->spcbfunc = NULL;
     p->cbdata = NULL;
 }
 static void xfdes(myxfer_t *p)
 {
+    DEBUG_DESTRUCT_LOCK(&p->lock);
     if (NULL != p->info) {
         PMIX_INFO_FREE(p->info, p->ninfo);
     }
@@ -174,6 +183,7 @@ static pmix_list_t pubdata;
 static pmix_event_t handler;
 static pmix_list_t children;
 static bool istimeouttest = false;
+static mylock_t globallock;
 
 static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x);
@@ -197,7 +207,49 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
     if (NULL != x->cbfunc) {
         x->cbfunc(PMIX_SUCCESS, x->cbdata);
     }
-    x->active = false;
+    DEBUG_WAKEUP_THREAD(&x->lock);
+}
+
+
+static void dlcbfunc(int sd, short flags, void *cbdata)
+{
+    myxfer_t *x = (myxfer_t*)cbdata;
+
+    pmix_output(0, "INVENTORY READY FOR DELIVERY");
+
+    PMIx_server_deliver_inventory(x->info, x->ninfo, NULL, 0, opcbfunc, (void*)x);
+}
+
+static void infocbfunc(pmix_status_t status,
+                       pmix_info_t *info, size_t ninfo,
+                       void *cbdata,
+                       pmix_release_cbfunc_t release_fn,
+                       void *release_cbdata)
+{
+    mylock_t *lock = (mylock_t*)cbdata;
+    myxfer_t *x;
+    size_t n;
+
+    pmix_output(0, "INVENTORY RECEIVED");
+
+    /* we don't have any place to send this, so for test
+     * purposes only, let's push it back down for processing.
+     * Note: it must be thread-shifted first as we are in
+     * the callback event thread of the underlying PMIx
+     * server */
+    x = PMIX_NEW(myxfer_t);
+    x->ninfo = ninfo;
+    PMIX_INFO_CREATE(x->info, x->ninfo);
+    for (n=0; n < ninfo; n++) {
+        PMIX_INFO_XFER(&x->info[n], &info[n]);
+    }
+    PMIX_THREADSHIFT(x, dlcbfunc);
+
+    if (NULL != release_fn) {
+        release_fn(release_cbdata);
+    }
+    lock->status = status;
+    DEBUG_WAKEUP_THREAD(lock);
 }
 
 /* this is an event notification function that we explicitly request
@@ -232,7 +284,7 @@ static void model_callback(size_t evhdlr_registration_id,
     if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
     }
-    wakeup = 0;
+    DEBUG_WAKEUP_THREAD(&globallock);
 }
 
 /* event handler registration is done asynchronously */
@@ -240,13 +292,14 @@ static void model_registration_callback(pmix_status_t status,
                                         size_t evhandler_ref,
                                         void *cbdata)
 {
-    volatile int *active = (volatile int*)cbdata;
+    mylock_t *lock = (mylock_t*)cbdata;
 
     if (PMIX_SUCCESS != status) {
         fprintf(stderr, "simptest EVENT HANDLER REGISTRATION FAILED WITH STATUS %d, ref=%lu\n",
                    status, (unsigned long)evhandler_ref);
     }
-    *active = status;
+    lock->status = status;
+    DEBUG_WAKEUP_THREAD(lock);
 }
 
 int main(int argc, char **argv)
@@ -265,7 +318,11 @@ int main(int argc, char **argv)
     size_t ninfo;
     bool cross_version = false;
     bool usock = true;
-    volatile int active;
+    bool hwloc = false;
+#if PMIX_HAVE_HWLOC
+    char *hwloc_file = NULL;
+#endif
+    mylock_t mylock;
     pmix_status_t code;
 
     /* smoke test */
@@ -302,6 +359,21 @@ int main(int argc, char **argv)
         } else if (0 == strcmp("-u", argv[n])) {
             /* enable usock */
             usock = false;
+#if PMIX_HAVE_HWLOC
+        } else if (0 == strcmp("-hwloc", argv[n]) ||
+                   0 == strcmp("--hwloc", argv[n])) {
+            /* test hwloc support */
+            hwloc = true;
+        } else if (0 == strcmp("-hwloc-file", argv[n]) ||
+                   0 == strcmp("--hwloc-file", argv[n])) {
+            if (NULL == argv[n+1]) {
+                fprintf(stderr, "The --hwloc-file option requires an argument\n");
+                exit(1);
+            }
+            hwloc_file = strdup(argv[n+1]);
+            hwloc = true;
+            ++n;
+#endif
         } else if (0 == strcmp("-h", argv[n])) {
             /* print the options and exit */
             fprintf(stderr, "usage: simptest <options>\n");
@@ -309,6 +381,8 @@ int main(int argc, char **argv)
             fprintf(stderr, "    -e foo   Name of the client executable to run (default: simpclient\n");
             fprintf(stderr, "    -x       Test cross-version support\n");
             fprintf(stderr, "    -u       Enable legacy usock support\n");
+            fprintf(stderr, "    -hwloc   Test hwloc support\n");
+            fprintf(stderr, "    -hwloc-file FILE   Use file to import topology\n");
             exit(0);
         }
     }
@@ -320,47 +394,78 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+#if !PMIX_HAVE_HWLOC
+    if (hwloc) {
+        fprintf(stderr, "PMIx was not configured with HWLOC support - cannot continue\n");
+        exit(1);
+    }
+#endif
+
     /* setup the server library and tell it to support tool connections */
-    ninfo = 2;
+#if PMIX_HAVE_HWLOC
+    if (hwloc) {
+#if HWLOC_API_VERSION < 0x20000
+        ninfo = 4;
+#else
+        ninfo = 5;
+#endif
+    } else {
+        ninfo = 3;
+    }
+#else
+    ninfo = 3;
+#endif
+
     PMIX_INFO_CREATE(info, ninfo);
     PMIX_INFO_LOAD(&info[0], PMIX_SERVER_TOOL_SUPPORT, NULL, PMIX_BOOL);
     PMIX_INFO_LOAD(&info[1], PMIX_USOCK_DISABLE, &usock, PMIX_BOOL);
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, info, 2))) {
+    PMIX_INFO_LOAD(&info[2], PMIX_SERVER_GATEWAY, NULL, PMIX_BOOL);
+#if PMIX_HAVE_HWLOC
+    if (hwloc) {
+        if (NULL != hwloc_file) {
+            PMIX_INFO_LOAD(&info[3], PMIX_TOPOLOGY_FILE, hwloc_file, PMIX_STRING);
+        } else {
+            PMIX_INFO_LOAD(&info[3], PMIX_TOPOLOGY, NULL, PMIX_STRING);
+        }
+#if HWLOC_API_VERSION >= 0x20000
+        PMIX_INFO_LOAD(&info[4], PMIX_HWLOC_SHARE_TOPO, NULL, PMIX_BOOL);
+#endif
+    }
+#endif
+    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, info, ninfo))) {
         fprintf(stderr, "Init failed with error %d\n", rc);
         return rc;
     }
     PMIX_INFO_FREE(info, ninfo);
 
     /* register the default errhandler */
-    active = -1;
+    DEBUG_CONSTRUCT_LOCK(&mylock);
     ninfo = 1;
     PMIX_INFO_CREATE(info, ninfo);
     PMIX_INFO_LOAD(&info[0], PMIX_EVENT_HDLR_NAME, "SIMPTEST-DEFAULT", PMIX_STRING);
     PMIx_Register_event_handler(NULL, 0, info, ninfo,
-                                errhandler, errhandler_reg_callbk, (void*)&active);
-    while (-1 == active) {
-        usleep(10);
-    }
+                                errhandler, errhandler_reg_callbk, (void*)&mylock);
+    DEBUG_WAIT_THREAD(&mylock);
     PMIX_INFO_FREE(info, ninfo);
-    if (0 != active) {
-        exit(active);
+    if (PMIX_SUCCESS != mylock.status) {
+        exit(mylock.status);
     }
+    DEBUG_DESTRUCT_LOCK(&mylock);
 
     /* register a handler specifically for when models declare */
-    active = -1;
+    DEBUG_CONSTRUCT_LOCK(&mylock);
     ninfo = 1;
     PMIX_INFO_CREATE(info, ninfo);
     PMIX_INFO_LOAD(&info[0], PMIX_EVENT_HDLR_NAME, "SIMPTEST-MODEL", PMIX_STRING);
     code = PMIX_MODEL_DECLARED;
     PMIx_Register_event_handler(&code, 1, info, ninfo,
-                                model_callback, model_registration_callback, (void*)&active);
-    while (-1 == active) {
-        usleep(10);
-    }
+                                model_callback, model_registration_callback, (void*)&mylock);
+    DEBUG_WAIT_THREAD(&mylock);
     PMIX_INFO_FREE(info, ninfo);
-    if (0 != active) {
-        exit(active);
+    if (PMIX_SUCCESS != mylock.status) {
+        exit(mylock.status);
     }
+    DEBUG_DESTRUCT_LOCK(&mylock);
 
     /* setup the pub data, in case it is used */
     PMIX_CONSTRUCT(&pubdata, pmix_list_t);
@@ -391,9 +496,24 @@ int main(int argc, char **argv)
     myuid = getuid();
     mygid = getgid();
 
+    /* collect our inventory */
+    DEBUG_CONSTRUCT_LOCK(&mylock);
+    fprintf(stderr, "Collecting inventory\n");
+    if (PMIX_SUCCESS != (rc = PMIx_server_collect_inventory(NULL, 0, infocbfunc, (void*)&mylock))) {
+        fprintf(stderr, "Collect inventory failed: %d\n", rc);
+        DEBUG_DESTRUCT_LOCK(&mylock);
+        goto done;
+    }
+    DEBUG_WAIT_THREAD(&mylock);
+    fprintf(stderr, "Inventory collected: %d\n", mylock.status);
+    if (PMIX_SUCCESS != mylock.status) {
+        exit(mylock.status);
+    }
+    DEBUG_DESTRUCT_LOCK(&mylock);
+
     /* if the nspace registration hasn't completed yet,
      * wait for it here */
-    PMIX_WAIT_FOR_COMPLETION(x->active);
+    DEBUG_WAIT_THREAD(&x->lock);
     free(tmp);
     PMIX_RELEASE(x);
 
@@ -427,7 +547,7 @@ int main(int argc, char **argv)
         }
         /* don't fork/exec the client until we know it is registered
          * so we avoid a potential race condition in the server */
-        PMIX_WAIT_FOR_COMPLETION(x->active);
+        DEBUG_WAIT_THREAD(&x->lock);
         PMIX_RELEASE(x);
         pid = fork();
         if (pid < 0) {
@@ -473,13 +593,12 @@ int main(int argc, char **argv)
     PMIX_INFO_LOAD(&info[1], PMIX_MODEL_LIBRARY_NAME, "test", PMIX_STRING);
     /* mark that it is not to go to any default handlers */
     PMIX_INFO_LOAD(&info[2], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
-    wakeup = -1;
+    DEBUG_CONSTRUCT_LOCK(&globallock);
     PMIx_Notify_event(PMIX_MODEL_DECLARED,
                       &pmix_globals.myid, PMIX_RANGE_PROC_LOCAL,
                       info, ninfo, NULL, NULL);
-    while (-1 == wakeup) {
-        usleep(10);
-    }
+    DEBUG_WAIT_THREAD(&globallock);
+    DEBUG_DESTRUCT_LOCK(&globallock);
     PMIX_INFO_FREE(info, ninfo);
 
   done:
@@ -566,11 +685,12 @@ static void errhandler_reg_callbk (pmix_status_t status,
                                    size_t errhandler_ref,
                                    void *cbdata)
 {
-    volatile int *active = (volatile int*)cbdata;
+    mylock_t *lock = (mylock_t*)cbdata;
 
     pmix_output(0, "SERVER: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%lu",
                 status, (unsigned long)errhandler_ref);
-    *active = status;
+    lock->status = status;
+    DEBUG_WAKEUP_THREAD(lock);
 }
 
 static pmix_status_t connected(const pmix_proc_t *proc, void *server_object,
@@ -834,26 +954,24 @@ static int numconnects = 0;
 
 static pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
                                 const pmix_info_t info[], size_t ninfo,
-                                pmix_connect_cbfunc_t cbfunc, void *cbdata)
+                                pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_output(0, "SERVER: CONNECT");
-    char nspace[PMIX_MAX_NSLEN+1];
 
     /* in practice, we would pass this request to the local
      * resource manager for handling */
 
-    (void)snprintf(nspace, PMIX_MAX_NSLEN, "NEW%d", numconnects);
     numconnects++;
 
     if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, nspace, 0, cbdata);
+        cbfunc(PMIX_SUCCESS, cbdata);
     }
 
     return PMIX_SUCCESS;
 }
 
 
-static pmix_status_t disconnect_fn(const char nspace[],
+static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                                    const pmix_info_t info[], size_t ninfo,
                                    pmix_op_cbfunc_t cbfunc, void *cbdata)
 {

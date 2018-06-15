@@ -71,8 +71,12 @@ PMIX_EXPORT const char* PMIx_Proc_state_string(pmix_proc_state_t state)
             return "PROC TERMINATED WITHOUT CALLING PMIx_Finalize";
         case PMIX_PROC_STATE_COMM_FAILED:
             return "PROC LOST COMMUNICATION";
+        case PMIX_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+            return "PROC SENSOR BOUND EXCEEDED";
         case PMIX_PROC_STATE_CALLED_ABORT:
             return "PROC CALLED PMIx_Abort";
+        case PMIX_PROC_STATE_HEARTBEAT_FAILED:
+            return "PROC FAILED TO REPORT HEARTBEAT";
         case PMIX_PROC_STATE_MIGRATING:
             return "PROC WAITING TO MIGRATE";
         case PMIX_PROC_STATE_CANNOT_RESTART:
@@ -117,6 +121,8 @@ PMIX_EXPORT const char* PMIx_Persistence_string(pmix_persistence_t persist)
             return "RETAIN UNTIL APPLICATION OF PUBLISHING PROCESS TERMINATES";
         case PMIX_PERSIST_SESSION:
             return "RETAIN UNTIL ALLOCATION OF PUBLISHING PROCESS TERMINATES";
+        case PMIX_PERSIST_INVALID:
+            return "INVALID";
         default:
             return "UNKNOWN PERSISTENCE";
     }
@@ -141,6 +147,8 @@ PMIX_EXPORT const char* PMIx_Data_range_string(pmix_data_range_t range)
             return "AVAIL AS SPECIFIED IN DIRECTIVES";
         case PMIX_RANGE_PROC_LOCAL:
             return "AVAIL ON LOCAL PROC ONLY";
+        case PMIX_RANGE_INVALID:
+            return "INVALID";
         default:
             return "UNKNOWN";
     }

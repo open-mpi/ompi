@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,16 +25,10 @@ static void cd_cb(pmix_status_t status, void *cbdata)
     cb->in_progress = 0;
 }
 
-static void cnct_cb(pmix_status_t status,
-                    char nspace[], int rank,
-                    void *cbdata)
+static void cnct_cb(pmix_status_t status, void *cbdata)
 {
     cd_cbdata *cb = (cd_cbdata*)cbdata;
 
-    if (NULL != nspace) {
-        (void)strncpy(cb->pname.nspace, nspace, PMIX_MAX_NSLEN);
-    }
-    cb->pname.rank = rank;
     cb->status = status;
     cb->in_progress = 0;
 }
@@ -43,21 +37,19 @@ int test_connect_disconnect(char *my_nspace, int my_rank)
 {
     int rc;
     pmix_proc_t proc;
-    char nspace[PMIX_MAX_NSLEN+1];
-    pmix_rank_t newrank;
     cd_cbdata cbdata;
 
     (void)strncpy(proc.nspace, my_nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
 
-    rc = PMIx_Connect(&proc, 1, NULL, 0, nspace, &newrank);
+    rc = PMIx_Connect(&proc, 1, NULL, 0);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Connect blocking test failed.", my_nspace, my_rank));
         return PMIX_ERROR;
     }
-    TEST_VERBOSE(("%s:%d: Connect blocking test succeded to nspace %s.", my_nspace, my_rank, nspace));
+    TEST_VERBOSE(("%s:%d: Connect blocking test succeded", my_nspace, my_rank));
 
-    rc = PMIx_Disconnect(nspace, NULL, 0);
+    rc = PMIx_Disconnect(&proc, 1, NULL, 0);
     if (PMIX_SUCCESS != rc) {
         TEST_ERROR(("%s:%d: Disconnect blocking test failed.", my_nspace, my_rank));
         return PMIX_ERROR;
@@ -77,7 +69,7 @@ int test_connect_disconnect(char *my_nspace, int my_rank)
     TEST_VERBOSE(("%s:%d: Connect non-blocking test succeded.", my_nspace, my_rank));
 
     cbdata.in_progress = 1;
-    rc = PMIx_Disconnect_nb(nspace, NULL, 0, cd_cb, &cbdata);
+    rc = PMIx_Disconnect_nb(&proc, 1, NULL, 0, cd_cb, &cbdata);
     if (PMIX_SUCCESS == rc) {
         PMIX_WAIT_FOR_COMPLETION(cbdata.in_progress);
         rc = cbdata.status;

@@ -76,8 +76,8 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *proc,
                                      pmix_spawn_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
                                        const pmix_info_t info[], size_t ninfo,
-                                       pmix_connect_cbfunc_t cbfunc, void *cbdata);
-static pmix_status_t server_disconnect_fn(const char nspace[],
+                                       pmix_op_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                                           const pmix_info_t info[], size_t ninfo,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t server_register_events(pmix_status_t *codes, size_t ncodes,
@@ -711,20 +711,9 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
 }
 
 
-static void cnopcbfunc(int status, void *cbdata)
-{
-    pmix3x_opalcaddy_t *opalcaddy = (pmix3x_opalcaddy_t*)cbdata;
-
-    if (NULL != opalcaddy->cnctcbfunc) {
-        opalcaddy->cnctcbfunc(pmix3x_convert_opalrc(status),
-                              "1234", 0, opalcaddy->cbdata);
-    }
-    OBJ_RELEASE(opalcaddy);
-}
-
 static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
                                        const pmix_info_t info[], size_t ninfo,
-                                       pmix_connect_cbfunc_t cbfunc, void *cbdata)
+                                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
     pmix3x_opalcaddy_t *opalcaddy;
@@ -738,7 +727,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix3x_opalcaddy_t);
-    opalcaddy->cnctcbfunc = cbfunc;
+    opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
     /* convert the array of pmix_proc_t to the list of procs */
@@ -764,7 +753,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
     }
 
     /* pass it up */
-    rc = host_module->connect(&opalcaddy->procs, &opalcaddy->info, cnopcbfunc, opalcaddy);
+    rc = host_module->connect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -773,7 +762,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
 }
 
 
-static pmix_status_t server_disconnect_fn(const char nspace[],
+static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                                           const pmix_info_t info[], size_t ninfo,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -792,14 +781,16 @@ static pmix_status_t server_disconnect_fn(const char nspace[],
     opalcaddy->opcbfunc = cbfunc;
     opalcaddy->cbdata = cbdata;
 
-    /* convert the nspace */
-    nm = OBJ_NEW(opal_namelist_t);
-    opal_list_append(&opalcaddy->procs, &nm->super);
-    if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&nm->name.jobid, nspace))) {
-        OBJ_RELEASE(opalcaddy);
-        return pmix3x_convert_opalrc(rc);
+    /* convert the array of pmix_proc_t to the list of procs */
+    for (n=0; n < nprocs; n++) {
+        nm = OBJ_NEW(opal_namelist_t);
+        opal_list_append(&opalcaddy->procs, &nm->super);
+        if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&nm->name.jobid, procs[n].nspace))) {
+            OBJ_RELEASE(opalcaddy);
+            return pmix3x_convert_opalrc(rc);
+        }
+        nm->name.vpid = pmix3x_convert_rank(procs[n].rank);
     }
-    nm->name.vpid = OPAL_VPID_WILDCARD;
 
     /* convert the info */
     for (n=0; n < ninfo; n++) {

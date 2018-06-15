@@ -45,6 +45,7 @@
 #include "src/mca/gds/base/base.h"
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
+#include "src/mca/plog/base/base.h"
 #include "src/mca/pnet/base/base.h"
 #include "src/mca/psec/base/base.h"
 #include "src/mca/preg/base/base.h"
@@ -151,7 +152,8 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
 
     /* setup the globals structure */
-    memset(&pmix_globals.myid, 0, sizeof(pmix_proc_t));
+    memset(&pmix_globals.myid.nspace, 0, PMIX_MAX_NSLEN+1);
+    pmix_globals.myid.rank = PMIX_RANK_INVALID;
     PMIX_CONSTRUCT(&pmix_globals.events, pmix_events_t);
     pmix_globals.event_window.tv_sec = pmix_event_caching_window;
     pmix_globals.event_window.tv_usec = 0;
@@ -248,21 +250,21 @@ int pmix_rte_init(pmix_proc_type_t type,
      * time of connection to that peer */
 
     /* open the bfrops and select the active plugins */
-    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_bfrops_base_framework, 0)) ) {
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_bfrops_base_framework, 0)) ) {
         error = "pmix_bfrops_base_open";
         goto return_error;
     }
-    if( PMIX_SUCCESS != (ret = pmix_bfrop_base_select()) ) {
+    if (PMIX_SUCCESS != (ret = pmix_bfrop_base_select()) ) {
         error = "pmix_bfrops_base_select";
         goto return_error;
     }
 
     /* open the ptl and select the active plugins */
-    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
         error = "pmix_ptl_base_open";
         goto return_error;
     }
-    if( PMIX_SUCCESS != (ret = pmix_ptl_base_select()) ) {
+    if (PMIX_SUCCESS != (ret = pmix_ptl_base_select()) ) {
         error = "pmix_ptl_base_select";
         goto return_error;
     }
@@ -283,11 +285,11 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
 
     /* open the gds and select the active plugins */
-    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_gds_base_framework, 0)) ) {
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_gds_base_framework, 0)) ) {
         error = "pmix_gds_base_open";
         goto return_error;
     }
-    if( PMIX_SUCCESS != (ret = pmix_gds_base_select(info, ninfo)) ) {
+    if (PMIX_SUCCESS != (ret = pmix_gds_base_select(info, ninfo)) ) {
         error = "pmix_gds_base_select";
         goto return_error;
     }
@@ -298,23 +300,23 @@ int pmix_rte_init(pmix_proc_type_t type,
         return ret;
     }
 
-    /* open the pnet and select the active modules for this environment */
-    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_pnet_base_framework, 0))) {
-        error = "pmix_pnet_base_open";
-        goto return_error;
-    }
-    if (PMIX_SUCCESS != (ret = pmix_pnet_base_select())) {
-        error = "pmix_pnet_base_select";
-        goto return_error;
-    }
-
     /* open the preg and select the active plugins */
-    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_preg_base_framework, 0)) ) {
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_preg_base_framework, 0)) ) {
         error = "pmix_preg_base_open";
         goto return_error;
     }
-    if( PMIX_SUCCESS != (ret = pmix_preg_base_select()) ) {
+    if (PMIX_SUCCESS != (ret = pmix_preg_base_select()) ) {
         error = "pmix_preg_base_select";
+        goto return_error;
+    }
+
+    /* open the plog and select the active plugins */
+    if (PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_plog_base_framework, 0)) ) {
+        error = "pmix_plog_base_open";
+        goto return_error;
+    }
+    if (PMIX_SUCCESS != (ret = pmix_plog_base_select()) ) {
+        error = "pmix_plog_base_select";
         goto return_error;
     }
 

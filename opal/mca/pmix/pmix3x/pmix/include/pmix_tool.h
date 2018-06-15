@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -98,6 +98,36 @@ PMIX_EXPORT pmix_status_t PMIx_tool_init(pmix_proc_t *proc,
  * operation. */
 PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void);
 
+/* Switch server connection. Closes the connection, if existing, to a server
+ * and establishes a connection to the specified server. The target server can
+ * be given as:
+ *
+ * - PMIX_CONNECT_TO_SYSTEM: connect solely to the system server
+ *
+ * - PMIX_CONNECT_SYSTEM_FIRST: a request to use the system server first,
+ *   if existing, and then look for the server specified in a different
+ *   attribute
+ *
+ * - PMIX_SERVER_URI: connect to the server at the given URI
+ *
+ * - PMIX_SERVER_NSPACE: connect to the server of a given nspace
+ *
+ * - PMIX_SERVER_PIDINFO: connect to a server embedded in the process with
+ *   the given pid
+ *
+ * Passing a _NULL_ value for the info array pointer is not allowed and will
+ * result in return of an error.
+ *
+ * NOTE: PMIx does not currently support on-the-fly changes to the tool's
+ * identifier. Thus, the new server must be under the same nspace manager
+ * (e.g., host RM) as the prior server so that the original nspace remains
+ * a unique assignment. The proc parameter is included here for obsolence
+ * protection in case this constraint is someday removed. Meantime, the
+ * proc parameter will be filled with the tool's existing nspace/rank, and
+ * the caller is welcome to pass _NULL_ in that location
+ */
+PMIX_EXPORT pmix_status_t PMIx_tool_connect_to_server(pmix_proc_t *proc,
+                                                      pmix_info_t info[], size_t ninfo);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

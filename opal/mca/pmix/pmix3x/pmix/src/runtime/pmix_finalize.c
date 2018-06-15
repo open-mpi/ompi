@@ -13,7 +13,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -37,6 +37,7 @@
 #include "src/mca/gds/base/base.h"
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
+#include "src/mca/plog/base/base.h"
 #include "src/mca/pnet/base/base.h"
 #include "src/mca/preg/base/base.h"
 #include "src/mca/psec/base/base.h"
@@ -49,12 +50,6 @@
 extern int pmix_initialized;
 extern bool pmix_init_called;
 
-static void __pmix_attribute_destructor__ pmix_cleanup (void)
-{
-    /* finalize the class/object system */
-    pmix_class_finalize();
-}
-
 void pmix_rte_finalize(void)
 {
     if( --pmix_initialized != 0 ) {
@@ -66,6 +61,9 @@ void pmix_rte_finalize(void)
     }
 
 
+    /* close plog */
+    (void)pmix_mca_base_framework_close(&pmix_plog_base_framework);
+
     /* close preg */
     (void)pmix_mca_base_framework_close(&pmix_preg_base_framework);
 
@@ -74,9 +72,6 @@ void pmix_rte_finalize(void)
 
     /* close the security framework */
     (void)pmix_mca_base_framework_close(&pmix_psec_base_framework);
-
-    /* close the pnet framework */
-    (void)pmix_mca_base_framework_close(&pmix_pnet_base_framework);
 
     /* close bfrops */
     (void)pmix_mca_base_framework_close(&pmix_bfrops_base_framework);
@@ -109,6 +104,12 @@ void pmix_rte_finalize(void)
     PMIX_RELEASE(pmix_globals.mypeer);
     PMIX_DESTRUCT(&pmix_globals.events);
     PMIX_LIST_DESTRUCT(&pmix_globals.cached_events);
+    {
+        pmix_notify_caddy_t *cd;
+        while (NULL != (cd=(pmix_notify_caddy_t *)pmix_ring_buffer_pop(&pmix_globals.notifications))) {
+            PMIX_RELEASE(cd);
+        }
+    }
     PMIX_DESTRUCT(&pmix_globals.notifications);
     PMIX_LIST_DESTRUCT(&pmix_globals.iof_requests);
 
@@ -116,10 +117,5 @@ void pmix_rte_finalize(void)
     if (!pmix_globals.external_evbase) {
         (void)pmix_progress_thread_stop(NULL);
     }
-
-
-#if PMIX_NO_LIB_DESTRUCTOR
-    pmix_cleanup();
-#endif
 
 }

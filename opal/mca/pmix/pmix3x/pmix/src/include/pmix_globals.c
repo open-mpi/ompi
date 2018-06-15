@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -99,16 +99,19 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_cleanup_dir_t,
 static void nscon(pmix_nspace_t *p)
 {
     p->nspace = NULL;
+    p->nprocs = 0;
     p->nlocalprocs = 0;
     p->all_registered = false;
     p->version_stored = false;
     p->jobbkt = NULL;
     p->ndelivered = 0;
+    p->nfinalized = 0;
     PMIX_CONSTRUCT(&p->ranks, pmix_list_t);
     memset(&p->compat, 0, sizeof(p->compat));
     PMIX_CONSTRUCT(&p->epilog.cleanup_dirs, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.cleanup_files, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.ignores, pmix_list_t);
+    PMIX_CONSTRUCT(&p->setup_data, pmix_list_t);
 }
 static void nsdes(pmix_nspace_t *p)
 {
@@ -125,6 +128,7 @@ static void nsdes(pmix_nspace_t *p)
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_dirs);
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_files);
     PMIX_LIST_DESTRUCT(&p->epilog.ignores);
+    PMIX_LIST_DESTRUCT(&p->setup_data);
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_t,
                                 pmix_list_item_t,
@@ -173,7 +177,6 @@ static void pcon(pmix_peer_t *p)
     p->proc_cnt = 0;
     p->index = 0;
     p->sd = -1;
-    p->finalized = false;
     p->send_ev_active = false;
     p->recv_ev_active = false;
     PMIX_CONSTRUCT(&p->send_queue, pmix_list_t);
@@ -183,6 +186,7 @@ static void pcon(pmix_peer_t *p)
     PMIX_CONSTRUCT(&p->epilog.cleanup_dirs, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.cleanup_files, pmix_list_t);
     PMIX_CONSTRUCT(&p->epilog.ignores, pmix_list_t);
+
 }
 
 static void pdes(pmix_peer_t *p)
@@ -214,6 +218,9 @@ static void pdes(pmix_peer_t *p)
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_dirs);
     PMIX_LIST_DESTRUCT(&p->epilog.cleanup_files);
     PMIX_LIST_DESTRUCT(&p->epilog.ignores);
+    if (NULL != p->nptr) {
+        PMIX_RELEASE(p->nptr);
+    }
 }
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_peer_t,
                                 pmix_object_t,

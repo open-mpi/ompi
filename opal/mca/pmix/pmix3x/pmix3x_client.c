@@ -1305,9 +1305,6 @@ int pmix3x_connect(opal_list_t *procs)
     pmix_status_t ret;
     char *nsptr;
     size_t n;
-    char nspace[PMIX_MAX_NSLEN+1];
-    pmix_rank_t rank;
-    pmix_info_t *info;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "pmix3x:client connect");
@@ -1339,26 +1336,10 @@ int pmix3x_connect(opal_list_t *procs)
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
-    /* tell PMIx that we don't want a return of an nspace */
-    PMIX_INFO_CREATE(info, 1);
-    PMIX_INFO_LOAD(&info[0], PMIX_CONNECT_XCHG_ONLY, NULL, PMIX_BOOL);
-
-    ret = PMIx_Connect(p, nprocs, info, 1, nspace, &rank);
+    ret = PMIx_Connect(p, nprocs, NULL, 0);
     PMIX_PROC_FREE(p, nprocs);
-    PMIX_INFO_FREE(info, 1);
 
     return pmix3x_convert_rc(ret);
-}
-
-static void cnctcbfunc(pmix_status_t status,
-                       char nspace[], int rank,
-                       void *cbdata)
-{
-    pmix3x_opcaddy_t *op = (pmix3x_opcaddy_t*)cbdata;
-    if (NULL != op->opcbfunc) {
-        op->opcbfunc(status, op->cbdata);
-    }
-    OBJ_RELEASE(op);
 }
 
 int pmix3x_connectnb(opal_list_t *procs,
@@ -1407,7 +1388,7 @@ int pmix3x_connectnb(opal_list_t *procs,
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
-    ret = PMIx_Connect_nb(op->procs, op->nprocs, NULL, 0, cnctcbfunc, op);
+    ret = PMIx_Connect_nb(op->procs, op->nprocs, NULL, 0, opcbfunc, op);
     if (PMIX_SUCCESS != ret) {
         OBJ_RELEASE(op);
     }
@@ -1416,9 +1397,10 @@ int pmix3x_connectnb(opal_list_t *procs,
 
 int pmix3x_disconnect(opal_list_t *procs)
 {
-    size_t nprocs;
+    size_t nprocs, n;
     opal_namelist_t *ptr;
     pmix_status_t ret=PMIX_SUCCESS;
+    pmix_proc_t *p;
     char *nsptr;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
@@ -1435,17 +1417,24 @@ int pmix3x_disconnect(opal_list_t *procs)
         return OPAL_ERR_NOT_INITIALIZED;
     }
 
+    /* convert the list of procs to an array
+     * of pmix_proc_t */
+    PMIX_PROC_CREATE(p, nprocs);
+    n=0;
     OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
         if (NULL == (nsptr = pmix3x_convert_jobid(ptr->name.jobid))) {
+            PMIX_PROC_FREE(p, nprocs);
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-        ret = PMIx_Disconnect(nsptr, NULL, 0);
-        OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+        (void)strncpy(p[n].nspace, nsptr, PMIX_MAX_NSLEN);
+        p[n].rank = pmix3x_convert_opalrank(ptr->name.vpid);
+        ++n;
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
+    ret = PMIx_Disconnect(p, nprocs, NULL, 0);
+    PMIX_PROC_FREE(p, nprocs);
 
     return pmix3x_convert_rc(ret);
 }
@@ -1454,9 +1443,11 @@ int pmix3x_disconnectnb(opal_list_t *procs,
                         opal_pmix_op_cbfunc_t cbfunc,
                         void *cbdata)
 {
+    pmix3x_opcaddy_t *op;
     opal_namelist_t *ptr;
-    pmix_status_t ret=PMIX_SUCCESS;
+    pmix_status_t ret;
     char *nsptr;
+    size_t n;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "pmix3x:client disconnect NB");
@@ -1472,22 +1463,31 @@ int pmix3x_disconnectnb(opal_list_t *procs,
         return OPAL_ERR_NOT_INITIALIZED;
     }
 
+    /* create the caddy */
+    op = OBJ_NEW(pmix3x_opcaddy_t);
+    op->opcbfunc = cbfunc;
+    op->cbdata = cbdata;
+    op->nprocs = opal_list_get_size(procs);
+
+    /* convert the list of procs to an array
+     * of pmix_proc_t */
+    PMIX_PROC_CREATE(op->procs, op->nprocs);
+    n=0;
     OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
         if (NULL == (nsptr = pmix3x_convert_jobid(ptr->name.jobid))) {
+            OBJ_RELEASE(op);
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-        ret = PMIx_Disconnect(nsptr, NULL, 0);
-        if (PMIX_SUCCESS != ret) {
-            OPAL_ERROR_LOG(pmix3x_convert_rc(ret));
-        }
-        OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+        (void)strncpy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
+        op->procs[n].rank = pmix3x_convert_opalrank(ptr->name.vpid);
+        ++n;
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
-    if (NULL != cbfunc) {
-        cbfunc(pmix3x_convert_rc(ret), cbdata);
+    ret = PMIx_Disconnect_nb(op->procs, op->nprocs, NULL, 0, opcbfunc, op);
+    if (PMIX_SUCCESS != ret) {
+        OBJ_RELEASE(op);
     }
     return pmix3x_convert_rc(ret);
 }

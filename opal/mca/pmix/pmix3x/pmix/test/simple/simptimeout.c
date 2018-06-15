@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     int rc;
     pmix_value_t value;
     pmix_value_t *val = &value;
-    pmix_proc_t proc, newproc;
+    pmix_proc_t proc;
     uint32_t nprocs, n;
     volatile bool active;
     pmix_info_t info;
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 
         /* check timeout on connect */
         pmix_output(0, "TEST CONNECT TIMEOUT");
-        if (PMIX_ERR_TIMEOUT != (rc = PMIx_Connect(&proc, 1, &info, 1, newproc.nspace, &newproc.rank))) {
+        if (PMIX_ERR_TIMEOUT != (rc = PMIx_Connect(&proc, 1, &info, 1))) {
             pmix_output(0, "Client ns %s rank %d: PMIx_Connect did not timeout: %s",
                         myproc.nspace, myproc.rank, PMIx_Error_string(rc));
             goto done;

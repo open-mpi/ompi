@@ -104,6 +104,15 @@ typedef struct {
 PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_iof_read_event_t);
 
 
+/* define a struct to hold booleans controlling the
+ * format/contents of the output */
+typedef struct {
+    bool xml;
+    time_t timestamp;
+    bool tag;
+} pmix_iof_flags_t;
+
+
 /* Write event macro's */
 
 static inline bool
@@ -184,7 +193,7 @@ PMIX_EXPORT pmix_status_t pmix_iof_flush(void);
 PMIX_EXPORT pmix_status_t pmix_iof_write_output(const pmix_proc_t *name,
                                                 pmix_iof_channel_t stream,
                                                 const pmix_byte_object_t *bo,
-                                                pmix_iof_write_event_t *channel);
+                                                pmix_iof_flags_t *flags);
 PMIX_EXPORT void pmix_iof_static_dump_output(pmix_iof_sink_t *sink);
 PMIX_EXPORT void pmix_iof_write_handler(int fd, short event, void *cbdata);
 PMIX_EXPORT void pmix_iof_stdin_write_handler(int fd, short event, void *cbdata);

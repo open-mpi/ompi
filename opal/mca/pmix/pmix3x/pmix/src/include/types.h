@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -231,6 +231,8 @@ typedef struct event pmix_event_t;
 #define pmix_event_base_create() event_base_new()
 
 #define pmix_event_base_free(b) event_base_free(b)
+
+#define pmix_event_free(x) event_free(x)
 
 #define pmix_event_base_loopbreak(b) event_base_loopbreak(b)
 
