@@ -96,7 +96,7 @@ static int external_register(void)
                                             &mca_pmix_ext4x_component.silence_warning);
 
     asprintf(&pmix_library_version,
-             "PMIx library version %s (embedded in Open MPI)", PMIx_Get_version());
+             "PMIx library version %s", PMIx_Get_version());
     (void) mca_base_component_var_register(component, "library_version",
                                            "Version of the underlying PMIx library",
                                            MCA_BASE_VAR_TYPE_STRING,
@@ -118,7 +118,7 @@ static int external_open(void)
     OBJ_CONSTRUCT(&mca_pmix_ext4x_component.dmdx, opal_list_t);
 
     version = PMIx_Get_version();
-    if ('3' != version[0]) {
+    if ('4' != version[0]) {
         opal_show_help("help-pmix-base.txt",
                        "incorrect-pmix", true, version, "v3.x");
         return OPAL_ERROR;
