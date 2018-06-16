@@ -10,9 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -49,7 +49,7 @@ int mca_io_ompio_file_open (ompi_communicator_t *comm,
                             ompi_file_t *fh)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data=NULL;
+    mca_common_ompio_data_t *data=NULL;
     bool use_sharedfp = true;
 
 
@@ -57,7 +57,7 @@ int mca_io_ompio_file_open (ompi_communicator_t *comm,
        There is virtually no way on how to reach this point from multiple
        threads simultaniously 
     */
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     if ( NULL == data ) {
         return  OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -83,9 +83,9 @@ int mca_io_ompio_file_open (ompi_communicator_t *comm,
 int mca_io_ompio_file_close (ompi_file_t *fh)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     if ( NULL == data ) {
 	/* structure has already been freed, this is an erroneous call to file_close */
 	return ret;
@@ -103,40 +103,16 @@ int mca_io_ompio_file_close (ompi_file_t *fh)
     return ret;
 }
 
-int mca_io_ompio_file_delete (const char *filename,
-                              struct opal_info_t *info)
-{
-    int ret = OMPI_SUCCESS;
-
-    /* No locking required for file_delete according to my understanding.
-       One thread will succeed, the other ones silently ignore the 
-       error that the file is already deleted.
-    */
-    ret = unlink(filename);
-
-    if (0 > ret ) {
-        if ( ENOENT == errno ) {
-            return MPI_ERR_NO_SUCH_FILE;
-        } else {
-            opal_output (0, "mca_io_ompio_file_delete: Could not remove file %s errno = %d %s\n", filename,
-                         errno, strerror(errno));
-            return MPI_ERR_ACCESS;
-        }
-    }
-
-    return OMPI_SUCCESS;
-}
-
 int mca_io_ompio_file_preallocate (ompi_file_t *fh,
                                    OMPI_MPI_OFFSET_TYPE diskspace)
 {
     int ret = OMPI_SUCCESS, cycles, i;
     OMPI_MPI_OFFSET_TYPE tmp, current_size, size, written, len;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     char *buf = NULL;
     ompi_status_public_t *status = NULL;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     tmp = diskspace;
@@ -251,9 +227,9 @@ int mca_io_ompio_file_set_size (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE tmp;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     tmp = size;
     OPAL_THREAD_LOCK(&fh->f_lock);
@@ -298,9 +274,9 @@ int mca_io_ompio_file_get_size (ompi_file_t *fh,
                             OMPI_MPI_OFFSET_TYPE *size)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK(&fh->f_lock);
     ret = mca_common_ompio_file_get_size(&data->ompio_fh,size);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
@@ -312,9 +288,9 @@ int mca_io_ompio_file_get_size (ompi_file_t *fh,
 int mca_io_ompio_file_get_amode (ompi_file_t *fh,
                                  int *amode)
 {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     /* No lock necessary in this case, amode is set in file_open, and 
        not modified later on*/
     *amode = data->ompio_fh.f_amode;
@@ -336,9 +312,9 @@ int mca_io_ompio_file_set_atomicity (ompi_file_t *fh,
                                      int flag)
 {
     int tmp;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     if (flag) {
@@ -368,9 +344,9 @@ int mca_io_ompio_file_set_atomicity (ompi_file_t *fh,
 int mca_io_ompio_file_get_atomicity (ompi_file_t *fh,
                                      int *flag)
 {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     *flag = data->ompio_fh.f_atomicity;
@@ -382,9 +358,9 @@ int mca_io_ompio_file_get_atomicity (ompi_file_t *fh,
 int mca_io_ompio_file_sync (ompi_file_t *fh)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     if ( !opal_list_is_empty (&mca_common_ompio_pending_requests) ) {
@@ -408,10 +384,10 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
                             int whence)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     OMPI_MPI_OFFSET_TYPE offset, temp_offset;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     offset = off * data->ompio_fh.f_etype_size;
@@ -456,10 +432,10 @@ int mca_io_ompio_file_get_position (ompi_file_t *fd,
                                     OMPI_MPI_OFFSET_TYPE *offset)
 {
     int ret=OMPI_SUCCESS;
-    mca_io_ompio_data_t *data=NULL;
-    mca_io_ompio_file_t *fh=NULL;
+    mca_common_ompio_data_t *data=NULL;
+    ompio_file_t *fh=NULL;
 
-    data = (mca_io_ompio_data_t *) fd->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fd->f_io_selected_data;
     fh = &data->ompio_fh;
 
     OPAL_THREAD_LOCK(&fd->f_lock);
@@ -474,11 +450,11 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
                                        OMPI_MPI_OFFSET_TYPE offset,
                                        OMPI_MPI_OFFSET_TYPE *disp)
 {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     int i, k, index;
     long temp_offset;
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
     temp_offset = (long) data->ompio_fh.f_view_extent *
@@ -520,11 +496,11 @@ int mca_io_ompio_file_seek_shared (ompi_file_t *fp,
                                    int whence)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
     mca_sharedfp_base_module_t * shared_fp_base_module;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     /*get the shared fp module associated with this file*/
@@ -546,11 +522,11 @@ int mca_io_ompio_file_get_position_shared (ompi_file_t *fp,
                                            OMPI_MPI_OFFSET_TYPE * offset)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
     mca_sharedfp_base_module_t * shared_fp_base_module;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     /*get the shared fp module associated with this file*/

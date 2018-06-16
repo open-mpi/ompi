@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +27,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-ssize_t  mca_fbtl_pvfs2_ipwritev (mca_io_ompio_file_t *file,
+ssize_t  mca_fbtl_pvfs2_ipwritev (ompio_file_t *file,
 				 ompi_request_t **request)
 {
     printf ("PVFS2 IPWRITEV\n");

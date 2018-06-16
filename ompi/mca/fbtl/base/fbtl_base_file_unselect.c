@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 #include "ompi/mca/fbtl/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
 
-int mca_fbtl_base_file_unselect(mca_io_ompio_file_t *file)
+int mca_fbtl_base_file_unselect(ompio_file_t *file)
 {
     if (NULL != file->f_fbtl && NULL != file->f_fbtl->fbtl_module_finalize) {
         return file->f_fbtl->fbtl_module_finalize(file);

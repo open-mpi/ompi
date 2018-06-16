@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2008      University of Houston. All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,7 +36,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sharedfp_sm_la_SOURCES = $(sources)
 mca_sharedfp_sm_la_LDFLAGS = -module -avoid-version
-mca_sharedfp_sm_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+mca_sharedfp_sm_la_LIBADD = $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/libmca_common_ompio.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sharedfp_sm_la_SOURCES = $(sources)

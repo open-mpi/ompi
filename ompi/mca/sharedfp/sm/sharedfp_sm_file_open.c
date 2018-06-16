@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2017 University of Houston. All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -50,18 +50,18 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
                                const char* filename,
                                int amode,
                                struct opal_info_t *info,
-                               mca_io_ompio_file_t *fh)
+                               ompio_file_t *fh)
 {
     int err = OMPI_SUCCESS;
     struct mca_sharedfp_base_data_t* sh;
     struct mca_sharedfp_sm_data * sm_data = NULL;
-    mca_io_ompio_file_t * shfileHandle, *ompio_fh;
+    ompio_file_t * shfileHandle, *ompio_fh;
     char * filename_basename;
     char * sm_filename;
     int sm_filename_length;
     struct mca_sharedfp_sm_offset * sm_offset_ptr;
     struct mca_sharedfp_sm_offset sm_offset;
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     int sm_fd;
     int rank;
     uint32_t comm_cid;
@@ -69,7 +69,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     /*----------------------------------------------------*/
     /*Open the same file again without shared file pointer*/
     /*----------------------------------------------------*/
-    shfileHandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    shfileHandle = (ompio_file_t *)malloc(sizeof(ompio_file_t));
     if ( NULL == shfileHandle ) {
         opal_output(0, "mca_sharedfp_sm_file_open: Error during memory allocation\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -81,7 +81,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         return err;
     }
     shfileHandle->f_fh = fh->f_fh;
-    data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
+    data = (mca_common_ompio_data_t *) fh->f_fh->f_io_selected_data;
     ompio_fh = &data->ompio_fh;
 
     err = mca_common_ompio_set_view (shfileHandle,
@@ -240,7 +240,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     return err;
 }
 
-int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
+int mca_sharedfp_sm_file_close (ompio_file_t *fh)
 {
     int err = OMPI_SUCCESS;
     /*sharedfp data structure*/

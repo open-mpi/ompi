@@ -10,6 +10,8 @@
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
  *  Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ *  Copyright (c) 2018      Research Organization for Information Science
+ *                          and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -31,7 +33,6 @@
 
 #include "common_ompio.h"
 #include "common_ompio_request.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
 #include "math.h"
 #include <unistd.h>
 
@@ -47,10 +48,10 @@
 ** routesin are used e.g. from the shared file pointer modules.
 ** The main difference is, that the first one takes an ompi_file_t
 ** as a file pointer argument, while the second uses the ompio internal
-** mca_io_ompio_file_t structure.
+** ompio_file_t structure.
 */
 
-int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_read (ompio_file_t *fh,
 			      void *buf,
 			      int count,
 			      struct ompi_datatype_t *datatype,
@@ -85,19 +86,19 @@ int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
       return ret;
     }
 
-    ompi_io_ompio_decode_datatype (fh,
-                                   datatype,
-                                   count,
-                                   buf,
-                                   &max_data,
-                                   &decoded_iov,
-                                   &iov_count);
+    mca_common_ompio_decode_datatype (fh,
+                                      datatype,
+                                      count,
+                                      buf,
+                                      &max_data,
+                                      &decoded_iov,
+                                      &iov_count);
 
-    if ( -1 == mca_io_ompio_cycle_buffer_size ) {
+    if ( -1 == OMPIO_MCA_GET(fh, cycle_buffer_size) ) {
 	bytes_per_cycle = max_data;
     }
     else {
-	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+	bytes_per_cycle = OMPIO_MCA_GET(fh, cycle_buffer_size);
     }
     cycles = ceil((float)max_data/bytes_per_cycle);
 
@@ -147,7 +148,7 @@ int mca_common_ompio_file_read (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_read_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_read_at (ompio_file_t *fh,
 				 OMPI_MPI_OFFSET_TYPE offset,
 				 void *buf,
 				 int count,
@@ -175,7 +176,7 @@ int mca_common_ompio_file_read_at (mca_io_ompio_file_t *fh,
 }
 
 
-int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iread (ompio_file_t *fh,
 			       void *buf,
 			       int count,
 			       struct ompi_datatype_t *datatype,
@@ -207,13 +208,13 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
 	int i = 0; /* index into the decoded iovec of the buffer */
 	int j = 0; /* index into the file vie iovec */
 
-	ompi_io_ompio_decode_datatype (fh,
-				       datatype,
-				       count,
-				       buf,
-				       &max_data,
-				       &decoded_iov,
-				       &iov_count);
+	mca_common_ompio_decode_datatype (fh,
+				          datatype,
+				          count,
+				          buf,
+				          &max_data,
+				          &decoded_iov,
+				          &iov_count);
 
 	// Non-blocking operations have to occur in a single cycle
 	j = fh->f_index_in_file_view;
@@ -262,7 +263,7 @@ int mca_common_ompio_file_iread (mca_io_ompio_file_t *fh,
 }
 
 
-int mca_common_ompio_file_iread_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iread_at (ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE offset,
 				  void *buf,
 				  int count,
@@ -295,7 +296,7 @@ int mca_common_ompio_file_iread_at (mca_io_ompio_file_t *fh,
 
 
 /* Infrastructure for collective operations  */
-int mca_common_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
 				     OMPI_MPI_OFFSET_TYPE offset,
 				     void *buf,
 				     int count,
@@ -317,7 +318,7 @@ int mca_common_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
+int mca_common_ompio_file_iread_at_all (ompio_file_t *fp,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      void *buf,
 				      int count,
@@ -349,7 +350,7 @@ int mca_common_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
     return ret;
 }
 
-int mca_common_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
+int mca_common_ompio_set_explicit_offset (ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE offset)
 {
     int i = 0;

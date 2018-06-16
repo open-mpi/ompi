@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2018 University of Houston. All rights reserved.
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -41,6 +43,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fcoll_vulcan_la_SOURCES = $(sources)
 mca_fcoll_vulcan_la_LDFLAGS = -module -avoid-version
+mca_fcoll_vulcan_la_LIBADD = $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/libmca_common_ompio.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_fcoll_vulcan_la_SOURCES =$(sources)

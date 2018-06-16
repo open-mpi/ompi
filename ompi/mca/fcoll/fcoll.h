@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -33,7 +33,7 @@
 
 BEGIN_C_DECLS
 
-struct mca_io_ompio_file_t;
+struct ompio_file_t;
 struct mca_fcoll_request_t;
 
 /*
@@ -76,11 +76,11 @@ typedef int (*mca_fcoll_base_component_init_query_1_0_0_fn_t)
      bool enable_mpi_threads);
 
 typedef struct mca_fcoll_base_module_1_0_0_t *
-(*mca_fcoll_base_component_file_query_1_0_0_fn_t) (struct mca_io_ompio_file_t *file,
+(*mca_fcoll_base_component_file_query_1_0_0_fn_t) (struct ompio_file_t *file,
                                                    int *priority);
 
 typedef int (*mca_fcoll_base_component_file_unquery_1_0_0_fn_t)
-    (struct mca_io_ompio_file_t *file);
+    (struct ompio_file_t *file);
 
 /*
  * ****************** component struct ******************************
@@ -107,34 +107,34 @@ typedef struct mca_fcoll_base_component_2_0_0_t mca_fcoll_base_component_t;
  */
 
 typedef int (*mca_fcoll_base_module_init_1_0_0_fn_t)
-(struct mca_io_ompio_file_t *file);
+(struct ompio_file_t *file);
 
 typedef int (*mca_fcoll_base_module_finalize_1_0_0_fn_t)
-(struct mca_io_ompio_file_t *file);
+(struct ompio_file_t *file);
 
 typedef int (*mca_fcoll_base_module_file_read_all_fn_t)
-(struct mca_io_ompio_file_t *fh,
+(struct ompio_file_t *fh,
  void *buf,
  int count,
  struct ompi_datatype_t *datatype,
  ompi_status_public_t *status);
 
 typedef int (*mca_fcoll_base_module_file_iread_all_fn_t)
-(struct mca_io_ompio_file_t *fh,
+(struct ompio_file_t *fh,
  void *buf,
  int count,
  struct ompi_datatype_t *datatype,
  ompi_request_t **request);
 
 typedef int (*mca_fcoll_base_module_file_write_all_fn_t)
-(struct mca_io_ompio_file_t *fh,
+(struct ompio_file_t *fh,
  const void *buf,
  int count,
  struct ompi_datatype_t *datatype,
  ompi_status_public_t *status);
 
 typedef int (*mca_fcoll_base_module_file_iwrite_all_fn_t)
-(struct mca_io_ompio_file_t *fh,
+(struct ompio_file_t *fh,
  const void *buf,
  int count,
  struct ompi_datatype_t *datatype,

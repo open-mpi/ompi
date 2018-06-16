@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,23 +32,24 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "ompi/mca/fs/fs.h"
 #include "opal/mca/base/base.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/fs/fs.h"
 
 
 BEGIN_C_DECLS
 
-OMPI_DECLSPEC int mca_fs_base_file_select(struct mca_io_ompio_file_t *file,
+OMPI_DECLSPEC int mca_fs_base_file_select(struct ompio_file_t *file,
                             mca_base_component_t *preferred);
 
-OMPI_DECLSPEC int mca_fs_base_file_unselect(struct mca_io_ompio_file_t *file);
+OMPI_DECLSPEC int mca_fs_base_file_unselect(struct ompio_file_t *file);
 
 OMPI_DECLSPEC int mca_fs_base_find_available(bool enable_progress_threads,
                                              bool enable_mpi_threads);
 
-OMPI_DECLSPEC int mca_fs_base_init_file (struct mca_io_ompio_file_t *file);
+OMPI_DECLSPEC int mca_fs_base_init_file (struct ompio_file_t *file);
 
-OMPI_DECLSPEC int mca_fs_base_get_param (struct mca_io_ompio_file_t *file, int keyval);
+OMPI_DECLSPEC int mca_fs_base_get_param (struct ompio_file_t *file, int keyval);
 OMPI_DECLSPEC void mca_fs_base_get_parent_dir (char *filename, char **dirnamep);
 OMPI_DECLSPEC int  mca_fs_base_get_fstype(char *fname);
 /*

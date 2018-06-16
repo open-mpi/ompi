@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +39,7 @@
  *	Returns:	- Success if file closed
  */
 int
-mca_fs_pvfs2_file_sync (mca_io_ompio_file_t *fh)
+mca_fs_pvfs2_file_sync (ompio_file_t *fh)
 {
     int ret;
     mca_fs_pvfs2 *pvfs2_fs;

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,11 +46,11 @@ BEGIN_C_DECLS
 int mca_fbtl_pvfs2_component_init_query(bool enable_progress_threads,
                                         bool enable_mpi_threads);
 struct mca_fbtl_base_module_1_0_0_t *
-mca_fbtl_pvfs2_component_file_query (mca_io_ompio_file_t *file, int *priority);
-int mca_fbtl_pvfs2_component_file_unquery (mca_io_ompio_file_t *file);
+mca_fbtl_pvfs2_component_file_query (ompio_file_t *file, int *priority);
+int mca_fbtl_pvfs2_component_file_unquery (ompio_file_t *file);
 
-int mca_fbtl_pvfs2_module_init (mca_io_ompio_file_t *file);
-int mca_fbtl_pvfs2_module_finalize (mca_io_ompio_file_t *file);
+int mca_fbtl_pvfs2_module_init (ompio_file_t *file);
+int mca_fbtl_pvfs2_module_finalize (ompio_file_t *file);
 
 OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_pvfs2_component;
 /*
@@ -57,11 +59,11 @@ OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_pvfs2_compo
  * ******************************************************************
  */
 
-ssize_t mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *file);
-ssize_t mca_fbtl_pvfs2_pwritev (mca_io_ompio_file_t *file);
-ssize_t mca_fbtl_pvfs2_ipreadv (mca_io_ompio_file_t *file,
+ssize_t mca_fbtl_pvfs2_preadv (ompio_file_t *file);
+ssize_t mca_fbtl_pvfs2_pwritev (ompio_file_t *file);
+ssize_t mca_fbtl_pvfs2_ipreadv (ompio_file_t *file,
                                ompi_request_t **request);
-ssize_t mca_fbtl_pvfs2_ipwritev (mca_io_ompio_file_t *file,
+ssize_t mca_fbtl_pvfs2_ipwritev (ompio_file_t *file,
                                ompi_request_t **request);
 
 /*

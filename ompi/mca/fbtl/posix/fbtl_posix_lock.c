@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2017      University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +43,7 @@
   Support for MPI atomicity operations are envisioned, but not yet tested.
 */
 
-int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op, 
+int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
                           OMPI_MPI_OFFSET_TYPE offset, off_t len, int flags)
 {
     off_t lmod, bmod;
@@ -131,7 +133,7 @@ int mca_fbtl_posix_lock ( struct flock *lock, mca_io_ompio_file_t *fh, int op,
     return ret;
 }
 
-void  mca_fbtl_posix_unlock ( struct flock *lock, mca_io_ompio_file_t *fh )
+void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh )
 {
     if ( -1 == lock->l_start && -1 == lock->l_len ) {
         return;

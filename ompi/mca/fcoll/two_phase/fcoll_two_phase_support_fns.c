@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -28,7 +28,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "opal/mca/base/base.h"
 #include "math.h"
@@ -41,7 +41,7 @@ Functions to support Domain partitioning and aggregator
 selection for two_phase .
 This is commom to both two_phase_read and write. */
 
-int mca_fcoll_two_phase_domain_partition (mca_io_ompio_file_t *fh,
+int mca_fcoll_two_phase_domain_partition (ompio_file_t *fh,
 					  OMPI_MPI_OFFSET_TYPE *start_offsets,
 					  OMPI_MPI_OFFSET_TYPE *end_offsets,
 					  OMPI_MPI_OFFSET_TYPE *min_st_offset_ptr,
@@ -143,7 +143,7 @@ int mca_fcoll_two_phase_domain_partition (mca_io_ompio_file_t *fh,
 
 
 
-int mca_fcoll_two_phase_calc_aggregator(mca_io_ompio_file_t *fh,
+int mca_fcoll_two_phase_calc_aggregator(ompio_file_t *fh,
 					OMPI_MPI_OFFSET_TYPE off,
 					OMPI_MPI_OFFSET_TYPE min_off,
 					OMPI_MPI_OFFSET_TYPE *len,
@@ -191,19 +191,19 @@ int mca_fcoll_two_phase_calc_aggregator(mca_io_ompio_file_t *fh,
     return rank;
 }
 
-int mca_fcoll_two_phase_calc_others_requests(mca_io_ompio_file_t *fh,
+int mca_fcoll_two_phase_calc_others_requests(ompio_file_t *fh,
 					     int count_my_req_procs,
 					     int *count_my_req_per_proc,
-					     mca_io_ompio_access_array_t *my_req,
+					     mca_common_ompio_access_array_t *my_req,
 					     int *count_others_req_procs_ptr,
-					     mca_io_ompio_access_array_t **others_req_ptr)
+					     mca_common_ompio_access_array_t **others_req_ptr)
 {
 
 
     int *count_others_req_per_proc=NULL, count_others_req_procs;
     int i,j, ret=OMPI_SUCCESS;
     MPI_Request *requests=NULL;
-    mca_io_ompio_access_array_t *others_req=NULL;
+    mca_common_ompio_access_array_t *others_req=NULL;
 
     count_others_req_per_proc = (int *)malloc(fh->f_size*sizeof(int));
 
@@ -232,8 +232,8 @@ int mca_fcoll_two_phase_calc_others_requests(mca_io_ompio_file_t *fh,
     }
 #endif
 
-    *others_req_ptr = (mca_io_ompio_access_array_t  *) malloc
-	(fh->f_size*sizeof(mca_io_ompio_access_array_t));
+    *others_req_ptr = (mca_common_ompio_access_array_t  *) malloc
+	(fh->f_size*sizeof(mca_common_ompio_access_array_t));
     others_req = *others_req_ptr;
 
     count_others_req_procs = 0;
@@ -347,7 +347,7 @@ exit:
 }
 
 
-int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
+int mca_fcoll_two_phase_calc_my_requests (ompio_file_t *fh,
 					  struct iovec *offset_len,
 					  int contig_access_count,
 					  OMPI_MPI_OFFSET_TYPE min_st_offset,
@@ -356,7 +356,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 					  OMPI_MPI_OFFSET_TYPE fd_size,
 					  int *count_my_req_procs_ptr,
 					  int **count_my_req_per_proc_ptr,
-					  mca_io_ompio_access_array_t **my_req_ptr,
+					  mca_common_ompio_access_array_t **my_req_ptr,
 					  size_t **buf_indices,
 					  int striping_unit,
 					  int num_aggregators,
@@ -367,7 +367,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
     size_t *buf_idx = NULL;
     int i, l, proc;
     OMPI_MPI_OFFSET_TYPE fd_len, rem_len, curr_idx, off;
-    mca_io_ompio_access_array_t *my_req = NULL;
+    mca_common_ompio_access_array_t *my_req = NULL;
 
 
     *count_my_req_per_proc_ptr = (int*)malloc(fh->f_size*sizeof(int));
@@ -415,8 +415,8 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
     }
 
 /*    printf("%d: fh->f_size : %d\n", fh->f_rank,fh->f_size);*/
-    *my_req_ptr =  (mca_io_ompio_access_array_t *)
-	malloc (fh->f_size * sizeof(mca_io_ompio_access_array_t));
+    *my_req_ptr =  (mca_common_ompio_access_array_t *)
+	malloc (fh->f_size * sizeof(mca_common_ompio_access_array_t));
     if ( NULL == *my_req_ptr ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto err_exit;

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 #include <semaphore.h>
 
 int
-mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
+mca_sharedfp_sm_seek (ompio_file_t *fh,
                       OMPI_MPI_OFFSET_TYPE offset, int whence)
 {
     int rank, status=0;

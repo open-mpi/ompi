@@ -45,7 +45,7 @@ mca_fs_pvfs2_file_delete (char* file_name,
     PVFS_sysresp_getparent resp_getparent;
     int ret;
     PVFS_fs_id pvfs2_id;
-    char pvfs2_path[OMPIO_MAX_NAME] = {0};
+    char pvfs2_path[OMPIO_PVFS2_MAX_NAME] = {0};
     char * ncache_timeout;
 
     if (!mca_fs_pvfs2_IS_INITIALIZED) {
@@ -64,7 +64,7 @@ mca_fs_pvfs2_file_delete (char* file_name,
     memset (&credentials, 0, sizeof(PVFS_credentials));
     PVFS_util_gen_credentials (&credentials);
 
-    ret = PVFS_util_resolve(file_name, &pvfs2_id, pvfs2_path, OMPIO_MAX_NAME);
+    ret = PVFS_util_resolve(file_name, &pvfs2_id, pvfs2_path, OMPIO_PVFS2_MAX_NAME);
     if (ret != 0) {
         return OMPI_ERROR;
     }

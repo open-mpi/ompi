@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -260,7 +260,8 @@ static int open_component(void)
 
     mca_common_ompio_request_init ();
 
-    return OMPI_SUCCESS;
+    return mca_common_ompio_set_callbacks(ompi_io_ompio_generate_current_file_view,
+                                          mca_io_ompio_get_mca_parameter_value);
 }
 
 
@@ -286,7 +287,7 @@ file_query(struct ompi_file_t *file,
            struct mca_io_base_file_t **private_data,
            int *priority)
 {
-    mca_io_ompio_data_t *data;
+    mca_common_ompio_data_t *data;
     char *tmp;
     int rank;
     int is_lustre=0; //false
@@ -323,7 +324,7 @@ file_query(struct ompi_file_t *file,
     /* Allocate a space for this module to hang private data (e.g.,
        the OMPIO file handle) */
 
-    data = calloc(1, sizeof(mca_io_ompio_data_t));
+    data = calloc(1, sizeof(mca_common_ompio_data_t));
     if (NULL == data) {
         return NULL;
     }
@@ -367,7 +368,7 @@ static int delete_select(const char *filename, struct opal_info_t *info,
     int ret;
 
     OPAL_THREAD_LOCK (&mca_io_ompio_mutex);
-    ret = mca_io_ompio_file_delete (filename, info);
+    ret = mca_common_ompio_file_delete (filename, info);
     OPAL_THREAD_UNLOCK (&mca_io_ompio_mutex);
 
     return ret;

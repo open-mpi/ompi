@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,11 +31,10 @@
 
 #include "common_ompio.h"
 #include "common_ompio_request.h"
-#include "ompi/mca/io/ompio/io_ompio.h"
 #include "math.h"
 #include <unistd.h>
 
-int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_write (ompio_file_t *fh,
 			       const void *buf,
 			       int count,
 			       struct ompi_datatype_t *datatype,
@@ -62,19 +61,19 @@ int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
 	return ret;
     }
 
-    ompi_io_ompio_decode_datatype (fh,
-                                   datatype,
-                                   count,
-                                   buf,
-                                   &max_data,
-                                   &decoded_iov,
-                                   &iov_count);
+    mca_common_ompio_decode_datatype (fh,
+                                      datatype,
+                                      count,
+                                      buf,
+                                      &max_data,
+                                      &decoded_iov,
+                                      &iov_count);
 
-    if ( -1 == mca_io_ompio_cycle_buffer_size ) {
+    if ( -1 == OMPIO_MCA_GET(fh, cycle_buffer_size) ) {
 	bytes_per_cycle = max_data;
     }
     else {
-	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+	bytes_per_cycle = OMPIO_MCA_GET(fh, cycle_buffer_size);
     }
     cycles = ceil((float)max_data/bytes_per_cycle);
 
@@ -122,7 +121,7 @@ int mca_common_ompio_file_write (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_write_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_write_at (ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE offset,
 				  const void *buf,
 				  int count,
@@ -146,7 +145,7 @@ int mca_common_ompio_file_write_at (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iwrite (ompio_file_t *fh,
 				const void *buf,
 				int count,
 				struct ompi_datatype_t *datatype,
@@ -177,13 +176,13 @@ int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 	int i = 0; /* index into the decoded iovec of the buffer */
 	int j = 0; /* index into the file vie iovec */
 
-	ompi_io_ompio_decode_datatype (fh,
-				       datatype,
-				       count,
-				       buf,
-				       &max_data,
-				       &decoded_iov,
-				       &iov_count);
+	mca_common_ompio_decode_datatype (fh,
+				          datatype,
+				          count,
+				          buf,
+				          &max_data,
+				          &decoded_iov,
+				          &iov_count);
 	j = fh->f_index_in_file_view;
 
 	/* Non blocking operations have to occur in a single cycle */
@@ -229,7 +228,7 @@ int mca_common_ompio_file_iwrite (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_iwrite_at (ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE offset,
 				   const void *buf,
 				   int count,
@@ -263,7 +262,7 @@ int mca_common_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
 /* Collective operations                                          */
 /******************************************************************/
 
-int mca_common_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
+int mca_common_ompio_file_write_at_all (ompio_file_t *fh,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      const void *buf,
 				      int count,
@@ -285,7 +284,7 @@ int mca_common_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
     return ret;
 }
 
-int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
+int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
 				       OMPI_MPI_OFFSET_TYPE offset,
 				       const void *buf,
 				       int count,
@@ -322,7 +321,7 @@ int mca_common_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
 /* Helper function used by both read and write operations     */
 /**************************************************************/
 
-int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles,
+int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
                                       size_t bytes_per_cycle, int max_data, uint32_t iov_count,
                                       struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw, 
                                       size_t *spc)
@@ -348,8 +347,8 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
 	bytes_to_write_in_cycle = bytes_per_cycle;
     }
 
-    fh->f_io_array = (mca_io_ompio_io_array_t *)malloc
-	(OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_io_ompio_io_array_t));
+    fh->f_io_array = (mca_common_ompio_io_array_t *)malloc
+	(OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_common_ompio_io_array_t));
     if (NULL == fh->f_io_array) {
 	opal_output(1, "OUT OF MEMORY\n");
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -359,9 +358,9 @@ int mca_common_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cy
 	/* reallocate if needed  */
 	if (OMPIO_IOVEC_INITIAL_SIZE*block <= k) {
 	    block ++;
-	    fh->f_io_array = (mca_io_ompio_io_array_t *)realloc
+	    fh->f_io_array = (mca_common_ompio_io_array_t *)realloc
 		(fh->f_io_array, OMPIO_IOVEC_INITIAL_SIZE *
-		 block * sizeof (mca_io_ompio_io_array_t));
+		 block * sizeof (mca_common_ompio_io_array_t));
 	    if (NULL == fh->f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
 		return OMPI_ERR_OUT_OF_RESOURCE;
