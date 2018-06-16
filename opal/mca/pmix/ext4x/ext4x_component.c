@@ -120,7 +120,7 @@ static int external_open(void)
     version = PMIx_Get_version();
     if ('4' != version[0]) {
         opal_show_help("help-pmix-base.txt",
-                       "incorrect-pmix", true, version, "v3.x");
+                       "incorrect-pmix", true, version, "v4.x");
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
