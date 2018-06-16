@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -348,13 +348,19 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
     opal_list_t *list = NULL;
     opal_hash_table_t *table = &object->s_subscriber_table;
     opal_callback_list_item_t *callback_list_item;
+    size_t max_len = OPAL_MAX_INFO_KEY - strlen(OPAL_INFO_SAVE_PREFIX);
 
-    if (strlen(key) > OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)) {
-        fprintf(stderr, "DEVELOPER WARNING: Unexpected key length [%s]: "
-            "OMPI internal callback keys are limited to %d chars\n",
-            key, (int)(OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)));
+    if (strlen(key) > max_len) {
+        opal_output(0, "DEVELOPER WARNING: Unexpected MPI info key length [%s]: "
+                    "OMPI internal callback keys are limited to %" PRIsize_t " chars.",
+                    key, max_len);
 #if OPAL_ENABLE_DEBUG
-        assert(!(strlen(key) > OPAL_MAX_INFO_KEY-strlen(OPAL_INFO_SAVE_PREFIX)));
+        opal_output(0, "Aborting because this is a developer / debugging build.  Go fix this error.");
+        // Do not assert() / dump core.  Just exit un-gracefully.
+        exit(1);
+#else
+        opal_output(0, "The \"%s\" MPI info key almost certainly will not work properly.  You should inform an Open MPI developer about this.", key);
+        key[max_len] = '\0';
 #endif
     }
 
