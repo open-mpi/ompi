@@ -86,6 +86,7 @@ static pmix_status_t pmix_pnet_open(pmix_mca_base_open_flag_t flags)
     /* initialize globals */
     pmix_pnet_globals.initialized = true;
     PMIX_CONSTRUCT_LOCK(&pmix_pnet_globals.lock);
+    pmix_pnet_globals.lock.active = false;
     PMIX_CONSTRUCT(&pmix_pnet_globals.actives, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_pnet_globals.jobs, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_pnet_globals.nodes, pmix_list_t);

@@ -415,6 +415,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (system_level_only) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "ptl:tcp: connecting to system failed");
+        if (NULL != suri) {
+            free(suri);
+        }
         return PMIX_ERR_UNREACH;
     }
 
@@ -424,6 +427,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
      * one session per user on a node */
 
     if (0 > asprintf(&filename, "pmix.%s.tool", myhost)) {
+        if (NULL != suri) {
+            free(suri);
+        }
         return PMIX_ERR_NOMEM;
     }
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
@@ -437,6 +443,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         if (NULL != nspace){
             free(nspace);
         }
+        if (NULL != suri) {
+            free(suri);
+        }
         return PMIX_ERR_UNREACH;
     }
 
@@ -448,6 +457,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     if (NULL == nspace || PMIX_RANK_WILDCARD == rank) {
         if (NULL != nspace) {
             free(nspace);
+        }
+        if (NULL != suri) {
+            free(suri);
         }
         CLOSE_THE_SOCKET(sd);
         return PMIX_ERR_UNREACH;
@@ -469,7 +481,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
         if (NULL != pmix_client_globals.myserver->nptr->nspace) {
             free(pmix_client_globals.myserver->nptr->nspace);
         }
-        pmix_client_globals.myserver->nptr->nspace = nspace;
+        pmix_client_globals.myserver->nptr->nspace = strdup(nspace);
 
         if (NULL != pmix_client_globals.myserver->info->pname.nspace) {
             free(pmix_client_globals.myserver->info->pname.nspace);
@@ -498,6 +510,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                       pmix_ptl_base_send_handler, pmix_client_globals.myserver);
     pmix_client_globals.myserver->send_ev_active = false;
 
+    free(nspace);
     if (NULL != suri) {
         free(suri);
     }
@@ -1169,9 +1182,11 @@ static pmix_status_t df_search(char *dirname, char *prefix,
                     (*nspace) = nsp;
                     *rank = rk;
                     closedir(cur_dirp);
+                    free(suri);
                     free(newdir);
                     return PMIX_SUCCESS;
                 }
+                free(suri);
                 free(nsp);
             }
         }

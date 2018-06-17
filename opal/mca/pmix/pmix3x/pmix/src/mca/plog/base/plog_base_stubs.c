@@ -60,7 +60,6 @@ static void localcbfunc(pmix_status_t status, void *cbdata)
             mycount->cbfunc(mycount->status, mycount->cbdata);
         }
         PMIX_RELEASE(mycount);
-        return;
     }
     PMIX_RELEASE_THREAD(&mycount->lock);
 }

@@ -833,8 +833,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     AC_CONFIG_FILES(
         pmix_config_prefix[Makefile]
-        pmix_config_prefix[bindings/Makefile]
-        pmix_config_prefix[bindings/python/Makefile]
         pmix_config_prefix[config/Makefile]
         pmix_config_prefix[etc/Makefile]
         pmix_config_prefix[include/Makefile]
@@ -1127,45 +1125,6 @@ else
 fi
 
 AM_CONDITIONAL([PMIX_INSTALL_BINARIES], [test $WANT_PMIX_BINARIES -eq 1])
-
-#
-# Install Python bindings?
-#
-AC_MSG_CHECKING([if want install Python bindings])
-AC_ARG_ENABLE(python-bindings,
-              AC_HELP_STRING([--enable-python-bindings],
-                             [enable Python bindings (default: disabled)]))
-if test "$enable_python_bindings" != "yes"; then
-    AC_MSG_RESULT([no])
-    WANT_PYTHON_BINDINGS=0
-else
-    AC_MSG_RESULT([yes])
-    WANT_PYTHON_BINDINGS=1
-fi
-
-AM_CONDITIONAL([WANT_PYTHON_BINDINGS], [test $WANT_PYTHON_BINDINGS -eq 1])
-
-if test "$WANT_PYTHON_BINDINGS" = "1"; then
-    AM_PATH_PYTHON([2.7], [python_happy=1], [python_happy=0])
-    if test "$python_happy" = "0"; then
-        AC_MSG_WARN([Python bindings were enabled, but no suitable])
-        AC_MSG_WARN([interpreter was found. PMIx requires at least])
-        AC_MSG_WARN([Python v2.7 to provide Python bindings])
-        AC_MSG_ERROR([Cannot continue])
-    fi
-
-    AC_MSG_CHECKING([if Cython package installed])
-    have_cython=esyscmd(config/pmix_check_cython.py)
-    if test "$have_cython" = "0"; then
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-        AC_MSG_WARN([Python bindings were enabled, but the Cython])
-        AC_MSG_WARN([package was not found. PMIx Python bindings])
-        AC_MSG_WARN([require that the Cython package be installed])
-        AC_MSG_ERROR([Cannot continue])
-    fi
-fi
 
 ])dnl
 
