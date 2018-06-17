@@ -108,7 +108,7 @@ static void setup_cbfunc(int status,
     orte_job_t *jdata = (orte_job_t*)provided_cbdata;
     opal_value_t *kv;
     opal_buffer_t cache, *bptr;
-    int rc;
+    int rc = ORTE_SUCCESS;
 
     OBJ_CONSTRUCT(&cache, opal_buffer_t);
     if (NULL != info) {
