@@ -103,8 +103,21 @@ pmix_status_t pmix_hwloc_get_topology(pmix_info_t *info, size_t ninfo)
     pmix_hwloc_vm_hole_kind_t hole = VM_HOLE_BIGGEST;
 #endif
 
-    /* we only do something if specifically requested */
-    if (NULL == info) {
+    if (NULL == info || 0 == ninfo) {
+        if (0 != hwloc_topology_init(&pmix_hwloc_topology)) {
+            return PMIX_ERR_INIT;
+        }
+
+        if (0 != set_flags(pmix_hwloc_topology, 0)) {
+            hwloc_topology_destroy(pmix_hwloc_topology);
+            return PMIX_ERR_INIT;
+        }
+
+        if (0 != hwloc_topology_load(pmix_hwloc_topology)) {
+            PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
+            hwloc_topology_destroy(pmix_hwloc_topology);
+            return PMIX_ERR_NOT_SUPPORTED;
+        }
         return PMIX_SUCCESS;
     }
 

@@ -11,9 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2016      Broadcom Limited. All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +67,7 @@
 BEGIN_C_DECLS
 
 /* If you update this list, you probably also want to update
-   src/mca/timer/linux/configure.m4.  Or not. */
+   pmix/mca/timer/linux/configure.m4.  Or not. */
 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */

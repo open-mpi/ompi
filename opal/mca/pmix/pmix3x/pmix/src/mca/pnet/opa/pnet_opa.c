@@ -26,15 +26,15 @@
 #endif
 #include <time.h>
 
-#if 0
 #if PMIX_WANT_OPAMGT
-#include "opamgt.h"
-#endif
+#include <opamgt/opamgt.h>
+#include <opamgt/opamgt_sa.h>
 #endif
 
 #include <pmix_common.h>
 
 #include "src/mca/base/pmix_mca_base_var.h"
+#include "src/class/pmix_list.h"
 #include "src/include/pmix_socket_errno.h"
 #include "src/include/pmix_globals.h"
 #include "src/class/pmix_list.h"
@@ -83,6 +83,52 @@ pmix_pnet_module_t pmix_opa_module = {
     .collect_inventory = collect_inventory,
     .deliver_inventory = deliver_inventory
 };
+
+/* local object definitions */
+typedef struct {
+    pmix_list_item_t super;
+    char *name;
+    char *value;
+} opa_attr_t;
+static void atcon(opa_attr_t *p)
+{
+    p->name = NULL;
+    p->value = NULL;
+}
+static void atdes(opa_attr_t *p)
+{
+    if (NULL != p->name) {
+        free(p->name);
+    }
+    if (NULL != p->value) {
+        free(p->value);
+    }
+}
+static PMIX_CLASS_INSTANCE(opa_attr_t,
+                           pmix_list_item_t,
+                           atcon, atdes);
+
+typedef struct {
+    pmix_list_item_t super;
+    char *device;
+    pmix_list_t attributes;
+} opa_resource_t;
+static void rcon(opa_resource_t *p)
+{
+    p->device = NULL;
+    PMIX_CONSTRUCT(&p->attributes, pmix_list_t);
+}
+static void rdes(opa_resource_t *p)
+{
+    if (NULL != p->device) {
+        free(p->device);
+    }
+    PMIX_LIST_DESTRUCT(&p->attributes);
+}
+static PMIX_CLASS_INSTANCE(opa_resource_t,
+                           pmix_list_item_t,
+                           rcon, rdes);
+
 
 static pmix_status_t opa_init(void)
 {
@@ -197,6 +243,10 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
 
     envars = false;
     seckeys = false;
+
+    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                        "pnet:opa:allocate for nspace %s", nptr->nspace);
+
     if (NULL == info) {
         return PMIX_ERR_TAKE_NEXT_OPTION;
     }
@@ -354,9 +404,10 @@ static void deregister_nspace(pmix_nspace_t *nptr)
 static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
                                        pmix_inventory_cbfunc_t cbfunc, void *cbdata)
 {
-#if PMIX_HAVE_HWLOC
     pmix_inventory_rollup_t *cd = (pmix_inventory_rollup_t*)cbdata;
+#if PMIX_HAVE_HWLOC
     hwloc_obj_t obj;
+#endif
     unsigned n;
     pmix_status_t rc;
     pmix_kval_t *kv;
@@ -367,10 +418,6 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
 
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa collect inventory");
-
-    if (NULL == pmix_hwloc_topology) {
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
 
     /* setup the bucket - we will pass the results as a blob */
     PMIX_CONSTRUCT(&bucket, pmix_buffer_t);
@@ -384,6 +431,11 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
         return rc;
     }
 
+#if PMIX_HAVE_HWLOC
+    if (NULL == pmix_hwloc_topology) {
+        goto query;
+    }
+
     /* search the topology for OPA devices */
     obj = hwloc_get_next_osdev(pmix_hwloc_topology, NULL);
     while (NULL != obj) {
@@ -393,9 +445,25 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
             continue;
         }
         found = true;
+        if (9 < pmix_output_get_verbosity(pmix_pnet_base_framework.framework_output)) {
+            /* dump the discovered node resources */
+            pmix_output(0, "OPA resource discovered on node: %s", nodename);
+            pmix_output(0, "\tDevice name: %s", obj->name);
+            for (n=0; n < obj->infos_count; n++) {
+                pmix_output(0, "\t\t%s: %s", obj->infos[n].name, obj->infos[n].value);
+            }
+        }
         /* pack the name of the device */
         PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
         PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &pbkt, &obj->name, 1, PMIX_STRING);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_DESTRUCT(&pbkt);
+            PMIX_DESTRUCT(&bucket);
+            return rc;
+        }
+        /* pack the number of attributes */
+        PMIX_BFROPS_PACK(rc, pmix_globals.mypeer, &pbkt, &obj->infos_count, 1, PMIX_UINT);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_DESTRUCT(&pbkt);
@@ -432,6 +500,29 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
         obj = hwloc_get_next_osdev(pmix_hwloc_topology, obj);
     }
 
+  query:
+#if 0
+#if PMIX_WANT_OPAMGT
+    if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+        /* collect the switch information from the FM */
+        OMGT_STATUS_T status = OMGT_STATUS_SUCCESS;
+        struct omgt_port * port = NULL;
+        omgt_sa_selector_t selector;
+
+        /* create a session */
+        status = omgt_open_port_by_num(&port, 1 /* hfi */, 1 /* port */, NULL);
+        if (OMGT_STATUS_SUCCESS != status) {
+            pmix_output_verbose(1, pmix_pnet_base_framework.framework_output,
+                                "Unable to open port to FM");
+            goto complete;
+        }
+        /* specify how and what we want to query by */
+        selector.InputType = InputTypeLid;
+        selector.InputValue.PortInfoRecord.Lid = 1;
+
+    }
+#endif
+#endif
     /* if we found any devices, then return the blob */
     if (!found) {
         PMIX_DESTRUCT(&bucket);
@@ -441,14 +532,39 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
     /* extract the resulting blob */
     PMIX_UNLOAD_BUFFER(&bucket, pbo.bytes, pbo.size);
     kv = PMIX_NEW(pmix_kval_t);
-    kv->key = strdup(PMIX_PNET_OPA_BLOB);
+    kv->key = strdup(PMIX_OPA_INVENTORY_KEY);
     PMIX_VALUE_CREATE(kv->value, 1);
     pmix_value_load(kv->value, &pbo, PMIX_BYTE_OBJECT);
     PMIX_BYTE_OBJECT_DESTRUCT(&pbo);
     pmix_list_append(&cd->payload, &kv->super);
-#else
-    return PMIX_ERR_TAKE_NEXT_OPTION;
+
+#else  // have_hwloc
+#if 0
+#if PMIX_WANT_OPAMGT
+    if (PMIX_PROC_IS_GATEWAY(pmix_globals.mypeer)) {
+        /* query the FM for the inventory */
+    }
+
+  complete:
+    /* if we found any devices, then return the blob */
+    if (!found) {
+        PMIX_DESTRUCT(&bucket);
+        return PMIX_ERR_TAKE_NEXT_OPTION;
+    }
+
+    /* extract the resulting blob */
+    PMIX_UNLOAD_BUFFER(&bucket, pbo.bytes, pbo.size);
+    kv = PMIX_NEW(pmix_kval_t);
+    kv->key = strdup(PMIX_OPA_INVENTORY_KEY);
+    PMIX_VALUE_CREATE(kv->value, 1);
+    pmix_value_load(kv->value, &pbo, PMIX_BYTE_OBJECT);
+    PMIX_BYTE_OBJECT_DESTRUCT(&pbo);
+    pmix_list_append(&cd->payload, &kv->super);
+
 #endif
+#endif
+    return PMIX_ERR_TAKE_NEXT_OPTION;
+#endif  // have_hwloc
 
     return PMIX_SUCCESS;
 }
@@ -457,8 +573,145 @@ static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
                                        pmix_info_t directives[], size_t ndirs,
                                        pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    pmix_buffer_t bkt, pbkt;
+    size_t n;
+    int32_t cnt;
+    unsigned m, nattrs;
+    char *hostname;
+    pmix_byte_object_t pbo;
+    pmix_pnet_node_t *nd, *ndptr;
+    pmix_pnet_resource_t *lt, *lst;
+    opa_attr_t *attr;
+    opa_resource_t *res;
+    pmix_status_t rc;
+
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa deliver inventory");
 
-    return PMIX_ERR_NOT_SUPPORTED;
+    for (n=0; n < ninfo; n++) {
+        if (0 == strncmp(info[n].key, PMIX_OPA_INVENTORY_KEY, PMIX_MAX_KEYLEN)) {
+            /* this is our inventory in the form of a blob */
+            PMIX_CONSTRUCT(&bkt,pmix_buffer_t);
+            PMIX_LOAD_BUFFER(pmix_globals.mypeer, &bkt,
+                             info[n].value.data.bo.bytes,
+                             info[n].value.data.bo.size);
+            /* first is the host this came from */
+            cnt = 1;
+            PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                               &bkt, &hostname, &cnt, PMIX_STRING);
+            if (PMIX_SUCCESS != rc) {
+                PMIX_ERROR_LOG(rc);
+                /* must _not_ destruct bkt as we don't
+                 * own the bytes! */
+                return rc;
+            }
+            /* do we already have this node? */
+            nd = NULL;
+            PMIX_LIST_FOREACH(ndptr, &pmix_pnet_globals.nodes, pmix_pnet_node_t) {
+                if (0 == strcmp(hostname, ndptr->name)) {
+                    nd = ndptr;
+                    break;
+                }
+            }
+            if (NULL == nd) {
+                nd = PMIX_NEW(pmix_pnet_node_t);
+                nd->name = strdup(hostname);
+                pmix_list_append(&pmix_pnet_globals.nodes, &nd->super);
+            }
+            /* does this node already have an OPA entry? */
+            lst = NULL;
+            PMIX_LIST_FOREACH(lt, &nd->resources, pmix_pnet_resource_t) {
+                if (0 == strcmp(lt->name, "opa")) {
+                    lst = lt;
+                    break;
+                }
+            }
+            if (NULL == lst) {
+                lst = PMIX_NEW(pmix_pnet_resource_t);
+                lst->name = strdup("opa");
+                pmix_list_append(&nd->resources, &lst->super);
+            }
+            /* each device was packed as a "blob" */
+            cnt = 1;
+            PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                               &bkt, &pbo, &cnt, PMIX_BYTE_OBJECT);
+            while (PMIX_SUCCESS == rc) {
+                /* load the blob for unpacking */
+                PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
+                PMIX_LOAD_BUFFER(pmix_globals.mypeer, &pbkt,
+                                 pbo.bytes, pbo.size);
+
+                res = PMIX_NEW(opa_resource_t);
+                /* starts with the name of the device */
+                cnt = 1;
+                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                                   &pbkt, &res->device, &cnt, PMIX_STRING);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_DESTRUCT(&pbkt);
+                    PMIX_RELEASE(res);
+                    return rc;
+                }
+                /* next comes the numbers of attributes for that device */
+                cnt = 1;
+                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                                   &pbkt, &nattrs, &cnt, PMIX_UINT);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_DESTRUCT(&pbkt);
+                    PMIX_RELEASE(res);
+                    return rc;
+                }
+                for (m=0; m < nattrs; m++) {
+                    attr = PMIX_NEW(opa_attr_t);
+                    /* unpack the name of the attribute */
+                    cnt = 1;
+                    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                                       &pbkt, &attr->name, &cnt, PMIX_STRING);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_DESTRUCT(&pbkt);
+                        PMIX_RELEASE(attr);
+                        PMIX_RELEASE(res);
+                        return rc;
+                    }
+                    /* unpack the attribute value */
+                    cnt = 1;
+                    PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                                       &pbkt, &attr->value, &cnt, PMIX_STRING);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_DESTRUCT(&pbkt);
+                        PMIX_RELEASE(attr);
+                        PMIX_RELEASE(res);
+                        return rc;
+                    }
+                    pmix_list_append(&res->attributes, &attr->super);
+                }
+                pmix_list_append(&lst->resources, &res->super);
+                PMIX_DESTRUCT(&pbkt);
+
+                /* get the next device unit */
+                cnt = 1;
+                PMIX_BFROPS_UNPACK(rc, pmix_globals.mypeer,
+                                   &bkt, &pbo, &cnt, PMIX_BYTE_OBJECT);
+            }
+            if (5 < pmix_output_get_verbosity(pmix_pnet_base_framework.framework_output)) {
+                /* dump the resulting node resources */
+                pmix_output(0, "OPA resources for node: %s", nd->name);
+                PMIX_LIST_FOREACH(lt, &nd->resources, pmix_pnet_resource_t) {
+                    if (0 == strcmp(lt->name, "opa")) {
+                        PMIX_LIST_FOREACH(res, &lt->resources, opa_resource_t) {
+                            pmix_output(0, "\tDevice: %s", res->device);
+                            PMIX_LIST_FOREACH(attr, &res->attributes, opa_attr_t) {
+                                pmix_output(0, "\t\t%s: %s", attr->name, attr->value);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return PMIX_SUCCESS;
 }

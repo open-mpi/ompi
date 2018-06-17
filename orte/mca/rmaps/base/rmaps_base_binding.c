@@ -573,8 +573,8 @@ static int bind_to_cpuset(orte_job_t *jdata)
 
 int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 {
-    hwloc_obj_type_t hwb, hwm;
-    unsigned clvl=0, clvm=0;
+    hwloc_obj_type_t hwb;
+    unsigned clvl=0;
     opal_binding_policy_t bind;
     orte_mapping_policy_t map;
     orte_node_t *node;
@@ -636,40 +636,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         break;
     case OPAL_BIND_TO_HWTHREAD:
         hwb = HWLOC_OBJ_PU;
-        break;
-    default:
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
-    }
-
-    /* do the same for the mapping policy */
-    switch (map) {
-    case ORTE_MAPPING_BYNODE:
-    case ORTE_MAPPING_BYSLOT:
-    case ORTE_MAPPING_SEQ:
-        hwm = HWLOC_OBJ_MACHINE;
-        break;
-    case ORTE_MAPPING_BYDIST:
-    case ORTE_MAPPING_BYNUMA:
-        hwm = HWLOC_OBJ_NODE;
-        break;
-    case ORTE_MAPPING_BYSOCKET:
-        hwm = HWLOC_OBJ_SOCKET;
-        break;
-    case ORTE_MAPPING_BYL3CACHE:
-        OPAL_HWLOC_MAKE_OBJ_CACHE(3, hwm, clvm);
-        break;
-    case ORTE_MAPPING_BYL2CACHE:
-        OPAL_HWLOC_MAKE_OBJ_CACHE(2, hwm, clvm);
-        break;
-    case ORTE_MAPPING_BYL1CACHE:
-        OPAL_HWLOC_MAKE_OBJ_CACHE(1, hwm, clvm);
-        break;
-    case ORTE_MAPPING_BYCORE:
-        hwm = HWLOC_OBJ_CORE;
-        break;
-    case ORTE_MAPPING_BYHWTHREAD:
-        hwm = HWLOC_OBJ_PU;
         break;
     default:
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);

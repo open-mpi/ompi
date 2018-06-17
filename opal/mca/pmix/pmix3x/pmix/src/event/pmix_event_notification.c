@@ -502,7 +502,7 @@ static void progress_local_event_hdlr(pmix_status_t status,
      * and code, then invoke it now */
     if (NULL != pmix_globals.events.last &&
         pmix_notify_check_range(&pmix_globals.events.last->rng, &chain->source) &&
-        pmix_notify_check_affected(nxt->affected, nxt->naffected,
+        pmix_notify_check_affected(pmix_globals.events.last->affected, pmix_globals.events.last->naffected,
                                    chain->affected, chain->naffected)) {
         chain->endchain = true;  // ensure we don't do this again
         if (1 == pmix_globals.events.last->ncodes &&

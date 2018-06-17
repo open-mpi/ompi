@@ -11,8 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,20 +35,63 @@
  *
  * Some architectures do not provide support for the 64 bits
  * atomic operations. Until we find a better solution let's just
- * undefine all those functions if there is no 64 bit cmpset
+ * undefine all those functions if there is no 64 bit compare-exchange
  *
  *********************************************************************/
-#if PMIX_HAVE_ATOMIC_CMPSET_32
+#if PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32
+
+#if !defined(PMIX_HAVE_ATOMIC_MIN_32)
+static inline int32_t pmix_atomic_fetch_min_32 (volatile int32_t *addr, int32_t value)
+{
+    int32_t old = *addr;
+    do {
+        if (old <= value) {
+            break;
+        }
+    } while (!pmix_atomic_compare_exchange_strong_32 (addr, &old, value));
+
+    return old;
+}
+
+#define PMIX_HAVE_ATOMIC_MIN_32 1
+
+#endif /* PMIX_HAVE_ATOMIC_MIN_32 */
+
+#if !defined(PMIX_HAVE_ATOMIC_MAX_32)
+static inline int32_t pmix_atomic_fetch_max_32 (volatile int32_t *addr, int32_t value)
+{
+    int32_t old = *addr;
+    do {
+        if (old >= value) {
+            break;
+        }
+    } while (!pmix_atomic_compare_exchange_strong_32 (addr, &old, value));
+
+    return old;
+}
+
+#define PMIX_HAVE_ATOMIC_MAX_32 1
+#endif /* PMIX_HAVE_ATOMIC_MAX_32 */
+
+#define PMIX_ATOMIC_DEFINE_CMPXCG_OP(type, bits, operation, name)  \
+    static inline type pmix_atomic_fetch_ ## name ## _ ## bits (volatile type *addr, type value) \
+    {                                                                   \
+        type oldval;                                                    \
+        do {                                                            \
+            oldval = *addr;                                             \
+        } while (!pmix_atomic_compare_exchange_strong_ ## bits (addr, &oldval, oldval operation value)); \
+                                                                        \
+        return oldval;                                                  \
+    }
 
 #if !defined(PMIX_HAVE_ATOMIC_SWAP_32)
 #define PMIX_HAVE_ATOMIC_SWAP_32 1
 static inline int32_t pmix_atomic_swap_32(volatile int32_t *addr,
                                           int32_t newval)
 {
-    int32_t old;
+    int32_t old = *addr;
     do {
-        old = *addr;
-    } while (0 == pmix_atomic_cmpset_32(addr, old, newval));
+    } while (!pmix_atomic_compare_exchange_strong_32 (addr, &old, newval));
 
     return old;
 }
@@ -55,78 +99,124 @@ static inline int32_t pmix_atomic_swap_32(volatile int32_t *addr,
 
 #if !defined(PMIX_HAVE_ATOMIC_ADD_32)
 #define PMIX_HAVE_ATOMIC_ADD_32 1
-static inline int32_t
-pmix_atomic_add_32(volatile int32_t *addr, int delta)
-{
-   int32_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (0 == pmix_atomic_cmpset_32(addr, oldval, oldval + delta));
-   return (oldval + delta);
-}
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, +, add)
+
 #endif  /* PMIX_HAVE_ATOMIC_ADD_32 */
+
+#if !defined(PMIX_HAVE_ATOMIC_AND_32)
+#define PMIX_HAVE_ATOMIC_AND_32 1
+
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, &, and)
+
+#endif  /* PMIX_HAVE_ATOMIC_AND_32 */
+
+#if !defined(PMIX_HAVE_ATOMIC_OR_32)
+#define PMIX_HAVE_ATOMIC_OR_32 1
+
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, |, or)
+
+#endif  /* PMIX_HAVE_ATOMIC_OR_32 */
+
+#if !defined(PMIX_HAVE_ATOMIC_XOR_32)
+#define PMIX_HAVE_ATOMIC_XOR_32 1
+
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, ^, xor)
+
+#endif  /* PMIX_HAVE_ATOMIC_XOR_32 */
 
 
 #if !defined(PMIX_HAVE_ATOMIC_SUB_32)
 #define PMIX_HAVE_ATOMIC_SUB_32 1
-static inline int32_t
-pmix_atomic_sub_32(volatile int32_t *addr, int delta)
-{
-   int32_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (0 == pmix_atomic_cmpset_32(addr, oldval, oldval - delta));
-   return (oldval - delta);
-}
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int32_t, 32, -, sub)
+
 #endif  /* PMIX_HAVE_ATOMIC_SUB_32 */
 
-#endif /* PMIX_HAVE_ATOMIC_CMPSET_32 */
+#endif /* PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32 */
 
 
-#if PMIX_HAVE_ATOMIC_CMPSET_64
+#if PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64
+
+#if !defined(PMIX_HAVE_ATOMIC_MIN_64)
+static inline int64_t pmix_atomic_fetch_min_64 (volatile int64_t *addr, int64_t value)
+{
+    int64_t old = *addr;
+    do {
+        if (old <= value) {
+            break;
+        }
+    } while (!pmix_atomic_compare_exchange_strong_64 (addr, &old, value));
+
+    return old;
+}
+
+#define PMIX_HAVE_ATOMIC_MIN_64 1
+
+#endif /* PMIX_HAVE_ATOMIC_MIN_64 */
+
+#if !defined(PMIX_HAVE_ATOMIC_MAX_64)
+static inline int64_t pmix_atomic_fetch_max_64 (volatile int64_t *addr, int64_t value)
+{
+    int64_t old = *addr;
+    do {
+        if (old >= value) {
+            break;
+        }
+    } while (!pmix_atomic_compare_exchange_strong_64 (addr, &old, value));
+
+    return old;
+}
+
+#define PMIX_HAVE_ATOMIC_MAX_64 1
+#endif /* PMIX_HAVE_ATOMIC_MAX_64 */
 
 #if !defined(PMIX_HAVE_ATOMIC_SWAP_64)
 #define PMIX_HAVE_ATOMIC_SWAP_64 1
 static inline int64_t pmix_atomic_swap_64(volatile int64_t *addr,
                                           int64_t newval)
 {
-    int64_t old;
+    int64_t old = *addr;
     do {
-        old = *addr;
-    } while (0 == pmix_atomic_cmpset_64(addr, old, newval));
+    } while (!pmix_atomic_compare_exchange_strong_64 (addr, &old, newval));
+
     return old;
 }
-#endif /* PMIX_HAVE_ATOMIC_SWAP_32 */
+#endif /* PMIX_HAVE_ATOMIC_SWAP_64 */
 
 #if !defined(PMIX_HAVE_ATOMIC_ADD_64)
 #define PMIX_HAVE_ATOMIC_ADD_64 1
-static inline int64_t
-pmix_atomic_add_64(volatile int64_t *addr, int64_t delta)
-{
-   int64_t oldval;
 
-   do {
-      oldval = *addr;
-   } while (0 == pmix_atomic_cmpset_64(addr, oldval, oldval + delta));
-   return (oldval + delta);
-}
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, +, add)
+
 #endif  /* PMIX_HAVE_ATOMIC_ADD_64 */
 
+#if !defined(PMIX_HAVE_ATOMIC_AND_64)
+#define PMIX_HAVE_ATOMIC_AND_64 1
+
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, &, and)
+
+#endif  /* PMIX_HAVE_ATOMIC_AND_64 */
+
+#if !defined(PMIX_HAVE_ATOMIC_OR_64)
+#define PMIX_HAVE_ATOMIC_OR_64 1
+
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, |, or)
+
+#endif  /* PMIX_HAVE_ATOMIC_OR_64 */
+
+#if !defined(PMIX_HAVE_ATOMIC_XOR_64)
+#define PMIX_HAVE_ATOMIC_XOR_64 1
+
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, ^, xor)
+
+#endif  /* PMIX_HAVE_ATOMIC_XOR_64 */
 
 #if !defined(PMIX_HAVE_ATOMIC_SUB_64)
 #define PMIX_HAVE_ATOMIC_SUB_64 1
-static inline int64_t
-pmix_atomic_sub_64(volatile int64_t *addr, int64_t delta)
-{
-    int64_t oldval;
 
-    do {
-        oldval = *addr;
-    } while (0 == pmix_atomic_cmpset_64(addr, oldval, oldval - delta));
-    return (oldval - delta);
-}
+PMIX_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, -, sub)
+
 #endif  /* PMIX_HAVE_ATOMIC_SUB_64 */
 
 #else
@@ -139,130 +229,71 @@ pmix_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 #define PMIX_HAVE_ATOMIC_SUB_64 0
 #endif
 
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64 */
 
+#if (PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64)
 
-#if (PMIX_HAVE_ATOMIC_CMPSET_32 || PMIX_HAVE_ATOMIC_CMPSET_64)
-
-static inline int
-pmix_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
-                      int64_t newval, size_t length)
-{
-   switch( length ) {
-#if PMIX_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      return pmix_atomic_cmpset_32( (volatile int32_t*)addr,
-                                    (int32_t)oldval, (int32_t)newval );
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_32 */
-
-#if PMIX_HAVE_ATOMIC_CMPSET_64
-   case 8:
-      return pmix_atomic_cmpset_64( (volatile int64_t*)addr,
-                                    (int64_t)oldval, (int64_t)newval );
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_64 */
-   }
-   abort();
-   /* This should never happen, so deliberately abort (hopefully
-      leaving a corefile for analysis) */
-}
-
-
-static inline int
-pmix_atomic_cmpset_acq_xx(volatile void* addr, int64_t oldval,
-                          int64_t newval, size_t length)
-{
-   switch( length ) {
-#if PMIX_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      return pmix_atomic_cmpset_acq_32( (volatile int32_t*)addr,
-                                        (int32_t)oldval, (int32_t)newval );
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_32 */
-
-#if PMIX_HAVE_ATOMIC_CMPSET_64
-   case 8:
-      return pmix_atomic_cmpset_acq_64( (volatile int64_t*)addr,
-                                        (int64_t)oldval, (int64_t)newval );
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_64 */
-   }
-   /* This should never happen, so deliberately abort (hopefully
-      leaving a corefile for analysis) */
-   abort();
-}
-
-
-static inline int
-pmix_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
-                          int64_t newval, size_t length)
-{
-   switch( length ) {
-#if PMIX_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      return pmix_atomic_cmpset_rel_32( (volatile int32_t*)addr,
-                                        (int32_t)oldval, (int32_t)newval );
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_32 */
-
-#if PMIX_HAVE_ATOMIC_CMPSET_64
-   case 8:
-      return pmix_atomic_cmpset_rel_64( (volatile int64_t*)addr,
-                                        (int64_t)oldval, (int64_t)newval );
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_64 */
-   }
-   /* This should never happen, so deliberately abort (hopefully
-      leaving a corefile for analysis) */
-   abort();
-}
-
-
-static inline int
-pmix_atomic_cmpset_ptr(volatile void* addr,
-                       void* oldval,
-                       void* newval)
-{
-#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_CMPSET_32
-    return pmix_atomic_cmpset_32((int32_t*) addr, (unsigned long) oldval,
-                                 (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_CMPSET_64
-    return pmix_atomic_cmpset_64((int64_t*) addr, (unsigned long) oldval,
-                                 (unsigned long) newval);
+#if PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32 && PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64
+#define PMIX_ATOMIC_DEFINE_CMPXCG_XX(semantics)                         \
+    static inline bool                                                  \
+    pmix_atomic_compare_exchange_strong ## semantics ## xx (volatile void* addr, void *oldval, \
+                                                            int64_t newval, const size_t length) \
+    {                                                                   \
+        switch (length) {                                               \
+        case 4:                                                         \
+            return pmix_atomic_compare_exchange_strong_32 ((volatile int32_t *) addr, \
+                                                           (int32_t *) oldval, (int32_t) newval); \
+        case 8:                                                         \
+            return pmix_atomic_compare_exchange_strong_64 ((volatile int64_t *) addr, \
+                                                           (int64_t *) oldval, (int64_t) newval); \
+        }                                                               \
+        abort();                                                        \
+    }
+#elif PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32
+#define PMIX_ATOMIC_DEFINE_CMPXCG_XX(semantics)                         \
+    static inline bool                                                  \
+    pmix_atomic_compare_exchange_strong ## semantics ## xx (volatile void* addr, void *oldval, \
+                                                            int64_t newval, const size_t length) \
+    {                                                                   \
+        switch (length) {                                               \
+        case 4:                                                         \
+            return pmix_atomic_compare_exchange_strong_32 ((volatile int32_t *) addr, \
+                                                           (int32_t *) oldval, (int32_t) newval); \
+        }                                                               \
+        abort();                                                        \
+    }
 #else
-    abort();
+#error "Platform does not have required atomic compare-and-swap functionality"
 #endif
-}
 
+PMIX_ATOMIC_DEFINE_CMPXCG_XX(_)
+PMIX_ATOMIC_DEFINE_CMPXCG_XX(_acq_)
+PMIX_ATOMIC_DEFINE_CMPXCG_XX(_rel_)
 
-static inline int
-pmix_atomic_cmpset_acq_ptr(volatile void* addr,
-                           void* oldval,
-                           void* newval)
-{
-#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_CMPSET_32
-    return pmix_atomic_cmpset_acq_32((int32_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_CMPSET_64
-    return pmix_atomic_cmpset_acq_64((int64_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
+#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32
+#define PMIX_ATOMIC_DEFINE_CMPXCG_PTR_XX(semantics)                     \
+    static inline bool                                                  \
+        pmix_atomic_compare_exchange_strong ## semantics ## ptr (volatile void* addr, void *oldval, void *newval) \
+    {                                                                   \
+        return pmix_atomic_compare_exchange_strong_32 ((volatile int32_t *) addr, (int32_t *) oldval, (int32_t) newval); \
+    }
+#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64
+#define PMIX_ATOMIC_DEFINE_CMPXCG_PTR_XX(semantics)                     \
+    static inline bool                                                  \
+        pmix_atomic_compare_exchange_strong ## semantics ## ptr (volatile void* addr, void *oldval, void *newval) \
+    {                                                                   \
+        return pmix_atomic_compare_exchange_strong_64 ((volatile int64_t *) addr, (int64_t *) oldval, (int64_t) newval); \
+    }
 #else
-    abort();
+#error "Can not define pmix_atomic_compare_exchange_strong_ptr with existing atomics"
 #endif
-}
 
+PMIX_ATOMIC_DEFINE_CMPXCG_PTR_XX(_)
+PMIX_ATOMIC_DEFINE_CMPXCG_PTR_XX(_acq_)
+PMIX_ATOMIC_DEFINE_CMPXCG_PTR_XX(_rel_)
 
-static inline int pmix_atomic_cmpset_rel_ptr(volatile void* addr,
-                                             void* oldval,
-                                             void* newval)
-{
-#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_CMPSET_32
-    return pmix_atomic_cmpset_rel_32((int32_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_CMPSET_64
-    return pmix_atomic_cmpset_rel_64((int64_t*) addr, (unsigned long) oldval,
-                                     (unsigned long) newval);
-#else
-    abort();
-#endif
-}
+#endif /* (PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_64) */
 
-#endif /* (PMIX_HAVE_ATOMIC_CMPSET_32 || PMIX_HAVE_ATOMIC_CMPSET_64) */
 
 #if (PMIX_HAVE_ATOMIC_SWAP_32 || PMIX_HAVE_ATOMIC_SWAP_64)
 
@@ -278,15 +309,15 @@ static inline int pmix_atomic_cmpset_rel_ptr(volatile void* addr,
 
 #if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_LLSC_32
 
-#define pmix_atomic_ll_ptr(addr) (void *) pmix_atomic_ll_32((int32_t *) addr)
-#define pmix_atomic_sc_ptr(addr, newval) pmix_atomic_sc_32((int32_t *) addr, (int32_t) newval)
+#define pmix_atomic_ll_ptr(addr, ret) pmix_atomic_ll_32((volatile int32_t *) (addr), ret)
+#define pmix_atomic_sc_ptr(addr, value, ret) pmix_atomic_sc_32((volatile int32_t *) (addr), (intptr_t) (value), ret)
 
 #define PMIX_HAVE_ATOMIC_LLSC_PTR 1
 
 #elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_LLSC_64
 
-#define pmix_atomic_ll_ptr(addr) (void *) pmix_atomic_ll_64((int64_t *) addr)
-#define pmix_atomic_sc_ptr(addr, newval) pmix_atomic_sc_64((int64_t *) addr, (int64_t) newval)
+#define pmix_atomic_ll_ptr(addr, ret) pmix_atomic_ll_64((volatile int64_t *) (addr), ret)
+#define pmix_atomic_sc_ptr(addr, value, ret) pmix_atomic_sc_64((volatile int64_t *) (addr), (intptr_t) (value), ret)
 
 #define PMIX_HAVE_ATOMIC_LLSC_PTR 1
 
@@ -300,20 +331,19 @@ static inline int pmix_atomic_cmpset_rel_ptr(volatile void* addr,
 
 #if PMIX_HAVE_ATOMIC_MATH_32 || PMIX_HAVE_ATOMIC_MATH_64
 
-
 static inline void
-pmix_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
+    pmix_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
 {
    switch( length ) {
 #if PMIX_HAVE_ATOMIC_ADD_32
    case 4:
-      pmix_atomic_add_32( (volatile int32_t*)addr, (int32_t)value );
+       (void) pmix_atomic_fetch_add_32( (volatile int32_t*)addr, (int32_t)value );
       break;
-#endif  /* PMIX_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32 */
 
 #if PMIX_HAVE_ATOMIC_ADD_64
    case 8:
-      pmix_atomic_add_64( (volatile int64_t*)addr, (int64_t)value );
+       (void) pmix_atomic_fetch_add_64( (volatile int64_t*)addr, (int64_t)value );
       break;
 #endif  /* PMIX_HAVE_ATOMIC_ADD_64 */
    default:
@@ -330,13 +360,13 @@ pmix_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
    switch( length ) {
 #if PMIX_HAVE_ATOMIC_SUB_32
    case 4:
-      pmix_atomic_sub_32( (volatile int32_t*)addr, (int32_t)value );
+       (void) pmix_atomic_fetch_sub_32( (volatile int32_t*)addr, (int32_t)value );
       break;
 #endif  /* PMIX_HAVE_ATOMIC_SUB_32 */
 
 #if PMIX_HAVE_ATOMIC_SUB_64
    case 8:
-      pmix_atomic_sub_64( (volatile int64_t*)addr, (int64_t)value );
+       (void) pmix_atomic_fetch_sub_64( (volatile int64_t*)addr, (int64_t)value );
       break;
 #endif  /* PMIX_HAVE_ATOMIC_SUB_64 */
    default:
@@ -346,47 +376,102 @@ pmix_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
    }
 }
 
-#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_ADD_32
-static inline int32_t pmix_atomic_add_ptr( volatile void* addr,
-                                           void* delta )
+#define PMIX_ATOMIC_DEFINE_OP_FETCH(op, operation, type, ptr_type, suffix) \
+    static inline type pmix_atomic_ ## op ## _fetch_ ## suffix (volatile ptr_type *addr, type value) \
+    {                                                                   \
+        return pmix_atomic_fetch_ ## op ## _ ## suffix (addr, value) operation value; \
+    }
+
+PMIX_ATOMIC_DEFINE_OP_FETCH(add, +, int32_t, int32_t, 32)
+PMIX_ATOMIC_DEFINE_OP_FETCH(and, &, int32_t, int32_t, 32)
+PMIX_ATOMIC_DEFINE_OP_FETCH(or, |, int32_t, int32_t, 32)
+PMIX_ATOMIC_DEFINE_OP_FETCH(xor, ^, int32_t, int32_t, 32)
+PMIX_ATOMIC_DEFINE_OP_FETCH(sub, -, int32_t, int32_t, 32)
+
+static inline int32_t pmix_atomic_min_fetch_32 (volatile int32_t *addr, int32_t value)
 {
-    return pmix_atomic_add_32((int32_t*) addr, (unsigned long) delta);
+    int32_t old = pmix_atomic_fetch_min_32 (addr, value);
+    return old <= value ? old : value;
 }
-#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_ADD_64
-static inline int64_t pmix_atomic_add_ptr( volatile void* addr,
-                                           void* delta )
+
+static inline int32_t pmix_atomic_max_fetch_32 (volatile int32_t *addr, int32_t value)
 {
-    return pmix_atomic_add_64((int64_t*) addr, (unsigned long) delta);
+    int32_t old = pmix_atomic_fetch_max_32 (addr, value);
+    return old >= value ? old : value;
 }
-#else
-static inline int32_t pmix_atomic_add_ptr( volatile void* addr,
-                                           void* delta )
+
+#if PMIX_HAVE_ATOMIC_MATH_64
+PMIX_ATOMIC_DEFINE_OP_FETCH(add, +, int64_t, int64_t, 64)
+PMIX_ATOMIC_DEFINE_OP_FETCH(and, &, int64_t, int64_t, 64)
+PMIX_ATOMIC_DEFINE_OP_FETCH(or, |, int64_t, int64_t, 64)
+PMIX_ATOMIC_DEFINE_OP_FETCH(xor, ^, int64_t, int64_t, 64)
+PMIX_ATOMIC_DEFINE_OP_FETCH(sub, -, int64_t, int64_t, 64)
+
+static inline int64_t pmix_atomic_min_fetch_64 (volatile int64_t *addr, int64_t value)
 {
-    abort();
-    return 0;
+    int64_t old = pmix_atomic_fetch_min_64 (addr, value);
+    return old <= value ? old : value;
 }
+
+static inline int64_t pmix_atomic_max_fetch_64 (volatile int64_t *addr, int64_t value)
+{
+    int64_t old = pmix_atomic_fetch_max_64 (addr, value);
+    return old >= value ? old : value;
+}
+
 #endif
 
-#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_SUB_32
-static inline int32_t pmix_atomic_sub_ptr( volatile void* addr,
+static inline intptr_t pmix_atomic_fetch_add_ptr( volatile void* addr,
                                            void* delta )
 {
-    return pmix_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
-}
-#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_SUB_32
-static inline int64_t pmix_atomic_sub_ptr( volatile void* addr,
-                                           void* delta )
-{
-    return pmix_atomic_sub_64((int64_t*) addr, (unsigned long) delta);
-}
+#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_ADD_32
+    return pmix_atomic_fetch_add_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_ADD_64
+    return pmix_atomic_fetch_add_64((int64_t*) addr, (unsigned long) delta);
 #else
-static inline int32_t pmix_atomic_sub_ptr( volatile void* addr,
+    abort ();
+    return 0;
+#endif
+}
+
+static inline intptr_t pmix_atomic_add_fetch_ptr( volatile void* addr,
                                            void* delta )
 {
+#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_ADD_32
+    return pmix_atomic_add_fetch_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_ADD_64
+    return pmix_atomic_add_fetch_64((int64_t*) addr, (unsigned long) delta);
+#else
+    abort ();
+    return 0;
+#endif
+}
+
+static inline intptr_t pmix_atomic_fetch_sub_ptr( volatile void* addr,
+                                           void* delta )
+{
+#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_SUB_32
+    return pmix_atomic_fetch_sub_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_SUB_32
+    return pmix_atomic_fetch_sub_64((int64_t*) addr, (unsigned long) delta);
+#else
     abort();
     return 0;
-}
 #endif
+}
+
+static inline intptr_t pmix_atomic_sub_fetch_ptr( volatile void* addr,
+                                           void* delta )
+{
+#if SIZEOF_VOID_P == 4 && PMIX_HAVE_ATOMIC_SUB_32
+    return pmix_atomic_sub_fetch_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && PMIX_HAVE_ATOMIC_SUB_32
+    return pmix_atomic_sub_fetch_64((int64_t*) addr, (unsigned long) delta);
+#else
+    abort();
+    return 0;
+#endif
+}
 
 #endif /* PMIX_HAVE_ATOMIC_MATH_32 || PMIX_HAVE_ATOMIC_MATH_64 */
 
@@ -401,7 +486,7 @@ static inline int32_t pmix_atomic_sub_ptr( volatile void* addr,
  * Lock initialization function. It set the lock to UNLOCKED.
  */
 static inline void
-pmix_atomic_init( pmix_atomic_lock_t* lock, int32_t value )
+pmix_atomic_lock_init( pmix_atomic_lock_t* lock, int32_t value )
 {
    lock->u.lock = value;
 }
@@ -410,21 +495,20 @@ pmix_atomic_init( pmix_atomic_lock_t* lock, int32_t value )
 static inline int
 pmix_atomic_trylock(pmix_atomic_lock_t *lock)
 {
-    int ret = pmix_atomic_cmpset_acq_32( &(lock->u.lock),
-                                         PMIX_ATOMIC_UNLOCKED, PMIX_ATOMIC_LOCKED);
-    return (ret == 0) ? 1 : 0;
+    int32_t unlocked = PMIX_ATOMIC_LOCK_UNLOCKED;
+    bool ret = pmix_atomic_compare_exchange_strong_32 (&lock->u.lock, &unlocked, PMIX_ATOMIC_LOCK_LOCKED);
+    return (ret == false) ? 1 : 0;
 }
 
 
 static inline void
 pmix_atomic_lock(pmix_atomic_lock_t *lock)
 {
-   while( !pmix_atomic_cmpset_acq_32( &(lock->u.lock),
-                                      PMIX_ATOMIC_UNLOCKED, PMIX_ATOMIC_LOCKED) ) {
-      while (lock->u.lock == PMIX_ATOMIC_LOCKED) {
-         /* spin */ ;
-      }
-   }
+    while (pmix_atomic_trylock (lock)) {
+        while (lock->u.lock == PMIX_ATOMIC_LOCK_LOCKED) {
+            /* spin */ ;
+        }
+    }
 }
 
 
@@ -432,7 +516,7 @@ static inline void
 pmix_atomic_unlock(pmix_atomic_lock_t *lock)
 {
    pmix_atomic_wmb();
-   lock->u.lock=PMIX_ATOMIC_UNLOCKED;
+   lock->u.lock=PMIX_ATOMIC_LOCK_UNLOCKED;
 }
 
 #endif /* PMIX_HAVE_ATOMIC_SPINLOCKS */

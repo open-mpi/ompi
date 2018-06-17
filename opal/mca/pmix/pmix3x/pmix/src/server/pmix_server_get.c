@@ -568,7 +568,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
     pmix_rank_info_t *iptr;
     pmix_proc_t proc;
     pmix_cb_t cb;
-    pmix_peer_t *peer;
+    pmix_peer_t *peer = NULL;
     pmix_byte_object_t bo;
     char *data = NULL;
     size_t sz = 0;

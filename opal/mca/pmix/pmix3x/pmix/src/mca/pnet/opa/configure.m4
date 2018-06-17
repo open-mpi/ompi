@@ -76,7 +76,7 @@ AC_DEFUN([MCA_pmix_pnet_opa_CONFIG],[
                               [pmix_check_opamgt_happy="no"])],
           [pmix_check_opamgt_happy="no"])
 
-    pnet_opa_CLFAGS="$pnet_opa_CFLAGS $pnet_opamgt_CFLAGS"
+    pnet_opa_CFLAGS="$pnet_opa_CFLAGS $pnet_opamgt_CFLAGS"
     pnet_opa_CPPFLAGS="$pnet_opa_CPPFLAGS $pnet_opamgt_CPPFLAGS"
     pnet_opa_LDFLAGS="$pnet_opa_LDFLAGS $pnet_opamgt_LDFLAGS"
     pnet_opa_LIBS="$pnet_opa_LIBS $pnet_opamgt_LIBS"

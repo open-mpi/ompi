@@ -108,7 +108,7 @@ static void setup_cbfunc(int status,
     orte_job_t *jdata = (orte_job_t*)provided_cbdata;
     opal_value_t *kv;
     opal_buffer_t cache, *bptr;
-    int rc;
+    int rc = ORTE_SUCCESS;
 
     OBJ_CONSTRUCT(&cache, opal_buffer_t);
     if (NULL != info) {
@@ -431,7 +431,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     }
 
     /* get any application prep info */
-    if (NULL != opal_pmix.server_setup_application) {
+    if (orte_enable_instant_on_support && NULL != opal_pmix.server_setup_application) {
         /* we don't want to block here because it could
          * take some indeterminate time to get the info */
         if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_application(jdata->jobid, NULL, setup_cbfunc, jdata))) {
@@ -798,7 +798,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     /* if we have local support setup info, then execute it here - we
      * have to do so AFTER we register the nspace so the PMIx server
      * has the nspace info it needs */
-    if (0 < opal_list_get_size(&local_support) &&
+    if (orte_enable_instant_on_support &&
+        0 < opal_list_get_size(&local_support) &&
         NULL != opal_pmix.server_setup_local_support) {
         if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_local_support(jdata->jobid, &local_support,
                                                                        ls_cbunc, &lock))) {
