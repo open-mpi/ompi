@@ -52,12 +52,6 @@
 #include PMIX_EVENT_HEADER
 #include PMIX_EVENT2_THREAD_HEADER
 
-#if PMIX_CC_USE_PRAGMA_IDENT
-#pragma ident PMIX_VERSION
-#elif PMIX_CC_USE_IDENT
-#ident PMIX_VERSION
-#endif
-
 #include "src/class/pmix_list.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"

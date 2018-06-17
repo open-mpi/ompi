@@ -60,11 +60,6 @@
 #include "src/runtime/pmix_rte.h"
 #include "src/runtime/pmix_progress_threads.h"
 
-#if PMIX_CC_USE_PRAGMA_IDENT
-#pragma ident PMIX_IDENT_STRING
-#elif PMIX_CC_USE_IDENT
-#ident PMIX_IDENT_STRING
-#endif
 const char pmix_version_string[] = PMIX_IDENT_STRING;
 
 PMIX_EXPORT int pmix_initialized = 0;
