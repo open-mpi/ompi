@@ -137,7 +137,7 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
     }
 #if OPAL_CUDA_SUPPORT
     if ( is_gpu && !is_managed ) {
-        mca_common_ompio_unregister_buf (fh, decoded_iov->iov_base);
+        mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
     }
 #endif
 

@@ -48,7 +48,7 @@ static int mca_common_ompio_request_free ( struct ompi_request_t **req)
             decoded_iov.iov_len  = ompio_req->req_size;
             opal_convertor_unpack (&ompio_req->req_convertor, &decoded_iov, &iov_count, &pos );
         }
-        mca_common_ompio_unregister_buf ( NULL, ompio_req->req_tbuf );
+        mca_common_ompio_release_buf ( NULL, ompio_req->req_tbuf );
     }
 #endif
     if ( NULL != ompio_req->req_free_fn ) {

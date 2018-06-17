@@ -34,6 +34,10 @@
 #include "io_ompio.h"
 #include "ompi/mca/common/ompio/common_ompio_request.h"
 
+#if OPAL_CUDA_SUPPORT
+#include "ompi/mca/common/ompio/common_ompio_cuda.h"
+#endif
+
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_num_aggregators = -1;
@@ -271,6 +275,10 @@ static int open_component(void)
 static int close_component(void)
 {
     mca_common_ompio_request_fini ();
+
+#if OPAL_CUDA_SUPPORT
+    mca_common_ompio_cuda_alloc_fini();
+#endif
 
     OBJ_DESTRUCT(&mca_io_ompio_mutex);
 

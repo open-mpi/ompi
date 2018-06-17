@@ -26,12 +26,7 @@
     opal_convertor_clone ( _fh->f_convertor, _convertor, 0);                          \
     opal_convertor_prepare_for_send ( _convertor, &(_datatype->super), _count, _buf );\
     opal_convertor_get_packed_size( _convertor, &_max_data );           \
-    _tbuf = (char *) malloc ( _max_data );                              \
-    if ( NULL == _tbuf ) {                                              \
-        opal_output(1, "common_ompio: could not allocate memory.\n");   \
-        return OMPI_ERR_OUT_OF_RESOURCE;                                \
-    }                                                                   \
-    mca_common_ompio_register_buf (_fh, _tbuf, _max_data);              \
+    _tbuf = mca_common_ompio_alloc_buf (_fh, _max_data);                \
     _decoded_iov = (struct iovec *) malloc ( sizeof ( struct iovec ));  \
     if ( NULL == _decoded_iov ) {                                       \
         opal_output(1, "common_ompio: could not allocate memory.\n");   \
@@ -44,8 +39,11 @@
 
 void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, 
 				      int *is_gpu, int *is_managed);
-void mca_common_ompio_register_buf ( ompio_file_t *fh,  const void *buf, 
-				    size_t bufsize);
-void mca_common_ompio_unregister_buf ( ompio_file_t *fh,  void *buf );
+int mca_common_ompio_cuda_alloc_init ( void );
+int mca_common_ompio_cuda_alloc_fini ( void );
+
+
+void* mca_common_ompio_alloc_buf ( ompio_file_t *fh, size_t bufsize);
+void mca_common_ompio_release_buf ( ompio_file_t *fh,  void *buf );
 
 #endif

@@ -167,7 +167,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
 
         opal_convertor_unpack (&convertor, decoded_iov, &iov_count, &pos );
         opal_convertor_cleanup (&convertor);
-        mca_common_ompio_unregister_buf (fh, decoded_iov->iov_base);
+        mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
     }
 #endif
     if (NULL != decoded_iov) {
