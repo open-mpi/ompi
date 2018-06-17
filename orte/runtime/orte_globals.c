@@ -205,6 +205,9 @@ char *orte_job_ident = NULL;
 bool orte_execute_quiet = false;
 bool orte_report_silent_errors = false;
 
+/* enable PMIx-based "instant on" support */
+bool orte_enable_instant_on_support = false;
+
 /* See comment in orte/tools/orterun/debuggers.c about this MCA
    param */
 bool orte_in_parallel_debugger = false;

@@ -100,7 +100,6 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
-#if 0
 static void setup_cbfunc(int status,
                          opal_list_t *info,
                          void *provided_cbdata,
@@ -132,9 +131,8 @@ static void setup_cbfunc(int status,
 
     /* move to next stage */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SEND_LAUNCH_MSG);
-}
-#endif
 
+}
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -433,8 +431,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     }
 
     /* get any application prep info */
-#if 0
-    if (NULL != opal_pmix.server_setup_application) {
+    if (orte_enable_instant_on_support && NULL != opal_pmix.server_setup_application) {
         /* we don't want to block here because it could
          * take some indeterminate time to get the info */
         if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_application(jdata->jobid, NULL, setup_cbfunc, jdata))) {
@@ -442,7 +439,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
         }
         return rc;
     }
-#endif
 
     /* move to next stage */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SEND_LAUNCH_MSG);
@@ -457,13 +453,11 @@ static void fm_release(void *cbdata)
     OBJ_RELEASE(bptr);
 }
 
-#if 0
 static void ls_cbunc(int status, void *cbdata)
 {
     opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
     OPAL_PMIX_WAKEUP_THREAD(lock);
 }
-#endif
 
 int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                                                 orte_jobid_t *job)
@@ -801,11 +795,11 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         goto REPORT_ERROR;
     }
 
-#if 0
     /* if we have local support setup info, then execute it here - we
      * have to do so AFTER we register the nspace so the PMIx server
      * has the nspace info it needs */
-    if (0 < opal_list_get_size(&local_support) &&
+    if (orte_enable_instant_on_support &&
+        0 < opal_list_get_size(&local_support) &&
         NULL != opal_pmix.server_setup_local_support) {
         if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_local_support(jdata->jobid, &local_support,
                                                                        ls_cbunc, &lock))) {
@@ -815,8 +809,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
     } else {
         lock.active = false;  // we won't get a callback
     }
-#endif
-    lock.active = false;  // we won't get a callback
 
     /* if we have a file map, then we need to load it */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FILE_MAPS, (void**)&bptr, OPAL_BUFFER)) {
@@ -1067,11 +1059,10 @@ void orte_odls_base_spawn_proc(int fd, short sd, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&child->name));
 
-  //  if (15 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
+    if (15 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
         /* dump what is going to be exec'd */
-        opal_dss.dump(0, app, ORTE_APP_CONTEXT);
-  //  }
-        exit(1);
+        opal_dss.dump(orte_odls_base_framework.framework_output, app, ORTE_APP_CONTEXT);
+    }
 
     if (ORTE_SUCCESS != (rc = cd->fork_local(cd))) {
         /* error message already output */

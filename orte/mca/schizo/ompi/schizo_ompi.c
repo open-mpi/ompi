@@ -509,6 +509,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Forward mpirun port to compute node daemons so all will use it",
       OPAL_CMD_LINE_OTYPE_LAUNCH },
 
+    /* enable instant-on support */
+    { "orte_enable_instant_on_support", '\0', "enable-instant-on-support", "enable-instant-on-support", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable PMIx-based instant on launch support (experimental)",
+      OPAL_CMD_LINE_OTYPE_LAUNCH },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -874,7 +880,7 @@ static int setup_fork(orte_job_t *jdata,
         tmp_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
         assert (NULL != tmp_app);
         orte_get_attribute(&tmp_app->attributes, ORTE_APP_PREFIX_DIR, (void**)&param, OPAL_STRING);
-    } 
+    }
     for (i = 0; NULL != param && NULL != app->env && NULL != app->env[i]; ++i) {
         char *newenv;
 
