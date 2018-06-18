@@ -8,7 +8,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,7 +103,7 @@ static inline void pmix_wait_sync_update(pmix_wait_sync_t *sync,
                                          int updates, int status)
 {
     if( PMIX_LIKELY(PMIX_SUCCESS == status) ) {
-        if( 0 != (PMIX_THREAD_ADD32(&sync->count, -updates)) ) {
+        if( 0 != (PMIX_THREAD_ADD_FETCH32(&sync->count, -updates)) ) {
             return;
         }
     } else {

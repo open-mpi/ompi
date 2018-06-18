@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -17,7 +17,7 @@
 #include "server_callbacks.h"
 #include "src/util/argv.h"
 
-extern int spawn_wait;
+extern bool spawn_wait;
 
 pmix_server_module_t mymodule = {
     .client_connected = connected,

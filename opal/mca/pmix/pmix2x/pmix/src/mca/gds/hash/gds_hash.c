@@ -513,6 +513,10 @@ pmix_status_t hash_cache_job_info(struct pmix_nspace_t *ns,
                 PMIX_RELEASE(kp2);
                 goto release;
             }
+            /* if this is the job size, then store it */
+            if (0 == strncmp(info[n].key, PMIX_JOB_SIZE, PMIX_MAX_KEYLEN)) {
+                nptr->nprocs = info[n].value.data.uint32;
+            }
         }
     }
 
@@ -560,7 +564,6 @@ static pmix_status_t register_info(pmix_peer_t *peer,
     pmix_hash_table_t *ht;
     pmix_value_t *val, blob;
     pmix_status_t rc = PMIX_SUCCESS;
-    pmix_rank_info_t *rinfo;
     pmix_info_t *info;
     size_t ninfo, n;
     pmix_kval_t kv;
@@ -607,9 +610,9 @@ static pmix_status_t register_info(pmix_peer_t *peer,
         PMIX_VALUE_RELEASE(val);
     }
 
-    PMIX_LIST_FOREACH(rinfo, &ns->ranks, pmix_rank_info_t) {
+    for (rank=0; rank < ns->nprocs; rank++) {
         val = NULL;
-        rc = pmix_hash_fetch(ht, rinfo->pname.rank, NULL, &val);
+        rc = pmix_hash_fetch(ht, rank, NULL, &val);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             if (NULL != val) {
@@ -621,7 +624,6 @@ static pmix_status_t register_info(pmix_peer_t *peer,
             return PMIX_ERR_NOT_FOUND;
         }
         PMIX_CONSTRUCT(&buf, pmix_buffer_t);
-        rank = rinfo->pname.rank;
         PMIX_BFROPS_PACK(rc, peer, &buf, &rank, 1, PMIX_PROC_RANK);
 
         info = (pmix_info_t*)val->data.darray->array;

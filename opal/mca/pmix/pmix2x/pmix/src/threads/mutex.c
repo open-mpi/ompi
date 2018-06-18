@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,7 +53,7 @@ static void pmix_mutex_construct(pmix_mutex_t *m)
 #endif /* PMIX_ENABLE_DEBUG */
 
 #if PMIX_HAVE_ATOMIC_SPINLOCKS
-    pmix_atomic_init( &m->m_lock_atomic, PMIX_ATOMIC_UNLOCKED );
+    pmix_atomic_lock_init( &m->m_lock_atomic, PMIX_ATOMIC_LOCK_UNLOCKED );
 #endif
 }
 
@@ -84,7 +84,7 @@ static void pmix_recursive_mutex_construct(pmix_recursive_mutex_t *m)
     pthread_mutexattr_destroy(&attr);
 
 #if PMIX_HAVE_ATOMIC_SPINLOCKS
-    pmix_atomic_init( &m->m_lock_atomic, PMIX_ATOMIC_UNLOCKED );
+    pmix_atomic_lock_init( &m->m_lock_atomic, PMIX_ATOMIC_LOCK_UNLOCKED );
 #endif
 }
 
