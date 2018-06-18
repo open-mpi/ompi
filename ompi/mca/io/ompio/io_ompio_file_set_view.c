@@ -65,7 +65,6 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     int ret=OMPI_SUCCESS;
     mca_common_ompio_data_t *data;
     ompio_file_t *fh;
-    ompio_file_t *sh;
 
     data = (mca_common_ompio_data_t *) fp->f_io_selected_data;
 
@@ -76,12 +75,6 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
 
     OPAL_THREAD_LOCK(&fp->f_lock);
     ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
-
-    if ( NULL != fh->f_sharedfp_data) {
-        sh = ((struct mca_sharedfp_base_data_t *)fh->f_sharedfp_data)->sharedfh;
-        ret = mca_common_ompio_set_view(sh, disp, etype, filetype, datarep, info);
-    }
-
     OPAL_THREAD_UNLOCK(&fp->f_lock);
     return ret;
 }

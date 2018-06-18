@@ -115,12 +115,10 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     errno = 0;
     if (0 == fh->f_rank) {
        /* MODE_CREATE and MODE_EXCL can only be set by one process */
-        if ( !(fh->f_flags & OMPIO_SHAREDFP_IS_SET)) {
-            if ( access_mode & MPI_MODE_CREATE )
-                amode = amode | O_CREAT;
-            if (access_mode & MPI_MODE_EXCL)
-                amode = amode | O_EXCL;
-        }
+        if ( access_mode & MPI_MODE_CREATE )
+            amode = amode | O_CREAT;
+        if (access_mode & MPI_MODE_EXCL)
+            amode = amode | O_EXCL;
 
         if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
              ( amode&O_CREAT)                                      && 

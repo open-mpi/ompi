@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
@@ -541,9 +541,6 @@ int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_le
     }
     else if ( !strncmp ( mca_parameter_name, "grouping_option", name_length )) {
         return mca_io_ompio_grouping_option;
-    }
-    else if ( !strncmp ( mca_parameter_name, "sharedfp_lazy_open", name_length )) {
-        return mca_io_ompio_sharedfp_lazy_open;
     }
     else if ( !strncmp ( mca_parameter_name, "coll_timing_info", name_length )) {
         return mca_io_ompio_coll_timing_info;

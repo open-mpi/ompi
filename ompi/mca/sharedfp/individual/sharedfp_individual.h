@@ -139,7 +139,7 @@ typedef struct mca_sharedfp_individual_header_record_s{
 
 mca_sharedfp_individual_header_record* mca_sharedfp_individual_insert_headnode(void);
 
-int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh);
+int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh, ompio_file_t *ompio_fh );
 int mca_sharedfp_individual_get_timestamps_and_reclengths(double **buff, long **rec_length, MPI_Offset **offbuff,struct mca_sharedfp_base_data_t *sh);
 int mca_sharedfp_individual_create_buff(double **ts,MPI_Offset **off,int totalnodes,int size);
 int mca_sharedfp_individual_sort_timestamps(double **ts,MPI_Offset **off, int **ranks, int totalnodes);

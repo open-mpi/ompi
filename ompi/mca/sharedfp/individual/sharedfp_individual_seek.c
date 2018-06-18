@@ -27,9 +27,22 @@
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 
+static int seek_counter=0;
+
 int mca_sharedfp_individual_seek (ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE offset, int whence)
 {
+    if ( 0 == seek_counter && 
+         0 == offset       && 
+         MPI_SEEK_SET == whence ) {
+        /* This is occuring when setting the default file view. THat is ok.
+        ** The component doesn't support however further seek operations. 
+        */
+        
+        seek_counter++;
+        return OMPI_SUCCESS;
+    }
+
     opal_output(0,"mca_sharedfp_individual_seek: NOT IMPLEMENTED\n");
     return OMPI_ERROR;
 }

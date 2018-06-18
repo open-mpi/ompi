@@ -48,7 +48,6 @@ extern int mca_io_ompio_cycle_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
 extern int mca_io_ompio_num_aggregators;
 extern int mca_io_ompio_record_offset_info;
-extern int mca_io_ompio_sharedfp_lazy_open;
 extern int mca_io_ompio_grouping_option;
 extern int mca_io_ompio_max_aggregators_ratio;
 extern int mca_io_ompio_aggregators_cutoff_threshold;
