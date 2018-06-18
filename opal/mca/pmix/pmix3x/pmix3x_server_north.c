@@ -1074,6 +1074,8 @@ static void server_tool_connection(pmix_info_t *info, size_t ninfo,
     opal_value_t *oinfo;
     int rc;
     pmix_status_t err;
+    opal_pmix3x_jobid_trkr_t *job;
+    bool found;
 
     /* setup the caddy */
     opalcaddy = OBJ_NEW(pmix3x_opalcaddy_t);
@@ -1085,12 +1087,36 @@ static void server_tool_connection(pmix_info_t *info, size_t ninfo,
         oinfo = OBJ_NEW(opal_value_t);
         opal_list_append(&opalcaddy->info, &oinfo->super);
         oinfo->key = strdup(info[n].key);
-        if (OPAL_SUCCESS != (rc = pmix3x_value_unload(oinfo, &info[n].value))) {
+        if (0 == strncmp(oinfo->key, PMIX_NSPACE, PMIX_MAX_KEYLEN)) {
+            /* will pass it up as a jobid */
+            oinfo->type = OPAL_JOBID;
+            /* see if this job is in our list of known nspaces */
+            found = false;
+            OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+                if (0 == strncmp(job->nspace, info[n].value.data.proc->nspace, PMIX_MAX_NSLEN)) {
+                    oinfo->data.name.jobid = job->jobid;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&oinfo->data.name.jobid, info[n].value.data.proc->nspace))) {
+                    OPAL_ERROR_LOG(rc);
+                    OBJ_RELEASE(opalcaddy);
+                    err = pmix3x_convert_opalrc(rc);
+                    if (NULL != cbfunc) {
+                        cbfunc(err, NULL, cbdata);
+                    }
+                    return;
+                }
+            }
+        } else if (OPAL_SUCCESS != (rc = pmix3x_value_unload(oinfo, &info[n].value))) {
             OBJ_RELEASE(opalcaddy);
             err = pmix3x_convert_opalrc(rc);
             if (NULL != cbfunc) {
                 cbfunc(err, NULL, cbdata);
             }
+            return;
         }
     }
 

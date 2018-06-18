@@ -64,6 +64,7 @@ typedef uint8_t orte_node_flags_t;
 #define ORTE_NODE_FLAG_OVERSUBSCRIBED     0x04   // whether or not this node is oversubscribed
 #define ORTE_NODE_FLAG_MAPPED             0x08   // whether we have been added to the current map
 #define ORTE_NODE_FLAG_SLOTS_GIVEN        0x10   // the number of slots was specified - used only in non-managed environments
+#define ORTE_NODE_NON_USABLE              0x20   // the node is hosting a tool and is NOT to be used for jobs
 
 
 /*** NODE ATTRIBUTE KEYS - never sent anywhere ***/
@@ -177,6 +178,7 @@ typedef uint16_t orte_proc_flags_t;
 #define ORTE_PROC_FLAG_DATA_IN_SM    0x0800  // modex data has been stored in the local shared memory region
 #define ORTE_PROC_FLAG_DATA_RECVD    0x1000  // modex data for this proc has been received
 #define ORTE_PROC_FLAG_SM_ACCESS     0x2000  // indicate if process can read modex data from shared memory region
+#define ORTE_PROC_FLAG_TOOL          0x4000  // proc is a tool and doesn't count against allocations
 
 /***   PROCESS ATTRIBUTE KEYS   ***/
 #define ORTE_PROC_START_KEY   ORTE_JOB_MAX_KEY

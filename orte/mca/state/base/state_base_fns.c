@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -405,8 +405,10 @@ static void cleanup_node(orte_proc_t *proc)
     if (NULL == (node = proc->node)) {
         return;
     }
-    node->num_procs--;
-    node->slots_inuse--;
+    if (!ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_TOOL)) {
+        node->num_procs--;
+        node->slots_inuse--;
+    }
     for (i=0; i < node->procs->size; i++) {
         if (NULL == (p = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
             continue;
