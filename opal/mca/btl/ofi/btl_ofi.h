@@ -46,9 +46,7 @@
 #include <rdma/fi_rma.h>
 
 BEGIN_C_DECLS
-
-#define MCA_BTL_OFI_MAX_MODULES 16
-#define MCA_BTL_OFI_MAX_WORKERS 1
+#define MCA_BTL_OFI_MAX_MODULES         16
 #define MCA_BTL_OFI_MAX_CQ_READ_ENTRIES 128
 
 #define MCA_BTL_OFI_ABORT(args)     mca_btl_ofi_exit(args)
@@ -62,6 +60,26 @@ enum mca_btl_ofi_type {
     MCA_BTL_OFI_TYPE_TOTAL
 };
 
+struct mca_btl_ofi_context_t {
+    int32_t context_id;
+
+    /* transmit context */
+    struct fid_ep *tx_ctx;
+    struct fid_ep *rx_ctx;
+
+    /* completion queue */
+    struct fid_cq *cq;
+
+    /* completion info freelist */
+    /* We have it per context to reduce the thread contention
+     * on the freelist. Things can get really slow. */
+    opal_free_list_t comp_list;
+
+    /* for thread locking */
+    volatile int32_t lock;
+};
+typedef struct mca_btl_ofi_context_t mca_btl_ofi_context_t;
+
 /**
  * @brief OFI BTL module
  */
@@ -74,17 +92,17 @@ struct mca_btl_ofi_module_t {
     struct fid_fabric *fabric;
     struct fid_domain *domain;
     struct fid_ep *ofi_endpoint;
-    struct fid_cq *cq;
     struct fid_av *av;
+
+    int num_contexts;
+    mca_btl_ofi_context_t *contexts;
 
     char *linux_device_name;
 
     /** whether the module has been fully initialized or not */
     bool initialized;
     bool use_virt_addr;
-
-    /** spin-lock to protect the module */
-    volatile int32_t lock;
+    bool is_scalable_ep;
 
     int64_t outstanding_rdma;
 
@@ -92,8 +110,7 @@ struct mca_btl_ofi_module_t {
      * there is no need for a complicated structure here at this time*/
     opal_list_t endpoints;
 
-    /* free lists */
-    opal_free_list_t comp_list;
+    opal_mutex_t module_lock;
 
     /** registration cache */
     mca_rcache_base_module_t *rcache;
@@ -110,6 +127,7 @@ struct mca_btl_ofi_component_t {
 
     /** number of TL modules */
     int module_count;
+    int num_contexts_per_module;
     int num_cqe_read;
 
     size_t namelen;
@@ -117,10 +135,6 @@ struct mca_btl_ofi_component_t {
     /** All BTL OFI modules (1 per tl) */
     mca_btl_ofi_module_t *modules[MCA_BTL_OFI_MAX_MODULES];
 
-#if OPAL_C_HAVE__THREAD_LOCAL
-    /** bind threads to contexts */
-    bool bind_threads_to_contexts;
-#endif
 };
 typedef struct mca_btl_ofi_component_t mca_btl_ofi_component_t;
 
@@ -151,6 +165,7 @@ struct mca_btl_ofi_completion_t {
 
     struct mca_btl_base_module_t *btl;
     struct mca_btl_base_endpoint_t *endpoint;
+    struct mca_btl_ofi_context_t *my_context;
     uint32_t type;
 
     void *local_address;
@@ -269,7 +284,25 @@ int mca_btl_ofi_reg_mem (void *reg_data, void *base, size_t size,
                          mca_rcache_base_registration_t *reg);
 int mca_btl_ofi_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg);
 
+int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context);
 void mca_btl_ofi_exit(void);
+
+/* thread atomics */
+static inline bool mca_btl_ofi_context_trylock (mca_btl_ofi_context_t *context)
+{
+    return (context->lock || OPAL_ATOMIC_SWAP_32(&context->lock, 1));
+}
+
+static inline void mca_btl_ofi_context_lock(mca_btl_ofi_context_t *context)
+{
+    while (mca_btl_ofi_context_trylock(context));
+}
+
+static inline void mca_btl_ofi_context_unlock(mca_btl_ofi_context_t *context)
+{
+    opal_atomic_mb();
+    context->lock = 0;
+}
 
 END_C_DECLS
 #endif

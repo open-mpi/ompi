@@ -31,8 +31,8 @@
 #include <string.h>
 
 #include "btl_ofi.h"
+#include "btl_ofi_endpoint.h"
 #include "btl_ofi_rdma.h"
-
 
 #define MCA_BTL_OFI_REQUIRED_CAPS       (FI_RMA | FI_ATOMIC)
 #define MCA_BTL_OFI_REQUESTED_MR_MODE   (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
@@ -40,6 +40,7 @@
 static char *prov_include;
 static char *prov_exclude;
 static char *ofi_progress_mode;
+static bool disable_sep;
 static int mca_btl_ofi_init_device(struct fi_info *info);
 
 /* validate information returned from fi_getinfo().
@@ -124,16 +125,24 @@ static int mca_btl_ofi_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &ofi_progress_mode);
 
-#if OPAL_C_HAVE__THREAD_LOCAL
-    mca_btl_ofi_component.bind_threads_to_contexts = true;
+    mca_btl_ofi_component.num_contexts_per_module = 1;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
-                                           "bind_threads_to_contexts", "Bind threads to device contexts. "
-                                           "In general this should improve the multi-threaded performance "
-                                           "when threads are used. (default: true)", MCA_BASE_VAR_TYPE_BOOL,
-                                           NULL, 0 ,MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_ALL,
-                                           &mca_btl_ofi_component.bind_threads_to_contexts);
-#endif
+                                          "num_contexts_per_module",
+                                          "number of communication context per module to create. "
+                                          "This should increase multithreaded performance but it is "
+                                          "advised that this number should be lower than total cores.",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_ofi_component.num_contexts_per_module);
+    disable_sep = false;
+    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
+                                          "disable_sep",
+                                          "force btl/ofi to never use scalable endpoint. ",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                          OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &disable_sep);
 
     /* for now we want this component to lose to btl/ugni and btl/vader */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
@@ -147,7 +156,6 @@ static int mca_btl_ofi_component_open(void)
     mca_btl_ofi_component.module_count = 0;
     return OPAL_SUCCESS;
 }
-
 
 /*
  * component cleanup - sanity checking of queue lengths
@@ -289,21 +297,34 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     int rc;
     int *module_count = &mca_btl_ofi_component.module_count;
     size_t namelen;
-    mca_btl_ofi_module_t *module;
+    size_t num_contexts_to_create;
 
     char *linux_device_name;
     char ep_name[FI_NAME_MAX];
+
     struct fi_info *ofi_info;
-    struct fi_cq_attr cq_attr = {0};
+    struct fi_ep_attr *ep_attr;
+    struct fi_domain_attr *domain_attr;
     struct fi_av_attr av_attr = {0};
     struct fid_fabric *fabric = NULL;
     struct fid_domain *domain = NULL;
-    struct fid_ep *endpoint = NULL;
-    struct fid_cq *cq = NULL;
+    struct fid_ep *ep = NULL;
     struct fid_av *av = NULL;
+
+    mca_btl_ofi_module_t *module;
+
+    /* allocate module */
+    module = (mca_btl_ofi_module_t*) calloc(1, sizeof(mca_btl_ofi_module_t));
+    if (NULL == module) {
+        BTL_ERROR(("failed to allocate memory for OFI module"));
+        goto fail;
+    }
+    *module = mca_btl_ofi_module_template;
 
     /* make a copy of the given info to store on the module */
     ofi_info = fi_dupinfo(info);
+    ep_attr = ofi_info->ep_attr;
+    domain_attr = ofi_info->domain_attr;
 
     linux_device_name = info->domain_attr->name;
     BTL_VERBOSE(("initializing dev:%s provider:%s",
@@ -330,28 +351,6 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         goto fail;
     }
 
-    /* endpoint */
-    rc = fi_endpoint(domain, ofi_info, &endpoint, NULL);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_endpoint with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
-        goto fail;
-    }
-
-    /* CQ */
-    cq_attr.format = FI_CQ_FORMAT_CONTEXT;
-    cq_attr.wait_obj = FI_WAIT_NONE;
-    rc = fi_cq_open(domain, &cq_attr, &cq, NULL);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_cq_open with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
-        goto fail;
-    }
-
     /* AV */
     av_attr.type = FI_AV_MAP;
     rc = fi_av_open(domain, &av_attr, &av, NULL);
@@ -363,29 +362,76 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         goto fail;
     }
 
+    num_contexts_to_create = mca_btl_ofi_component.num_contexts_per_module;
 
-    /* bind CQ and AV to endpoint */
-    uint32_t cq_flags = (FI_TRANSMIT);
-    rc = fi_ep_bind(endpoint, (fid_t)cq, cq_flags);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_ep_bind with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
-        goto fail;
+    /* If the domain support scalable endpoint. */
+    if (domain_attr->max_ep_tx_ctx > 1 && !disable_sep) {
+
+        BTL_VERBOSE(("btl/ofi using scalable endpoint."));
+
+        if (num_contexts_to_create > domain_attr->max_ep_tx_ctx) {
+            BTL_VERBOSE(("cannot create requested %u contexts. (node max=%zu)",
+                            module->num_contexts,
+                            domain_attr->max_ep_tx_ctx));
+            goto fail;
+         }
+
+        /* modify the info to let the provider know we are creating x contexts */
+        ep_attr->tx_ctx_cnt = num_contexts_to_create;
+        ep_attr->rx_ctx_cnt = num_contexts_to_create;
+
+        /* create scalable endpoint */
+        rc = fi_scalable_ep(domain, ofi_info, &ep, NULL);
+        if (0 != rc) {
+            BTL_VERBOSE(("%s failed fi_scalable_ep with err=%s",
+                            linux_device_name,
+                            fi_strerror(-rc)
+                            ));
+            goto fail;
+        }
+
+        module->num_contexts = num_contexts_to_create;
+        module->is_scalable_ep = true;
+
+        /* create contexts */
+        module->contexts = mca_btl_ofi_context_alloc_scalable(ofi_info,
+                                domain, ep, av,
+                                num_contexts_to_create);
+
+   } else {
+        /* warn the user if they want more than 1 context */
+        if (num_contexts_to_create > 1) {
+            BTL_ERROR(("cannot create %zu contexts as the provider does not support "
+                        "scalable endpoint. Falling back to single context endpoint.",
+                        num_contexts_to_create));
+        }
+
+        BTL_VERBOSE(("btl/ofi using normal endpoint."));
+
+        rc = fi_endpoint(domain, ofi_info, &ep, NULL);
+        if (0 != rc) {
+            BTL_VERBOSE(("%s failed fi_endpoint with err=%s",
+                            linux_device_name,
+                            fi_strerror(-rc)
+                            ));
+            goto fail;
+        }
+
+        module->num_contexts = 1;
+        module->is_scalable_ep = false;
+
+        /* create contexts */
+        module->contexts = mca_btl_ofi_context_alloc_normal(ofi_info,
+                                                            domain, ep, av);
     }
 
-    rc = fi_ep_bind(endpoint, (fid_t)av, 0);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_ep_bind with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
+    if (NULL == module->contexts) {
+        /* error message is already printed */
         goto fail;
     }
 
     /* enable the endpoint for using */
-    rc = fi_enable(endpoint);
+    rc = fi_enable(ep);
     if (0 != rc) {
         BTL_VERBOSE(("%s failed fi_enable with err=%s",
                         linux_device_name,
@@ -395,19 +441,12 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     }
 
     /* Everything succeeded, lets create a module for this device. */
-    module = (mca_btl_ofi_module_t*) calloc(1, sizeof(mca_btl_ofi_module_t));
-    if (NULL == module) {
-        goto fail;
-    }
-    *module = mca_btl_ofi_module_template;
-
     /* store the information. */
     module->fabric_info = ofi_info;
     module->fabric = fabric;
     module->domain = domain;
-    module->cq = cq;
     module->av = av;
-    module->ofi_endpoint = endpoint;
+    module->ofi_endpoint = ep;
     module->linux_device_name = linux_device_name;
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
@@ -420,29 +459,13 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     /* initialize the rcache */
     mca_btl_ofi_rcache_init(module);
 
+    /* create endpoint list */
     OBJ_CONSTRUCT(&module->endpoints, opal_list_t);
-
-    /* init free lists */
-    OBJ_CONSTRUCT(&module->comp_list, opal_free_list_t);
-    rc = opal_free_list_init(&module->comp_list,
-                             sizeof(mca_btl_ofi_completion_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(mca_btl_ofi_completion_t),
-                             0,
-                             0,
-                             128,
-                             -1,
-                             128,
-                             NULL,
-                             0,
-                             NULL,
-                             NULL,
-                             NULL);
-    assert(OPAL_SUCCESS == rc);
+    OBJ_CONSTRUCT(&module->module_lock, opal_mutex_t);
 
     /* create and send the modex for this device */
     namelen = sizeof(ep_name);
-    rc = fi_getname((fid_t)endpoint, &ep_name[0], &namelen);
+    rc = fi_getname((fid_t)ep, &ep_name[0], &namelen);
     if (0 != rc) {
         BTL_VERBOSE(("%s failed fi_getname with err=%s",
                         linux_device_name,
@@ -466,15 +489,20 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
 fail:
     /* clean up */
+
+    /* if the contexts have not been initiated, num_contexts should
+     * be zero and we skip this. */
+    for (int i=0; i < module->num_contexts; i++) {
+        mca_btl_ofi_context_finalize(&module->contexts[i], module->is_scalable_ep);
+    }
+    free(module->contexts);
+
     if (NULL != av) {
         fi_close(&av->fid);
     }
-    if (NULL != cq) {
-        fi_close(&cq->fid);
-    }
 
-    if (NULL != endpoint) {
-        fi_close(&endpoint->fid);
+    if (NULL != ep) {
+        fi_close(&ep->fid);
     }
 
     if (NULL != domain) {
@@ -484,11 +512,11 @@ fail:
     if (NULL != fabric) {
         fi_close(&fabric->fid);
     }
+    free(module);
 
     /* not really a failure. just skip this device. */
     return OPAL_ERR_OUT_OF_RESOURCE;
 }
-
 
 /**
  * @brief OFI BTL progress function
@@ -497,6 +525,44 @@ fail:
  */
 static int mca_btl_ofi_component_progress (void)
 {
+    int events = 0;
+    mca_btl_ofi_context_t *context;
+
+    for (int i = 0 ; i < mca_btl_ofi_component.module_count ; ++i) {
+        mca_btl_ofi_module_t *module = mca_btl_ofi_component.modules[i];
+
+        /* progress context we own first. */
+        context = get_ofi_context(module);
+
+        if (mca_btl_ofi_context_trylock(context)) {
+            events += mca_btl_ofi_context_progress(context);
+            mca_btl_ofi_context_unlock(context);
+        }
+
+        /* if there is nothing to do, try progress other's. */
+        if (events == 0) {
+            for (int j = 0 ; j < module->num_contexts ; j++ ) {
+
+                context = get_ofi_context_rr(module);
+
+                if (mca_btl_ofi_context_trylock(context)) {
+                    events += mca_btl_ofi_context_progress(context);
+                    mca_btl_ofi_context_unlock(context);
+                }
+
+                /* If we did something, good enough. return now.
+                 * This is crucial for performance/latency. */
+                if (events > 0) {
+                    break;
+                }
+            }
+        }
+    }
+
+    return events;
+}
+
+int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
 
     int ret = 0;
     int events_read;
@@ -506,72 +572,66 @@ static int mca_btl_ofi_component_progress (void)
 
     mca_btl_ofi_completion_t *comp;
 
-    for (int i = 0 ; i < mca_btl_ofi_component.module_count ; ++i) {
-        mca_btl_ofi_module_t *module = mca_btl_ofi_component.modules[i];
+    ret = fi_cq_read(context->cq, &cq_entry, mca_btl_ofi_component.num_cqe_read);
 
-        ret = fi_cq_read(module->cq, &cq_entry, mca_btl_ofi_component.num_cqe_read);
+    if (0 < ret) {
+        events_read = ret;
+        for (int i = 0; i < events_read; i++) {
+            if (NULL != cq_entry[i].op_context) {
+                ++events;
+                comp = (mca_btl_ofi_completion_t*) cq_entry[i].op_context;
+                mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t*)comp->btl;
 
-        if (0 < ret) {
-            events_read = ret;
-            for (int j = 0; j < events_read; j++) {
-                if (NULL != cq_entry[j].op_context) {
-                    ++events;
-                    comp = (mca_btl_ofi_completion_t*) cq_entry[j].op_context;
-                    mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t*)comp->btl;
+                switch (comp->type) {
+                case MCA_BTL_OFI_TYPE_GET:
+                case MCA_BTL_OFI_TYPE_PUT:
+                case MCA_BTL_OFI_TYPE_AOP:
+                case MCA_BTL_OFI_TYPE_AFOP:
+                case MCA_BTL_OFI_TYPE_CSWAP:
 
-                    switch (comp->type) {
-                    case MCA_BTL_OFI_TYPE_GET:
-                    case MCA_BTL_OFI_TYPE_PUT:
-                    case MCA_BTL_OFI_TYPE_AOP:
-                    case MCA_BTL_OFI_TYPE_AFOP:
-                    case MCA_BTL_OFI_TYPE_CSWAP:
-
-                        /* call the callback */
-                        if (comp->cbfunc) {
-                            comp->cbfunc (comp->btl, comp->endpoint,
-                                             comp->local_address, comp->local_handle,
-                                             comp->cbcontext, comp->cbdata, OPAL_SUCCESS);
-                        }
-
-                        /* return the completion handler */
-                        opal_free_list_return(comp->my_list, (opal_free_list_item_t*) comp);
-
-                        MCA_BTL_OFI_NUM_RDMA_DEC(ofi_btl);
-                        break;
-
-                    default:
-                        /* catasthrophic */
-                        BTL_ERROR(("unknown completion type"));
-                        MCA_BTL_OFI_ABORT();
+                    /* call the callback */
+                    if (comp->cbfunc) {
+                        comp->cbfunc (comp->btl, comp->endpoint,
+                                         comp->local_address, comp->local_handle,
+                                         comp->cbcontext, comp->cbdata, OPAL_SUCCESS);
                     }
+
+                    /* return the completion handler */
+                    opal_free_list_return(comp->my_list, (opal_free_list_item_t*) comp);
+
+                    MCA_BTL_OFI_NUM_RDMA_DEC(ofi_btl);
+                    break;
+
+                default:
+                    /* catasthrophic */
+                    BTL_ERROR(("unknown completion type"));
+                    MCA_BTL_OFI_ABORT();
                 }
             }
-        } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
-            ret = fi_cq_readerr(module->cq, &cqerr, 0);
-
-            /* cq readerr failed!? */
-            if (0 > ret) {
-                BTL_ERROR(("%s:%d: Error returned from fi_cq_readerr: %s(%d)",
-                           __FILE__, __LINE__, fi_strerror(-ret), ret));
-            } else {
-                BTL_ERROR(("fi_cq_readerr: (provider err_code = %d)\n",
-                           cqerr.prov_errno));
-            }
-
-            MCA_BTL_OFI_ABORT();
-
         }
+    } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
+        ret = fi_cq_readerr(context->cq, &cqerr, 0);
+
+        /* cq readerr failed!? */
+        if (0 > ret) {
+            BTL_ERROR(("%s:%d: Error returned from fi_cq_readerr: %s(%d)",
+                       __FILE__, __LINE__, fi_strerror(-ret), ret));
+        } else {
+            BTL_ERROR(("fi_cq_readerr: (provider err_code = %d)\n",
+                       cqerr.prov_errno));
+        }
+        MCA_BTL_OFI_ABORT();
+    }
 #ifdef FI_EINTR
-        /* sometimes, sockets provider complain about interupt. */
-        else if (OPAL_UNLIKELY(ret == -FI_EINTR)) {
-            continue;
-        }
+    /* sometimes, sockets provider complain about interupt. We do nothing. */
+    else if (OPAL_UNLIKELY(ret == -FI_EINTR)) {
+
+    }
 #endif
-        /* If the error is not FI_EAGAIN, report the error and abort. */
-        else if (OPAL_UNLIKELY(ret != -FI_EAGAIN)) {
-            BTL_ERROR(("fi_cq_read returned error %d:%s", ret, fi_strerror(-ret)));
-            MCA_BTL_OFI_ABORT();
-        }
+    /* If the error is not FI_EAGAIN, report the error and abort. */
+    else if (OPAL_UNLIKELY(ret != -FI_EAGAIN)) {
+        BTL_ERROR(("fi_cq_read returned error %d:%s", ret, fi_strerror(-ret)));
+        MCA_BTL_OFI_ABORT();
     }
 
     return events;
@@ -593,5 +653,5 @@ mca_btl_ofi_component_t mca_btl_ofi_component = {
 
         .btl_init = mca_btl_ofi_component_init,
         .btl_progress = mca_btl_ofi_component_progress,
-    }
+    },
 };
