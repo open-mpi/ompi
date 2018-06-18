@@ -2,6 +2,8 @@
  * Copyright (c) 2018      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -150,7 +152,6 @@ void ompi_spc_timer_stop(unsigned int event_id, opal_timer_t *cycles);
 void ompi_spc_user_or_mpi(int tag, ompi_spc_value_t value, unsigned int user_enum, unsigned int mpi_enum);
 void ompi_spc_cycles_to_usecs(ompi_spc_value_t *cycles);
 void ompi_spc_update_watermark(unsigned int watermark_enum, unsigned int value_enum);
-static int ompi_spc_get_count(const struct mca_base_pvar_t *pvar, void *value, void *obj_handle);
 
 /* Macros for using the SPC utility functions throughout the codebase.
  * If SPC_ENABLE is not 1, the macros become no-ops.
