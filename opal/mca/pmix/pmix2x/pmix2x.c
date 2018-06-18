@@ -222,6 +222,45 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
     }
 }
 
+/* process the notification */
+static void process_event(int sd, short args, void *cbdata)
+{
+    pmix2x_threadshift_t *cd = (pmix2x_threadshift_t*)cbdata;
+    opal_pmix2x_event_t *event;
+
+    OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
+
+    /* cycle thru the registrations */
+    OPAL_LIST_FOREACH(event, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
+        if (cd->id == event->index) {
+            /* found it - invoke the handler, pointing its
+             * callback function to our callback function */
+            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                "%s _EVENT_HDLR CALLING EVHDLR",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+            if (NULL != event->handler) {
+                OBJ_RETAIN(event);
+                OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+                event->handler(cd->status, &cd->pname,
+                               cd->info, &cd->results,
+                               return_local_event_hdlr, cd);
+                OBJ_RELEASE(event);
+                return;
+            }
+        }
+    }
+
+    OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
+
+    /* if we didn't find a match, we still have to call their final callback */
+    if (NULL != cd->pmixcbfunc) {
+        cd->pmixcbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cd->cbdata);
+    }
+    OPAL_LIST_RELEASE(cd->info);
+    OBJ_RELEASE(cd);
+    return;
+}
+
 /* this function will be called by the PMIx client library
  * whenever it receives notification of an event. The
  * notification can come from an ORTE daemon (when launched
@@ -239,7 +278,6 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     int rc;
     opal_value_t *iptr;
     size_t n;
-    opal_pmix2x_event_t *event;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s RECEIVED NOTIFICATION OF STATUS %d",
@@ -301,34 +339,12 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
         }
     }
 
-    /* cycle thru the registrations */
-    OPAL_LIST_FOREACH(event, &mca_pmix_pmix2x_component.events, opal_pmix2x_event_t) {
-        if (evhdlr_registration_id == event->index) {
-            /* found it - invoke the handler, pointing its
-             * callback function to our callback function */
-            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                                "%s _EVENT_HDLR CALLING EVHDLR",
-                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-            if (NULL != event->handler) {
-                OBJ_RETAIN(event);
-                OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
-                event->handler(cd->status, &cd->pname,
-                               cd->info, &cd->results,
-                               return_local_event_hdlr, cd);
-                OBJ_RELEASE(event);
-                return;
-            }
-        }
-    }
-
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
 
-    /* if we didn't find a match, we still have to call their final callback */
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_SUCCESS, NULL, 0, NULL, NULL, cbdata);
-    }
-    OPAL_LIST_RELEASE(cd->info);
-    OBJ_RELEASE(cd);
+    /* do NOT directly call the event handler as this
+     * may lead to a deadlock condition should the
+     * handler invoke a PMIx function */
+    OPAL_PMIX2X_THREADSHIFT(cd, process_event);
     return;
 }
 
