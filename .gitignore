@@ -181,6 +181,8 @@ ompi/mca/io/romio314/romio/test/pfcoll_test.f
 ompi/mca/io/romio314/romio/test/runtests
 ompi/mca/io/romio314/romio/util/romioinstall
 
+ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
+
 ompi/mca/pml/v/autogen.vprotocols
 ompi/mca/pml/v/mca_vprotocol_config_output
 
