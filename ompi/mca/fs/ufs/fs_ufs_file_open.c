@@ -76,12 +76,11 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
     errno = 0;
     if ( 0 == rank ) {
 	/* MODE_CREATE and MODE_EXCL can only be set by one process */
-        if ( !(fh->f_flags & OMPIO_SHAREDFP_IS_SET)) {
-            if ( access_mode & MPI_MODE_CREATE )
-                amode = amode | O_CREAT;
-            if (access_mode & MPI_MODE_EXCL)
-                amode = amode | O_EXCL;
-        }
+        if ( access_mode & MPI_MODE_CREATE )
+            amode = amode | O_CREAT;
+        if (access_mode & MPI_MODE_EXCL)
+            amode = amode | O_EXCL;
+
 	fh->fd = open (filename, amode, perm);
 	if ( 0 > fh->fd ) {
             if ( EACCES == errno ) {

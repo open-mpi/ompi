@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
@@ -44,47 +44,19 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 {
     int err = MPI_SUCCESS;
     char * lockedfilename;
-    int handle, rank;
+    int handle;
     struct mca_sharedfp_lockedfile_data * module_data = NULL;
     struct mca_sharedfp_base_data_t* sh;
-    ompio_file_t * shfileHandle, *ompio_fh;
-    mca_common_ompio_data_t *data;
-
-    /*------------------------------------------------------------*/
-    /*Open the same file again without shared file pointer support*/
-    /*------------------------------------------------------------*/
-    shfileHandle =  (ompio_file_t *)malloc(sizeof(ompio_file_t));
-    err = mca_common_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
-    if ( OMPI_SUCCESS != err)  {
-        opal_output(0, "mca_sharedfp_lockedfile_file_open: Error during file open\n");
-        return err;
-    }
-    shfileHandle->f_fh = fh->f_fh;
-    data = (mca_common_ompio_data_t *) fh->f_fh->f_io_selected_data;
-    ompio_fh = &data->ompio_fh;
-
-    err = mca_common_ompio_set_view (shfileHandle,
-                                     ompio_fh->f_disp,
-                                     ompio_fh->f_etype,
-                                     ompio_fh->f_orig_filetype,
-                                     ompio_fh->f_datarep,
-                                     &(MPI_INFO_NULL->super));
-    
 
     /*Memory is allocated here for the sh structure*/
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh){
-        opal_output(0, "mca_sharedfp_lockedfile_file_open: Error, unable to malloc f_sharedfp_ptr struct\n");
-	free ( shfileHandle);
+        opal_output(0, "mca_sharedfp_lockedfile_file_open: Error, unable to malloc f_sharedfp struct\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /*Populate the sh file structure based on the implementation*/
-    sh->sharedfh      = shfileHandle;			/* Shared file pointer*/
-    sh->global_offset = 0;				/* Global Offset*/
-    sh->comm          = comm; 				/* Communicator*/
+    sh->global_offset = 0;			/* Global Offset*/
     sh->selected_module_data = NULL;
-
-    rank = ompi_comm_rank ( sh->comm);
 
     /*Open a new file which will maintain the pointer for this file open*/
     if ( mca_sharedfp_lockedfile_verbose ) {
@@ -97,7 +69,6 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     if ( NULL == module_data ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
                     "mca_sharedfp_lockedfile_file_open: Error, unable to malloc lockedfile_data struct\n");
-	free (shfileHandle);
 	free (sh);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -113,7 +84,6 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     size_t filenamelen = strlen(filename) + 16;
     lockedfilename = (char*)malloc(sizeof(char) * filenamelen);
     if ( NULL == lockedfilename ) {
-	free (shfileHandle);
 	free (sh);
         free (module_data);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -124,7 +94,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     /*-------------------------------------------------*/
     /*Open the lockedfile without shared file pointer  */
     /*-------------------------------------------------*/
-    if ( 0 == rank ) {
+    if ( 0 == comm->c_my_rank ) {
 	OMPI_MPI_OFFSET_TYPE position=0;
 	/*only let main process initialize file pointer,
 	 *therefore there is no need to lock the file
@@ -137,8 +107,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 
     handle = open ( lockedfilename, O_RDWR, 0644  );
     if ( -1 == handle ) {
-        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", rank);
-	free (shfileHandle);
+        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", fh->f_rank);
 	free (sh);
 	free(module_data);
         return OMPI_ERROR;
@@ -161,13 +130,8 @@ int mca_sharedfp_lockedfile_file_close (ompio_file_t *fh)
     int err = OMPI_SUCCESS;
     struct mca_sharedfp_lockedfile_data * module_data = NULL;
     struct mca_sharedfp_base_data_t *sh;
-    int rank = ompi_comm_rank ( fh->f_comm );
 
     if ( fh->f_sharedfp_data==NULL){
-	/* Can happen with lazy_open being set */
-	if ( mca_sharedfp_lockedfile_verbose ) {
-	    opal_output(0, "sharedfp_lockedfile_file_close - shared file pointer structure not initialized\n");
-	}
         return OMPI_SUCCESS;
     }
     sh = fh->f_sharedfp_data;
@@ -177,7 +141,7 @@ int mca_sharedfp_lockedfile_file_close (ompio_file_t *fh)
         /*Close lockedfile handle*/
         if ( module_data->handle)  {
             close (module_data->handle );
-	    if ( 0 == rank ) {
+	    if ( 0 == fh->f_rank ) {
 		unlink ( module_data->filename);
 	    }
         }
@@ -186,9 +150,6 @@ int mca_sharedfp_lockedfile_file_close (ompio_file_t *fh)
         }
         free ( module_data );
     }
-
-    /* Close the main file opened by this component*/
-    err = mca_common_ompio_file_close(sh->sharedfh);
 
     /*free shared file pointer data struct*/
     free(sh);

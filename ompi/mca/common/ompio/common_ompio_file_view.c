@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -279,6 +279,10 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     if ( OMPI_SUCCESS != ret ) {
         opal_output(1, "mca_common_ompio_set_view: mca_fcoll_base_file_select() failed\n");
         goto exit;
+    }
+
+    if ( NULL != fh->f_sharedfp ) {
+        ret = fh->f_sharedfp->sharedfp_seek( fh, 0, MPI_SEEK_SET);
     }
 
 exit:

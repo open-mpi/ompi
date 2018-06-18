@@ -45,10 +45,10 @@ static mca_common_ompio_generate_current_file_view_fn_t generate_current_file_vi
 static mca_common_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value_fn;
 
 int mca_common_ompio_file_open (ompi_communicator_t *comm,
-                              const char *filename,
-                              int amode,
-                              opal_info_t *info,
-                              ompio_file_t *ompio_fh, bool use_sharedfp)
+                                const char *filename,
+                                int amode,
+                                opal_info_t *info,
+                                ompio_file_t *ompio_fh, bool use_sharedfp)
 {
     int ret = OMPI_SUCCESS;
     int remote_arch;
@@ -92,8 +92,6 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_fstype = NONE;
     ompio_fh->f_amode  = amode;
     ompio_fh->f_info   = info;
-    ompio_fh->f_atomicity = 0;
-    ompio_fh->f_fs_block_size = 4096;
 
     /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
     ompio_fh->f_generate_current_file_view=generate_current_file_view_fn;
@@ -164,20 +162,22 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 #endif
         goto fn_fail;
     }
-    
-    if (OMPI_SUCCESS != (ret = mca_fcoll_base_file_select (ompio_fh,
-                                                           NULL))) {
-        opal_output(1, "mca_fcoll_base_file_select() failed\n");
-        goto fn_fail;
-    }
 
+    /* Set default file view */
+    mca_common_ompio_set_view(ompio_fh,
+                              0,
+                              &ompi_mpi_byte.dt,
+                              &ompi_mpi_byte.dt,
+                              "native",
+                              info);
+
+    
     if ( true == use_sharedfp ) {
 	/* open the file once more for the shared file pointer if required.           
         ** Can be disabled by the user if no shared file pointer operations
         ** are used by his application.	
         */
-	if ( NULL != ompio_fh->f_sharedfp &&
-	     !OMPIO_MCA_GET(ompio_fh, sharedfp_lazy_open) ) {
+	if ( NULL != ompio_fh->f_sharedfp ) {
 	    ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
 							   filename,
 							   amode,
@@ -201,8 +201,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
                                           &current_size);
         mca_common_ompio_set_explicit_offset (ompio_fh, current_size);
         if ( true == use_sharedfp ) {
-            if ( NULL != ompio_fh->f_sharedfp &&
-                 !OMPIO_MCA_GET(ompio_fh, sharedfp_lazy_open) ) {                
+            if ( NULL != ompio_fh->f_sharedfp ) {
                 shared_fp_base_module = ompio_fh->f_sharedfp;
                 ret = shared_fp_base_module->sharedfp_seek(ompio_fh,current_size, MPI_SEEK_SET);
                 if ( MPI_SUCCESS != ret  ) {
@@ -346,6 +345,7 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
 
     if (MPI_DATATYPE_NULL != ompio_fh->f_iov_type) {
         ompi_datatype_destroy (&ompio_fh->f_iov_type);
+        ompio_fh->f_iov_type=MPI_DATATYPE_NULL;
     }
 
     if ( MPI_DATATYPE_NULL != ompio_fh->f_etype ) {
@@ -409,7 +409,8 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
         fh->f_perm = OMPIO_PERM_NULL;
         fh->f_flags = 0;
         fh->f_bytes_per_agg = OMPIO_MCA_GET(fh, bytes_per_agg);
-        fh->f_datarep = strdup ("native");
+        fh->f_atomicity = 0;
+        fh->f_fs_block_size = 4096;
 
         fh->f_offset = 0;
         fh->f_disp = 0;
@@ -434,17 +435,10 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
         fh->f_stripe_size = 0;
 	/*Decoded iovec of the file-view*/
 	fh->f_decoded_iov = NULL;
-        fh->f_etype = NULL;
-        fh->f_filetype = NULL;
-        fh->f_orig_filetype = NULL;
-
-	mca_common_ompio_set_view(fh,
-                                  0,
-                                  &ompi_mpi_byte.dt,
-                                  &ompi_mpi_byte.dt,
-                                  "native",
-                                  fh->f_info);
-
+        fh->f_etype = MPI_DATATYPE_NULL;
+        fh->f_filetype = MPI_DATATYPE_NULL;
+        fh->f_orig_filetype = MPI_DATATYPE_NULL;
+        fh->f_datarep = NULL;
 
 	/*Create a derived datatype for the created iovec */
 	types[0] = &ompi_mpi_long.dt;

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2013 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
@@ -223,9 +223,7 @@ typedef mca_sharedfp_base_module_1_0_0_t mca_sharedfp_base_module_t;
  */
 struct mca_sharedfp_base_data_t{
     /* attributes that will be used by all of the sharedfp components */
-    struct ompio_file_t * sharedfh;
     OMPI_MPI_OFFSET_TYPE global_offset;
-    struct ompi_communicator_t *    comm;
 
     /* attributes that are specific to a component are
      * combined into a structure that is assigned to this attribute */

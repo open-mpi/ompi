@@ -127,9 +127,9 @@ struct mca_sharedfp_sm_data
 typedef struct mca_sharedfp_sm_data sm_data;
 
 
-int mca_sharedfp_sm_request_position (struct mca_sharedfp_base_data_t * sh,
-                                              int bytes_requested,
-                                              OMPI_MPI_OFFSET_TYPE * offset);
+int mca_sharedfp_sm_request_position (ompio_file_t *fh,
+                                      int bytes_requested,
+                                      OMPI_MPI_OFFSET_TYPE * offset);
 /*
  * ******************************************************************
  * ************ functions implemented in this module end ************
