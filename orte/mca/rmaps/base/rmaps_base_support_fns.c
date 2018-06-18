@@ -217,6 +217,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
             }
+            /* ignore nodes that are non-usable */
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_NON_USABLE)) {
+                continue;
+            }
             OPAL_LIST_FOREACH_SAFE(nptr, next, &nodes, orte_node_t) {
                 if (0 != strcmp(node->name, nptr->name)) {
                     OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
@@ -320,6 +324,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            /* ignore nodes that are non-usable */
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_NON_USABLE)) {
+                continue;
+            }
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
                 OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
