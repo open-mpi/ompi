@@ -114,7 +114,7 @@ static int progress_callback(void) {
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads) {
     ucp_config_t *config = NULL;
     ucp_params_t context_params;
-    bool progress_registered = false, requests_created = false;
+    bool requests_created = false;
     int ret = OMPI_SUCCESS;
     ucs_status_t status;
 
@@ -146,15 +146,6 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
     mca_osc_ucx_component.num_incomplete_req_ops = 0;
 
-    ret = opal_progress_register(progress_callback);
-    progress_registered = true;
-    if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: opal_progress_register failed: %d\n",
-                            __FILE__, __LINE__, ret);
-        goto error;
-    }
-
     /* initialize UCP context */
 
     memset(&context_params, 0, sizeof(ucp_context_h));
@@ -181,7 +172,6 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
     return ret;
  error:
-    if (progress_registered) opal_progress_unregister(progress_callback);
     if (requests_created) OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
     if (mca_osc_ucx_component.ucp_context) ucp_cleanup(mca_osc_ucx_component.ucp_context);
     return ret;
@@ -313,7 +303,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     ucs_status_t status;
     int i, comm_size = ompi_comm_size(comm);
     int is_eps_ready;
-    bool eps_created = false, worker_created = false;
+    bool progress_registered = false, eps_created = false, worker_created = false;
     ucp_address_t *my_addr = NULL;
     size_t my_addr_len;
     char *recv_buf = NULL;
@@ -348,6 +338,15 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                                 "%s:%d: ucp_worker_create failed: %d\n",
                                 __FILE__, __LINE__, status);
             ret = OMPI_ERROR;
+            goto error;
+        }
+
+        ret = opal_progress_register(progress_callback);
+        progress_registered = true;
+        if (OMPI_SUCCESS != ret) {
+            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                                "%s:%d: opal_progress_register failed: %d\n",
+                                __FILE__, __LINE__, ret);
             goto error;
         }
 
@@ -674,6 +673,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
             ucp_ep_destroy(ep);
         }
     }
+    if (progress_registered) opal_progress_unregister(progress_callback);
     if (worker_created) ucp_worker_destroy(mca_osc_ucx_component.ucp_worker);
     if (module) free(module);
     return ret;
