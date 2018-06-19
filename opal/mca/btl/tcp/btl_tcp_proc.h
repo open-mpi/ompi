@@ -60,7 +60,7 @@ typedef struct mca_btl_tcp_proc_t mca_btl_tcp_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_proc_t);
 
 /*	the highest possible interface kernel index we can handle */
-#define MAX_KERNEL_INTERFACE_INDEX 65536
+#define MAX_KERNEL_INTERFACE_INDEX 64
 
 /*	the maximum number of kernel interfaces we can handle */
 #define MAX_KERNEL_INTERFACES 8
