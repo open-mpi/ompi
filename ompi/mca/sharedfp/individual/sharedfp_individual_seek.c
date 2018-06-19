@@ -27,19 +27,18 @@
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 
-static int seek_counter=0;
+int mca_sharedfp_individual_usage_counter=0;
 
 int mca_sharedfp_individual_seek (ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE offset, int whence)
 {
-    if ( 0 == seek_counter && 
-         0 == offset       && 
-         MPI_SEEK_SET == whence ) {
-        /* This is occuring when setting the default file view. THat is ok.
-        ** The component doesn't support however further seek operations. 
+    if ( 0 == mca_sharedfp_individual_usage_counter  ) {
+        /* As long as nobody using this module 'inapproprialy', its is ok.
+        ** to call this function, since it might come out of File_set_view.
+        ** however, we have to return an error as soon as people are calling
+        ** this function on this component and expect it to work. 
         */
         
-        seek_counter++;
         return OMPI_SUCCESS;
     }
 

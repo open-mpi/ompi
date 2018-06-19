@@ -45,6 +45,7 @@ int mca_sharedfp_individual_iwrite(ompio_file_t *fh,
                     "mca_sharedfp_individual_iwrite: module not initialized \n");
         return OMPI_ERROR;
     }
+    mca_sharedfp_individual_usage_counter++;
 
     /* Calculate the number of bytes of data that needs to be written*/
     opal_datatype_type_size ( &datatype->super, &numofbytes);
@@ -103,6 +104,7 @@ int mca_sharedfp_individual_write_ordered_begin(ompio_file_t *fh,
                     "at any given point in time!\n");
         return MPI_ERR_REQUEST;
     }
+    mca_sharedfp_individual_usage_counter++;
 
     /*Retrieve the sharedfp data structures*/
     sh = fh->f_sharedfp_data;
