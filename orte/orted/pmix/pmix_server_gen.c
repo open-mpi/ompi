@@ -858,6 +858,10 @@ static void _toolconn(int sd, short args, void *cbdata)
             } else if (0 == strcmp(val->key, OPAL_PMIX_RANK)) {
                 tool.vpid = val->data.name.vpid;
             } else if (0 == strcmp(val->key, OPAL_PMIX_HOSTNAME)) {
+                if (NULL != hostname) {
+                    /* shouldn't happen, but just take the last one */
+                    free(hostname);
+                }
                 hostname = strdup(val->data.string);
             }
         }
@@ -880,6 +884,9 @@ static void _toolconn(int sd, short args, void *cbdata)
                     cd->toolcbfunc(ORTE_ERROR, tool, cd->cbdata);
                 }
                 OBJ_RELEASE(cd);
+                if (NULL != hostname) {
+                    free(hostname);
+                }
                 return;
             }
             tool.jobid = jdata->jobid;
@@ -891,6 +898,9 @@ static void _toolconn(int sd, short args, void *cbdata)
                 cd->toolcbfunc(ORTE_ERR_NOT_SUPPORTED, tool, cd->cbdata);
             }
             OBJ_RELEASE(cd);
+            if (NULL != hostname) {
+                free(hostname);
+            }
             return;
         }
     } else {
@@ -956,6 +966,7 @@ static void _toolconn(int sd, short args, void *cbdata)
             ORTE_FLAG_SET(node, ORTE_NODE_NON_USABLE);
             opal_pointer_array_add(orte_node_pool, node);
         }
+        free(hostname);  // no longer needed
     }
     proc->node = node;
     OBJ_RETAIN(node);  /* keep accounting straight */
