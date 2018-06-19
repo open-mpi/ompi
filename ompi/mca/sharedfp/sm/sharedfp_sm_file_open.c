@@ -126,12 +126,20 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     sm_data->sm_filename = sm_filename;
 
-    /*TODO: is it necessary to write to the file first?*/
+    /* TODO: is it necessary to write to the file first? */
     if( 0 == fh->f_rank ){
         memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
         write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
     }
-    comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    err = comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0,"mca_sharedfp_sm_file_open: Error in barrier operation \n");
+        free(sm_filename);
+        free(sm_data);
+        free(sh);
+        close (sm_fd);
+        return err;
+    }
 
     /*the file has been written to, now we can map*/
     sm_offset_ptr = mmap(NULL, sizeof(struct mca_sharedfp_sm_offset), PROT_READ | PROT_WRITE,
@@ -188,10 +196,18 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_data);
         free(sh);
         munmap(sm_offset_ptr, sizeof(struct mca_sharedfp_sm_offset));
-        err = OMPI_ERROR;
+        return OMPI_ERROR;
     }
 
-    comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    err = comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0,"mca_sharedfp_sm_file_open: Error in barrier operation \n");
+        free(sm_filename);
+        free(sm_data);
+        free(sh);
+        munmap(sm_offset_ptr, sizeof(struct mca_sharedfp_sm_offset));
+        return err;
+    }
 
 #if defined(HAVE_SEM_OPEN)
     if ( 0 == fh->f_rank ) {
@@ -199,7 +215,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     }
 #endif
 
-    return err;
+    return OMPI_SUCCESS;
 }
 
 int mca_sharedfp_sm_file_close (ompio_file_t *fh)

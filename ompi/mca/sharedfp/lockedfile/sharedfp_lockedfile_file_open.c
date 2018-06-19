@@ -78,9 +78,15 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         ompi_proc_t *masterproc = ompi_group_peer_lookup(comm->c_local_group, 0 );
         masterjobid = OMPI_CAST_RTE_NAME(&masterproc->super.proc_name)->jobid;
     }
-    comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
-                               comm->c_coll->coll_bcast_module );
- 
+    err = comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
+                                     comm->c_coll->coll_bcast_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error in bcast operation\n", fh->f_rank);
+	free (sh);
+	free(module_data);
+        return err;
+    }
+
     size_t filenamelen = strlen(filename) + 16;
     lockedfilename = (char*)malloc(sizeof(char) * filenamelen);
     if ( NULL == lockedfilename ) {
@@ -100,16 +106,33 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 	 *therefore there is no need to lock the file
 	 */
 	handle = open ( lockedfilename, O_RDWR | O_CREAT, 0644 );
+        if ( -1 == handle ){
+            opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", 
+                        fh->f_rank);
+            free (sh);
+            free(module_data);
+            free (lockedfilename);
+            return OMPI_ERROR;
+        }
 	write ( handle, &position, sizeof(OMPI_MPI_OFFSET_TYPE) );
 	close ( handle );
     }
-    comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
+    err = comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error in barrier operation\n", fh->f_rank);
+	free (sh);
+	free(module_data);
+        free (lockedfilename);
+        return err;
+    }
 
     handle = open ( lockedfilename, O_RDWR, 0644  );
     if ( -1 == handle ) {
-        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", fh->f_rank);
+        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", 
+                    fh->f_rank);
 	free (sh);
 	free(module_data);
+        free (lockedfilename);
         return OMPI_ERROR;
     }
 
@@ -120,9 +143,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     /*remember the shared file handle*/
     fh->f_sharedfp_data = sh;
 
-    comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
-
-    return err;
+    return comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
 }
 
 int mca_sharedfp_lockedfile_file_close (ompio_file_t *fh)
