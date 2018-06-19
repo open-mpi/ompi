@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +70,6 @@ typedef uint16_t pmix_proc_type_t;
 #define PMIX_PROC_V1        0x0008
 #define PMIX_PROC_V20       0x0010
 #define PMIX_PROC_V21       0x0020
-#define PMIX_PROC_V3        0x0040
 
 /* defins some convenience macros for testing proc type */
 #define PMIX_PROC_IS_CLIENT(p)      (PMIX_PROC_CLIENT & (p)->proc_type)
@@ -79,7 +78,6 @@ typedef uint16_t pmix_proc_type_t;
 #define PMIX_PROC_IS_V1(p)          (PMIX_PROC_V1 & (p)->proc_type)
 #define PMIX_PROC_IS_V20(p)         (PMIX_PROC_V20 & (p)->proc_type)
 #define PMIX_PROC_IS_V21(p)         (PMIX_PROC_V21 & (p)->proc_type)
-#define PMIX_PROC_IS_V3(p)          (PMIX_PROC_V3 & (p)->proc_type)
 
 
 /****    MESSAGING STRUCTURES    ****/

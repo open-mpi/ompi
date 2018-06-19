@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -477,6 +477,7 @@ static pmix_status_t parse_uri_file(char *filename,
     pmix_event_t ev;
     struct timeval tv;
     int retries;
+    int major;
 
     fp = fopen(filename, "r");
     if (NULL == fp) {
@@ -528,19 +529,21 @@ static pmix_status_t parse_uri_file(char *filename,
         pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V20;
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "V20 SERVER DETECTED");
-    } else if (0 == strncmp(p2, "v2.1", strlen("v2.1")) ||
-               0 == strncmp(p2, "2.1", strlen("2.1"))) {
-        pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V21;
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "V21 SERVER DETECTED");
-    } else if (0 == strncmp(p2, "3", strlen("3")) ||
-               0 == strncmp(p2, "v3", strlen("v3"))) {
-        pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V3;
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "V3 SERVER DETECTED");
     } else {
-        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
-                            "UNKNOWN SERVER VERSION DETECTED: %s", p2);
+        /* convert the version to a number */
+        if ('v' == p2[0]) {
+            major = strtoul(&p2[1], NULL, 10);
+        } else {
+            major = strtoul(p2, NULL, 10);
+        }
+        if (2 <= major) {
+            pmix_client_globals.myserver->proc_type = PMIX_PROC_SERVER | PMIX_PROC_V21;
+            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                "V21 SERVER DETECTED");
+        } else {
+            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                "UNKNOWN SERVER VERSION DETECTED: %s", p2);
+        }
     }
     if (NULL != p2) {
         free(p2);

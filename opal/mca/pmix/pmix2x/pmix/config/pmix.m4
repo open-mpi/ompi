@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2009-2018 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
@@ -109,12 +109,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_DEFINE_UNQUOTED([PMIX_MINOR_VERSION], [$PMIX_MINOR_VERSION],
                        [The library minor version is always available, contrary to VERSION])
 
-    pmixmajor=${PMIX_MAJOR_VERSION}L
-    pmixminor=${PMIX_MINOR_VERSION}L
-    AC_SUBST(pmixmajor)
-    AC_SUBST(pmixminor)
-    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
-
     PMIX_RELEASE_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release`"
     if test "$?" != "0"; then
         AC_MSG_ERROR([Cannot continue])
@@ -122,6 +116,14 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_RELEASE_VERSION)
     AC_DEFINE_UNQUOTED([PMIX_RELEASE_VERSION], [$PMIX_RELEASE_VERSION],
                        [The library release version is always available, contrary to VERSION])
+
+    pmixmajor=${PMIX_MAJOR_VERSION}L
+    pmixminor=${PMIX_MINOR_VERSION}L
+    pmixrelease=${PMIX_RELEASE_VERSION}L
+    AC_SUBST(pmixmajor)
+    AC_SUBST(pmixminor)
+    AC_SUBST(pmixrelease)
+    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
 
     # Debug mode?
     AC_MSG_CHECKING([if want pmix maintainer support])

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -1036,6 +1036,9 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     }
     cd->spcbfunc = cbfunc;
     cd->cbdata = cbdata;
+    /* setup the proc name */
+    (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
+    proc.rank = peer->info->pname.rank;
 
     /* unpack the number of job-level directives */
     cnt=1;
@@ -1048,6 +1051,11 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     /* always add one directive that indicates whether the requestor
      * is a tool or client */
     cd->ninfo = ninfo + 1;
+    /* if it is a client, then we set the parent and
+     * "spawned" keys as well */
+    if (!PMIX_PROC_IS_TOOL(peer)) {
+        cd->ninfo += 2;
+    }
     PMIX_INFO_CREATE(cd->info, cd->ninfo);
     if (NULL == cd->info) {
         rc = PMIX_ERR_NOMEM;
@@ -1067,7 +1075,9 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
     if (PMIX_PROC_IS_TOOL(peer)) {
         PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_TOOL, NULL, PMIX_BOOL);
     } else {
-        PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_REQUESTOR_IS_CLIENT, NULL, PMIX_BOOL);
+        PMIX_INFO_LOAD(&cd->info[cd->ninfo-3], PMIX_SPAWNED, NULL, PMIX_BOOL);
+        PMIX_INFO_LOAD(&cd->info[cd->ninfo-2], PMIX_PARENT_ID, &proc, PMIX_PROC);
+        PMIX_INFO_LOAD(&cd->info[cd->ninfo-1], PMIX_REQUESTOR_IS_CLIENT, NULL, PMIX_BOOL);
     }
 
     /* unpack the number of apps */
@@ -1092,8 +1102,6 @@ pmix_status_t pmix_server_spawn(pmix_peer_t *peer,
         }
     }
     /* call the local server */
-    (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
-    proc.rank = peer->info->pname.rank;
     rc = pmix_host_server.spawn(&proc, cd->info, cd->ninfo, cd->apps, cd->napps, spcbfunc, cd);
 
   cleanup:
@@ -1257,6 +1265,8 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
     bool found, matched;
     pmix_buffer_t *relay;
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
+    pmix_proc_t *affected = NULL;
+    size_t naffected = 0;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd register events");
@@ -1305,11 +1315,28 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         }
     }
 
-    /* see if they asked for enviro events */
+    /* check the directives */
     for (n=0; n < ninfo; n++) {
-        if (0 == strcmp(info[n].key, PMIX_EVENT_ENVIRO_LEVEL)) {
+        if (0 == strncmp(info[n].key, PMIX_EVENT_ENVIRO_LEVEL, PMIX_MAX_KEYLEN)) {
             enviro_events = PMIX_INFO_TRUE(&info[n]);
-            break;
+        } else if (0 == strncmp(info[n].key, PMIX_EVENT_AFFECTED_PROC, PMIX_MAX_KEYLEN)) {
+            if (NULL != affected) {
+                PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+                rc = PMIX_ERR_BAD_PARAM;
+                goto cleanup;
+            }
+            naffected = 1;
+            PMIX_PROC_CREATE(affected, naffected);
+            memcpy(affected, info[n].value.data.proc, sizeof(pmix_proc_t));
+        } else if (0 == strncmp(info[n].key, PMIX_EVENT_AFFECTED_PROCS, PMIX_MAX_KEYLEN)) {
+            if (NULL != affected) {
+                PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+                rc = PMIX_ERR_BAD_PARAM;
+                goto cleanup;
+            }
+            naffected = info[n].value.data.darray->size;
+            PMIX_PROC_CREATE(affected, naffected);
+            memcpy(affected, info[n].value.data.darray->array, naffected * sizeof(pmix_proc_t));
         }
     }
 
@@ -1459,6 +1486,9 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         if (NULL != codes) {
             free(codes);
         }
+        if (NULL != affected) {
+            PMIX_PROC_FREE(affected, naffected);
+        }
         return rc;
     }
 
@@ -1506,6 +1536,11 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
                     continue;
                 }
             }
+            /* if they specified affected proc(s) they wanted to know about, check */
+            if (!pmix_notify_check_affected(cd->affected, cd->naffected,
+                                            affected, naffected)) {
+                continue;
+            }
             /* all matches - notify */
             relay = PMIX_NEW(pmix_buffer_t);
             if (NULL == relay) {
@@ -1548,6 +1583,9 @@ pmix_status_t pmix_server_register_events(pmix_peer_t *peer,
         if (NULL != codes) {
             free(codes);
         }
+    }
+    if (NULL != affected) {
+        PMIX_PROC_FREE(affected, naffected);
     }
 
     return PMIX_SUCCESS;
@@ -2073,6 +2111,7 @@ static void tcon(pmix_server_trkr_t *t)
     t->collect_type = PMIX_COLLECT_INVALID;
     t->modexcbfunc = NULL;
     t->op_cbfunc = NULL;
+    t->hybrid = false;
 }
 static void tdes(pmix_server_trkr_t *t)
 {

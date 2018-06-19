@@ -127,6 +127,7 @@ typedef struct pmix_personality_t {
 typedef struct {
     pmix_list_item_t super;
     char *nspace;
+    pmix_rank_t nprocs;          // num procs in this nspace
     size_t nlocalprocs;
     bool all_registered;         // all local ranks have been defined
     bool version_stored;         // the version string used by this nspace has been stored
@@ -340,9 +341,28 @@ typedef struct {
     pmix_status_t status;
     pmix_proc_t source;
     pmix_data_range_t range;
+    /* For notification, we use the targets field to track
+     * any custom range of procs that are to receive the
+     * event.
+     */
     pmix_proc_t *targets;
     size_t ntargets;
+    /* When generating a notification, the originator can
+     * specify the range of procs affected by this event.
+     * For example, when creating a JOB_TERMINATED event,
+     * the RM can specify the nspace of the job that has
+     * ended, thus allowing users to provide a different
+     * callback object based on the nspace being monitored.
+     * We use the "affected" field to track these values
+     * when processing the event chain.
+     */
+    pmix_proc_t *affected;
+    size_t naffected;
+    /* track if the event generator stipulates that default
+     * event handlers are/are not to be given the event */
     bool nondefault;
+    /* carry along any other provided info so the individual
+     * handlers can look at it */
     pmix_info_t *info;
     size_t ninfo;
     pmix_buffer_t *buf;

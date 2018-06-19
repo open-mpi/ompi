@@ -80,6 +80,11 @@ static pmix_peer_t* find_peer(const pmix_proc_t *proc)
         return pmix_globals.mypeer;
     }
 
+    /* if the target is someone in my nspace, then use my own peer */
+    if (0 == strncmp(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
+        return pmix_globals.mypeer;
+    }
+
     if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         /* see if we know this proc */
         for (i=0; i < pmix_server_globals.clients.size; i++) {
@@ -130,12 +135,6 @@ static pmix_peer_t* find_peer(const pmix_proc_t *proc)
      * pack it using that peer. */
     if (0 == strncmp(proc->nspace, pmix_client_globals.myserver->info->pname.nspace, PMIX_MAX_NSLEN)) {
         return pmix_client_globals.myserver;
-    }
-
-    /* if the target is another member of my nspace, then
-     * they must be using the same version */
-    if (0 == strncmp(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN)) {
-        return pmix_globals.mypeer;
     }
 
     /* try to get the library version of this peer - the result will be

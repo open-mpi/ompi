@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -58,11 +58,6 @@
 #include "src/runtime/pmix_rte.h"
 #include "src/runtime/pmix_progress_threads.h"
 
-#if PMIX_CC_USE_PRAGMA_IDENT
-#pragma ident PMIX_IDENT_STRING
-#elif PMIX_CC_USE_IDENT
-#ident PMIX_IDENT_STRING
-#endif
 const char pmix_version_string[] = PMIX_IDENT_STRING;
 
 PMIX_EXPORT int pmix_initialized = 0;

@@ -582,10 +582,8 @@ static void connection_handler(int sd, short args, void *cbdata)
         psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V1;
     } else if (2 == major && 0 == minor) {
         psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V20;
-    } else if (2 == major && 1 == minor) {
+    } else if (2 <= major) {
         psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V21;
-    } else if (3 == major) {
-        psave->proc_type = PMIX_PROC_CLIENT | PMIX_PROC_V3;
     } else {
         /* we don't recognize this version */
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,

@@ -13,9 +13,9 @@
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +30,7 @@
  * On ia32, we use cmpxchg.
  */
 
-#define PMIXSMPLOCK "lock; "
+#define SMPLOCK "lock; "
 #define PMIXMB() __asm__ __volatile__("": : :"memory")
 
 
@@ -41,16 +41,11 @@
  *********************************************************************/
 #define PMIX_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define PMIX_HAVE_ATOMIC_CMPSET_32 1
+#define PMIX_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 
 #define PMIX_HAVE_ATOMIC_MATH_32 1
 #define PMIX_HAVE_ATOMIC_ADD_32 1
 #define PMIX_HAVE_ATOMIC_SUB_32 1
-
-#define PMIX_HAVE_ATOMIC_CMPSET_64 1
-
-#undef PMIX_HAVE_INLINE_ATOMIC_CMPSET_64
-#define PMIX_HAVE_INLINE_ATOMIC_CMPSET_64 0
 
 /**********************************************************************
  *
@@ -90,73 +85,23 @@ static inline void pmix_atomic_isync(void)
  *********************************************************************/
 #if PMIX_GCC_INLINE_ASSEMBLY
 
-static inline int pmix_atomic_cmpset_32(volatile int32_t *addr,
-                                        int32_t oldval,
-                                        int32_t newval)
+static inline bool pmix_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
 {
    unsigned char ret;
    __asm__ __volatile__ (
-                       PMIXSMPLOCK "cmpxchgl %3,%2   \n\t"
+                       SMPLOCK "cmpxchgl %3,%2   \n\t"
                                "sete     %0      \n\t"
-                       : "=qm" (ret), "+a" (oldval), "+m" (*addr)
+                       : "=qm" (ret), "+a" (*oldval), "+m" (*addr)
                        : "q"(newval)
                        : "memory", "cc");
 
-   return (int)ret;
+   return (bool) ret;
 }
 
 #endif /* PMIX_GCC_INLINE_ASSEMBLY */
 
-#define pmix_atomic_cmpset_acq_32 pmix_atomic_cmpset_32
-#define pmix_atomic_cmpset_rel_32 pmix_atomic_cmpset_32
-
-#if PMIX_GCC_INLINE_ASSEMBLY
-
-#if 0
-
-/* some versions of GCC won't let you use ebx period (even though they
-   should be able to save / restore for the life of the inline
-   assembly).  For the beta, just use the non-inline version */
-
-#ifndef ll_low /* GLIBC provides these somewhere, so protect */
-#define ll_low(x)       *(((unsigned int*)&(x))+0)
-#define ll_high(x)      *(((unsigned int*)&(x))+1)
-#endif
-
-/* On Linux the EBX register is used by the shared libraries
- * to keep the global offset. In same time this register is
- * required by the cmpxchg8b instruction (as an input parameter).
- * This conflict force us to save the EBX before the cmpxchg8b
- * and to restore it afterward.
- */
-static inline int pmix_atomic_cmpset_64(volatile int64_t *addr,
-                                        int64_t oldval,
-                                        int64_t newval)
-{
-   /*
-    * Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into
-    * m64. Else, clear ZF and load m64 into EDX:EAX.
-    */
-    unsigned char ret;
-
-    __asm__ __volatile__(
-                    "push %%ebx            \n\t"
-                    "movl %4, %%ebx        \n\t"
-                    SMPLOCK "cmpxchg8b (%1)  \n\t"
-                    "sete %0               \n\t"
-                    "pop %%ebx             \n\t"
-                    : "=qm"(ret)
-                    : "D"(addr), "a"(ll_low(oldval)), "d"(ll_high(oldval)),
-                      "r"(ll_low(newval)), "c"(ll_high(newval))
-                    : "cc", "memory", "ebx");
-    return (int) ret;
-}
-#endif /* if 0 */
-
-#endif /* PMIX_GCC_INLINE_ASSEMBLY */
-
-#define pmix_atomic_cmpset_acq_64 pmix_atomic_cmpset_64
-#define pmix_atomic_cmpset_rel_64 pmix_atomic_cmpset_64
+#define pmix_atomic_compare_exchange_strong_acq_32 pmix_atomic_compare_exchange_strong_32
+#define pmix_atomic_compare_exchange_strong_rel_32 pmix_atomic_compare_exchange_strong_32
 
 #if PMIX_GCC_INLINE_ASSEMBLY
 
@@ -186,16 +131,16 @@ static inline int32_t pmix_atomic_swap_32( volatile int32_t *addr,
  *
  * Atomically adds @i to @v.
  */
-static inline int32_t pmix_atomic_add_32(volatile int32_t* v, int i)
+static inline int32_t pmix_atomic_fetch_add_32(volatile int32_t* v, int i)
 {
     int ret = i;
    __asm__ __volatile__(
-                        PMIXSMPLOCK "xaddl %1,%0"
+                        SMPLOCK "xaddl %1,%0"
                         :"+m" (*v), "+r" (ret)
                         :
                         :"memory", "cc"
                         );
-   return (ret+i);
+   return ret;
 }
 
 
@@ -206,16 +151,16 @@ static inline int32_t pmix_atomic_add_32(volatile int32_t* v, int i)
  *
  * Atomically subtracts @i from @v.
  */
-static inline int32_t pmix_atomic_sub_32(volatile int32_t* v, int i)
+static inline int32_t pmix_atomic_fetch_sub_32(volatile int32_t* v, int i)
 {
     int ret = -i;
    __asm__ __volatile__(
-                        PMIXSMPLOCK "xaddl %1,%0"
+                        SMPLOCK "xaddl %1,%0"
                         :"+m" (*v), "+r" (ret)
                         :
                         :"memory", "cc"
                         );
-   return (ret-i);
+   return ret;
 }
 
 #endif /* PMIX_GCC_INLINE_ASSEMBLY */
