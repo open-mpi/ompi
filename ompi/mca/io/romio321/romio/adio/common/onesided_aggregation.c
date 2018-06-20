@@ -250,14 +250,14 @@ printf("ADIOI_OneSidedWriteAggregation started on rank %d\n",myrank);
      */
     int bufTypeIsContig;
 
-    MPI_Aint bufTypeExtent;
+    MPI_Aint bufTypeExtent, lb;
     ADIOI_Flatlist_node *flatBuf=NULL;
     ADIOI_Datatype_iscontig(datatype, &bufTypeIsContig);
 
     if (!bufTypeIsContig) {
    /* Flatten the non-contiguous source datatype and set the extent. */
       flatBuf = ADIOI_Flatten_and_find(datatype);
-      MPI_Type_extent(datatype, &bufTypeExtent);
+      MPI_Type_get_extent(datatype, &lb, &bufTypeExtent);
 #ifdef onesidedtrace
       printf("flatBuf->count is %d bufTypeExtent is %d\n", flatBuf->count,bufTypeExtent);
       for (i=0;i<flatBuf->count;i++)
@@ -1281,7 +1281,7 @@ printf("ADIOI_OneSidedReadAggregation started on rank %d\n",myrank);
      */
     int bufTypeIsContig;
 
-    MPI_Aint bufTypeExtent;
+    MPI_Aint bufTypeExtent, lb;
     ADIOI_Flatlist_node *flatBuf=NULL;
     ADIOI_Datatype_iscontig(datatype, &bufTypeIsContig);
 
@@ -1289,7 +1289,7 @@ printf("ADIOI_OneSidedReadAggregation started on rank %d\n",myrank);
     /* Flatten the non-contiguous source datatype.
      */
       flatBuf = ADIOI_Flatten_and_find(datatype);
-      MPI_Type_extent(datatype, &bufTypeExtent);
+      MPI_Type_get_extent(datatype, &lb, &bufTypeExtent);
 #ifdef onesidedtrace
       printf("flatBuf->count is %d bufTypeExtent is %d\n", flatBuf->count,bufTypeExtent);
       for (i=0;i<flatBuf->count;i++)

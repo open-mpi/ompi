@@ -122,7 +122,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
     ADIO_Offset num, size, n_filetypes, etype_in_filetype, st_n_filetypes;
     ADIO_Offset n_etypes_in_filetype, abs_off_in_filetype=0;
     MPI_Count filetype_size, etype_size, buftype_size;
-    MPI_Aint filetype_extent, buftype_extent; 
+    MPI_Aint filetype_extent, buftype_extent, lb; 
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset userbuf_off;
     ADIO_Offset off, req_off, disp, end_offset=0, writebuf_off, start_off;
