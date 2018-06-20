@@ -159,11 +159,8 @@ int mca_fcoll_dynamic_gen2_file_write_all (ompio_file_t *fh,
     /**************************************************************************
      ** 1.  In case the data is not contigous in memory, decode it into an iovec
      **************************************************************************/
-    bytes_per_cycle = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
-    if ( OMPI_ERR_MAX == bytes_per_cycle ) {
-        ret = OMPI_ERROR;
-        goto exit;
-    }
+    bytes_per_cycle = fh->f_bytes_per_agg;
+
     /* since we want to overlap 2 iterations, define the bytes_per_cycle to be half of what
        the user requested */
     bytes_per_cycle =bytes_per_cycle/2;
@@ -258,42 +255,53 @@ int mca_fcoll_dynamic_gen2_file_write_all (ompio_file_t *fh,
     /**************************************************************************
      ** 3. Determine the total amount of data to be written and no. of cycles
      **************************************************************************/
-    total_bytes_per_process = (MPI_Aint*)malloc
-        (dynamic_gen2_num_io_procs * fh->f_procs_per_group*sizeof(MPI_Aint));
-    if (NULL == total_bytes_per_process) {
-        opal_output (1, "OUT OF MEMORY\n");
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-	goto exit;
-    }
-    
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_comm_time = MPI_Wtime();
 #endif
     if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
-        ret = fh->f_comm->c_coll->coll_allgather (broken_total_lengths,
-                                                 dynamic_gen2_num_io_procs,
-                                                 MPI_LONG,
-                                                 total_bytes_per_process,
-                                                 dynamic_gen2_num_io_procs,
-                                                 MPI_LONG,
-                                                 fh->f_comm,
-                                                 fh->f_comm->c_coll->coll_allgather_module);
+        ret = fh->f_comm->c_coll->coll_allreduce (MPI_IN_PLACE,
+                                                  broken_total_lengths,
+                                                  dynamic_gen2_num_io_procs,
+                                                  MPI_LONG,
+                                                  MPI_SUM,
+                                                  fh->f_comm,
+                                                  fh->f_comm->c_coll->coll_allreduce_module);
+        if( OMPI_SUCCESS != ret){
+            goto exit;
+        }
     }
     else {
-        ret = ompi_fcoll_base_coll_allgather_array (broken_total_lengths,
-                                               dynamic_gen2_num_io_procs,
-                                               MPI_LONG,
-                                               total_bytes_per_process,
-                                               dynamic_gen2_num_io_procs,
-                                               MPI_LONG,
-                                               0,
-                                               fh->f_procs_in_group,
-                                               fh->f_procs_per_group,
-                                               fh->f_comm);
-    }
+        total_bytes_per_process = (MPI_Aint*)malloc
+            (dynamic_gen2_num_io_procs * fh->f_procs_per_group*sizeof(MPI_Aint));
+        if (NULL == total_bytes_per_process) {
+            opal_output (1, "OUT OF MEMORY\n");
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
+        }
     
-    if( OMPI_SUCCESS != ret){
-	goto exit;
+        ret = ompi_fcoll_base_coll_allgather_array (broken_total_lengths,
+                                                    dynamic_gen2_num_io_procs,
+                                                    MPI_LONG,
+                                                    total_bytes_per_process,
+                                                    dynamic_gen2_num_io_procs,
+                                                    MPI_LONG,
+                                                    0,
+                                                    fh->f_procs_in_group,
+                                                    fh->f_procs_per_group,
+                                                    fh->f_comm);
+        if( OMPI_SUCCESS != ret){
+            goto exit;
+        }
+        for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+            broken_total_lengths[i] = 0;
+            for (j=0 ; j<fh->f_procs_per_group ; j++) {
+                broken_total_lengths[i] += total_bytes_per_process[j*dynamic_gen2_num_io_procs + i];
+            }
+        }
+        if (NULL != total_bytes_per_process) {
+            free (total_bytes_per_process);
+            total_bytes_per_process = NULL;
+        }
     }
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_comm_time = MPI_Wtime();
@@ -302,10 +310,6 @@ int mca_fcoll_dynamic_gen2_file_write_all (ompio_file_t *fh,
 
     cycles=0;
     for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
-        broken_total_lengths[i] = 0;
-        for (j=0 ; j<fh->f_procs_per_group ; j++) {
-            broken_total_lengths[i] += total_bytes_per_process[j*dynamic_gen2_num_io_procs + i];
-        }
 #if DEBUG_ON
         printf("%d: Overall broken_total_lengths[%d] = %ld\n", fh->f_rank, i, broken_total_lengths[i]);
 #endif
@@ -314,10 +318,6 @@ int mca_fcoll_dynamic_gen2_file_write_all (ompio_file_t *fh,
         }
     }
     
-    if (NULL != total_bytes_per_process) {
-        free (total_bytes_per_process);
-        total_bytes_per_process = NULL;
-    }
 
     result_counts = (int *) malloc ( dynamic_gen2_num_io_procs * fh->f_procs_per_group * sizeof(int) );
     if ( NULL == result_counts ) {

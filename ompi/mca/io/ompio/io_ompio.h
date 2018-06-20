@@ -52,6 +52,7 @@ extern int mca_io_ompio_grouping_option;
 extern int mca_io_ompio_max_aggregators_ratio;
 extern int mca_io_ompio_aggregators_cutoff_threshold;
 extern int mca_io_ompio_overwrite_amode;
+extern int mca_io_ompio_verbose_info_parsing;
 
 OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 

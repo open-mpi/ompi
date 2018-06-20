@@ -45,6 +45,12 @@
 #define OMPIO_MAX(a, b) (((a) < (b)) ? (b) : (a))
 
 #define OMPIO_MCA_GET(fh, name) ((fh)->f_get_mca_parameter_value(#name, strlen(#name)+1))
+#define OMPIO_MCA_PRINT_INFO(_fh,_infostr,_infoval, _msg ) {            \
+    int _verbose = _fh->f_get_mca_parameter_value("verbose_info_parsing", strlen("verbose_info_parsing")); \
+    if ( 1==_verbose && 0==_fh->f_rank ) printf("File: %s info: %s value %s %s\n", _fh->f_filename, _infostr, _infoval, _msg); \
+    if ( 2==_verbose ) printf("File: %s info: %s value %s %s\n", _fh->f_filename, _infostr, _infoval, _msg); \
+    }
+    
 
 /*
  * Flags
