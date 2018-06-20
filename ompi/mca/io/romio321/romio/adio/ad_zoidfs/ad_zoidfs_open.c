@@ -115,8 +115,8 @@ void ADIOI_ZOIDFS_Open(ADIO_File fd, int *error_code)
 #endif
 
     /* broadcast status and (possibly valid) object reference */
-    MPI_Address(&o_status.error, &offsets[0]);
-    MPI_Address(&o_status.handle, &offsets[1]);
+    MPI_Get_address(&o_status.error, &offsets[0]);
+    MPI_Get_address(&o_status.handle, &offsets[1]);
 
     MPI_Type_struct(2, lens, offsets, types, &open_status_type);
     MPI_Type_commit(&open_status_type);
