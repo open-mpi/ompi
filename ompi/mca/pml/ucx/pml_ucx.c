@@ -78,6 +78,11 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
 #define PML_UCX_REQ_ALLOCA() \
     ((char *)alloca(ompi_pml_ucx.request_size) + ompi_pml_ucx.request_size);
 
+typedef struct mca_pml_progress_data {
+    ucp_worker_h worker;
+    int          complete;
+} mca_pml_progress_data_t;
+
 
 static int mca_pml_ucx_send_worker_address(void)
 {
@@ -387,6 +392,16 @@ static void mca_pml_ucx_waitall(void **reqs, size_t *count_p)
     *count_p = 0;
 }
 
+static void *mca_pml_async_ucx_progress(void *arg)
+{
+    mca_pml_progress_data_t *data = arg;
+
+    while (!data->complete) {
+        ucp_worker_progress(data->worker);
+    }
+    return NULL;
+}
+
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     ompi_proc_t *proc;
@@ -394,6 +409,10 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
     void *dreq, **dreqs;
     ucp_ep_h ep;
     size_t i;
+    ucs_status_t ret;
+    pthread_t progress_thr;
+    mca_pml_progress_data_t progress_data;
+    int thread_err;
 
     max_reqs = ompi_pml_ucx.num_disconnect;
     if (max_reqs > nprocs) {
@@ -440,7 +459,26 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
      * finalize gracefully */
     ucp_worker_flush(ompi_pml_ucx.ucp_worker);
 
+    /* Some peers may be in active communication phase and
+     * require progress from current process. Unfortunately
+     * PMIX could not provide progress call during Fence, and
+     * we will create own progress thread for UCX */
+    progress_data.worker   = ompi_pml_ucx.ucp_worker;
+    progress_data.complete = 0;
+
+    thread_err = pthread_create(&progress_thr, NULL, mca_pml_async_ucx_progress,
+                                &progress_data);
+    if (thread_err) {
+        PML_UCX_ERROR("Failed to create async progress thread: %d", thread_err);
+    }
+
     opal_pmix.fence(NULL, 0);
+
+    /* All peers are completed comunication. Let's stop progress thread */
+    if (!thread_err) {
+        progress_data.complete = 1;
+        pthread_join(progress_thr, NULL);
+    }
 
     return OMPI_SUCCESS;
 }
