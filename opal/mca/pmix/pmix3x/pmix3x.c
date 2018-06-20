@@ -1075,9 +1075,9 @@ int pmix3x_value_unload(opal_value_t *kv,
         kv->type = OPAL_STATUS;
         kv->data.status = pmix3x_convert_rc(v->data.status);
         break;
-    case PMIX_PROC_RANK:
-        kv->type = OPAL_VPID;
-        kv->data.name.vpid = pmix3x_convert_rank(v->data.rank);
+    case PMIX_VALUE:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
         break;
     case PMIX_PROC:
         kv->type = OPAL_NAME;
@@ -1097,6 +1097,22 @@ int pmix3x_value_unload(opal_value_t *kv,
         }
         kv->data.name.vpid = pmix3x_convert_rank(v->data.proc->rank);
         break;
+    case PMIX_APP:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_INFO:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_PDATA:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_BUFFER:
+    OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+    rc = OPAL_ERR_NOT_SUPPORTED;
+    break;
     case PMIX_BYTE_OBJECT:
         kv->type = OPAL_BYTE_OBJECT;
         if (NULL != v->data.bo.bytes && 0 < v->data.bo.size) {
@@ -1108,9 +1124,21 @@ int pmix3x_value_unload(opal_value_t *kv,
             kv->data.bo.size = 0;
         }
         break;
+    case PMIX_KVAL:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_MODEX:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
     case PMIX_PERSIST:
         kv->type = OPAL_PERSIST;
         kv->data.uint8 = pmix3x_convert_persist(v->data.persist);
+        break;
+    case PMIX_POINTER:
+        kv->type = OPAL_PTR;
+        kv->data.ptr = v->data.ptr;
         break;
     case PMIX_SCOPE:
         kv->type = OPAL_SCOPE;
@@ -1120,42 +1148,23 @@ int pmix3x_value_unload(opal_value_t *kv,
         kv->type = OPAL_DATA_RANGE;
         kv->data.uint8 = pmix3x_convert_range(v->data.range);
         break;
+    case PMIX_COMMAND:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_INFO_DIRECTIVES:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_DATA_TYPE:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
     case PMIX_PROC_STATE:
         kv->type = OPAL_PROC_STATE;
         /* the OPAL layer doesn't have any concept of proc state,
          * so the ORTE layer is responsible for converting it */
         memcpy(&kv->data.uint8, &v->data.state, sizeof(uint8_t));
-        break;
-    case PMIX_POINTER:
-        kv->type = OPAL_PTR;
-        kv->data.ptr = v->data.ptr;
-        break;
-    case PMIX_DATA_ARRAY:
-        if (NULL == v->data.darray || NULL == v->data.darray->array) {
-            kv->data.ptr = NULL;
-            break;
-        }
-        lt = OBJ_NEW(opal_list_t);
-        kv->type = OPAL_PTR;
-        kv->data.ptr = (void*)lt;
-        for (n=0; n < v->data.darray->size; n++) {
-            ival = OBJ_NEW(opal_value_t);
-            opal_list_append(lt, &ival->super);
-            /* handle the various types */
-            if (PMIX_INFO == v->data.darray->type) {
-                pmix_info_t *iptr = (pmix_info_t*)v->data.darray->array;
-                if (NULL != iptr[n].key) {
-                    ival->key = strdup(iptr[n].key);
-                }
-                rc = pmix3x_value_unload(ival, &iptr[n].value);
-                if (OPAL_SUCCESS != rc) {
-                    OPAL_LIST_RELEASE(lt);
-                    kv->type = OPAL_UNDEF;
-                    kv->data.ptr = NULL;
-                    break;
-                }
-            }
-        }
         break;
     case PMIX_PROC_INFO:
         kv->type = OPAL_PROC_INFO;
@@ -1187,6 +1196,57 @@ int pmix3x_value_unload(opal_value_t *kv,
         kv->data.pinfo.pid = v->data.pinfo->pid;
         kv->data.pinfo.exit_code = v->data.pinfo->exit_code;
         kv->data.pinfo.state = pmix3x_convert_state(v->data.pinfo->state);
+        break;
+    case PMIX_DATA_ARRAY:
+        if (NULL == v->data.darray || NULL == v->data.darray->array) {
+            kv->data.ptr = NULL;
+            break;
+        }
+        lt = OBJ_NEW(opal_list_t);
+        kv->type = OPAL_PTR;
+        kv->data.ptr = (void*)lt;
+        for (n=0; n < v->data.darray->size; n++) {
+            ival = OBJ_NEW(opal_value_t);
+            opal_list_append(lt, &ival->super);
+            /* handle the various types */
+            if (PMIX_INFO == v->data.darray->type) {
+                pmix_info_t *iptr = (pmix_info_t*)v->data.darray->array;
+                if (NULL != iptr[n].key) {
+                    ival->key = strdup(iptr[n].key);
+                }
+                rc = pmix3x_value_unload(ival, &iptr[n].value);
+                if (OPAL_SUCCESS != rc) {
+                    OPAL_LIST_RELEASE(lt);
+                    kv->type = OPAL_UNDEF;
+                    kv->data.ptr = NULL;
+                    break;
+                }
+            }
+        }
+        break;
+    case PMIX_PROC_RANK:
+        kv->type = OPAL_VPID;
+        kv->data.name.vpid = pmix3x_convert_rank(v->data.rank);
+        break;
+    case PMIX_QUERY:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_COMPRESSED_STRING:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_ALLOC_DIRECTIVE:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_INFO_ARRAY:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        break;
+    case PMIX_IOF_CHANNEL:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        rc = OPAL_ERR_NOT_SUPPORTED;
         break;
     case PMIX_ENVAR:
         kv->type = OPAL_ENVAR;
