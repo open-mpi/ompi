@@ -34,10 +34,10 @@
 
 int
 mca_sharedfp_sm_seek (ompio_file_t *fh,
-                      OMPI_MPI_OFFSET_TYPE offset, int whence)
+                      OMPI_MPI_OFFSET_TYPE off, int whence)
 {
     int status=0;
-    OMPI_MPI_OFFSET_TYPE end_position=0;
+    OMPI_MPI_OFFSET_TYPE offset, end_position=0;
     int ret = OMPI_SUCCESS;
     struct mca_sharedfp_base_data_t *sh = NULL;
     struct mca_sharedfp_sm_data * sm_data = NULL;
@@ -50,6 +50,7 @@ mca_sharedfp_sm_seek (ompio_file_t *fh,
     }
 
     sh = fh->f_sharedfp_data;
+    offset = off * fh->f_etype_size;
 
     if( 0 == fh->f_rank ){
         if ( MPI_SEEK_SET == whence){

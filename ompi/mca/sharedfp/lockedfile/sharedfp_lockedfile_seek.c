@@ -33,7 +33,7 @@
 
 int
 mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
-                              OMPI_MPI_OFFSET_TYPE offset, int whence)
+                              OMPI_MPI_OFFSET_TYPE off, int whence)
 {
     int ret = OMPI_SUCCESS;
     struct mca_sharedfp_base_data_t *sh = NULL;
@@ -41,6 +41,7 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
     int fd_lockedfilehandle;
     /* flock structure that is used to setup the desired fcntl operation */
     struct flock fl;
+    OMPI_MPI_OFFSET_TYPE offset, end_position=0;
 
     if(fh->f_sharedfp_data==NULL){
 	opal_output(ompi_sharedfp_base_framework.framework_output,
@@ -49,6 +50,7 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
     }
 
     sh = fh->f_sharedfp_data;
+    offset = off * fh->f_etype_size;
 
     if( 0 == fh->f_rank ){
         if ( MPI_SEEK_SET == whence ){
@@ -74,7 +76,6 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
             }
         }
 	else if( MPI_SEEK_END == whence ){
-            OMPI_MPI_OFFSET_TYPE end_position=0;
             mca_common_ompio_file_get_size( fh,&end_position);
             offset = end_position + offset;
 
