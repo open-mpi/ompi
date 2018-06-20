@@ -1023,6 +1023,16 @@ void pmix_tool_connected_fn(opal_list_t *info,
 
 }
 
+static void lgcbfn(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(cd->status, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
+}
+
 void pmix_server_log_fn(opal_process_name_t *requestor,
                         opal_list_t *info,
                         opal_list_t *directives,
@@ -1068,9 +1078,12 @@ void pmix_server_log_fn(opal_process_name_t *requestor,
         }
     }
 
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_SUCCESS, cbdata);
-    }
+    /* we cannot directly execute the callback here
+     * as it would threadlock - so shift to somewhere
+     * safe */
+    ORTE_PMIX_THREADSHIFT(requestor, NULL, rc,
+                          NULL, NULL, lgcbfn,
+                          cbfunc, cbdata);
 }
 
 int pmix_server_job_ctrl_fn(const opal_process_name_t *requestor,
