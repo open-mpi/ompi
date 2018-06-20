@@ -108,15 +108,6 @@ ompi_coll_base_reduce_scatter_block_basic_linear(const void *sbuf, void *rbuf, i
 
     return err;
 }
-/*
- * ompi_rounddown: Rounds a number down to nearest multiple.
- *     rounddown(10,4) = 8, rounddown(6,3) = 6, rounddown(14,3) = 12
- */
-static int ompi_rounddown(int num, int factor)
-{
-    num /= factor;
-    return num * factor;    /* floor(num / factor) * factor */
-}
 
 /*
  * ompi_coll_base_reduce_scatter_block_intra_recursivedoubling

@@ -93,3 +93,13 @@ unsigned int ompi_mirror_perm(unsigned int x, int nbits)
     x = ((x >> 16) | (x << 16));
     return x >> (sizeof(x) * CHAR_BIT - nbits);
 }
+
+/*
+ * ompi_rounddown: Rounds a number down to nearest multiple.
+ *     rounddown(10,4) = 8, rounddown(6,3) = 6, rounddown(14,3) = 12
+ */
+int ompi_rounddown(int num, int factor)
+{
+    num /= factor;
+    return num * factor;    /* floor(num / factor) * factor */
+}
