@@ -53,7 +53,7 @@ struct MPIR_Info {
 
 #define MPIR_INFO_COOKIE 5835657
 
-MPI_Delete_function ADIOI_End_call;
+MPI_Comm_delete_attr_function ADIOI_End_call;
 
 /* common initialization routine */
 void MPIR_MPIOInit(int * error_code);
