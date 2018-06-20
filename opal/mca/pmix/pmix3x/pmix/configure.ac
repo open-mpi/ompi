@@ -21,7 +21,7 @@
 #                         All rights reserved.
 # Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (c) 2016      Research Organization for Information Science
+# Copyright (c) 2016-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -204,8 +204,6 @@ AC_ARG_VAR(CC_FOR_BUILD,[build system C compiler])
 AS_IF([test -z "$CC_FOR_BUILD"],[
     AC_SUBST([CC_FOR_BUILD], [$CC])
 ])
-
-PMIX_SETUP_CC
 
 # Cleanup duplicate flags
 PMIX_FLAGS_UNIQ(CPPFLAGS)
