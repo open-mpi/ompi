@@ -174,17 +174,19 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
        }
     }
 
-    char char_stripe[MPI_MAX_INFO_KEY];
+    char char_stripe[MPI_MAX_INFO_VAL];
     /* Check the info object set during File_open */
     opal_info_get (fh->f_info, "cb_nodes", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &num_cb_nodes );
+        OMPIO_MCA_PRINT_INFO(fh, "cb_nodes", char_stripe, "");
     }
     else {
         /* Check the info object set during file_set_view */
         opal_info_get (info, "cb_nodes", MPI_MAX_INFO_VAL, char_stripe, &flag);
         if ( flag ) {
             sscanf ( char_stripe, "%d", &num_cb_nodes );
+            OMPIO_MCA_PRINT_INFO(fh, "cb_nodes", char_stripe, "");
         }
     }
         
@@ -274,12 +276,38 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
 	ompi_datatype_destroy ( &newfiletype );
     }
 
+    bool info_is_set=false;
+    opal_info_get (fh->f_info, "collective_buffering", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    if ( flag ) {
+        if ( strncmp ( char_stripe, "false", sizeof("true") )){
+            info_is_set = true;
+            OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", char_stripe, "enforcing using individual fcoll component");
+        } else {
+            OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", char_stripe, "");
+        }
+    } else {
+        opal_info_get (info, "collective_buffering", MPI_MAX_INFO_VAL, char_stripe, &flag);
+        if ( flag ) {
+            if ( strncmp ( char_stripe, "false", sizeof("true") )){
+                info_is_set = true;
+                OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", char_stripe, "enforcing using individual fcoll component");
+            } else {
+                OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", char_stripe, "");
+            }
+        }
+    }
 
-    ret = mca_fcoll_base_file_select (fh, NULL);
+    mca_fcoll_base_component_t *preferred =NULL;
+    if ( info_is_set ) {
+        /* user requested using an info object to disable collective buffering. */
+        preferred = mca_fcoll_base_component_lookup ("individual");
+    }
+    ret = mca_fcoll_base_file_select (fh, (mca_base_component_t *)preferred);
     if ( OMPI_SUCCESS != ret ) {
         opal_output(1, "mca_common_ompio_set_view: mca_fcoll_base_file_select() failed\n");
         goto exit;
     }
+
 
     if ( NULL != fh->f_sharedfp ) {
         ret = fh->f_sharedfp->sharedfp_seek( fh, 0, MPI_SEEK_SET);

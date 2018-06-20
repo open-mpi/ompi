@@ -521,7 +521,10 @@ int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
 
 int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_length )
 {
-    if ( !strncmp ( mca_parameter_name, "num_aggregators", name_length )) {
+    if ( !strncmp ( mca_parameter_name, "verbose_info_parsing", name_length )) {
+        return mca_io_ompio_verbose_info_parsing;
+    }
+    else if ( !strncmp ( mca_parameter_name, "num_aggregators", name_length )) {
         return mca_io_ompio_num_aggregators;
     }
     else if ( !strncmp ( mca_parameter_name, "bytes_per_agg", name_length )) {

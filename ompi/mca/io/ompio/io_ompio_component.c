@@ -42,6 +42,7 @@ int mca_io_ompio_coll_timing_info = 0;
 int mca_io_ompio_max_aggregators_ratio=8;
 int mca_io_ompio_aggregators_cutoff_threshold=3;
 int mca_io_ompio_overwrite_amode = 1;
+int mca_io_ompio_verbose_info_parsing = 0;
 
 int mca_io_ompio_grouping_option=5;
 
@@ -239,6 +240,18 @@ static int register_component(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_overwrite_amode);
+
+    mca_io_ompio_verbose_info_parsing = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "verbose_info_parsing",
+                                           "Provide visual output when parsing info objects "
+                                           "0: no verbose output (default) "
+                                           "1: verbose output by rank 0 "
+                                           "2: verbose output by all ranks ",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_verbose_info_parsing);
 
     return OMPI_SUCCESS;
 }

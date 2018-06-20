@@ -53,6 +53,8 @@ OMPI_DECLSPEC int mca_fcoll_base_init_file (struct ompio_file_t *file);
 OMPI_DECLSPEC int mca_fcoll_base_get_param (struct ompio_file_t *file, int keyval);
 OMPI_DECLSPEC int ompi_fcoll_base_sort_iovec (struct iovec *iov, int num_entries, int *sorted);
 
+OMPI_DECLSPEC mca_fcoll_base_component_t* mca_fcoll_base_component_lookup(const char* name);
+
 /*
  * Globals
  */
