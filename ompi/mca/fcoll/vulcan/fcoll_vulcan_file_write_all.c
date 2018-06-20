@@ -167,11 +167,7 @@ int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
         ret = OMPI_ERROR;
         goto exit;
     }
-    bytes_per_cycle = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
-    if ( OMPI_ERR_MAX == bytes_per_cycle ) {
-        ret = OMPI_ERROR;
-        goto exit;
-    }
+    bytes_per_cycle = fh->f_bytes_per_agg;
 
     if( (1 == mca_fcoll_vulcan_async_io) && (NULL == fh->f_fbtl->fbtl_ipwritev) ) {
         opal_output (1, "vulcan_write_all: fbtl Does NOT support ipwritev() (asynchrounous write) \n");
@@ -256,28 +252,31 @@ int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
     /**************************************************************************
      ** 3. Determine the total amount of data to be written and no. of cycles
      **************************************************************************/
-    total_bytes_per_process = (MPI_Aint*)malloc
-        (fh->f_num_aggrs * fh->f_procs_per_group*sizeof(MPI_Aint));
-    if (NULL == total_bytes_per_process) {
-        opal_output (1, "OUT OF MEMORY\n");
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-	goto exit;
-    }
-    
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_comm_time = MPI_Wtime();
 #endif
     if ( 1 == mca_fcoll_vulcan_num_groups ) {
-        ret = fh->f_comm->c_coll->coll_allgather (broken_total_lengths,
+        ret = fh->f_comm->c_coll->coll_allreduce (MPI_IN_PLACE,
+                                                  broken_total_lengths,
 						  fh->f_num_aggrs,
 						  MPI_LONG,
-						  total_bytes_per_process,
-						  fh->f_num_aggrs,
-						  MPI_LONG,
+                                                  MPI_SUM,
 						  fh->f_comm,
-						  fh->f_comm->c_coll->coll_allgather_module);
+						  fh->f_comm->c_coll->coll_allreduce_module);
+        if( OMPI_SUCCESS != ret){
+            goto exit;
+        }
+
     }
     else {
+        total_bytes_per_process = (MPI_Aint*)malloc
+            (fh->f_num_aggrs * fh->f_procs_per_group*sizeof(MPI_Aint));
+        if (NULL == total_bytes_per_process) {
+            opal_output (1, "OUT OF MEMORY\n");
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
+        }
+    
         ret = ompi_fcoll_base_coll_allgather_array (broken_total_lengths,
 						    fh->f_num_aggrs,
 						    MPI_LONG,
@@ -288,11 +287,22 @@ int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
 						    fh->f_procs_in_group,
 						    fh->f_procs_per_group,
 						    fh->f_comm);
+        if( OMPI_SUCCESS != ret){
+            goto exit;
+        }
+
+        for ( i=0; i<fh->f_num_aggrs; i++ ) {
+            broken_total_lengths[i] = 0;
+            for (j=0 ; j<fh->f_procs_per_group ; j++) {
+                broken_total_lengths[i] += total_bytes_per_process[j*fh->f_num_aggrs + i];
+            }
+        }
+        if (NULL != total_bytes_per_process) {
+            free (total_bytes_per_process);
+            total_bytes_per_process = NULL;
+        }    
     }
     
-    if( OMPI_SUCCESS != ret){
-	goto exit;
-    }
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_comm_time = MPI_Wtime();
     comm_time += (end_comm_time - start_comm_time);
@@ -300,21 +310,12 @@ int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
     
     cycles=0;
     for ( i=0; i<fh->f_num_aggrs; i++ ) {
-        broken_total_lengths[i] = 0;
-        for (j=0 ; j<fh->f_procs_per_group ; j++) {
-            broken_total_lengths[i] += total_bytes_per_process[j*fh->f_num_aggrs + i];
-        }
 #if DEBUG_ON
         printf("%d: Overall broken_total_lengths[%d] = %ld\n", fh->f_rank, i, broken_total_lengths[i]);
 #endif
         if ( ceil((double)broken_total_lengths[i]/bytes_per_cycle) > cycles ) {
             cycles = ceil((double)broken_total_lengths[i]/bytes_per_cycle);
         }
-    }
-    
-    if (NULL != total_bytes_per_process) {
-        free (total_bytes_per_process);
-        total_bytes_per_process = NULL;
     }
     
     result_counts = (int *) malloc ( fh->f_num_aggrs * fh->f_procs_per_group * sizeof(int) );

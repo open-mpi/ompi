@@ -579,11 +579,7 @@ static int two_phase_read_and_exch(ompio_file_t *fh,
 	}
     }
 
-    two_phase_cycle_buffer_size = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
-    if ( OMPI_ERR_MAX == two_phase_cycle_buffer_size ) {
-        ret = OMPI_ERROR;
-        goto exit;
-    }
+    two_phase_cycle_buffer_size = fh->f_bytes_per_agg;
     ntimes = (int)((end_loc - st_loc + two_phase_cycle_buffer_size)/
 		   two_phase_cycle_buffer_size);
 

@@ -337,11 +337,7 @@ mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
      *** 6. Determine the number of cycles required to execute this
      ***    operation
      *************************************************************/
-    bytes_per_cycle = fh->f_get_mca_parameter_value ("bytes_per_agg", strlen ("bytes_per_agg"));
-    if ( OMPI_ERR_MAX == bytes_per_cycle ) {
-        ret = OMPI_ERROR;
-        goto exit;
-    }
+    bytes_per_cycle = fh->f_bytes_per_agg;
     cycles = ceil((double)total_bytes/bytes_per_cycle);
 
     if ( my_aggregator == fh->f_rank) {
