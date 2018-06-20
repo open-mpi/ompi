@@ -307,8 +307,7 @@ void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
 
     MPI_Type_size_x(fd->filetype, &filetype_size);
-    MPI_Type_extent(fd->filetype, &filetype_extent);
-    MPI_Type_lb(fd->filetype, &filetype_lb);
+    MPI_Type_get_extent(fd->filetype, &filetype_lb, &filetype_extent);
     MPI_Type_size_x(datatype, &buftype_size);
     etype_size = fd->etype_size;
 
@@ -524,7 +523,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
     int req_len, flag, rank;
     MPI_Status status;
     ADIOI_Flatlist_node *flat_buf=NULL;
-    MPI_Aint buftype_extent;
+    MPI_Aint buftype_extent, lb;
     int coll_bufsize;
 
     *error_code = MPI_SUCCESS;  /* changed below if error */
@@ -603,7 +602,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
     if (!buftype_is_contig) {
 	flat_buf = ADIOI_Flatten_and_find(datatype);
     }
-    MPI_Type_extent(datatype, &buftype_extent);
+    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
 
     done = 0;
     off = st_loc;
@@ -683,7 +682,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 		    if (req_off < real_off + real_size) {
 			count[i]++;
       ADIOI_Assert((((ADIO_Offset)(MPIU_Upint)read_buf)+req_off-real_off) == (ADIO_Offset)(MPIU_Upint)(read_buf+req_off-real_off));
-			MPI_Address(read_buf+req_off-real_off, 
+			MPI_Get_address(read_buf+req_off-real_off, 
                                &(others_req[i].mem_ptrs[j]));
       ADIOI_Assert((real_off + real_size - req_off) == (int)(real_off + real_size - req_off));
 			send_size[i] += (int)(ADIOI_MIN(real_off + real_size - req_off, 

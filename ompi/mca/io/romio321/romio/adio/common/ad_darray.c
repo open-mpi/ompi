@@ -24,11 +24,11 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 			    int order, MPI_Datatype oldtype, 
 			    MPI_Datatype *newtype) 
 {
-    MPI_Datatype type_old, type_new=MPI_DATATYPE_NULL, types[3];
-    int procs, tmp_rank, i, tmp_size, blklens[3], *coords;
-    MPI_Aint *st_offsets, orig_extent, disps[3];
+    MPI_Datatype type_old, type_new=MPI_DATATYPE_NULL, inttype;
+    int procs, tmp_rank, i, tmp_size, blklen, *coords;
+    MPI_Aint *st_offsets, orig_extent, disp, ub, lb;
 
-    MPI_Type_extent(oldtype, &orig_extent);
+    MPI_Type_get_extent(oldtype, &lb, &orig_extent);
 
 /* calculate position in Cartesian grid as MPI would (row-major
    ordering) */
@@ -77,11 +77,11 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 	}
 
 	/* add displacement and UB */
-	disps[1] = st_offsets[0];
+	disp = st_offsets[0];
 	tmp_size = 1;
 	for (i=1; i<ndims; i++) {
 	    tmp_size *= array_of_gsizes[i-1];
-	    disps[1] += (MPI_Aint)tmp_size*st_offsets[i];
+	    disp += (MPI_Aint)tmp_size*st_offsets[i];
 	}
         /* rest done below for both Fortran and C order */
     }
@@ -115,26 +115,24 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 	}
 
 	/* add displacement and UB */
-	disps[1] = st_offsets[ndims-1];
+	disp = st_offsets[ndims-1];
 	tmp_size = 1;
 	for (i=ndims-2; i>=0; i--) {
 	    tmp_size *= array_of_gsizes[i+1];
-	    disps[1] += (MPI_Aint)tmp_size*st_offsets[i];
+	    disp += (MPI_Aint)tmp_size*st_offsets[i];
 	}
     }
 
-    disps[1] *= orig_extent;
+    disp *= orig_extent;
 
-    disps[2] = orig_extent;
-    for (i=0; i<ndims; i++) disps[2] *= (MPI_Aint)array_of_gsizes[i];
+    ub = orig_extent;
+    for (i=0; i<ndims; i++) ub *= (MPI_Aint)array_of_gsizes[i];
 	
-    disps[0] = 0;
-    blklens[0] = blklens[1] = blklens[2] = 1;
-    types[0] = MPI_LB;
-    types[1] = type_new;
-    types[2] = MPI_UB;
+    blklen = 1;
     
-    MPI_Type_struct(3, blklens, disps, types, newtype);
+    MPI_Type_create_struct(1, &blklen, &disp, &type_new, &inttype);
+    MPI_Type_create_resized (inttype, 0, ub, newtype);
+    MPI_Type_free (&inttype);
 
     MPI_Type_free(&type_new);
     ADIOI_Free(st_offsets);
@@ -184,7 +182,7 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
 	    MPI_Type_contiguous(mysize, type_old, type_new);
 	else {
 	    for (i=0; i<dim; i++) stride *= (MPI_Aint)array_of_gsizes[i];
-	    MPI_Type_hvector(mysize, 1, stride, type_old, type_new);
+	    MPI_Type_create_hvector(mysize, 1, stride, type_old, type_new);
 	}
     }
     else {
@@ -192,7 +190,7 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
 	    MPI_Type_contiguous(mysize, type_old, type_new);
 	else {
 	    for (i=ndims-1; i>dim; i--) stride *= (MPI_Aint)array_of_gsizes[i];
-	    MPI_Type_hvector(mysize, 1, stride, type_old, type_new);
+	    MPI_Type_create_hvector(mysize, 1, stride, type_old, type_new);
 	}
 
     }
@@ -217,7 +215,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
    rank = coordinate of this process in dimension dim */
     int blksize, i, blklens[3], st_index, end_index, local_size, rem, count;
     MPI_Aint stride, disps[3];
-    MPI_Datatype type_tmp, types[3];
+    MPI_Datatype type_tmp, type_tmp1, types[3];
 
     if (darg == MPI_DISTRIBUTE_DFLT_DARG) blksize = 1;
     else blksize = darg;
@@ -246,7 +244,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
 	for (i=0; i<dim; i++) stride *= (MPI_Aint)array_of_gsizes[i];
     else for (i=ndims-1; i>dim; i--) stride *= (MPI_Aint)array_of_gsizes[i];
 
-    MPI_Type_hvector(count, blksize, stride, type_old, type_new);
+    MPI_Type_create_hvector(count, blksize, stride, type_old, type_new);
 
     if (rem) {
 	/* if the last block is of size less than blksize, include
@@ -259,7 +257,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
 	blklens[0] = 1;
 	blklens[1] = rem;
 
-	MPI_Type_struct(2, blklens, disps, types, &type_tmp);
+	MPI_Type_create_struct(2, blklens, disps, types, &type_tmp);
 
 	MPI_Type_free(type_new);
 	*type_new = type_tmp;
@@ -269,14 +267,12 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
        dimension correctly. */ 
     if ( ((order == MPI_ORDER_FORTRAN) && (dim == 0)) ||
          ((order == MPI_ORDER_C) && (dim == ndims-1)) ) {
-        types[0] = MPI_LB;
-        disps[0] = 0;
-        types[1] = *type_new;
-        disps[1] = (MPI_Aint)rank * (MPI_Aint)blksize * orig_extent;
-        types[2] = MPI_UB;
-        disps[2] = orig_extent * (MPI_Aint)array_of_gsizes[dim];
-        blklens[0] = blklens[1] = blklens[2] = 1;
-        MPI_Type_struct(3, blklens, disps, types, &type_tmp);
+        types[0] = *type_new;
+        disps[0] = (MPI_Aint)rank * (MPI_Aint)blksize * orig_extent;
+        blklens[0] = 1;
+        MPI_Type_create_struct(1, blklens, disps, types, &type_tmp1);
+        MPI_Type_create_resized (type_tmp1, 0, orig_extent * (MPI_Aint)array_of_gsizes[dim], &type_tmp);
+        MPI_Type_free(&type_tmp1);
         MPI_Type_free(type_new);
         *type_new = type_tmp;
 

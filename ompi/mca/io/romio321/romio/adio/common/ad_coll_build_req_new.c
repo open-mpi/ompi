@@ -279,7 +279,7 @@ static inline int get_next_fr_off(ADIO_File fd,
 				  ADIO_Offset *fr_next_off_p,
 				  ADIO_Offset *fr_max_len_p) 
 {
-    MPI_Aint fr_extent = -1;
+    MPI_Aint fr_extent = -1, lb;
     ADIO_Offset tmp_off, off_rem;
     ADIOI_Flatlist_node *fr_node_p = ADIOI_Flatlist;
     int i = -1, fr_dtype_ct = 0;
@@ -299,7 +299,7 @@ static inline int get_next_fr_off(ADIO_File fd,
 
     /* Calculate how many times to loop through the fr_type 
      * and where the next fr_off is. */
-    MPI_Type_extent(*fr_type_p, &fr_extent);
+    MPI_Type_get_extent(*fr_type_p, &lb, &fr_extent);
     tmp_off = off - fr_st_off;
     fr_dtype_ct = tmp_off / fr_extent;
     off_rem = tmp_off % fr_extent;
@@ -844,9 +844,9 @@ int ADIOI_Build_agg_reqs(ADIO_File fd, int rw_type, int nprocs,
     {
 	if (client_comm_sz_arr[i] > 0)
 	{
-	    MPI_Type_hindexed(client_ol_ct_arr[i], client_blk_arr[i],
-			      client_disp_arr[i], MPI_BYTE, 
-			      &(client_comm_dtype_arr[i]));
+	    MPI_Type_create_hindexed(client_ol_ct_arr[i], client_blk_arr[i],
+			             client_disp_arr[i], MPI_BYTE, 
+			             &(client_comm_dtype_arr[i]));
 	    MPI_Type_commit(&(client_comm_dtype_arr[i]));
 	}
 	else
@@ -863,8 +863,8 @@ int ADIOI_Build_agg_reqs(ADIO_File fd, int rw_type, int nprocs,
 	if (agg_ol_ct == 1)
 	    MPI_Type_contiguous (agg_blk_arr[0], MPI_BYTE, agg_dtype_p);
 	else if (agg_ol_ct > 1)
-	    MPI_Type_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
-			      agg_dtype_p);    
+	    MPI_Type_create_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
+			             agg_dtype_p);    
 
 	MPI_Type_commit(agg_dtype_p);
 
@@ -1203,9 +1203,9 @@ int ADIOI_Build_client_reqs(ADIO_File fd,
     {
 	if (agg_comm_sz_arr[i] > 0)
 	{
-	    MPI_Type_hindexed(agg_ol_ct_arr[i], agg_blk_arr[i],
-                              agg_disp_arr[i], MPI_BYTE,
-                              &(agg_comm_dtype_arr[i]));
+	    MPI_Type_create_hindexed(agg_ol_ct_arr[i], agg_blk_arr[i],
+                                     agg_disp_arr[i], MPI_BYTE,
+                                     &(agg_comm_dtype_arr[i]));
             MPI_Type_commit(&(agg_comm_dtype_arr[i]));
 	}
 	else
@@ -2063,8 +2063,8 @@ int ADIOI_Build_client_req(ADIO_File fd,
     /* Create the aggregator MPI_Datatype */
     if (agg_comm_sz > 0)
     {
-	MPI_Type_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
-			  agg_comm_dtype_p);
+	MPI_Type_create_hindexed(agg_ol_ct, agg_blk_arr, agg_disp_arr, MPI_BYTE,
+			         agg_comm_dtype_p);
 	MPI_Type_commit(agg_comm_dtype_p);
     }
     else

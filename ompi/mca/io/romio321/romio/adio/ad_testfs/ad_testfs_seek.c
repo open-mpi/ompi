@@ -30,7 +30,7 @@ ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
     int size_in_filetype;
     int filetype_is_contig;
     MPI_Count filetype_size;
-    MPI_Aint etype_size, filetype_extent;
+    MPI_Aint etype_size, filetype_extent, lb;
 
     *error_code = MPI_SUCCESS;
 
@@ -47,7 +47,7 @@ ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
         flat_file = ADIOI_Flatlist;
         while (flat_file->type != fd->filetype) flat_file = flat_file->next;
 
-	MPI_Type_extent(fd->filetype, &filetype_extent);
+	MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
 	MPI_Type_size_x(fd->filetype, &filetype_size);
 	if ( ! filetype_size ) {
 	    *error_code = MPI_SUCCESS; 

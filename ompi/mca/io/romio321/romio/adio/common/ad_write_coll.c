@@ -321,7 +321,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
     int *send_buf_idx, *curr_to_proc, *done_to_proc;
     MPI_Status status;
     ADIOI_Flatlist_node *flat_buf=NULL;
-    MPI_Aint buftype_extent;
+    MPI_Aint buftype_extent, lb;
     int info_flag, coll_bufsize;
     char *value;
     static char myname[] = "ADIOI_EXCH_AND_WRITE";
@@ -404,7 +404,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
     if (!buftype_is_contig) {
 	flat_buf = ADIOI_Flatten_and_find(datatype);
     }
-    MPI_Type_extent(datatype, &buftype_extent);
+    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
 
 
 /* I need to check if there are any outstanding nonblocking writes to

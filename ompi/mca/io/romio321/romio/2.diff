@@ -1,0 +1,1032 @@
+commit 84765001aaee5e62e232cfcfd8a20e93e2d67e9f
+Author: Nathan Hjelm <hjelmn@lanl.gov>
+Date:   Thu Mar 22 13:12:11 2018 -0600
+
+    io/romio: do not use removed functions
+    
+    This commit attempts to update the romio io component to not use
+    functions removed in MPI-3.0 (2012). This is a first cut and will
+    probably need to be reviewed for correctness.
+    
+    Signed-off-by: Nathan Hjelm <hjelmn@lanl.gov>
+
+diff --git a/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_read.c b/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_read.c
+index 48543ea..8e76dd4 100644
+--- a/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_read.c
++++ b/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_read.c
+@@ -164,7 +164,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
+     ADIO_Offset abs_off_in_filetype=0;
+     int req_len, partial_read;
+     MPI_Count filetype_size, etype_size, buftype_size;
+-    MPI_Aint filetype_extent, buftype_extent;
++    MPI_Aint filetype_extent, buftype_extent, lb;
+     int buf_count, buftype_is_contig, filetype_is_contig;
+     ADIO_Offset userbuf_off;
+     ADIO_Offset off, req_off, disp, end_offset=0, readbuf_off, start_off;
+@@ -187,9 +187,9 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
+ 	return;
+     }
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(datatype, &buftype_size);
+-    MPI_Type_extent(datatype, &buftype_extent);
++    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
+     etype_size = fd->etype_size;
+ 
+     bufsize = buftype_size * count;
+diff --git a/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_write.c b/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_write.c
+index 0a4636b..794c06c 100644
+--- a/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_write.c
++++ b/ompi/mca/io/romio314/romio/adio/ad_nfs/ad_nfs_write.c
+@@ -267,7 +267,7 @@ void ADIOI_NFS_WriteStrided(ADIO_File fd, const void *buf, int count,
+     ADIO_Offset abs_off_in_filetype=0;
+     int req_len;
+     MPI_Count filetype_size, etype_size, buftype_size;
+-    MPI_Aint filetype_extent, buftype_extent;
++    MPI_Aint filetype_extent, buftype_extent, lb;
+     int buf_count, buftype_is_contig, filetype_is_contig;
+     ADIO_Offset userbuf_off;
+     ADIO_Offset off, req_off, disp, end_offset=0, writebuf_off, start_off;
+@@ -289,9 +289,9 @@ void ADIOI_NFS_WriteStrided(ADIO_File fd, const void *buf, int count,
+ 	return;
+     }
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(datatype, &buftype_size);
+-    MPI_Type_extent(datatype, &buftype_extent);
++    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
+     etype_size = fd->etype_size;
+ 
+     bufsize = buftype_size * count;
+diff --git a/ompi/mca/io/romio314/romio/adio/ad_testfs/ad_testfs_seek.c b/ompi/mca/io/romio314/romio/adio/ad_testfs/ad_testfs_seek.c
+index a6bca98..56d1043 100644
+--- a/ompi/mca/io/romio314/romio/adio/ad_testfs/ad_testfs_seek.c
++++ b/ompi/mca/io/romio314/romio/adio/ad_testfs/ad_testfs_seek.c
+@@ -30,7 +30,7 @@ ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
+     int size_in_filetype;
+     int filetype_is_contig;
+     MPI_Count filetype_size;
+-    MPI_Aint etype_size, filetype_extent;
++    MPI_Aint etype_size, filetype_extent, lb;
+ 
+     *error_code = MPI_SUCCESS;
+ 
+@@ -47,7 +47,7 @@ ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
+         flat_file = ADIOI_Flatlist;
+         while (flat_file->type != fd->filetype) flat_file = flat_file->next;
+ 
+-	MPI_Type_extent(fd->filetype, &filetype_extent);
++	MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+ 	MPI_Type_size_x(fd->filetype, &filetype_size);
+ 	if ( ! filetype_size ) {
+ 	    *error_code = MPI_SUCCESS;
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_aggregate_new.c b/ompi/mca/io/romio314/romio/adio/common/ad_aggregate_new.c
+index a01a41c..59fee5b 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_aggregate_new.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_aggregate_new.c
+@@ -237,18 +237,18 @@ void ADIOI_Calc_file_realms_fsize (ADIO_File fd, int nprocs_for_coll,
+ void ADIOI_Create_fr_simpletype (int size, int nprocs_for_coll,
+ 			      MPI_Datatype *simpletype)
+ {
+-    int count=2, blocklens[2];
+-    MPI_Aint indices[2];
+-    MPI_Datatype old_types[2];
++    int count=1, blocklens[1];
++    MPI_Aint indices[1];
++    MPI_Datatype old_types[1];
++    MPI_Datatype inttype;
+ 
+     blocklens[0] = size;
+-    blocklens[1] = 1;
+     indices[0]   = 0;
+-    indices[1]   = size*nprocs_for_coll;
+     old_types[0] = MPI_BYTE;
+-    old_types[1] = MPI_UB;
+ 
+-    MPI_Type_struct (count, blocklens, indices, old_types, simpletype);
++    MPI_Type_create_struct (count, blocklens, indices, old_types, &inttype);
++    MPI_Type_create_resized (inttype, 0, size*nprocs_for_coll, simpletype);
++    MPI_Type_free (&inttype);
+ 
+     MPI_Type_commit (simpletype);
+ }
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_coll_build_req_new.c b/ompi/mca/io/romio314/romio/adio/common/ad_coll_build_req_new.c
+index a9be23c..2b6f29e 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_coll_build_req_new.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_coll_build_req_new.c
+@@ -279,7 +279,7 @@ static inline int get_next_fr_off(ADIO_File fd,
+ 				  ADIO_Offset *fr_next_off_p,
+ 				  ADIO_Offset *fr_max_len_p)
+ {
+-    MPI_Aint fr_extent = -1;
++    MPI_Aint fr_extent = -1, lb;
+     ADIO_Offset tmp_off, off_rem;
+     ADIOI_Flatlist_node *fr_node_p = ADIOI_Flatlist;
+     int i = -1, fr_dtype_ct = 0;
+@@ -299,7 +299,7 @@ static inline int get_next_fr_off(ADIO_File fd,
+ 
+     /* Calculate how many times to loop through the fr_type
+      * and where the next fr_off is. */
+-    MPI_Type_extent(*fr_type_p, &fr_extent);
++    MPI_Type_get_extent(*fr_type_p, &lb, &fr_extent);
+     tmp_off = off - fr_st_off;
+     fr_dtype_ct = tmp_off / fr_extent;
+     off_rem = tmp_off % fr_extent;
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_coll_exch_new.c b/ompi/mca/io/romio314/romio/adio/common/ad_coll_exch_new.c
+index abe7d74..1815616 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_coll_exch_new.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_coll_exch_new.c
+@@ -127,7 +127,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
+     MPI_Request *send_req_arr = NULL, *recv_req_arr = NULL;
+     MPI_Status *statuses = NULL;
+     ADIO_Offset disp_off_sz_ext_typesz[6];
+-    MPI_Aint memtype_extent, filetype_extent;
++    MPI_Aint memtype_extent, filetype_extent, lb;
+     int ret = -1;
+ 
+     /* parameters for datatypes */
+@@ -143,7 +143,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
+      * freed in the close and should have been flattened in the file
+      * view. */
+     MPI_Type_size_x(datatype, &memtype_sz);
+-    MPI_Type_extent(datatype, &memtype_extent);
++    MPI_Type_get_extent(datatype, &lb, &memtype_extent);
+     if (memtype_sz == memtype_extent) {
+ 	memtype_is_contig = 1;
+ 	flat_mem_p = ADIOI_Add_contig_flattened(datatype);
+@@ -156,7 +156,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
+             flat_mem_p = flat_mem_p->next;
+     }
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(fd->filetype, &filetype_sz);
+     if (filetype_extent == filetype_sz) {
+ 	flat_file_p = ADIOI_Add_contig_flattened(fd->filetype);
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_darray.c b/ompi/mca/io/romio314/romio/adio/common/ad_darray.c
+index 0437db8..cb1407b 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_darray.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_darray.c
+@@ -24,11 +24,11 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
+ 			    int order, MPI_Datatype oldtype,
+ 			    MPI_Datatype *newtype)
+ {
+-    MPI_Datatype type_old, type_new=MPI_DATATYPE_NULL, types[3];
+-    int procs, tmp_rank, i, tmp_size, blklens[3], *coords;
+-    MPI_Aint *st_offsets, orig_extent, disps[3];
++    MPI_Datatype type_old, type_new=MPI_DATATYPE_NULL, inttype;
++    int procs, tmp_rank, i, tmp_size, blklen, *coords;
++    MPI_Aint *st_offsets, orig_extent, disp, ub, lb;
+ 
+-    MPI_Type_extent(oldtype, &orig_extent);
++    MPI_Type_get_extent(oldtype, &lb, &orig_extent);
+ 
+ /* calculate position in Cartesian grid as MPI would (row-major
+    ordering) */
+@@ -77,11 +77,11 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
+ 	}
+ 
+ 	/* add displacement and UB */
+-	disps[1] = st_offsets[0];
++	disp = st_offsets[0];
+ 	tmp_size = 1;
+ 	for (i=1; i<ndims; i++) {
+ 	    tmp_size *= array_of_gsizes[i-1];
+-	    disps[1] += (MPI_Aint)tmp_size*st_offsets[i];
++	    disp += (MPI_Aint)tmp_size*st_offsets[i];
+ 	}
+         /* rest done below for both Fortran and C order */
+     }
+@@ -115,26 +115,24 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
+ 	}
+ 
+ 	/* add displacement and UB */
+-	disps[1] = st_offsets[ndims-1];
++	disp = st_offsets[ndims-1];
+ 	tmp_size = 1;
+ 	for (i=ndims-2; i>=0; i--) {
+ 	    tmp_size *= array_of_gsizes[i+1];
+-	    disps[1] += (MPI_Aint)tmp_size*st_offsets[i];
++	    disp += (MPI_Aint)tmp_size*st_offsets[i];
+ 	}
+     }
+ 
+-    disps[1] *= orig_extent;
++    disp *= orig_extent;
+ 
+-    disps[2] = orig_extent;
+-    for (i=0; i<ndims; i++) disps[2] *= (MPI_Aint)array_of_gsizes[i];
++    ub = orig_extent;
++    for (i=0; i<ndims; i++) ub *= (MPI_Aint)array_of_gsizes[i];
+ 
+-    disps[0] = 0;
+-    blklens[0] = blklens[1] = blklens[2] = 1;
+-    types[0] = MPI_LB;
+-    types[1] = type_new;
+-    types[2] = MPI_UB;
++    blklen = 1;
+ 
+-    MPI_Type_struct(3, blklens, disps, types, newtype);
++    MPI_Type_create_struct(1, &blklen, &disp, &type_new, &inttype);
++    MPI_Type_create_resized (inttype, 0, ub, newtype);
++    MPI_Type_free (&inttype);
+ 
+     MPI_Type_free(&type_new);
+     ADIOI_Free(st_offsets);
+@@ -184,7 +182,7 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
+ 	    MPI_Type_contiguous(mysize, type_old, type_new);
+ 	else {
+ 	    for (i=0; i<dim; i++) stride *= (MPI_Aint)array_of_gsizes[i];
+-	    MPI_Type_hvector(mysize, 1, stride, type_old, type_new);
++	    MPI_Type_create_hvector(mysize, 1, stride, type_old, type_new);
+ 	}
+     }
+     else {
+@@ -192,7 +190,7 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
+ 	    MPI_Type_contiguous(mysize, type_old, type_new);
+ 	else {
+ 	    for (i=ndims-1; i>dim; i--) stride *= (MPI_Aint)array_of_gsizes[i];
+-	    MPI_Type_hvector(mysize, 1, stride, type_old, type_new);
++	    MPI_Type_create_hvector(mysize, 1, stride, type_old, type_new);
+ 	}
+ 
+     }
+@@ -217,7 +215,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
+    rank = coordinate of this process in dimension dim */
+     int blksize, i, blklens[3], st_index, end_index, local_size, rem, count;
+     MPI_Aint stride, disps[3];
+-    MPI_Datatype type_tmp, types[3];
++    MPI_Datatype type_tmp, type_tmp1, types[3];
+ 
+     if (darg == MPI_DISTRIBUTE_DFLT_DARG) blksize = 1;
+     else blksize = darg;
+@@ -246,7 +244,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
+ 	for (i=0; i<dim; i++) stride *= (MPI_Aint)array_of_gsizes[i];
+     else for (i=ndims-1; i>dim; i--) stride *= (MPI_Aint)array_of_gsizes[i];
+ 
+-    MPI_Type_hvector(count, blksize, stride, type_old, type_new);
++    MPI_Type_create_hvector(count, blksize, stride, type_old, type_new);
+ 
+     if (rem) {
+ 	/* if the last block is of size less than blksize, include
+@@ -259,7 +257,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
+ 	blklens[0] = 1;
+ 	blklens[1] = rem;
+ 
+-	MPI_Type_struct(2, blklens, disps, types, &type_tmp);
++	MPI_Type_create_struct(2, blklens, disps, types, &type_tmp);
+ 
+ 	MPI_Type_free(type_new);
+ 	*type_new = type_tmp;
+@@ -269,14 +267,12 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
+        dimension correctly. */
+     if ( ((order == MPI_ORDER_FORTRAN) && (dim == 0)) ||
+          ((order == MPI_ORDER_C) && (dim == ndims-1)) ) {
+-        types[0] = MPI_LB;
+-        disps[0] = 0;
+-        types[1] = *type_new;
+-        disps[1] = (MPI_Aint)rank * (MPI_Aint)blksize * orig_extent;
+-        types[2] = MPI_UB;
+-        disps[2] = orig_extent * (MPI_Aint)array_of_gsizes[dim];
+-        blklens[0] = blklens[1] = blklens[2] = 1;
+-        MPI_Type_struct(3, blklens, disps, types, &type_tmp);
++        types[0] = *type_new;
++        disps[0] = (MPI_Aint)rank * (MPI_Aint)blksize * orig_extent;
++        blklens[0] = 1;
++        MPI_Type_create_struct(1, blklens, disps, types, &type_tmp1);
++        MPI_Type_create_resized (type_tmp1, 0, orig_extent * (MPI_Aint)array_of_gsizes[dim], &type_tmp);
++        MPI_Type_free(&type_tmp1);
+         MPI_Type_free(type_new);
+         *type_new = type_tmp;
+ 
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_end.c b/ompi/mca/io/romio314/romio/adio/common/ad_end.c
+index 00725f5..b534e0c 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_end.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_end.c
+@@ -72,13 +72,13 @@ int ADIOI_End_call(MPI_Comm comm, int keyval, void *attribute_val, void
+     ADIOI_UNREFERENCED_ARG(attribute_val);
+     ADIOI_UNREFERENCED_ARG(extra_state);
+ 
+-    MPI_Keyval_free(&keyval);
++    MPI_Comm_free_keyval (&keyval);
+ 
+     /* The end call will be called after all possible uses of this keyval, even
+      * if a file was opened with MPI_COMM_SELF.  Note, this assumes LIFO
+      * MPI_COMM_SELF attribute destruction behavior mandated by MPI-2.2. */
+     if (ADIOI_cb_config_list_keyval != MPI_KEYVAL_INVALID)
+-        MPI_Keyval_free(&ADIOI_cb_config_list_keyval);
++        MPI_Comm_free_keyval (&ADIOI_cb_config_list_keyval);
+ 
+     ADIO_End(&error_code);
+     return error_code;
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_io_coll.c b/ompi/mca/io/romio314/romio/adio/common/ad_io_coll.c
+index 22b2da4..1f2573e 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_io_coll.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_io_coll.c
+@@ -54,7 +54,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
+     int interleave_count = 0, i, nprocs, myrank, nprocs_for_coll;
+     int cb_enable;
+     ADIO_Offset bufsize;
+-    MPI_Aint extent;
++    MPI_Aint extent, lb;
+ #ifdef DEBUG2
+     MPI_Aint bufextent;
+ #endif
+@@ -191,7 +191,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
+ 	return;
+     }
+ 
+-    MPI_Type_extent(datatype, &extent);
++    MPI_Type_get_extent(datatype, &lb, &extent);
+ #ifdef DEBUG2
+     bufextent = extent * count;
+ #endif
+@@ -702,7 +702,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
+ {
+     MPI_Count filetype_size, buftype_size, etype_size;
+     int sum;
+-    MPI_Aint filetype_extent;
++    MPI_Aint filetype_extent, lb;
+     ADIO_Offset total_io;
+     int filetype_is_contig;
+     ADIO_Offset i, remainder;
+@@ -726,7 +726,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
+     ADIOI_Datatype_iscontig (fd->filetype, &filetype_is_contig);
+ 
+     MPI_Type_size_x (fd->filetype, &filetype_size);
+-    MPI_Type_extent (fd->filetype, &filetype_extent);
++    MPI_Type_get_extent (fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x (fd->etype, &etype_size);
+     MPI_Type_size_x (buftype, &buftype_size);
+ 
+@@ -884,7 +884,7 @@ void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
+     int user_ind_rd_buffer_size;
+     int f_is_contig, m_is_contig;
+     int user_ds_read, user_ds_write;
+-    MPI_Aint f_extent;
++    MPI_Aint f_extent, lb;
+     MPI_Count f_size;
+     int f_ds_percent; /* size/extent */
+ 
+@@ -894,7 +894,7 @@ void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
+     else
+ 	MPE_Log_event(5008, 0, NULL);
+ #endif
+-    MPI_Type_extent(custom_ftype, &f_extent);
++    MPI_Type_get_extent(custom_ftype, &lb, &f_extent);
+     MPI_Type_size_x(custom_ftype, &f_size);
+     f_ds_percent = 100 * f_size / f_extent;
+ 
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_read_coll.c b/ompi/mca/io/romio314/romio/adio/common/ad_read_coll.c
+index 60b409d..ea76f45 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_read_coll.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_read_coll.c
+@@ -307,8 +307,7 @@ void ADIOI_Calc_my_off_len(ADIO_File fd, int bufcount, MPI_Datatype
+     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
+ 
+     MPI_Type_size_x(fd->filetype, &filetype_size);
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
+-    MPI_Type_lb(fd->filetype, &filetype_lb);
++    MPI_Type_get_extent(fd->filetype, &filetype_lb, &filetype_extent);
+     MPI_Type_size_x(datatype, &buftype_size);
+     etype_size = fd->etype_size;
+ 
+@@ -524,7 +523,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
+     int req_len, flag, rank;
+     MPI_Status status;
+     ADIOI_Flatlist_node *flat_buf=NULL;
+-    MPI_Aint buftype_extent;
++    MPI_Aint buftype_extent, lb;
+     int coll_bufsize;
+ 
+     *error_code = MPI_SUCCESS;  /* changed below if error */
+@@ -605,7 +604,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
+ 	flat_buf = ADIOI_Flatlist;
+         while (flat_buf->type != datatype) flat_buf = flat_buf->next;
+     }
+-    MPI_Type_extent(datatype, &buftype_extent);
++    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
+ 
+     done = 0;
+     off = st_loc;
+@@ -685,7 +684,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
+ 		    if (req_off < real_off + real_size) {
+ 			count[i]++;
+       ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)read_buf)+req_off-real_off) == (ADIO_Offset)(MPIR_Upint)(read_buf+req_off-real_off));
+-			MPI_Address(read_buf+req_off-real_off,
++			MPI_Get_address(read_buf+req_off-real_off,
+                                &(others_req[i].mem_ptrs[j]));
+       ADIOI_Assert((real_off + real_size - req_off) == (int)(real_off + real_size - req_off));
+ 			send_size[i] += (int)(ADIOI_MIN(real_off + real_size - req_off,
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_read_str.c b/ompi/mca/io/romio314/romio/adio/common/ad_read_str.c
+index dc2ea71..bad948a 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_read_str.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_read_str.c
+@@ -56,7 +56,7 @@ void ADIOI_GEN_ReadStrided(ADIO_File fd, void *buf, int count,
+     ADIO_Offset n_filetypes, etype_in_filetype, st_n_filetypes, size_in_filetype;
+     ADIO_Offset abs_off_in_filetype=0, new_frd_size, frd_size=0, st_frd_size;
+     MPI_Count filetype_size, etype_size, buftype_size, partial_read;
+-    MPI_Aint filetype_extent, buftype_extent;
++    MPI_Aint filetype_extent, buftype_extent, lb;
+     int buf_count, buftype_is_contig, filetype_is_contig;
+     ADIO_Offset userbuf_off, req_len, sum;
+     ADIO_Offset off, req_off, disp, end_offset=0, readbuf_off, start_off;
+@@ -94,9 +94,9 @@ void ADIOI_GEN_ReadStrided(ADIO_File fd, void *buf, int count,
+ 	return;
+     }
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(datatype, &buftype_size);
+-    MPI_Type_extent(datatype, &buftype_extent);
++    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
+     etype_size = fd->etype_size;
+ 
+     ADIOI_Assert((buftype_size * count) == ((ADIO_Offset)(MPI_Count)buftype_size * (ADIO_Offset)count));
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_read_str_naive.c b/ompi/mca/io/romio314/romio/adio/common/ad_read_str_naive.c
+index 6ecebda..cb57489 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_read_str_naive.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_read_str_naive.c
+@@ -23,7 +23,7 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
+     ADIO_Offset abs_off_in_filetype=0;
+     MPI_Count bufsize, filetype_size, buftype_size, size_in_filetype;
+     ADIO_Offset etype_size;
+-    MPI_Aint filetype_extent, buftype_extent;
++    MPI_Aint filetype_extent, buftype_extent, lb;
+     int buf_count, buftype_is_contig, filetype_is_contig;
+     ADIO_Offset userbuf_off;
+     ADIO_Offset off, req_off, disp, end_offset=0, start_off;
+@@ -43,9 +43,9 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
+ 	return;
+     }
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(buftype, &buftype_size);
+-    MPI_Type_extent(buftype, &buftype_extent);
++    MPI_Type_get_extent(buftype, &lb, &buftype_extent);
+     etype_size = fd->etype_size;
+ 
+     ADIOI_Assert((buftype_size * count) == ((ADIO_Offset)buftype_size * (ADIO_Offset)count));
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_seek.c b/ompi/mca/io/romio314/romio/adio/common/ad_seek.c
+index b987fe6..9a992dd 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_seek.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_seek.c
+@@ -28,7 +28,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
+     ADIO_Offset size_in_filetype, sum;
+     MPI_Count filetype_size, etype_size;
+     int filetype_is_contig;
+-    MPI_Aint filetype_extent;
++    MPI_Aint filetype_extent, lb;
+ 
+     ADIOI_UNREFERENCED_ARG(whence);
+ 
+@@ -40,7 +40,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
+         flat_file = ADIOI_Flatlist;
+         while (flat_file->type != fd->filetype) flat_file = flat_file->next;
+ 
+-	MPI_Type_extent(fd->filetype, &filetype_extent);
++	MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+ 	MPI_Type_size_x(fd->filetype, &filetype_size);
+ 	if ( ! filetype_size ) {
+ 	    /* Since offset relative to the filetype size, we can't
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_subarray.c b/ompi/mca/io/romio314/romio/adio/common/ad_subarray.c
+index e7984ac..6ae7015 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_subarray.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_subarray.c
+@@ -16,11 +16,11 @@ int ADIO_Type_create_subarray(int ndims,
+ 			      MPI_Datatype oldtype,
+ 			      MPI_Datatype *newtype)
+ {
+-    MPI_Aint extent, disps[3], size;
+-    int i, blklens[3];
+-    MPI_Datatype tmp1, tmp2, types[3];
++    MPI_Aint extent, disp, size, lb, ub;
++    int i, blklen;
++    MPI_Datatype tmp1, tmp2, inttype;
+ 
+-    MPI_Type_extent(oldtype, &extent);
++    MPI_Type_get_extent(oldtype, &lb, &extent);
+ 
+     if (order == MPI_ORDER_FORTRAN) {
+ 	/* dimension 0 changes fastest */
+@@ -35,18 +35,18 @@ int ADIO_Type_create_subarray(int ndims,
+ 	    size = (MPI_Aint)array_of_sizes[0]*extent;
+ 	    for (i=2; i<ndims; i++) {
+ 		size *= (MPI_Aint)array_of_sizes[i-1];
+-		MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
++		MPI_Type_create_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+ 		MPI_Type_free(&tmp1);
+ 		tmp1 = tmp2;
+ 	    }
+ 	}
+ 
+ 	/* add displacement and UB */
+-	disps[1] = array_of_starts[0];
++	disp = array_of_starts[0];
+ 	size = 1;
+ 	for (i=1; i<ndims; i++) {
+ 	    size *= (MPI_Aint)array_of_sizes[i-1];
+-	    disps[1] += size*(MPI_Aint)array_of_starts[i];
++	    disp += size*(MPI_Aint)array_of_starts[i];
+ 	}
+         /* rest done below for both Fortran and C order */
+     }
+@@ -64,33 +64,31 @@ int ADIO_Type_create_subarray(int ndims,
+ 	    size = (MPI_Aint)array_of_sizes[ndims-1]*extent;
+ 	    for (i=ndims-3; i>=0; i--) {
+ 		size *= (MPI_Aint)array_of_sizes[i+1];
+-		MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
++		MPI_Type_create_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+ 		MPI_Type_free(&tmp1);
+ 		tmp1 = tmp2;
+ 	    }
+ 	}
+ 
+ 	/* add displacement and UB */
+-	disps[1] = array_of_starts[ndims-1];
++	disp = array_of_starts[ndims-1];
+ 	size = 1;
+ 	for (i=ndims-2; i>=0; i--) {
+ 	    size *= (MPI_Aint)array_of_sizes[i+1];
+-	    disps[1] += size*(MPI_Aint)array_of_starts[i];
++	    disp += size*(MPI_Aint)array_of_starts[i];
+ 	}
+     }
+ 
+-    disps[1] *= extent;
++    disp *= extent;
+ 
+-    disps[2] = extent;
+-    for (i=0; i<ndims; i++) disps[2] *= (MPI_Aint)array_of_sizes[i];
++    ub = extent;
++    for (i=0; i<ndims; i++) ub *= (MPI_Aint)array_of_sizes[i];
+ 
+-    disps[0] = 0;
+-    blklens[0] = blklens[1] = blklens[2] = 1;
+-    types[0] = MPI_LB;
+-    types[1] = tmp1;
+-    types[2] = MPI_UB;
++    blklen = 1;
+ 
+-    MPI_Type_struct(3, blklens, disps, types, newtype);
++    MPI_Type_create_struct(1, &blklen, &disp, &tmp1, &inttype);
++    MPI_Type_create_resized (inttype, 0, ub, newtype);
++    MPI_Type_free(&inttype);
+ 
+     MPI_Type_free(&tmp1);
+ 
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_write_coll.c b/ompi/mca/io/romio314/romio/adio/common/ad_write_coll.c
+index 266f97d..f14342e 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_write_coll.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_write_coll.c
+@@ -321,7 +321,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
+     int *send_buf_idx, *curr_to_proc, *done_to_proc;
+     MPI_Status status;
+     ADIOI_Flatlist_node *flat_buf=NULL;
+-    MPI_Aint buftype_extent;
++    MPI_Aint buftype_extent, lb;
+     int info_flag, coll_bufsize;
+     char *value;
+     static char myname[] = "ADIOI_EXCH_AND_WRITE";
+@@ -406,7 +406,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
+ 	flat_buf = ADIOI_Flatlist;
+         while (flat_buf->type != datatype) flat_buf = flat_buf->next;
+     }
+-    MPI_Type_extent(datatype, &buftype_extent);
++    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
+ 
+ 
+ /* I need to check if there are any outstanding nonblocking writes to
+@@ -468,7 +468,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
+ 		    if (req_off < off + size) {
+ 			count[i]++;
+       ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)write_buf)+req_off-off) == (ADIO_Offset)(MPIR_Upint)(write_buf+req_off-off));
+-			MPI_Address(write_buf+req_off-off,
++			MPI_Get_address(write_buf+req_off-off,
+                                &(others_req[i].mem_ptrs[j]));
+       ADIOI_Assert((off + size - req_off) == (int)(off + size - req_off));
+ 			recv_size[i] += (int)(ADIOI_MIN(off + size - req_off,
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_write_nolock.c b/ompi/mca/io/romio314/romio/adio/common/ad_write_nolock.c
+index 42b5ff2..e3371a7 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_write_nolock.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_write_nolock.c
+@@ -35,7 +35,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
+     ADIO_Offset n_filetypes, etype_in_filetype, size, sum;
+     ADIO_Offset abs_off_in_filetype=0, size_in_filetype;
+     MPI_Count filetype_size, etype_size, buftype_size;
+-    MPI_Aint filetype_extent, buftype_extent, indx;
++    MPI_Aint filetype_extent, buftype_extent, indx, lb;
+     int buf_count, buftype_is_contig, filetype_is_contig;
+     ADIO_Offset off, disp;
+     int flag, err_flag=0;
+@@ -71,9 +71,9 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
+     MPI_Comm_size(fd->comm, &nprocs);
+ #endif
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(datatype, &buftype_size);
+-    MPI_Type_extent(datatype, &buftype_extent);
++    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
+     etype_size = fd->etype_size;
+ 
+     ADIOI_Assert((buftype_size * count) == ((ADIO_Offset)(unsigned)buftype_size * (ADIO_Offset)count));
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_write_str.c b/ompi/mca/io/romio314/romio/adio/common/ad_write_str.c
+index 624aeb1..9e4d7f7 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_write_str.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_write_str.c
+@@ -122,7 +122,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
+     ADIO_Offset num, size, n_filetypes, etype_in_filetype, st_n_filetypes;
+     ADIO_Offset n_etypes_in_filetype, abs_off_in_filetype=0;
+     MPI_Count filetype_size, etype_size, buftype_size;
+-    MPI_Aint filetype_extent, buftype_extent;
++    MPI_Aint filetype_extent, buftype_extent, lb;
+     int buf_count, buftype_is_contig, filetype_is_contig;
+     ADIO_Offset userbuf_off;
+     ADIO_Offset off, req_off, disp, end_offset=0, writebuf_off, start_off;
+@@ -164,9 +164,9 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
+ 	return;
+     }
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(datatype, &buftype_size);
+-    MPI_Type_extent(datatype, &buftype_extent);
++    MPI_Type_get_extent(datatype, &lb, &buftype_extent);
+     etype_size = fd->etype_size;
+ 
+     ADIOI_Assert((buftype_size * count) == ((MPI_Count)buftype_size * (ADIO_Offset)count));
+diff --git a/ompi/mca/io/romio314/romio/adio/common/ad_write_str_naive.c b/ompi/mca/io/romio314/romio/adio/common/ad_write_str_naive.c
+index 591c66f..d72f116 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/ad_write_str_naive.c
++++ b/ompi/mca/io/romio314/romio/adio/common/ad_write_str_naive.c
+@@ -24,7 +24,7 @@ void ADIOI_GEN_WriteStrided_naive(ADIO_File fd, const void *buf, int count,
+     ADIO_Offset size, n_filetypes, etype_in_filetype;
+     ADIO_Offset abs_off_in_filetype=0, req_len;
+     MPI_Count filetype_size, etype_size, buftype_size;
+-    MPI_Aint filetype_extent, buftype_extent;
++    MPI_Aint filetype_extent, buftype_extent, lb;
+     int buf_count, buftype_is_contig, filetype_is_contig;
+     ADIO_Offset userbuf_off;
+     ADIO_Offset off, req_off, disp, end_offset=0, start_off;
+@@ -44,9 +44,9 @@ void ADIOI_GEN_WriteStrided_naive(ADIO_File fd, const void *buf, int count,
+ 	return;
+     }
+ 
+-    MPI_Type_extent(fd->filetype, &filetype_extent);
++    MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+     MPI_Type_size_x(buftype, &buftype_size);
+-    MPI_Type_extent(buftype, &buftype_extent);
++    MPI_Type_get_extent(buftype, &lb, &buftype_extent);
+     etype_size = fd->etype_size;
+ 
+     ADIOI_Assert((buftype_size * count) == ((ADIO_Offset)(unsigned)buftype_size * (ADIO_Offset)count));
+diff --git a/ompi/mca/io/romio314/romio/adio/common/byte_offset.c b/ompi/mca/io/romio314/romio/adio/common/byte_offset.c
+index b7350f1..66f83ed 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/byte_offset.c
++++ b/ompi/mca/io/romio314/romio/adio/common/byte_offset.c
+@@ -18,7 +18,7 @@ void ADIOI_Get_byte_offset(ADIO_File fd, ADIO_Offset offset, ADIO_Offset *disp)
+     ADIO_Offset n_filetypes, etype_in_filetype, sum, abs_off_in_filetype=0, size_in_filetype;
+     MPI_Count n_etypes_in_filetype, filetype_size, etype_size;
+     int filetype_is_contig;
+-    MPI_Aint filetype_extent;
++    MPI_Aint filetype_extent, lb;
+ 
+     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
+     etype_size = fd->etype_size;
+@@ -46,7 +46,7 @@ void ADIOI_Get_byte_offset(ADIO_File fd, ADIO_Offset offset, ADIO_Offset *disp)
+ 	}
+ 
+ 	/* abs. offset in bytes in the file */
+-	MPI_Type_extent(fd->filetype, &filetype_extent);
++	MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+ 	*disp = fd->disp + n_filetypes * ADIOI_AINT_CAST_TO_OFFSET filetype_extent + abs_off_in_filetype;
+     }
+ }
+diff --git a/ompi/mca/io/romio314/romio/adio/common/cb_config_list.c b/ompi/mca/io/romio314/romio/adio/common/cb_config_list.c
+index 468105c..718205b 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/cb_config_list.c
++++ b/ompi/mca/io/romio314/romio/adio/common/cb_config_list.c
+@@ -135,12 +135,12 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
+ 
+     if (ADIOI_cb_config_list_keyval == MPI_KEYVAL_INVALID) {
+         /* cleaned up by ADIOI_End_call */
+-	MPI_Keyval_create((MPI_Copy_function *) ADIOI_cb_copy_name_array,
++	MPI_Comm_create_keyval((MPI_Copy_function *) ADIOI_cb_copy_name_array,
+ 			  (MPI_Delete_function *) ADIOI_cb_delete_name_array,
+ 			  &ADIOI_cb_config_list_keyval, NULL);
+     }
+     else {
+-	MPI_Attr_get(comm, ADIOI_cb_config_list_keyval, (void *) &array, &found);
++	MPI_Comm_get_attr(comm, ADIOI_cb_config_list_keyval, (void *) &array, &found);
+         if (found) {
+             ADIOI_Assert(array != NULL);
+ 	    *arrayp = array;
+@@ -255,8 +255,8 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
+      * it next time an open is performed on this same comm, and on the
+      * dupcomm, so we can use it in I/O operations.
+      */
+-    MPI_Attr_put(comm, ADIOI_cb_config_list_keyval, array);
+-    MPI_Attr_put(dupcomm, ADIOI_cb_config_list_keyval, array);
++    MPI_Comm_set_attr (comm, ADIOI_cb_config_list_keyval, array);
++    MPI_Comm_set_attr (dupcomm, ADIOI_cb_config_list_keyval, array);
+     *arrayp = array;
+     return 0;
+ }
+diff --git a/ompi/mca/io/romio314/romio/adio/common/eof_offset.c b/ompi/mca/io/romio314/romio/adio/common/eof_offset.c
+index 7247463..c503eaf 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/eof_offset.c
++++ b/ompi/mca/io/romio314/romio/adio/common/eof_offset.c
+@@ -18,7 +18,7 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
+     ADIO_Offset fsize, disp, sum=0, size_in_file, n_filetypes, rem, etype_size;
+     int flag, i;
+     ADIO_Fcntl_t *fcntl_struct;
+-    MPI_Aint filetype_extent;
++    MPI_Aint filetype_extent, lb;
+     ADIOI_Flatlist_node *flat_file;
+ 
+     /* find the eof in bytes */
+@@ -45,7 +45,7 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
+ 	    flat_file = flat_file->next;
+ 
+ 	MPI_Type_size_x(fd->filetype, &filetype_size);
+-	MPI_Type_extent(fd->filetype, &filetype_extent);
++	MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+ 
+ 	disp = fd->disp;
+ 	n_filetypes = -1;
+diff --git a/ompi/mca/io/romio314/romio/adio/common/flatten.c b/ompi/mca/io/romio314/romio/adio/common/flatten.c
+index 1b6ff95..89da527 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/flatten.c
++++ b/ompi/mca/io/romio314/romio/adio/common/flatten.c
+@@ -198,7 +198,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+          avoid >2G integer arithmetic problems */
+     ADIO_Offset top_count;
+     MPI_Count j, old_size, prev_index, num;
+-    MPI_Aint old_extent;/* Assume extents are non-negative */
++    MPI_Aint old_extent, lb;/* Assume extents are non-negative */
+     int *ints;
+     MPI_Aint *adds; /* Make no assumptions about +/- sign on these */
+     MPI_Datatype *types;
+@@ -331,7 +331,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+ 	    num = *curr_index - prev_index;
+ 
+ /* The noncontiguous types have to be replicated count times */
+-	    MPI_Type_extent(types[0], &old_extent);
++	    MPI_Type_get_extent(types[0], &lb, &old_extent);
+ 	    for (m=1; m<top_count; m++) {
+ 		for (i=0; i<num; i++) {
+ 		    flat->indices[j] = flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
+@@ -385,7 +385,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+ 
+ /* The noncontiguous types have to be replicated blocklen times
+    and then strided. Replicate the first one. */
+-	    MPI_Type_extent(types[0], &old_extent);
++	    MPI_Type_get_extent(types[0], &lb, &old_extent);
+ 	    for (m=1; m<blocklength; m++) {
+ 		for (i=0; i<num; i++) {
+ 		    flat->indices[j] = flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
+@@ -448,7 +448,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+ 
+ /* The noncontiguous types have to be replicated blocklen times
+    and then strided. Replicate the first one. */
+-	    MPI_Type_extent(types[0], &old_extent);
++	    MPI_Type_get_extent(types[0], &lb, &old_extent);
+ 	    for (m=1; m<blocklength; m++) {
+ 		for (i=0; i<num; i++) {
+ 		    flat->indices[j] = flat->indices[j-num] + ADIOI_AINT_CAST_TO_OFFSET old_extent;
+@@ -479,7 +479,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+         ADIOI_Type_get_envelope(types[0], &old_nints, &old_nadds,
+ 			      &old_ntypes, &old_combiner);
+         ADIOI_Datatype_iscontig(types[0], &old_is_contig);
+-	MPI_Type_extent(types[0], &old_extent);
++	MPI_Type_get_extent(types[0], &lb, &old_extent);
+ 
+ 	prev_index = *curr_index;
+ 	if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig))
+@@ -585,7 +585,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+         ADIOI_Type_get_envelope(types[0], &old_nints, &old_nadds,
+ 			      &old_ntypes, &old_combiner);
+         ADIOI_Datatype_iscontig(types[0], &old_is_contig);
+-	MPI_Type_extent(types[0], &old_extent);
++	MPI_Type_get_extent(types[0], &lb, &old_extent);
+ 
+ 	prev_index = *curr_index;
+ 	if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig))
+@@ -633,7 +633,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+ 		    if (is_hindexed_block) {
+ 			/* this is the one place the hindexed case uses the
+ 			 * extent of a type */
+-			MPI_Type_extent(types[0], &old_extent);
++			MPI_Type_get_extent(types[0], &lb, &old_extent);
+ 		    }
+ 		    flat->indices[j] = flat->indices[j-num] +
+ 			ADIOI_AINT_CAST_TO_OFFSET old_extent;
+@@ -708,7 +708,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+ 
+ /* The noncontiguous types have to be replicated blocklens[i] times
+    and then strided. Replicate the first one. */
+-	    MPI_Type_extent(types[0], &old_extent);
++	    MPI_Type_get_extent(types[0], &lb, &old_extent);
+ 	    for (m=1; m<ints[1]; m++) {
+ 		for (i=0, nonzeroth=j; i<num; i++) {
+ 		    if (flat->blocklens[j-num] > 0) {
+@@ -775,7 +775,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+ /* simplest case, current type is basic or contiguous types */
+         /* By using ADIO_Offset we preserve +/- sign and
+            avoid >2G integer arithmetic problems */
+-		if (ints[1+n] > 0 || types[n] == MPI_LB || types[n] == MPI_UB) {
++		if (ints[1+n] > 0) {
+ 		    ADIO_Offset blocklength = ints[1+n];
+ 		    j = *curr_index;
+ 		    flat->indices[j] = st_offset + adds[n];
+@@ -794,7 +794,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
+ 		num = *curr_index - prev_index;
+ 
+ /* The current type has to be replicated blocklens[n] times */
+-		MPI_Type_extent(types[n], &old_extent);
++		MPI_Type_get_extent(types[n], &lb, &old_extent);
+ 		for (m=1; m<ints[1+n]; m++) {
+ 		    for (i=0; i<num; i++) {
+ 			flat->indices[j] =
+diff --git a/ompi/mca/io/romio314/romio/adio/common/get_fp_posn.c b/ompi/mca/io/romio314/romio/adio/common/get_fp_posn.c
+index eb176b8..785b662 100644
+--- a/ompi/mca/io/romio314/romio/adio/common/get_fp_posn.c
++++ b/ompi/mca/io/romio314/romio/adio/common/get_fp_posn.c
+@@ -18,7 +18,7 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset)
+     int i, flag;
+     MPI_Count filetype_size, etype_size;
+     int filetype_is_contig;
+-    MPI_Aint filetype_extent;
++    MPI_Aint filetype_extent, lb;
+     ADIO_Offset disp, byte_offset, sum=0, size_in_file, n_filetypes, frd_size;
+ 
+     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
+@@ -31,7 +31,7 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset)
+         while (flat_file->type != fd->filetype) flat_file = flat_file->next;
+ 
+ 	MPI_Type_size_x(fd->filetype, &filetype_size);
+-	MPI_Type_extent(fd->filetype, &filetype_extent);
++	MPI_Type_get_extent(fd->filetype, &lb, &filetype_extent);
+ 
+ 	disp = fd->disp;
+ 	byte_offset = fd->fp_ind;
+diff --git a/ompi/mca/io/romio314/romio/adio/include/mpipr.h b/ompi/mca/io/romio314/romio/adio/include/mpipr.h
+index 21f208e..bfe8b5e 100644
+--- a/ompi/mca/io/romio314/romio/adio/include/mpipr.h
++++ b/ompi/mca/io/romio314/romio/adio/include/mpipr.h
+@@ -12,8 +12,6 @@
+ 
+ #undef MPI_Abort
+ #define MPI_Abort PMPI_Abort
+-#undef MPI_Address
+-#define MPI_Address PMPI_Address
+ #undef MPI_Allgather
+ #define MPI_Allgather PMPI_Allgather
+ #undef MPI_Allgatherv
+@@ -30,8 +28,6 @@
+ #define MPI_Attr_delete PMPI_Attr_delete
+ #undef MPI_Attr_get
+ #define MPI_Attr_get PMPI_Attr_get
+-#undef MPI_Attr_put
+-#define MPI_Attr_put PMPI_Attr_put
+ #undef MPI_Barrier
+ #define MPI_Barrier PMPI_Barrier
+ #undef MPI_Bcast
+@@ -68,10 +64,14 @@
+ #define MPI_Comm_compare PMPI_Comm_compare
+ #undef MPI_Comm_create
+ #define MPI_Comm_create PMPI_Comm_create
++#undef MPI_Comm_create_keyval
++#define MPI_Comm_create_keyval PMPI_Comm_create_keyval
+ #undef MPI_Comm_dup
+ #define MPI_Comm_dup PMPI_Comm_dup
+ #undef MPI_Comm_free
+ #define MPI_Comm_free PMPI_Comm_free
++#undef MPI_Comm_free_keyval
++#define MPI_Comm_free_keyval PMPI_Comm_free_keyval
+ #undef MPI_Comm_group
+ #define MPI_Comm_group PMPI_Comm_group
+ #undef MPI_Comm_rank
+@@ -80,6 +80,8 @@
+ #define MPI_Comm_remote_group PMPI_Comm_remote_group
+ #undef MPI_Comm_remote_size
+ #define MPI_Comm_remote_size PMPI_Comm_remote_size
++#undef MPI_Comm_set_attr
++#define MPI_Comm_set_attr PMPI_Comm_set_attr
+ #undef MPI_Comm_size
+ #define MPI_Comm_size PMPI_Comm_size
+ #undef MPI_Comm_split
+@@ -106,6 +108,8 @@
+ #define MPI_Gather PMPI_Gather
+ #undef MPI_Gatherv
+ #define MPI_Gatherv PMPI_Gatherv
++#undef MPI_Get_address
++#define MPI_Get_address PMPI_Get_address
+ #undef MPI_Get_count
+ #define MPI_Get_count PMPI_Get_count
+ #undef MPI_Get_elements
+@@ -170,10 +174,6 @@
+ #define MPI_Isend PMPI_Isend
+ #undef MPI_Issend
+ #define MPI_Issend PMPI_Issend
+-#undef MPI_Keyval_create
+-#define MPI_Keyval_create PMPI_Keyval_create
+-#undef MPI_Keyval_free
+-#define MPI_Keyval_free PMPI_Keyval_free
+ #undef MPI_Name_get
+ #define MPI_Name_get PMPI_Name_get
+ #undef MPI_Name_put
+@@ -248,14 +248,22 @@
+ #define MPI_Type_contiguous PMPI_Type_contiguous
+ #undef MPI_Type_count
+ #define MPI_Type_count PMPI_Type_count
++#undef MPI_Type_create_struct
++#define MPI_Type_create_struct PMPI_Type_create_struct
++#undef MPI_Type_create_resized
++#define MPI_Type_create_resized PMPI_Type_create_resized
+ /* #define MPI_Type_create_darray PMPI_Type_create_darray */
+ #undef MPI_Type_create_indexed_block
+ #define MPI_Type_create_indexed_block PMPI_Type_create_indexed_block
++#undef MPI_Type_create_hindexed
++#define MPI_Type_create_hindexed PMPI_Type_create_hindexed
+ #undef MPI_Type_create_hindexed_block
+ #define MPI_Type_create_hindexed_block PMPI_Type_create_hindexed_block
++#undef MPI_Type_create_hvector
++#define MPI_Type_create_hvector PMPI_Type_create_hvector
+ /* #define MPI_Type_create_subarray PMPI_Type_create_subarray */
+-#undef MPI_Type_extent
+-#define MPI_Type_extent PMPI_Type_extent
++#undef MPI_Type_get_extent
++#define MPI_Type_get_extent PMPI_Type_get_extent
+ #undef MPI_Type_free
+ #define MPI_Type_free PMPI_Type_free
+ #undef MPI_Type_get_contents
+@@ -264,20 +272,10 @@
+ #define MPI_Type_get_envelope PMPI_Type_get_envelope
+ #undef MPI_Type_get_true_extent
+ #define MPI_Type_get_true_extent PMPI_Type_get_true_extent
+-#undef MPI_Type_hindexed
+-#define MPI_Type_hindexed PMPI_Type_hindexed
+-#undef MPI_Type_hvector
+-#define MPI_Type_hvector PMPI_Type_hvector
+ #undef MPI_Type_indexed
+ #define MPI_Type_indexed PMPI_Type_indexed
+-#undef MPI_Type_lb
+-#define MPI_Type_lb PMPI_Type_lb
+ #undef MPI_Type_size
+ #define MPI_Type_size PMPI_Type_size
+-#undef MPI_Type_struct
+-#define MPI_Type_struct PMPI_Type_struct
+-#undef MPI_Type_ub
+-#define MPI_Type_ub PMPI_Type_ub
+ #undef MPI_Type_vector
+ #define MPI_Type_vector PMPI_Type_vector
+ #undef MPI_Unpack
+diff --git a/ompi/mca/io/romio314/romio/mpi-io/get_extent.c b/ompi/mca/io/romio314/romio/mpi-io/get_extent.c
+index 103f881..8b7ff15 100644
+--- a/ompi/mca/io/romio314/romio/mpi-io/get_extent.c
++++ b/ompi/mca/io/romio314/romio/mpi-io/get_extent.c
+@@ -42,6 +42,7 @@ int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint *exten
+     int error_code;
+     ADIO_File adio_fh;
+     static char myname[] = "MPI_FILE_GET_TYPE_EXTENT";
++    MPI_Aint lb;
+ 
+     adio_fh = MPIO_File_resolve(fh);
+ 
+@@ -52,7 +53,7 @@ int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint *exten
+ 
+     /* FIXME: handle other file data representations */
+ 
+-    error_code = MPI_Type_extent(datatype, extent);
++    error_code = MPI_Type_get_extent(datatype, &lb, extent);
+ 
+ fn_exit:
+     return error_code;
+diff --git a/ompi/mca/io/romio314/romio/mpi-io/mpir-mpioinit.c b/ompi/mca/io/romio314/romio/mpi-io/mpir-mpioinit.c
+index 914b8d5..50d9d4e 100644
+--- a/ompi/mca/io/romio314/romio/mpi-io/mpir-mpioinit.c
++++ b/ompi/mca/io/romio314/romio/mpi-io/mpir-mpioinit.c
+@@ -36,15 +36,15 @@ void MPIR_MPIOInit(int * error_code) {
+ 	}
+ 	/* --END ERROR HANDLING-- */
+ 
+-        MPI_Keyval_create(MPI_NULL_COPY_FN, ADIOI_End_call, &ADIO_Init_keyval,
+-                          (void *) 0);
++        MPI_Comm_create_keyval (MPI_COMM_NULL_COPY_FN, ADIOI_End_call, &ADIO_Init_keyval,
++                                (void *) 0);
+ 
+ 	/* put a dummy attribute on MPI_COMM_SELF, because we want the delete
+ 	   function to be called when MPI_COMM_SELF is freed. Clarified
+ 	   in MPI-2 section 4.8, the standard mandates that attributes on
+ 	   MPI_COMM_SELF get cleaned up early in MPI_Finalize */
+ 
+-        MPI_Attr_put(MPI_COMM_SELF, ADIO_Init_keyval, (void *) 0);
++        MPI_Comm_set_attr (MPI_COMM_SELF, ADIO_Init_keyval, (void *) 0);
+ 
+ 	/* initialize ADIO */
+         ADIO_Init( (int *)0, (char ***)0, error_code);
