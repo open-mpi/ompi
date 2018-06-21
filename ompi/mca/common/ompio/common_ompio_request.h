@@ -52,6 +52,11 @@ struct mca_ompio_request_t {
     mca_ompio_request_type_t                       req_type;
     void                                          *req_data;
     opal_list_item_t                               req_item;
+#if OPAL_CUDA_SUPPORT
+    void                                          *req_tbuf;
+    size_t                                         req_size;
+    opal_convertor_t                          req_convertor;
+#endif
     mca_fbtl_base_module_progress_fn_t      req_progress_fn;
     mca_fbtl_base_module_request_free_fn_t      req_free_fn;
 };

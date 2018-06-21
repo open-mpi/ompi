@@ -91,6 +91,33 @@ bool opal_cuda_check_bufs(char *dest, char *src)
  * Note that if there is an error with any of the CUDA calls, the program
  * aborts as there is no recovering.
  */
+
+/* Checks the type of pointer
+ *
+ * @param buf   check one pointer providing a convertor.
+ *  Provides aditional information, e.g. managed vs. unmanaged GPU buffer
+ */
+bool  opal_cuda_check_one_buf(char *buf, opal_convertor_t *convertor )
+{
+    /* Only do the initialization on the first GPU access */
+    if (!initialized) {
+        opal_cuda_support_init();
+    }
+
+    if (!opal_cuda_enabled) {
+        return false;
+    }
+
+    return ( ftable.gpu_is_gpu_buffer(buf, convertor));
+}
+
+/*
+ * With CUDA enabled, all contiguous copies will pass through this function.
+ * Therefore, the first check is to see if the convertor is a GPU buffer.
+ * Note that if there is an error with any of the CUDA calls, the program
+ * aborts as there is no recovering.
+ */
+
 void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_t* convertor)
 {
     int res;
