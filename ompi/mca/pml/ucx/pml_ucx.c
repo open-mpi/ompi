@@ -387,8 +387,14 @@ static void mca_pml_ucx_waitall(void **reqs, size_t *count_p)
     *count_p = 0;
 }
 
+static void mca_pml_fence_complete_cb(int status, void *fenced)
+{
+    *(int*)fenced = 1;
+}
+
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
+    int fenced = 0;
     ompi_proc_t *proc;
     size_t num_reqs, max_reqs;
     void *dreq, **dreqs;
@@ -435,12 +441,11 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 
     mca_pml_ucx_waitall(dreqs, &num_reqs);
     free(dreqs);
-    /* flush worker to allow all pending operations to complete.
-     * ignore error (we can do nothing here), just try to
-     * finalize gracefully */
-    ucp_worker_flush(ompi_pml_ucx.ucp_worker);
 
-    opal_pmix.fence(NULL, 0);
+    opal_pmix.fence_nb(NULL, 0, mca_pml_fence_complete_cb, &fenced);
+    while (!fenced) {
+        ucp_worker_progress(ompi_pml_ucx.ucp_worker);
+    }
 
     return OMPI_SUCCESS;
 }
