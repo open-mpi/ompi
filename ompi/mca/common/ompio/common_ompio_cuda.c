@@ -22,6 +22,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/util/sys_limits.h"
 
 #include "opal/mca/allocator/allocator.h"
 #include "opal/mca/allocator/base/base.h"
@@ -60,13 +61,9 @@ void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, int *is
 static void* mca_common_ompio_cuda_alloc_seg ( void*ctx, size_t *size )
 {
     char *buf=NULL;
-    size_t realsize, numpages, rest;
+    size_t realsize, numpages;
 
-    numpages = *size / mca_common_ompio_pagesize;
-    rest = *size % mca_common_ompio_pagesize;
-    if ( rest ) {
-        numpages++;
-    }
+    numpages = (*size + mca_common_ompio_pagesize -1 )/mca_common_ompio_pagesize;
     realsize = numpages * mca_common_ompio_pagesize;
 
     buf = malloc ( realsize);
@@ -81,8 +78,8 @@ static void mca_common_ompio_cuda_free_seg ( void *ctx, void *buf )
 {
     if ( NULL != buf ) {
         mca_common_cuda_unregister ( (char *) buf, NULL );
+        free ( buf );
     }
-    free ( buf );
     return;
 }
 
@@ -113,7 +110,8 @@ int mca_common_ompio_cuda_alloc_init ( void )
         return OMPI_ERR_BUFFER;
     }
 
-    mca_common_ompio_pagesize = sysconf(_SC_PAGESIZE);
+//    mca_common_ompio_pagesize = sysconf(_SC_PAGESIZE);
+    mca_common_ompio_pagesize = opal_getpagesize();
 
     OPAL_THREAD_UNLOCK(&mca_common_ompio_cuda_mutex);
     return OMPI_SUCCESS;

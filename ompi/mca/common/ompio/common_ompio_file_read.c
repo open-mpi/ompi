@@ -91,7 +91,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
     }
 
 #if OPAL_CUDA_SUPPORT
-    int is_gpu=0, is_managed=0;
+    int is_gpu, is_managed;
     opal_convertor_t convertor;
     mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
     if ( is_gpu && !is_managed ) {
@@ -243,7 +243,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
         int j = 0; /* index into the file vie iovec */
         
 #if OPAL_CUDA_SUPPORT
-        int is_gpu=0, is_managed=0;
+        int is_gpu, is_managed;
         mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
         if ( is_gpu && !is_managed ) {
             char *tbuf=NULL;
