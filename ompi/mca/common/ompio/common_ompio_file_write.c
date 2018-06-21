@@ -96,6 +96,13 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
                                       &decoded_iov,
                                       &iov_count);
 #endif
+    if ( 0 < max_data && 0 == fh->f_iov_count  ) {
+        if ( MPI_STATUS_IGNORE != status ) {
+            status->_ucount = 0;
+        }
+        return OMPI_SUCCESS;
+    }
+
     if ( -1 == OMPIO_MCA_GET(fh, cycle_buffer_size )) {
         bytes_per_cycle = max_data;
     }
@@ -242,6 +249,14 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
                                           &decoded_iov,
                                           &iov_count);
 #endif
+        if ( 0 < max_data && 0 == fh->f_iov_count  ) {
+            ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
+            ompio_req->req_ompi.req_status._ucount = 0;
+            ompi_request_complete (&ompio_req->req_ompi, false);
+            *request = (ompi_request_t *) ompio_req;
+            return OMPI_SUCCESS;
+        }
+
         j = fh->f_index_in_file_view;
 
         /* Non blocking operations have to occur in a single cycle */
