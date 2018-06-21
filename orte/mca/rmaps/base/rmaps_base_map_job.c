@@ -199,6 +199,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
         }
     }
+
     /* check for oversubscribe directives */
     if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
         if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
@@ -212,12 +213,14 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
         }
     }
+
     /* check for no-use-local directive */
     if (!(ORTE_MAPPING_LOCAL_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
         if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
             ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
         }
     }
+
     /* ditto for rank policy */
     if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
         jdata->map->ranking = orte_rmaps_base.ranking;
