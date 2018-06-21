@@ -280,6 +280,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             return ORTE_ERR_SILENT;
         }
     }
+
     if (0 < orte_rmaps_base.cpus_per_rank) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
                        "--cpus-per-proc, -cpus-per-proc, --cpus-per-rank, -cpus-per-rank",

@@ -505,6 +505,9 @@ static int bind_to_cpuset(orte_job_t *jdata)
     opal_hwloc_topo_data_t *sum;
     hwloc_obj_t root;
     char *cpu_bitmap;
+    unsigned id;
+    orte_local_rank_t lrank;
+    hwloc_bitmap_t mycpuset;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind job %s to cpus %s",
@@ -512,6 +515,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
                         opal_hwloc_base_cpu_list);
     /* initialize */
     map = jdata->map;
+    mycpuset = hwloc_bitmap_alloc();
 
     for (i=0; i < map->nodes->size; i++) {
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
@@ -569,6 +573,8 @@ static int bind_to_cpuset(orte_job_t *jdata)
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
+        /* the cpu list in sum->available has already been filtered
+         * to include _only_ the cpus defined by the user */
         for (j=0; j < node->procs->size; j++) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                 continue;
@@ -577,13 +583,38 @@ static int bind_to_cpuset(orte_job_t *jdata)
             if (proc->name.jobid != jdata->jobid) {
                 continue;
             }
-            hwloc_bitmap_list_asprintf(&cpu_bitmap, sum->available);
+            if (OPAL_BIND_ORDERED_REQUESTED(jdata->map->binding)) {
+                /* assign each proc, in local rank order, to
+                 * the corresponding cpu in the list */
+                id = hwloc_bitmap_first(sum->available);
+                lrank = 0;
+                while (lrank != proc->local_rank) {
+                    id = hwloc_bitmap_next(sum->available, id);
+                    if ((unsigned)-1 == id) {
+                        break;
+                    }
+                    ++lrank;
+                }
+                if ((unsigned)-1 ==id) {
+                    /* ran out of cpus - that's an error */
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:insufficient-cpus", true,
+                                   node->name, (int)proc->local_rank, opal_hwloc_base_cpu_list);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                 /* set the bit of interest */
+                hwloc_bitmap_only(mycpuset, id);
+            } else {
+                /* bind the proc to all assigned cpus */
+                mycpuset = sum->available;
+            }
+            hwloc_bitmap_list_asprintf(&cpu_bitmap, mycpuset);
             orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
             if (NULL != cpu_bitmap) {
                 free(cpu_bitmap);
             }
         }
     }
+    hwloc_bitmap_free(mycpuset);
     return ORTE_SUCCESS;
 }
 
