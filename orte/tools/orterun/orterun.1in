@@ -366,7 +366,7 @@ For process binding:
 .TP
 .B --bind-to \fR<foo>\fP
 Bind processes to the specified object, defaults to \fIcore\fP. Supported options
-include slot, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, and none.
+include slot, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, cpuset, and none.
 .
 .TP
 .B -cpus-per-proc\fR,\fP --cpus-per-proc \fR<#perproc>\fP
@@ -1147,6 +1147,15 @@ their assigned location. Thus, if a process is assigned by the mapper
 to a certain socket, then a \fI—bind-to l3cache\fP directive will
 cause the process to be bound to the processors that share a single L3
 cache within that socket.
+.
+.PP
+Alternatively, processes can be assigned to processors based on
+their local rank on a node using the \fI--bind-to cpuset:ordered\fP option
+with an associated \fI--cpu-list "0,2,5"\fP. This directs that the first
+rank on a node be bound to cpu0, the second rank on the node be bound
+to cpu1, and the third rank on the node be bound to cpu5. Note that an
+error will result if more processes are assigned to a node than cpus
+are provided.
 .
 .PP
 To help balance loads, the binding directive uses a round-robin method when binding to
