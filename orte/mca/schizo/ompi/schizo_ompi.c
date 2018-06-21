@@ -337,7 +337,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       /* Binding options */
     { "hwloc_base_binding_policy", '\0', NULL, "bind-to", 1,
       &orte_cmd_options.binding_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported", OPAL_CMD_LINE_OTYPE_BINDING },
+      "Policy for binding processes. Allowed values: none, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, cpuset (\"none\" is the default when oversubscribed, \"core\" is the default when np<=2, and \"socket\" is the default when np>2). Allowed qualifiers: overload-allowed, if-supported, ordered", OPAL_CMD_LINE_OTYPE_BINDING },
 
     /* backward compatiblity */
     { "hwloc_base_bind_to_core", '\0', "bind-to-core", "bind-to-core", 0,
