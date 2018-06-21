@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * Additional copyrights may follow
@@ -84,6 +84,12 @@
  * @endcode
  * which allocates memory of sizeof(sally_t) and runs the class's
  * constructors.
+ *
+ * To create a instance of a class (an object) with a C99 flexible array
+ * member use OBJ_NEW_FLEXIBLE:
+ * @code
+ *   sally_t *sally = OBJ_NEW_FLEXIBLE(sally_t, some_size);
+ * @endcode
  *
  * Use OBJ_RETAIN, OBJ_RELEASE to do reference-count-based
  * memory management:
@@ -253,24 +259,30 @@ struct opal_object_t {
  * Create an object: dynamically allocate storage and run the class
  * constructor.
  *
- * @param type          Type (class) of the object
+ * @param[in] cls           Type (class) of the object
+ * @param[in] flexible size Total size to allocate for a flexible array member
  * @return              Pointer to the object
  */
-static inline opal_object_t *opal_obj_new(opal_class_t * cls);
+static inline opal_object_t *opal_obj_new(opal_class_t * cls, size_t flexible_size);
 #if OPAL_ENABLE_DEBUG
-static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* file, int line)
+static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const size_t flexible_size, const char* file, int line)
 {
-    opal_object_t* object = opal_obj_new(type);
+    opal_object_t* object = opal_obj_new(type, flexible_size);
     object->obj_magic_id = OPAL_OBJ_MAGIC_ID;
     object->cls_init_file_name = file;
     object->cls_init_lineno = line;
     return object;
 }
 #define OBJ_NEW(type)                                   \
-    ((type *)opal_obj_new_debug(OBJ_CLASS(type), __FILE__, __LINE__))
+    ((type *)opal_obj_new_debug(OBJ_CLASS(type), 0, __FILE__, __LINE__))
+#define OBJ_NEW_FLEXIBLE(type, flexible_size)                           \
+    ((type *)opal_obj_new_debug(OBJ_CLASS(type), flexible_size, __FILE__, __LINE__))
 #else
 #define OBJ_NEW(type)                                   \
-    ((type *) opal_obj_new(OBJ_CLASS(type)))
+    ((type *) opal_obj_new(OBJ_CLASS(type), 0))
+
+#define OBJ_NEW_FLEXIBLE(type, flexible_size)        \
+    ((type *) opal_obj_new(OBJ_CLASS(type)), flexible_size)
 #endif  /* OPAL_ENABLE_DEBUG */
 
 /**
@@ -469,21 +481,21 @@ static inline void opal_obj_run_destructors(opal_object_t * object)
  * Create new object: dynamically allocate storage and run the class
  * constructor.
  *
- * Do not use this function directly: use OBJ_NEW() instead.
+ * Do not use this function directly: use OBJ_NEW() or OBJ_NEW_FLEXIBLE() instead.
  *
- * @param size          Size of the object
- * @param cls           Pointer to the class descriptor of this object
+ * @param[in] cls           Pointer to the class descriptor of this object
+ * @param[in] flexible_size Size of the flexible array member
  * @return              Pointer to the object
  */
-static inline opal_object_t *opal_obj_new(opal_class_t * cls)
+static inline opal_object_t *opal_obj_new(opal_class_t * cls, const size_t flexible_size)
 {
     opal_object_t *object;
     assert(cls->cls_sizeof >= sizeof(opal_object_t));
 
 #if OPAL_WANT_MEMCHECKER
-    object = (opal_object_t *) calloc(1, cls->cls_sizeof);
+    object = (opal_object_t *) calloc(1, cls->cls_sizeof + flexible_size);
 #else
-    object = (opal_object_t *) malloc(cls->cls_sizeof);
+    object = (opal_object_t *) malloc(cls->cls_sizeof + flexible_size);
 #endif
     if (opal_class_init_epoch != cls->cls_initialized) {
         opal_class_initialize(cls);
