@@ -341,7 +341,10 @@ MPI_COMM_WORLD ranks in a round-robin, "by node" manner.
 .
 .TP
 .B -cpu-list\fR,\fP --cpu-list \fR<cpus>\fP
-List of processor IDs to bind processes to [default=NULL].
+Comma-delimited list of processor IDs to which to bind processes
+[default=NULL].  Processor IDs are interpreted as hwloc logical core
+IDs.  Run the hwloc \fIlstopo(1)\fR command to see a list of available
+cores and their logical IDs.
 .
 .
 .
@@ -366,7 +369,7 @@ For process binding:
 .TP
 .B --bind-to \fR<foo>\fP
 Bind processes to the specified object, defaults to \fIcore\fP. Supported options
-include slot, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, cpuset, and none.
+include slot, hwthread, core, l1cache, l2cache, l3cache, socket, numa, board, cpu-list, and none.
 .
 .TP
 .B -cpus-per-proc\fR,\fP --cpus-per-proc \fR<#perproc>\fP
@@ -1149,13 +1152,15 @@ cause the process to be bound to the processors that share a single L3
 cache within that socket.
 .
 .PP
-Alternatively, processes can be assigned to processors based on
-their local rank on a node using the \fI--bind-to cpuset:ordered\fP option
-with an associated \fI--cpu-list "0,2,5"\fP. This directs that the first
-rank on a node be bound to cpu0, the second rank on the node be bound
-to cpu1, and the third rank on the node be bound to cpu5. Note that an
-error will result if more processes are assigned to a node than cpus
-are provided.
+Alternatively, processes can be assigned to processors based on their
+local rank on a node using the \fI--bind-to cpu-list:ordered\fP option
+with an associated \fI--cpu-list "0,2,5"\fP. In this example, the
+first process on a node will be bound to cpu 0, the second process on
+the node will be bound to cpu 2, and the third process on the node
+will be bound to cpu 5. \fI--bind-to\fP will also accept
+\fIcpulist:ortered\fP as a synonym to \fIcpu-list:ordered\fP.  Note
+that an error will result if more processes are assigned to a node
+than cpus are provided.
 .
 .PP
 To help balance loads, the binding directive uses a round-robin method when binding to
