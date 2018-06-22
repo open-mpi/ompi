@@ -650,14 +650,17 @@ int mca_common_ompio_create_groups(ompio_file_t *fh,
         opal_output(1,"mca_common_ompio_create_groups: could not allocate memory\n");
         goto exit;
     }
-
+    
+    int found;
     for ( i=0, j=0; i<fh->f_num_aggrs; i++ ) {
-        for ( ; j<fh->f_size; j++ ) {
+        found = 0; 
+        do {
             if ( 1 == tmp_final_aggrs[j] ) {
-                break;
+                fh->f_aggr_list[i] = j;
+                found=1;
             }
-            fh->f_aggr_list[i] = tmp_final_aggrs[j];
-        }        
+            j++;
+        } while ( !found && j < fh->f_size);       
     }
 
 exit:
