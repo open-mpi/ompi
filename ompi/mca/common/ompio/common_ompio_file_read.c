@@ -99,7 +99,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
 
         OMPIO_CUDA_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);        
         
-    }
+   }
     else {
         mca_common_ompio_decode_datatype (fh,
                                           datatype,
@@ -118,6 +118,12 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
                                       &decoded_iov,
                                       &iov_count);
 #endif
+    if ( 0 < max_data && 0 == fh->f_iov_count  ) {
+        if ( MPI_STATUS_IGNORE != status ) {
+            status->_ucount = 0;
+        }
+        return OMPI_SUCCESS;
+    }
 
     if ( -1 == OMPIO_MCA_GET(fh, cycle_buffer_size )) {
         bytes_per_cycle = max_data;
@@ -271,6 +277,14 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                           &decoded_iov,
                                           &iov_count);
 #endif
+        if ( 0 < max_data && 0 == fh->f_iov_count  ) {
+            ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
+            ompio_req->req_ompi.req_status._ucount = 0;
+            ompi_request_complete (&ompio_req->req_ompi, false);
+            *request = (ompi_request_t *) ompio_req;
+            return OMPI_SUCCESS;
+        }
+
         // Non-blocking operations have to occur in a single cycle
         j = fh->f_index_in_file_view;
         
