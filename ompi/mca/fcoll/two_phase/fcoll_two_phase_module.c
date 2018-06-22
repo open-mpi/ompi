@@ -63,8 +63,8 @@ mca_fcoll_two_phase_component_file_query (ompio_file_t *fh, int *priority)
     }
 
     if (mca_fcoll_base_query_table (fh, "two_phase")) {
-        if (*priority < 50) {
-            *priority = 50;
+        if (*priority < 35) {
+            *priority = 35;
         }
     }
 

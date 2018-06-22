@@ -268,6 +268,11 @@ int mca_fcoll_base_query_table (struct ompio_file_t *file, char *name)
 	    return 1;
 	}
     }
+    if (!strcmp (name, "vulcan")) {
+        if ( (LUSTRE != file->f_fstype)) {
+            return 1;
+        }
+    }
     if (!strcmp (name, "dynamic")) {
         if ((int)file->f_cc_size < file->f_bytes_per_agg &&
             file->f_cc_size >= file->f_stripe_size) {
