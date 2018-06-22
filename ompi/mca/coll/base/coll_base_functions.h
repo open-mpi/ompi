@@ -247,6 +247,7 @@ int ompi_coll_base_bcast_intra_bintree(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
 int ompi_coll_base_bcast_intra_knomial(BCAST_ARGS, uint32_t segsize, int radix);
 int ompi_coll_base_bcast_intra_scatter_allgather(BCAST_ARGS, uint32_t segsize);
+int ompi_coll_base_bcast_intra_scatter_allgather_ring(BCAST_ARGS, uint32_t segsize);
 
 /* Exscan */
 int ompi_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
