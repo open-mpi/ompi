@@ -28,6 +28,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
 
@@ -73,7 +74,7 @@ int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
     }
 
     if (!(assert & MPI_MODE_NOPRECEDE)) {
-        status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
+        status = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                 "%s:%d: ucp_worker_flush failed: %d\n",
@@ -175,7 +176,7 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
 
     module->epoch_type.access = NONE_EPOCH;
 
-    status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
+    status = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_worker_flush failed: %d\n",
@@ -200,7 +201,7 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
                                 __FILE__, __LINE__, status);
         }
 
-        status = ucp_ep_flush(ep);
+        status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                 "%s:%d: ucp_ep_flush failed: %d\n",

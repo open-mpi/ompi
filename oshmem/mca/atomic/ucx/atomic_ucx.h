@@ -13,6 +13,7 @@
 
 #include "oshmem_config.h"
 
+#include "opal/mca/common/ucx/common_ucx.h"
 #include "opal/mca/mca.h"
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/util/oshmem_util.h"
@@ -66,28 +67,7 @@ void mca_atomic_ucx_complete_cb(void *request, ucs_status_t status);
 static inline
 ucs_status_t mca_atomic_ucx_wait_request(ucs_status_ptr_t request)
 {
-    ucs_status_t status;
-    int i;
-
-    /* check for request completed or failed */
-    if (UCS_OK == request) {
-        return UCS_OK;
-    } else if (UCS_PTR_IS_ERR(request)) {
-        return UCS_PTR_STATUS(request);
-    }
-
-    while (1) {
-        /* call UCX progress */
-        for (i = 0; i < 100; i++) {
-            if (UCS_INPROGRESS != (status = ucp_request_check_status(request))) {
-                ucp_request_free(request);
-                return status;
-            }
-            ucp_worker_progress(mca_spml_self->ucp_worker);
-        }
-        /* call OPAL progress on every 100 call to UCX progress */
-        opal_progress();
-    }
+    return opal_common_ucx_wait_request(request, mca_spml_self->ucp_worker);
 }
 END_C_DECLS
 

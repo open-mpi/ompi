@@ -20,6 +20,7 @@
 
 #include "oshmem_config.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 #include "orte/include/orte/types.h"
 #include "orte/runtime/orte_globals.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -611,7 +612,7 @@ int mca_spml_ucx_quiet(void)
 {
     ucs_status_t err;
 
-    err = ucp_worker_flush(mca_spml_ucx.ucp_worker);
+    err = opal_common_ucx_worker_flush(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
          SPML_ERROR("quiet failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);

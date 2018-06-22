@@ -12,6 +12,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
@@ -65,9 +66,7 @@ static inline int incr_and_check_ops_num(ompi_osc_ucx_module_t *module, int targ
     module->global_ops_num++;
     module->per_target_ops_nums[target]++;
     if (module->global_ops_num >= OSC_UCX_OPS_THRESHOLD) {
-        /* TODO: ucp_ep_flush needs to be replaced with its non-blocking counterpart
-         * when it is implemented in UCX */
-        status = ucp_ep_flush(ep);
+        status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                 "%s:%d: ucp_ep_flush failed: %d\n",
@@ -348,7 +347,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
         return OMPI_ERROR;
     }
 
-    status = ucp_ep_flush(ep);
+    status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_ep_flush failed: %d\n",
@@ -550,7 +549,7 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        status = ucp_ep_flush(ep);
+        status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                 "%s:%d: ucp_ep_flush failed: %d\n",
@@ -607,7 +606,7 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        status = ucp_ep_flush(ep);
+        status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                 "%s:%d: ucp_ep_flush failed: %d\n",
@@ -801,7 +800,7 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
 
-            status = ucp_ep_flush(ep);
+            status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
             if (status != UCS_OK) {
                 opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                     "%s:%d: ucp_ep_flush failed: %d\n",
@@ -857,7 +856,7 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
 
-            status = ucp_ep_flush(ep);
+            status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
             if (status != UCS_OK) {
                 opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                     "%s:%d: ucp_ep_flush failed: %d\n",

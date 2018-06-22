@@ -12,6 +12,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
 
@@ -179,7 +180,7 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
                                         (uint32_t)target);
 
     ep = OSC_UCX_GET_EP(module->comm, target);
-    status = ucp_ep_flush(ep);
+    status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_ep_flush failed: %d\n",
@@ -258,7 +259,7 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
 
     assert(module->lock_count == 0);
 
-    status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
+    status = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_worker_flush failed: %d\n",
@@ -314,7 +315,7 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
     }
 
     ep = OSC_UCX_GET_EP(module->comm, target);
-    status = ucp_ep_flush(ep);
+    status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_ep_flush failed: %d\n",
@@ -337,7 +338,7 @@ int ompi_osc_ucx_flush_all(struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    status = ucp_worker_flush(mca_osc_ucx_component.ucp_worker);
+    status = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_worker_flush failed: %d\n",
