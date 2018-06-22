@@ -1,8 +1,10 @@
 /*
- * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (C) 2001-2011 Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -394,7 +396,7 @@ static void mca_pml_fence_complete_cb(int status, void *fenced)
 
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
-    int fenced = 0;
+    volatile int fenced = 0;
     ompi_proc_t *proc;
     size_t num_reqs, max_reqs;
     void *dreq, **dreqs;
