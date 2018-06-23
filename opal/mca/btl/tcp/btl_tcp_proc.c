@@ -51,10 +51,10 @@ static void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc);
 
 struct mca_btl_tcp_proc_data_t {
     mca_btl_tcp_interface_t** local_interfaces;
-    int local_kindex_to_index[MAX_KERNEL_INTERFACE_INDEX];
+    opal_hash_table_t local_kindex_to_index;
     size_t num_local_interfaces, max_local_interfaces;
     size_t num_peer_interfaces;
-    int peer_kindex_to_index[MAX_KERNEL_INTERFACE_INDEX];
+    opal_hash_table_t peer_kindex_to_index;
     unsigned int *best_assignment;
     int max_assignment_weight;
     int max_assignment_cardinality;
@@ -284,8 +284,6 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
     if( NULL == proc_data->local_interfaces )
         return NULL;
 
-    memset(proc_data->local_kindex_to_index, -1, sizeof(int)*MAX_KERNEL_INTERFACE_INDEX);
-
     /* Collect up the list of included and excluded interfaces, if any */
     include = opal_argv_split(mca_btl_tcp_component.tcp_if_include,',');
     exclude = opal_argv_split(mca_btl_tcp_component.tcp_if_exclude,',');
@@ -295,7 +293,8 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
      * the local node
      */
     for( idx = opal_ifbegin(); idx >= 0; idx = opal_ifnext (idx) ) {
-        int kindex, index;
+        int kindex;
+        uint32_t index;
         bool skip = false;
 
         opal_ifindextoaddr (idx, (struct sockaddr*) &local_addr, sizeof (local_addr));
@@ -344,12 +343,12 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
         }
 
         kindex = opal_ifindextokindex(idx);
-        index = proc_data->local_kindex_to_index[kindex];
+        int rc = opal_hash_table_get_value_uint32(&proc_data->local_kindex_to_index, kindex, (void**) &index);
 
         /* create entry for this kernel index previously not seen */
-        if(-1 == index) {
+        if (OPAL_SUCCESS != rc) {
             index = proc_data->num_local_interfaces++;
-            proc_data->local_kindex_to_index[kindex] = index;
+            opal_hash_table_set_value_uint32(&proc_data->local_kindex_to_index, kindex, &index);
 
             if( proc_data->num_local_interfaces == proc_data->max_local_interfaces ) {
                 proc_data->max_local_interfaces <<= 1;
@@ -363,7 +362,7 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
             mca_btl_tcp_initialise_interface(proc_data->local_interfaces[index], kindex, index);
         }
 
-        local_interface = proc_data->local_interfaces[proc_data->local_kindex_to_index[kindex]];
+        local_interface = proc_data->local_interfaces[index];
         switch(local_addr.ss_family) {
         case AF_INET:
             /* if AF is disabled, skip it completely */
@@ -424,11 +423,16 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     mca_btl_tcp_interface_t** peer_interfaces;
     mca_btl_tcp_proc_data_t _proc_data, *proc_data=&_proc_data;
     size_t max_peer_interfaces;
-    memset(proc_data, 0, sizeof(mca_btl_tcp_proc_data_t));
 
     if (NULL == (proc_hostname = opal_get_proc_hostname(btl_proc->proc_opal))) {
         return OPAL_ERR_UNREACH;
     }
+
+    memset(proc_data, 0, sizeof(mca_btl_tcp_proc_data_t));
+    OBJ_CONSTRUCT(&_proc_data.local_kindex_to_index, opal_hash_table_t);
+    opal_hash_table_init(&_proc_data.local_kindex_to_index, 8);
+    OBJ_CONSTRUCT(&_proc_data.peer_kindex_to_index, opal_hash_table_t);
+    opal_hash_table_init(&_proc_data.peer_kindex_to_index, 8);
 
 #ifndef WORDS_BIGENDIAN
     /* if we are little endian and our peer is not so lucky, then we
@@ -456,7 +460,6 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     peer_interfaces = (mca_btl_tcp_interface_t**)calloc( max_peer_interfaces, sizeof(mca_btl_tcp_interface_t*) );
     assert(NULL != peer_interfaces);
     proc_data->num_peer_interfaces = 0;
-    memset(proc_data->peer_kindex_to_index, -1, sizeof(int)*MAX_KERNEL_INTERFACE_INDEX);
 
     /*
      * identify all kernel interfaces and the associated addresses of
@@ -465,17 +468,17 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
     for( i = 0; i < btl_proc->proc_addr_count; i++ ) {
 
-        int index;
+        uint32_t index;
 
         mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
 
         mca_btl_tcp_proc_tosocks (endpoint_addr, &endpoint_addr_ss);
 
-        index = proc_data->peer_kindex_to_index[endpoint_addr->addr_ifkindex];
+        rc = opal_hash_table_get_value_uint32(&proc_data->peer_kindex_to_index, endpoint_addr->addr_ifkindex, (void**) &index);
 
-        if(-1 == index) {
+        if (OPAL_SUCCESS != rc) {
             index = proc_data->num_peer_interfaces++;
-            proc_data->peer_kindex_to_index[endpoint_addr->addr_ifkindex] = index;
+            opal_hash_table_set_value_uint32(&proc_data->peer_kindex_to_index, endpoint_addr->addr_ifkindex, &index);
             if( proc_data->num_peer_interfaces == max_peer_interfaces ) {
                 max_peer_interfaces <<= 1;
                 peer_interfaces = (mca_btl_tcp_interface_t**)realloc( peer_interfaces,
@@ -696,6 +699,10 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     free(proc_data->weights);
     free(proc_data->best_addr);
     free(proc_data->best_assignment);
+
+    OBJ_DESTRUCT(&_proc_data.local_kindex_to_index);
+    OBJ_DESTRUCT(&_proc_data.peer_kindex_to_index);
+
     free(a);
 
     return rc;
