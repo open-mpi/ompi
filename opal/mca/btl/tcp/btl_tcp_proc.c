@@ -833,7 +833,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
         /* We are not here to make a decision about what is good socket
          * and what is not. We simply check that this socket fit the endpoint
-         * end we prepare for the real decision function mca_btl_tcp_endpoint_accept. */ 
+         * end we prepare for the real decision function mca_btl_tcp_endpoint_accept. */
         if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
             continue;
         }
@@ -888,7 +888,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
     }
     /* In this case the connection was inbound to an address exported, but was not in a CLOSED state.
      * mca_btl_tcp_endpoint_accept() has logic to deal with the race condition that has likely caused this
-     * scenario, so call it here.*/     
+     * scenario, so call it here.*/
     if (found_match) {
         (void)mca_btl_tcp_endpoint_accept(match_btl_endpoint, addr, sd);
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
