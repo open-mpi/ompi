@@ -61,14 +61,6 @@ struct mca_atomic_ucx_module_t {
 typedef struct mca_atomic_ucx_module_t mca_atomic_ucx_module_t;
 OBJ_CLASS_DECLARATION(mca_atomic_ucx_module_t);
 
-
-void mca_atomic_ucx_complete_cb(void *request, ucs_status_t status);
-
-static inline
-ucs_status_t mca_atomic_ucx_wait_request(ucs_status_ptr_t request)
-{
-    return opal_common_ucx_wait_request(request, mca_spml_self->ucp_worker);
-}
 END_C_DECLS
 
 #endif /* MCA_ATOMIC_UCX_H */

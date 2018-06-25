@@ -53,15 +53,15 @@ lib@OPAL_LIB_PREFIX@mca_common_ucx_la_SOURCES = \
 lib@OPAL_LIB_PREFIX@mca_common_ucx_la_LDFLAGS = \
         -version-info $(libmca_opal_common_ucx_so_version) \
 		$(common_ucx_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LDFLAGS = \
-		$(common_ucx_LDFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_ucx_la_LIBADD = \
 		$(common_ucx_LIBS) \
 		$(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
-lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LIBADD = \
-		$(common_ucx_LIBS)
 lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_SOURCES = \
         $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LDFLAGS = \
+		$(common_ucx_LDFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LIBADD = \
+		$(common_ucx_LIBS)
 
 # Conditionally install the header files
 

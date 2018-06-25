@@ -506,6 +506,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     mkeys[0].va_base = addr;
     *count = 1;
     mca_spml_ucx_cache_mkey(&mkeys[0], segno, my_pe);
+    opal_common_ucx_mca_register();
     return mkeys;
 
 error_unmap:
