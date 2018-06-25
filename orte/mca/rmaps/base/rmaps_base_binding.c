@@ -507,7 +507,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
     char *cpu_bitmap;
     unsigned id;
     orte_local_rank_t lrank;
-    hwloc_bitmap_t mycpuset;
+    hwloc_bitmap_t mycpuset, tset;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind job %s to cpus %s",
@@ -541,6 +541,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
                     continue;
                 }
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
+                hwloc_bitmap_free(mycpuset);
                 return ORTE_ERR_SILENT;
             }
             /* check if topology supports membind - have to be careful here
@@ -557,6 +558,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
                     membind_warned = true;
                 } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+                    hwloc_bitmap_free(mycpuset);
                     return ORTE_ERR_SILENT;
                 }
             }
@@ -565,12 +567,14 @@ static int bind_to_cpuset(orte_job_t *jdata)
         if (NULL == root->userdata) {
             /* something went wrong */
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            hwloc_bitmap_free(mycpuset);
             return ORTE_ERR_NOT_FOUND;
         }
         sum = (opal_hwloc_topo_data_t*)root->userdata;
         if (NULL == sum->available) {
             /* another error */
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            hwloc_bitmap_free(mycpuset);
             return ORTE_ERR_NOT_FOUND;
         }
         /* the cpu list in sum->available has already been filtered
@@ -599,15 +603,17 @@ static int bind_to_cpuset(orte_job_t *jdata)
                     /* ran out of cpus - that's an error */
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:insufficient-cpus", true,
                                    node->name, (int)proc->local_rank, opal_hwloc_base_cpu_list);
+                    hwloc_bitmap_free(mycpuset);
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
                  /* set the bit of interest */
                 hwloc_bitmap_only(mycpuset, id);
+                tset = mycpuset;
             } else {
                 /* bind the proc to all assigned cpus */
-                mycpuset = sum->available;
+                tset = sum->available;
             }
-            hwloc_bitmap_list_asprintf(&cpu_bitmap, mycpuset);
+            hwloc_bitmap_list_asprintf(&cpu_bitmap, tset);
             orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
             if (NULL != cpu_bitmap) {
                 free(cpu_bitmap);

@@ -181,6 +181,7 @@ ompi/mca/io/romio314/romio/test/misc.c
 ompi/mca/io/romio314/romio/test/pfcoll_test.f
 ompi/mca/io/romio314/romio/test/runtests
 ompi/mca/io/romio314/romio/util/romioinstall
+ompi/mca/io/romio321/romio/test/syshints.c
 
 ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
 
