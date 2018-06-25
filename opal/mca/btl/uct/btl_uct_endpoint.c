@@ -17,7 +17,7 @@
 
 static void mca_btl_uct_endpoint_construct (mca_btl_uct_endpoint_t *endpoint)
 {
-    memset (endpoint->uct_eps, 0, sizeof (endpoint->uct_eps));
+    memset (endpoint->uct_eps, 0, sizeof (endpoint->uct_eps[0]) * mca_btl_uct_component.num_contexts_per_module);
     endpoint->conn_ep = NULL;
     OBJ_CONSTRUCT(&endpoint->ep_lock, opal_recursive_mutex_t);
 }
@@ -25,14 +25,12 @@ static void mca_btl_uct_endpoint_construct (mca_btl_uct_endpoint_t *endpoint)
 static void mca_btl_uct_endpoint_destruct (mca_btl_uct_endpoint_t *endpoint)
 {
     for (int tl_index = 0 ; tl_index < 2 ; ++tl_index) {
-        for (int i = 0 ; i < MCA_BTL_UCT_MAX_WORKERS ; ++i) {
-            if (NULL != endpoint->uct_eps[tl_index][i].uct_ep) {
-                uct_ep_destroy (endpoint->uct_eps[tl_index][i].uct_ep);
+        for (int i = 0 ; i < mca_btl_uct_component.num_contexts_per_module ; ++i) {
+            if (NULL != endpoint->uct_eps[i][tl_index].uct_ep) {
+                uct_ep_destroy (endpoint->uct_eps[i][tl_index].uct_ep);
             }
         }
     }
-
-    memset (endpoint->uct_eps, 0, sizeof (endpoint->uct_eps));
 
     OBJ_DESTRUCT(&endpoint->ep_lock);
 }
@@ -43,12 +41,14 @@ OBJ_CLASS_INSTANCE(mca_btl_uct_endpoint_t, opal_object_t,
 
 mca_btl_base_endpoint_t *mca_btl_uct_endpoint_create (opal_proc_t *proc)
 {
-    mca_btl_uct_endpoint_t *endpoint = OBJ_NEW(mca_btl_uct_endpoint_t);
+    mca_btl_uct_endpoint_t *endpoint = calloc (1, sizeof (*endpoint) + sizeof (endpoint->uct_eps[0]) *
+                                               mca_btl_uct_component.num_contexts_per_module);
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
         return NULL;
     }
 
+    OBJ_CONSTRUCT(endpoint, mca_btl_uct_endpoint_t);
     endpoint->ep_proc = proc;
 
     return (mca_btl_base_endpoint_t *) endpoint;
@@ -295,7 +295,7 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
 int mca_btl_uct_endpoint_connect (mca_btl_uct_module_t *uct_btl, mca_btl_uct_endpoint_t *endpoint, int context_id,
                                   void *ep_addr, int tl_index)
 {
-    mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[tl_index] + context_id;
+    mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[context_id] + tl_index;
     mca_btl_uct_device_context_t *tl_context = mca_btl_uct_module_get_rdma_context_specific (uct_btl, context_id);
     mca_btl_uct_tl_t *tl = (tl_index == uct_btl->rdma_tl->tl_index) ? uct_btl->rdma_tl : uct_btl->am_tl;
     uint8_t *rdma_tl_data = NULL, *conn_tl_data = NULL, *am_tl_data = NULL, *tl_data;

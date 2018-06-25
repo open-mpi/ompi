@@ -243,8 +243,8 @@ int mca_btl_uct_flush (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endp
         do {
             uct_worker_progress (context->uct_worker);
 
-            if (NULL != endpoint && endpoint->uct_eps[tl_index][context->context_id].uct_ep) {
-                ucs_status = uct_ep_flush (endpoint->uct_eps[tl_index][context->context_id].uct_ep, 0, NULL);
+            if (NULL != endpoint && endpoint->uct_eps[context->context_id][tl_index].uct_ep) {
+                ucs_status = uct_ep_flush (endpoint->uct_eps[context->context_id][tl_index].uct_ep, 0, NULL);
             } else {
                 ucs_status = uct_iface_flush (context->uct_iface, 0, NULL);
             }
