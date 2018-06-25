@@ -279,12 +279,7 @@
 #                    define __mpi_interface_deprecated__(msg) __attribute__((__deprecated__))
 #                endif
 #            endif
-#            if !OMPI_ENABLE_MPI1_COMPAT
-#                if OPAL_HAVE_ATTRIBUTE_ERROR
-#                    define __mpi_interface_removed__(msg) __attribute__((__error__(msg)))
-#                    define OMPI_OMIT_MPI1_COMPAT_DECLS 0
-#                endif
-#            else
+#            if OMPI_ENABLE_MPI1_COMPAT
 #                    define __mpi_interface_removed__(msg) __mpi_interface_deprecated__(msg)
 #                    define OMPI_OMIT_MPI1_COMPAT_DECLS 0
 #            endif
