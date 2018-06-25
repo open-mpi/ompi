@@ -25,7 +25,7 @@
  * Additional copyrights may follow
  */
 #include "nbc_internal.h"
-#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
 
@@ -595,7 +595,6 @@ void NBC_Return_handle(ompi_coll_libnbc_request_t *request) {
 }
 
 int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
-  comminfo->tag= MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
 
 #ifdef NBC_CACHE_SCHEDULE
   /* initialize the NBC_ALLTOALL SchedCache tree */
@@ -672,7 +671,7 @@ int NBC_Start(NBC_Handle *handle) {
 int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
                          ompi_coll_libnbc_module_t *module, bool persistent,
                          ompi_request_t **request, void *tmpbuf) {
-  int ret, tmp_tag;
+  int ret;
   bool need_register = false;
   ompi_coll_libnbc_request_t *handle;
 
@@ -685,13 +684,7 @@ int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
 
     /* update the module->tag here because other processes may have operations
      * and they may update the module->tag */
-    OPAL_THREAD_LOCK(&module->mutex);
-    tmp_tag = module->tag--;
-    if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-      NBC_DEBUG(2,"resetting tags ...\n");
-    }
-    OPAL_THREAD_UNLOCK(&module->mutex);
+    (void)ompi_coll_base_nbc_reserve_tags(comm, 1);
 
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -712,20 +705,15 @@ int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
 
   /******************** Do the tag and shadow comm administration ...  ***************/
 
-  OPAL_THREAD_LOCK(&module->mutex);
-  tmp_tag = module->tag--;
-  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
-      tmp_tag = module->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
-      NBC_DEBUG(2,"resetting tags ...\n");
-  }
+  handle->tag = ompi_coll_base_nbc_reserve_tags(comm, 1);
 
+  OPAL_THREAD_LOCK(&module->mutex);
   if (true != module->comm_registered) {
       module->comm_registered = true;
       need_register = true;
   }
   OPAL_THREAD_UNLOCK(&module->mutex);
 
-  handle->tag = tmp_tag;
 
   /* register progress */
   if (need_register) {
@@ -737,7 +725,6 @@ int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
   }
 
   handle->comm=comm;
-  /*printf("got module: %lu tag: %i\n", module, module->tag);*/
 
   /******************** end of tag and shadow comm administration ...  ***************/
   handle->comminfo = module;

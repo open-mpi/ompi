@@ -2,7 +2,7 @@
  * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017-2018 The University of Tennessee and The University
+ * Copyright (c) 2017-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -78,6 +78,14 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
       }
+    }
+
+    /* If there's only one node, or if the count is 0, we're done */
+
+    if ((OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) <= 1) ||
+        0 == count) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
