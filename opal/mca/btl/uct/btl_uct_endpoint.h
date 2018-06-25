@@ -37,8 +37,8 @@ static int mca_btl_uct_endpoint_test_am (mca_btl_uct_module_t *module, mca_btl_u
     int tl_index = module->am_tl->tl_index;
     int ep_index = context->context_id;
 
-    if (OPAL_LIKELY(MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & endpoint->uct_eps[tl_index][ep_index].flags)) {
-        *ep_handle = endpoint->uct_eps[tl_index][ep_index].uct_ep;
+    if (OPAL_LIKELY(MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & endpoint->uct_eps[ep_index][tl_index].flags)) {
+        *ep_handle = endpoint->uct_eps[ep_index][tl_index].uct_ep;
         return OPAL_SUCCESS;
     }
 
@@ -65,13 +65,13 @@ static inline int mca_btl_uct_endpoint_check (mca_btl_uct_module_t *module, mca_
     int ep_index = context->context_id;
     int rc;
 
-    if (OPAL_LIKELY(MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & endpoint->uct_eps[tl_index][ep_index].flags)) {
-        *ep_handle = endpoint->uct_eps[tl_index][ep_index].uct_ep;
+    if (OPAL_LIKELY(MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & endpoint->uct_eps[ep_index][tl_index].flags)) {
+        *ep_handle = endpoint->uct_eps[ep_index][tl_index].uct_ep;
         return OPAL_SUCCESS;
     }
 
     rc = mca_btl_uct_endpoint_connect (module, endpoint, ep_index, NULL, tl_index);
-    *ep_handle = endpoint->uct_eps[tl_index][ep_index].uct_ep;
+    *ep_handle = endpoint->uct_eps[ep_index][tl_index].uct_ep;
     BTL_VERBOSE(("mca_btl_uct_endpoint_connect returned %d", rc));
     return rc;
 }

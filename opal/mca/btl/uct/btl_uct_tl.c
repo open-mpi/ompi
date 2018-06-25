@@ -165,7 +165,7 @@ static ucs_status_t mca_btl_uct_conn_req_cb (void *arg, void *data, size_t lengt
     mca_btl_uct_conn_req_t *req = (mca_btl_uct_conn_req_t *) ((uintptr_t) data + 8);
     struct opal_proc_t *remote_proc = opal_proc_for_name (req->proc_name);
     mca_btl_base_endpoint_t *endpoint = mca_btl_uct_get_ep (&module->super, remote_proc);
-    mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[req->tl_index] + req->context_id;
+    mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[req->context_id] + req->tl_index;
     int64_t type = *((int64_t *) data);
     int32_t ep_flags;
     int rc;

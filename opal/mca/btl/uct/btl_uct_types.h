@@ -269,7 +269,7 @@ struct mca_btl_base_endpoint_t {
     mca_btl_uct_connection_ep_t *conn_ep;
 
     /** endpoints into UCT for this BTL endpoint */
-    mca_btl_uct_tl_endpoint_t uct_eps[2][MCA_BTL_UCT_MAX_WORKERS];
+    mca_btl_uct_tl_endpoint_t uct_eps[][2];
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
