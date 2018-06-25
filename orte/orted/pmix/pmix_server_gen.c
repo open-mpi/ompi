@@ -1081,6 +1081,7 @@ void pmix_server_log_fn(opal_process_name_t *requestor,
     /* we cannot directly execute the callback here
      * as it would threadlock - so shift to somewhere
      * safe */
+    rc = ORTE_SUCCESS;  // unused - silence compiler warning
     ORTE_PMIX_THREADSHIFT(requestor, NULL, rc,
                           NULL, NULL, lgcbfn,
                           cbfunc, cbdata);
