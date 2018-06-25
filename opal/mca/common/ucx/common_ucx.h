@@ -73,6 +73,44 @@ ucs_status_t opal_common_ucx_worker_flush(ucp_worker_h worker)
     status = ucp_worker_flush_nb(worker, 0, opal_common_ucx_empty_complete_cb);
     return opal_common_ucx_wait_request(status, worker);
 }
+
+static inline
+ucs_status_t opal_common_ucx_atomic_fetch(ucp_ep_h ep, ucp_atomic_fetch_op_t opcode,
+                                          uint64_t value, void *result, size_t op_size,
+                                          uint64_t remote_addr, ucp_rkey_h rkey,
+                                          ucp_worker_h worker)
+{
+    ucs_status_ptr_t request;
+
+    request = ucp_atomic_fetch_nb(ep, opcode, value, result, op_size,
+                                  remote_addr, rkey, opal_common_ucx_empty_complete_cb);
+    return opal_common_ucx_wait_request(request, worker);
+}
+
+static inline
+ucs_status_t opal_common_ucx_atomic_cswap(ucp_ep_h ep, uint64_t compare,
+                                          uint64_t value, void *result, size_t op_size,
+                                          uint64_t remote_addr, ucp_rkey_h rkey,
+                                          ucp_worker_h worker)
+{
+    uint64_t tmp = value;
+    ucs_status_t status;
+
+    status = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_CSWAP, compare, &tmp,
+                                          op_size, remote_addr, rkey, worker);
+    if (OPAL_LIKELY(UCS_OK == status)) {
+        /* in case if op_size is constant (like sizeof(type)) then this condition
+         * is evaluated in compile time */
+        if (op_size == sizeof(uint64_t)) {
+            *(uint64_t*)result = tmp;
+        } else {
+            assert(op_size == sizeof(uint32_t));
+            *(uint32_t*)result = tmp;
+        }
+    }
+    return status;
+}
+
 END_C_DECLS
 
 #endif

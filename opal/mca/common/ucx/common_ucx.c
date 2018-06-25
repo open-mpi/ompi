@@ -27,10 +27,10 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
 
     registered = 1;
     mca_base_var_register("opal", "opal_common", "ucx", "progress_iterations",
-            "Set number of calls of internal UCX progress calls per opal_progress call",
-            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
-            &opal_common_ucx_progress_iterations);
+                          "Set number of calls of internal UCX progress calls per opal_progress call",
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                          &opal_common_ucx_progress_iterations);
 }
 
 void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status)

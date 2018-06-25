@@ -26,7 +26,9 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
     ucs_status_t status;
 
     while (true) {
-        status = ucp_atomic_fadd64(ep, 1, remote_addr, rkey, &result_value);
+        status = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_FADD, 1,
+                                              &result_value, sizeof(result_value),
+                                              remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                 "%s:%d: ucp_atomic_fadd64 failed: %d\n",
@@ -35,7 +37,8 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
         }
         assert(result_value >= 0);
         if (result_value >= TARGET_LOCK_EXCLUSIVE) {
-            status = ucp_atomic_add64(ep, (-1), remote_addr, rkey);
+            status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD, (-1), sizeof(uint64_t),
+                                     remote_addr, rkey);
             if (status != UCS_OK) {
                 opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                     "%s:%d: ucp_atomic_add64 failed: %d\n",
@@ -56,7 +59,8 @@ static inline int end_shared(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_LOCK_OFFSET;
     ucs_status_t status;
 
-    status = ucp_atomic_add64(ep, (-1), remote_addr, rkey);
+    status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD, (-1), sizeof(uint64_t),
+                             remote_addr, rkey);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_atomic_add64 failed: %d\n",
@@ -75,9 +79,10 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
     ucs_status_t status;
 
     while (result_value != TARGET_LOCK_UNLOCKED) {
-        status = ucp_atomic_cswap64(ep, TARGET_LOCK_UNLOCKED,
-                                    TARGET_LOCK_EXCLUSIVE,
-                                    remote_addr, rkey, &result_value);
+        status = opal_common_ucx_atomic_cswap(ep, TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
+                                              &result_value, sizeof(result_value),
+                                              remote_addr, rkey,
+                                              mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                 "%s:%d: ucp_atomic_cswap64 failed: %d\n",
@@ -96,8 +101,9 @@ static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_LOCK_OFFSET;
     ucs_status_t status;
 
-    status = ucp_atomic_swap64(ep, TARGET_LOCK_UNLOCKED,
-                               remote_addr, rkey, &result_value);
+    status = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
+                                          &result_value, sizeof(result_value),
+                                          remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                             "%s:%d: ucp_atomic_swap64 failed: %d\n",
