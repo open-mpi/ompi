@@ -269,6 +269,9 @@ struct ompi_osc_rdma_module_t {
 
     /** number of time a get had to be retried */
     unsigned long get_retry_count;
+
+    /** outstanding atomic operations */
+    volatile int32_t pending_ops;
 };
 typedef struct ompi_osc_rdma_module_t ompi_osc_rdma_module_t;
 OMPI_MODULE_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;

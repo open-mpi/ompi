@@ -47,6 +47,10 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, struct 
 
     if (wait_for_completion) {
         OBJ_RETAIN(pending_op);
+    } else {
+        /* NTH: need to keep track of pending ops to avoid a potential teardown problem */
+        pending_op->module = module;
+        (void) opal_atomic_fetch_add_32 (&module->pending_ops, 1);
     }
 
     pending_op->op_result = (void *) result;
@@ -128,6 +132,12 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, struct m
         pending_op->cbfunc = cbfunc;
         pending_op->cbdata = cbdata;
         pending_op->cbcontext = cbcontext;
+    }
+
+    if (!wait_for_completion) {
+        /* NTH: need to keep track of pending ops to avoid a potential teardown problem */
+        pending_op->module = module;
+        (void) opal_atomic_fetch_add_32 (&module->pending_ops, 1);
     }
 
     /* spin until the btl has accepted the operation */
