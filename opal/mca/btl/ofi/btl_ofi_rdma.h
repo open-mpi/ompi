@@ -29,8 +29,11 @@ mca_btl_ofi_completion_t *mca_btl_ofi_completion_alloc (
                                          void *cbcontext, void *cbdata,
                                          int type);
 
-#define MCA_BTL_OFI_NUM_RDMA_INC(module)                            \
-            OPAL_THREAD_ADD_FETCH64(&(module)->outstanding_rdma, 1);
+#define MCA_BTL_OFI_NUM_RDMA_INC(module)                                                \
+            OPAL_THREAD_ADD_FETCH64(&(module)->outstanding_rdma, 1);                    \
+            if (module->outstanding_rdma > mca_btl_ofi_component.progress_threshold){   \
+                mca_btl_ofi_component.super.btl_progress();                             \
+            }
 
 #define MCA_BTL_OFI_NUM_RDMA_DEC(module)                            \
             OPAL_THREAD_ADD_FETCH64(&(module)->outstanding_rdma, -1);

@@ -48,6 +48,8 @@
 BEGIN_C_DECLS
 #define MCA_BTL_OFI_MAX_MODULES         16
 #define MCA_BTL_OFI_MAX_CQ_READ_ENTRIES 128
+#define MCA_BTL_OFI_NUM_CQE_READ        64
+#define MCA_BTL_OFI_PROGRESS_THRESHOLD  64
 
 #define MCA_BTL_OFI_ABORT(args)     mca_btl_ofi_exit(args)
 
@@ -129,6 +131,7 @@ struct mca_btl_ofi_component_t {
     int module_count;
     int num_contexts_per_module;
     int num_cqe_read;
+    int progress_threshold;
 
     size_t namelen;
 
