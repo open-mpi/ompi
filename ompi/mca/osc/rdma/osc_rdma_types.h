@@ -209,6 +209,7 @@ typedef void (*ompi_osc_rdma_pending_op_cb_fn_t) (void *, void *, int);
 
 struct ompi_osc_rdma_pending_op_t {
     opal_list_item_t super;
+    struct ompi_osc_rdma_module_t *module;
     struct ompi_osc_rdma_frag_t *op_frag;
     void *op_buffer;
     void *op_result;

@@ -63,7 +63,7 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, struct mca_btl_b
     ompi_osc_rdma_frag_t *frag = NULL;
     volatile bool read_complete = false;
     size_t aligned_len, offset;
-    uint64_t aligned_addr = (source_address + btl_alignment_mask) & ~btl_alignment_mask;
+    uint64_t aligned_addr = source_address & ~btl_alignment_mask;
     char *ptr = data;
     int ret;
 
