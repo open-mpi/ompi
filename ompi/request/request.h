@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -436,12 +436,13 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
     int rc = 0;
-
-    if( NULL != request->req_complete_cb) {
-        rc = request->req_complete_cb( request );
+    
+    if(NULL != request->req_complete_cb) {
+        ompi_request_complete_fn_t temp = request->req_complete_cb;
         request->req_complete_cb = NULL;
+        rc = temp( request );
     }
-
+        
     if (0 == rc) {
         if( OPAL_LIKELY(with_signal) ) {
             void *_tmp_ptr = REQUEST_PENDING;
@@ -453,11 +454,28 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
                 if( REQUEST_PENDING != tmp_sync )
                     wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
             }
-        } else
+        } else {
             request->req_complete = REQUEST_COMPLETED;
+        }
     }
-
+    
     return OMPI_SUCCESS;
+}
+
+static inline int ompi_request_set_callback(ompi_request_t* request,
+                                            ompi_request_complete_fn_t cb,
+                                            void* cb_data)
+{
+    request->req_complete_cb_data = cb_data;
+    request->req_complete_cb = cb;
+    int rc = 0;
+    /* If request is completed and the callback is not called, need to call callback */
+    if ((NULL != request->req_complete_cb) && (request->req_complete == REQUEST_COMPLETED)) {
+        ompi_request_complete_fn_t temp = request->req_complete_cb;
+        request->req_complete_cb = NULL;
+        rc = temp( request );
+    }
+    return rc;
 }
 
 END_C_DECLS

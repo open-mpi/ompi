@@ -382,7 +382,9 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_pml_comm     = NULL;
     comm->c_topo         = NULL;
     comm->c_coll         = NULL;
-
+    comm->c_ibcast_tag = 0;
+    comm->c_ireduce_tag = 0;
+    
     /* A keyhash will be created if/when an attribute is cached on
        this communicator */
     comm->c_keyhash      = NULL;
