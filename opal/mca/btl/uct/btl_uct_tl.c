@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +14,7 @@
 #include "btl_uct_device_context.h"
 #include "btl_uct_am.h"
 #include "opal/util/bit_ops.h"
+#include "opal/util/argv.h"
 
 /**
  * @brief Convert UCT capabilities to BTL flags
