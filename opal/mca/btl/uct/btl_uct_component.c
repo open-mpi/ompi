@@ -34,10 +34,6 @@
 #include "btl_uct_device_context.h"
 #include "btl_uct_am.h"
 
-#if !OPAL_C_HAVE__THREAD_LOCAL
-opal_tsd_key_t mca_btl_uct_tsd_device_key;
-#endif
-
 static int mca_btl_uct_component_register(void)
 {
     mca_btl_uct_module_t *module = &mca_btl_uct_module_template;
@@ -116,10 +112,6 @@ static int mca_btl_uct_component_open(void)
         }
     }
 
-#if !OPAL_C_HAVE__THREAD_LOCAL
-    opal_tsd_key_create (&mca_btl_uct_tsd_device_key, NULL);
-#endif
-
     return OPAL_SUCCESS;
 }
 
@@ -129,10 +121,6 @@ static int mca_btl_uct_component_open(void)
  */
 static int mca_btl_uct_component_close(void)
 {
-#if !OPAL_C_HAVE__THREAD_LOCAL
-    opal_tsd_key_delete (mca_btl_uct_tsd_device_key);
-#endif
-
     return OPAL_SUCCESS;
 }
 
