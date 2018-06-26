@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,7 @@ static int ompi_request_empty_free(ompi_request_t** request)
     return OMPI_SUCCESS;
 }
 
-int ompi_request_persistent_proc_null_free(ompi_request_t** request)
+static int ompi_request_persistent_noop_free(ompi_request_t** request)
 {
     OMPI_REQUEST_FINI(*request);
     (*request)->req_state = OMPI_REQUEST_INVALID;
@@ -183,5 +184,28 @@ int ompi_request_finalize(void)
     OMPI_REQUEST_FINI( &ompi_request_empty );
     OBJ_DESTRUCT( &ompi_request_empty );
     OBJ_DESTRUCT( &ompi_request_f_to_c_table );
+    return OMPI_SUCCESS;
+}
+
+
+int ompi_request_persistent_noop_create(ompi_request_t** request)
+{
+    ompi_request_t *req;
+
+    req = OBJ_NEW(ompi_request_t);
+    if (NULL == req) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Other fields were initialized by the constructor for
+       ompi_request_t */
+    req->req_type = OMPI_REQUEST_NOOP;
+    req->req_status = ompi_request_empty.req_status;
+    req->req_complete = REQUEST_COMPLETED;
+    req->req_state = OMPI_REQUEST_INACTIVE;
+    req->req_persistent = true;
+    req->req_free = ompi_request_persistent_noop_free;
+
+    *request = req;
     return OMPI_SUCCESS;
 }

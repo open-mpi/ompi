@@ -33,6 +33,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/info/info.h"
 #include "ompi/request/request.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
@@ -134,6 +135,29 @@ typedef enum COLLTYPE {
 #define INEIGHBOR_ALLTOALL_ARGS   NEIGHBOR_ALLTOALL_BASE_ARGS,   ompi_request_t **request, mca_coll_base_module_t *module
 #define INEIGHBOR_ALLTOALLV_ARGS  NEIGHBOR_ALLTOALLV_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
 #define INEIGHBOR_ALLTOALLW_ARGS  NEIGHBOR_ALLTOALLW_BASE_ARGS,  ompi_request_t **request, mca_coll_base_module_t *module
+
+#define ALLGATHER_INIT_ARGS           ALLGATHER_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLGATHERV_INIT_ARGS          ALLGATHERV_BASE_ARGS,          ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLREDUCE_INIT_ARGS           ALLREDUCE_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLTOALL_INIT_ARGS            ALLTOALL_BASE_ARGS,            ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLTOALLV_INIT_ARGS           ALLTOALLV_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define ALLTOALLW_INIT_ARGS           ALLTOALLW_BASE_ARGS,           ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define BARRIER_INIT_ARGS             BARRIER_BASE_ARGS,             ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define BCAST_INIT_ARGS               BCAST_BASE_ARGS,               ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define EXSCAN_INIT_ARGS              EXSCAN_BASE_ARGS,              ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define GATHER_INIT_ARGS              GATHER_BASE_ARGS,              ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define GATHERV_INIT_ARGS             GATHERV_BASE_ARGS,             ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define REDUCE_INIT_ARGS              REDUCE_BASE_ARGS,              ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define REDUCESCATTER_INIT_ARGS       REDUCESCATTER_BASE_ARGS,       ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define REDUCESCATTERBLOCK_INIT_ARGS  REDUCESCATTERBLOCK_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define SCAN_INIT_ARGS                SCAN_BASE_ARGS,                ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define SCATTER_INIT_ARGS             SCATTER_BASE_ARGS,             ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define SCATTERV_INIT_ARGS            SCATTERV_BASE_ARGS,            ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLGATHER_INIT_ARGS  NEIGHBOR_ALLGATHER_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLGATHERV_INIT_ARGS NEIGHBOR_ALLGATHERV_BASE_ARGS, ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALL_INIT_ARGS   NEIGHBOR_ALLTOALL_BASE_ARGS,   ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALLV_INIT_ARGS  NEIGHBOR_ALLTOALLV_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
+#define NEIGHBOR_ALLTOALLW_INIT_ARGS  NEIGHBOR_ALLTOALLW_BASE_ARGS,  ompi_info_t *info, ompi_request_t **request, mca_coll_base_module_t *module
 
 #define ALLGATHER_BASE_ARG_NAMES           sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm
 #define ALLGATHERV_BASE_ARG_NAMES          sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm

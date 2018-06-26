@@ -13,9 +13,12 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
+ *                         rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +29,7 @@
 #include "ompi_config.h"
 
 #include "coll_libnbc.h"
+#include "nbc_internal.h"
 
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
@@ -207,6 +211,24 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_iscan = NULL;
         module->super.coll_iscatter = ompi_coll_libnbc_iscatter_inter;
         module->super.coll_iscatterv = ompi_coll_libnbc_iscatterv_inter;
+
+        module->super.coll_allgather_init = ompi_coll_libnbc_allgather_inter_init;
+        module->super.coll_allgatherv_init = ompi_coll_libnbc_allgatherv_inter_init;
+        module->super.coll_allreduce_init = ompi_coll_libnbc_allreduce_inter_init;
+        module->super.coll_alltoall_init = ompi_coll_libnbc_alltoall_inter_init;
+        module->super.coll_alltoallv_init = ompi_coll_libnbc_alltoallv_inter_init;
+        module->super.coll_alltoallw_init = ompi_coll_libnbc_alltoallw_inter_init;
+        module->super.coll_barrier_init = ompi_coll_libnbc_barrier_inter_init;
+        module->super.coll_bcast_init = ompi_coll_libnbc_bcast_inter_init;
+        module->super.coll_exscan_init = NULL;
+        module->super.coll_gather_init = ompi_coll_libnbc_gather_inter_init;
+        module->super.coll_gatherv_init = ompi_coll_libnbc_gatherv_inter_init;
+        module->super.coll_reduce_init = ompi_coll_libnbc_reduce_inter_init;
+        module->super.coll_reduce_scatter_init = ompi_coll_libnbc_reduce_scatter_inter_init;
+        module->super.coll_reduce_scatter_block_init = ompi_coll_libnbc_reduce_scatter_block_inter_init;
+        module->super.coll_scan_init = NULL;
+        module->super.coll_scatter_init = ompi_coll_libnbc_scatter_inter_init;
+        module->super.coll_scatterv_init = ompi_coll_libnbc_scatterv_inter_init;
     } else {
         module->super.coll_iallgather = ompi_coll_libnbc_iallgather;
         module->super.coll_iallgatherv = ompi_coll_libnbc_iallgatherv;
@@ -231,6 +253,30 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_ineighbor_alltoall = ompi_coll_libnbc_ineighbor_alltoall;
         module->super.coll_ineighbor_alltoallv = ompi_coll_libnbc_ineighbor_alltoallv;
         module->super.coll_ineighbor_alltoallw = ompi_coll_libnbc_ineighbor_alltoallw;
+
+        module->super.coll_allgather_init = ompi_coll_libnbc_allgather_init;
+        module->super.coll_allgatherv_init = ompi_coll_libnbc_allgatherv_init;
+        module->super.coll_allreduce_init = ompi_coll_libnbc_allreduce_init;
+        module->super.coll_alltoall_init = ompi_coll_libnbc_alltoall_init;
+        module->super.coll_alltoallv_init = ompi_coll_libnbc_alltoallv_init;
+        module->super.coll_alltoallw_init = ompi_coll_libnbc_alltoallw_init;
+        module->super.coll_barrier_init = ompi_coll_libnbc_barrier_init;
+        module->super.coll_bcast_init = ompi_coll_libnbc_bcast_init;
+        module->super.coll_exscan_init = ompi_coll_libnbc_exscan_init;
+        module->super.coll_gather_init = ompi_coll_libnbc_gather_init;
+        module->super.coll_gatherv_init = ompi_coll_libnbc_gatherv_init;
+        module->super.coll_reduce_init = ompi_coll_libnbc_reduce_init;
+        module->super.coll_reduce_scatter_init = ompi_coll_libnbc_reduce_scatter_init;
+        module->super.coll_reduce_scatter_block_init = ompi_coll_libnbc_reduce_scatter_block_init;
+        module->super.coll_scan_init = ompi_coll_libnbc_scan_init;
+        module->super.coll_scatter_init = ompi_coll_libnbc_scatter_init;
+        module->super.coll_scatterv_init = ompi_coll_libnbc_scatterv_init;
+
+        module->super.coll_neighbor_allgather_init = ompi_coll_libnbc_neighbor_allgather_init;
+        module->super.coll_neighbor_allgatherv_init = ompi_coll_libnbc_neighbor_allgatherv_init;
+        module->super.coll_neighbor_alltoall_init = ompi_coll_libnbc_neighbor_alltoall_init;
+        module->super.coll_neighbor_alltoallv_init = ompi_coll_libnbc_neighbor_alltoallv_init;
+        module->super.coll_neighbor_alltoallw_init = ompi_coll_libnbc_neighbor_alltoallw_init;
     }
 
     module->super.ft_event = NULL;
@@ -291,7 +337,13 @@ ompi_coll_libnbc_progress(void)
                 else {
                     request->super.req_status.MPI_ERROR = res;
                 }
-                ompi_request_complete(&request->super, true);
+                if(request->super.req_persistent) {
+                    /* reset for the next communication */
+                    request->row_offset = 0;
+                }
+                if(!request->super.req_persistent || !REQUEST_COMPLETE(&request->super)) {
+            	    ompi_request_complete(&request->super, true);
+                }
             }
             OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
         }
@@ -334,6 +386,44 @@ OBJ_CLASS_INSTANCE(ompi_coll_libnbc_module_t,
 
 
 static int
+request_start(size_t count, ompi_request_t ** requests)
+{
+    int i, res;
+
+    NBC_DEBUG(5, " ** request_start **\n");
+
+    for (i = 0; i < count; i++) {
+        NBC_Handle *handle = (NBC_Handle *) requests[i];
+        NBC_Schedule *schedule = handle->schedule;
+
+        NBC_DEBUG(5, "--------------------------------\n");
+        NBC_DEBUG(5, "schedule %p size %u\n", &schedule, sizeof(schedule));
+        NBC_DEBUG(5, "handle %p size %u\n", &handle, sizeof(handle));
+        NBC_DEBUG(5, "data %p size %u\n", &schedule->data, sizeof(schedule->data));
+        NBC_DEBUG(5, "req_array %p size %u\n", &handle->req_array, sizeof(handle->req_array));
+        NBC_DEBUG(5, "row_offset=%u address=%p size=%u\n", handle->row_offset, &handle->row_offset, sizeof(handle->row_offset));
+        NBC_DEBUG(5, "req_count=%u address=%p size=%u\n", handle->req_count, &handle->req_count, sizeof(handle->req_count));
+        NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
+        NBC_DEBUG(5, "--------------------------------\n");
+
+        handle->super.req_complete = REQUEST_PENDING;
+        handle->nbc_complete = false;
+
+        res = NBC_Start(handle);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            NBC_DEBUG(5, " ** bad result from NBC_Start **\n");
+            return res;
+        }
+    }
+
+    NBC_DEBUG(5, " ** LEAVING request_start **\n");
+
+    return OMPI_SUCCESS;
+
+}
+
+
+static int
 request_cancel(struct ompi_request_t *request, int complete)
 {
     return MPI_ERR_REQUEST;
@@ -351,7 +441,6 @@ request_free(struct ompi_request_t **ompi_req)
     }
 
     OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
-
     *ompi_req = MPI_REQUEST_NULL;
 
     return OMPI_SUCCESS;
@@ -363,6 +452,7 @@ request_construct(ompi_coll_libnbc_request_t *request)
 {
     request->super.req_type = OMPI_REQUEST_COLL;
     request->super.req_status._cancelled = 0;
+    request->super.req_start = request_start;
     request->super.req_free = request_free;
     request->super.req_cancel = request_cancel;
 }

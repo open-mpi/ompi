@@ -250,6 +250,8 @@ ompi/mpiext/example/tests/progress_usempif08
 ompi/mpiext/cuda/c/MPIX_Query_cuda_support.3
 ompi/mpiext/cuda/c/mpiext_cuda_c.h
 
+ompi/mpiext/pcollreq/c/MPIX_*.3
+
 ompi/tools/mpisync/mpisync
 ompi/tools/mpisync/mpirun_prof
 ompi/tools/mpisync/ompi_timing_post

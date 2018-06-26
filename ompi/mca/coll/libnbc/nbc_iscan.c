@@ -10,6 +10,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,9 +46,9 @@ int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
  * 3. all but rank p-1 do sends to it's right neighbor and exits
  *
  */
-int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                           struct ompi_communicator_t *comm, ompi_request_t ** request,
-                           struct mca_coll_base_module_2_2_0_t *module) {
+static int nbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                         struct ompi_communicator_t *comm, ompi_request_t ** request,
+                         struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
   int rank, p, res;
   ptrdiff_t gap, span;
   NBC_Schedule *schedule;
@@ -59,14 +60,6 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
-
-  if (!inplace) {
-    /* copy data to receivebuf */
-    res = NBC_Copy (sendbuf, count, datatype, recvbuf, count, datatype, comm);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
-    }
-  }
 
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Scan_args *args, *found, search;
@@ -83,6 +76,16 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
     schedule = OBJ_NEW(NBC_Schedule);
     if (OPAL_UNLIKELY(NULL == schedule)) {
       return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (!inplace) {
+      /* copy data to receivebuf */
+      res = NBC_Sched_copy ((void *)sendbuf, false, count, datatype,
+                            recvbuf, false, count, datatype, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
+        return res;
+      }
     }
 
     if(rank != 0) {
@@ -159,7 +162,7 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
   }
 #endif
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -167,4 +170,34 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                           struct ompi_communicator_t *comm, ompi_request_t ** request,
+                           struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_scan_init(sendbuf, recvbuf, count, datatype, op,
+                            comm, request, module, false);
+    if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                               struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                               struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_scan_init(sendbuf, recvbuf, count, datatype, op,
+                            comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }

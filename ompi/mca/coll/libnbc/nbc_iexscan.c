@@ -10,6 +10,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,9 +46,9 @@ int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
  * 3. all but rank p-1 do sends to it's right neigbor and exits
  *
  */
-int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                             struct ompi_communicator_t *comm, ompi_request_t ** request,
-                             struct mca_coll_base_module_2_2_0_t *module) {
+static int nbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                           struct ompi_communicator_t *comm, ompi_request_t ** request,
+                           struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
     int rank, p, res;
     ptrdiff_t gap, span;
     NBC_Schedule *schedule;
@@ -62,23 +63,6 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
 
     rank = ompi_comm_rank (comm);
     p = ompi_comm_size (comm);
-
-    span = opal_datatype_span(&datatype->super, count, &gap);
-    if (0 < rank) {
-        tmpbuf = malloc(span);
-        if (NULL == tmpbuf) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        if (inplace) {
-            res = NBC_Copy(recvbuf, count, datatype, (char *)tmpbuf-gap, count, datatype, comm);
-        } else {
-            res = NBC_Copy(sendbuf, count, datatype, (char *)tmpbuf-gap, count, datatype, comm);
-        }
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-            free(tmpbuf);
-            return res;
-        }
-    }
 
 #ifdef NBC_CACHE_SCHEDULE
     /* search schedule in communicator specific tree */
@@ -97,6 +81,24 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
         }
 
         if (rank != 0) {
+            span = opal_datatype_span(&datatype->super, count, &gap);
+            tmpbuf = malloc(span);
+            if (NULL == tmpbuf) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            if (inplace) {
+                res = NBC_Sched_copy(recvbuf, false, count, datatype,
+                                     (char *)tmpbuf-gap, false, count, datatype, schedule, false);
+            } else {
+                res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
+                                     (char *)tmpbuf-gap, false, count, datatype, schedule, false);
+            }
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                OBJ_RELEASE(schedule);
+                free(tmpbuf);
+                return res;
+            }
+
             res = NBC_Sched_recv (recvbuf, false, count, datatype, rank-1, schedule, false);
 
             if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -182,10 +184,41 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
     }
 #endif
 
-    res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
+    res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         OBJ_RELEASE(schedule);
         free(tmpbuf);
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                             struct ompi_communicator_t *comm, ompi_request_t ** request,
+                             struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_exscan_init(sendbuf, recvbuf, count, datatype, op,
+                              comm, request, module, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+  
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                                 struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                 struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_exscan_init(sendbuf, recvbuf, count, datatype, op,
+                              comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
 

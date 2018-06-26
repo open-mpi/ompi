@@ -10,6 +10,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,9 +53,9 @@ int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param)
 #endif
 
 /* the non-blocking reduce */
-int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
-                             MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                             struct mca_coll_base_module_2_2_0_t *module) {
+static int nbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+                           MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                           struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
   int rank, p, res, segsize;
   size_t size;
   MPI_Aint ext;
@@ -84,15 +85,14 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
   }
 
   /* only one node -> copy data */
-  if (p == 1) {
+  if (1 == p && (!persistent || inplace)) {
     if (!inplace) {
       res = NBC_Copy (sendbuf, count, datatype, recvbuf, count, datatype, comm);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
     }
-    *request = &ompi_request_empty;
-    return OMPI_SUCCESS;
+    return nbc_get_noop_request(persistent, request);
   }
 
   span = opal_datatype_span(&datatype->super, count, &gap);
@@ -140,13 +140,18 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    switch(alg) {
-      case NBC_RED_BINOMIAL:
-        res = red_sched_binomial(rank, p, root, sendbuf, redbuf, tmpredbuf, count, datatype, op, inplace, schedule, tmpbuf);
-        break;
-      case NBC_RED_CHAIN:
-        res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, tmpbuf, segsize);
-        break;
+    if (p == 1) {
+      res = NBC_Sched_copy ((void *)sendbuf, false, count, datatype,
+                            recvbuf, false, count, datatype, schedule, false);
+    } else {
+      switch(alg) {
+        case NBC_RED_BINOMIAL:
+          res = red_sched_binomial(rank, p, root, sendbuf, redbuf, tmpredbuf, count, datatype, op, inplace, schedule, tmpbuf);
+          break;
+        case NBC_RED_CHAIN:
+          res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, tmpbuf, segsize);
+          break;
+      }
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -193,7 +198,7 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
   }
 #endif
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -203,9 +208,27 @@ int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
-				   MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
-				   struct mca_coll_base_module_2_2_0_t *module) {
+int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+                             MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                             struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_reduce_init(sendbuf, recvbuf, count, datatype, op, root,
+                              comm, request, module, false);
+    if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int nbc_reduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+                                 MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                 struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
   int rank, res, rsize;
   NBC_Schedule *schedule;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -241,7 +264,7 @@ int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count
     return res;
   }
 
-  res = NBC_Schedule_request(schedule, comm, libnbc_module, request, tmpbuf);
+  res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
     free(tmpbuf);
@@ -249,6 +272,24 @@ int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+                                   MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                   struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_reduce_inter_init(sendbuf, recvbuf, count, datatype, op, root,
+                                    comm, request, module, false);
+    if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        *request = &ompi_request_null.request;
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -315,7 +356,9 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
     rbuf = redbuf;
     tmprbuf = tmpredbuf;
     if (inplace) {
-        res = NBC_Copy(rbuf, count, datatype, ((char *)tmpbuf)-gap, count, datatype, MPI_COMM_SELF);
+        res = NBC_Sched_copy(rbuf, false, count, datatype,
+                             ((char *)tmpbuf)-gap, false, count, datatype,
+                             schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           return res;
         }
@@ -515,4 +558,28 @@ static inline int red_sched_linear (int rank, int rsize, int root, const void *s
   }
 
   return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+                                 MPI_Op op, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                 struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_reduce_init(sendbuf, recvbuf, count, datatype, op, root,
+                              comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_libnbc_reduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+                                       MPI_Op op, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
+                                       struct mca_coll_base_module_2_3_0_t *module) {
+    int res = nbc_reduce_inter_init(sendbuf, recvbuf, count, datatype, op, root,
+                                    comm, request, module, true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        return res;
+    }
+
+    return OMPI_SUCCESS;
 }
