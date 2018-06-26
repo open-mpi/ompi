@@ -41,15 +41,17 @@ int mca_atomic_ucx_cswap_inner(void *target,
     if (NULL == cond) {
         status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                          UCP_ATOMIC_FETCH_OP_SWAP, val, prev, nlong,
-                                         rva, ucx_mkey->rkey, mca_atomic_ucx_complete_cb);
-        status = mca_atomic_ucx_wait_request(status_ptr);
+                                         rva, ucx_mkey->rkey,
+                                         opal_common_ucx_empty_complete_cb);
+        status = opal_common_ucx_wait_request(status_ptr, mca_spml_self->ucp_worker);
     }
     else {
         cmp = (4 == nlong) ? *(uint32_t*)cond : *(uint64_t*)cond;
         status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                          UCP_ATOMIC_FETCH_OP_CSWAP, cmp, &val, nlong,
-                                         rva, ucx_mkey->rkey, mca_atomic_ucx_complete_cb);
-        status = mca_atomic_ucx_wait_request(status_ptr);
+                                         rva, ucx_mkey->rkey,
+                                         opal_common_ucx_empty_complete_cb);
+        status = opal_common_ucx_wait_request(status_ptr, mca_spml_self->ucp_worker);
         if (UCS_OK == status) {
             assert(NULL != prev);
             memcpy(prev, &val, nlong);

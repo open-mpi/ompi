@@ -162,6 +162,7 @@ AC_SUBST(libmca_opal_common_verbs_so_version)
 AC_SUBST(libmca_orte_common_alps_so_version)
 AC_SUBST(libmca_ompi_common_ompio_so_version)
 AC_SUBST(libmca_ompi_common_monitoring_so_version)
+AC_SUBST(libmca_opal_common_ucx_so_version)
 
 #
 # Get the versions of the autotools that were used to bootstrap us

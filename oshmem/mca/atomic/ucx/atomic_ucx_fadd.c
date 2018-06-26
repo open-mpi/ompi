@@ -49,8 +49,9 @@ int mca_atomic_ucx_fadd(void *target,
     else {
         status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn, 
                                          UCP_ATOMIC_FETCH_OP_FADD, val, prev, nlong,
-                                         rva, ucx_mkey->rkey, mca_atomic_ucx_complete_cb);
-        status = mca_atomic_ucx_wait_request(status_ptr);
+                                         rva, ucx_mkey->rkey,
+                                         opal_common_ucx_empty_complete_cb);
+        status = opal_common_ucx_wait_request(status_ptr, mca_spml_self->ucp_worker);
     }
 
     return ucx_status_to_oshmem(status);

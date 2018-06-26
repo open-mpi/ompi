@@ -12,6 +12,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
@@ -170,6 +171,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
         goto error;
     }
 
+    opal_common_ucx_mca_register();
     return ret;
  error:
     if (requests_created) OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
