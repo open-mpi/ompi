@@ -86,17 +86,25 @@ struct mca_atomic_base_module_1_0_0_t {
     opal_object_t super;
 
     /* Collective function pointers */
+    int (*atomic_add)(void *target,
+                      const void *value,
+                      size_t size,
+                      int pe);
     int (*atomic_fadd)(void *target,
                        void *prev,
                        const void *value,
-                       size_t nlong,
-                       int pe,
-                       struct oshmem_op_t *op);
+                       size_t size,
+                       int pe);
+    int (*atomic_swap)(void *target,
+                       void *prev,
+                       const void *value,
+                       size_t size,
+                       int pe);
     int (*atomic_cswap)(void *target,
                         void *prev,
                         const void *cond,
                         const void *value,
-                        size_t nlong,
+                        size_t size,
                         int pe);
 };
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_1_0_0_t;

@@ -24,6 +24,25 @@
 
 #include "atomic_mxm.h"
 
+int mca_atomic_mxm_swap(void *target,
+                        void *prev,
+                        const void *value,
+                        size_t nlong,
+                        int pe)
+{
+    mxm_send_req_t sreq;
+
+    mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
+    memcpy(prev, value, nlong);
+
+    sreq.base.data.buffer.ptr = prev;
+    sreq.opcode               = MXM_REQ_OP_ATOMIC_SWAP;
+
+    mca_atomic_mxm_post(&sreq);
+
+    return OSHMEM_SUCCESS;
+}
+
 int mca_atomic_mxm_cswap(void *target,
                          void *prev,
                          const void *cond,
@@ -36,13 +55,10 @@ int mca_atomic_mxm_cswap(void *target,
     mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
     memcpy(prev, value, nlong);
 
+    memcpy(&sreq.op.atomic.value, cond, nlong);
+
     sreq.base.data.buffer.ptr = prev;
-    if (NULL == cond) {
-        sreq.opcode = MXM_REQ_OP_ATOMIC_SWAP;
-    } else {
-        memcpy(&sreq.op.atomic.value, cond, nlong);
-        sreq.opcode = MXM_REQ_OP_ATOMIC_CSWAP;
-    }
+    sreq.opcode               = MXM_REQ_OP_ATOMIC_CSWAP;
 
     mca_atomic_mxm_post(&sreq);
 

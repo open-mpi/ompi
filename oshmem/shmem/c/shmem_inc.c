@@ -23,27 +23,23 @@
  * one. The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_INC(type_name, type, prefix)    \
-    void prefix##type_name##_inc(type *target, int pe) \
+#define SHMEM_TYPE_INC(type_name, type, prefix)                     \
+    void prefix##type_name##_inc(type *target, int pe)              \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
         type value = 1;                                             \
-        type out_value;                                             \
-        oshmem_op_t* op = oshmem_op_sum##type_name;                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
         RUNTIME_CHECK_ADDR(target);                                 \
                                                                     \
-        size = sizeof(out_value);                                   \
-        rc = MCA_ATOMIC_CALL(fadd(                                  \
+        size = sizeof(value);                                       \
+        rc = MCA_ATOMIC_CALL(add(                                   \
             (void*)target,                                          \
-            NULL,                                                   \
             (const void*)&value,                                    \
             size,                                                   \
-            pe,                                                     \
-            op));                                                   \
+            pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
                                                                     \
         return ;                                                    \

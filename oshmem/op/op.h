@@ -202,6 +202,13 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_int16;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_int32;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_int64;
 
+/* SWAP */
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_int;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_long;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_longlong;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_swap_int64;
+
 /**
  * Initialize the op interface.
  *

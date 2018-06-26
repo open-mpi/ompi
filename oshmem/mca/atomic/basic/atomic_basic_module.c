@@ -16,6 +16,7 @@
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/proc/proc.h"
+#include "oshmem/op/op.h"
 #include "atomic_basic.h"
 
 static char *atomic_lock_sync;
@@ -91,6 +92,86 @@ int mca_atomic_basic_finalize(void)
     return OSHMEM_SUCCESS;
 }
 
+static inline
+int mca_atomic_basic_op(void *target,
+                        const void *value,
+                        size_t size,
+                        int pe,
+                        struct oshmem_op_t *op)
+{
+    int rc = OSHMEM_SUCCESS;
+    long long temp_value = 0;
+
+    atomic_basic_lock(pe);
+
+    rc = MCA_SPML_CALL(get(target, size, (void*)&temp_value, pe));
+
+    op->o_func.c_fn((void*) value,
+            (void*) &temp_value,
+            size / op->dt_size);
+
+    if (rc == OSHMEM_SUCCESS) {
+        rc = MCA_SPML_CALL(put(target, size, (void*)&temp_value, pe));
+        shmem_quiet();
+    }
+
+    atomic_basic_unlock(pe);
+
+    return rc;
+}
+
+static inline
+int mca_atomic_basic_fop(void *target,
+                         void *prev,
+                         const void *value,
+                         size_t size,
+                         int pe,
+                         struct oshmem_op_t *op)
+{
+    int rc = OSHMEM_SUCCESS;
+    long long temp_value = 0;
+
+    atomic_basic_lock(pe);
+
+    rc = MCA_SPML_CALL(get(target, size, (void*)&temp_value, pe));
+
+    memcpy(prev, (void*) &temp_value, size);
+
+    op->o_func.c_fn((void*) value,
+            (void*) &temp_value,
+            size / op->dt_size);
+
+    if (rc == OSHMEM_SUCCESS) {
+        rc = MCA_SPML_CALL(put(target, size, (void*)&temp_value, pe));
+        shmem_quiet();
+    }
+
+    atomic_basic_unlock(pe);
+
+    return rc;
+}
+
+static int mca_atomic_basic_add(void *target, const void *value,
+                                size_t size, int pe)
+{
+    return mca_atomic_basic_op(target, value, size, pe,
+                               MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
+}
+
+static int mca_atomic_basic_fadd(void *target, void *prev, const void *value,
+                                 size_t size, int pe)
+{
+    return mca_atomic_basic_fop(target, prev, value, size, pe,
+                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
+}
+
+static int mca_atomic_basic_swap(void *target, void *prev, const void *value,
+                                 size_t size, int pe)
+{
+    return mca_atomic_basic_fop(target, prev, value, size, pe,
+                                MCA_BASIC_OP(size, oshmem_op_swap_int32, oshmem_op_swap_int64));
+}
+
 mca_atomic_base_module_t *
 mca_atomic_basic_query(int *priority)
 {
@@ -100,7 +181,9 @@ mca_atomic_basic_query(int *priority)
 
     module = OBJ_NEW(mca_atomic_basic_module_t);
     if (module) {
-        module->super.atomic_fadd = mca_atomic_basic_fadd;
+        module->super.atomic_add   = mca_atomic_basic_add;
+        module->super.atomic_fadd  = mca_atomic_basic_fadd;
+        module->super.atomic_swap  = mca_atomic_basic_swap;
         module->super.atomic_cswap = mca_atomic_basic_cswap;
         return &(module->super);
     }

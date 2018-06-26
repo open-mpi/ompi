@@ -42,17 +42,11 @@ int mca_atomic_ucx_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_ucx_query(int *priority);
 
-int mca_atomic_ucx_fadd(void *target,
-                        void *prev,
-                        const void *value,
-                        size_t nlong,
-                        int pe,
-                        struct oshmem_op_t *op);
 int mca_atomic_ucx_cswap(void *target,
                          void *prev,
                          const void *cond,
                          const void *value,
-                         size_t nlong,
+                         size_t size,
                          int pe);
 
 struct mca_atomic_ucx_module_t {

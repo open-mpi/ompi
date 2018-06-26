@@ -13,7 +13,6 @@ sources = \
 	atomic_basic.h \
 	atomic_basic_module.c \
 	atomic_basic_component.c \
-	atomic_basic_fadd.c \
 	atomic_basic_cswap.c
 
 

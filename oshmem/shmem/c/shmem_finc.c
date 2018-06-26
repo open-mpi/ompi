@@ -24,14 +24,13 @@
  * completed without the possibility of another process updating target between the time of
  * the fetch and the update.
  */
-#define SHMEM_TYPE_FINC(type_name, type, prefix)    \
-    type prefix##type_name##_finc(type *target, int pe) \
+#define SHMEM_TYPE_FINC(type_name, type, prefix)                    \
+    type prefix##type_name##_finc(type *target, int pe)             \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size;                                                \
         type value = 1;                                             \
         type out_value;                                             \
-        oshmem_op_t* op = oshmem_op_sum##type_name;                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
@@ -43,8 +42,7 @@
             (void*)&out_value,                                      \
             (const void*)&value,                                    \
             size,                                                   \
-            pe,                                                     \
-            op));                                                   \
+            pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
                                                                     \
         return out_value;                                           \
