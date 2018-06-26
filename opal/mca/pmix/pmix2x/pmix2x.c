@@ -1115,6 +1115,7 @@ int pmix2x_value_unload(opal_value_t *kv,
 
     default:
         /* silence warnings */
+        opal_output(0, "VALUE UNLOAD NOT SUPPORTED FOR TYPE %d", v->type);
         rc = OPAL_ERROR;
         break;
     }
