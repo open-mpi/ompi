@@ -30,6 +30,8 @@
 #include <unistd.h>
 #endif
 #include <fcntl.h>
+#include <sys/socket.h>
+
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
@@ -77,6 +79,9 @@
 #include "orte/mca/oob/tcp/oob_tcp_peer.h"
 #include "orte/mca/oob/tcp/oob_tcp_common.h"
 #include "orte/mca/oob/tcp/oob_tcp_connection.h"
+#include "oob_tcp_peer.h"
+#include "oob_tcp_common.h"
+#include "oob_tcp_connection.h"
 
 static void tcp_peer_event_init(mca_oob_tcp_peer_t* peer);
 static int  tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer);
@@ -86,7 +91,7 @@ static bool tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, int sd,
                                    void* data, size_t size);
 static void tcp_peer_connected(mca_oob_tcp_peer_t* peer);
 
-static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer)
+static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer, sa_family_t family)
 {
     int flags;
 
@@ -98,8 +103,7 @@ static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer)
                          "%s oob:tcp:peer creating socket to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&(peer->name))));
-
-    peer->sd = socket(AF_INET, SOCK_STREAM, 0);
+    peer->sd = socket(family, SOCK_STREAM, 0);
     if (peer->sd < 0) {
         opal_output(0, "%s-%s tcp_peer_create_socket: socket() failed: %s (%d)\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -155,6 +159,7 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_conn_op_t *op = (mca_oob_tcp_conn_op_t*)cbdata;
     mca_oob_tcp_peer_t *peer;
+    int current_socket_family = 0;
     int rc;
     opal_socklen_t addrlen = 0;
     mca_oob_tcp_addr_t *addr;
@@ -171,30 +176,12 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer->name)));
 
-    rc = tcp_peer_create_socket(peer);
-    if (ORTE_SUCCESS != rc) {
-        /* FIXME: we cannot create a TCP socket - this spans
-         * all interfaces, so all we can do is report
-         * back to the component that this peer is
-         * unreachable so it can remove the peer
-         * from its list and report back to the base
-         * NOTE: this could be a reconnect attempt,
-         * so we also need to mark any queued messages
-         * and return them as "unreachable"
-         */
-        opal_output(0, "%s CANNOT CREATE SOCKET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        ORTE_FORCED_TERMINATE(1);
-        OBJ_RELEASE(op);
-        return;
-    }
-
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s orte_tcp_peer_try_connect: "
                         "attempting to connect to proc %s on socket %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer->name)), peer->sd);
 
-    addrlen = sizeof(struct sockaddr_in);
     peer->active_addr = NULL;
     OPAL_LIST_FOREACH(addr, &peer->addrs, mca_oob_tcp_addr_t) {
         opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -222,9 +209,36 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
             continue;
         }
         peer->active_addr = addr;  // record the one we are using
+        addrlen = addr->addr.ss_family == AF_INET6 ? sizeof(struct sockaddr_in6)
+                                                   : sizeof(struct sockaddr_in);
+        if (addr->addr.ss_family != current_socket_family) {
+            if (peer->sd >= 0) {
+                CLOSE_THE_SOCKET(peer->sd);
+                peer->sd = -1;
+            }
+            rc = tcp_peer_create_socket(peer, addr->addr.ss_family);
+            current_socket_family = addr->addr.ss_family;
+
+            if (ORTE_SUCCESS != rc) {
+                /* FIXME: we cannot create a TCP socket - this spans
+                 * all interfaces, so all we can do is report
+                 * back to the component that this peer is
+                 * unreachable so it can remove the peer
+                 * from its list and report back to the base
+                 * NOTE: this could be a reconnect attempt,
+                 * so we also need to mark any queued messages
+                 * and return them as "unreachable"
+                 */
+                opal_output(0, "%s CANNOT CREATE SOCKET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                ORTE_FORCED_TERMINATE(1);
+                goto cleanup;
+            }
+        }
     retry_connect:
         addr->retries++;
-        if (connect(peer->sd, (struct sockaddr*)&addr->addr, addrlen) < 0) {
+
+        rc = connect(peer->sd, (struct sockaddr*) &addr->addr, addrlen);
+        if (rc < 0) {
             /* non-blocking so wait for completion */
             if (opal_socket_errno == EINPROGRESS || opal_socket_errno == EWOULDBLOCK) {
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
