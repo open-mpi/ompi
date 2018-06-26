@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,15 +27,12 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/argv.h"
 
 #include <string.h>
 
 #include "btl_uct_device_context.h"
 #include "btl_uct_am.h"
-
-#if !OPAL_C_HAVE__THREAD_LOCAL
-opal_tsd_key_t mca_btl_uct_tsd_device_key;
-#endif
 
 static int mca_btl_uct_component_register(void)
 {
@@ -113,10 +112,6 @@ static int mca_btl_uct_component_open(void)
         }
     }
 
-#if !OPAL_C_HAVE__THREAD_LOCAL
-    opal_tsd_key_create (&mca_btl_uct_tsd_device_key, NULL);
-#endif
-
     return OPAL_SUCCESS;
 }
 
@@ -126,10 +121,6 @@ static int mca_btl_uct_component_open(void)
  */
 static int mca_btl_uct_component_close(void)
 {
-#if !OPAL_C_HAVE__THREAD_LOCAL
-    opal_tsd_key_delete (mca_btl_uct_tsd_device_key);
-#endif
-
     return OPAL_SUCCESS;
 }
 
