@@ -1511,7 +1511,16 @@ if test $FROM_OMPI = yes ; then
    # Open MPI: see comments in mpi-io/mpioprof.h
    AC_DEFINE(MPIO_BUILD_PROFILING, 1, [hack to make ROMIO build without profiling])
    DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST 1"
-   DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#undef HAVE_MPI_GREQUEST_EXTENSIONS"
+   AC_ARG_ENABLE([grequest-extensions],
+       [AC_HELP_STRING([--enable-grequest-extensions],
+                       [Enable support for Grequest extensions (default: disabled)])])
+   AS_IF([test "x$enable_grequest_extensions" = "xyes"],
+         [DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#define HAVE_MPI_GREQUEST_EXTENSIONS 1
+
+extern void opal_progress(void);
+#define MPIR_Ext_cs_yield_opal_progress"],
+         [DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#undef HAVE_MPI_GREQUEST_EXTENSIONS"])
+
    AC_DEFINE(HAVE_DECL_MPI_COMBINER_HINDEXED_BLOCK, 1, [Define if MPI library provides HINDEXED_BLOCK datatype])
    AC_DEFINE(HAVE_MPIIO_CONST, 1, Set if MPI-IO prototypes use const qualifier)
 elif test $FROM_LAM = yes ; then

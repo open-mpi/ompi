@@ -17,7 +17,7 @@ dnl Copyright (c) 2009-2018 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2015-2017 Research Organization for Information Science
+dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
@@ -211,6 +211,21 @@ fi
 AC_DEFINE_UNQUOTED([OMPI_ENABLE_MPI1_COMPAT], [$ompi_mpi1_support], [whether we want MPI-1.x support])
 AC_SUBST([OMPI_ENABLE_MPI1_COMPAT], [$ompi_mpi1_support])
 AM_CONDITIONAL([OMPI_ENABLE_MPI1_COMPAT],[test $ompi_mpi1_support = 1])
+
+AC_ARG_ENABLE([grequest-extensions],
+    [AC_HELP_STRING([--enable-grequest-extensions],
+                    [Enable support for Grequest extensions (default: disabled)])])
+
+if test "x$enable_grequest_extensions" = "xyes" ; then
+ompi_grequest_extensions=1
+else
+ompi_grequest_extensions=0
+fi
+
+
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_GREQUEST_EXTENSIONS], [$ompi_grequest_extensions], [whether we support Grequest extensions])
+AC_SUBST([OMPI_ENABLE_GREQUEST_EXTENSIONS], [$ompi_grequest_extensions])
+AM_CONDITIONAL([OMPI_ENABLE_GREQUEST_EXTENSIONS],[test $ompi_grequest_extensions = 1])
 
 #
 # Do we want to disable MPI parameter checking at run-time?

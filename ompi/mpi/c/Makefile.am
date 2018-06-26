@@ -15,7 +15,7 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2017 Research Organization for Information Science
+# Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -430,6 +430,13 @@ libmpi_c_mpi_la_SOURCES = \
         win_unlock.c \
 	win_unlock_all.c \
         win_wait.c
+
+if OMPI_ENABLE_GREQUEST_EXTENSIONS
+libmpi_c_mpi_la_SOURCES += \
+        grequestx_class_allocate.c \
+        grequestx_class_create.c \
+        grequestx_start.c
+endif
 
 if OMPI_ENABLE_MPI1_COMPAT
 libmpi_c_mpi_la_SOURCES += \
