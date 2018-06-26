@@ -1,8 +1,10 @@
 /*
- * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (C) 2001-2011 Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -381,14 +383,19 @@ static void mca_pml_ucx_waitall(void **reqs, size_t *count_p)
     *count_p = 0;
 }
 
+static void mca_pml_fence_complete_cb(int status, void *fenced)
+{
+    *(int*)fenced = 1;
+}
+
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
+    volatile int fenced = 0;
     ompi_proc_t *proc;
     size_t num_reqs, max_reqs;
     void *dreq, **dreqs;
     ucp_ep_h ep;
     size_t i;
-    ucs_status_t ret;
 
     max_reqs = ompi_pml_ucx.num_disconnect;
     if (max_reqs > nprocs) {
@@ -430,16 +437,11 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 
     mca_pml_ucx_waitall(dreqs, &num_reqs);
     free(dreqs);
-    /* flush worker to allow all pending operations to complete.
-     * ignore error (we can do nothing here), just try to
-     * finalize gracefully */
-    ret = ucp_worker_flush(ompi_pml_ucx.ucp_worker);
-    if (UCS_OK != ret) {
-        PML_UCX_ERROR("ucp_worker_flush failed: %s",
-                      ucs_status_string(ret));
-    }
 
-    opal_pmix.fence(NULL, 0);
+    opal_pmix.fence_nb(NULL, 0, mca_pml_fence_complete_cb, &fenced);
+    while (!fenced) {
+        ucp_worker_progress(ompi_pml_ucx.ucp_worker);
+    }
 
     return OMPI_SUCCESS;
 }
