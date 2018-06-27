@@ -26,7 +26,6 @@ int mca_atomic_ucx_cswap(void *target,
                          size_t size,
                          int pe)
 {
-    int status;
     ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
@@ -39,7 +38,7 @@ int mca_atomic_ucx_cswap(void *target,
     assert(NULL != prev);
 
     *prev      = value;
-    ucx_mkey   = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
+    ucx_mkey   = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, &mca_spml_ucx);
     status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                      UCP_ATOMIC_FETCH_OP_CSWAP, cond, prev, size,
                                      rva, ucx_mkey->rkey,

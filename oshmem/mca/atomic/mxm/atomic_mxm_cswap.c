@@ -55,7 +55,7 @@ int mca_atomic_mxm_cswap(void *target,
     mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
 
     *prev                     = value;
-    sreq.op.atomic.value      = value;
+    sreq.op.atomic.value      = cond;
     sreq.base.data.buffer.ptr = prev;
     sreq.opcode               = MXM_REQ_OP_ATOMIC_CSWAP;
 

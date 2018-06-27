@@ -45,12 +45,9 @@ int mca_atomic_ucx_op(void *target,
     uint64_t rva;
     uint64_t val;
 
-    if ((8 != size) && (4 != size)) {
-        ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
-        return OSHMEM_ERROR;
-    }
+    assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, &mca_spml_ucx);
     status = ucp_atomic_post(mca_spml_self->ucp_peers[pe].ucp_conn,
                              op, value, size, rva,
                              ucx_mkey->rkey);
@@ -65,17 +62,13 @@ int mca_atomic_ucx_fop(void *target,
                        int pe,
                        ucp_atomic_fetch_op_t op)
 {
-    ucs_status_t status;
     ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
 
-    if ((8 != size) && (4 != size)) {
-        ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
-        return OSHMEM_ERROR;
-    }
+    assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, &mca_spml_ucx);
     status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                      op, value, prev, size,
                                      rva, ucx_mkey->rkey,

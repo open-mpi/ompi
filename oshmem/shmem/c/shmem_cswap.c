@@ -38,9 +38,9 @@
         size = sizeof(value);                                       \
         rc = MCA_ATOMIC_CALL(cswap(                                 \
             (void*)target,                                          \
-            (void*)&out_value,                                      \
-            cond,                                                   \
-            value,                                                  \
+            &out_value,                                             \
+            ATOMIC_PTR_2_INT(&cond, sizeof(cond)),                  \
+            ATOMIC_PTR_2_INT(&value, sizeof(value)),                \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \

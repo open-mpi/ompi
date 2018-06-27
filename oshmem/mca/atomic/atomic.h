@@ -33,6 +33,8 @@
 
 BEGIN_C_DECLS
 
+#define ATOMIC_PTR_2_INT(ptr, size) ((size) == 8 ? *(uint64_t*)(ptr) : *(uint32_t*)(ptr))
+
 /* ******************************************************************** */
 
 struct oshmem_op_t;
