@@ -95,9 +95,6 @@ int mca_btl_ofi_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
 
     MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
 
-    /* force a bit of progress */
-    mca_btl_ofi_component.super.btl_progress();
-
     return OPAL_SUCCESS;
 }
 
@@ -142,9 +139,6 @@ int mca_btl_ofi_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     }
 
     MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
-
-    /* force a bit of progress */
-    mca_btl_ofi_component.super.btl_progress();
 
     return OPAL_SUCCESS;
 

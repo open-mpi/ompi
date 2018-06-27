@@ -49,13 +49,17 @@ static int validate_info(struct fi_info *info)
 {
     int mr_mode;
 
+    BTL_VERBOSE(("validating device: %s", info->domain_attr->name));
+
     /* we need exactly all the required bits */
     if ((info->caps & MCA_BTL_OFI_REQUIRED_CAPS) != MCA_BTL_OFI_REQUIRED_CAPS) {
+        BTL_VERBOSE(("unsupported caps"));
         return OPAL_ERROR;
     }
 
     /* we need FI_EP_RDM */
     if (info->ep_attr->type != FI_EP_RDM) {
+        BTL_VERBOSE(("unsupported EP type"));
         return OPAL_ERROR;
     }
 
@@ -63,9 +67,16 @@ static int validate_info(struct fi_info *info)
 
     if (!(mr_mode == FI_MR_BASIC || mr_mode == FI_MR_SCALABLE ||
          (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY)) == 0)) {
+        BTL_VERBOSE(("unsupported MR mode"));
         return OPAL_ERROR;
     }
 
+    if (!(info->tx_attr->op_flags | FI_DELIVERY_COMPLETE)) {
+        BTL_VERBOSE(("the endpoint tx_ctx does not support FI_DELIVERY_COMPLETE"));
+        return OPAL_ERROR;
+    }
+
+    BTL_VERBOSE(("device: %s is good to go.", info->domain_attr->name));
     return OPAL_SUCCESS;
 }
 
@@ -102,14 +113,10 @@ static int mca_btl_ofi_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &prov_exclude);
 
-    /* Note: better leave it at 1 for now. osc rdma module is designed for 1 completion
-     * at a time. Dealing with more than 1 completion in 1 read will confuse the osc rdma.
-     * source: 8 hours of debugging. :(*/
-    mca_btl_ofi_component.num_cqe_read = 1;
+    mca_btl_ofi_component.num_cqe_read = MCA_BTL_OFI_NUM_CQE_READ;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "num_cq_read",
-                                          "Number of completion entries to read from a single cq_read. "
-                                          "(default: 1)",
+                                          "Number of completion entries to read from a single cq_read. ",
                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
@@ -135,6 +142,7 @@ static int mca_btl_ofi_component_register(void)
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.num_contexts_per_module);
+
     disable_sep = false;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "disable_sep",
@@ -143,6 +151,17 @@ static int mca_btl_ofi_component_register(void)
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &disable_sep);
+
+    mca_btl_ofi_component.progress_threshold = MCA_BTL_OFI_PROGRESS_THRESHOLD;
+    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
+                                          "progress_threshold",
+                                          "number of outstanding operation before btl will progress "
+                                          "automatically. Tuning this might improve performance on "
+                                          "certain type of application.",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_ofi_component.progress_threshold);
 
     /* for now we want this component to lose to btl/ugni and btl/vader */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
@@ -240,6 +259,8 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     /* for now */
     tx_attr.iov_limit = 1;
     rx_attr.iov_limit = 1;
+
+    tx_attr.op_flags = FI_DELIVERY_COMPLETE;
 
     mca_btl_ofi_component.module_count = 0;
 

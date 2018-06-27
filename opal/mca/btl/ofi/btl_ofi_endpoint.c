@@ -176,6 +176,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
     struct fi_rx_attr rx_attr = {0};
 
     mca_btl_ofi_context_t *contexts;
+    tx_attr.op_flags = FI_DELIVERY_COMPLETE;
 
     contexts = (mca_btl_ofi_context_t*) calloc(num_contexts, sizeof(*contexts));
     if (NULL == contexts) {
