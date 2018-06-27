@@ -36,8 +36,8 @@ int mca_atomic_ucx_cswap_inner(void *target,
     uint64_t val;
     uint64_t cmp;
 
-    val        = (4 == size) ? *(uint32_t*)value : *(uint64_t*)value;
-    cmp        = (4 == size) ? *(uint32_t*)cond : *(uint64_t*)cond;
+    val        = (sizeof(uint32_t) == size) ? *(uint32_t*)value : *(uint64_t*)value;
+    cmp        = (sizeof(uint32_t) == size) ? *(uint32_t*)cond : *(uint64_t*)cond;
     ucx_mkey   = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
     status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                      UCP_ATOMIC_FETCH_OP_CSWAP, cmp, &val, size,
@@ -47,7 +47,7 @@ int mca_atomic_ucx_cswap_inner(void *target,
     if (UCS_OK == status) {
         assert(NULL != prev);
         memcpy(prev, &val, size);
-        if (4 == size) {
+        if (sizeof(uint32_t) == size) {
             *(uint32_t*)prev = val;
         } else {
             *(uint64_t*)prev = val;
@@ -63,10 +63,10 @@ int mca_atomic_ucx_cswap(void *target,
                          size_t size,
                          int pe)
 {
-    if (8 == size) {
-        return mca_atomic_ucx_cswap_inner(target, prev, cond, value, 8, pe);
-    } else if (4 == size) {
-        return mca_atomic_ucx_cswap_inner(target, prev, cond, value, 4, pe);
+    if (sizeof(uint64_t) == size) {
+        return mca_atomic_ucx_cswap_inner(target, prev, cond, value, sizeof(uint64_t), pe);
+    } else if (sizeof(uint32_t) == size) {
+        return mca_atomic_ucx_cswap_inner(target, prev, cond, value, sizeof(uint32_t), pe);
     } else {
         ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
         return OSHMEM_ERROR;
