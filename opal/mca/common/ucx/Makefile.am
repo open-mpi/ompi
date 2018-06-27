@@ -50,6 +50,10 @@ endif
 
 lib@OPAL_LIB_PREFIX@mca_common_ucx_la_SOURCES = \
         $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_ucx_la_CFLAGS = \
+		$(common_ucx_CFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_ucx_la_CPPFLAGS = \
+		$(common_ucx_CPPFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_ucx_la_LDFLAGS = \
         -version-info $(libmca_opal_common_ucx_so_version) \
 		$(common_ucx_LDFLAGS)
@@ -58,6 +62,10 @@ lib@OPAL_LIB_PREFIX@mca_common_ucx_la_LIBADD = \
 		$(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_SOURCES = \
         $(headers) $(sources)
+lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_CFLAGS = \
+		$(common_ucx_CFLAGS)
+lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_CPPFLAGS = \
+		$(common_ucx_CPPFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LDFLAGS = \
 		$(common_ucx_LDFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LIBADD = \

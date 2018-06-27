@@ -23,7 +23,7 @@ AC_DEFUN([MCA_opal_common_ucx_CONFIG],[
           [$2])
 
 
-    # substitute in the things needed to build openib
+    # substitute in the things needed to build common_ucx
     AC_SUBST([common_ucx_CFLAGS])
     AC_SUBST([common_ucx_CPPFLAGS])
     AC_SUBST([common_ucx_LDFLAGS])
