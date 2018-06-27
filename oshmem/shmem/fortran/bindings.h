@@ -37,4 +37,6 @@ ret upper_case signature {wrapper_function params; } \
 ret single_underscore signature {wrapper_function params; } \
 ret double_underscore signature {wrapper_function params; }
 
+#define FPTR_2_INT(ptr, size) ((size) == sizeof(uint64_t) ? *(uint64_t*)(ptr) : *(uint32_t*)(ptr))
+
 #endif /*SHMEM_FORTRAN_BINDINGS_H*/

@@ -20,8 +20,8 @@
 
 int mca_atomic_basic_cswap(void *target,
                            void *prev,
-                           const void *cond,
-                           const void *value,
+                           uint64_t cond,
+                           uint64_t value,
                            size_t nlong,
                            int pe)
 {
@@ -36,8 +36,8 @@ int mca_atomic_basic_cswap(void *target,
 
         rc = MCA_SPML_CALL(get(target, nlong, prev, pe));
 
-        if ((rc == OSHMEM_SUCCESS) && (!cond || !memcmp(prev, cond, nlong))) {
-            rc = MCA_SPML_CALL(put(target, nlong, (void*)value, pe));
+        if ((rc == OSHMEM_SUCCESS) && (!cond || !memcmp(prev, &cond, nlong))) {
+            rc = MCA_SPML_CALL(put(target, nlong, (void*)&value, pe));
             shmem_quiet();
         }
 

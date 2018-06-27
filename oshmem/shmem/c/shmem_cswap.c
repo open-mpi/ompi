@@ -39,8 +39,8 @@
         rc = MCA_ATOMIC_CALL(cswap(                                 \
             (void*)target,                                          \
             (void*)&out_value,                                      \
-            (const void*)&cond,                                     \
-            (const void*)&value,                                    \
+            cond,                                                   \
+            value,                                                  \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \

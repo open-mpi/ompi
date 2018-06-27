@@ -95,7 +95,7 @@ int mca_atomic_basic_finalize(void)
 static inline
 int mca_atomic_basic_fop(void *target,
                          void *prev,
-                         const void *value,
+                         uint64_t value,
                          size_t size,
                          int pe,
                          struct oshmem_op_t *op)
@@ -110,8 +110,8 @@ int mca_atomic_basic_fop(void *target,
     memcpy(prev, (void*) &temp_value, size);
 
     op->o_func.c_fn((void*) value,
-            (void*) &temp_value,
-            size / op->dt_size);
+                    (void*) &temp_value,
+                    size / op->dt_size);
 
     if (rc == OSHMEM_SUCCESS) {
         rc = MCA_SPML_CALL(put(target, size, (void*)&temp_value, pe));
@@ -125,7 +125,7 @@ int mca_atomic_basic_fop(void *target,
 
 static inline
 int mca_atomic_basic_op(void *target,
-                        const void *value,
+                        uint64_t value,
                         size_t size,
                         int pe,
                         struct oshmem_op_t *op)
@@ -135,21 +135,21 @@ int mca_atomic_basic_op(void *target,
     return mca_atomic_basic_fop(target, &prev, value, size, pe, op);
 }
 
-static int mca_atomic_basic_add(void *target, const void *value,
+static int mca_atomic_basic_add(void *target, uint64_t value,
                                 size_t size, int pe)
 {
     return mca_atomic_basic_op(target, value, size, pe,
                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
 }
 
-static int mca_atomic_basic_fadd(void *target, void *prev, const void *value,
+static int mca_atomic_basic_fadd(void *target, void *prev, uint64_t value,
                                  size_t size, int pe)
 {
     return mca_atomic_basic_fop(target, prev, value, size, pe,
                                 MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
 }
 
-static int mca_atomic_basic_swap(void *target, void *prev, const void *value,
+static int mca_atomic_basic_swap(void *target, void *prev, uint64_t value,
                                  size_t size, int pe)
 {
     return mca_atomic_basic_fop(target, prev, value, size, pe,

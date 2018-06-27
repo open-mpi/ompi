@@ -40,7 +40,7 @@
         rc = MCA_ATOMIC_CALL(fadd(                                  \
             (void*)target,                                          \
             (void*)&out_value,                                      \
-            (const void*)&value,                                    \
+            value,                                                  \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \

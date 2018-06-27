@@ -44,8 +44,8 @@ mca_atomic_ucx_query(int *priority);
 
 int mca_atomic_ucx_cswap(void *target,
                          void *prev,
-                         const void *cond,
-                         const void *value,
+                         uint64_t cond,
+                         uint64_t value,
                          size_t size,
                          int pe);
 

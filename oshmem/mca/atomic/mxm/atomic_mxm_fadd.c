@@ -26,7 +26,7 @@
 #include "atomic_mxm.h"
 
 int mca_atomic_mxm_add(void *target,
-                       const void *value,
+                       uint64_t value,
                        size_t size,
                        int pe)
 {
@@ -35,8 +35,7 @@ int mca_atomic_mxm_add(void *target,
 
     mca_atomic_mxm_req_init(&sreq, pe, target, size);
 
-    memcpy(&sreq.op.atomic.value, value, size);
-
+    sreq.op.atomic.value      = value;
     sreq.opcode               = MXM_REQ_OP_ATOMIC_FADD;
     sreq.base.data.buffer.ptr = dummy_buf;
 
@@ -47,7 +46,7 @@ int mca_atomic_mxm_add(void *target,
 
 int mca_atomic_mxm_fadd(void *target,
                         void *prev,
-                        const void *value,
+                        uint64_t value,
                         size_t size,
                         int pe)
 {
@@ -55,8 +54,7 @@ int mca_atomic_mxm_fadd(void *target,
 
     mca_atomic_mxm_req_init(&sreq, pe, target, size);
 
-    memcpy(&sreq.op.atomic.value, value, size);
-
+    sreq.op.atomic.value      = value;
     sreq.opcode               = MXM_REQ_OP_ATOMIC_FADD;
     sreq.base.data.buffer.ptr = prev;
 

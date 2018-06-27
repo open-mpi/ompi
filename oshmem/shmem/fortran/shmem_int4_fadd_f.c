@@ -39,7 +39,7 @@ ompi_fortran_integer4_t shmem_int4_fadd_f(FORTRAN_POINTER_T target, FORTRAN_POIN
 
     MCA_ATOMIC_CALL(fadd(FPTR_2_VOID_PTR(target),
         (void *)&out_value,
-        FPTR_2_VOID_PTR(value),
+        FPTR_2_INT(value, sizeof(out_value)),
         sizeof(out_value),
         OMPI_FINT_2_INT(*pe)));
 

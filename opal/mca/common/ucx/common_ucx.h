@@ -19,6 +19,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/runtime/opal_progress.h"
+#include "opal/include/opal/constants.h"
 #include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
@@ -30,20 +31,13 @@ OPAL_DECLSPEC void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t
 OPAL_DECLSPEC void opal_common_ucx_mca_pmix_fence(ucp_worker_h worker);
 
 static inline
-ucs_status_t opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h worker)
+ucs_status_t opal_common_ucx_wait_request_internal(ucs_status_ptr_t request, ucp_worker_h worker)
 {
     ucs_status_t status;
     int i;
 #if !HAVE_DECL_UCP_REQUEST_CHECK_STATUS
     ucp_tag_recv_info_t info;
 #endif
-
-    /* check for request completed or failed */
-    if (OPAL_LIKELY(UCS_OK == request)) {
-        return UCS_OK;
-    } else if (OPAL_UNLIKELY(UCS_PTR_IS_ERR(request))) {
-        return UCS_PTR_STATUS(request);
-    }
 
     while (1) {
         /* call UCX progress */
@@ -64,6 +58,33 @@ ucs_status_t opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h
          * calls to UCX progress */
         opal_progress();
     }
+}
+
+static inline
+int opal_common_ucx_wait_request_opal_status(ucs_status_ptr_t request, ucp_worker_h worker)
+{
+    /* check for request completed or failed */
+    if (OPAL_LIKELY(UCS_OK == request)) {
+        return OPAL_SUCCESS;
+    } else if (OPAL_UNLIKELY(UCS_PTR_IS_ERR(request))) {
+        return OPAL_ERROR;
+    }
+
+    return opal_common_ucx_wait_request_internal(request, worker) == UCS_OK ?
+           OPAL_SUCCESS : OPAL_ERROR;
+}
+
+static inline
+ucs_status_t opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h worker)
+{
+    /* check for request completed or failed */
+    if (OPAL_LIKELY(UCS_OK == request)) {
+        return UCS_OK;
+    } else if (OPAL_UNLIKELY(UCS_PTR_IS_ERR(request))) {
+        return UCS_PTR_STATUS(request);
+    }
+
+    return opal_common_ucx_wait_request_internal(request, worker);
 }
 
 static inline

@@ -34,7 +34,7 @@ int mca_atomic_ucx_finalize(void)
 
 static inline
 int mca_atomic_ucx_op(void *target,
-                      const void *value,
+                      uint64_t value,
                       size_t size,
                       int pe,
                       ucp_atomic_post_op_t op)
@@ -45,18 +45,14 @@ int mca_atomic_ucx_op(void *target,
     uint64_t rva;
     uint64_t val;
 
-    if (8 == size) {
-        val = *(uint64_t*)value;
-    } else if (4 == size) {
-        val = *(uint32_t*)value;
-    } else {
+    if ((8 != size) && (4 != size)) {
         ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
         return OSHMEM_ERROR;
     }
 
     ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
     status = ucp_atomic_post(mca_spml_self->ucp_peers[pe].ucp_conn,
-                             op, val, size, rva,
+                             op, value, size, rva,
                              ucx_mkey->rkey);
     return ucx_status_to_oshmem(status);
 }
@@ -64,7 +60,7 @@ int mca_atomic_ucx_op(void *target,
 static inline
 int mca_atomic_ucx_fop(void *target,
                        void *prev,
-                       const void *value,
+                       uint64_t value,
                        size_t size,
                        int pe,
                        ucp_atomic_fetch_op_t op)
@@ -73,29 +69,22 @@ int mca_atomic_ucx_fop(void *target,
     ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
-    uint64_t val;
 
-    if (8 == size) {
-        val = *(uint64_t*)value;
-    } else if (4 == size) {
-        val = *(uint32_t*)value;
-    } else {
+    if ((8 != size) && (4 != size)) {
         ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
         return OSHMEM_ERROR;
     }
 
     ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
     status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
-                                     op, val, prev, size,
+                                     op, value, prev, size,
                                      rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
-    status = opal_common_ucx_wait_request(status_ptr, mca_spml_self->ucp_worker);
-
-    return ucx_status_to_oshmem(status);
+    return opal_common_ucx_wait_request_opal_status(status_ptr, mca_spml_self->ucp_worker);
 }
 
 static int mca_atomic_ucx_add(void *target,
-                              const void *value,
+                              uint64_t value,
                               size_t size,
                               int pe)
 {
@@ -104,7 +93,7 @@ static int mca_atomic_ucx_add(void *target,
 
 static int mca_atomic_ucx_fadd(void *target,
                                void *prev,
-                               const void *value,
+                               uint64_t value,
                                size_t size,
                                int pe)
 {
@@ -113,7 +102,7 @@ static int mca_atomic_ucx_fadd(void *target,
 
 static int mca_atomic_ucx_swap(void *target,
                                void *prev,
-                               const void *value,
+                               uint64_t value,
                                size_t size,
                                int pe)
 {

@@ -43,23 +43,23 @@ mca_atomic_base_module_t*
 mca_atomic_mxm_query(int *priority);
 
 int mca_atomic_mxm_add(void *target,
-                       const void *value,
+                       uint64_t value,
                        size_t nlong,
                        int pe);
 int mca_atomic_mxm_fadd(void *target,
                         void *prev,
-                        const void *value,
+                        uint64_t value,
                         size_t nlong,
                         int pe);
 int mca_atomic_mxm_swap(void *target,
                         void *prev,
-                        const void *value,
+                        uint64_t value,
                         size_t nlong,
                         int pe);
 int mca_atomic_mxm_cswap(void *target,
                          void *prev,
-                         const void *cond,
-                         const void *value,
+                         uint64_t cond,
+                         uint64_t value,
                          size_t nlong,
                          int pe);
 

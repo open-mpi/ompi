@@ -26,14 +26,14 @@
 
 int mca_atomic_mxm_swap(void *target,
                         void *prev,
-                        const void *value,
+                        uint64_t value,
                         size_t nlong,
                         int pe)
 {
     mxm_send_req_t sreq;
 
     mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
-    memcpy(prev, value, nlong);
+    memcpy(prev, &value, nlong);
 
     sreq.base.data.buffer.ptr = prev;
     sreq.opcode               = MXM_REQ_OP_ATOMIC_SWAP;
@@ -45,18 +45,17 @@ int mca_atomic_mxm_swap(void *target,
 
 int mca_atomic_mxm_cswap(void *target,
                          void *prev,
-                         const void *cond,
-                         const void *value,
+                         uint64_t cond,
+                         uint64_t value,
                          size_t nlong,
                          int pe)
 {
     mxm_send_req_t sreq;
 
     mca_atomic_mxm_req_init(&sreq, pe, target, nlong);
-    memcpy(prev, value, nlong);
+    memcpy(prev, &value, nlong);
 
-    memcpy(&sreq.op.atomic.value, cond, nlong);
-
+    sreq.op.atomic.value      = value;
     sreq.base.data.buffer.ptr = prev;
     sreq.opcode               = MXM_REQ_OP_ATOMIC_CSWAP;
 

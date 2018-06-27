@@ -35,7 +35,7 @@
         size = sizeof(value);                                       \
         rc = MCA_ATOMIC_CALL(add(                                   \
             (void*)target,                                          \
-            (const void*)&value,                                    \
+            value,                                                  \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \

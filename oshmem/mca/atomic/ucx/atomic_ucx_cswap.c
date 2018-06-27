@@ -24,42 +24,39 @@
 static inline
 int mca_atomic_ucx_cswap_inner(void *target,
                                void *prev,
-                               const void *cond,
-                               const void *value,
+                               uint64_t cond,
+                               uint64_t value,
                                size_t size,
                                int pe)
 {
-    ucs_status_t status;
+    int status;
     ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
     uint64_t val;
-    uint64_t cmp;
 
-    val        = (sizeof(uint32_t) == size) ? *(uint32_t*)value : *(uint64_t*)value;
-    cmp        = (sizeof(uint32_t) == size) ? *(uint32_t*)cond : *(uint64_t*)cond;
+    val        = value;
     ucx_mkey   = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
     status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
-                                     UCP_ATOMIC_FETCH_OP_CSWAP, cmp, &val, size,
+                                     UCP_ATOMIC_FETCH_OP_CSWAP, cond, &val, size,
                                      rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
-    status = opal_common_ucx_wait_request(status_ptr, mca_spml_self->ucp_worker);
-    if (UCS_OK == status) {
+    status = opal_common_ucx_wait_request_opal_status(status_ptr, mca_spml_self->ucp_worker);
+    if (OPAL_SUCCESS == status) {
         assert(NULL != prev);
-        memcpy(prev, &val, size);
         if (sizeof(uint32_t) == size) {
             *(uint32_t*)prev = val;
         } else {
             *(uint64_t*)prev = val;
         }
     }
-    return ucx_status_to_oshmem(status);
+    return status;
 }
 
 int mca_atomic_ucx_cswap(void *target,
                          void *prev,
-                         const void *cond,
-                         const void *value,
+                         uint64_t cond,
+                         uint64_t value,
                          size_t size,
                          int pe)
 {
