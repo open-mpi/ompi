@@ -35,7 +35,7 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
                                 __FILE__, __LINE__, status);
             return OMPI_ERROR;
         }
-        assert(result_value >= 0);
+        assert((int64_t)result_value >= 0);
         if (result_value >= TARGET_LOCK_EXCLUSIVE) {
             status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD, (-1), sizeof(uint64_t),
                                      remote_addr, rkey);
@@ -245,12 +245,8 @@ int ompi_osc_ucx_lock_all(int assert, struct ompi_win_t *win) {
     } else {
         module->lock_all_is_nocheck = true;
     }
-
-    if (ret != OMPI_SUCCESS) {
-        module->epoch_type.access = NONE_EPOCH;
-    }
-
-    return ret;
+    assert(OMPI_SUCCESS == ret);
+    return OMPI_SUCCESS;
 }
 
 int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {

@@ -367,12 +367,12 @@ static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int rank)
     return NULL;
 }
 
-static void mca_pml_ucx_waitall(void **reqs, size_t *count_p)
+static void mca_pml_ucx_waitall(void **reqs, int *count_p)
 {
     ucs_status_t status;
-    size_t i;
+    int i;
 
-    PML_UCX_VERBOSE(2, "waiting for %d disconnect requests", (int)*count_p);
+    PML_UCX_VERBOSE(2, "waiting for %d disconnect requests", *count_p);
     for (i = 0; i < *count_p; ++i) {
         do {
             opal_progress();
@@ -398,7 +398,8 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     volatile int fenced = 0;
     ompi_proc_t *proc;
-    size_t num_reqs, max_reqs;
+    int num_reqs;
+    size_t max_reqs;
     void *dreq, **dreqs;
     ucp_ep_h ep;
     size_t i;
@@ -422,6 +423,8 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
             continue;
         }
 
+        proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = NULL;
+
         PML_UCX_VERBOSE(2, "disconnecting from rank %d", proc->super.proc_name.vpid);
         dreq = ucp_disconnect_nb(ep);
         if (dreq != NULL) {
@@ -429,18 +432,18 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
                 PML_UCX_ERROR("ucp_disconnect_nb(%d) failed: %s",
                               proc->super.proc_name.vpid,
                               ucs_status_string(UCS_PTR_STATUS(dreq)));
+                continue;
             } else {
                 dreqs[num_reqs++] = dreq;
+                if (num_reqs >= ompi_pml_ucx.num_disconnect) {
+                    mca_pml_ucx_waitall(dreqs, &num_reqs);
+                }
             }
         }
-
-        proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = NULL;
-
-        if ((int)num_reqs >= ompi_pml_ucx.num_disconnect) {
-            mca_pml_ucx_waitall(dreqs, &num_reqs);
-        }
     }
-
+    /* num_reqs == 0 is processed by mca_pml_ucx_waitall routine,
+     * so suppress coverity warning */
+    /* coverity[uninit_use_in_call] */
     mca_pml_ucx_waitall(dreqs, &num_reqs);
     free(dreqs);
 
@@ -541,6 +544,7 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
 
     PML_UCX_TRACE_RECV("%s", buf, count, datatype, src, tag, comm, "recv");
 
+    /* coverity[bad_alloc_arithmetic] */
     PML_UCX_MAKE_RECV_TAG(ucp_tag, ucp_tag_mask, tag, src, comm);
     req = PML_UCX_REQ_ALLOCA();
     status = ucp_tag_recv_nbr(ompi_pml_ucx.ucp_worker, buf, count,
@@ -765,6 +769,7 @@ mca_pml_ucx_send_nbr(ucp_ep_h ep, const void *buf, size_t count,
     void *req;
     ucs_status_t status;
 
+    /* coverity[bad_alloc_arithmetic] */
     req    = PML_UCX_REQ_ALLOCA();
     status = ucp_tag_send_nbr(ep, buf, count, ucx_datatype, tag, req);
     if (OPAL_LIKELY(status == UCS_OK)) {

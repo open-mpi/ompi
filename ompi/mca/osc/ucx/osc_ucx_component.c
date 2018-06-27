@@ -149,7 +149,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
     /* initialize UCP context */
 
-    memset(&context_params, 0, sizeof(ucp_context_h));
+    memset(&context_params, 0, sizeof(context_params));
     context_params.field_mask = UCP_PARAM_FIELD_FEATURES |
                                 UCP_PARAM_FIELD_MT_WORKERS_SHARED |
                                 UCP_PARAM_FIELD_ESTIMATED_NUM_EPS |
@@ -329,7 +329,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         ucp_worker_params_t worker_params;
         ucp_worker_attr_t worker_attr;
 
-        memset(&worker_params, 0, sizeof(ucp_worker_h));
+        memset(&worker_params, 0, sizeof(worker_params));
         worker_params.field_mask = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
         worker_params.thread_mode = (mca_osc_ucx_component.enable_mpi_threads == true)
                                     ? UCS_THREAD_MODE_MULTI : UCS_THREAD_MODE_SINGLE;
@@ -340,7 +340,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                                 "%s:%d: ucp_worker_create failed: %d\n",
                                 __FILE__, __LINE__, status);
             ret = OMPI_ERROR;
-            goto error;
+            goto error_nomem;
         }
 
         ret = opal_progress_register(progress_callback);
@@ -360,7 +360,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                                 "%s:%d: ucp_worker_query failed: %d\n",
                                 __FILE__, __LINE__, status);
             ret = OMPI_ERROR;
-            goto error;
+            goto error_nomem;
         }
 
         if (mca_osc_ucx_component.enable_mpi_threads == true &&
@@ -369,7 +369,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                                 "%s:%d: ucx does not support multithreading\n",
                                 __FILE__, __LINE__);
             ret = OMPI_ERROR;
-            goto error;
+            goto error_nomem;
         }
 
         worker_created = true;
@@ -379,7 +379,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     module = (ompi_osc_ucx_module_t *)calloc(1, sizeof(ompi_osc_ucx_module_t));
     if (module == NULL) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        goto error;
+        goto error_nomem;
     }
 
     /* fill in the function pointer part */
@@ -676,8 +676,10 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         }
     }
     if (progress_registered) opal_progress_unregister(progress_callback);
-    if (worker_created) ucp_worker_destroy(mca_osc_ucx_component.ucp_worker);
     if (module) free(module);
+
+error_nomem:
+    if (worker_created) ucp_worker_destroy(mca_osc_ucx_component.ucp_worker);
     return ret;
 }
 
@@ -777,6 +779,11 @@ int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
                                                      (uint64_t)base, 1, &insert);
     assert(contain >= 0 && contain < module->state.dynamic_win_count);
 
+    /* if we can't find region - just exit */
+    if (contain < 0) {
+        return OMPI_SUCCESS;
+    }
+
     module->local_dynamic_win_info[contain].refcnt--;
     if (module->local_dynamic_win_info[contain].refcnt == 0) {
         ucp_mem_unmap(mca_osc_ucx_component.ucp_context,
@@ -796,16 +803,7 @@ int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
 
 int ompi_osc_ucx_free(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
-    int i, ret = OMPI_SUCCESS;
-
-    if ((module->epoch_type.access != NONE_EPOCH && module->epoch_type.access != FENCE_EPOCH)
-        || module->epoch_type.exposure != NONE_EPOCH) {
-        ret = OMPI_ERR_RMA_SYNC;
-    }
-
-    if (module->start_group != NULL || module->post_group != NULL) {
-        ret = OMPI_ERR_RMA_SYNC;
-    }
+    int i, ret;
 
     assert(module->global_ops_num == 0);
     assert(module->lock_count == 0);
@@ -824,7 +822,7 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     for (i = 0; i < ompi_comm_size(module->comm); i++) {
         if ((module->win_info_array[i]).rkey_init == true) {
             ucp_rkey_destroy((module->win_info_array[i]).rkey);
-            (module->win_info_array[i]).rkey_init == false;
+            (module->win_info_array[i]).rkey_init = false;
         }
         ucp_rkey_destroy((module->state_info_array[i]).rkey);
     }
