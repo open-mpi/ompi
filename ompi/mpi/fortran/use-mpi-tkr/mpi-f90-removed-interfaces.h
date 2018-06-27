@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2016      Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! Copyright (c) 2018      Los Alamos National Security, LLC. All rights
@@ -181,3 +181,5 @@ subroutine MPI_Type_ub(datatype, ub, ierror)
   integer, intent(out) :: ub
   integer, intent(out) :: ierror
 end subroutine MPI_Type_ub
+
+end interface
