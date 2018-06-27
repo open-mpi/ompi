@@ -29,13 +29,13 @@
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
-        type out_value;                                             \
+        uint64_t out_value;                                         \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
         RUNTIME_CHECK_ADDR(target);                                 \
                                                                     \
-        size = sizeof(out_value);                                   \
+        size = sizeof(value);                                       \
         rc = MCA_ATOMIC_CALL(cswap(                                 \
             (void*)target,                                          \
             (void*)&out_value,                                      \

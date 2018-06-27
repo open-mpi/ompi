@@ -43,7 +43,7 @@ mca_atomic_base_module_t*
 mca_atomic_ucx_query(int *priority);
 
 int mca_atomic_ucx_cswap(void *target,
-                         void *prev,
+                         uint64_t *prev,
                          uint64_t cond,
                          uint64_t value,
                          size_t size,

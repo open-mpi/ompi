@@ -57,7 +57,7 @@ int mca_atomic_mxm_swap(void *target,
                         size_t nlong,
                         int pe);
 int mca_atomic_mxm_cswap(void *target,
-                         void *prev,
+                         uint64_t *prev,
                          uint64_t cond,
                          uint64_t value,
                          size_t nlong,

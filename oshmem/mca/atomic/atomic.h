@@ -101,7 +101,8 @@ struct mca_atomic_base_module_1_0_0_t {
                        size_t size,
                        int pe);
     int (*atomic_cswap)(void *target,
-                        void *prev,
+                        uint64_t *prev, /* prev is used internally by wrapper, we may
+                                           always use 64-bit value */
                         uint64_t cond,
                         uint64_t value,
                         size_t size,
