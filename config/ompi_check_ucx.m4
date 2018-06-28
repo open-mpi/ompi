@@ -108,6 +108,9 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                  [AC_DEFINE([HAVE_UCP_TAG_SEND_NBR],[1],
                                             [have ucp_tag_send_nbr()])], [],
                                  [#include <ucp/api/ucp.h>])
+                  AC_CHECK_DECLS([ucp_ep_flush_nb, ucp_worker_flush_nb, ucp_request_check_status],
+                                 [], [],
+                                 [#include <ucp/api/ucp.h>])
                   CPPFLAGS=$old_CPPFLAGS
 
                   OPAL_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])])])

@@ -33,6 +33,9 @@ ucs_status_t opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h
 {
     ucs_status_t status;
     int i;
+#if !HAVE_DECL_UCP_REQUEST_CHECK_STATUS
+    ucp_tag_recv_info_t info;
+#endif
 
     /* check for request completed or failed */
     if (OPAL_LIKELY(UCS_OK == request)) {
@@ -44,7 +47,13 @@ ucs_status_t opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h
     while (1) {
         /* call UCX progress */
         for (i = 0; i < opal_common_ucx_progress_iterations; i++) {
-            if (UCS_INPROGRESS != (status = ucp_request_check_status(request))) {
+            if (UCS_INPROGRESS != (status =
+#if HAVE_DECL_UCP_REQUEST_CHECK_STATUS
+                ucp_request_check_status(request)
+#else
+                ucp_request_test(request, &info)
+#endif
+                )) {
                 ucp_request_free(request);
                 return status;
             }
@@ -59,19 +68,27 @@ ucs_status_t opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h
 static inline
 ucs_status_t opal_common_ucx_ep_flush(ucp_ep_h ep, ucp_worker_h worker)
 {
+#if HAVE_DECL_UCP_EP_FLUSH_NB
     ucs_status_ptr_t status;
 
     status = ucp_ep_flush_nb(ep, 0, opal_common_ucx_empty_complete_cb);
     return opal_common_ucx_wait_request(status, worker);
+#else
+    return ucp_ep_flush(ep);
+#endif
 }
 
 static inline
 ucs_status_t opal_common_ucx_worker_flush(ucp_worker_h worker)
 {
+#if HAVE_DECL_UCP_WORKER_FLUSH_NB
     ucs_status_ptr_t status;
 
     status = ucp_worker_flush_nb(worker, 0, opal_common_ucx_empty_complete_cb);
     return opal_common_ucx_wait_request(status, worker);
+#else
+    return ucp_worker_flush(worker);
+#endif
 }
 
 static inline
