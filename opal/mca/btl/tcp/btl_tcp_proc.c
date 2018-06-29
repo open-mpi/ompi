@@ -344,7 +344,7 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(mca_btl_t
         /* create entry for this kernel index previously not seen */
         if (OPAL_SUCCESS != rc) {
             index = proc_data->num_local_interfaces++;
-            opal_hash_table_set_value_uint32(&proc_data->local_kindex_to_index, kindex, (void**) index);
+            opal_hash_table_set_value_uint32(&proc_data->local_kindex_to_index, kindex, (void*)(uintptr_t) index);
 
             if( proc_data->num_local_interfaces == proc_data->max_local_interfaces ) {
                 proc_data->max_local_interfaces <<= 1;
@@ -479,7 +479,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
         if (OPAL_SUCCESS != rc) {
             index = proc_data->num_peer_interfaces++;
-            opal_hash_table_set_value_uint32(&proc_data->peer_kindex_to_index, endpoint_addr->addr_ifkindex, (void**) index);
+            opal_hash_table_set_value_uint32(&proc_data->peer_kindex_to_index, endpoint_addr->addr_ifkindex, (void*)(uintptr_t) index);
             if( proc_data->num_peer_interfaces == max_peer_interfaces ) {
                 max_peer_interfaces <<= 1;
                 peer_interfaces = (mca_btl_tcp_interface_t**)realloc( peer_interfaces,
