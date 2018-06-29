@@ -330,20 +330,6 @@ error:
 }
 
 
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva)
-{
-    sshmem_mkey_t *r_mkey;
-
-    r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
-    if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_ERROR("pe=%d: %p is not address of symmetric variable",
-                   pe, va);
-        oshmem_shmem_abort(-1);
-        return NULL;
-    }
-    return (spml_ucx_mkey_t *)(r_mkey->spml_context);
-}
-
 void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey)
 {
     spml_ucx_mkey_t   *ucx_mkey;
@@ -555,7 +541,7 @@ int mca_spml_ucx_get(void *src_addr, size_t size, void *dst_addr, int src)
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva, &mca_spml_ucx);
     status = ucp_get(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
@@ -568,7 +554,7 @@ int mca_spml_ucx_get_nb(void *src_addr, size_t size, void *dst_addr, int src, vo
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva, &mca_spml_ucx);
     status = ucp_get_nbi(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
@@ -581,7 +567,7 @@ int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva, &mca_spml_ucx);
     status = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
@@ -594,7 +580,7 @@ int mca_spml_ucx_put_nb(void* dst_addr, size_t size, void* src_addr, int dst, vo
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva, &mca_spml_ucx);
     status = ucp_put_nbi(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 

@@ -40,7 +40,7 @@ int mca_atomic_ucx_fadd(void *target,
         return OSHMEM_ERROR;
     }
 
-    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, mca_spml_self);
     if (NULL == prev) {
         status = ucp_atomic_post(mca_spml_self->ucp_peers[pe].ucp_conn, 
                                  UCP_ATOMIC_POST_OP_ADD, val, nlong, rva,
