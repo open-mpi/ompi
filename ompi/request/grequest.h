@@ -50,9 +50,11 @@ typedef void (MPI_F_Grequest_cancel_function)(MPI_Aint *extra_state,
 /**
  * Fortran type for generalized request query function
  */
-typedef void (MPIX_F_Grequest_poll_function)(MPI_Aint *extra_state,
-                                             MPI_Fint *status,
-                                             MPI_Fint *ierr);
+typedef int (ompi_grequestx_poll_function)(void *, MPI_Status *);
+
+typedef void (ompi_f_grequestx_poll_function)(MPI_Aint *extra_state,
+                                              MPI_Fint *status,
+                                              MPI_Fint *ierr);
 #endif
 
 /**
@@ -84,9 +86,9 @@ typedef union {
  * Union for poll function for use in ompi_grequestx_t
  */
 typedef union {
-    MPIX_Grequest_poll_function*   c_poll;
-    MPIX_F_Grequest_poll_function*  f_poll;
-} MPIX_Grequest_poll_fct_t;
+    ompi_grequestx_poll_function*   c_poll;
+    ompi_f_grequestx_poll_function*  f_poll;
+} ompi_grequestx_poll_fct_t;
 #endif
 
 /**
@@ -98,7 +100,7 @@ struct ompi_grequest_t {
     MPI_Grequest_free_fct_t greq_free;
     MPI_Grequest_cancel_fct_t greq_cancel;
 #if OMPI_ENABLE_GREQUEST_EXTENSIONS
-    MPIX_Grequest_poll_fct_t greq_poll;
+    ompi_grequestx_poll_fct_t greq_poll;
 #endif
     void *greq_state;
     bool greq_funcs_are_c;

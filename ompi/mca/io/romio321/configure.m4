@@ -77,6 +77,8 @@ AC_DEFUN([MCA_ompi_io_romio321_CONFIG],[
                        [AS_IF([test ! -z $build], [io_romio321_flags="$io_romio321_flags --build=$build"])
                         AS_IF([test ! -z $host], [io_romio321_flags="$io_romio321_flags --host=$host"])
                         AS_IF([test ! -z $target], [io_romio321_flags="$io_romio321_flags --target=$target"])])
+                   AS_IF([test "$enable_grequest_extensions" = "yes"],
+                         [io_romio321_flags="$io_romio321_flags --enable-grequest-extensions"])
                    io_romio321_flags_define="$io_romio321_flags FROM_OMPI=yes CC='$CC' CFLAGS='$CFLAGS -D__EXTENSIONS__' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio321_shared-shared --$io_romio321_static-static $io_romio321_flags $io_romio321_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90"
                    AC_DEFINE_UNQUOTED([MCA_io_romio321_COMPLETE_CONFIGURE_FLAGS], ["$io_romio321_flags_define"], [Complete set of command line arguments given to ROMIOs configure script])
 

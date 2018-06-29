@@ -25,14 +25,16 @@
 
 BEGIN_C_DECLS
 
+typedef int (ompi_grequestx_wait_function)(int, void **, double, MPI_Status *);
+typedef int ompi_grequestx_class;
 /**
- * Start a generalized request (back end for MPIX_GREQUEST_START)
+ * Start an extended generalized request
  */
 OMPI_DECLSPEC int ompi_grequestx_start(
     MPI_Grequest_query_function *gquery,
     MPI_Grequest_free_function *gfree,
     MPI_Grequest_cancel_function *gcancel,
-    MPIX_Grequest_poll_function *gpoll,
+    ompi_grequestx_poll_function *gpoll,
     void* gstate,
     ompi_request_t** request);
 
@@ -40,14 +42,14 @@ OMPI_DECLSPEC int ompi_grequestx_class_create(
     MPI_Grequest_query_function *gquery,
     MPI_Grequest_free_function *gfree,
     MPI_Grequest_cancel_function *gcancel,
-    MPIX_Grequest_poll_function *gpoll,
-    MPIX_Grequest_wait_function *gwait,
-    MPIX_Grequest_class *greq_class);
+    ompi_grequestx_poll_function *gpoll,
+    ompi_grequestx_wait_function *gwait,
+    ompi_grequestx_class *greq_class);
 
 OMPI_DECLSPEC int ompi_grequestx_class_allocate(
-    MPIX_Grequest_class greq_class,
+    ompi_grequestx_class greq_class,
     void *extra_state,
-    ompi_request_t **request);
+    ompi_request_t** request);
 
 END_C_DECLS
 

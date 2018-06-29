@@ -1515,10 +1515,7 @@ if test $FROM_OMPI = yes ; then
        [AC_HELP_STRING([--enable-grequest-extensions],
                        [Enable support for Grequest extensions (default: disabled)])])
    AS_IF([test "x$enable_grequest_extensions" = "xyes"],
-         [DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#define HAVE_MPI_GREQUEST_EXTENSIONS 1
-
-extern void opal_progress(void);
-#define MPIR_Ext_cs_yield_opal_progress"],
+         [DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#include \"ompi_grequestx.h\""],
          [DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS="#undef HAVE_MPI_GREQUEST_EXTENSIONS"])
 
    AC_DEFINE(HAVE_DECL_MPI_COMBINER_HINDEXED_BLOCK, 1, [Define if MPI library provides HINDEXED_BLOCK datatype])

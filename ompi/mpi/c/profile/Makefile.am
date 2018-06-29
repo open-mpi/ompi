@@ -411,13 +411,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 	pwin_unlock_all.c \
         pwin_wait.c
 
-if OMPI_ENABLE_GREQUEST_EXTENSIONS
-nodist_libmpi_c_pmpi_la_SOURCES += \
-        pgrequestx_class_allocate.c \
-        pgrequestx_class_create.c \
-        pgrequestx_start.c
-endif
-
 if OMPI_ENABLE_MPI1_COMPAT
 nodist_libmpi_c_pmpi_la_SOURCES += \
         paddress.c \
