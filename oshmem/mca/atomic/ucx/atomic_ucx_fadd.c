@@ -29,8 +29,7 @@ int mca_atomic_ucx_fadd(void *target,
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva);
-
+    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, mca_spml_self);
     if (NULL == prev) {
         switch (nlong) {
             case 4:
