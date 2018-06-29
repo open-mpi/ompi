@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(atomic_ucx_CPPFLAGS)
+SUBDIRS = ../../spml/ucx
 
 ucx_sources = \
 	atomic_ucx.h \
@@ -33,12 +33,21 @@ endif
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
+mca_atomic_ucx_la_CFLAGS = $(atomic_ucx_CFLAGS)
+mca_atomic_ucx_la_CPPFLAGS = $(atomic_ucx_CPPFLAGS)
 mca_atomic_ucx_la_SOURCES = $(ucx_sources)
 mca_atomic_ucx_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
-	$(atomic_ucx_LIBS)
+	$(atomic_ucx_LIBS) \
+	$(top_builddir)/oshmem/mca/spml/libmca_spml.la \
+	$(top_builddir)/oshmem/mca/spml/ucx/mca_spml_ucx.la
 mca_atomic_ucx_la_LDFLAGS = -module -avoid-version $(atomic_ucx_LDFLAGS)
+mca_atomic_ucx_la_DEPENDENCIES = \
+	$(top_builddir)/oshmem/mca/spml/libmca_spml.la \
+	$(top_builddir)/oshmem/mca/spml/ucx/mca_spml_ucx.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_atomic_ucx_la_SOURCES =$(ucx_sources)
+libmca_atomic_ucx_la_CFLAGS = $(atomic_ucx_CFLAGS)
+libmca_atomic_ucx_la_CPPFLAGS = $(atomic_ucx_CPPFLAGS)
 libmca_atomic_ucx_la_LDFLAGS = -module -avoid-version $(atomic_ucx_LDFLAGS)
 
