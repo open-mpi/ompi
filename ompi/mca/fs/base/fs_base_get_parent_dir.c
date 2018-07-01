@@ -135,6 +135,9 @@ int  mca_fs_base_get_fstype(char *fname )
     else if ( 0 == strncasecmp(fstype, "ime", sizeof("ime"))) {
         ompio_type = IME;
     }
+    else if ( 0 == strncasecmp(fstype, "gpfs", sizeof("gpfs"))) {
+        ompio_type = GPFS;
+    }
 
     free (fstype);
     return ompio_type;
