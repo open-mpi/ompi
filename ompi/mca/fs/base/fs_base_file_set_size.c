@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -21,7 +21,7 @@
 
 
 #include "ompi_config.h"
-#include "fs_ufs.h"
+#include "base.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -36,8 +36,7 @@
  *	Accepts:	- same arguments as MPI_File_set_size()
  *	Returns:	- Success if size is set
  */
-int
-mca_fs_ufs_file_set_size (ompio_file_t *fh,
+int mca_fs_base_file_set_size (ompio_file_t *fh,
                           OMPI_MPI_OFFSET_TYPE size)
 {
     int err = 0;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -21,22 +21,22 @@
 
 
 #include "ompi_config.h"
-#include "fs_lustre.h"
-
+#include "base.h"
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fs/fs.h"
 
+#include <unistd.h>
+
 /*
- *	file_get_size_lustre
+ *	file_get_size_ufs
  *
  *	Function:	- get_size of a file
  *	Accepts:	- same arguments as MPI_File_get_size()
- *	Returns:	- Success if size is get
+ *	Returns:	- Success if size is retrieved
  */
-int
-mca_fs_lustre_file_get_size (ompio_file_t *fh,
-                         OMPI_MPI_OFFSET_TYPE *size)
+int mca_fs_base_file_get_size (ompio_file_t *fh,
+                               OMPI_MPI_OFFSET_TYPE *size)
 {
     *size = lseek(fh->fd, 0, SEEK_END);
     if (-1 == *size) {
