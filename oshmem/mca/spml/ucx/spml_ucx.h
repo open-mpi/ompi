@@ -68,6 +68,7 @@ struct mca_spml_ucx {
 
     int                      priority; /* component priority */
     bool                     enabled;
+    spml_ucx_mkey_t          *(*mca_spml_ucx_get_mkey_slow)(int pe, void *va, void **rva);
 };
 typedef struct mca_spml_ucx mca_spml_ucx_t;
 
@@ -121,22 +122,6 @@ extern int mca_spml_ucx_quiet(void);
 extern int spml_ucx_progress(void);
 
 
-static inline
-spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva)
-{
-    sshmem_mkey_t *r_mkey;
-
-    r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
-    if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_ERROR("pe=%d: %p is not address of symmetric variable",
-                   pe, va);
-        oshmem_shmem_abort(-1);
-        return NULL;
-    }
-    return (spml_ucx_mkey_t *)(r_mkey->spml_context);
-}
-
-
 static inline spml_ucx_mkey_t * 
 mca_spml_ucx_get_mkey(int pe, void *va, void **rva, mca_spml_ucx_t* module)
 {
@@ -145,7 +130,8 @@ mca_spml_ucx_get_mkey(int pe, void *va, void **rva, mca_spml_ucx_t* module)
     mkey = module->ucp_peers[pe].mkeys;
     mkey = (spml_ucx_cached_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
     if (OPAL_UNLIKELY(NULL == mkey)) {
-        return mca_spml_ucx_get_mkey_slow(pe, va, rva);
+        assert(module->mca_spml_ucx_get_mkey_slow);
+        return module->mca_spml_ucx_get_mkey_slow(pe, va, rva);
     }
     *rva = map_segment_va2rva(&mkey->super, va);
     return &mkey->key;
