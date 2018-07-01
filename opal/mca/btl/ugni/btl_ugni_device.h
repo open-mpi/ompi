@@ -278,8 +278,8 @@ static inline intptr_t mca_btl_ugni_post_fma_device (mca_btl_ugni_device_t *devi
     }
 
     BTL_VERBOSE(("Posting FMA descriptor %p with op_type %d, amo %d, remote_addr 0x%lx, "
-                 "length %lu", (void*)desc, desc->gni_desc.type, desc->gni_desc.amo_cmd,
-                 desc->gni_desc.remote_addr, desc->gni_desc.length));
+                 "length %lu", (void*)rdma_desc, rdma_desc->btl_ugni_desc.gni_desc.type, rdma_desc->btl_ugni_desc.gni_desc.amo_cmd,
+                 rdma_desc->btl_ugni_desc.gni_desc.remote_addr, rdma_desc->btl_ugni_desc.gni_desc.length));
 
     rc = GNI_PostFma (rdma_desc->gni_handle, &rdma_desc->btl_ugni_desc.gni_desc);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
@@ -323,8 +323,8 @@ static inline intptr_t mca_btl_ugni_post_rdma_device (mca_btl_ugni_device_t *dev
         &device->dev_rdma_local_cq;
 
     BTL_VERBOSE(("Posting RDMA descriptor %p with op_type %d, amo %d, remote_addr 0x%lx, "
-                 "length %lu", (void*)desc, desc->gni_desc.type, desc->gni_desc.amo_cmd,
-                 desc->gni_desc.remote_addr, desc->gni_desc.length));
+                 "length %lu", (void*)rdma_desc, rdma_desc->btl_ugni_desc.gni_desc.type, rdma_desc->btl_ugni_desc.gni_desc.amo_cmd,
+                 rdma_desc->btl_ugni_desc.gni_desc.remote_addr, rdma_desc->btl_ugni_desc.gni_desc.length));
 
     rc = GNI_PostRdma (rdma_desc->gni_handle, &rdma_desc->btl_ugni_desc.gni_desc);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {

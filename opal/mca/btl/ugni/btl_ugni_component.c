@@ -625,7 +625,7 @@ void mca_btl_ugni_handle_rdma_completions (mca_btl_ugni_module_t *ugni_module, m
     int bte_complete = 0;
 
     for (int i = 0 ; i < count ; ++i) {
-        BTL_VERBOSE(("post descriptor complete. status: %d", post_dest[i].rc));
+        BTL_VERBOSE(("post descriptor complete. status: %d", post_desc[i].rc));
 
         if (OPAL_UNLIKELY(OPAL_SUCCESS != post_desc[i].rc)) {
             /* dump the post descriptor if in a debug build */
