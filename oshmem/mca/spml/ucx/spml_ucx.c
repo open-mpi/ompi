@@ -79,6 +79,7 @@ mca_spml_ucx_t mca_spml_ucx = {
     0,      /* using_mem_hooks */
     1,      /* num_disconnect */
     0,      /* heap_reg_nb */
+    0,      /* enabled */
     mca_spml_ucx_get_mkey_slow
 };
 
