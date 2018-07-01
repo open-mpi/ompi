@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -55,11 +55,11 @@ static mca_fs_base_module_1_0_0_t lustre =  {
     mca_fs_lustre_module_init, /* initalise after being selected */
     mca_fs_lustre_module_finalize, /* close a module on a communicator */
     mca_fs_lustre_file_open,
-    mca_fs_lustre_file_close,
-    mca_fs_lustre_file_delete,
-    mca_fs_lustre_file_set_size,
-    mca_fs_lustre_file_get_size,
-    mca_fs_lustre_file_sync
+    mca_fs_base_file_close,
+    mca_fs_base_file_delete,
+    mca_fs_base_file_set_size,
+    mca_fs_base_file_get_size,
+    mca_fs_base_file_sync
 };
 /*
  * *******************************************************************

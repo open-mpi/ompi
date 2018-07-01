@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -30,6 +30,7 @@
 #include "mpi.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/ufs/fs_ufs.h"
+#include "ompi/mca/fs/base/base.h"
 
 /*
  * *******************************************************************
@@ -40,11 +41,11 @@ static mca_fs_base_module_1_0_0_t ufs =  {
     mca_fs_ufs_module_init, /* initalise after being selected */
     mca_fs_ufs_module_finalize, /* close a module on a communicator */
     mca_fs_ufs_file_open,
-    mca_fs_ufs_file_close,
-    mca_fs_ufs_file_delete,
-    mca_fs_ufs_file_set_size,
-    mca_fs_ufs_file_get_size,
-    mca_fs_ufs_file_sync
+    mca_fs_base_file_close,
+    mca_fs_base_file_delete,
+    mca_fs_base_file_set_size,
+    mca_fs_base_file_get_size,
+    mca_fs_base_file_sync
 };
 /*
  * *******************************************************************

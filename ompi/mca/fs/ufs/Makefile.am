@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2018 University of Houston. All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -46,9 +46,4 @@ sources = \
         fs_ufs.h \
         fs_ufs.c \
         fs_ufs_component.c \
-        fs_ufs_file_open.c \
-	fs_ufs_file_close.c \
-	fs_ufs_file_delete.c \
-	fs_ufs_file_sync.c \
-	fs_ufs_file_set_size.c \
-        fs_ufs_file_get_size.c
+        fs_ufs_file_open.c 
