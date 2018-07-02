@@ -37,7 +37,7 @@ int mca_atomic_ucx_cswap_inner(void *target,
     uint64_t cmp;
 
     val = (4 == nlong) ? *(uint32_t*)value : *(uint64_t*)value;
-    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva); 
+    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, mca_spml_self);
     if (NULL == cond) {
         status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                          UCP_ATOMIC_FETCH_OP_SWAP, val, prev, nlong,
