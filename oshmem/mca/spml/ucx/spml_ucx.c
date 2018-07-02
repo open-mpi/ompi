@@ -557,10 +557,20 @@ int mca_spml_ucx_get(void *src_addr, size_t size, void *dst_addr, int src)
     void *rva;
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
+#if HAVE_DECL_UCP_GET_NB
+    ucs_status_ptr_t request;
+#endif
 
     ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva, &mca_spml_ucx);
+#if HAVE_DECL_UCP_GET_NB
+    request = ucp_get_nb(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
+                         (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
+    /* TODO: replace wait_request by opal_common_ucx_wait_request_opal_status */
+    status = opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
+#else
     status = ucp_get(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
+#endif
 
     return ucx_status_to_oshmem(status);
 }
@@ -582,14 +592,21 @@ int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
 {
     void *rva;
     ucs_status_t status;
-    ucs_status_ptr_t request;
     spml_ucx_mkey_t *ucx_mkey;
+#if HAVE_DECL_UCP_PUT_NB
+    ucs_status_ptr_t request;
+#endif
 
     ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva, &mca_spml_ucx);
+#if HAVE_DECL_UCP_PUT_NB
     request = ucp_put_nb(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                          (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
     /* TODO: replace wait_request by opal_common_ucx_wait_request_opal_status */
     status = opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
+#else
+    request = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
+                     (uint64_t)rva, ucx_mkey->rkey);
+#endif
     return ucx_status_to_oshmem(status);
 }
 
