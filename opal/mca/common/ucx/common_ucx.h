@@ -27,6 +27,7 @@ extern int opal_common_ucx_progress_iterations;
 
 OPAL_DECLSPEC void opal_common_ucx_mca_register(void);
 OPAL_DECLSPEC void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status);
+OPAL_DECLSPEC void opal_common_ucx_mca_pmix_fence(ucp_worker_h worker);
 
 static inline
 ucs_status_t opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h worker)
