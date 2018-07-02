@@ -604,7 +604,7 @@ int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
     /* TODO: replace wait_request by opal_common_ucx_wait_request_opal_status */
     status = opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
 #else
-    request = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
+    status = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 #endif
     return ucx_status_to_oshmem(status);
