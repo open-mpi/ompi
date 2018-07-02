@@ -188,6 +188,8 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 
 static inline bool mca_btl_ugni_frag_del_ref (mca_btl_ugni_base_frag_t *frag, int rc) {
     mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (frag->endpoint);
+    /* save the descriptor flags since the callback is allowed to free the frag */
+    int des_flags = frag->base.des_flags;
     int32_t ref_cnt;
 
     opal_atomic_mb ();
@@ -199,11 +201,11 @@ static inline bool mca_btl_ugni_frag_del_ref (mca_btl_ugni_base_frag_t *frag, in
     }
 
     /* call callback if specified */
-    if (frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+    if (des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
         frag->base.des_cbfunc(&ugni_module->super, frag->endpoint, &frag->base, rc);
     }
 
-    if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
+    if (des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
         mca_btl_ugni_frag_return (frag);
     }
 
