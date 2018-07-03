@@ -86,8 +86,11 @@ static inline opal_list_item_t *opal_fifo_push_atomic (opal_fifo_t *fifo,
                                                        opal_list_item_t *item)
 {
     opal_counted_pointer_t tail = {.value = fifo->opal_fifo_tail.value};
+    const opal_list_item_t * const ghost = &fifo->opal_fifo_ghost;
 
-    item->opal_list_next = &fifo->opal_fifo_ghost;
+    item->opal_list_next = (opal_list_item_t *) ghost;
+
+    opal_atomic_wmb ();
 
     do {
         if (opal_update_counted_pointer (&fifo->opal_fifo_tail, &tail, item)) {
@@ -97,7 +100,7 @@ static inline opal_list_item_t *opal_fifo_push_atomic (opal_fifo_t *fifo,
 
     opal_atomic_wmb ();
 
-    if (&fifo->opal_fifo_ghost == tail.data.item) {
+    if (ghost == tail.data.item) {
         /* update the head */
         opal_counted_pointer_t head = {.value = fifo->opal_fifo_head.value};
         opal_update_counted_pointer (&fifo->opal_fifo_head, &head, item);
@@ -115,7 +118,9 @@ static inline opal_list_item_t *opal_fifo_push_atomic (opal_fifo_t *fifo,
 static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 {
     opal_list_item_t *item, *next, *ghost = &fifo->opal_fifo_ghost;
-    opal_counted_pointer_t head = {.value = fifo->opal_fifo_head.value}, tail;
+    opal_counted_pointer_t head, tail;
+
+    opal_read_counted_pointer (&fifo->opal_fifo_head, &head);
 
     do {
         tail.value = fifo->opal_fifo_tail.value;
@@ -130,7 +135,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 
         /* the head or next pointer are in an inconsistent state. keep looping. */
         if (tail.data.item != item && ghost != tail.data.item && ghost == next) {
-            head.value =  fifo->opal_fifo_head.value;
+            opal_read_counted_pointer (&fifo->opal_fifo_head, &head);
             continue;
         }
 
@@ -160,12 +165,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
              * will be attempting to update the head until after it has been updated
              * with the next pointer. push will not see an empty list and other pop
              * operations will loop until the head is consistent. */
-            head.value = fifo->opal_fifo_head.value;
-            next = (opal_list_item_t *) item->opal_list_next;
-
-            assert (ghost == head.data.item);
-
-            fifo->opal_fifo_head.data.item = next;
+            fifo->opal_fifo_head.data.item = (opal_list_item_t *) item->opal_list_next;
             opal_atomic_wmb ();
         }
     }
