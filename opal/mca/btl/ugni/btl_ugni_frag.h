@@ -174,8 +174,6 @@ mca_btl_ugni_alloc_rdma_desc (mca_btl_ugni_device_t *device, mca_btl_ugni_post_d
 
 static inline void mca_btl_ugni_return_rdma_desc (mca_btl_ugni_rdma_desc_t *desc)
 {
-    mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (desc->btl_ugni_desc.endpoint);
-
     (void) GNI_EpUnbind (desc->gni_handle);
     opal_free_list_return_st (&desc->device->rdma_descs, &desc->super);
 }

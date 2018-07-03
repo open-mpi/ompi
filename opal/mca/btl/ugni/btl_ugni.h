@@ -306,7 +306,7 @@ static inline uint32_t mca_btl_ugni_ep_get_device_index (mca_btl_ugni_module_t *
     static volatile uint32_t device_index = (uint32_t) 0;
 
     /* don't really care if the device index is atomically updated */
-    return opal_atomic_fetch_add_32 (&device_index, 1) % mca_btl_ugni_component.virtual_device_count;
+    return opal_atomic_fetch_add_32 ((volatile int32_t *) &device_index, 1) % mca_btl_ugni_component.virtual_device_count;
 }
 
 /**

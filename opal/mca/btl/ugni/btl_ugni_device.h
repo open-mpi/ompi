@@ -243,7 +243,6 @@ mca_btl_ugni_get_rdma_desc_device (mca_btl_ugni_device_t *device, struct mca_btl
 {
     mca_btl_ugni_post_descriptor_t *desc = args->desc;
     mca_btl_ugni_rdma_desc_t *rdma_desc;
-    int count;
 
     args->device = device;
     args->count = 0;

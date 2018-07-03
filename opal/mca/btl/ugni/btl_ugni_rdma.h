@@ -134,8 +134,8 @@ static inline int mca_btl_ugni_post (mca_btl_base_endpoint_t *endpoint, int get,
 {
     const gni_post_type_t fma_ops[2] = {GNI_POST_FMA_PUT, GNI_POST_FMA_GET};
     const gni_post_type_t rdma_ops[2] = {GNI_POST_RDMA_PUT, GNI_POST_RDMA_GET};
-    const long int fma_limit = get ? mca_btl_ugni_component.ugni_fma_get_limit :
-        mca_btl_ugni_component.ugni_fma_put_limit;
+    const size_t fma_limit = (size_t) (get ? mca_btl_ugni_component.ugni_fma_get_limit :
+                                       mca_btl_ugni_component.ugni_fma_put_limit);
 
     if (size <= fma_limit) {
         return mca_btl_ugni_post_fma (endpoint, fma_ops[get], size, local_address, remote_address,
