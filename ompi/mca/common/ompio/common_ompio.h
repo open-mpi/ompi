@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -291,8 +292,10 @@ OMPI_DECLSPEC int mca_common_ompio_file_open (ompi_communicator_t *comm, const c
                                               int amode, opal_info_t *info,
                                               ompio_file_t *ompio_fh, bool use_sharedfp);
 
-int mca_common_ompio_file_delete (const char *filename,
-                                  struct opal_info_t *info);
+OMPI_DECLSPEC int mca_common_ompio_file_delete (const char *filename,
+                                                struct opal_info_t *info);
+OMPI_DECLSPEC int mca_common_ompio_create_incomplete_file_handle (const char *filename,
+                                                                  ompio_file_t **fh);
 
 OMPI_DECLSPEC int mca_common_ompio_file_close (ompio_file_t *ompio_fh);
 OMPI_DECLSPEC int mca_common_ompio_file_get_size (ompio_file_t *ompio_fh, OMPI_MPI_OFFSET_TYPE *size);

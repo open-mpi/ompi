@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +42,16 @@ int mca_fs_base_file_delete (char* file_name,
     int ret;
 
     ret = unlink(file_name);
-    if (0 > ret) {
-        return OMPI_ERROR;
+
+    if (0 > ret ) {
+        if ( ENOENT == errno ) {
+            return MPI_ERR_NO_SUCH_FILE;
+        } else {
+            opal_output (0, "mca_fs_base_file_delete: Could not remove file "
+                            "%s errno = %d %s\n",
+                            file_name, errno, strerror(errno));
+            return MPI_ERR_ACCESS;
+        }
     }
 
     return OMPI_SUCCESS;
