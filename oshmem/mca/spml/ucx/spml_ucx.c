@@ -98,16 +98,11 @@ int mca_spml_ucx_enable(bool enable)
 
 static void mca_spml_ucx_waitall(void **reqs, int *count_p)
 {
-    ucs_status_t status;
     int i;
 
     SPML_VERBOSE(10, "waiting for %d disconnect requests", *count_p);
     for (i = 0; i < *count_p; ++i) {
-        status = opal_common_ucx_wait_request(reqs[i], mca_spml_ucx.ucp_worker);
-        if (status != UCS_OK) {
-            SPML_ERROR("disconnect request failed: %s",
-                       ucs_status_string(status));
-        }
+        opal_common_ucx_wait_request(reqs[i], mca_spml_ucx.ucp_worker);
         reqs[i] = NULL;
     }
 
@@ -555,24 +550,23 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
 int mca_spml_ucx_get(void *src_addr, size_t size, void *dst_addr, int src)
 {
     void *rva;
-    ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 #if HAVE_DECL_UCP_GET_NB
     ucs_status_ptr_t request;
+#else
+    ucs_status_t status;
 #endif
 
     ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva, &mca_spml_ucx);
 #if HAVE_DECL_UCP_GET_NB
     request = ucp_get_nb(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                          (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
-    /* TODO: replace wait_request by opal_common_ucx_wait_request_opal_status */
-    status = opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
+    return opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
 #else
     status = ucp_get(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
-#endif
-
     return ucx_status_to_oshmem(status);
+#endif
 }
 
 int mca_spml_ucx_get_nb(void *src_addr, size_t size, void *dst_addr, int src, void **handle)
@@ -591,23 +585,23 @@ int mca_spml_ucx_get_nb(void *src_addr, size_t size, void *dst_addr, int src, vo
 int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
 {
     void *rva;
-    ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 #if HAVE_DECL_UCP_PUT_NB
     ucs_status_ptr_t request;
+#else
+    ucs_status_t status;
 #endif
 
     ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva, &mca_spml_ucx);
 #if HAVE_DECL_UCP_PUT_NB
     request = ucp_put_nb(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                          (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
-    /* TODO: replace wait_request by opal_common_ucx_wait_request_opal_status */
-    status = opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
+    return opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
 #else
     status = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
-#endif
     return ucx_status_to_oshmem(status);
+#endif
 }
 
 int mca_spml_ucx_put_nb(void* dst_addr, size_t size, void* src_addr, int dst, void **handle)
@@ -638,13 +632,12 @@ int mca_spml_ucx_fence(void)
 
 int mca_spml_ucx_quiet(void)
 {
-    ucs_status_t err;
+    int ret;
 
-    err = opal_common_ucx_worker_flush(mca_spml_ucx.ucp_worker);
-    if (UCS_OK != err) {
-         SPML_ERROR("quiet failed: %s", ucs_status_string(err));
+    ret = opal_common_ucx_worker_flush(mca_spml_ucx.ucp_worker);
+    if (OMPI_SUCCESS != ret) {
          oshmem_shmem_abort(-1);
-         return OSHMEM_ERROR;
+         return ret;
     }
     return OSHMEM_SUCCESS;
 }

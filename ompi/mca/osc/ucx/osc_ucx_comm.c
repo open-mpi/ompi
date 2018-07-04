@@ -61,17 +61,14 @@ static inline int check_sync_state(ompi_osc_ucx_module_t *module, int target,
 
 static inline int incr_and_check_ops_num(ompi_osc_ucx_module_t *module, int target,
                                          ucp_ep_h ep) {
-    ucs_status_t status;
+    int status;
 
     module->global_ops_num++;
     module->per_target_ops_nums[target]++;
     if (module->global_ops_num >= OSC_UCX_OPS_THRESHOLD) {
         status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        if (status != OMPI_SUCCESS) {
+            return status;
         }
         module->global_ops_num -= module->per_target_ops_nums[target];
         module->per_target_ops_nums[target] = 0;
@@ -309,16 +306,13 @@ static inline int end_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, int 
     uint64_t result_value = 0;
     ucp_rkey_h rkey = (module->state_info_array)[target].rkey;
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_ACC_LOCK_OFFSET;
-    ucs_status_t status;
+    int ret;
 
-    status = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
-                                          &result_value, sizeof(result_value),
-                                          remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_atomic_swap64 failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
+                                       &result_value, sizeof(result_value),
+                                       remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
     assert(result_value == TARGET_LOCK_EXCLUSIVE);
@@ -336,6 +330,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
     uint64_t win_count;
     int contain, insert = -1;
     ucs_status_t status;
+    int ret;
 
     if ((module->win_info_array[target]).rkey_init == true) {
         ucp_rkey_destroy((module->win_info_array[target]).rkey);
@@ -350,12 +345,9 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
         return OMPI_ERROR;
     }
 
-    status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_ep_flush failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     memcpy(&win_count, temp_buf, sizeof(uint64_t));
@@ -529,7 +521,6 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
         uint32_t temp_count;
         ompi_datatype_t *temp_dt;
         ptrdiff_t temp_lb, temp_extent;
-        ucs_status_t status;
         bool is_origin_contig = ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
 
         if (ompi_datatype_is_predefined(target_dt)) {
@@ -553,12 +544,9 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
         }
 
         if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
@@ -610,12 +598,9 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_flush failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
         }
 
         free(temp_addr_holder);
@@ -781,7 +766,6 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
             uint32_t temp_count;
             ompi_datatype_t *temp_dt;
             ptrdiff_t temp_lb, temp_extent;
-            ucs_status_t status;
             bool is_origin_contig = ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
 
             if (ompi_datatype_is_predefined(target_dt)) {
@@ -805,12 +789,9 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
 
-            status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-            if (status != UCS_OK) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: ucp_ep_flush failed: %d\n",
-                                    __FILE__, __LINE__, status);
-                return OMPI_ERROR;
+            ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+            if (ret != OMPI_SUCCESS) {
+                return ret;
             }
 
             if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
@@ -861,12 +842,9 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                 return ret;
             }
 
-            status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-            if (status != UCS_OK) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: ucp_ep_flush failed: %d\n",
-                                    __FILE__, __LINE__, status);
-                return OMPI_ERROR;
+            ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+            if (ret != OMPI_SUCCESS) {
+                return ret;
             }
 
             free(temp_addr_holder);

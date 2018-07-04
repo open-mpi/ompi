@@ -40,14 +40,12 @@ int mca_atomic_ucx_op(void *target,
                       ucp_atomic_post_op_t op)
 {
     ucs_status_t status;
-    ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
-    uint64_t val;
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, &mca_spml_ucx);
+    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, mca_spml_self);
     status = ucp_atomic_post(mca_spml_self->ucp_peers[pe].ucp_conn,
                              op, value, size, rva,
                              ucx_mkey->rkey);
@@ -68,12 +66,12 @@ int mca_atomic_ucx_fop(void *target,
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, &mca_spml_ucx);
+    ucx_mkey = mca_spml_ucx_get_mkey(pe, target, (void *)&rva, mca_spml_self);
     status_ptr = ucp_atomic_fetch_nb(mca_spml_self->ucp_peers[pe].ucp_conn,
                                      op, value, prev, size,
                                      rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
-    return opal_common_ucx_wait_request_opal_status(status_ptr, mca_spml_self->ucp_worker);
+    return opal_common_ucx_wait_request(status_ptr, mca_spml_self->ucp_worker);
 }
 
 static int mca_atomic_ucx_add(void *target,

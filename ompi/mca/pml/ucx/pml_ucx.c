@@ -370,16 +370,11 @@ static inline ucp_ep_h mca_pml_ucx_get_ep(ompi_communicator_t *comm, int rank)
 
 static void mca_pml_ucx_waitall(void **reqs, int *count_p)
 {
-    ucs_status_t status;
     int i;
 
     PML_UCX_VERBOSE(2, "waiting for %d disconnect requests", *count_p);
     for (i = 0; i < *count_p; ++i) {
-        status = opal_common_ucx_wait_request(reqs[i], ompi_pml_ucx.ucp_worker);
-        if (status != UCS_OK) {
-            PML_UCX_ERROR("disconnect request failed: %s",
-                          ucs_status_string(status));
-        }
+        opal_common_ucx_wait_request(reqs[i], ompi_pml_ucx.ucp_worker);
         reqs[i] = NULL;
     }
 
