@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,15 +90,18 @@ mca_fs_lustre_component_file_query (ompio_file_t *fh, int *priority)
 
     tmp = strchr (fh->f_filename, ':');
     if (!tmp) {
-        if (OMPIO_ROOT == fh->f_rank) {
+        /* The communicator might be NULL if we only want to delete the file */
+        if (OMPIO_ROOT == fh->f_rank || MPI_COMM_NULL == fh->f_comm) {
             fh->f_fstype = mca_fs_base_get_fstype ( fh->f_filename );
         }
-	fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
-				       1,
-				       MPI_INT,
-				       OMPIO_ROOT,
-				       fh->f_comm,
-				       fh->f_comm->c_coll->coll_bcast_module);
+        if (fh->f_comm != MPI_COMM_NULL) {
+            fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
+                        1,
+                        MPI_INT,
+                        OMPIO_ROOT,
+                        fh->f_comm,
+                        fh->f_comm->c_coll->coll_bcast_module);
+        }
     }
     else {
 	if (!strncmp(fh->f_filename, "lustre:", 7) ||
