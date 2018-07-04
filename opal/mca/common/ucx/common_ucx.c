@@ -11,6 +11,7 @@
 
 #include "common_ucx.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/pmix/pmix.h"
 
 /***********************************************************************/
 
@@ -36,3 +37,19 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
 void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status)
 {
 }
+
+static void opal_common_ucx_mca_fence_complete_cb(int status, void *fenced)
+{
+    *(int*)fenced = 1;
+}
+
+OPAL_DECLSPEC void opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
+{
+    volatile int fenced = 0;
+
+    opal_pmix.fence_nb(NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void*)&fenced);
+    while (!fenced) {
+        ucp_worker_progress(worker);
+    }
+}
+

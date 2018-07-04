@@ -18,6 +18,7 @@
 #include "opal/mca/pmix/pmix.h"
 #include "ompi/message/message.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 #include "pml_ucx_request.h"
 
 #include <inttypes.h>
@@ -374,29 +375,19 @@ static void mca_pml_ucx_waitall(void **reqs, int *count_p)
 
     PML_UCX_VERBOSE(2, "waiting for %d disconnect requests", *count_p);
     for (i = 0; i < *count_p; ++i) {
-        do {
-            opal_progress();
-            status = ucp_request_test(reqs[i], NULL);
-        } while (status == UCS_INPROGRESS);
+        status = opal_common_ucx_wait_request(reqs[i], ompi_pml_ucx.ucp_worker);
         if (status != UCS_OK) {
             PML_UCX_ERROR("disconnect request failed: %s",
                           ucs_status_string(status));
         }
-        ucp_request_free(reqs[i]);
         reqs[i] = NULL;
     }
 
     *count_p = 0;
 }
 
-static void mca_pml_fence_complete_cb(int status, void *fenced)
-{
-    *(int*)fenced = 1;
-}
-
 int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
-    volatile int fenced = 0;
     ompi_proc_t *proc;
     int num_reqs;
     size_t max_reqs;
@@ -447,10 +438,7 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
     mca_pml_ucx_waitall(dreqs, &num_reqs);
     free(dreqs);
 
-    opal_pmix.fence_nb(NULL, 0, mca_pml_fence_complete_cb, (void*)&fenced);
-    while (!fenced) {
-        ucp_worker_progress(ompi_pml_ucx.ucp_worker);
-    }
+    opal_common_ucx_mca_pmix_fence(ompi_pml_ucx.ucp_worker);
 
     return OMPI_SUCCESS;
 }
