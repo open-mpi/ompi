@@ -22,7 +22,7 @@
  * contents of target. The operation must be completed without the possibility of another
  * process updating target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_SWAP(type_name, type, prefix)    \
+#define SHMEM_TYPE_SWAP(type_name, type, prefix)                    \
     type prefix##type_name##_swap(type *target, type value, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
@@ -34,11 +34,10 @@
         RUNTIME_CHECK_ADDR(target);                                 \
                                                                     \
         size = sizeof(out_value);                                   \
-        rc = MCA_ATOMIC_CALL(cswap(                                 \
+        rc = MCA_ATOMIC_CALL(swap(                                  \
             (void*)target,                                          \
             (void*)&out_value,                                      \
-            NULL,                                                   \
-            (const void*)&value,                                    \
+            OSHMEM_ATOMIC_PTR_2_INT(&value, sizeof(value)),         \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \

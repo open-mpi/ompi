@@ -15,7 +15,6 @@ ucx_sources = \
 	atomic_ucx.h \
 	atomic_ucx_module.c \
 	atomic_ucx_component.c \
-	atomic_ucx_fadd.c \
 	atomic_ucx_cswap.c
 
 

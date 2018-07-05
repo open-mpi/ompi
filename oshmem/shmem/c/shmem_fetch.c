@@ -30,7 +30,6 @@
         size_t size = 0;                                            \
         type out_value;                                             \
         type value = 0;                                             \
-        oshmem_op_t* op = oshmem_op_sum##type_name;                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
@@ -40,10 +39,9 @@
         rc = MCA_ATOMIC_CALL(fadd(                                  \
             (void*)target,                                          \
             (void*)&out_value,                                      \
-            (const void*)&value,                                    \
+            value,                                                  \
             size,                                                   \
-            pe,                                                     \
-            op));                                                   \
+            pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
                                                                     \
         return out_value;                                           \

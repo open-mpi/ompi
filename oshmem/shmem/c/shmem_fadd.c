@@ -24,13 +24,12 @@
  * without the possibility of another process updating target between the time of the
  * fetch and the update.
  */
-#define SHMEM_TYPE_FADD(type_name, type, prefix)    \
+#define SHMEM_TYPE_FADD(type_name, type, prefix)                    \
     type prefix##type_name##_fadd(type *target, type value, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
         type out_value;                                             \
-        oshmem_op_t* op = oshmem_op_sum##type_name;                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
@@ -40,10 +39,9 @@
         rc = MCA_ATOMIC_CALL(fadd(                                  \
             (void*)target,                                          \
             (void*)&out_value,                                      \
-            (const void*)&value,                                    \
+            value,                                                  \
             size,                                                   \
-            pe,                                                     \
-            op));                                                   \
+            pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
                                                                     \
         return out_value;                                           \

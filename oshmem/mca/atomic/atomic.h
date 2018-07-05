@@ -33,6 +33,8 @@
 
 BEGIN_C_DECLS
 
+#define OSHMEM_ATOMIC_PTR_2_INT(ptr, size) ((size) == 8 ? *(uint64_t*)(ptr) : *(uint32_t*)(ptr))
+
 /* ******************************************************************** */
 
 struct oshmem_op_t;
@@ -86,17 +88,26 @@ struct mca_atomic_base_module_1_0_0_t {
     opal_object_t super;
 
     /* Collective function pointers */
+    int (*atomic_add)(void *target,
+                      uint64_t value,
+                      size_t size,
+                      int pe);
     int (*atomic_fadd)(void *target,
                        void *prev,
-                       const void *value,
-                       size_t nlong,
-                       int pe,
-                       struct oshmem_op_t *op);
+                       uint64_t value,
+                       size_t size,
+                       int pe);
+    int (*atomic_swap)(void *target,
+                       void *prev,
+                       uint64_t value,
+                       size_t size,
+                       int pe);
     int (*atomic_cswap)(void *target,
-                        void *prev,
-                        const void *cond,
-                        const void *value,
-                        size_t nlong,
+                        uint64_t *prev, /* prev is used internally by wrapper, we may
+                                           always use 64-bit value */
+                        uint64_t cond,
+                        uint64_t value,
+                        size_t size,
                         int pe);
 };
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_1_0_0_t;

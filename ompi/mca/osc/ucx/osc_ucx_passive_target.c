@@ -24,16 +24,14 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
     ucp_rkey_h rkey = (module->state_info_array)[target].rkey;
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_LOCK_OFFSET;
     ucs_status_t status;
+    int ret;
 
     while (true) {
-        status = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_FADD, 1,
-                                              &result_value, sizeof(result_value),
-                                              remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
-        if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_atomic_fadd64 failed: %d\n",
-                                __FILE__, __LINE__, status);
-            return OMPI_ERROR;
+        ret = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_FADD, 1,
+                                           &result_value, sizeof(result_value),
+                                           remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
         }
         assert((int64_t)result_value >= 0);
         if (result_value >= TARGET_LOCK_EXCLUSIVE) {
@@ -99,16 +97,13 @@ static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
     ucp_ep_h ep = OSC_UCX_GET_EP(module->comm, target);
     ucp_rkey_h rkey = (module->state_info_array)[target].rkey;
     uint64_t remote_addr = (module->state_info_array)[target].addr + OSC_UCX_STATE_LOCK_OFFSET;
-    ucs_status_t status;
+    int ret;
 
-    status = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
-                                          &result_value, sizeof(result_value),
-                                          remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_atomic_swap64 failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_atomic_fetch(ep, UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
+                                       &result_value, sizeof(result_value),
+                                       remote_addr, rkey, mca_osc_ucx_component.ucp_worker);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
     assert(result_value >= TARGET_LOCK_EXCLUSIVE);
@@ -169,7 +164,6 @@ int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *
 int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     ompi_osc_ucx_lock_t *lock = NULL;
-    ucs_status_t status;
     int ret = OMPI_SUCCESS;
     ucp_ep_h ep;
 
@@ -186,12 +180,9 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
                                         (uint32_t)target);
 
     ep = OSC_UCX_GET_EP(module->comm, target);
-    status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_ep_flush failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     module->global_ops_num -= module->per_target_ops_nums[target];
@@ -252,7 +243,6 @@ int ompi_osc_ucx_lock_all(int assert, struct ompi_win_t *win) {
 int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*)win->w_osc_module;
     int comm_size = ompi_comm_size(module->comm);
-    ucs_status_t status;
     int ret = OMPI_SUCCESS;
 
     if (module->epoch_type.access != PASSIVE_ALL_EPOCH) {
@@ -261,12 +251,9 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
 
     assert(module->lock_count == 0);
 
-    status = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_flush failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     module->global_ops_num = 0;
@@ -309,7 +296,7 @@ int ompi_osc_ucx_sync(struct ompi_win_t *win) {
 int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h ep;
-    ucs_status_t status;
+    int ret;
 
     if (module->epoch_type.access != PASSIVE_EPOCH &&
         module->epoch_type.access != PASSIVE_ALL_EPOCH) {
@@ -317,12 +304,9 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
     }
 
     ep = OSC_UCX_GET_EP(module->comm, target);
-    status = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_ep_flush failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     module->global_ops_num -= module->per_target_ops_nums[target];
@@ -333,19 +317,16 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
 
 int ompi_osc_ucx_flush_all(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
-    ucs_status_t status;
+    int ret;
 
     if (module->epoch_type.access != PASSIVE_EPOCH &&
         module->epoch_type.access != PASSIVE_ALL_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    status = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
-    if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_flush failed: %d\n",
-                            __FILE__, __LINE__, status);
-        return OMPI_ERROR;
+    ret = opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     module->global_ops_num = 0;

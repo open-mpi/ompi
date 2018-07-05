@@ -19,6 +19,8 @@
 
 BEGIN_C_DECLS
 
+#define MCA_BASIC_OP(size, op4, op8) ((size == sizeof(uint64_t)) ? (op8) : (op4))
+
 /* Globally exported variables */
 
 OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t
@@ -34,17 +36,11 @@ int mca_atomic_basic_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_basic_query(int *priority);
 
-int mca_atomic_basic_fadd(void *target,
-                          void *prev,
-                          const void *value,
-                          size_t nlong,
-                          int pe,
-                          struct oshmem_op_t *op);
 int mca_atomic_basic_cswap(void *target,
-                           void *prev,
-                           const void *cond,
-                           const void *value,
-                           size_t nlong,
+                           uint64_t *prev,
+                           uint64_t cond,
+                           uint64_t value,
+                           size_t size,
                            int pe);
 
 struct mca_atomic_basic_module_t {

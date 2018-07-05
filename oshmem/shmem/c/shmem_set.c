@@ -34,11 +34,10 @@
         RUNTIME_CHECK_ADDR(target);                                 \
                                                                     \
         size = sizeof(out_value);                                   \
-        rc = MCA_ATOMIC_CALL(cswap(                                 \
+        rc = MCA_ATOMIC_CALL(swap(                                  \
             (void*)target,                                          \
             (void*)&out_value,                                      \
-            NULL,                                                   \
-            (const void*)&value,                                    \
+            value,                                                  \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \

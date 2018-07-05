@@ -41,7 +41,9 @@ mca_atomic_mxm_query(int *priority)
 
     module = OBJ_NEW(mca_atomic_mxm_module_t);
     if (module) {
-        module->super.atomic_fadd = mca_atomic_mxm_fadd;
+        module->super.atomic_add   = mca_atomic_mxm_add;
+        module->super.atomic_fadd  = mca_atomic_mxm_fadd;
+        module->super.atomic_swap  = mca_atomic_mxm_swap;
         module->super.atomic_cswap = mca_atomic_mxm_cswap;
         return &(module->super);
     }
