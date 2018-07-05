@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -29,6 +29,7 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/memchecker.h"
 
 /**
  * Single usage request. As we allow recursive calls (as an
@@ -282,6 +283,16 @@ int mca_pml_ob1_send(const void *buf,
         rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
     }
 
+    if (sendreq->req_send.req_base.req_pml_complete) {
+        /* make buffer defined when the request is completed,
+           and before releasing the objects. */
+        MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
+        );
+    }
     if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_sendreq)) {
         MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
     } else {
