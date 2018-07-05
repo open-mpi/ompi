@@ -165,18 +165,14 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                 status = ucp_put_nbi(ep, origin_ucx_iov[origin_ucx_iov_idx].addr, curr_len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_put_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             } else {
                 status = ucp_get_nbi(ep, origin_ucx_iov[origin_ucx_iov_idx].addr, curr_len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_get_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d",status);
                     return OMPI_ERROR;
                 }
             }
@@ -210,9 +206,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      origin_ucx_iov[origin_ucx_iov_idx].len,
                                      remote_addr + target_lb + prev_len, rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_put_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             } else {
@@ -220,9 +214,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      origin_ucx_iov[origin_ucx_iov_idx].len,
                                      remote_addr + target_lb + prev_len, rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_get_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             }
@@ -243,9 +235,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      target_ucx_iov[target_ucx_iov_idx].len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_put_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             } else {
@@ -253,9 +243,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
                                      target_ucx_iov[target_ucx_iov_idx].len,
                                      remote_addr + (uint64_t)(target_ucx_iov[target_ucx_iov_idx].addr), rkey);
                 if (status != UCS_OK && status != UCS_INPROGRESS) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_get_nbi failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
                     return OMPI_ERROR;
                 }
             }
@@ -292,9 +280,7 @@ static inline int start_atomicity(ompi_osc_ucx_module_t *module, ucp_ep_h ep, in
                                               remote_addr, rkey,
                                               mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_atomic_cswap64 failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_atomic_cswap64 failed: %d", status);
             return OMPI_ERROR;
         }
     }
@@ -339,9 +325,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
 
     status = ucp_get_nbi(ep, (void *)temp_buf, len, remote_state_addr, state_rkey);
     if (status != UCS_OK && status != UCS_INPROGRESS) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_get_nbi failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
         return OMPI_ERROR;
     }
 
@@ -361,9 +345,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
     status = ucp_ep_rkey_unpack(ep, temp_dynamic_wins[contain].rkey_buffer,
                                 &((module->win_info_array[target]).rkey));
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_ep_rkey_unpack failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_ep_rkey_unpack failed: %d", status);
         return OMPI_ERROR;
     }
 
@@ -416,9 +398,7 @@ int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_data
         status = ucp_put_nbi(ep, (void *)((intptr_t)origin_addr + origin_lb), origin_len,
                              remote_addr + target_lb, rkey);
         if (status != UCS_OK && status != UCS_INPROGRESS) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_put_nbi failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_put_nbi failed: %d", status);
             return OMPI_ERROR;
         }
         return incr_and_check_ops_num(module, target, ep);
@@ -472,9 +452,7 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
         status = ucp_get_nbi(ep, (void *)((intptr_t)origin_addr + origin_lb), origin_len,
                              remote_addr + target_lb, rkey);
         if (status != UCS_OK && status != UCS_INPROGRESS) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_get_nbi failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_get_nbi failed: %d", status);
             return OMPI_ERROR;
         }
 
@@ -895,9 +873,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
 
     status = ucp_worker_fence(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_fence failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_worker_fence failed: %d", status);
         return OMPI_ERROR;
     }
 
@@ -956,9 +932,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
 
     status = ucp_worker_fence(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_fence failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_worker_fence failed: %d", status);
         return OMPI_ERROR;
     }
 

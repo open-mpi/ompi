@@ -125,6 +125,8 @@ static int mca_spml_ucx_component_open(void)
         return OSHMEM_ERROR;
     }
 
+    opal_common_ucx_mca_register();
+
     memset(&params, 0, sizeof(params));
     params.field_mask = UCP_PARAM_FIELD_FEATURES|UCP_PARAM_FIELD_ESTIMATED_NUM_EPS;
     params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
@@ -145,6 +147,7 @@ static int mca_spml_ucx_component_close(void)
         ucp_cleanup(mca_spml_ucx.ucp_context);
         mca_spml_ucx.ucp_context = NULL;
     }
+    opal_common_ucx_mca_deregister();
     return OSHMEM_SUCCESS;
 }
 
@@ -170,7 +173,7 @@ mca_spml_ucx_component_init(int* priority,
                               bool enable_progress_threads,
                               bool enable_mpi_threads)
 {
-    SPML_VERBOSE( 10, "in ucx, my priority is %d\n", mca_spml_ucx.priority);
+    SPML_UCX_VERBOSE( 10, "in ucx, my priority is %d\n", mca_spml_ucx.priority);
 
     if ((*priority) > mca_spml_ucx.priority) {
         *priority = mca_spml_ucx.priority;
@@ -181,7 +184,7 @@ mca_spml_ucx_component_init(int* priority,
     if (OSHMEM_SUCCESS != spml_ucx_init())
         return NULL ;
 
-    SPML_VERBOSE(50, "*** ucx initialized ****");
+    SPML_UCX_VERBOSE(50, "*** ucx initialized ****");
     return &mca_spml_ucx.super;
 }
 

@@ -38,9 +38,7 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
             status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD, (-1), sizeof(uint64_t),
                                      remote_addr, rkey);
             if (status != UCS_OK) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: ucp_atomic_add64 failed: %d\n",
-                                    __FILE__, __LINE__, status);
+                OSC_UCX_VERBOSE(1, "ucp_atomic_add64 failed: %d", status);
                 return OMPI_ERROR;
             }
         } else {
@@ -60,9 +58,7 @@ static inline int end_shared(ompi_osc_ucx_module_t *module, int target) {
     status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD, (-1), sizeof(uint64_t),
                              remote_addr, rkey);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_atomic_add64 failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_atomic_post(OP_ADD) failed: %d", status);
         return OMPI_ERROR;
     }
 
@@ -82,9 +78,6 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
                                               remote_addr, rkey,
                                               mca_osc_ucx_component.ucp_worker);
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_atomic_cswap64 failed: %d\n",
-                                __FILE__, __LINE__, status);
             return OMPI_ERROR;
         }
     }
@@ -284,9 +277,7 @@ int ompi_osc_ucx_sync(struct ompi_win_t *win) {
 
     status = ucp_worker_fence(mca_osc_ucx_component.ucp_worker);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_worker_fence failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_worker_fence failed: %d", status);
         return OMPI_ERROR;
     }
 
