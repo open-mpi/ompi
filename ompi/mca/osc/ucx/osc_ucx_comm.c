@@ -356,7 +356,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
     temp_dynamic_wins = (ompi_osc_dynamic_win_info_t *)(temp_buf + sizeof(uint64_t));
     contain = ompi_osc_find_attached_region_position(temp_dynamic_wins, 0, win_count,
                                                      remote_addr, 1, &insert);
-    assert(contain >= 0 && contain < win_count);
+    assert(contain >= 0 && (uint64_t)contain < win_count);
 
     status = ucp_ep_rkey_unpack(ep, temp_dynamic_wins[contain].rkey_buffer,
                                 &((module->win_info_array[target]).rkey));
