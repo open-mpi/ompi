@@ -34,47 +34,66 @@
 #include "coll_base_topo.h"
 #include "coll_base_util.h"
 
+/*
+ * ompi_coll_base_scatter_intra_binomial
+ *
+ * Function:  Binomial tree algorithm for scatter
+ * Accepts:   Same as MPI_Scatter
+ * Returns:   MPI_SUCCESS or error code
+ *
+ * Time complexity: \alpha\log(p) + \beta*m((p-1)/p),
+ *                  where m = scount * comm_size, p = comm_size
+ *
+ * Memory requirements (per process):
+ *   root process (root > 0): scount * comm_size * sdtype_size
+ *   non-root, non-leaf process: rcount * comm_size * rdtype_size
+ *
+ * Examples:
+ *   comm_size=8          comm_size=10          comm_size=12
+ *         0                    0                     0
+ *       / | \             /  / | \               /  / \  \
+ *      4  2  1           8  4  2  1            8   4   2  1
+ *    / |  |            /  / |  |             / |  / |  |
+ *   6  5  3           9  6  5  3            10 9 6  5  3
+ *   |                    |                  |    |
+ *   7                    7                  11   7
+ */
 int
-ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
-                                       struct ompi_datatype_t *sdtype,
-                                       void *rbuf, int rcount,
-                                       struct ompi_datatype_t *rdtype,
-                                       int root,
-                                       struct ompi_communicator_t *comm,
-                                       mca_coll_base_module_t *module)
+ompi_coll_base_scatter_intra_binomial(
+    const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+    void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+    int root, struct ompi_communicator_t *comm,
+    mca_coll_base_module_t *module)
 {
-    int line = -1, i, rank, vrank, size, total_send = 0, err;
+    int line = -1, rank, vrank, size, err;
     char *ptmp, *tempbuf = NULL;
-    ompi_coll_tree_t* bmtree;
     MPI_Status status;
-    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*)module;
     mca_coll_base_comm_t *data = base_module->base_data;
     ptrdiff_t sextent, rextent, ssize, rsize, sgap = 0, rgap = 0;
-
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                 "ompi_coll_base_scatter_intra_binomial rank %d", rank));
+                 "coll:base:scatter_intra_binomial rank %d/%d", rank, size));
 
-    /* create the binomial tree */
-    COLL_BASE_UPDATE_IN_ORDER_BMTREE( comm, base_module, root );
-    bmtree = data->cached_in_order_bmtree;
-
-    ompi_datatype_type_extent(rdtype, &rextent);
-
-    rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
+    /* Create the binomial tree */
+    COLL_BASE_UPDATE_IN_ORDER_BMTREE(comm, base_module, root);
+    if (NULL == data->cached_in_order_bmtree) {
+        err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
+    }
+    ompi_coll_tree_t *bmtree = data->cached_in_order_bmtree;
 
     vrank = (rank - root + size) % size;
-    ptmp = (char *) rbuf;  /* by default suppose leaf nodes, just use rbuf */
+    ptmp = (char *)rbuf;  /* by default suppose leaf nodes, just use rbuf */
 
     if (rank == root) {
         ompi_datatype_type_extent(sdtype, &sextent);
         ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
         if (0 == root) {
             /* root on 0, just use the send buffer */
-            ptmp = (char *) sbuf;
+            ptmp = (char *)sbuf;
             if (rbuf != MPI_IN_PLACE) {
                 /* local copy to rbuf */
                 err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
@@ -83,7 +102,7 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
             }
         } else {
             /* root is not on 0, allocate temp buffer for send */
-            tempbuf = (char *) malloc(ssize);
+            tempbuf = (char *)malloc(ssize);
             if (NULL == tempbuf) {
                 err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
             }
@@ -93,7 +112,6 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
             err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)(size - root),
                                                       ptmp, (char *) sbuf + sextent * (ptrdiff_t)root * (ptrdiff_t)scount);
             if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
 
             err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)root,
                                                       ptmp + sextent * (ptrdiff_t)scount * (ptrdiff_t)(size - root), (char *)sbuf);
@@ -106,53 +124,54 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
                 if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
             }
         }
-        total_send = scount;
     } else if (!(vrank % 2)) {
-        /* non-root, non-leaf nodes, allocte temp buffer for recv
+        /* non-root, non-leaf nodes, allocate temp buffer for recv
          * the most we need is rcount*size/2 */
-        tempbuf = (char *) malloc(rsize);
+        ompi_datatype_type_extent(rdtype, &rextent);
+        rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
+        tempbuf = (char *)malloc(rsize / 2);
         if (NULL == tempbuf) {
-            err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
+            err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
         ptmp = tempbuf - rgap;
-
         sdtype = rdtype;
         scount = rcount;
         sextent = rextent;
-        total_send = scount;
     }
 
+    int curr_count = (rank == root) ? scount * size : 0;
     if (!(vrank % 2)) {
         if (rank != root) {
             /* recv from parent on non-root */
             err = MCA_PML_CALL(recv(ptmp, (ptrdiff_t)rcount * (ptrdiff_t)size, rdtype, bmtree->tree_prev,
                                     MCA_COLL_BASE_TAG_SCATTER, comm, &status));
             if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+            /* Get received count */
+            size_t rdtype_size;
+            ompi_datatype_type_size(rdtype, &rdtype_size);
+            curr_count = (int)(status._ucount / rdtype_size);
+
             /* local copy to rbuf */
             err = ompi_datatype_sndrcv(ptmp, scount, sdtype,
                                        rbuf, rcount, rdtype);
             if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         }
         /* send to children on all non-leaf */
-        for (i = 0; i < bmtree->tree_nextsize; i++) {
-            size_t mycount = 0;
-            int vkid;
+        for (int i = bmtree->tree_nextsize - 1; i >= 0; i--) {
             /* figure out how much data I have to send to this child */
-            vkid = (bmtree->tree_next[i] - root + size) % size;
-            mycount = vkid - vrank;
-            if( (int)mycount > (size - vkid) )
-                mycount = size - vkid;
-            mycount *= scount;
-
-            err = MCA_PML_CALL(send(ptmp + (ptrdiff_t)total_send * sextent, mycount, sdtype,
-                                    bmtree->tree_next[i],
+            int vchild = (bmtree->tree_next[i] - root + size) % size;
+            int send_count = vchild - vrank;
+            if (send_count > size - vchild)
+                send_count = size - vchild;
+            send_count *= scount;
+            err = MCA_PML_CALL(send(ptmp + (ptrdiff_t)(curr_count - send_count) * sextent,
+                                    send_count, sdtype, bmtree->tree_next[i],
                                     MCA_COLL_BASE_TAG_SCATTER,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
             if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
-            total_send += mycount;
+            curr_count -= send_count;
         }
-
         if (NULL != tempbuf)
             free(tempbuf);
     } else {
