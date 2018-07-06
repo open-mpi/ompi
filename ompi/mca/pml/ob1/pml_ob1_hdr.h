@@ -86,15 +86,9 @@ struct mca_pml_ob1_match_hdr_t {
     int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
     uint16_t hdr_seq;                      /**< message sequence number */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t  hdr_padding[2];               /**< explicitly pad to 16 bytes.  Compilers seem to already prefer to do this, but make it explicit just in case */
-#endif
 };
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
 #define OMPI_PML_OB1_MATCH_HDR_LEN  16
-#else
-#define OMPI_PML_OB1_MATCH_HDR_LEN  14
-#endif
 
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
@@ -171,9 +165,6 @@ static inline void mca_pml_ob1_rendezvous_hdr_prepare (mca_pml_ob1_rendezvous_hd
  */
 struct mca_pml_ob1_rget_hdr_t {
     mca_pml_ob1_rendezvous_hdr_t hdr_rndv;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
-    uint8_t hdr_padding[4];
-#endif
     opal_ptr_t hdr_frag;                      /**< source fragment (for fin) */
     uint64_t   hdr_src_ptr;                   /**< source pointer */
     /* btl registration handle data follows */
@@ -187,12 +178,6 @@ static inline void mca_pml_ob1_rget_hdr_prepare (mca_pml_ob1_rget_hdr_t *hdr, ui
 {
     mca_pml_ob1_rendezvous_hdr_prepare (&hdr->hdr_rndv, MCA_PML_OB1_HDR_TYPE_RGET, hdr_flags,
                                         hdr_ctx, hdr_src, hdr_tag, hdr_seq, hdr_msg_length, hdr_src_req);
-#if OPAL_ENABLE_DEBUG
-    hdr->hdr_padding[0] = 0;
-    hdr->hdr_padding[1] = 0;
-    hdr->hdr_padding[2] = 0;
-    hdr->hdr_padding[3] = 0;
-#endif
     hdr->hdr_frag.pval = hdr_frag;
     hdr->hdr_src_ptr = (uint64_t)(intptr_t) hdr_src_ptr;
 
@@ -217,9 +202,7 @@ static inline void mca_pml_ob1_rget_hdr_prepare (mca_pml_ob1_rget_hdr_t *hdr, ui
  */
 struct mca_pml_ob1_frag_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;     /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t hdr_padding[6];
-#endif
     uint64_t hdr_frag_offset;                /**< offset into message */
     opal_ptr_t hdr_src_req;                  /**< pointer to source request */
     opal_ptr_t hdr_dst_req;                  /**< pointer to matched receive */
@@ -262,9 +245,7 @@ static inline void mca_pml_ob1_frag_hdr_prepare (mca_pml_ob1_frag_hdr_t *hdr, ui
 
 struct mca_pml_ob1_ack_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t hdr_padding[6];
-#endif
     opal_ptr_t hdr_src_req;                   /**< source request */
     opal_ptr_t hdr_dst_req;                   /**< matched receive request */
     uint64_t hdr_send_offset;                 /**< starting point of copy in/out */
@@ -315,9 +296,7 @@ static inline void mca_pml_ob1_ack_hdr_prepare (mca_pml_ob1_ack_hdr_t *hdr, uint
 
 struct mca_pml_ob1_rdma_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t hdr_padding[6];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
-#endif
     /* TODO: add real support for multiple destination segments */
     opal_ptr_t hdr_req;                       /**< destination request */
     opal_ptr_t hdr_frag;                      /**< receiver fragment */
@@ -377,9 +356,7 @@ static inline void mca_pml_ob1_rdma_hdr_prepare (mca_pml_ob1_rdma_hdr_t *hdr, ui
 
 struct mca_pml_ob1_fin_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT || OPAL_ENABLE_DEBUG
     uint8_t hdr_padding[6];
-#endif
     int64_t hdr_size;                         /**< number of bytes completed (positive), error code (negative) */
     opal_ptr_t hdr_frag;                      /**< completed RDMA fragment */
 };
