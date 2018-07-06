@@ -725,7 +725,7 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
             return ret;
         }
 
-        assert(insert_index >= 0 && insert_index < module->state.dynamic_win_count);
+        assert(insert_index >= 0 && (uint64_t)insert_index < module->state.dynamic_win_count);
 
         memmove((void *)&module->local_dynamic_win_info[insert_index+1],
                 (void *)&module->local_dynamic_win_info[insert_index],
@@ -777,7 +777,7 @@ int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
     contain = ompi_osc_find_attached_region_position((ompi_osc_dynamic_win_info_t *)module->state.dynamic_wins,
                                                      0, (int)module->state.dynamic_win_count,
                                                      (uint64_t)base, 1, &insert);
-    assert(contain >= 0 && contain < module->state.dynamic_win_count);
+    assert(contain >= 0 && (uint64_t)contain < module->state.dynamic_win_count);
 
     /* if we can't find region - just exit */
     if (contain < 0) {
