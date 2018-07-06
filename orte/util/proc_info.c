@@ -12,7 +12,7 @@
  * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -327,6 +327,7 @@ int orte_proc_info_finalize(void)
     orte_process_info.proc_type = ORTE_PROC_TYPE_NONE;
 
     opal_argv_free(orte_process_info.aliases);
+    orte_process_info.aliases = NULL;
 
     init = false;
     return ORTE_SUCCESS;

@@ -14,6 +14,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +70,7 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
        it */
     for (i = 0; i < ompi_errcode_intern_lastused; i++) {
         errc = (ompi_errcode_intern_t *)opal_pointer_array_get_item(&ompi_errcodes_intern, i);
-        if (errc->code == errcode) {
+        if (NULL != errc && errc->code == errcode) {
             ret = errc->mpi_code;
             break;
         }
