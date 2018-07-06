@@ -150,7 +150,7 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
         if (dreq != NULL) {
             if (UCS_PTR_IS_ERR(dreq)) {
                 SPML_UCX_ERROR("ucp_disconnect_nb(%zu) failed: %s", n,
-                           ucs_status_string(UCS_PTR_STATUS(dreq)));
+                               ucs_status_string(UCS_PTR_STATUS(dreq)));
                 continue;
             } else {
                 dreqs[num_reqs++] = dreq;
@@ -292,7 +292,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
                             &mca_spml_ucx.ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
             SPML_UCX_ERROR("ucp_ep_create(proc=%zu/%zu) failed: %s", n, nprocs,
-                       ucs_status_string(err));
+                           ucs_status_string(err));
             goto error2;
         }
 
@@ -335,7 +335,7 @@ spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva)
     r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
     if (OPAL_UNLIKELY(!r_mkey)) {
         SPML_UCX_ERROR("pe=%d: %p is not address of symmetric variable",
-                   pe, va);
+                       pe, va);
         oshmem_shmem_abort(-1);
         return NULL;
     }
@@ -427,7 +427,7 @@ void mca_spml_ucx_memuse_hook(void *addr, size_t length)
     status = ucp_mem_advise(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, &params);
     if (UCS_OK != status) {
         SPML_UCX_ERROR("ucp_mem_advise failed addr %p len %llu : %s",
-                   addr, (unsigned long long)length, ucs_status_string(status));
+                       addr, (unsigned long long)length, ucs_status_string(status));
     }
 }
 

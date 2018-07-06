@@ -22,8 +22,8 @@
 #include <ucp/api/ucp.h>
 #include "pml_ucx_freelist.h"
 
-#define PML_UCX_ASSERT MCA_COMMON_UCX_ASSERT
-#define PML_UCX_ERROR MCA_COMMON_UCX_ERROR
+#define PML_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
+#define PML_UCX_ERROR   MCA_COMMON_UCX_ERROR
 #define PML_UCX_VERBOSE MCA_COMMON_UCX_VERBOSE
 
 
