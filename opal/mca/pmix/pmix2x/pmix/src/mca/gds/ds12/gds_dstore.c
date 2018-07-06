@@ -2879,6 +2879,8 @@ static pmix_status_t dstore_del_nspace(const char* nspace)
     ns_map_t *ns_map;
     session_t *session_tbl = NULL;
     ns_track_elem_t *trk = NULL;
+    int dstor_track_idx;
+    size_t session_tbl_idx;
 
     PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
         "%s:%d:%s delete nspace `%s`", __FILE__, __LINE__, __func__, nspace));
@@ -2887,7 +2889,8 @@ static pmix_status_t dstore_del_nspace(const char* nspace)
         rc = PMIX_ERR_NOT_AVAILABLE;
         return rc;
     }
-
+    dstor_track_idx = ns_map_data->track_idx;
+    session_tbl_idx = ns_map_data->tbl_idx;
     size = pmix_value_array_get_size(_ns_map_array);
     ns_map = PMIX_VALUE_ARRAY_GET_BASE(_ns_map_array, ns_map_t);
 
@@ -2899,19 +2902,6 @@ static pmix_status_t dstore_del_nspace(const char* nspace)
                 continue;
             }
             in_use++;
-            break;
-        }
-    }
-
-    if(ns_map_data->track_idx >= 0) {
-        trk = pmix_value_array_get_item(_ns_track_array, ns_map_data->track_idx);
-        if((ns_map_data->track_idx + 1) > (int)pmix_value_array_get_size(_ns_track_array)) {
-            rc = PMIX_ERR_VALUE_OUT_OF_BOUNDS;
-            PMIX_ERROR_LOG(rc);
-            goto exit;
-        }
-        if (true == trk->in_use) {
-            PMIX_DESTRUCT(trk);
         }
     }
 
@@ -2919,10 +2909,22 @@ static pmix_status_t dstore_del_nspace(const char* nspace)
      * session record can only be deleted once all references are gone */
     if (!in_use) {
         session_tbl = PMIX_VALUE_ARRAY_GET_BASE(_session_array, session_t);
-
         PMIX_OUTPUT_VERBOSE((10, pmix_gds_base_framework.framework_output,
-            "%s:%d:%s delete session for jobuid: %d", __FILE__, __LINE__, __func__, session_tbl[ns_map_data->tbl_idx].jobuid));
-        _esh_session_release(&session_tbl[ns_map_data->tbl_idx]);
+                             "%s:%d:%s delete session for jobuid: %d",
+                             __FILE__, __LINE__, __func__, session_tbl[session_tbl_idx].jobuid));
+        size = pmix_value_array_get_size(_ns_track_array);
+        if (size && (dstor_track_idx >= 0)) {
+            if((dstor_track_idx + 1) > size) {
+                rc = PMIX_ERR_VALUE_OUT_OF_BOUNDS;
+                PMIX_ERROR_LOG(rc);
+                goto exit;
+            }
+            trk = pmix_value_array_get_item(_ns_track_array, dstor_track_idx);
+            if (true == trk->in_use) {
+                PMIX_DESTRUCT(trk);
+            }
+        }
+        _esh_session_release(&session_tbl[session_tbl_idx]);
      }
 exit:
     return rc;
