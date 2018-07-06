@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +21,7 @@
 BEGIN_C_DECLS
 
 /*
- * Most of this file is just for ompi_info.  The only public interface
+ * Most of this file is just for pmix_info.  The only public interface
  * once pmix_init has been called is the pmix_pinstall_dirs structure
  * and the pmix_pinstall_dirs_expand() call */
 struct pmix_pinstall_dirs_t {
@@ -40,18 +40,9 @@ struct pmix_pinstall_dirs_t {
     char* infodir;
     char* mandir;
 
-    /* Note that the following fields intentionally have an "ompi"
-       prefix, even though they're down in the PMIX layer.  This is
-       not abstraction break because the "ompi" they're referring to
-       is for the build system of the overall software tree -- not an
-       individual project within that overall tree.
-
-       Rather than using pkg{data,lib,includedir}, use our own
-       ompi{data,lib,includedir}, which is always set to
-       {datadir,libdir,includedir}/pmix. This will keep us from
-       having help files in prefix/share/open-rte when building
-       without PMIX, but in prefix/share/pmix when building
-       with PMIX.
+    /* Rather than using pkg{data,lib,includedir}, use our own
+       pmix{data,lib,includedir}, which is always set to
+       {datadir,libdir,includedir}/pmix.
 
        Note that these field names match macros set by configure that
        are used in Makefile.am files.  E.g., project help files are

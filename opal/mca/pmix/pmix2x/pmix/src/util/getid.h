@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,9 +23,8 @@
 BEGIN_C_DECLS
 
 /* lookup the effective uid and gid of a socket */
-pmix_status_t pmix_util_getid(int sd, uid_t *uid, gid_t *gid);
+PMIX_EXPORT pmix_status_t pmix_util_getid(int sd, uid_t *uid, gid_t *gid);
 
 END_C_DECLS
 
 #endif /* PMIX_PRINTF_H */
-

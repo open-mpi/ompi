@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -66,14 +66,14 @@ typedef struct {
 } pmix_timing_prep_t;
 
 /* Pass down our namespace and rank for pretty-print purposes */
-void pmix_init_id(char* nspace, int rank);
+PMIX_EXPORT void pmix_init_id(char* nspace, int rank);
 
 /**
  * Initialize timing structure.
  *
  * @param t pointer to the timing handler structure
  */
-void pmix_timing_init(pmix_timing_t *t);
+PMIX_EXPORT void pmix_timing_init(pmix_timing_t *t);
 
 /**
  * Prepare timing event, do all printf-like processing.
@@ -85,7 +85,7 @@ void pmix_timing_init(pmix_timing_t *t);
  *
  * @retval partly filled pmix_timing_prep_t structure
   */
-pmix_timing_prep_t pmix_timing_prep_ev(pmix_timing_t *t, const char *fmt, ...);
+PMIX_EXPORT pmix_timing_prep_t pmix_timing_prep_ev(pmix_timing_t *t, const char *fmt, ...);
 
 /**
  * Prepare timing event, ignore printf-like processing.
@@ -97,7 +97,7 @@ pmix_timing_prep_t pmix_timing_prep_ev(pmix_timing_t *t, const char *fmt, ...);
  *
  * @retval partly filled pmix_timing_prep_t structure
   */
-pmix_timing_prep_t pmix_timing_prep_ev_end(pmix_timing_t *t, const char *fmt, ...);
+PMIX_EXPORT pmix_timing_prep_t pmix_timing_prep_ev_end(pmix_timing_t *t, const char *fmt, ...);
 
 /**
  * Enqueue timing event into the list of events in handler 't'.
@@ -109,8 +109,8 @@ pmix_timing_prep_t pmix_timing_prep_ev_end(pmix_timing_t *t, const char *fmt, ..
  *
  * @retval
  */
-void pmix_timing_add_step(pmix_timing_prep_t p, const char *func,
-                          const char *file, int line);
+PMIX_EXPORT void pmix_timing_add_step(pmix_timing_prep_t p, const char *func,
+                                      const char *file, int line);
 
 /**
  * Enqueue the description of the interval into a list of events
@@ -123,8 +123,8 @@ void pmix_timing_add_step(pmix_timing_prep_t p, const char *func,
  *
  * @retval id of event interval
  */
-int pmix_timing_descr(pmix_timing_prep_t p, const char *func,
-                      const char *file, int line);
+PMIX_EXPORT int pmix_timing_descr(pmix_timing_prep_t p, const char *func,
+                                  const char *file, int line);
 
 /**
  * Enqueue the beginning of timing interval that already has the
@@ -138,8 +138,8 @@ int pmix_timing_descr(pmix_timing_prep_t p, const char *func,
  *
  * @retval
  */
-void pmix_timing_start_id(pmix_timing_t *t, int id, const char *func,
-                          const char *file, int line);
+PMIX_EXPORT void pmix_timing_start_id(pmix_timing_t *t, int id, const char *func,
+                                      const char *file, int line);
 
 /**
  * Enqueue the end of timing interval that already has
@@ -153,8 +153,8 @@ void pmix_timing_start_id(pmix_timing_t *t, int id, const char *func,
  *
  * @retval
  */
-void pmix_timing_end(pmix_timing_t *t, int id, const char *func,
-                     const char *file, int line );
+PMIX_EXPORT void pmix_timing_end(pmix_timing_t *t, int id, const char *func,
+                                 const char *file, int line );
 
 /**
  * Enqueue both description and start of timing interval
@@ -188,8 +188,8 @@ static inline int pmix_timing_start_init(pmix_timing_prep_t p,
  *
  * @retval interval id
  */
-void pmix_timing_end_prep(pmix_timing_prep_t p,
-                          const char *func, const char *file, int line);
+PMIX_EXPORT void pmix_timing_end_prep(pmix_timing_prep_t p,
+                                      const char *func, const char *file, int line);
 
 /**
  * Report all events that were enqueued in the timing handler 't'.
@@ -207,7 +207,7 @@ void pmix_timing_end_prep(pmix_timing_prep_t p,
  * @retval PMIX_SUCCESS On success
  * @retval PMIX_ERROR or PMIX_ERR_OUT_OF_RESOURCE On failure
  */
-pmix_status_t pmix_timing_report(pmix_timing_t *t, char *fname);
+PMIX_EXPORT pmix_status_t pmix_timing_report(pmix_timing_t *t, char *fname);
 
 /**
  * Report all intervals that were enqueued in the timing handler 't'.
@@ -224,7 +224,7 @@ pmix_status_t pmix_timing_report(pmix_timing_t *t, char *fname);
  * @retval PMIX_SUCCESS On success
  * @retval PMIX_ERROR or PMIX_ERR_OUT_OF_RESOURCE On failure
  */
-pmix_status_t pmix_timing_deltas(pmix_timing_t *t, char *fname);
+PMIX_EXPORT pmix_status_t pmix_timing_deltas(pmix_timing_t *t, char *fname);
 
 /**
  * Release all memory allocated for the timing handler 't'.
@@ -233,7 +233,7 @@ pmix_status_t pmix_timing_deltas(pmix_timing_t *t, char *fname);
  *
  * @retval
  */
-void pmix_timing_release(pmix_timing_t *t);
+PMIX_EXPORT void pmix_timing_release(pmix_timing_t *t);
 
 /**
  * Macro for passing down process id - compiled out

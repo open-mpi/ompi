@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -27,17 +27,17 @@ static int _verbose = 1;
 static void log_fatal(const char *format, ...)
 {
     va_list arglist;
-    char **output = NULL;
+    char *output = NULL;
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist) ||
-            NULL == output || NULL == *output) {
+        if (0 > vasprintf(&output, format, arglist) ||
+            NULL == output) {
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "FATAL: %s", *output);
-        free(*output);
+        fprintf(stderr, "FATAL: %s", output);
+        free(output);
     }
     va_end(arglist);
 }
@@ -45,17 +45,17 @@ static void log_fatal(const char *format, ...)
 static void log_error(const char *format, ...)
 {
     va_list arglist;
-    char **output = NULL;
+    char *output = NULL;
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist) ||
-            NULL == output || NULL == *output) {
+        if (0 > vasprintf(&output, format, arglist) ||
+            NULL == output) {
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "ERROR: %s", *output);
-        free(*output);
+        fprintf(stderr, "ERROR: %s", output);
+        free(output);
     }
     va_end(arglist);
 }
@@ -63,17 +63,17 @@ static void log_error(const char *format, ...)
 static void log_info(const char *format, ...)
 {
     va_list arglist;
-    char **output = NULL;
+    char *output = NULL;
 
     va_start(arglist, format);
     if (_verbose > 0) {
-        if (0 > vasprintf(output, format, arglist) ||
-            NULL == output || NULL == *output) {
+        if (0 > vasprintf(&output, format, arglist) ||
+            NULL == output) {
             va_end(arglist);
             return;
         }
-        fprintf(stderr, "INFO: %s", *output);
-        free(*output);
+        fprintf(stderr, "INFO: %s", output);
+        free(output);
     }
     va_end(arglist);
 }
@@ -341,7 +341,7 @@ static int test_item5(void)
     };
     const char **ptr = tkeys;
 
-    if (_legacy || !_legacy) {
+    if (!_legacy) {
         log_error("%s\n", "PMIx and SLURM/PMI1 do not set 'PMI_process_mapping' (Do not mark test as failed)");
         return rc;
     }

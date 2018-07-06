@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +70,7 @@ struct pmix_hash_type_methods_t {
 static void pmix_hash_table_construct(pmix_hash_table_t* ht);
 static void pmix_hash_table_destruct(pmix_hash_table_t* ht);
 
-PMIX_EXPORT PMIX_CLASS_INSTANCE(
+PMIX_CLASS_INSTANCE(
     pmix_hash_table_t,
     pmix_object_t,
     pmix_hash_table_construct,

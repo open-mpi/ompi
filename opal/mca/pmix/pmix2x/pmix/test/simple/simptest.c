@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -28,6 +28,7 @@
 #include <src/include/pmix_config.h>
 #include <pmix_server.h>
 #include <src/include/types.h>
+#include <src/include/pmix_globals.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,11 +40,11 @@
 #include <signal.h>
 #include PMIX_EVENT_HEADER
 
+#include "src/class/pmix_list.h"
 #include "src/util/pmix_environ.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"
 #include "src/util/argv.h"
-#include "src/buffer_ops/buffer_ops.h"
 
 static pmix_status_t connected(const pmix_proc_t *proc, void *server_object,
                                pmix_op_cbfunc_t cbfunc, void *cbdata);
@@ -763,8 +764,22 @@ static pmix_status_t spawn_fn(const pmix_proc_t *proc,
                     pmix_spawn_cbfunc_t cbfunc, void *cbdata)
 {
     myxfer_t *x;
+    size_t n;
+    pmix_proc_t *pptr;
+    bool spawned;
 
     pmix_output(0, "SERVER: SPAWN");
+
+    /* check the job info for parent and spawned keys */
+    for (n=0; n < ninfo; n++) {
+        if (0 == strncmp(job_info[n].key, PMIX_PARENT_ID, PMIX_MAX_KEYLEN)) {
+            pptr = job_info[n].value.data.proc;
+            pmix_output(0, "SPAWN: Parent ID %s:%d", pptr->nspace, pptr->rank);
+        } else if (0 == strncmp(job_info[n].key, PMIX_SPAWNED, PMIX_MAX_KEYLEN)) {
+            spawned = PMIX_INFO_TRUE(&job_info[n]);
+            pmix_output(0, "SPAWN: Spawned %s", spawned ? "TRUE" : "FALSE");
+        }
+    }
 
     /* in practice, we would pass this request to the local
      * resource manager for launch, and then have that server
@@ -862,6 +877,7 @@ static pmix_status_t query_fn(pmix_proc_t *proct,
     /* keep this simple */
     PMIX_INFO_CREATE(info, nqueries);
     for (n=0; n < nqueries; n++) {
+        pmix_output(0, "\tKey: %s", queries[n].keys[0]);
         (void)strncpy(info[n].key, queries[n].keys[0], PMIX_MAX_KEYLEN);
         info[n].value.type = PMIX_STRING;
         if (0 > asprintf(&info[n].value.data.string, "%d", (int)n)) {

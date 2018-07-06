@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -87,8 +87,8 @@ extern "C" {
  * and subsequent operations. Passing a _NULL_ value for the array pointer
  * is supported if no directives are desired.
  */
-    PMIX_EXPORT pmix_status_t PMIx_tool_init(pmix_proc_t *proc,
-                                             pmix_info_t info[], size_t ninfo);
+PMIX_EXPORT pmix_status_t PMIx_tool_init(pmix_proc_t *proc,
+                                         pmix_info_t info[], size_t ninfo);
 
 /* Finalize the PMIx tool library, closing the connection to the local server.
  * An error code will be returned if, for some reason, the connection
@@ -96,7 +96,7 @@ extern "C" {
  *
  * The info array is used to pass user requests regarding the finalize
  * operation. */
-    PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void);
+PMIX_EXPORT pmix_status_t PMIx_tool_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

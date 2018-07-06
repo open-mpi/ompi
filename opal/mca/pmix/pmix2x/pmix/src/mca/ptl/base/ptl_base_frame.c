@@ -57,30 +57,19 @@
 
 /* Instantiate the global vars */
 pmix_ptl_globals_t pmix_ptl_globals = {{{0}}};
-pmix_ptl_API_t pmix_ptl = {
-    .set_notification_cbfunc = pmix_ptl_stub_set_notification_cbfunc,
-    .get_available_modules = pmix_ptl_stub_get_available_modules,
-    .send_recv = pmix_ptl_stub_send_recv,
-    .send_oneway = pmix_ptl_stub_send_oneway,
-    .connect_to_peer = pmix_ptl_stub_connect_to_peer,
-    .recv = pmix_ptl_stub_register_recv,
-    .cancel = pmix_ptl_stub_cancel_recv,
-    .start_listening = pmix_ptl_base_start_listening,
-    .stop_listening = pmix_ptl_base_stop_listening
-};
+int pmix_ptl_base_output = -1;
 
 static size_t max_msg_size = PMIX_MAX_MSG_SIZE;
 
 static int pmix_ptl_register(pmix_mca_base_register_flag_t flags)
 {
-    (void) pmix_mca_base_var_register("pmix", "ptl", "base", "max_msg_size",
-                                      "Maximum allowed message size (in MBytes)",
-                                      PMIX_MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                      PMIX_INFO_LVL_2,
-                                      PMIX_MCA_BASE_VAR_SCOPE_READONLY,
-                                      &max_msg_size);
+    pmix_mca_base_var_register("pmix", "ptl", "base", "max_msg_size",
+                               "Max size (in Mbytes) of a client/server msg",
+                               PMIX_MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                               PMIX_INFO_LVL_2,
+                               PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                               &max_msg_size);
     pmix_ptl_globals.max_msg_size = max_msg_size * 1024 * 1024;
-
     return PMIX_SUCCESS;
 }
 
@@ -92,7 +81,7 @@ static pmix_status_t pmix_ptl_close(void)
     pmix_ptl_globals.initialized = false;
 
     /* ensure the listen thread has been shut down */
-    pmix_ptl.stop_listening();
+    pmix_ptl_base_stop_listening();
 
     if (NULL != pmix_client_globals.myserver) {
         if (0 <= pmix_client_globals.myserver->sd) {
@@ -112,6 +101,8 @@ static pmix_status_t pmix_ptl_close(void)
 
 static pmix_status_t pmix_ptl_open(pmix_mca_base_open_flag_t flags)
 {
+    pmix_status_t rc;
+
     /* initialize globals */
     pmix_ptl_globals.initialized = true;
     PMIX_CONSTRUCT(&pmix_ptl_globals.actives, pmix_list_t);
@@ -122,7 +113,9 @@ static pmix_status_t pmix_ptl_open(pmix_mca_base_open_flag_t flags)
     pmix_ptl_globals.current_tag = PMIX_PTL_TAG_DYNAMIC;
 
     /* Open up all available components */
-    return pmix_mca_base_framework_components_open(&pmix_ptl_base_framework, flags);
+    rc = pmix_mca_base_framework_components_open(&pmix_ptl_base_framework, flags);
+    pmix_ptl_base_output = pmix_ptl_base_framework.framework_output;
+    return rc;
 }
 
 PMIX_MCA_BASE_FRAMEWORK_DECLARE(pmix, ptl, "PMIx Transfer Layer",
@@ -150,9 +143,9 @@ static void sdes(pmix_ptl_send_t *p)
         PMIX_RELEASE(p->data);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_ptl_send_t,
-                    pmix_list_item_t,
-                    scon, sdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_send_t,
+                                pmix_list_item_t,
+                                scon, sdes);
 
 static void rcon(pmix_ptl_recv_t *p)
 {
@@ -171,9 +164,9 @@ static void rdes(pmix_ptl_recv_t *p)
         PMIX_RELEASE(p->peer);
     }
 }
-PMIX_CLASS_INSTANCE(pmix_ptl_recv_t,
-                    pmix_list_item_t,
-                    rcon, rdes);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_recv_t,
+                                pmix_list_item_t,
+                                rcon, rdes);
 
 static void prcon(pmix_ptl_posted_recv_t *p)
 {
@@ -181,9 +174,9 @@ static void prcon(pmix_ptl_posted_recv_t *p)
     p->cbfunc = NULL;
     p->cbdata = NULL;
 }
-PMIX_CLASS_INSTANCE(pmix_ptl_posted_recv_t,
-                    pmix_list_item_t,
-                    prcon, NULL);
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ptl_posted_recv_t,
+                                pmix_list_item_t,
+                                prcon, NULL);
 
 
 static void srcon(pmix_ptl_sr_t *p)
@@ -208,21 +201,26 @@ static void pccon(pmix_pending_connection_t *p)
     memset(p->nspace, 0, PMIX_MAX_NSLEN+1);
     p->info = NULL;
     p->ninfo = 0;
-    p->bfrop = NULL;
+    p->bfrops = NULL;
     p->psec = NULL;
+    p->gds = NULL;
     p->ptl = NULL;
     p->cred = NULL;
+    p->proc_type = PMIX_PROC_UNDEF;
 }
 static void pcdes(pmix_pending_connection_t *p)
 {
     if (NULL != p->info) {
         PMIX_INFO_FREE(p->info, p->ninfo);
     }
-    if (NULL != p->bfrop) {
-        free(p->bfrop);
+    if (NULL != p->bfrops) {
+        free(p->bfrops);
     }
     if (NULL != p->psec) {
         free(p->psec);
+    }
+    if (NULL != p->gds) {
+        free(p->gds);
     }
     if (NULL != p->cred) {
         free(p->cred);

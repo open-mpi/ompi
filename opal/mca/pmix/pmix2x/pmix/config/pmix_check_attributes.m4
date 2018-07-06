@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 # PMIx copyrights:
-# Copyright (c) 2013      Intel, Inc. All rights reserved
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 #
 #########################
 #
@@ -15,7 +15,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
@@ -170,6 +170,8 @@ AC_DEFUN([PMIX_CHECK_ATTRIBUTES], [
     pmix_cv___attribute__visibility=0
     pmix_cv___attribute__warn_unused_result=0
     pmix_cv___attribute__destructor=0
+    pmix_cv___attribute__optnone=0
+    pmix_cv___attribute__extension=0
   else
     AC_MSG_RESULT([yes])
 
@@ -486,6 +488,21 @@ AC_DEFUN([PMIX_CHECK_ATTRIBUTES], [
         ],
         [],
         [])
+
+    _PMIX_CHECK_SPECIFIC_ATTRIBUTE([optnone],
+        [
+        void __attribute__ ((__optnone__)) foo(void);
+        void foo(void) { return ; }
+        ],
+        [],
+        [])
+
+    _PMIX_CHECK_SPECIFIC_ATTRIBUTE([extension],
+        [
+        int i = __extension__ 3;
+        ],
+        [],
+        [])
   fi
 
   # Now that all the values are set, define them
@@ -536,4 +553,8 @@ AC_DEFUN([PMIX_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ weak alias or not])
   AC_DEFINE_UNQUOTED(PMIX_HAVE_ATTRIBUTE_DESTRUCTOR, [$pmix_cv___attribute__destructor],
                      [Whether your compiler has __attribute__ destructor or not])
+  AC_DEFINE_UNQUOTED(PMIX_HAVE_ATTRIBUTE_OPTNONE, [$pmix_cv___attribute__optnone],
+                     [Whether your compiler has __attribute__ optnone or not])
+  AC_DEFINE_UNQUOTED(PMIX_HAVE_ATTRIBUTE_EXTENSION, [$pmix_cv___attribute__extension],
+                     [Whether your compiler has __attribute__ extension or not])
 ])

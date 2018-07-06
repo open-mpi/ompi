@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +30,7 @@
 
 #include "src/mca/ptl/base/base.h"
 
-pmix_status_t pmix_ptl_stub_set_notification_cbfunc(pmix_ptl_cbfunc_t cbfunc)
+pmix_status_t pmix_ptl_base_set_notification_cbfunc(pmix_ptl_cbfunc_t cbfunc)
 {
     pmix_ptl_posted_recv_t *req;
 
@@ -42,7 +42,7 @@ pmix_status_t pmix_ptl_stub_set_notification_cbfunc(pmix_ptl_cbfunc_t cbfunc)
     }
     req->tag = 0;
     req->cbfunc = cbfunc;
-    pmix_output_verbose(5, pmix_globals.debug_output,
+    pmix_output_verbose(5, pmix_ptl_base_framework.framework_output,
                         "posting notification recv on tag %d", req->tag);
     /* add it to the list of recvs - we cannot have unexpected messages
      * in this subsystem as the server never sends us something that
@@ -51,7 +51,7 @@ pmix_status_t pmix_ptl_stub_set_notification_cbfunc(pmix_ptl_cbfunc_t cbfunc)
     return PMIX_SUCCESS;
 }
 
-char* pmix_ptl_stub_get_available_modules(void)
+char* pmix_ptl_base_get_available_modules(void)
 {
     pmix_ptl_base_active_t *active;
     char **tmp=NULL, *reply=NULL;
@@ -70,25 +70,20 @@ char* pmix_ptl_stub_get_available_modules(void)
     return reply;
 }
 
-pmix_status_t pmix_ptl_stub_send_recv(struct pmix_peer_t *peer,
-                                      pmix_buffer_t *bfr,
-                                      pmix_ptl_cbfunc_t cbfunc,
-                                      void *cbdata)
+/* return the highest priority module */
+pmix_ptl_module_t* pmix_ptl_base_assign_module(void)
 {
-    pmix_peer_t *pr = (pmix_peer_t*)peer;
+    pmix_ptl_base_active_t *active;
 
-    return pr->compat.ptl->send_recv(peer, bfr, cbfunc, cbdata);
+    if (!pmix_ptl_globals.initialized) {
+        return NULL;
+    }
+
+    active = (pmix_ptl_base_active_t*)pmix_list_get_first(&pmix_ptl_globals.actives);
+    return active->module;
 }
 
-pmix_status_t pmix_ptl_stub_send_oneway(struct pmix_peer_t *peer,
-                                        pmix_buffer_t *bfr,
-                                        pmix_ptl_tag_t tag)
-{
-    pmix_peer_t *pr = (pmix_peer_t*)peer;
-    return pr->compat.ptl->send(peer, bfr, tag);
-}
-
-pmix_status_t pmix_ptl_stub_connect_to_peer(struct pmix_peer_t *peer,
+pmix_status_t pmix_ptl_base_connect_to_peer(struct pmix_peer_t *peer,
                                             pmix_info_t info[], size_t ninfo)
 {
     pmix_peer_t *pr = (pmix_peer_t*)peer;
@@ -97,7 +92,7 @@ pmix_status_t pmix_ptl_stub_connect_to_peer(struct pmix_peer_t *peer,
     PMIX_LIST_FOREACH(active, &pmix_ptl_globals.actives, pmix_ptl_base_active_t) {
         if (NULL != active->module->connect_to_peer) {
             if (PMIX_SUCCESS == active->module->connect_to_peer(peer, info, ninfo)) {
-                pr->compat.ptl = active->module;
+                pr->nptr->compat.ptl = active->module;
                 return PMIX_SUCCESS;
             }
         }
@@ -106,13 +101,14 @@ pmix_status_t pmix_ptl_stub_connect_to_peer(struct pmix_peer_t *peer,
     return PMIX_ERR_UNREACH;
 }
 
+
 static void post_recv(int fd, short args, void *cbdata)
 {
     pmix_ptl_posted_recv_t *req = (pmix_ptl_posted_recv_t*)cbdata;
     pmix_ptl_recv_t *msg, *nmsg;
     pmix_buffer_t buf;
 
-    pmix_output_verbose(5, pmix_globals.debug_output,
+    pmix_output_verbose(5, pmix_ptl_base_framework.framework_output,
                         "posting recv on tag %d", req->tag);
 
     /* add it to the list of recvs */
@@ -141,7 +137,7 @@ static void post_recv(int fd, short args, void *cbdata)
     }
 }
 
-pmix_status_t pmix_ptl_stub_register_recv(struct pmix_peer_t *peer,
+pmix_status_t pmix_ptl_base_register_recv(struct pmix_peer_t *peer,
                                           pmix_ptl_cbfunc_t cbfunc,
                                           pmix_ptl_tag_t tag)
 {
@@ -177,7 +173,7 @@ static void cancel_recv(int fd, short args, void *cbdata)
     PMIX_RELEASE(req);
 }
 
-pmix_status_t pmix_ptl_stub_cancel_recv(struct pmix_peer_t *peer,
+pmix_status_t pmix_ptl_base_cancel_recv(struct pmix_peer_t *peer,
                                         pmix_ptl_tag_t tag)
 {
     pmix_ptl_posted_recv_t *req;

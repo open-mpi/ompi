@@ -12,8 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2018      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,6 +63,8 @@
 #include "src/util/show_help.h"
 #include "src/util/strnlen.h"
 #include "src/server/pmix_server_ops.h"
+#include "src/mca/bfrops/base/base.h"
+#include "src/mca/gds/base/base.h"
 #include "src/mca/psec/base/base.h"
 
 #include "src/mca/ptl/base/base.h"
@@ -110,7 +113,10 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     .disable_ipv6_family = true,
     .session_filename = NULL,
     .system_filename = NULL,
-    .tool_pid = 0
+    .wait_to_connect = 4,
+    .max_retries = 2,
+    .report_uri = NULL,
+    .remote_connections = false
 };
 
 static char **split_and_resolve(char **orig_str, char *name);
@@ -123,18 +129,26 @@ static int component_register(void)
     pmix_mca_base_component_t *component = &mca_ptl_tcp_component.super.base;
 
     (void)pmix_mca_base_component_var_register(component, "server_uri",
-                                               "URI of a server a tool wishes to connect to",
+                                               "URI of a server a tool wishes to connect to - either the "
+                                               "URI itself, or file:path-to-file-containing-uri",
                                                PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                                PMIX_INFO_LVL_2,
                                                PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
                                                &mca_ptl_tcp_component.super.uri);
 
-    (void)pmix_mca_base_component_var_register(component, "tool_pid",
-                                               "pid of a tool we are to connect to",
-                                               PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+    (void)pmix_mca_base_component_var_register(component, "report_uri",
+                                               "Output URI [- => stdout, + => stderr, or filename]",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                                PMIX_INFO_LVL_2,
                                                PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &mca_ptl_tcp_component.tool_pid);
+                                               &mca_ptl_tcp_component.report_uri);
+
+    (void)pmix_mca_base_component_var_register(component, "remote_connections",
+                                               "Enable connections from remote tools",
+                                               PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                               PMIX_INFO_LVL_2,
+                                               PMIX_MCA_BASE_VAR_SCOPE_LOCAL,
+                                               &mca_ptl_tcp_component.remote_connections);
 
     (void)pmix_mca_base_component_var_register(component, "if_include",
                                                "Comma-delimited list of devices and/or CIDR notation of TCP networks (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with ptl_tcp_if_exclude.",
@@ -189,8 +203,24 @@ static int component_register(void)
                                           PMIX_MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_ptl_tcp_component.disable_ipv6_family);
 
+    (void)pmix_mca_base_component_var_register(component, "connection_wait_time",
+                                          "Number of seconds to wait for the server connection file to appear",
+                                          PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          PMIX_INFO_LVL_4,
+                                          PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_ptl_tcp_component.wait_to_connect);
+
+    (void)pmix_mca_base_component_var_register(component, "max_retries",
+                                          "Number of times to look for the connection file before quitting",
+                                          PMIX_MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          PMIX_INFO_LVL_4,
+                                          PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_ptl_tcp_component.max_retries);
+
     return PMIX_SUCCESS;
 }
+
+static char *urifile = NULL;
 
 static pmix_status_t component_open(void)
 {
@@ -221,6 +251,11 @@ static pmix_status_t component_open(void)
     if (NULL == mca_ptl_tcp_component.system_tmpdir) {
         mca_ptl_tcp_component.system_tmpdir = strdup(tdir);
     }
+    if (NULL != mca_ptl_tcp_component.report_uri &&
+        0 != strcmp(mca_ptl_tcp_component.report_uri, "-") &&
+        0 != strcmp(mca_ptl_tcp_component.report_uri, "+")) {
+        urifile = strdup(mca_ptl_tcp_component.report_uri);
+    }
     return PMIX_SUCCESS;
 }
 
@@ -232,6 +267,12 @@ pmix_status_t component_close(void)
     }
     if (NULL != mca_ptl_tcp_component.session_filename) {
         unlink(mca_ptl_tcp_component.session_filename);
+    }
+    if (NULL != urifile) {
+        /* remove the file */
+        unlink(urifile);
+        free(urifile);
+        urifile = NULL;
     }
     return PMIX_SUCCESS;
 }
@@ -263,7 +304,6 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     struct sockaddr_storage my_ss;
     int kindex;
     size_t n;
-    bool remote_connections = false;
     bool session_tool = false;
     bool system_tool = false;
     pmix_socklen_t addrlen;
@@ -275,7 +315,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                         "ptl:tcp setup_listener");
 
     /* if we are not a server, then we shouldn't be doing this */
-    if (PMIX_PROC_SERVER != pmix_globals.proc_type) {
+    if (!PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -297,28 +337,21 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             } else if (0 == strcmp(info[n].key, PMIX_TCP_IPV6_PORT)) {
                 mca_ptl_tcp_component.ipv6_port = info[n].value.data.integer;
             } else if (0 == strcmp(info[n].key, PMIX_TCP_DISABLE_IPV4)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    mca_ptl_tcp_component.disable_ipv4_family = true;
-                } else {
-                    mca_ptl_tcp_component.disable_ipv4_family = info[n].value.data.flag;
-                }
+                mca_ptl_tcp_component.disable_ipv4_family = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_TCP_DISABLE_IPV6)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    mca_ptl_tcp_component.disable_ipv6_family = true;
-                } else {
-                    mca_ptl_tcp_component.disable_ipv6_family = info[n].value.data.flag;
-                }
+                mca_ptl_tcp_component.disable_ipv6_family = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_REMOTE_CONNECTIONS)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    remote_connections = true;
-                } else {
-                    remote_connections = info[n].value.data.flag;
-                }
+                mca_ptl_tcp_component.remote_connections = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_TCP_URI)) {
                 if (NULL != mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);
                 }
                 mca_ptl_tcp_component.super.uri = strdup(info[n].value.data.string);
+            } else if (0 == strcmp(info[n].key, PMIX_TCP_REPORT_URI)) {
+                if (NULL != mca_ptl_tcp_component.report_uri) {
+                    free(mca_ptl_tcp_component.report_uri);
+                }
+                mca_ptl_tcp_component.report_uri = strdup(info[n].value.data.string);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_TMPDIR)) {
                 if (NULL != mca_ptl_tcp_component.session_tmpdir) {
                     free(mca_ptl_tcp_component.session_tmpdir);
@@ -330,17 +363,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
                 }
                 mca_ptl_tcp_component.system_tmpdir = strdup(info[n].value.data.string);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_TOOL_SUPPORT)) {
-                if (PMIX_UNDEF == info[n].value.type) {
-                    session_tool = true;
-                } else {
-                    session_tool = info[n].value.data.flag;
-                }
+                session_tool = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_SYSTEM_SUPPORT)) {
-               if (PMIX_UNDEF == info[n].value.type) {
-                   system_tool = true;
-               } else {
-                   system_tool = info[n].value.data.flag;
-               }
+                system_tool = PMIX_INFO_TRUE(&info[n]);
            }
         }
     }
@@ -429,7 +454,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         /* if this is the loopback device and they didn't enable
          * remote connections, then we are done */
         if (pmix_ifisloopback(i)) {
-            if (remote_connections) {
+            if (mca_ptl_tcp_component.remote_connections) {
                 /* ignore loopback */
                 continue;
             } else {
@@ -479,7 +504,7 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     }
 
     lt = PMIX_NEW(pmix_listener_t);
-    lt->varname = strdup("PMIX_SERVER_URI2");
+    lt->varname = strdup("PMIX_SERVER_URI2:PMIX_SERVER_URI21");
     lt->protocol = PMIX_PROTOCOL_V2;
     lt->ptl = (struct pmix_ptl_module_t*)&pmix_ptl_tcp_module;
     lt->cbfunc = connection_handler;
@@ -556,13 +581,40 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         goto sockerror;
     }
 
-    asprintf(&lt->uri, "%s.%d;%s%s:%d", pmix_globals.myid.nspace, pmix_globals.myid.rank, prefix, myconnhost, myport);
-    if (NULL == lt->uri) {
+    rc = asprintf(&lt->uri, "%s.%d;%s%s:%d", pmix_globals.myid.nspace, pmix_globals.myid.rank, prefix, myconnhost, myport);
+    if (0 > rc || NULL == lt->uri) {
         CLOSE_THE_SOCKET(lt->socket);
         goto sockerror;
     }
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl:tcp URI %s", lt->uri);
+
+    if (NULL != mca_ptl_tcp_component.report_uri) {
+        /* if the string is a "-", then output to stdout */
+        if (0 == strcmp(mca_ptl_tcp_component.report_uri, "-")) {
+            fprintf(stdout, "%s\n", lt->uri);
+        } else if (0 == strcmp(mca_ptl_tcp_component.report_uri, "+")) {
+            /* output to stderr */
+            fprintf(stderr, "%s\n", lt->uri);
+        } else {
+            /* must be a file */
+            FILE *fp;
+            fp = fopen(mca_ptl_tcp_component.report_uri, "w");
+            if (NULL == fp) {
+                pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.report_uri);
+                PMIX_ERROR_LOG(PMIX_ERR_FILE_OPEN_FAILURE);
+                CLOSE_THE_SOCKET(lt->socket);
+                free(mca_ptl_tcp_component.system_filename);
+                mca_ptl_tcp_component.system_filename = NULL;
+                goto sockerror;
+            }
+            /* output my nspace and rank plus the URI */
+            fprintf(fp, "%s\n", lt->uri);
+            /* add a flag that indicates we accept v2.1 protocols */
+            fprintf(fp, "v%s\n", PMIX_VERSION);
+            fclose(fp);
+        }
+    }
 
     /* if we are going to support tools, then drop contact file(s) */
     if (system_tool) {
@@ -573,6 +625,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
         }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "WRITING SYSTEM FILE %s",
+                            mca_ptl_tcp_component.system_filename);
         fp = fopen(mca_ptl_tcp_component.system_filename, "w");
         if (NULL == fp) {
             pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.system_filename);
@@ -584,7 +639,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
         }
 
         /* output my nspace and rank plus the URI */
-        fprintf(fp, "%s.%d:%s\n", pmix_globals.myid.nspace, pmix_globals.myid.rank, lt->uri);
+        fprintf(fp, "%s\n", lt->uri);
+        /* add a flag that indicates we accept v3.0 protocols */
+        fprintf(fp, "v%s\n", PMIX_VERSION);
         fclose(fp);
         /* set the file mode */
         if (0 != chmod(mca_ptl_tcp_component.system_filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) {
@@ -605,6 +662,9 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
         }
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "WRITING TOOL FILE %s",
+                            mca_ptl_tcp_component.session_filename);
         fp = fopen(mca_ptl_tcp_component.session_filename, "w");
         if (NULL == fp) {
             pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.session_filename);
@@ -615,8 +675,10 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             goto sockerror;
         }
 
-        /* output my nspace and rank plus the URI */
-        fprintf(fp, "%s.%d:%s\n", pmix_globals.myid.nspace, pmix_globals.myid.rank, lt->uri);
+        /* output my URI */
+        fprintf(fp, "%s\n", lt->uri);
+        /* add a flag that indicates we accept v2.1 protocols */
+        fprintf(fp, "%s\n", PMIX_VERSION);
         fclose(fp);
         /* set the file mode */
         if (0 != chmod(mca_ptl_tcp_component.session_filename, S_IRUSR | S_IWUSR | S_IRGRP)) {
@@ -746,10 +808,11 @@ static void connection_handler(int sd, short args, void *cbdata)
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cbdata;
     pmix_ptl_hdr_t hdr;
     pmix_peer_t *peer;
-    pmix_rank_t rank;
+    pmix_rank_t rank=0;
     pmix_status_t rc;
-    char *msg, *mg;
-    char *sec;
+    char *msg, *mg, *version;
+    char *sec, *bfrops, *gds;
+    pmix_bfrop_buffer_type_t bftype;
     char *nspace;
     uint32_t len, u32;
     size_t cnt, msglen, n;
@@ -758,6 +821,8 @@ static void connection_handler(int sd, short args, void *cbdata)
     bool found;
     pmix_rank_info_t *info;
     pmix_proc_t proc;
+    pmix_info_t ginfo;
+    pmix_proc_type_t proc_type;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(pnd);
@@ -850,7 +915,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         cnt -= pnd->len;
     }
 
-    /* get the request type */
+    /* get the process type of the connecting peer */
     if (1 <= cnt) {
         memcpy(&flag, mg, 1);
         ++mg;
@@ -862,14 +927,34 @@ static void connection_handler(int sd, short args, void *cbdata)
         goto error;
     }
 
-    /* see if this is a tool connection request */
-    if (1 == flag) {
-        /* does the server support tool connections? */
-        if (NULL == pmix_host_server.tool_connected) {
+    if (0 == flag) {
+        /* they must be a client, so get their nspace/rank */
+        PMIX_STRNLEN(msglen, mg, cnt);
+        if (msglen < cnt) {
+            nspace = mg;
+            mg += strlen(nspace) + 1;
+            cnt -= strlen(nspace) + 1;
+        } else {
+            free(msg);
             /* send an error reply to the client */
-            rc = PMIX_ERR_NOT_SUPPORTED;
+            rc = PMIX_ERR_BAD_PARAM;
             goto error;
         }
+
+        if (sizeof(pmix_rank_t) <= cnt) {
+            /* have to convert this to host order */
+            memcpy(&u32, mg, sizeof(uint32_t));
+            rank = ntohl(u32);
+            mg += sizeof(uint32_t);
+            cnt -= sizeof(uint32_t);
+        } else {
+            free(msg);
+            /* send an error reply to the client */
+            rc = PMIX_ERR_BAD_PARAM;
+            goto error;
+        }
+    } else if (1 == flag) {
+        /* they are a tool */
         /* extract the uid/gid */
         if (sizeof(uint32_t) <= cnt) {
             memcpy(&u32, mg, sizeof(uint32_t));
@@ -892,6 +977,98 @@ static void connection_handler(int sd, short args, void *cbdata)
            /* send an error reply to the client */
            rc = PMIX_ERR_BAD_PARAM;
            goto error;
+        }
+    } else {
+        /* we don't know what they are! */
+        rc = PMIX_ERR_NOT_SUPPORTED;
+        free(msg);
+        goto error;
+    }
+
+    /* extract their VERSION */
+    PMIX_STRNLEN(msglen, mg, cnt);
+    if (msglen < cnt) {
+        version = mg;
+        mg += strlen(version) + 1;
+        cnt -= strlen(version) + 1;
+    } else {
+        PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+        free(msg);
+        /* send an error reply to the client */
+        rc = PMIX_ERR_BAD_PARAM;
+        goto error;
+    }
+
+    if (0 == strncmp(version, "2.0", 3)) {
+        /* the 2.0 release handshake ends with the version string */
+        proc_type = PMIX_PROC_V20;
+        bfrops = "v20";
+        bftype = pmix_bfrops_globals.default_type;  // we can't know any better
+        gds = NULL;
+    } else {
+        int major;
+        major = strtoul(version, NULL, 10);
+        /* we already checked for version 2.0, so just check
+         * now for any version >= 2 as they must support
+         * V21 for backward compatibility */
+        if (2 <= major) {
+            proc_type = PMIX_PROC_V21;
+        } else {
+            /* must be a version 1.x or earlier, which cannot
+             * support us */
+            free(msg);
+            rc = PMIX_ERR_NOT_SUPPORTED;
+            goto error;
+        }
+        /* extract the name of the bfrops module they used */
+        PMIX_STRNLEN(msglen, mg, cnt);
+        if (msglen < cnt) {
+            bfrops = mg;
+            mg += strlen(bfrops) + 1;
+            cnt -= strlen(bfrops) + 1;
+        } else {
+            PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+            free(msg);
+            /* send an error reply to the client */
+            rc = PMIX_ERR_BAD_PARAM;
+            goto error;
+        }
+
+        /* extract the type of buffer they used */
+        if (sizeof(bftype) < cnt) {
+            memcpy(&bftype, mg, sizeof(bftype));
+            mg += sizeof(bftype);
+            cnt -= sizeof(bftype);
+        } else {
+            PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+            free(msg);
+            /* send an error reply to the client */
+            rc = PMIX_ERR_BAD_PARAM;
+            goto error;
+        }
+
+        /* extract the name of the gds module they used */
+        PMIX_STRNLEN(msglen, mg, cnt);
+        if (msglen < cnt) {
+            gds = mg;
+            mg += strlen(gds) + 1;
+            cnt -= strlen(gds) + 1;
+        } else {
+            PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+            free(msg);
+            /* send an error reply to the client */
+            rc = PMIX_ERR_BAD_PARAM;
+            goto error;
+        }
+    }
+
+    /* see if this is a tool connection request */
+    if (1 == flag) {
+        /* does the server support tool connections? */
+        if (NULL == pmix_host_server.tool_connected) {
+            /* send an error reply to the client */
+            rc = PMIX_ERR_NOT_SUPPORTED;
+            goto error;
         }
         /* setup the info array to pass the relevant info
          * to the server - starting with the version, if present */
@@ -918,9 +1095,18 @@ static void connection_handler(int sd, short args, void *cbdata)
         pnd->info[n].value.type = PMIX_UINT32;
         pnd->info[n].value.data.uint32 = pnd->gid;
         ++n;
+        /* pass along the proc_type */
+        pnd->proc_type = proc_type;
         /* pass along the bfrop, buffer_type, and sec fields so
          * we can assign them once we create a peer object */
         pnd->psec = strdup(sec);
+        if (NULL != bfrops) {
+            pnd->bfrops = strdup(bfrops);
+        }
+        pnd->buffer_type = bftype;
+        if (NULL != gds) {
+            pnd->gds = strdup(gds);
+        }
         /* release the msg */
         free(msg);
         /* request an nspace for this requestor - it will
@@ -929,35 +1115,9 @@ static void connection_handler(int sd, short args, void *cbdata)
         return;
     }
 
-    /* they must be a client, so get their nspace/rank */
-    PMIX_STRNLEN(msglen, mg, cnt);
-    if (msglen < cnt) {
-        nspace = mg;
-        mg += strlen(nspace) + 1;
-        cnt -= strlen(nspace) + 1;
-    } else {
-        free(msg);
-        /* send an error reply to the client */
-        rc = PMIX_ERR_BAD_PARAM;
-        goto error;
-    }
-
-    if (sizeof(pmix_rank_t) <= cnt) {
-        /* have to convert this to host order */
-        memcpy(&u32, mg, sizeof(uint32_t));
-        rank = ntohl(u32);
-        mg += sizeof(uint32_t);
-        cnt -= sizeof(uint32_t);
-    } else {
-        free(msg);
-        /* send an error reply to the client */
-        rc = PMIX_ERR_BAD_PARAM;
-        goto error;
-    }
-
     /* see if we know this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
         if (0 == strcmp(tmp->nspace, nspace)) {
             nptr = tmp;
             break;
@@ -974,8 +1134,8 @@ static void connection_handler(int sd, short args, void *cbdata)
     /* see if we have this peer in our list */
     info = NULL;
     found = false;
-    PMIX_LIST_FOREACH(info, &nptr->server->ranks, pmix_rank_info_t) {
-        if (info->rank == rank) {
+    PMIX_LIST_FOREACH(info, &nptr->ranks, pmix_rank_info_t) {
+        if (info->pname.rank == rank) {
             found = true;
             break;
         }
@@ -999,47 +1159,89 @@ static void connection_handler(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         return;
     }
+    /* mark that this peer is a client of the given type */
+    peer->proc_type = PMIX_PROC_CLIENT | proc_type;
+    /* add in the nspace pointer */
+    PMIX_RETAIN(nptr);
+    peer->nptr = nptr;
     PMIX_RETAIN(info);
     peer->info = info;
-    PMIX_RETAIN(nptr);
-    peer->info->nptr = nptr;
     info->proc_cnt++; /* increase number of processes on this rank */
     peer->sd = pnd->sd;
     if (0 > (peer->index = pmix_pointer_array_add(&pmix_server_globals.clients, peer))) {
         free(msg);
         info->proc_cnt--;
-        PMIX_RELEASE(info);
         PMIX_RELEASE(peer);
         /* probably cannot send an error reply if we are out of memory */
         CLOSE_THE_SOCKET(pnd->sd);
         PMIX_RELEASE(pnd);
         return;
     }
+    info->peerid = peer->index;
 
     /* set the sec module to match this peer */
-    rc = pmix_psec.assign_module(peer, sec);
-    if (PMIX_SUCCESS != rc) {
+    peer->nptr->compat.psec = pmix_psec_base_assign_module(sec);
+    if (NULL == peer->nptr->compat.psec) {
         free(msg);
         info->proc_cnt--;
-        PMIX_RELEASE(info);
         pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
         PMIX_RELEASE(peer);
         /* send an error reply to the client */
         goto error;
     }
-    free(msg);
+
+    /* set the bfrops module to match this peer */
+    peer->nptr->compat.bfrops = pmix_bfrops_base_assign_module(bfrops);
+    if (NULL == peer->nptr->compat.bfrops) {
+        free(msg);
+        info->proc_cnt--;
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
+        PMIX_RELEASE(peer);
+        /* send an error reply to the client */
+        goto error;
+    }
+    /* and the buffer type to match */
+    peer->nptr->compat.type = bftype;
+
+    /* set the gds module to match this peer */
+    if (NULL != gds) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, gds, PMIX_STRING);
+        peer->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+    } else {
+        peer->nptr->compat.gds = pmix_gds_base_assign_module(NULL, 0);
+    }
+    if (NULL == peer->nptr->compat.gds) {
+        free(msg);
+        info->proc_cnt--;
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
+        PMIX_RELEASE(peer);
+        /* send an error reply to the client */
+        goto error;
+    }
+
+    /* if we haven't previously stored the version for this
+     * nspace, do so now */
+    if (!nptr->version_stored) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_BFROPS_MODULE, peer->nptr->compat.bfrops->version, PMIX_STRING);
+        PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, peer->nptr, &ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+        nptr->version_stored = true;
+    }
+
+    free(msg);  // can now release the data buffer
 
     /* the choice of PTL module is obviously us */
-    peer->compat.ptl = &pmix_ptl_tcp_module;
+    peer->nptr->compat.ptl = &pmix_ptl_tcp_module;
 
     /* validate the connection */
-    rc = pmix_psec.validate_connection(peer, PMIX_PROTOCOL_V2,
-                                       pnd->cred, pnd->len);
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer,
+                                  PMIX_PROTOCOL_V2,
+                                  pnd->cred, pnd->len);
     if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of client connection failed");
         info->proc_cnt--;
-        PMIX_RELEASE(info);
         pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
         PMIX_RELEASE(peer);
         /* send an error reply to the client */
@@ -1054,7 +1256,6 @@ static void connection_handler(int sd, short args, void *cbdata)
     if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&u32, sizeof(uint32_t)))) {
         PMIX_ERROR_LOG(rc);
         info->proc_cnt--;
-        PMIX_RELEASE(info);
         pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
         PMIX_RELEASE(peer);
         CLOSE_THE_SOCKET(pnd->sd);
@@ -1066,7 +1267,6 @@ static void connection_handler(int sd, short args, void *cbdata)
       if (PMIX_SUCCESS != (rc = pmix_ptl_base_send_blocking(pnd->sd, (char*)&u32, sizeof(uint32_t)))) {
           PMIX_ERROR_LOG(rc);
           info->proc_cnt--;
-          PMIX_RELEASE(info);
           pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
           PMIX_RELEASE(peer);
           goto error;
@@ -1077,8 +1277,8 @@ static void connection_handler(int sd, short args, void *cbdata)
 
       /* let the host server know that this client has connected */
       if (NULL != pmix_host_server.client_connected) {
-          (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
-          proc.rank = peer->info->rank;
+          (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
+          proc.rank = peer->info->pname.rank;
           rc = pmix_host_server.client_connected(&proc, peer->info->server_object,
                                                  NULL, NULL);
           if (PMIX_SUCCESS != rc) {
@@ -1097,7 +1297,7 @@ static void connection_handler(int sd, short args, void *cbdata)
                       EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server client %s:%u has connected on socket %d",
-                        peer->info->nptr->nspace, peer->info->rank, peer->sd);
+                        peer->info->pname.nspace, peer->info->pname.rank, peer->sd);
     PMIX_RELEASE(pnd);
     return;
 
@@ -1119,8 +1319,10 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cd->cbdata;
     pmix_nspace_t *nptr;
     pmix_rank_info_t *info;
+    pmix_peer_t *peer;
     int rc;
     uint32_t u32;
+    pmix_info_t ginfo;
 
     /* acquire the object */
     PMIX_ACQUIRE_OBJECT(cd);
@@ -1170,37 +1372,58 @@ static void process_cbfunc(int sd, short args, void *cbdata)
         return;
     }
 
-    /* add this tool rank to the nspace */
-    info = PMIX_NEW(pmix_rank_info_t);
     /* add this nspace to our pool */
     nptr = PMIX_NEW(pmix_nspace_t);
-    info->nptr = nptr;
-    (void)strncpy(info->nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN);
-    info->rank = 0;
-    (void)strncpy(nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN);
-    nptr->server = PMIX_NEW(pmix_server_nspace_t);
-
-    pmix_list_append(&pmix_globals.nspaces, &nptr->super);
+    if (NULL == nptr) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        PMIX_RELEASE(cd);
+        return;
+    }
+    nptr->nspace = strdup(cd->proc.nspace);
+    pmix_list_append(&pmix_server_globals.nspaces, &nptr->super);
+    /* add this tool rank to the nspace */
+    info = PMIX_NEW(pmix_rank_info_t);
+    if (NULL == info) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        PMIX_RELEASE(cd);
+        return;
+    }
+    info->pname.nspace = strdup(cd->proc.nspace);
+    info->pname.rank = 0;
     /* need to include the uid/gid for validation */
     info->uid = pnd->uid;
     info->gid = pnd->gid;
-    pmix_list_append(&nptr->server->ranks, &info->super);
+    pmix_list_append(&nptr->ranks, &info->super);
 
     /* setup a peer object for this tool */
-    pmix_peer_t *peer = PMIX_NEW(pmix_peer_t);
+    peer = PMIX_NEW(pmix_peer_t);
+    if (NULL == peer) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        CLOSE_THE_SOCKET(pnd->sd);
+        PMIX_RELEASE(pnd);
+        PMIX_RELEASE(cd);
+        return;
+    }
+    /* mark the peer proc type */
+    peer->proc_type = PMIX_PROC_TOOL | pnd->proc_type;
+    /* add in the nspace pointer */
+    PMIX_RETAIN(nptr);
+    peer->nptr = nptr;
     PMIX_RETAIN(info);
     peer->info = info;
-    PMIX_RETAIN(nptr);
-    peer->info->nptr = nptr;
     peer->proc_cnt = 1;
     peer->sd = pnd->sd;
 
     /* get the appropriate compatibility modules based on the
      * info provided by the tool during the initial connection request */
-    rc = pmix_psec.assign_module(peer, pnd->psec);
-    if (PMIX_SUCCESS != rc) {
+    peer->nptr->compat.psec = pmix_psec_base_assign_module(pnd->psec);
+    if (NULL == peer->nptr->compat.psec) {
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1208,17 +1431,49 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     /* the choice of PTL module was obviously made by the connecting
      * tool as we received this request via that channel, so simply
      * record it here for future use */
-    peer->compat.ptl = &pmix_ptl_tcp_module;
+    peer->nptr->compat.ptl = &pmix_ptl_tcp_module;
+    /* select their bfrops compat module */
+    peer->nptr->compat.bfrops = pmix_bfrops_base_assign_module(pnd->bfrops);
+    if (NULL == peer->nptr->compat.bfrops) {
+        PMIX_RELEASE(peer);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
+        PMIX_RELEASE(nptr);  // will release the info object
+        CLOSE_THE_SOCKET(pnd->sd);
+        goto done;
+    }
+    /* set the buffer type */
+    peer->nptr->compat.type = pnd->buffer_type;
+    /* set the gds */
+    PMIX_INFO_LOAD(&ginfo, PMIX_GDS_MODULE, pnd->gds, PMIX_STRING);
+    peer->nptr->compat.gds = pmix_gds_base_assign_module(&ginfo, 1);
+    PMIX_INFO_DESTRUCT(&ginfo);
+    if (NULL == peer->nptr->compat.gds) {
+        PMIX_RELEASE(peer);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
+        PMIX_RELEASE(nptr);  // will release the info object
+        CLOSE_THE_SOCKET(pnd->sd);
+        goto done;
+    }
+
+    /* if we haven't previously stored the version for this
+     * nspace, do so now */
+    if (!peer->nptr->version_stored) {
+        PMIX_INFO_LOAD(&ginfo, PMIX_BFROPS_MODULE, peer->nptr->compat.bfrops->version, PMIX_STRING);
+        PMIX_GDS_CACHE_JOB_INFO(rc, pmix_globals.mypeer, peer->nptr, &ginfo, 1);
+        PMIX_INFO_DESTRUCT(&ginfo);
+        nptr->version_stored = true;
+    }
 
     /* validate the connection */
-    rc = pmix_psec.validate_connection(peer, PMIX_PROTOCOL_V2,
-                                       pnd->cred, pnd->len);
+    PMIX_PSEC_VALIDATE_CONNECTION(rc, peer,
+                                  PMIX_PROTOCOL_V2,
+                                  pnd->cred, pnd->len);
     if (PMIX_SUCCESS != rc) {
         pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                             "validation of tool credentials failed: %s",
                             PMIx_Error_string(rc));
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         CLOSE_THE_SOCKET(pnd->sd);
         goto done;
@@ -1231,22 +1486,22 @@ static void process_cbfunc(int sd, short args, void *cbdata)
         PMIX_RELEASE(pnd);
         PMIX_RELEASE(cd);
         PMIX_RELEASE(peer);
-        pmix_list_remove_item(&pmix_globals.nspaces, &nptr->super);
+        pmix_list_remove_item(&pmix_server_globals.nspaces, &nptr->super);
         PMIX_RELEASE(nptr);  // will release the info object
         /* probably cannot send an error reply if we are out of memory */
         return;
     }
 
     /* start the events for this tool */
-    pmix_event_assign(&peer->recv_event, pmix_globals.evbase, pnd->sd,
+    pmix_event_assign(&peer->recv_event, pmix_globals.evbase, peer->sd,
                       EV_READ|EV_PERSIST, pmix_ptl_base_recv_handler, peer);
     pmix_event_add(&peer->recv_event, NULL);
     peer->recv_ev_active = true;
-    pmix_event_assign(&peer->send_event, pmix_globals.evbase, pnd->sd,
+    pmix_event_assign(&peer->send_event, pmix_globals.evbase, peer->sd,
                       EV_WRITE|EV_PERSIST, pmix_ptl_base_send_handler, peer);
     pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "pmix:server tool %s:%d has connected on socket %d",
-                        peer->info->nptr->nspace, peer->info->rank, peer->sd);
+                        peer->info->pname.nspace, peer->info->pname.rank, peer->sd);
 
   done:
     PMIX_RELEASE(pnd);
@@ -1266,6 +1521,10 @@ static void cnct_cbfunc(pmix_status_t status,
 
     /* need to thread-shift this into our context */
     cd = PMIX_NEW(pmix_setup_caddy_t);
+    if (NULL == cd) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
+        return;
+    }
     cd->status = status;
     (void)strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
     cd->cbdata = cbdata;

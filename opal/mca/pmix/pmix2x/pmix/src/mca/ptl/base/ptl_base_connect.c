@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,7 +87,7 @@ pmix_status_t pmix_ptl_base_send_blocking(int sd, char *ptr, size_t size)
     size_t cnt = 0;
     int retval;
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "send blocking of %"PRIsize_t" bytes to socket %d",
                         size, sd );
     while (cnt < size) {
@@ -96,13 +96,13 @@ pmix_status_t pmix_ptl_base_send_blocking(int sd, char *ptr, size_t size)
             if (EAGAIN == pmix_socket_errno ||
                 EWOULDBLOCK == pmix_socket_errno) {
                 /* just cycle and let it try again */
-                pmix_output_verbose(8, pmix_globals.debug_output,
+                pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                     "blocking_send received error %d:%s from remote - cycling",
                                     pmix_socket_errno, strerror(pmix_socket_errno));
                 continue;
             }
             if (pmix_socket_errno != EINTR) {
-                pmix_output_verbose(8, pmix_globals.debug_output,
+                pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                     "ptl:base:peer_send_blocking: send() to socket %d failed: %s (%d)\n",
                                     sd, strerror(pmix_socket_errno),
                                     pmix_socket_errno);
@@ -113,7 +113,7 @@ pmix_status_t pmix_ptl_base_send_blocking(int sd, char *ptr, size_t size)
         cnt += retval;
     }
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "blocking send complete to socket %d", sd);
     return PMIX_SUCCESS;
 }
@@ -126,7 +126,7 @@ pmix_status_t pmix_ptl_base_recv_blocking(int sd, char *data, size_t size)
 {
     size_t cnt = 0;
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "waiting for blocking recv of %"PRIsize_t" bytes", size);
 
     while (cnt < size) {
@@ -134,7 +134,7 @@ pmix_status_t pmix_ptl_base_recv_blocking(int sd, char *data, size_t size)
 
         /* remote closed connection */
         if (retval == 0) {
-            pmix_output_verbose(8, pmix_globals.debug_output,
+            pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                 "ptl:base:recv_blocking: remote closed connection");
             return PMIX_ERR_UNREACH;
         }
@@ -144,10 +144,10 @@ pmix_status_t pmix_ptl_base_recv_blocking(int sd, char *data, size_t size)
             if (EAGAIN == pmix_socket_errno ||
                 EWOULDBLOCK == pmix_socket_errno) {
                 /* just cycle and let it try again */
-                pmix_output_verbose(8, pmix_globals.debug_output,
+                pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                     "blocking_recv received error %d:%s from remote - cycling",
                                     pmix_socket_errno, strerror(pmix_socket_errno));
-                continue;
+                return PMIX_ERR_TEMP_UNAVAILABLE;
             }
             if (pmix_socket_errno != EINTR ) {
                 /* If we overflow the listen backlog, it's
@@ -164,7 +164,7 @@ pmix_status_t pmix_ptl_base_recv_blocking(int sd, char *data, size_t size)
                    CONNECT_ACK and propogate the error up to
                    recv_connect_ack, who will try to establish the
                    connection again */
-                pmix_output_verbose(8, pmix_globals.debug_output,
+                pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                     "blocking_recv received error %d:%s from remote - aborting",
                                     pmix_socket_errno, strerror(pmix_socket_errno));
                 return PMIX_ERR_UNREACH;
@@ -174,7 +174,7 @@ pmix_status_t pmix_ptl_base_recv_blocking(int sd, char *data, size_t size)
         cnt += retval;
     }
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "blocking receive complete from remote");
     return PMIX_SUCCESS;
 }
@@ -187,7 +187,7 @@ pmix_status_t pmix_ptl_base_connect(struct sockaddr_storage *addr,
     int sd = -1;
     int retries = 0;
 
-    pmix_output_verbose(2, pmix_globals.debug_output,
+    pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                         "ptl_base_connect: attempting to connect to server");
 
     while (retries < PMIX_MAX_RETRIES) {
@@ -200,13 +200,13 @@ pmix_status_t pmix_ptl_base_connect(struct sockaddr_storage *addr,
                         pmix_socket_errno);
             continue;
         }
-        pmix_output_verbose(2, pmix_globals.debug_output,
-                            "usock_peer_try_connect: attempting to connect to server on socket %d", sd);
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "pmix_ptl_base_connect: attempting to connect to server on socket %d", sd);
         /* try to connect */
         if (connect(sd, (struct sockaddr*)addr, addrlen) < 0) {
             if (pmix_socket_errno == ETIMEDOUT) {
                 /* The server may be too busy to accept new connections */
-                pmix_output_verbose(2, pmix_globals.debug_output,
+                pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                     "timeout connecting to server");
                 CLOSE_THE_SOCKET(sd);
                 continue;
@@ -218,12 +218,12 @@ pmix_status_t pmix_ptl_base_connect(struct sockaddr_storage *addr,
              connection.  Handle that case in a semi-rational
              way by trying twice before giving up */
             if (ECONNABORTED == pmix_socket_errno) {
-                pmix_output_verbose(2, pmix_globals.debug_output,
+                pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                     "connection to server aborted by OS - retrying");
                 CLOSE_THE_SOCKET(sd);
                 continue;
             } else {
-                pmix_output_verbose(2, pmix_globals.debug_output,
+                pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
                                     "Connect failed: %s (%d)", strerror(pmix_socket_errno),
                                     pmix_socket_errno);
                 CLOSE_THE_SOCKET(sd);

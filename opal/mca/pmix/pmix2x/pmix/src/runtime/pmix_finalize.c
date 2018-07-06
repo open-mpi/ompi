@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,12 +33,14 @@
 #include "src/util/show_help.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
+#include "src/mca/bfrops/base/base.h"
+#include "src/mca/gds/base/base.h"
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/mca/pnet/base/base.h"
+#include "src/mca/preg/base/base.h"
 #include "src/mca/psec/base/base.h"
 #include "src/mca/ptl/base/base.h"
-#include "src/dstore/pmix_dstore.h"
 #include PMIX_EVENT_HEADER
 
 #include "src/runtime/pmix_rte.h"
@@ -68,17 +70,24 @@ void pmix_rte_finalize(void)
         return;
     }
 
+
+    /* close preg */
+    (void)pmix_mca_base_framework_close(&pmix_preg_base_framework);
+
     /* cleanup communications */
     (void)pmix_mca_base_framework_close(&pmix_ptl_base_framework);
-    #if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-        pmix_dstore_finalize();
-    #endif /* PMIX_ENABLE_DSTORE */
 
     /* close the security framework */
     (void)pmix_mca_base_framework_close(&pmix_psec_base_framework);
 
     /* close the pnet framework */
     (void)pmix_mca_base_framework_close(&pmix_pnet_base_framework);
+
+    /* close bfrops */
+    (void)pmix_mca_base_framework_close(&pmix_bfrops_base_framework);
+
+    /* close GDS */
+    (void)pmix_mca_base_framework_close(&pmix_gds_base_framework);
 
     /* finalize the mca */
     /* Clear out all the registered MCA params */
@@ -101,18 +110,8 @@ void pmix_rte_finalize(void)
        much */
     pmix_output_finalize();
 
-    /* close the bfrops */
-    pmix_bfrop_close();
-
     /* clean out the globals */
     PMIX_RELEASE(pmix_globals.mypeer);
-    PMIX_LIST_DESTRUCT(&pmix_globals.nspaces);
-    if (NULL != pmix_globals.cache_local) {
-        PMIX_RELEASE(pmix_globals.cache_local);
-    }
-    if (NULL != pmix_globals.cache_remote) {
-        PMIX_RELEASE(pmix_globals.cache_remote);
-    }
     PMIX_DESTRUCT(&pmix_globals.events);
     PMIX_LIST_DESTRUCT(&pmix_globals.cached_events);
     PMIX_DESTRUCT(&pmix_globals.notifications);

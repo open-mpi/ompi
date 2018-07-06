@@ -12,12 +12,12 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2009-2018 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -34,7 +34,14 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
     AC_REQUIRE([AC_CANONICAL_TARGET])
-    AC_REQUIRE([AC_PROG_CC])
+
+    # AM_PROG_CC_C_O AC_REQUIREs AC_PROG_CC, so we have to be a little
+    # careful about ordering here, and AC_REQUIRE these things so that
+    # they get stamped out in the right order.
+    AC_REQUIRE([_PMIX_START_SETUP_CC])
+    AC_REQUIRE([_PMIX_PROG_CC])
+    AC_REQUIRE([AM_PROG_CC_C_O])
+
 
     # If no prefix was defined, set a good value
     m4_ifval([$1],
@@ -102,12 +109,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_DEFINE_UNQUOTED([PMIX_MINOR_VERSION], [$PMIX_MINOR_VERSION],
                        [The library minor version is always available, contrary to VERSION])
 
-    pmixmajor=${PMIX_MAJOR_VERSION}L
-    pmixminor=${PMIX_MINOR_VERSION}L
-    AC_SUBST(pmixmajor)
-    AC_SUBST(pmixminor)
-    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
-
     PMIX_RELEASE_VERSION="`$PMIX_top_srcdir/config/pmix_get_version.sh $PMIX_top_srcdir/VERSION --release`"
     if test "$?" != "0"; then
         AC_MSG_ERROR([Cannot continue])
@@ -115,6 +116,14 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_SUBST(PMIX_RELEASE_VERSION)
     AC_DEFINE_UNQUOTED([PMIX_RELEASE_VERSION], [$PMIX_RELEASE_VERSION],
                        [The library release version is always available, contrary to VERSION])
+
+    pmixmajor=${PMIX_MAJOR_VERSION}L
+    pmixminor=${PMIX_MINOR_VERSION}L
+    pmixrelease=${PMIX_RELEASE_VERSION}L
+    AC_SUBST(pmixmajor)
+    AC_SUBST(pmixminor)
+    AC_SUBST(pmixrelease)
+    AC_CONFIG_FILES(pmix_config_prefix[include/pmix_version.h])
 
     # Debug mode?
     AC_MSG_CHECKING([if want pmix maintainer support])
@@ -155,6 +164,18 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                        [The pmix symbol rename include directive])
     AC_SUBST(PMIX_RENAME)
     AC_CONFIG_FILES(pmix_config_prefix[include/pmix_rename.h])
+
+    # Add any extra lib?
+    AC_ARG_WITH([pmix-extra-lib],
+                AC_HELP_STRING([--with-pmix-extra-lib=LIB],
+                               [Link the output PMIx library to this extra lib (used in embedded mode)]))
+    AC_MSG_CHECKING([for extra lib])
+    AS_IF([test ! -z "$with_pmix_extra_lib"],
+          [AC_MSG_RESULT([$with_pmix_extra_lib])
+           PMIX_EXTRA_LIB=$with_pmix_extra_lib],
+          [AC_MSG_RESULT([no])
+           PMIX_EXTRA_LIB=])
+    AC_SUBST(PMIX_EXTRA_LIB)
 
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
@@ -767,9 +788,12 @@ AC_DEFUN([PMIX_SETUP_CORE],[
 
     pmix_show_subtitle "Final output"
 
+    AC_CONFIG_HEADERS(pmix_config_prefix[include/pmix_common.h])
+
     AC_CONFIG_FILES(
         pmix_config_prefix[Makefile]
         pmix_config_prefix[config/Makefile]
+        pmix_config_prefix[etc/Makefile]
         pmix_config_prefix[include/Makefile]
         pmix_config_prefix[src/Makefile]
         pmix_config_prefix[src/util/keyval/Makefile]
@@ -950,25 +974,6 @@ AC_DEFINE_UNQUOTED([PMIX_WANT_PRETTY_PRINT_STACKTRACE],
                    [$WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
-# Do we want the shared memory datastore usage?
-#
-
-AC_MSG_CHECKING([if want shared memory datastore])
-AC_ARG_ENABLE([dstore],
-              [AC_HELP_STRING([--disable-dstore],
-                              [Using shared memory datastore (default: enabled)])])
-if test "$enable_dstore" = "no" ; then
-    AC_MSG_RESULT([no])
-    WANT_DSTORE=0
-else
-    AC_MSG_RESULT([yes])
-    WANT_DSTORE=1
-fi
-AC_DEFINE_UNQUOTED([PMIX_ENABLE_DSTORE],
-                 [$WANT_DSTORE],
-                 [if want shared memory dstore feature])
-
-#
 #
 # Use pthread-based locking
 #
@@ -976,7 +981,7 @@ DSTORE_PTHREAD_LOCK="1"
 AC_MSG_CHECKING([if want dstore pthread-based locking])
 AC_ARG_ENABLE([dstore-pthlck],
               [AC_HELP_STRING([--disable-dstore-pthlck],
-                              [Disable pthread-based lockig in dstor (default: enabled)])])
+                              [Disable pthread-based locking in dstor (default: enabled)])])
 if test "$enable_dstore_pthlck" = "no" ; then
     AC_MSG_RESULT([no])
     DSTORE_PTHREAD_LOCK="0"

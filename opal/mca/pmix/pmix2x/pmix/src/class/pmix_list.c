@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +30,7 @@
 static void pmix_list_item_construct(pmix_list_item_t*);
 static void pmix_list_item_destruct(pmix_list_item_t*);
 
-PMIX_EXPORT PMIX_CLASS_INSTANCE(
+PMIX_CLASS_INSTANCE(
     pmix_list_item_t,
     pmix_object_t,
     pmix_list_item_construct,
@@ -40,7 +40,7 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(
 static void pmix_list_construct(pmix_list_t*);
 static void pmix_list_destruct(pmix_list_t*);
 
-PMIX_EXPORT PMIX_CLASS_INSTANCE(
+PMIX_CLASS_INSTANCE(
     pmix_list_t,
     pmix_object_t,
     pmix_list_construct,

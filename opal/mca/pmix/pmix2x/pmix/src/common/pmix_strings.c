@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +34,6 @@
 #include <pmix_common.h>
 #include <pmix_rename.h>
 
-#include "src/buffer_ops/internal.h"
 #include "src/include/pmix_globals.h"
 
 PMIX_EXPORT const char* PMIx_Proc_state_string(pmix_proc_state_t state)
@@ -98,6 +97,8 @@ PMIX_EXPORT const char* PMIx_Scope_string(pmix_scope_t scope)
             return "SHARE ON REMOTE NODES ONLY";
         case PMIX_GLOBAL:
             return "SHARE ACROSS ALL NODES";
+        case PMIX_INTERNAL:
+            return "STORE INTERNALLY";
         default:
             return "UNKNOWN SCOPE";
     }
@@ -208,17 +209,4 @@ PMIX_EXPORT const char* pmix_command_string(pmix_cmd_t cmd)
         default:
             return "UNKNOWN";
     }
-}
-
-PMIX_EXPORT const char* PMIx_Data_type_string(pmix_data_type_t type)
-{
-    pmix_bfrop_type_info_t *info;
-
-    if (NULL == (info = (pmix_bfrop_type_info_t*)pmix_pointer_array_get_item(&pmix_bfrop_types, type))) {
-        return "UNKNOWN";
-    }
-    if (NULL == info->odti_name) {
-        return "UNKNOWN";
-    }
-    return info->odti_name;
 }

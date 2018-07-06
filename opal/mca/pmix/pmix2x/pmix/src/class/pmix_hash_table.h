@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -47,7 +47,7 @@
 
 BEGIN_C_DECLS
 
-PMIX_CLASS_DECLARATION(pmix_hash_table_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_hash_table_t);
 
 struct pmix_hash_table_t
 {

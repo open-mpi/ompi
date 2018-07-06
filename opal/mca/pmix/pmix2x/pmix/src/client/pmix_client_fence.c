@@ -47,7 +47,7 @@
 #include PMIX_EVENT_HEADER
 
 #include "src/class/pmix_list.h"
-#include "src/buffer_ops/buffer_ops.h"
+#include "src/mca/bfrops/bfrops.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/hash.h"
@@ -96,6 +96,7 @@ PMIX_EXPORT pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
     /* push the message into our event base to send to the server */
     if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(procs, nprocs, info, ninfo,
                                             op_cbfunc, cb))) {
+        PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(cb);
         return rc;
     }
@@ -165,11 +166,13 @@ PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs
      * recv routine so we know which callback to use when
      * the return message is recvd */
     cb = PMIX_NEW(pmix_cb_t);
-    cb->op_cbfunc = cbfunc;
+    cb->cbfunc.opfn = cbfunc;
     cb->cbdata = cbdata;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, wait_cbfunc, (void*)cb))){
+    PMIX_PTL_SEND_RECV(rc, pmix_client_globals.myserver,
+                       msg, wait_cbfunc, (void*)cb);
+    if (PMIX_SUCCESS != rc) {
         PMIX_RELEASE(msg);
         PMIX_RELEASE(cb);
     }
@@ -187,7 +190,9 @@ static pmix_status_t unpack_return(pmix_buffer_t *data)
 
     /* unpack the status code */
     cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(data, &ret, &cnt, PMIX_STATUS))) {
+    PMIX_BFROPS_UNPACK(rc, pmix_client_globals.myserver,
+                       data, &ret, &cnt, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
@@ -203,29 +208,39 @@ static pmix_status_t pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
     pmix_status_t rc;
 
     /* pack the cmd */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+    PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                     msg, &cmd, 1, PMIX_COMMAND);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
 
     /* pack the number of procs */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &nprocs, 1, PMIX_SIZE))) {
+    PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                     msg, &nprocs, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
     /* pack any provided procs - must always be at least one (our own) */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, procs, nprocs, PMIX_PROC))) {
+    PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                     msg, procs, nprocs, PMIX_PROC);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
     /* pack the number of info */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+    PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                     msg, &ninfo, 1, PMIX_SIZE);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
     /* pack any provided info - may be NULL */
     if (NULL != info && 0 < ninfo) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver,
+                         msg, info, ninfo, PMIX_INFO);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             return rc;
         }
@@ -256,8 +271,8 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_ptl_hdr_t *hdr,
     }
 
     /* if a callback was provided, execute it */
-    if (NULL != cb->op_cbfunc) {
-        cb->op_cbfunc(rc, cb->cbdata);
+    if (NULL != cb->cbfunc.opfn) {
+        cb->cbfunc.opfn(rc, cb->cbdata);
     }
     PMIX_RELEASE(cb);
 }

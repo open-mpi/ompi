@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,7 +131,7 @@ static void destructor(pmix_hotel_t *h)
     }
 }
 
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_hotel_t,
-                                pmix_object_t,
-                                constructor,
-                                destructor);
+PMIX_CLASS_INSTANCE(pmix_hotel_t,
+                    pmix_object_t,
+                    constructor,
+                    destructor);

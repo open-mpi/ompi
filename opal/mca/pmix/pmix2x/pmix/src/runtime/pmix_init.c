@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -41,44 +41,40 @@
 #include "src/util/show_help.h"
 #include "src/mca/base/base.h"
 #include "src/mca/base/pmix_mca_base_var.h"
+#include "src/mca/bfrops/base/base.h"
+#include "src/mca/gds/base/base.h"
 #include "src/mca/pif/base/base.h"
 #include "src/mca/pinstalldirs/base/base.h"
 #include "src/mca/pnet/base/base.h"
 #include "src/mca/psec/base/base.h"
+#include "src/mca/preg/base/base.h"
 #include "src/mca/ptl/base/base.h"
 
 #include "src/event/pmix_event.h"
 #include "src/include/types.h"
 #include "src/util/error.h"
 #include "src/util/keyval_parse.h"
-#include "src/buffer_ops/buffer_ops.h"
 
 #include "src/runtime/pmix_rte.h"
 #include "src/runtime/pmix_progress_threads.h"
 
-#if PMIX_CC_USE_PRAGMA_IDENT
-#pragma ident PMIX_IDENT_STRING
-#elif PMIX_CC_USE_IDENT
-#ident PMIX_IDENT_STRING
-#endif
 const char pmix_version_string[] = PMIX_IDENT_STRING;
 
-int pmix_initialized = 0;
-bool pmix_init_called = false;
+PMIX_EXPORT int pmix_initialized = 0;
+PMIX_EXPORT bool pmix_init_called = false;
 /* we have to export the pmix_globals object so
  * all plugins can access it. However, it is included
  * in the pmix_rename.h file for external protection */
 PMIX_EXPORT pmix_globals_t pmix_globals = {
     .init_cntr = 0,
     .mypeer = NULL,
-    .proc_type = PMIX_PROC_UNDEF,
     .pindex = 0,
     .evbase = NULL,
     .external_evbase = false,
     .debug_output = -1,
     .connected = false,
-    .cache_local = NULL,
-    .cache_remote = NULL
+    .commits_pending = false,
+    .mygds = NULL
 };
 
 
@@ -149,9 +145,7 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
 
     /* setup the globals structure */
-    pmix_globals.proc_type = type;
     memset(&pmix_globals.myid, 0, sizeof(pmix_proc_t));
-    PMIX_CONSTRUCT(&pmix_globals.nspaces, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_globals.events, pmix_events_t);
     pmix_globals.event_window.tv_sec = pmix_event_caching_window;
     pmix_globals.event_window.tv_usec = 0;
@@ -175,6 +169,16 @@ int pmix_rte_init(pmix_proc_type_t type,
         ret = PMIX_ERR_NOMEM;
         goto return_error;
     }
+    /* whatever our declared proc type, we are definitely v2.1 */
+    pmix_globals.mypeer->proc_type = type | PMIX_PROC_V21;
+    /* create an nspace object for ourselves - we will
+     * fill in the nspace name later */
+    pmix_globals.mypeer->nptr = PMIX_NEW(pmix_nspace_t);
+    if (NULL == pmix_globals.mypeer->nptr) {
+        PMIX_RELEASE(pmix_globals.mypeer);
+        ret = PMIX_ERR_NOMEM;
+        goto return_error;
+    }
 
     /* scan incoming info for directives */
     if (NULL != info) {
@@ -185,11 +189,20 @@ int pmix_rte_init(pmix_proc_type_t type,
             }
         }
     }
-    pmix_bfrop_open();
 
     /* the choice of modules to use when communicating with a peer
      * will be done by the individual init functions and at the
      * time of connection to that peer */
+
+    /* open the bfrops and select the active plugins */
+    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_bfrops_base_framework, 0)) ) {
+        error = "pmix_bfrops_base_open";
+        goto return_error;
+    }
+    if( PMIX_SUCCESS != (ret = pmix_bfrop_base_select()) ) {
+        error = "pmix_bfrops_base_select";
+        goto return_error;
+    }
 
     /* open the ptl and select the active plugins */
     if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_ptl_base_framework, 0)) ) {
@@ -201,7 +214,7 @@ int pmix_rte_init(pmix_proc_type_t type,
         goto return_error;
     }
     /* set the notification callback function */
-    if (PMIX_SUCCESS != (ret = pmix_ptl.set_notification_cbfunc(cbfunc))) {
+    if (PMIX_SUCCESS != (ret = pmix_ptl_base_set_notification_cbfunc(cbfunc))) {
         error = "pmix_ptl_set_notification_cbfunc";
         goto return_error;
     }
@@ -213,6 +226,16 @@ int pmix_rte_init(pmix_proc_type_t type,
     }
     if (PMIX_SUCCESS != (ret = pmix_psec_base_select())) {
         error = "pmix_psec_base_select";
+        goto return_error;
+    }
+
+    /* open the gds and select the active plugins */
+    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_gds_base_framework, 0)) ) {
+        error = "pmix_gds_base_open";
+        goto return_error;
+    }
+    if( PMIX_SUCCESS != (ret = pmix_gds_base_select(info, ninfo)) ) {
+        error = "pmix_gds_base_select";
         goto return_error;
     }
 
@@ -232,11 +255,21 @@ int pmix_rte_init(pmix_proc_type_t type,
         goto return_error;
     }
 
-    /* tell libevent that we need thread support */
-    pmix_event_use_threads();
+    /* open the preg and select the active plugins */
+    if( PMIX_SUCCESS != (ret = pmix_mca_base_framework_open(&pmix_preg_base_framework, 0)) ) {
+        error = "pmix_preg_base_open";
+        goto return_error;
+    }
+    if( PMIX_SUCCESS != (ret = pmix_preg_base_select()) ) {
+        error = "pmix_preg_base_select";
+        goto return_error;
+    }
 
     /* if an external event base wasn't provide, create one */
     if (!pmix_globals.external_evbase) {
+        /* tell libevent that we need thread support */
+        pmix_event_use_threads();
+
         /* create an event base and progress thread for us */
         if (NULL == (pmix_globals.evbase = pmix_progress_thread_init(NULL))) {
             error = "progress thread";
@@ -247,9 +280,11 @@ int pmix_rte_init(pmix_proc_type_t type,
 
     return PMIX_SUCCESS;
 
- return_error:
-    pmix_show_help( "help-pmix-runtime.txt",
-                    "pmix_init:startup:internal-failure", true,
-                    error, ret );
+  return_error:
+    if (PMIX_ERR_SILENT != ret) {
+        pmix_show_help( "help-pmix-runtime.txt",
+                        "pmix_init:startup:internal-failure", true,
+                        error, ret );
+    }
     return ret;
 }

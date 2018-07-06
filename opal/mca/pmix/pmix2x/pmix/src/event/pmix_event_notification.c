@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -22,6 +22,7 @@
 #include "src/util/error.h"
 #include "src/util/output.h"
 
+#include "src/mca/bfrops/bfrops.h"
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/include/pmix_globals.h"
@@ -31,8 +32,6 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                                             pmix_data_range_t range,
                                             pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
-
-static bool check_range(pmix_range_trkr_t *range, const pmix_proc_t *proc);
 
 /* if we are a client, we call this function to notify the server of
  * an event. If we are a server, our host RM will call this function
@@ -52,15 +51,9 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
         return PMIX_ERR_INIT;
     }
 
-    /* if we aren't connected, don't attempt to send */
-    if (!PMIX_PROC_IS_SERVER && !pmix_globals.connected) {
+
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         PMIX_RELEASE_THREAD(&pmix_global_lock);
-        return PMIX_ERR_UNREACH;
-    }
-    PMIX_RELEASE_THREAD(&pmix_global_lock);
-
-
-    if (PMIX_PROC_IS_SERVER) {
         rc = pmix_server_notify_client_of_event(status, source, range,
                                                 info, ninfo,
                                                 cbfunc, cbdata);
@@ -68,15 +61,23 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
                             "pmix_server_notify_event source = %s:%d event_status = %d, rc= %d",
                             (NULL == source) ? "UNKNOWN" : source->nspace,
                             (NULL == source) ? PMIX_RANK_WILDCARD : source->rank, status, rc);
-    } else {
-        rc = notify_server_of_event(status, source, range,
-                                    info, ninfo,
-                                    cbfunc, cbdata);
-        pmix_output_verbose(2, pmix_globals.debug_output,
-                            "pmix_client_notify_event source = %s:%d event_status =%d, rc=%d",
-                            (NULL == source) ? pmix_globals.myid.nspace : source->nspace,
-                            (NULL == source) ? pmix_globals.myid.rank : source->rank, status, rc);
+        return rc;
     }
+
+    /* if we aren't connected, don't attempt to send */
+    if (!pmix_globals.connected) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return PMIX_ERR_UNREACH;
+    }
+    PMIX_RELEASE_THREAD(&pmix_global_lock);
+
+    rc = notify_server_of_event(status, source, range,
+                                info, ninfo,
+                                cbfunc, cbdata);
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix_client_notify_event source = %s:%d event_status =%d, rc=%d",
+                        (NULL == source) ? pmix_globals.myid.nspace : source->nspace,
+                        (NULL == source) ? pmix_globals.myid.rank : source->rank, status, rc);
     return rc;
 }
 
@@ -88,13 +89,14 @@ static void notify_event_cbfunc(struct pmix_peer_t *pr, pmix_ptl_hdr_t *hdr,
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
     /* unpack the status */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_STATUS))) {
+    PMIX_BFROPS_UNPACK(rc, pr, buf, &ret, &cnt, PMIX_STATUS);
+    if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         ret = rc;
     }
     /* do the cback */
-    if (NULL != cb->op_cbfunc) {
-        cb->op_cbfunc(ret, cb->cbdata);
+    if (NULL != cb->cbfunc.opfn) {
+        cb->cbfunc.opfn(ret, cb->cbdata);
     }
     PMIX_RELEASE(cb);
 }
@@ -107,7 +109,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_status_t rc;
-    pmix_buffer_t *msg;
+    pmix_buffer_t *msg = NULL;
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
     pmix_cb_t *cb;
     pmix_event_chain_t *chain;
@@ -115,38 +117,45 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     pmix_notify_caddy_t *cd, *rbout;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "client: notifying server %s:%d of status %s",
+                        "client: notifying server %s:%d of status %s for range %s",
                         pmix_globals.myid.nspace, pmix_globals.myid.rank,
-                        PMIx_Error_string(status));
+                        PMIx_Error_string(status), PMIx_Data_range_string(range));
 
     if (PMIX_RANGE_PROC_LOCAL != range) {
         /* create the msg object */
         msg = PMIX_NEW(pmix_buffer_t);
-
+        if (NULL == msg) {
+            return PMIX_ERR_NOMEM;
+        }
         /* pack the command */
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, &cmd, 1, PMIX_COMMAND);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
         /* pack the status */
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &status, 1, PMIX_STATUS))) {
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, &status, 1, PMIX_STATUS);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
         /* no need to pack the source as it is us */
 
         /* pack the range */
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &range, 1, PMIX_DATA_RANGE))) {
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, &range, 1, PMIX_DATA_RANGE);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
         /* pack the info */
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+        PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, &ninfo, 1, PMIX_SIZE);
+        if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto cleanup;
         }
         if (0 < ninfo) {
-            if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
+            PMIX_BFROPS_PACK(rc, pmix_client_globals.myserver, msg, info, ninfo, PMIX_INFO);
+            if (PMIX_SUCCESS != rc) {
                 PMIX_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -158,22 +167,17 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     chain->status = status;
     (void)strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     chain->source.rank = pmix_globals.myid.rank;
-    /* we always leave space for a callback object and
-     * the evhandler name. */
-    chain->ninfo = ninfo + 2;
-    PMIX_INFO_CREATE(chain->info, chain->ninfo);
+    /* we always leave space for event hdlr name and a callback object */
+    chain->nallocated = ninfo + 2;
+    PMIX_INFO_CREATE(chain->info, chain->nallocated);
 
     if (0 < ninfo) {
+        chain->ninfo = ninfo;
         /* need to copy the info */
         for (n=0; n < ninfo; n++) {
             PMIX_INFO_XFER(&chain->info[n], &info[n]);
         }
     }
-    /* add the evhandler name tag - we
-     * will fill it in as each handler is called */
-    PMIX_INFO_LOAD(&chain->info[chain->ninfo-2], PMIX_EVENT_HDLR_NAME, NULL, PMIX_STRING);
-    /* now add the callback object tag */
-    PMIX_INFO_LOAD(&chain->info[chain->ninfo-1], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
 
     /* we need to cache this event so we can pass it into
      * ourselves should someone later register for it */
@@ -195,6 +199,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
             PMIX_INFO_XFER(&cd->info[n], &chain->info[n]);
             if (0 == strncmp(cd->info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
                 cd->nondefault = true;
+                chain->nondefault = true;
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
                 /* provides an array of pmix_proc_t identifying the procs
                  * that are to receive this notification, or a single pmix_proc_t  */
@@ -213,6 +218,40 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
                     PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
                     return PMIX_ERR_BAD_PARAM;
                 }
+            } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROC, PMIX_MAX_KEYLEN)) {
+                PMIX_PROC_CREATE(cd->affected, 1);
+                if (NULL == cd->affected) {
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
+                }
+                cd->naffected = 1;
+                memcpy(cd->affected, cd->info[n].value.data.proc, sizeof(pmix_proc_t));
+                /* need to do the same for chain so it can be correctly processed */
+                PMIX_PROC_CREATE(chain->affected, 1);
+                if (NULL == chain->affected) {
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
+                }
+                chain->naffected = 1;
+                memcpy(chain->affected, cd->info[n].value.data.proc, sizeof(pmix_proc_t));
+            } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROCS, PMIX_MAX_KEYLEN)) {
+                cd->naffected = cd->info[n].value.data.darray->size;
+                PMIX_PROC_CREATE(cd->affected, cd->naffected);
+                if (NULL == cd->affected) {
+                    cd->naffected = 0;
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
+                }
+                memcpy(cd->affected, cd->info[n].value.data.darray->array, cd->naffected * sizeof(pmix_proc_t));
+                /* need to do the same for chain so it can be correctly processed */
+                chain->naffected = cd->info[n].value.data.darray->size;
+                PMIX_PROC_CREATE(chain->affected, chain->naffected);
+                if (NULL == chain->affected) {
+                    chain->naffected = 0;
+                    rc = PMIX_ERR_NOMEM;
+                    goto cleanup;
+                }
+                memcpy(chain->affected, cd->info[n].value.data.darray->array, chain->naffected * sizeof(pmix_proc_t));
             }
         }
     }
@@ -224,20 +263,21 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         PMIX_RELEASE(rbout);
     }
 
-    if (PMIX_RANGE_PROC_LOCAL != range) {
+    if (PMIX_RANGE_PROC_LOCAL != range && NULL != msg) {
         /* create a callback object as we need to pass it to the
          * recv routine so we know which callback to use when
          * the server acks/nacks the register events request. The
          * server will _not_ send this notification back to us,
          * so we handle it locally */
         cb = PMIX_NEW(pmix_cb_t);
-        cb->op_cbfunc = cbfunc;
+        cb->cbfunc.opfn = cbfunc;
         cb->cbdata = cbdata;
         /* send to the server */
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "client: notifying server %s:%d - sending",
                             pmix_globals.myid.nspace, pmix_globals.myid.rank);
-        rc = pmix_ptl.send_recv(pmix_client_globals.myserver, msg, notify_event_cbfunc, cb);
+        PMIX_PTL_SEND_RECV(rc, pmix_client_globals.myserver,
+                           msg, notify_event_cbfunc, cb);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             PMIX_RELEASE(cb);
@@ -255,7 +295,9 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
   cleanup:
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "client: notifying server - unable to send");
-    PMIX_RELEASE(msg);
+    if (NULL != msg) {
+        PMIX_RELEASE(msg);
+    }
     /* we were unable to send anything, so we just return the error */
     return rc;
 }
@@ -322,6 +364,10 @@ static void progress_local_event_hdlr(pmix_status_t status,
     /* pass along the new ones */
     chain->results = newinfo;
     chain->nresults = cnt;
+    /* clear any loaded name and object */
+    chain->ninfo = chain->nallocated - 2;
+    PMIX_INFO_DESTRUCT(&chain->info[chain->nallocated-2]);
+    PMIX_INFO_DESTRUCT(&chain->info[chain->nallocated-1]);
 
     /* if the caller indicates that the chain is completed,
      * or we completed the "last" event */
@@ -338,28 +384,22 @@ static void progress_local_event_hdlr(pmix_status_t status,
         while (pmix_list_get_end(&pmix_globals.events.single_events) != (item = pmix_list_get_next(item))) {
             nxt = (pmix_event_hdlr_t*)item;
             if (nxt->codes[0] == chain->status &&
-                check_range(&nxt->rng, &chain->source)) {
+                pmix_notify_check_range(&nxt->rng, &chain->source) &&
+                pmix_notify_check_affected(nxt->affected, nxt->naffected,
+                                           chain->affected, chain->naffected)) {
                 chain->evhdlr = nxt;
-                /* update the handler name in case they want to reference it */
-                for (n=0; n < chain->ninfo; n++) {
-                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
-                        if (NULL != chain->info[n].value.data.string) {
-                            free(chain->info[n].value.data.string);
-                        }
-                        if (NULL != chain->evhdlr->name) {
-                            chain->info[n].value.data.string = strdup(chain->evhdlr->name);
-                        }
-                        break;
-                    }
+                /* reset our count to the info provided by the caller */
+                chain->ninfo = chain->nallocated - 2;
+                /* if the handler has a name, then provide it */
+                if (NULL != chain->evhdlr->name) {
+                    PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_HDLR_NAME, chain->evhdlr->name, PMIX_STRING);
+                    chain->ninfo++;
                 }
-                /* update the evhdlr cbobject */
-                for (n=0; n < chain->ninfo; n++) {
-                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
-                        if (NULL != chain->evhdlr->name) {
-                            chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
-                        }
-                        break;
-                    }
+
+                /* if there is an evhdlr cbobject, provide it */
+                if (NULL != chain->evhdlr->cbobject) {
+                    PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_RETURN_OBJECT, chain->evhdlr->cbobject, PMIX_POINTER);
+                    chain->ninfo++;
                 }
                 nxt->evhdlr(nxt->index,
                             chain->status, &chain->source,
@@ -384,7 +424,9 @@ static void progress_local_event_hdlr(pmix_status_t status,
         }
         while (pmix_list_get_end(&pmix_globals.events.multi_events) != (item = pmix_list_get_next(item))) {
             nxt = (pmix_event_hdlr_t*)item;
-            if (!check_range(&nxt->rng, &chain->source)) {
+            if (!pmix_notify_check_range(&nxt->rng, &chain->source) &&
+                !pmix_notify_check_affected(nxt->affected, nxt->naffected,
+                                            chain->affected, chain->naffected)) {
                 continue;
             }
             for (n=0; n < nxt->ncodes; n++) {
@@ -392,26 +434,18 @@ static void progress_local_event_hdlr(pmix_status_t status,
                  * the source fits within it */
                 if (nxt->codes[n] == chain->status) {
                     chain->evhdlr = nxt;
-                    /* update the handler name in case they want to reference it */
-                    for (n=0; n < chain->ninfo; n++) {
-                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
-                            if (NULL != chain->info[n].value.data.string) {
-                                free(chain->info[n].value.data.string);
-                            }
-                            if (NULL != chain->evhdlr->name) {
-                                chain->info[n].value.data.string = strdup(chain->evhdlr->name);
-                            }
-                            break;
-                        }
+                    /* reset our count to the info provided by the caller */
+                    chain->ninfo = chain->nallocated - 2;
+                    /* if the handler has a name, then provide it */
+                    if (NULL != chain->evhdlr->name) {
+                        PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_HDLR_NAME, chain->evhdlr->name, PMIX_STRING);
+                        chain->ninfo++;
                     }
-                    /* update the evhdlr cbobject */
-                    for (n=0; n < chain->ninfo; n++) {
-                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
-                            if (NULL != chain->evhdlr->name) {
-                                chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
-                            }
-                            break;
-                        }
+
+                    /* if there is an evhdlr cbobject, provide it */
+                    if (NULL != chain->evhdlr->cbobject) {
+                        PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_RETURN_OBJECT, chain->evhdlr->cbobject, PMIX_POINTER);
+                        chain->ninfo++;
                     }
                     nxt->evhdlr(nxt->index,
                                 chain->status, &chain->source,
@@ -436,28 +470,22 @@ static void progress_local_event_hdlr(pmix_status_t status,
             nxt = (pmix_event_hdlr_t*)item;
             /* if this event handler provided a range, check to see if
              * the source fits within it */
-            if (check_range(&nxt->rng, &chain->source)) {
+            if (pmix_notify_check_range(&nxt->rng, &chain->source) &&
+                pmix_notify_check_affected(nxt->affected, nxt->naffected,
+                                           chain->affected, chain->naffected)) {
                 chain->evhdlr = nxt;
-                /* update the handler name in case they want to reference it */
-                for (n=0; n < chain->ninfo; n++) {
-                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
-                        if (NULL != chain->info[n].value.data.string) {
-                            free(chain->info[n].value.data.string);
-                        }
-                        if (NULL != chain->evhdlr->name) {
-                            chain->info[n].value.data.string = strdup(chain->evhdlr->name);
-                        }
-                        break;
-                    }
+                /* reset our count to the info provided by the caller */
+                chain->ninfo = chain->nallocated - 2;
+                /* if the handler has a name, then provide it */
+                if (NULL != chain->evhdlr->name) {
+                    PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_HDLR_NAME, chain->evhdlr->name, PMIX_STRING);
+                    chain->ninfo++;
                 }
-                /* update the evhdlr cbobject */
-                for (n=0; n < chain->ninfo; n++) {
-                    if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
-                        if (NULL != chain->evhdlr->name) {
-                            chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
-                        }
-                        break;
-                    }
+
+                /* if there is an evhdlr cbobject, provide it */
+                if (NULL != chain->evhdlr->cbobject) {
+                    PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_RETURN_OBJECT, chain->evhdlr->cbobject, PMIX_POINTER);
+                    chain->ninfo++;
                 }
                 nxt->evhdlr(nxt->index,
                             chain->status, &chain->source,
@@ -472,31 +500,25 @@ static void progress_local_event_hdlr(pmix_status_t status,
     /* if we registered a "last" handler, and it fits the given range
      * and code, then invoke it now */
     if (NULL != pmix_globals.events.last &&
-        check_range(&pmix_globals.events.last->rng, &chain->source)) {
+        pmix_notify_check_range(&pmix_globals.events.last->rng, &chain->source) &&
+        pmix_notify_check_affected(pmix_globals.events.last->affected, pmix_globals.events.last->naffected,
+                                   chain->affected, chain->naffected)) {
         chain->endchain = true;  // ensure we don't do this again
         if (1 == pmix_globals.events.last->ncodes &&
             pmix_globals.events.last->codes[0] == chain->status) {
             chain->evhdlr = pmix_globals.events.last;
-            /* update the handler name in case they want to reference it */
-            for (n=0; n < chain->ninfo; n++) {
-                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
-                    if (NULL != chain->info[n].value.data.string) {
-                        free(chain->info[n].value.data.string);
-                    }
-                    if (NULL != chain->evhdlr->name) {
-                        chain->info[n].value.data.string = strdup(chain->evhdlr->name);
-                    }
-                    break;
-                }
+            /* reset our count to the info provided by the caller */
+            chain->ninfo = chain->nallocated - 2;
+            /* if the handler has a name, then provide it */
+            if (NULL != chain->evhdlr->name) {
+                PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_HDLR_NAME, chain->evhdlr->name, PMIX_STRING);
+                chain->ninfo++;
             }
-            /* update the evhdlr cbobject */
-            for (n=0; n < chain->ninfo; n++) {
-                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
-                    if (NULL != chain->evhdlr->name) {
-                        chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
-                    }
-                    break;
-                }
+
+            /* if there is an evhdlr cbobject, provide it */
+            if (NULL != chain->evhdlr->cbobject) {
+                PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_RETURN_OBJECT, chain->evhdlr->cbobject, PMIX_POINTER);
+                chain->ninfo++;
             }
             chain->evhdlr->evhdlr(chain->evhdlr->index,
                                   chain->status, &chain->source,
@@ -509,26 +531,18 @@ static void progress_local_event_hdlr(pmix_status_t status,
             for (n=0; n < pmix_globals.events.last->ncodes; n++) {
                 if (pmix_globals.events.last->codes[n] == chain->status) {
                     chain->evhdlr = pmix_globals.events.last;
-                    /* update the handler name in case they want to reference it */
-                    for (n=0; n < chain->ninfo; n++) {
-                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
-                            if (NULL != chain->info[n].value.data.string) {
-                                free(chain->info[n].value.data.string);
-                            }
-                            if (NULL != chain->evhdlr->name) {
-                                chain->info[n].value.data.string = strdup(chain->evhdlr->name);
-                            }
-                            break;
-                        }
+                    /* reset our count to the info provided by the caller */
+                    chain->ninfo = chain->nallocated - 2;
+                    /* if the handler has a name, then provide it */
+                    if (NULL != chain->evhdlr->name) {
+                        PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_HDLR_NAME, chain->evhdlr->name, PMIX_STRING);
+                        chain->ninfo++;
                     }
-                    /* update the evhdlr cbobject */
-                    for (n=0; n < chain->ninfo; n++) {
-                        if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
-                            if (NULL != chain->evhdlr->name) {
-                                chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
-                            }
-                            break;
-                        }
+
+                    /* if there is an evhdlr cbobject, provide it */
+                    if (NULL != chain->evhdlr->cbobject) {
+                        PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_RETURN_OBJECT, chain->evhdlr->cbobject, PMIX_POINTER);
+                        chain->ninfo++;
                     }
                     chain->evhdlr->evhdlr(chain->evhdlr->index,
                                           chain->status, &chain->source,
@@ -541,26 +555,18 @@ static void progress_local_event_hdlr(pmix_status_t status,
         } else {
             /* gets run for all codes */
             chain->evhdlr = pmix_globals.events.last;
-            /* update the handler name in case they want to reference it */
-            for (n=0; n < chain->ninfo; n++) {
-                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
-                    if (NULL != chain->info[n].value.data.string) {
-                        free(chain->info[n].value.data.string);
-                    }
-                    if (NULL != chain->evhdlr->name) {
-                        chain->info[n].value.data.string = strdup(chain->evhdlr->name);
-                    }
-                    break;
-                }
+            /* reset our count to the info provided by the caller */
+            chain->ninfo = chain->nallocated - 2;
+            /* if the handler has a name, then provide it */
+            if (NULL != chain->evhdlr->name) {
+                PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_HDLR_NAME, chain->evhdlr->name, PMIX_STRING);
+                chain->ninfo++;
             }
-            /* update the evhdlr cbobject */
-            for (n=0; n < chain->ninfo; n++) {
-                if (0 == strncmp(chain->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
-                    if (NULL != chain->evhdlr->name) {
-                        chain->info[n].value.data.ptr = chain->evhdlr->cbobject;
-                    }
-                    break;
-                }
+
+            /* if there is an evhdlr cbobject, provide it */
+            if (NULL != chain->evhdlr->cbobject) {
+                PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_RETURN_OBJECT, chain->evhdlr->cbobject, PMIX_POINTER);
+                chain->ninfo++;
             }
             chain->evhdlr->evhdlr(chain->evhdlr->index,
                                   chain->status, &chain->source,
@@ -610,8 +616,8 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
 
     /* sanity check */
     if (NULL == chain->info) {
-        /* should never happen as the return object must
-         * at least be there, even if it is NULL */
+        /* should never happen as space must always be
+         * reserved for handler name and callback object*/
         rc = PMIX_ERR_BAD_PARAM;
         goto complete;
     }
@@ -628,7 +634,9 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     if (NULL != pmix_globals.events.first) {
         if (1 == pmix_globals.events.first->ncodes &&
             pmix_globals.events.first->codes[0] == chain->status &&
-            check_range(&pmix_globals.events.first->rng, &chain->source)) {
+            pmix_notify_check_range(&pmix_globals.events.first->rng, &chain->source) &&
+            pmix_notify_check_affected(pmix_globals.events.first->affected, pmix_globals.events.first->naffected,
+                                       chain->affected, chain->naffected)) {
             /* invoke the handler */
             chain->evhdlr = pmix_globals.events.first;
             goto invk;
@@ -643,14 +651,14 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
             }
             /* if this event handler provided a range, check to see if
              * the source fits within it */
-            if (found && check_range(&pmix_globals.events.first->rng, &chain->source)) {
+            if (found && pmix_notify_check_range(&pmix_globals.events.first->rng, &chain->source)) {
                 /* invoke the handler */
                 chain->evhdlr = pmix_globals.events.first;
                 goto invk;
             }
         } else {
             /* take all codes for a default handler */
-            if (check_range(&pmix_globals.events.first->rng, &chain->source)) {
+            if (pmix_notify_check_range(&pmix_globals.events.first->rng, &chain->source)) {
                 /* invoke the handler */
                 chain->evhdlr = pmix_globals.events.first;
                 goto invk;
@@ -662,7 +670,9 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     /* cycle thru the single-event registrations first */
     PMIX_LIST_FOREACH(evhdlr, &pmix_globals.events.single_events, pmix_event_hdlr_t) {
         if (evhdlr->codes[0] == chain->status) {
-            if (check_range(&evhdlr->rng, &chain->source)) {
+            if (pmix_notify_check_range(&evhdlr->rng, &chain->source) &&
+                pmix_notify_check_affected(evhdlr->affected, evhdlr->naffected,
+                                           chain->affected, chain->naffected)) {
                 /* invoke the handler */
                 chain->evhdlr = evhdlr;
                 goto invk;
@@ -675,7 +685,9 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     PMIX_LIST_FOREACH(evhdlr, &pmix_globals.events.multi_events, pmix_event_hdlr_t) {
         for (i=0; i < evhdlr->ncodes; i++) {
             if (evhdlr->codes[i] == chain->status) {
-                if (check_range(&evhdlr->rng, &chain->source)) {
+                if (pmix_notify_check_range(&evhdlr->rng, &chain->source) &&
+                    pmix_notify_check_affected(evhdlr->affected, evhdlr->naffected,
+                                               chain->affected, chain->naffected)) {
                     /* invoke the handler */
                     chain->evhdlr = evhdlr;
                     goto invk;
@@ -688,7 +700,9 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     if (!chain->nondefault) {
         /* pass it to any default handlers */
         PMIX_LIST_FOREACH(evhdlr, &pmix_globals.events.default_events, pmix_event_hdlr_t) {
-            if (check_range(&evhdlr->rng, &chain->source)) {
+            if (pmix_notify_check_range(&evhdlr->rng, &chain->source) &&
+                pmix_notify_check_affected(evhdlr->affected, evhdlr->naffected,
+                                           chain->affected, chain->naffected)) {
                 /* invoke the handler */
                 chain->evhdlr = evhdlr;
                 goto invk;
@@ -699,7 +713,9 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     /* if we registered a "last" handler, and it fits the given range
      * and code, then invoke it now */
     if (NULL != pmix_globals.events.last &&
-        check_range(&pmix_globals.events.last->rng, &chain->source)) {
+        pmix_notify_check_range(&pmix_globals.events.last->rng, &chain->source) &&
+        pmix_notify_check_affected(pmix_globals.events.last->affected, pmix_globals.events.last->naffected,
+                                   chain->affected, chain->naffected)) {
         chain->endchain = true;  // ensure we don't do this again
         if (1 == pmix_globals.events.last->ncodes &&
             pmix_globals.events.last->codes[0] == chain->status) {
@@ -721,6 +737,7 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
     }
 
     /* if we got here, then nothing was found */
+
   complete:
     /* we still have to call their final callback */
     if (NULL != chain->final_cbfunc) {
@@ -730,27 +747,21 @@ void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain)
 
 
   invk:
-    /* update the handler name in case they want to reference it */
-    for (i=0; i < chain->ninfo; i++) {
-        if (0 == strncmp(chain->info[i].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
-            if (NULL != chain->info[i].value.data.string) {
-                free(chain->info[i].value.data.string);
-            }
-            if (NULL != chain->evhdlr->name) {
-                chain->info[i].value.data.string = strdup(chain->evhdlr->name);
-            }
-            break;
-        }
+    /* start with the chain holding only the given info */
+    chain->ninfo = chain->nallocated - 2;
+
+    /* if the handler has a name, then provide it */
+    if (NULL != chain->evhdlr->name) {
+        PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_HDLR_NAME, chain->evhdlr->name, PMIX_STRING);
+        chain->ninfo++;
     }
-    /* update the evhdlr cbobject */
-    for (i=0; i < chain->ninfo; i++) {
-        if (0 == strncmp(chain->info[i].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
-            if (NULL != chain->evhdlr->name) {
-                chain->info[i].value.data.ptr = chain->evhdlr->cbobject;
-            }
-            break;
-        }
+
+    /* if there is an evhdlr cbobject, provide it */
+    if (NULL != chain->evhdlr->cbobject) {
+        PMIX_INFO_LOAD(&chain->info[chain->ninfo], PMIX_EVENT_RETURN_OBJECT, chain->evhdlr->cbobject, PMIX_POINTER);
+        chain->ninfo++;
     }
+
     /* invoke the handler */
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "[%s:%d] INVOKING EVHDLR %s", __FILE__, __LINE__,
@@ -783,28 +794,51 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     pmix_event_chain_t *chain;
     size_t n;
     bool matched, holdcd;
+    pmix_buffer_t *bfr;
+    pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
+    pmix_status_t rc;
+    pmix_list_t trk;
+    pmix_namelist_t *nm;
 
     /* need to acquire the object from its originating thread */
     PMIX_ACQUIRE_OBJECT(cd);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_server: _notify_error notifying clients of error %s",
-                        PMIx_Error_string(cd->status));
+                        "pmix_server: _notify_client_event notifying clients of event %s range %s type %s",
+                        PMIx_Error_string(cd->status),
+                        PMIx_Data_range_string(cd->range),
+                        cd->nondefault ? "NONDEFAULT" : "OPEN");
 
-    /* we cannot know if everyone who wants this notice has had a chance
-     * to register for it - the notice may be coming too early. So cache
-     * the message until all local procs have received it, or it ages to
-     * the point where it gets pushed out by more recent events */
-    PMIX_RETAIN(cd);
-    rbout = pmix_ring_buffer_push(&pmix_globals.notifications, cd);
+    /* check for caching instructions */
+    holdcd = true;
+    if (0 < cd->ninfo) {
+        /* check for caching instructions */
+        for (n=0; n < cd->ninfo; n++) {
+            if (0 == strncmp(cd->info[n].key, PMIX_EVENT_DO_NOT_CACHE, PMIX_MAX_KEYLEN)) {
+                if (PMIX_INFO_TRUE(&cd->info[n])) {
+                    holdcd = false;
+                }
+                break;
+            }
+        }
+    }
+    if (holdcd) {
+        /* we cannot know if everyone who wants this notice has had a chance
+         * to register for it - the notice may be coming too early. So cache
+         * the message until all local procs have received it, or it ages to
+         * the point where it gets pushed out by more recent events */
+        PMIX_RETAIN(cd);
+        rbout = pmix_ring_buffer_push(&pmix_globals.notifications, cd);
 
-   /* if an older event was bumped, release it */
-    if (NULL != rbout) {
-        PMIX_RELEASE(rbout);
+        /* if an older event was bumped, release it */
+        if (NULL != rbout) {
+            PMIX_RELEASE(rbout);
+        }
     }
 
     holdcd = false;
     if (PMIX_RANGE_PROC_LOCAL != cd->range) {
+        PMIX_CONSTRUCT(&trk, pmix_list_t);
         /* cycle across our registered events and send the message to
          * any client who registered for it */
         PMIX_LIST_FOREACH(reginfoptr, &pmix_server_globals.events, pmix_regevents_info_t) {
@@ -814,19 +848,30 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                     /* if this client was the source of the event, then
                      * don't send it back as they will have processed it
                      * when they generated it */
-                    if (0 == strncmp(cd->source.nspace, pr->peer->info->nptr->nspace, PMIX_MAX_NSLEN) &&
-                        cd->source.rank == pr->peer->info->rank) {
+                    if (0 == strncmp(cd->source.nspace, pr->peer->info->pname.nspace, PMIX_MAX_NSLEN) &&
+                        cd->source.rank == pr->peer->info->pname.rank) {
+                        continue;
+                    }
+                    /* if we have already notified this client, then don't do it again */
+                    matched = false;
+                    PMIX_LIST_FOREACH(nm, &trk, pmix_namelist_t) {
+                        if (nm->pname == &pr->peer->info->pname) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (matched) {
                         continue;
                     }
                     /* if we were given specific targets, check if this is one */
                     if (NULL != cd->targets) {
                         matched = false;
                         for (n=0; n < cd->ntargets; n++) {
-                            if (0 != strncmp(pr->peer->info->nptr->nspace, cd->targets[n].nspace, PMIX_MAX_NSLEN)) {
+                            if (0 != strncmp(pr->peer->info->pname.nspace, cd->targets[n].nspace, PMIX_MAX_NSLEN)) {
                                 continue;
                             }
                             if (PMIX_RANK_WILDCARD == cd->targets[n].rank ||
-                                pr->peer->info->rank == cd->targets[n].rank) {
+                                pr->peer->info->pname.rank == cd->targets[n].rank) {
                                 matched = true;
                                 break;
                             }
@@ -837,13 +882,63 @@ static void _notify_client_event(int sd, short args, void *cbdata)
                         }
                     }
                     pmix_output_verbose(2, pmix_globals.debug_output,
-                                        "pmix_server: notifying client %s:%d",
-                                        pr->peer->info->nptr->nspace, pr->peer->info->rank);
-                    PMIX_RETAIN(cd->buf);
-                    PMIX_SERVER_QUEUE_REPLY(pr->peer, 0, cd->buf);
+                                        "pmix_server: notifying client %s:%u on status %s",
+                                        pr->peer->info->pname.nspace, pr->peer->info->pname.rank,
+                                        PMIx_Error_string(cd->status));
+
+                    /* record that we notified this client */
+                    nm = PMIX_NEW(pmix_namelist_t);
+                    nm->pname = &pr->peer->info->pname;
+                    pmix_list_append(&trk, &nm->super);
+
+                    bfr = PMIX_NEW(pmix_buffer_t);
+                    if (NULL == bfr) {
+                        continue;
+                    }
+                    /* pack the command */
+                    PMIX_BFROPS_PACK(rc, pr->peer, bfr, &cmd, 1, PMIX_COMMAND);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(bfr);
+                        continue;
+                    }
+
+                    /* pack the status */
+                    PMIX_BFROPS_PACK(rc, pr->peer, bfr, &cd->status, 1, PMIX_STATUS);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(bfr);
+                        continue;
+                    }
+
+                    /* pack the source */
+                    PMIX_BFROPS_PACK(rc, pr->peer, bfr, &cd->source, 1, PMIX_PROC);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(bfr);
+                        continue;
+                    }
+                    /* pack any info */
+                    PMIX_BFROPS_PACK(rc, pr->peer, bfr, &cd->ninfo, 1, PMIX_SIZE);
+                    if (PMIX_SUCCESS != rc) {
+                        PMIX_ERROR_LOG(rc);
+                        PMIX_RELEASE(bfr);
+                        continue;
+                    }
+
+                    if (0 < cd->ninfo) {
+                        PMIX_BFROPS_PACK(rc, pr->peer, bfr, cd->info, cd->ninfo, PMIX_INFO);
+                        if (PMIX_SUCCESS != rc) {
+                            PMIX_ERROR_LOG(rc);
+                            PMIX_RELEASE(bfr);
+                            continue;
+                        }
+                    }
+                    PMIX_SERVER_QUEUE_REPLY(pr->peer, 0, bfr);
                 }
             }
         }
+        PMIX_LIST_DESTRUCT(&trk);
         if (PMIX_RANGE_LOCAL != cd->range &&
             0 == strncmp(cd->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN) &&
             cd->source.rank == pmix_globals.myid.rank) {
@@ -869,19 +964,72 @@ static void _notify_client_event(int sd, short args, void *cbdata)
     chain->source.rank = cd->source.rank;
     /* we always leave space for a callback object and
      * the evhandler name. */
-    chain->ninfo = cd->ninfo + 2;
-    PMIX_INFO_CREATE(chain->info, chain->ninfo);
+    chain->nallocated = cd->ninfo + 2;
+    PMIX_INFO_CREATE(chain->info, chain->nallocated);
     if (0 < cd->ninfo) {
+        chain->ninfo = cd->ninfo;
         /* need to copy the info */
         for (n=0; n < cd->ninfo; n++) {
             PMIX_INFO_XFER(&chain->info[n], &cd->info[n]);
+            if (0 == strncmp(cd->info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
+                cd->nondefault = true;
+                chain->nondefault = true;
+            } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
+                /* provides an array of pmix_proc_t identifying the procs
+                 * that are to receive this notification, or a single pmix_proc_t  */
+                if (PMIX_DATA_ARRAY == cd->info[n].value.type &&
+                    NULL != cd->info[n].value.data.darray &&
+                    NULL != cd->info[n].value.data.darray->array) {
+                    cd->ntargets = cd->info[n].value.data.darray->size;
+                    PMIX_PROC_CREATE(cd->targets, cd->ntargets);
+                    memcpy(cd->targets, cd->info[n].value.data.darray->array, cd->ntargets * sizeof(pmix_proc_t));
+                } else if (PMIX_PROC == cd->info[n].value.type) {
+                    cd->ntargets = 1;
+                    PMIX_PROC_CREATE(cd->targets, cd->ntargets);
+                    memcpy(cd->targets, cd->info[n].value.data.proc, sizeof(pmix_proc_t));
+                } else {
+                    /* this is an error */
+                    PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
+                    PMIX_RELEASE(chain);
+                    return;
+                }
+            } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROC, PMIX_MAX_KEYLEN)) {
+                PMIX_PROC_CREATE(cd->affected, 1);
+                if (NULL == cd->affected) {
+                    PMIX_RELEASE(chain);
+                    return;
+                }
+                cd->naffected = 1;
+                memcpy(cd->affected, cd->info[n].value.data.proc, sizeof(pmix_proc_t));
+                /* need to do the same for chain so it can be correctly processed */
+                PMIX_PROC_CREATE(chain->affected, 1);
+                if (NULL == chain->affected) {
+                    PMIX_RELEASE(chain);
+                    return;
+                }
+                chain->naffected = 1;
+                memcpy(chain->affected, cd->info[n].value.data.proc, sizeof(pmix_proc_t));
+            } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_AFFECTED_PROCS, PMIX_MAX_KEYLEN)) {
+                cd->naffected = cd->info[n].value.data.darray->size;
+                PMIX_PROC_CREATE(cd->affected, cd->naffected);
+                if (NULL == cd->affected) {
+                    cd->naffected = 0;
+                    PMIX_RELEASE(chain);
+                    return;
+                }
+                memcpy(cd->affected, cd->info[n].value.data.darray->array, cd->naffected * sizeof(pmix_proc_t));
+                /* need to do the same for chain so it can be correctly processed */
+                chain->naffected = cd->info[n].value.data.darray->size;
+                PMIX_PROC_CREATE(chain->affected, chain->naffected);
+                if (NULL == chain->affected) {
+                    chain->naffected = 0;
+                    PMIX_RELEASE(chain);
+                    return;
+                }
+                memcpy(chain->affected, cd->info[n].value.data.darray->array, chain->naffected * sizeof(pmix_proc_t));
+            }
         }
     }
-    /* put the evhandler name tag in the next-to-last element - we
-     * will fill it in as each handler is called */
-    PMIX_INFO_LOAD(&chain->info[chain->ninfo-2], PMIX_EVENT_HDLR_NAME, NULL, PMIX_STRING);
-    /* now put the callback object tag in the last element */
-    PMIX_INFO_LOAD(&chain->info[chain->ninfo-1], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
     /* process it */
     pmix_invoke_local_event_hdlr(chain);
 
@@ -909,8 +1057,6 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
                                                  pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_notify_caddy_t *cd;
-    pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
-    pmix_status_t rc;
     size_t n;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -927,6 +1073,15 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
         cd->source.rank = source->rank;
     }
     cd->range = range;
+    /* have to copy the info to preserve it for future when cached */
+    if (0 < ninfo) {
+        cd->ninfo = ninfo;
+        PMIX_INFO_CREATE(cd->info, cd->ninfo);
+        /* need to copy the info */
+        for (n=0; n < cd->ninfo; n++) {
+            PMIX_INFO_XFER(&cd->info[n], &info[n]);
+        }
+    }
 
     /* check for directives */
     if (NULL != info) {
@@ -954,6 +1109,7 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
             }
         }
     }
+
     /*
      * If the range is PMIX_RANGE_NAMESPACE, then they should not have set a
      * PMIX_EVENT_CUSTOM_RANGE info object or at least we should ignore it
@@ -972,42 +1128,6 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
         }
     }
 
-    /* pack the command */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, &cmd, 1, PMIX_CMD))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(cd);
-        return rc;
-    }
-
-    /* pack the status */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, &status, 1, PMIX_STATUS))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(cd);
-        return rc;
-    }
-
-    /* pack the source */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, source, 1, PMIX_PROC))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(cd);
-        return rc;
-    }
-
-    /* pack any info */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, &ninfo, 1, PMIX_SIZE))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(cd);
-        return rc;
-    }
-
-    if (0 < ninfo) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, info, ninfo, PMIX_INFO))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(cd);
-            return rc;
-        }
-    }
-
     /* track the eventual callback info */
     cd->cbfunc = cbfunc;
     cd->cbdata = cbdata;
@@ -1022,8 +1142,8 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     return PMIX_SUCCESS;
 }
 
-static bool check_range(pmix_range_trkr_t *rng,
-                        const pmix_proc_t *proc)
+bool pmix_notify_check_range(pmix_range_trkr_t *rng,
+                             const pmix_proc_t *proc)
 {
     size_t n;
 
@@ -1071,6 +1191,37 @@ static bool check_range(pmix_range_trkr_t *rng,
     return false;
 }
 
+bool pmix_notify_check_affected(pmix_proc_t *interested, size_t ninterested,
+                                pmix_proc_t *affected, size_t naffected)
+{
+    size_t m, n;
+
+    /* if they didn't restrict their interests, then accept it */
+    if (NULL == interested) {
+        return true;
+    }
+    /* if we weren't given the affected procs, then accept it */
+    if (NULL == affected) {
+        return true;
+    }
+    /* check if the two overlap */
+    for (n=0; n < naffected; n++) {
+        for (m=0; m < ninterested; m++) {
+            if (0 != strncmp(affected[n].nspace, interested[m].nspace, PMIX_MAX_NSLEN)) {
+                continue;
+            }
+            if (PMIX_RANK_WILDCARD == interested[m].rank ||
+                PMIX_RANK_WILDCARD == affected[n].rank ||
+                affected[n].rank == interested[m].rank) {
+                return true;
+            }
+        }
+    }
+    /* if we get here, then this proc isn't in range */
+    return false;
+
+}
+
 void pmix_event_timeout_cb(int fd, short flags, void *arg)
 {
     pmix_event_chain_t *ch = (pmix_event_chain_t*)arg;
@@ -1084,7 +1235,7 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg)
     pmix_list_remove_item(&pmix_globals.cached_events, &ch->super);
 
     /* process this event thru the regular channels */
-    if (PMIX_PROC_SERVER == pmix_globals.proc_type) {
+    if (PMIX_PROC_IS_SERVER(pmix_globals.mypeer)) {
         pmix_server_notify_client_of_event(ch->status, &ch->source,
                                            ch->range, ch->info, ch->ninfo,
                                            ch->final_cbfunc, ch->final_cbdata);
@@ -1104,6 +1255,8 @@ static void sevcon(pmix_event_hdlr_t *p)
     p->rng.range = PMIX_RANGE_UNDEF;
     p->rng.procs = NULL;
     p->rng.nprocs = 0;
+    p->affected = NULL;
+    p->naffected = 0;
     p->evhdlr = NULL;
     p->cbobject = NULL;
     p->codes = NULL;
@@ -1119,6 +1272,9 @@ static void sevdes(pmix_event_hdlr_t *p)
     }
     if (NULL != p->rng.procs) {
         free(p->rng.procs);
+    }
+    if (NULL != p->affected) {
+        PMIX_PROC_FREE(p->affected, p->naffected);
     }
     if (NULL != p->codes) {
         free(p->codes);
@@ -1171,8 +1327,11 @@ static void chcon(pmix_event_chain_t *p)
     p->nondefault = false;
     p->endchain = false;
     p->range = PMIX_RANGE_UNDEF;
+    p->affected = NULL;
+    p->naffected = 0;
     p->info = NULL;
     p->ninfo = 0;
+    p->nallocated = 0;
     p->results = NULL;
     p->nresults = 0;
     p->evhdlr = NULL;
@@ -1184,8 +1343,11 @@ static void chdes(pmix_event_chain_t *p)
     if (p->timer_active) {
         pmix_event_del(&p->ev);
     }
+    if (NULL != p->affected) {
+        PMIX_PROC_FREE(p->affected, p->naffected);
+    }
     if (NULL != p->info) {
-        PMIX_INFO_FREE(p->info, p->ninfo);
+        PMIX_INFO_FREE(p->info, p->nallocated);
     }
     if (NULL != p->results) {
         PMIX_INFO_FREE(p->results, p->nresults);

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,8 @@
 
 #include "src/mca/mca.h"
 #include "src/mca/base/base.h"
+#include "src/util/error.h"
+#include "src/util/show_help.h"
 
 #include "src/mca/ptl/base/base.h"
 
@@ -79,6 +81,12 @@ int pmix_ptl_base_select(void)
             /* must be lowest priority - add to end */
             pmix_list_append(&pmix_ptl_globals.actives, &newactive->super);
         }
+    }
+
+    /* if no modules were found, then that's an error as we require at least one */
+    if (0 == pmix_list_get_size(&pmix_ptl_globals.actives)) {
+        pmix_show_help("help-pmix-runtime.txt", "no-plugins", true, "PTL");
+        return PMIX_ERR_SILENT;
     }
 
     if (4 < pmix_output_get_verbosity(pmix_ptl_base_framework.framework_output)) {

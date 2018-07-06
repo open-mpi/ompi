@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -36,9 +36,6 @@
 #include "src/mca/ptl/ptl_types.h"
 
 BEGIN_C_DECLS
-
-/*** forward declaration ***/
-struct pmix_peer_t;
 
 /******    MODULE DEFINITION    ******/
 
@@ -76,7 +73,7 @@ typedef pmix_status_t (*pmix_psec_base_module_client_hndshk_fn_t)(int sd);
  * Validate a client's credential - the credential could be a string
  * or an array of bytes, which is why we include the length
  */
-typedef pmix_status_t (*pmix_psec_base_module_validate_cred_fn_t)(struct pmix_peer_t *peer,
+typedef pmix_status_t (*pmix_psec_base_module_validate_cred_fn_t)(int sd, uid_t uid, gid_t gid,
                                                                   pmix_listener_protocol_t protocol,
                                                                   char *cred, size_t len);
 
@@ -85,7 +82,7 @@ typedef pmix_status_t (*pmix_psec_base_module_validate_cred_fn_t)(struct pmix_pe
  * (and indeed, would be rare) for a protocol to use both the
  * credential and handshake interfaces. It is acceptable, therefore,
  * for one of them to be NULL */
-typedef pmix_status_t (*pmix_psec_base_module_server_hndshk_fn_t)(struct pmix_peer_t *peer);
+typedef pmix_status_t (*pmix_psec_base_module_server_hndshk_fn_t)(int sd);
 
 /**
  * Base structure for a PSEC module
@@ -108,45 +105,59 @@ typedef struct {
 
 /* get a list of available options - caller must free results
  * when done */
-typedef char* (*pmix_psec_API_get_available_modules_fn_t)(void);
+PMIX_EXPORT char* pmix_psec_base_get_available_modules(void);
 
 /* Select a psec module for a given peer */
-typedef pmix_status_t (*pmix_psec_API_assign_module_fn_t)(struct pmix_peer_t *peer,
-                                                          const char *options);
+PMIX_EXPORT pmix_psec_module_t* pmix_psec_base_assign_module(const char *options);
 
-/**
- * Create and return a string representation of a credential for this
- * client
- */
-typedef pmix_status_t (*pmix_psec_API_create_cred_fn_t)(struct pmix_peer_t *peer,
-                                                        pmix_listener_protocol_t protocol,
-                                                        char **cred, size_t *len);
+/* MACROS FOR EXECUTING PSEC FUNCTIONS */
 
-/**
- * Perform the client-side handshake. Note that it is not required
- * (and indeed, would be rare) for a protocol to use both the
- * credential and handshake interfaces. It is acceptable, therefore,
- * for one of them to be NULL */
-typedef pmix_status_t (*pmix_psec_API_client_hndshk_fn_t)(struct pmix_peer_t *peer, int sd);
+#define PMIX_PSEC_CREATE_CRED(r, p, pr, c, l)       \
+    (r) = (p)->nptr->compat.psec->create_cred(pr, c, l)
 
+#define PMIX_PSEC_CLIENT_HANDSHAKE(r, p, sd) \
+    (r) = (p)->nptr->compat.psec->client_handshake(sd)
 
-/****    SERVER-SIDE FUNCTIONS    ****/
-/**
- * Validate a client's connection request
- */
-typedef pmix_status_t (*pmix_psec_API_validate_connection_fn_t)(struct pmix_peer_t *peer,
-                                                                pmix_listener_protocol_t protocol,
-                                                                char *cred, size_t len);
+#define PMIX_PSEC_VALIDATE_CRED(r, p, pr, c, l)     \
+    (r) = (p)->nptr->compat.psec->validate_cred((p)->sd, (p)->info->uid, (p)->info->gid, pr, c, l)
 
-typedef struct {
-    pmix_psec_API_get_available_modules_fn_t    get_available_modules;
-    pmix_psec_API_assign_module_fn_t            assign_module;
-    pmix_psec_API_create_cred_fn_t              create_cred;
-    pmix_psec_API_client_hndshk_fn_t            client_handshake;
-    pmix_psec_API_validate_connection_fn_t      validate_connection;
-} pmix_psec_API_t;
-
-PMIX_EXPORT extern pmix_psec_API_t pmix_psec;
+#define PMIX_PSEC_VALIDATE_CONNECTION(r, p, pr, c, l)                                                       \
+    do {                                                                                                    \
+        int _r;                                                                                             \
+        /* if a credential is available, then check it */                                                   \
+        if (NULL != (p)->nptr->compat.psec->validate_cred) {                                                \
+            _r = (p)->nptr->compat.psec->validate_cred((p)->sd, (p)->info->uid, (p)->info->gid, pr, c, l);  \
+            if (PMIX_SUCCESS != _r) {                                                                       \
+                pmix_output_verbose(2, pmix_globals.debug_output,                                           \
+                                    "validation of credential failed: %s",                                  \
+                                    PMIx_Error_string(_r));                                                 \
+            } else {                                                                                        \
+                pmix_output_verbose(2, pmix_globals.debug_output,                                           \
+                                    "credential validated");                                                \
+            }                                                                                               \
+            /* send them the result */                                                                      \
+            if (PMIX_SUCCESS != (_r = pmix_ptl_base_send_blocking((p)->sd, (char*)&(_r), sizeof(int)))) {   \
+                PMIX_ERROR_LOG(_r);                                                                         \
+            }                                                                                               \
+            (r) = _r;                                                                                       \
+        } else if (NULL != (p)->nptr->compat.psec->server_handshake) {                                      \
+            /* execute the handshake if the security mode calls for it */                                   \
+            pmix_output_verbose(2, pmix_globals.debug_output,                                               \
+                                "executing handshake");                                                     \
+            _r = PMIX_ERR_READY_FOR_HANDSHAKE;                                                              \
+            if (PMIX_SUCCESS != (_r = pmix_ptl_base_send_blocking((p)->sd, (char*)&(_r), sizeof(int)))) {   \
+                PMIX_ERROR_LOG(_r);                                                                         \
+            } else {                                                                                        \
+                if (PMIX_SUCCESS != (_r = p->nptr->compat.psec->server_handshake((p)->sd))) {               \
+                    PMIX_ERROR_LOG(_r);                                                                     \
+                }                                                                                           \
+            }                                                                                               \
+            (r) = _r;                                                                                       \
+        } else {                                                                                            \
+            /* this is not allowed */                                                                       \
+            (r) = PMIX_ERR_NOT_SUPPORTED;                                                                   \
+        }                                                                                                   \
+    } while(0)
 
 /****    COMPONENT STRUCTURE DEFINITION    ****/
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,8 +81,12 @@ int pmix_mca_base_framework_register (struct pmix_mca_base_framework_t *framewor
             return ret;
         }
 
-        asprintf (&desc, "Default selection set of components for the %s framework (<none>"
-                  " means use all components that can be found)", framework->framework_name);
+        ret = asprintf (&desc, "Default selection set of components for the %s framework (<none>"
+                        " means use all components that can be found)", framework->framework_name);
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
+
         ret = pmix_mca_base_var_register (framework->framework_project, framework->framework_name,
                                      NULL, NULL, desc, PMIX_MCA_BASE_VAR_TYPE_STRING, NULL, 0,
                                      PMIX_MCA_BASE_VAR_FLAG_SETTABLE, PMIX_INFO_LVL_2,

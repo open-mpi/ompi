@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -49,7 +49,8 @@ pmi2_sources =
 
 libpmix_la_LIBADD = \
 	mca/base/libpmix_mca_base.la \
-	$(MCA_pmix_FRAMEWORK_LIBS)
+	$(MCA_pmix_FRAMEWORK_LIBS) \
+	$(PMIX_EXTRA_LIB)
 libpmix_la_DEPENDENCIES = $(libpmix_la_LIBADD)
 
 if PMIX_EMBEDDED_MODE
@@ -101,11 +102,6 @@ include server/Makefile.include
 include runtime/Makefile.include
 include tool/Makefile.include
 include common/Makefile.include
-include buffer_ops/Makefile.am
-if WANT_DSTORE
-include sm/Makefile.include
-include dstore/Makefile.include
-endif
 
 MAINTAINERCLEANFILES = Makefile.in config.h config.h.in
 DISTCLEANFILES = Makefile

@@ -8,7 +8,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +40,7 @@ typedef struct pmix_wait_sync_t {
 #define REQUEST_PENDING        (void*)0L
 #define REQUEST_COMPLETED      (void*)1L
 
-#define PMIX_SYNC_WAIT(sync)    sync_wait_mt (sync)
+#define PMIX_SYNC_WAIT(sync)    pmix_sync_wait_mt (sync)
 
 /* The loop in release handles a race condition between the signaling
  * thread and the destruction of the condition variable. The signaling
@@ -50,25 +50,25 @@ typedef struct pmix_wait_sync_t {
  * as possible. Note that the race window is small so spinning here
  * is more optimal than sleeping since this macro is called in
  * the critical path. */
-#define PMIX_WAIT_SYNC_RELEASE(sync)                       \
+#define PMIX_WAIT_SYNC_RELEASE(sync)                  \
         while ((sync)->signaling) {                   \
             continue;                                 \
         }                                             \
         pthread_cond_destroy(&(sync)->condition);     \
         pthread_mutex_destroy(&(sync)->lock);
 
-#define PMIX_WAIT_SYNC_RELEASE_NOWAIT(sync)                \
+#define PMIX_WAIT_SYNC_RELEASE_NOWAIT(sync)           \
         pthread_cond_destroy(&(sync)->condition);     \
         pthread_mutex_destroy(&(sync)->lock);
 
 
-#define PMIX_WAIT_SYNC_SIGNAL(sync)                        \
+#define PMIX_WAIT_SYNC_SIGNAL(sync)                   \
         pthread_mutex_lock(&(sync->lock));            \
         pthread_cond_signal(&sync->condition);        \
         pthread_mutex_unlock(&(sync->lock));          \
         sync->signaling = false;
 
-#define PMIX_WAIT_SYNC_SIGNALLED(sync){                    \
+#define PMIX_WAIT_SYNC_SIGNALLED(sync){               \
         (sync)->signaling = false;                    \
 }
 
@@ -82,7 +82,7 @@ static inline int pmix_sync_wait_st (pmix_wait_sync_t *sync)
 }
 
 
-#define PMIX_WAIT_SYNC_INIT(sync,c)                                  \
+#define PMIX_WAIT_SYNC_INIT(sync,c)                             \
     do {                                                        \
         (sync)->count = (c);                                    \
         (sync)->next = NULL;                                    \
@@ -99,10 +99,11 @@ static inline int pmix_sync_wait_st (pmix_wait_sync_t *sync)
  * triggered. The status of the synchronization will be reported to
  * the waiting threads.
  */
-static inline void pmix_wait_sync_update(pmix_wait_sync_t *sync, int updates, int status)
+static inline void pmix_wait_sync_update(pmix_wait_sync_t *sync,
+                                         int updates, int status)
 {
     if( PMIX_LIKELY(PMIX_SUCCESS == status) ) {
-        if( 0 != (PMIX_THREAD_ADD32(&sync->count, -updates)) ) {
+        if( 0 != (PMIX_THREAD_ADD_FETCH32(&sync->count, -updates)) ) {
             return;
         }
     } else {

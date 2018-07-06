@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -269,20 +269,25 @@ int16_t pmix_ifaddrtokindex(const char* if_addr)
     for (r = res; r != NULL; r = r->ai_next) {
         PMIX_LIST_FOREACH(intf, &pmix_if_list, pmix_pif_t) {
             if (AF_INET == r->ai_family && AF_INET == intf->af_family) {
-                struct sockaddr ipv4;
+                struct sockaddr ipv4, intv4;
                 memset(&ipv4, 0, sizeof(struct sockaddr));
                 len = (r->ai_addrlen < sizeof(struct sockaddr_in)) ? r->ai_addrlen : sizeof(struct sockaddr_in);
                 memcpy(&ipv4, r->ai_addr, len);
-                if (pmix_net_samenetwork(&ipv4, (struct sockaddr*)&intf->if_addr, intf->if_mask)) {
+                memset(&intv4, 0, sizeof(struct sockaddr));
+                memcpy(&intv4, &intf->if_addr, sizeof(struct sockaddr));
+                if (pmix_net_samenetwork(&ipv4, &intv4, intf->if_mask)) {
                     if_kernel_index = intf->if_kernel_index;
                     freeaddrinfo (res);
                     return if_kernel_index;
                 }
             } else if (AF_INET6 == r->ai_family && AF_INET6 == intf->af_family) {
-                struct sockaddr_in6 ipv6;
+                struct sockaddr_in6 ipv6, intv6;
+                memset(&ipv6, 0, sizeof(struct sockaddr));
                 len = (r->ai_addrlen < sizeof(struct sockaddr_in6)) ? r->ai_addrlen : sizeof(struct sockaddr_in6);
                 memcpy(&ipv6, r->ai_addr, len);
-                if (pmix_net_samenetwork((struct sockaddr*)((struct sockaddr_in6*)&intf->if_addr),
+                memset(&intv6, 0, sizeof(struct sockaddr));
+                memcpy(&intv6, &intf->if_addr, sizeof(struct sockaddr_in6));
+                if (pmix_net_samenetwork((struct sockaddr*)&intv6,
                                          (struct sockaddr*)&ipv6, intf->if_mask)) {
                     if_kernel_index = intf->if_kernel_index;
                     freeaddrinfo (res);

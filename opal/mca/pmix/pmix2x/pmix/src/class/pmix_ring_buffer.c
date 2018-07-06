@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,9 +32,9 @@
 static void pmix_ring_buffer_construct(pmix_ring_buffer_t *);
 static void pmix_ring_buffer_destruct(pmix_ring_buffer_t *);
 
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_ring_buffer_t, pmix_object_t,
-                                pmix_ring_buffer_construct,
-                                pmix_ring_buffer_destruct);
+PMIX_CLASS_INSTANCE(pmix_ring_buffer_t, pmix_object_t,
+                    pmix_ring_buffer_construct,
+                    pmix_ring_buffer_destruct);
 
 /*
  * pmix_ring_buffer constructor

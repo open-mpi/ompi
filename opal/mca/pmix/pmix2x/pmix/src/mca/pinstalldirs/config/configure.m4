@@ -3,7 +3,7 @@
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016      Intel, Inc. All rights reserved
+# Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -29,4 +29,3 @@ AC_DEFUN([MCA_pmix_pinstalldirs_config_CONFIG],[
     AC_CONFIG_FILES([src/mca/pinstalldirs/config/Makefile
                      src/mca/pinstalldirs/config/pinstall_dirs.h])
 ])
-

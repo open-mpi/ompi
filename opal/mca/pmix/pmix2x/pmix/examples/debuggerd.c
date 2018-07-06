@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
      * our local target processes */
     nq = 1;
     PMIX_QUERY_CREATE(query, nq);
-    PMIX_ARGV_APPEND(query[0].keys, PMIX_QUERY_LOCAL_PROC_TABLE);
+    PMIX_ARGV_APPEND(rc, query[0].keys, PMIX_QUERY_LOCAL_PROC_TABLE);
     query[0].nqual = 1;
     PMIX_INFO_CREATE(query[0].qualifiers, 1);
     PMIX_INFO_LOAD(&query[0].qualifiers[0], PMIX_NSPACE, val->data.string, PMIX_STRING);  // the nspace we are enquiring about

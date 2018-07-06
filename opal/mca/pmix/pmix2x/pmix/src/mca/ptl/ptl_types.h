@@ -53,13 +53,32 @@
 
 #include "src/class/pmix_list.h"
 #include "src/util/output.h"
-#include "src/buffer_ops/types.h"
+#include "src/mca/bfrops/bfrops_types.h"
 
 BEGIN_C_DECLS
 
 // forward declaration
 struct pmix_peer_t;
 struct pmix_ptl_module_t;
+
+/* define a process type */
+typedef uint16_t pmix_proc_type_t;
+#define PMIX_PROC_UNDEF     0x0000
+#define PMIX_PROC_CLIENT    0x0001
+#define PMIX_PROC_SERVER    0x0002
+#define PMIX_PROC_TOOL      0x0004
+#define PMIX_PROC_V1        0x0008
+#define PMIX_PROC_V20       0x0010
+#define PMIX_PROC_V21       0x0020
+
+/* defins some convenience macros for testing proc type */
+#define PMIX_PROC_IS_CLIENT(p)      (PMIX_PROC_CLIENT & (p)->proc_type)
+#define PMIX_PROC_IS_SERVER(p)      (PMIX_PROC_SERVER & (p)->proc_type)
+#define PMIX_PROC_IS_TOOL(p)        (PMIX_PROC_TOOL & (p)->proc_type)
+#define PMIX_PROC_IS_V1(p)          (PMIX_PROC_V1 & (p)->proc_type)
+#define PMIX_PROC_IS_V20(p)         (PMIX_PROC_V20 & (p)->proc_type)
+#define PMIX_PROC_IS_V21(p)         (PMIX_PROC_V21 & (p)->proc_type)
+
 
 /****    MESSAGING STRUCTURES    ****/
 typedef uint32_t pmix_ptl_tag_t;
@@ -170,14 +189,16 @@ typedef struct {
     size_t ninfo;
     pmix_status_t status;
     struct sockaddr_storage addr;
-    char *bfrop;
+    char *bfrops;
     char *psec;
+    char *gds;
     struct pmix_ptl_module_t *ptl;
     pmix_bfrop_buffer_type_t buffer_type;
     char *cred;
     size_t len;
     uid_t uid;
     gid_t gid;
+    pmix_proc_type_t proc_type;
 } pmix_pending_connection_t;
 PMIX_CLASS_DECLARATION(pmix_pending_connection_t);
 
@@ -198,10 +219,12 @@ typedef struct pmix_listener_t {
 } pmix_listener_t;
 PMIX_CLASS_DECLARATION(pmix_listener_t);
 
+/* provide a backdoor to the framework output for debugging */
+PMIX_EXPORT extern int pmix_ptl_base_output;
 
 #define PMIX_ACTIVATE_POST_MSG(ms)                                      \
     do {                                                                \
-        pmix_output_verbose(5, pmix_globals.debug_output,               \
+        pmix_output_verbose(5, pmix_ptl_base_output,                    \
                             "[%s:%d] post msg",                         \
                             __FILE__, __LINE__);                        \
         pmix_event_assign(&((ms)->ev), pmix_globals.evbase, -1,         \
@@ -228,11 +251,11 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
     do {                                                                                \
         pmix_ptl_send_t *snd;                                                           \
         uint32_t nbytes;                                                                \
-        pmix_output_verbose(5, pmix_globals.debug_output,                               \
+        pmix_output_verbose(5, pmix_ptl_base_output,                                    \
                             "[%s:%d] queue callback called: reply to %s:%d on tag %d size %d",  \
                             __FILE__, __LINE__,                                         \
-                            (p)->info->nptr->nspace,                                    \
-                            (p)->info->rank, (t), (int)(b)->bytes_used);                \
+                            (p)->info->pname.nspace,                                    \
+                            (p)->info->pname.rank, (t), (int)(b)->bytes_used);          \
         snd = PMIX_NEW(pmix_ptl_send_t);                                                \
         snd->hdr.pindex = htonl(pmix_globals.pindex);                                   \
         snd->hdr.tag = htonl(t);                                                        \
@@ -257,12 +280,12 @@ PMIX_CLASS_DECLARATION(pmix_listener_t);
         }                                                                               \
     } while (0)
 
-#define CLOSE_THE_SOCKET(socket)                \
+#define CLOSE_THE_SOCKET(s)                     \
     do {                                        \
-        if (0 <= socket) {                      \
-            shutdown(socket, 2);                \
-            close(socket);                      \
-            socket = -1;                        \
+        if (0 <= (s)) {                         \
+            shutdown((s), 2);                   \
+            close((s));                         \
+            (s) = -1;                           \
         }                                       \
     } while (0)
 

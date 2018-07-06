@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -30,7 +30,7 @@
 #include <pmi2.h>
 #include <pmix.h>
 
-#include "src/buffer_ops/buffer_ops.h"
+#include "src/mca/bfrops/bfrops.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -62,7 +62,7 @@ PMIX_EXPORT int PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
     pmix_proc_t proc = myproc;
     proc.rank = PMIX_RANK_WILDCARD;
 
-    if (PMIX_SUCCESS != PMIx_Init(&myproc, NULL, 0)) {
+    if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc, NULL, 0))) {
         /* if we didn't see a PMIx server (e.g., missing envar),
          * then allow us to run as a singleton */
         if (PMIX_ERR_INVALID_NAMESPACE == rc) {

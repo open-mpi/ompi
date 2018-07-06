@@ -7,17 +7,13 @@
 #ifndef PMI2_H_INCLUDED
 #define PMI2_H_INCLUDED
 
+/* Structure and constant definitions */
+#include <pmix_common.h>
+
 #define PMI2_MAX_KEYLEN 64
 #define PMI2_MAX_VALLEN 1024
 #define PMI2_MAX_ATTRVALUE 1024
 #define PMI2_ID_NULL -1
-
-#ifdef PMIX_HAVE_VISIBILITY
-#define PMIX_EXPORT __attribute__((__visibility__("default")))
-#else
-#define PMIX_EXPORT
-#endif
-
 
 #if defined(__cplusplus)
 extern "C" {

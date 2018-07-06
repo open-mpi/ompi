@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -11,7 +11,6 @@
  */
 
 #include "test_fence.h"
-#include "src/buffer_ops/buffer_ops.h"
 
 static void get_cb(pmix_status_t status, pmix_value_t *kv, void *cbdata)
 {
@@ -436,4 +435,3 @@ int test_job_fence(test_params params, char *my_nspace, pmix_rank_t my_rank)
     }
     return PMIX_SUCCESS;
 }
-

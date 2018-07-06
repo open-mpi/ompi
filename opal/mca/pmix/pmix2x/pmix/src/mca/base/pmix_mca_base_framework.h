@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -169,8 +169,8 @@ typedef struct pmix_mca_base_framework_t {
  *
  * Call a framework's register function.
  */
-int pmix_mca_base_framework_register (pmix_mca_base_framework_t *framework,
-                                      pmix_mca_base_register_flag_t flags);
+PMIX_EXPORT int pmix_mca_base_framework_register (pmix_mca_base_framework_t *framework,
+                                                  pmix_mca_base_register_flag_t flags);
 
 /**
  * Open a framework
@@ -182,8 +182,8 @@ int pmix_mca_base_framework_register (pmix_mca_base_framework_t *framework,
  *
  * Call a framework's open function.
  */
-int pmix_mca_base_framework_open (pmix_mca_base_framework_t *framework,
-                                  pmix_mca_base_open_flag_t flags);
+PMIX_EXPORT int pmix_mca_base_framework_open (pmix_mca_base_framework_t *framework,
+                                              pmix_mca_base_open_flag_t flags);
 
 /**
  * Close a framework
@@ -195,7 +195,7 @@ int pmix_mca_base_framework_open (pmix_mca_base_framework_t *framework,
  *
  * Call a framework's close function.
  */
-int pmix_mca_base_framework_close (pmix_mca_base_framework_t *framework);
+PMIX_EXPORT int pmix_mca_base_framework_close (pmix_mca_base_framework_t *framework);
 
 
 /**
@@ -206,7 +206,7 @@ int pmix_mca_base_framework_close (pmix_mca_base_framework_t *framework);
  * @retval true if the framework's mca variables are registered
  * @retval false if not
  */
-bool pmix_mca_base_framework_is_registered (struct pmix_mca_base_framework_t *framework);
+PMIX_EXPORT bool pmix_mca_base_framework_is_registered (struct pmix_mca_base_framework_t *framework);
 
 
 /**
@@ -217,7 +217,7 @@ bool pmix_mca_base_framework_is_registered (struct pmix_mca_base_framework_t *fr
  * @retval true if the framework is open
  * @retval false if not
  */
-bool pmix_mca_base_framework_is_open (struct pmix_mca_base_framework_t *framework);
+PMIX_EXPORT bool pmix_mca_base_framework_is_open (struct pmix_mca_base_framework_t *framework);
 
 
 /**
