@@ -60,8 +60,21 @@ current release as well as the "stable" bug fix release branch.
      channels, including local/remote syslog and email. Added
      attributes to query available channels and to tag and
      format output.
+- Fix several memory and file descriptor leaks
 
 
+2.1.2 -- TBD
+----------------------
+- Added PMIX_VERSION_RELEASE string to pmix_version.h
+- Added PMIX_SPAWNED and PMIX_PARENT_ID keys to all procs
+  started via PMIx_Spawn
+- Fixed faulty compares in PMI/PMI2 tests
+- Fixed bug in direct modex for data on remote node
+- Correctly transfer all cached job info to the client's
+  shared memory region upon first connection
+- Fix potential deadlock in PMIx_server_init in an error case
+- Fix uninitialized variable
+- Fix several memory and file descriptor leaks
 
 
 2.1.1 -- 23 Feb 2018

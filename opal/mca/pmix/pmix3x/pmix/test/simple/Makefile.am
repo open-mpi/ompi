@@ -27,91 +27,91 @@ noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex \
                   test_pmix simptool simpdie simplegacy simptimeout \
                   gwtest gwclient stability quietclient
 
-simptest_SOURCES = \
+simptest_SOURCES = $(headers) \
         simptest.c
 simptest_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simptest_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simpclient_SOURCES = \
+simpclient_SOURCES = $(headers) \
         simpclient.c
 simpclient_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpclient_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simppub_SOURCES = \
+simppub_SOURCES = $(headers) \
         simppub.c
 simppub_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simppub_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simpdmodex_SOURCES = \
+simpdmodex_SOURCES = $(headers) \
         simpdmodex.c
 simpdmodex_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpdmodex_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simpft_SOURCES = \
+simpft_SOURCES = $(headers) \
         simpft.c
 simpft_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpft_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simpdyn_SOURCES = \
+simpdyn_SOURCES = $(headers) \
         simpdyn.c
 simpdyn_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpdyn_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-test_pmix_SOURCES = \
+test_pmix_SOURCES = $(headers) \
         test_pmix.c
 test_pmix_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 test_pmix_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simptool_SOURCES = \
+simptool_SOURCES = $(headers) \
         simptool.c
 simptool_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simptool_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simpdie_SOURCES = \
+simpdie_SOURCES = $(headers) \
         simpdie.c
 simpdie_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simpdie_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simplegacy_SOURCES = \
+simplegacy_SOURCES = $(headers) \
         simplegacy.c
 simplegacy_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simplegacy_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-simptimeout_SOURCES = \
+simptimeout_SOURCES = $(headers) \
         simptimeout.c
 simptimeout_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 simptimeout_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-gwtest_SOURCES = \
+gwtest_SOURCES = $(headers) \
         gwtest.c
 gwtest_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 gwtest_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-gwclient_SOURCES = \
+gwclient_SOURCES = $(headers) \
         gwclient.c
 gwclient_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 gwclient_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-stability_SOURCES = \
+stability_SOURCES = $(headers) \
         stability.c
 stability_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 stability_LDADD = \
     $(top_builddir)/src/libpmix.la
 
-quietclient_SOURCES = \
+quietclient_SOURCES = $(headers) \
         quietclient.c
 quietclient_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 quietclient_LDADD = \
