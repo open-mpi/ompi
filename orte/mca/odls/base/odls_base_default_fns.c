@@ -121,6 +121,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     opal_list_t *modex;
     int n;
 
+
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
