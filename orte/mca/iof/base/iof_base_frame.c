@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -118,7 +118,7 @@ static int orte_iof_base_close(void)
  */
 static int orte_iof_base_open(mca_base_open_flag_t flags)
 {
-    int rc, xmlfd;
+    int xmlfd;
 
     /* daemons do not need to do this as they do not write out stdout/err */
     if (!ORTE_PROC_IS_DAEMON) {

@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
@@ -115,9 +115,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     void *nptr;
     uint32_t key;
     char *nidmap;
-    orte_proc_t *dmn, *proc;
-    opal_value_t *val = NULL, *kv;
-    opal_list_t *modex;
+    orte_proc_t *proc;
     int n;
 
     /* get the job data pointer */

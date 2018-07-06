@@ -17,7 +17,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies Ltd. All rights reserved.
@@ -392,7 +392,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     int32_t expected = OMPI_MPI_STATE_NOT_INITIALIZED;
     int32_t desired  = OMPI_MPI_STATE_INIT_STARTED;
     opal_atomic_wmb();
-    if (!opal_atomic_cmpset_32(&ompi_mpi_state, &expected, desired)) {
+    if (!opal_atomic_cmpset_32(&ompi_mpi_state, expected, desired)) {
         // If we failed to atomically transition ompi_mpi_state from
         // NOT_INITIALIZED to INIT_STARTED, then someone else already
         // did that, and we should return.
