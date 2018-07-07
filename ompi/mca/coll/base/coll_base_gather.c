@@ -65,9 +65,6 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
     COLL_BASE_UPDATE_IN_ORDER_BMTREE( comm, base_module, root );
     bmtree = data->cached_in_order_bmtree;
 
-    ompi_datatype_type_extent(sdtype, &sextent);
-    ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
-
     vrank = (rank - root + size) % size;
 
     if (rank == root) {
@@ -107,6 +104,8 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
         /* other non-leaf nodes, allocate temp buffer for data received from
          * children, the most we need is half of the total data elements due
          * to the property of binimoal tree */
+        ompi_datatype_type_extent(sdtype, &sextent);
+        ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
         tempbuf = (char *) malloc(ssize);
         if (NULL == tempbuf) {
             err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
