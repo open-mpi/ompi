@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +41,8 @@ static int get_distance_matrix(void)
      * responsible for freeing it. */
 
     if (NULL == matrix) {
-        matrix = hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
-                                                         HWLOC_OBJ_NODE);
+        matrix = (struct hwloc_distances_s*)hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
+                                                                                    HWLOC_OBJ_NODE);
     }
 
     return (NULL == matrix) ? OPAL_ERROR : OPAL_SUCCESS;

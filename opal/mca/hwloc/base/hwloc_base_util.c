@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -2047,8 +2047,9 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
     hwloc_obj_t root = NULL;
     int depth;
     unsigned i;
-#endif
+#else
     unsigned distances_nr = 0;
+#endif
 
     for (device_obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_OS_DEVICE, 0); device_obj; device_obj = hwloc_get_next_osdev(topo, device_obj)) {
         if (device_obj->attr->osdev.type == HWLOC_OBJ_OSDEV_OPENFABRICS
@@ -2070,7 +2071,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
 
                 /* find distance matrix for all numa nodes */
 #if HWLOC_API_VERSION < 0x20000
-                distances = hwloc_get_whole_distance_matrix_by_type(topo, HWLOC_OBJ_NODE);
+                distances = (struct hwloc_distances_s*)hwloc_get_whole_distance_matrix_by_type(topo, HWLOC_OBJ_NODE);
                 if (NULL ==  distances) {
                     /* we can try to find distances under group object. This info can be there. */
                     depth = hwloc_get_type_depth(topo, HWLOC_OBJ_NODE);
