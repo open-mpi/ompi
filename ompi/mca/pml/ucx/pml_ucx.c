@@ -374,7 +374,7 @@ static void mca_pml_ucx_waitall(void **reqs, int *count_p)
 
     PML_UCX_VERBOSE(2, "waiting for %d disconnect requests", *count_p);
     for (i = 0; i < *count_p; ++i) {
-        opal_common_ucx_wait_request(reqs[i], ompi_pml_ucx.ucp_worker);
+        opal_common_ucx_wait_request(reqs[i], ompi_pml_ucx.ucp_worker, "ucp_disconnect_nb");
         reqs[i] = NULL;
     }
 

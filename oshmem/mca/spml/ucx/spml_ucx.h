@@ -32,10 +32,15 @@
 #include "oshmem/mca/memheap/base/base.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 
 #include <ucp/api/ucp.h>
 
 BEGIN_C_DECLS
+
+#define SPML_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
+#define SPML_UCX_ERROR   MCA_COMMON_UCX_ERROR
+#define SPML_UCX_VERBOSE MCA_COMMON_UCX_VERBOSE
 
 /**
  * UCX SPML module

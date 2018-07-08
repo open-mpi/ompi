@@ -190,9 +190,7 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
         status = ucp_atomic_post(ep, UCP_ATOMIC_POST_OP_ADD, 1,
                                  sizeof(uint64_t), remote_addr, rkey);
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_atomic_post failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_atomic_post failed: %d", status);
         }
 
         opal_common_ucx_ep_flush(ep, mca_osc_ucx_component.ucp_worker);

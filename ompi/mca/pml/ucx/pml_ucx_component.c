@@ -52,14 +52,6 @@ mca_pml_base_component_2_0_0_t mca_pml_ucx_component = {
 
 static int mca_pml_ucx_component_register(void)
 {
-    ompi_pml_ucx.verbose = 0;
-    (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "verbose",
-                                           "Verbose level of the UCX component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &ompi_pml_ucx.verbose);
-
     ompi_pml_ucx.priority = 51;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "priority",
                                            "Priority of the UCX component",
@@ -94,8 +86,7 @@ static void mca_pml_ucx_mem_release_cb(void *buf, size_t length,
 
 static int mca_pml_ucx_component_open(void)
 {
-    ompi_pml_ucx.output = opal_output_open(NULL);
-    opal_output_set_verbosity(ompi_pml_ucx.output, ompi_pml_ucx.verbose);
+    opal_common_ucx_mca_register();
 
     /* Set memory hooks */
     if (ompi_pml_ucx.opal_mem_hooks &&
@@ -121,7 +112,7 @@ static int mca_pml_ucx_component_close(void)
     }
 
     opal_mem_hooks_unregister_release(mca_pml_ucx_mem_release_cb);
-    opal_output_close(ompi_pml_ucx.output);
+    opal_common_ucx_mca_deregister();
     return 0;
 }
 

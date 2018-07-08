@@ -14,6 +14,11 @@
 
 #include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
+#include "opal/mca/common/ucx/common_ucx.h"
+
+#define OSC_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
+#define OSC_UCX_ERROR   MCA_COMMON_UCX_ERROR
+#define OSC_UCX_VERBOSE MCA_COMMON_UCX_VERBOSE
 
 #define OMPI_OSC_UCX_POST_PEER_MAX 32
 #define OMPI_OSC_UCX_ATTACH_MAX    32

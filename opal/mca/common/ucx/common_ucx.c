@@ -15,23 +15,44 @@
 
 /***********************************************************************/
 
-int opal_common_ucx_progress_iterations = 100;
+opal_common_ucx_module_t opal_common_ucx = {
+    .verbose             = 0,
+    .progress_iterations = 100,
+    .registered          = 0
+};
 
 OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
 {
-    static int registered = 0;
-
-    if (registered) {
+    opal_common_ucx.registered++;
+    if (opal_common_ucx.registered > 1) {
         /* process once */
         return;
     }
 
-    registered = 1;
+    mca_base_var_register("opal", "opal_common", "ucx", "verbose",
+                          "Verbose level of the UCX components",
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                          &opal_common_ucx.verbose);
     mca_base_var_register("opal", "opal_common", "ucx", "progress_iterations",
                           "Set number of calls of internal UCX progress calls per opal_progress call",
                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
-                          &opal_common_ucx_progress_iterations);
+                          &opal_common_ucx.progress_iterations);
+
+    opal_common_ucx.output = opal_output_open(NULL);
+    opal_output_set_verbosity(opal_common_ucx.output, opal_common_ucx.verbose);
+}
+
+OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void)
+{
+    /* unregister only on last deregister */
+    opal_common_ucx.registered--;
+    assert(opal_common_ucx.registered >= 0);
+    if (opal_common_ucx.registered) {
+        return;
+    }
+    opal_output_close(opal_common_ucx.output);
 }
 
 void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status)

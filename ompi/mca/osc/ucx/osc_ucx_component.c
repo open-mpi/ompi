@@ -125,9 +125,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
     status = ucp_config_read("MPI", NULL, &config);
     if (UCS_OK != status) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_config_read failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_config_read failed: %d", status);
         return OMPI_ERROR;
     }
 
@@ -139,9 +137,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
                                OBJ_CLASS(ompi_osc_ucx_request_t),
                                0, 0, 8, 0, 8, NULL, 0, NULL, NULL, NULL);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: opal_free_list_init failed: %d\n",
-                            __FILE__, __LINE__, ret);
+        OSC_UCX_VERBOSE(1, "opal_free_list_init failed: %d", ret);
         goto error;
     }
 
@@ -164,9 +160,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
     status = ucp_init(&context_params, config, &mca_osc_ucx_component.ucp_context);
     ucp_config_release(config);
     if (UCS_OK != status) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_init failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_init failed: %d", status);
         ret = OMPI_ERROR;
         goto error;
     }
@@ -196,6 +190,7 @@ static int component_finalize(void) {
     OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
     opal_progress_unregister(progress_callback);
     ucp_cleanup(mca_osc_ucx_component.ucp_context);
+    opal_common_ucx_mca_deregister();
     return OMPI_SUCCESS;
 }
 
@@ -265,9 +260,7 @@ static inline int mem_map(void **base, size_t size, ucp_mem_h *memh_ptr,
 
     status = ucp_mem_map(mca_osc_ucx_component.ucp_context, &mem_params, memh_ptr);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_mem_map failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_mem_map failed: %d", status);
         ret = OMPI_ERROR;
         goto error;
     }
@@ -275,9 +268,7 @@ static inline int mem_map(void **base, size_t size, ucp_mem_h *memh_ptr,
     mem_attrs.field_mask = UCP_MEM_ATTR_FIELD_ADDRESS | UCP_MEM_ATTR_FIELD_LENGTH;
     status = ucp_mem_query((*memh_ptr), &mem_attrs);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_mem_query failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_mem_query failed: %d", status);
         ret = OMPI_ERROR;
         goto error;
     }
@@ -336,9 +327,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         status = ucp_worker_create(mca_osc_ucx_component.ucp_context, &worker_params,
                                    &(mca_osc_ucx_component.ucp_worker));
         if (UCS_OK != status) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_worker_create failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_worker_create failed: %d", status);
             ret = OMPI_ERROR;
             goto error_nomem;
         }
@@ -346,9 +335,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         ret = opal_progress_register(progress_callback);
         progress_registered = true;
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: opal_progress_register failed: %d\n",
-                                __FILE__, __LINE__, ret);
+            OSC_UCX_VERBOSE(1, "opal_progress_register failed: %d", ret);
             goto error;
         }
 
@@ -356,18 +343,14 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         worker_attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
         status = ucp_worker_query(mca_osc_ucx_component.ucp_worker, &worker_attr);
         if (UCS_OK != status) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_worker_query failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_worker_query failed: %d", status);
             ret = OMPI_ERROR;
             goto error_nomem;
         }
 
         if (mca_osc_ucx_component.enable_mpi_threads == true &&
             worker_attr.thread_mode != UCS_THREAD_MODE_MULTI) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucx does not support multithreading\n",
-                                __FILE__, __LINE__);
+            OSC_UCX_VERBOSE(1, "ucx does not support multithreading");
             ret = OMPI_ERROR;
             goto error_nomem;
         }
@@ -450,9 +433,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         status = ucp_worker_get_address(mca_osc_ucx_component.ucp_worker,
                                         &my_addr, &my_addr_len);
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_worker_get_address failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_worker_get_address failed: %d", status);
             ret = OMPI_ERROR;
             goto error;
         }
@@ -472,9 +453,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
                 ep_params.address = (ucp_address_t *)&(recv_buf[disps[i]]);
                 status = ucp_ep_create(mca_osc_ucx_component.ucp_worker, &ep_params, &ep);
                 if (status != UCS_OK) {
-                    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                        "%s:%d: ucp_ep_create failed: %d\n",
-                                        __FILE__, __LINE__, status);
+                    OSC_UCX_VERBOSE(1, "ucp_ep_create failed: %d", status);
                     ret = OMPI_ERROR;
                     goto error;
                 }
@@ -519,9 +498,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         status = ucp_rkey_pack(mca_osc_ucx_component.ucp_context, module->memh,
                                &rkey_buffer, &rkey_buffer_size);
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_rkey_pack failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_rkey_pack failed: %d", status);
             ret = OMPI_ERROR;
             goto error;
         }
@@ -532,9 +509,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     status = ucp_rkey_pack(mca_osc_ucx_component.ucp_context, module->state_memh,
                            &state_rkey_buffer, &state_rkey_buffer_size);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_rkey_pack failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_rkey_pack failed: %d", status);
         ret = OMPI_ERROR;
         goto error;
     }
@@ -581,9 +556,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
             status = ucp_ep_rkey_unpack(ep, &(recv_buf[disps[i] + 2 * sizeof(uint64_t)]),
                                         &((module->win_info_array[i]).rkey));
             if (status != UCS_OK) {
-                opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                    "%s:%d: ucp_ep_rkey_unpack failed: %d\n",
-                                    __FILE__, __LINE__, status);
+                OSC_UCX_VERBOSE(1, "ucp_ep_rkey_unpack failed: %d", status);
                 ret = OMPI_ERROR;
                 goto error;
             }
@@ -593,9 +566,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         status = ucp_ep_rkey_unpack(ep, &(recv_buf[disps[i] + 2 * sizeof(uint64_t) + rkey_sizes[i]]),
                                     &((module->state_info_array[i]).rkey));
         if (status != UCS_OK) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: ucp_ep_rkey_unpack failed: %d\n",
-                                __FILE__, __LINE__, status);
+            OSC_UCX_VERBOSE(1, "ucp_ep_rkey_unpack failed: %d", status);
             ret = OMPI_ERROR;
             goto error;
         }
@@ -750,9 +721,7 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
                            module->local_dynamic_win_info[insert_index].memh,
                            &rkey_buffer, (size_t *)&rkey_buffer_size);
     if (status != UCS_OK) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ucp_rkey_pack failed: %d\n",
-                            __FILE__, __LINE__, status);
+        OSC_UCX_VERBOSE(1, "ucp_rkey_pack failed: %d", status);
         return OMPI_ERROR;
     }
 

@@ -85,7 +85,7 @@ mca_spml_ucx_t mca_spml_ucx = {
 
 int mca_spml_ucx_enable(bool enable)
 {
-    SPML_VERBOSE(50, "*** ucx ENABLED ****");
+    SPML_UCX_VERBOSE(50, "*** ucx ENABLED ****");
     if (false == enable) {
         return OSHMEM_SUCCESS;
     }
@@ -100,9 +100,9 @@ static void mca_spml_ucx_waitall(void **reqs, int *count_p)
 {
     int i;
 
-    SPML_VERBOSE(10, "waiting for %d disconnect requests", *count_p);
+    SPML_UCX_VERBOSE(10, "waiting for %d disconnect requests", *count_p);
     for (i = 0; i < *count_p; ++i) {
-        opal_common_ucx_wait_request(reqs[i], mca_spml_ucx.ucp_worker);
+        opal_common_ucx_wait_request(reqs[i], mca_spml_ucx.ucp_worker, "ucp_disconnect_nb");
         reqs[i] = NULL;
     }
 
@@ -145,12 +145,12 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 
         mca_spml_ucx.ucp_peers[n].ucp_conn = NULL;
 
-        SPML_VERBOSE(10, "disconnecting from peer %d", n);
+        SPML_UCX_VERBOSE(10, "disconnecting from peer %zu", n);
         dreq = ucp_disconnect_nb(ep);
         if (dreq != NULL) {
             if (UCS_PTR_IS_ERR(dreq)) {
-                SPML_ERROR("ucp_disconnect_nb(%d) failed: %s", n,
-                           ucs_status_string(UCS_PTR_STATUS(dreq)));
+                SPML_UCX_ERROR("ucp_disconnect_nb(%zu) failed: %s", n,
+                               ucs_status_string(UCS_PTR_STATUS(dreq)));
                 continue;
             } else {
                 dreqs[num_reqs++] = dreq;
@@ -291,8 +291,8 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
         err = ucp_ep_create(mca_spml_ucx.ucp_worker, &ep_params,
                             &mca_spml_ucx.ucp_peers[i].ucp_conn);
         if (UCS_OK != err) {
-            SPML_ERROR("ucp_ep_create(proc=%d/%d) failed: %s", n, nprocs,
-                       ucs_status_string(err));
+            SPML_UCX_ERROR("ucp_ep_create(proc=%zu/%zu) failed: %s", n, nprocs,
+                           ucs_status_string(err));
             goto error2;
         }
 
@@ -305,7 +305,7 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
     free(wk_rsizes);
     free(wk_roffs);
 
-    SPML_VERBOSE(50, "*** ADDED PROCS ***");
+    SPML_UCX_VERBOSE(50, "*** ADDED PROCS ***");
     return OSHMEM_SUCCESS;
 
 error2:
@@ -321,7 +321,7 @@ error2:
     free(wk_roffs);
 error:
     rc = OSHMEM_ERR_OUT_OF_RESOURCE;
-    SPML_ERROR("add procs FAILED rc=%d", rc);
+    SPML_UCX_ERROR("add procs FAILED rc=%d", rc);
     return rc;
 
 }
@@ -334,8 +334,8 @@ spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva)
 
     r_mkey = mca_memheap_base_get_cached_mkey(pe, va, 0, rva);
     if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_ERROR("pe=%d: %p is not address of symmetric variable",
-                   pe, va);
+        SPML_UCX_ERROR("pe=%d: %p is not address of symmetric variable",
+                       pe, va);
         oshmem_shmem_abort(-1);
         return NULL;
     }
@@ -389,7 +389,7 @@ void mca_spml_ucx_rmkey_unpack(sshmem_mkey_t *mkey, uint32_t segno, int pe, int 
             mkey->u.data, 
             &ucx_mkey->rkey); 
     if (UCS_OK != err) {
-        SPML_ERROR("failed to unpack rkey: %s", ucs_status_string(err));
+        SPML_UCX_ERROR("failed to unpack rkey: %s", ucs_status_string(err));
         goto error_fatal;
     }
 
@@ -426,8 +426,8 @@ void mca_spml_ucx_memuse_hook(void *addr, size_t length)
 
     status = ucp_mem_advise(mca_spml_ucx.ucp_context, ucx_mkey->mem_h, &params);
     if (UCS_OK != status) {
-        SPML_ERROR("ucp_mem_advise failed addr %p len %llu : %s",
-                   addr, (unsigned long long)length, ucs_status_string(status));
+        SPML_UCX_ERROR("ucp_mem_advise failed addr %p len %llu : %s",
+                       addr, (unsigned long long)length, ucs_status_string(status));
     }
 }
 
@@ -487,7 +487,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         goto error_unmap;
     }
     if (len >= 0xffff) {
-        SPML_ERROR("packed rkey is too long: %llu >= %d",
+        SPML_UCX_ERROR("packed rkey is too long: %llu >= %d",
                 (unsigned long long)len,
                 0xffff);
         oshmem_shmem_abort(-1);
@@ -497,7 +497,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
                                 mkeys[0].u.data,
                                 &ucx_mkey->rkey);
     if (UCS_OK != status) {
-        SPML_ERROR("failed to unpack rkey");
+        SPML_UCX_ERROR("failed to unpack rkey");
         goto error_unmap;
     }
 
@@ -505,7 +505,6 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     mkeys[0].va_base = addr;
     *count = 1;
     mca_spml_ucx_cache_mkey(&mkeys[0], segno, my_pe);
-    opal_common_ucx_mca_register();
     return mkeys;
 
 error_unmap:
@@ -561,7 +560,7 @@ int mca_spml_ucx_get(void *src_addr, size_t size, void *dst_addr, int src)
 #if HAVE_DECL_UCP_GET_NB
     request = ucp_get_nb(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                          (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
-    return opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
+    return opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker, "ucp_get_nb");
 #else
     status = ucp_get(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
@@ -596,7 +595,7 @@ int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
 #if HAVE_DECL_UCP_PUT_NB
     request = ucp_put_nb(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                          (uint64_t)rva, ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
-    return opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker);
+    return opal_common_ucx_wait_request(request, mca_spml_ucx.ucp_worker, "ucp_put_nb");
 #else
     status = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
@@ -623,7 +622,7 @@ int mca_spml_ucx_fence(void)
 
     err = ucp_worker_fence(mca_spml_ucx.ucp_worker);
     if (UCS_OK != err) {
-         SPML_ERROR("fence failed: %s", ucs_status_string(err));
+         SPML_UCX_ERROR("fence failed: %s", ucs_status_string(err));
          oshmem_shmem_abort(-1);
          return OSHMEM_ERROR;
     }
