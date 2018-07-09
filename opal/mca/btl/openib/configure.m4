@@ -39,8 +39,8 @@ AC_DEFUN([MCA_opal_btl_openib_POST_CONFIG], [
 AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
     AC_CONFIG_FILES([opal/mca/btl/openib/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([cpcs btl_openib_LDFLAGS_save btl_openib_LIBS_save])
-    cpcs="oob"
+    OPAL_VAR_SCOPE_PUSH([cpcs_verbs btl_openib_LDFLAGS_save btl_openib_LIBS_save])
+    cpcs_verbs="oob"
 
     OPAL_CHECK_OPENFABRICS([btl_openib],
                      [btl_openib_happy="yes"
@@ -62,10 +62,10 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
 
     AS_IF([test "$btl_openib_happy" = "yes"],
           [if test "x$btl_openib_have_xrc" = "x1"; then
-              cpcs="$cpcs xoob"
+              cpcs_verbs="$cpcs_verbs xoob"
           fi
           if test "x$btl_openib_have_rdmacm" = "x1"; then
-              cpcs="$cpcs rdmacm"
+              cpcs_verbs="$cpcs_verbs rdmacm"
               if test "$enable_openib_rdmacm_ibaddr" = "yes"; then
                   AC_MSG_CHECKING([IB addressing])
                   AC_EGREP_CPP(
@@ -99,10 +99,10 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
               fi
           fi
           if test "x$btl_openib_have_udcm" = "x1"; then
-              cpcs="$cpcs udcm"
+              cpcs_verbs="$cpcs_verbs udcm"
           fi
-          AC_MSG_CHECKING([which openib btl cpcs will be built])
-          AC_MSG_RESULT([$cpcs])])
+          AC_MSG_CHECKING([which openib btl cpcs_verbs will be built])
+          AC_MSG_RESULT([$cpcs_verbs])])
 
     # make sure that CUDA-aware checks have been done
     AC_REQUIRE([OPAL_CHECK_CUDA])
