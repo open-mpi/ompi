@@ -112,6 +112,14 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                   ucp_request_check_status, ucp_put_nb, ucp_get_nb],
                                  [], [],
                                  [#include <ucp/api/ucp.h>])
+                  AC_CHECK_DECLS([UCP_ATOMIC_POST_OP_AND,
+                                  UCP_ATOMIC_POST_OP_OR,
+                                  UCP_ATOMIC_POST_OP_XOR,
+                                  UCP_ATOMIC_FETCH_OP_FAND,
+                                  UCP_ATOMIC_FETCH_OP_FOR,
+                                  UCP_ATOMIC_FETCH_OP_FXOR],
+                                 [], [],
+                                 [#include <ucp/api/ucp.h>])
                   CPPFLAGS=$old_CPPFLAGS
 
                   OPAL_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])])])

@@ -142,11 +142,53 @@ static int mca_atomic_basic_add(void *target, uint64_t value,
                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
 }
 
+static int mca_atomic_basic_and(void *target, uint64_t value,
+                                size_t size, int pe)
+{
+    return mca_atomic_basic_op(target, value, size, pe,
+                               MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_and_int64));
+}
+
+static int mca_atomic_basic_or(void *target, uint64_t value,
+                               size_t size, int pe)
+{
+    return mca_atomic_basic_op(target, value, size, pe,
+                               MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_or_int64));
+}
+
+static int mca_atomic_basic_xor(void *target, uint64_t value,
+                                size_t size, int pe)
+{
+    return mca_atomic_basic_op(target, value, size, pe,
+                               MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_xor_int64));
+}
+
 static int mca_atomic_basic_fadd(void *target, void *prev, uint64_t value,
                                  size_t size, int pe)
 {
     return mca_atomic_basic_fop(target, prev, value, size, pe,
                                 MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
+}
+
+static int mca_atomic_basic_fand(void *target, void *prev, uint64_t value,
+                                 size_t size, int pe)
+{
+    return mca_atomic_basic_fop(target, prev, value, size, pe,
+                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_and_int64));
+}
+
+static int mca_atomic_basic_for(void *target, void *prev, uint64_t value,
+                                size_t size, int pe)
+{
+    return mca_atomic_basic_fop(target, prev, value, size, pe,
+                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_or_int64));
+}
+
+static int mca_atomic_basic_fxor(void *target, void *prev, uint64_t value,
+                                 size_t size, int pe)
+{
+    return mca_atomic_basic_fop(target, prev, value, size, pe,
+                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_xor_int64));
 }
 
 static int mca_atomic_basic_swap(void *target, void *prev, uint64_t value,
@@ -166,7 +208,13 @@ mca_atomic_basic_query(int *priority)
     module = OBJ_NEW(mca_atomic_basic_module_t);
     if (module) {
         module->super.atomic_add   = mca_atomic_basic_add;
+        module->super.atomic_and   = mca_atomic_basic_and;
+        module->super.atomic_or    = mca_atomic_basic_or;
+        module->super.atomic_xor   = mca_atomic_basic_xor;
         module->super.atomic_fadd  = mca_atomic_basic_fadd;
+        module->super.atomic_fand  = mca_atomic_basic_fand;
+        module->super.atomic_for   = mca_atomic_basic_for;
+        module->super.atomic_fxor  = mca_atomic_basic_fxor;
         module->super.atomic_swap  = mca_atomic_basic_swap;
         module->super.atomic_cswap = mca_atomic_basic_cswap;
         return &(module->super);

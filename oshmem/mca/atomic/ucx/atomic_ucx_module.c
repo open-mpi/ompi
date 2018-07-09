@@ -83,6 +83,42 @@ static int mca_atomic_ucx_add(void *target,
     return mca_atomic_ucx_op(target, value, size, pe, UCP_ATOMIC_POST_OP_ADD);
 }
 
+static int mca_atomic_ucx_and(void *target,
+                              uint64_t value,
+                              size_t size,
+                              int pe)
+{
+#if HAVE_DECL_UCP_ATOMIC_POST_OP_AND
+    return mca_atomic_ucx_op(target, value, size, pe, UCP_ATOMIC_POST_OP_AND);
+#else
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#endif
+}
+
+static int mca_atomic_ucx_or(void *target,
+                              uint64_t value,
+                              size_t size,
+                              int pe)
+{
+#if HAVE_DECL_UCP_ATOMIC_POST_OP_OR
+    return mca_atomic_ucx_op(target, value, size, pe, UCP_ATOMIC_POST_OP_OR);
+#else
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#endif
+}
+
+static int mca_atomic_ucx_xor(void *target,
+                              uint64_t value,
+                              size_t size,
+                              int pe)
+{
+#if HAVE_DECL_UCP_ATOMIC_POST_OP_XOR
+    return mca_atomic_ucx_op(target, value, size, pe, UCP_ATOMIC_POST_OP_XOR);
+#else
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#endif
+}
+
 static int mca_atomic_ucx_fadd(void *target,
                                void *prev,
                                uint64_t value,
@@ -90,6 +126,45 @@ static int mca_atomic_ucx_fadd(void *target,
                                int pe)
 {
     return mca_atomic_ucx_fop(target, prev, value, size, pe, UCP_ATOMIC_FETCH_OP_FADD);
+}
+
+static int mca_atomic_ucx_fand(void *target,
+                               void *prev,
+                               uint64_t value,
+                               size_t size,
+                               int pe)
+{
+#if HAVE_DECL_UCP_ATOMIC_FETCH_OP_FAND
+    return mca_atomic_ucx_fop(target, prev, value, size, pe, UCP_ATOMIC_FETCH_OP_FAND);
+#else
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#endif
+}
+
+static int mca_atomic_ucx_for(void *target,
+                               void *prev,
+                               uint64_t value,
+                               size_t size,
+                               int pe)
+{
+#if HAVE_DECL_UCP_ATOMIC_FETCH_OP_FOR
+    return mca_atomic_ucx_fop(target, prev, value, size, pe, UCP_ATOMIC_FETCH_OP_FOR);
+#else
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#endif
+}
+
+static int mca_atomic_ucx_fxor(void *target,
+                               void *prev,
+                               uint64_t value,
+                               size_t size,
+                               int pe)
+{
+#if HAVE_DECL_UCP_ATOMIC_FETCH_OP_FXOR
+    return mca_atomic_ucx_fop(target, prev, value, size, pe, UCP_ATOMIC_FETCH_OP_FXOR);
+#else
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#endif
 }
 
 static int mca_atomic_ucx_swap(void *target,
@@ -112,7 +187,13 @@ mca_atomic_ucx_query(int *priority)
     module = OBJ_NEW(mca_atomic_ucx_module_t);
     if (module) {
         module->super.atomic_add   = mca_atomic_ucx_add;
+        module->super.atomic_and   = mca_atomic_ucx_and;
+        module->super.atomic_or    = mca_atomic_ucx_or;
+        module->super.atomic_xor   = mca_atomic_ucx_xor;
         module->super.atomic_fadd  = mca_atomic_ucx_fadd;
+        module->super.atomic_fand  = mca_atomic_ucx_fand;
+        module->super.atomic_for   = mca_atomic_ucx_for;
+        module->super.atomic_fxor  = mca_atomic_ucx_fxor;
         module->super.atomic_swap  = mca_atomic_ucx_swap;
         module->super.atomic_cswap = mca_atomic_ucx_cswap;
         return &(module->super);
