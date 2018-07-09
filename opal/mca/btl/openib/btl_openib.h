@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -245,6 +245,7 @@ struct mca_btl_openib_component_t {
        guarantee about the size of an enum. this value will be registered as an
        integer with the MCA variable system */
     int device_type;
+    bool allow_ib;
     char *if_include;
     char **if_include_list;
     char *if_exclude;

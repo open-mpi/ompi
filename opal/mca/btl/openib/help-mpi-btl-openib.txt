@@ -14,6 +14,8 @@
 # Copyright (c) 2007-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2018      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -250,6 +252,10 @@ this run.
 
 If the "requested type" is "<any>", this usually means that *no*
 OpenFabrics devices were found within the requested bus distance.
+
+Note starting with Open MPI 4.0, only iWarp and RoCE devices are considered
+for selection by default.  Set the btl_openib_allow_ib MCA
+parameter to "true" to allow use of Infiniband devices.
 #
 [default subnet prefix]
 WARNING: There are more than one active ports on host '%s', but the
@@ -706,3 +712,14 @@ Open MPI has detected that you have attempted to set the btl_openib_cuda_max_sen
 value. This is not supported. Setting back to default value of 0.
 
   Local host:              %s
+[ib port not selected]
+By default, for Open MPI 4.0 and later, infiniband ports on a device
+are not used by default.  The intent is to use UCX for these devices.
+You can override this policy by setting the btl_openib_allow_ib MCA parameter
+to true.
+
+  Local host:              %s
+  Local adapter:           %s
+  Local port:              %d
+#
+
