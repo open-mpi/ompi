@@ -8,8 +8,8 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -57,7 +57,8 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_2_0_t *module)
 {
-  int rank, p, res, datasize;
+  int rank, p, res;
+  MPI_Aint datasize;
   size_t a2asize, sndsize;
   NBC_Schedule *schedule;
   MPI_Aint rcvext, sndext;
@@ -131,9 +132,9 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
     if(NBC_Type_intrinsic(sendtype)) {
       datasize = sndext * sendcount;
     } else {
-      res = PMPI_Pack_size (sendcount, sendtype, comm, &datasize);
+      res = ompi_datatype_pack_external_size("external32", sendcount, sendtype, &datasize);
       if (MPI_SUCCESS != res) {
-        NBC_Error("MPI Error in PMPI_Pack_size() (%i)", res);
+        NBC_Error("MPI Error in ompi_datatype_pack_external_size() (%i)", res);
         return res;
       }
     }
@@ -162,23 +163,23 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
         memcpy ((char *) tmpbuf + datasize * (p - rank), sendbuf, datasize * rank);
       }
     } else {
-      int pos=0;
+      MPI_Aint pos=0;
 
       /* non-contiguous - pack */
-      res = PMPI_Pack ((char *) sendbuf + rank * sendcount * sndext, (p - rank) * sendcount, sendtype, tmpbuf,
-                      (p - rank) * datasize, &pos, comm);
+      res = ompi_datatype_pack_external ("external32", (char *) sendbuf + (intptr_t)rank * (intptr_t)sendcount * sndext, (intptr_t)(p - rank) * (intptr_t)sendcount, sendtype, tmpbuf,
+                      (intptr_t)(p - rank) * datasize, &pos);
       if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-        NBC_Error("MPI Error in PMPI_Pack() (%i)", res);
+        NBC_Error("MPI Error in ompi_datatype_pack_external() (%i)", res);
         free(tmpbuf);
         return res;
       }
 
       if (rank != 0) {
         pos = 0;
-        res = PMPI_Pack(sendbuf, rank * sendcount, sendtype, (char *) tmpbuf + datasize * (p - rank),
-                       rank * datasize, &pos, comm);
+        res = ompi_datatype_pack_external("external32", sendbuf, (intptr_t)rank * (intptr_t)sendcount, sendtype, (char *) tmpbuf + datasize * (intptr_t)(p - rank),
+                       rank * datasize, &pos);
         if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-          NBC_Error("MPI Error in PMPI_Pack() (%i)", res);
+          NBC_Error("MPI Error in ompi_datatype_pack_external() (%i)", res);
           free(tmpbuf);
           return res;
         }
@@ -379,13 +380,13 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
       continue;
     }
 
-    char *rbuf = (char *) recvbuf + r * recvcount * rcvext;
+    char *rbuf = (char *) recvbuf + (intptr_t)r * (intptr_t)recvcount * rcvext;
     res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, r, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
 
-    char *sbuf = (char *) sendbuf + r * sendcount * sndext;
+    char *sbuf = (char *) sendbuf + (intptr_t)r * (intptr_t)sendcount * sndext;
     res = NBC_Sched_send (sbuf, false, sendcount, sendtype, r, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
@@ -398,7 +399,8 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,
                                  const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                  MPI_Datatype recvtype, MPI_Comm comm, void* tmpbuf) {
-  int res, speer, rpeer, datasize, offset, virtp;
+  int res, speer, rpeer, virtp;
+  MPI_Aint datasize, offset;
   char *rbuf, *rtmpbuf, *stmpbuf;
 
   if (p < 2) {
@@ -408,9 +410,9 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
   if(NBC_Type_intrinsic(sendtype)) {
     datasize = sndext*sendcount;
   } else {
-    res = PMPI_Pack_size(sendcount, sendtype, comm, &datasize);
+    res = ompi_datatype_pack_external_size("external32", sendcount, sendtype, &datasize);
     if (MPI_SUCCESS != res) {
-      NBC_Error("MPI Error in PMPI_Pack_size() (%i)", res);
+      NBC_Error("MPI Error in ompi_datatype_pack_external_size() (%i)", res);
       return res;
     }
   }
@@ -495,8 +497,8 @@ static inline int a2a_sched_inplace(int rank, int p, NBC_Schedule* schedule, voi
   for (int i = 1 ; i < (p+1)/2 ; i++) {
     int speer = (rank + i) % p;
     int rpeer = (rank + p - i) % p;
-    char *sbuf = (char *) buf + speer * count * ext;
-    char *rbuf = (char *) buf + rpeer * count * ext;
+    char *sbuf = (char *) buf + (intptr_t)speer * (intptr_t)count * ext;
+    char *rbuf = (char *) buf + (intptr_t)rpeer * (intptr_t)count * ext;
 
     res = NBC_Sched_copy (rbuf, false, count, type,
                           (void *)(-gap), true, count, type,
@@ -525,7 +527,7 @@ static inline int a2a_sched_inplace(int rank, int p, NBC_Schedule* schedule, voi
   if (0 == (p%2)) {
     int peer = (rank + p/2) % p;
 
-    char *tbuf = (char *) buf + peer * count * ext;
+    char *tbuf = (char *) buf + (intptr_t)peer * (intptr_t)count * ext;
     res = NBC_Sched_copy (tbuf, false, count, type,
                           (void *)(-gap), true, count, type,
                           schedule, true);
