@@ -10,8 +10,8 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -500,60 +500,20 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 
 /* let's give a try to inline functions */
 static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
-  int size, pos, res;
-  void *packbuf;
+  int res;
 
-#if OPAL_CUDA_SUPPORT
-  if((srctype == tgttype) && NBC_Type_intrinsic(srctype) && !(opal_cuda_check_bufs((char *)tgt, (char *)src))) {
-#else
-  if((srctype == tgttype) && NBC_Type_intrinsic(srctype)) {
-#endif /* OPAL_CUDA_SUPPORT */
-    /* if we have the same types and they are contiguous (intrinsic
-     * types are contiguous), we can just use a single memcpy */
-    ptrdiff_t gap, span;
-    span = opal_datatype_span(&srctype->super, srccount, &gap);
-
-    memcpy(tgt, src, span);
-  } else {
-    /* we have to pack and unpack */
-    res = PMPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Pack_size() (%i:%i)", res, size);
-      return res;
-    }
-
-    if (0 == size) {
-        return OMPI_SUCCESS;
-    }
-    packbuf = malloc(size);
-    if (NULL == packbuf) {
-      NBC_Error("Error in malloc()");
-      return res;
-    }
-
-    pos=0;
-    res = PMPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
-
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Pack() (%i)", res);
-      free (packbuf);
-      return res;
-    }
-
-    pos=0;
-    res = PMPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
-    free(packbuf);
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
-      return res;
-    }
+  res = ompi_datatype_sndrcv(src, srccount, srctype, tgt, tgtcount, tgttype);
+  if (OMPI_SUCCESS != res) {
+    NBC_Error ("MPI Error in ompi_datatype_sndrcv() (%i)", res);
+    return res;
   }
 
   return OMPI_SUCCESS;
 }
 
 static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm) {
-  int size, pos, res;
+  MPI_Aint size, pos;
+  int res;
   ptrdiff_t ext, lb;
 
 #if OPAL_CUDA_SUPPORT
@@ -563,6 +523,7 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 #endif /* OPAL_CUDA_SUPPORT */
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
+    res = ompi_datatype_pack_external_size("external32", srccount, srctype, &size);
     res = ompi_datatype_get_extent (srctype, &lb, &ext);
     if (OMPI_SUCCESS != res) {
       NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
@@ -573,15 +534,10 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 
   } else {
     /* we have to unpack */
-    res = PMPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Pack_size() (%i)", res);
-      return res;
-    }
     pos = 0;
-    res = PMPI_Unpack(src, size, &pos, tgt, srccount, srctype, comm);
+    res = ompi_datatype_unpack_external("external32", src, size, &pos, tgt, srccount, srctype);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
+      NBC_Error ("MPI Error in ompi_datatype_unpack_external() (%i)", res);
       return res;
     }
   }
