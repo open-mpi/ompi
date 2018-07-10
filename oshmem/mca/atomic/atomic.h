@@ -35,6 +35,49 @@ BEGIN_C_DECLS
 
 #define OSHMEM_ATOMIC_PTR_2_INT(ptr, size) ((size) == 8 ? *(uint64_t*)(ptr) : *(uint32_t*)(ptr))
 
+#define OSHMEM_TYPE_OP(type_name, type, prefix, op)                        \
+    void prefix##type_name##_atomic_##op(type *target, type value, int pe) \
+    {                                                                      \
+        int rc = OSHMEM_SUCCESS;                                           \
+        size_t size = 0;                                                   \
+                                                                           \
+        RUNTIME_CHECK_INIT();                                              \
+        RUNTIME_CHECK_PE(pe);                                              \
+        RUNTIME_CHECK_ADDR(target);                                        \
+                                                                           \
+        size = sizeof(value);                                              \
+        rc = MCA_ATOMIC_CALL(op(                                           \
+            (void*)target,                                                 \
+            value,                                                         \
+            size,                                                          \
+            pe));                                                          \
+        RUNTIME_CHECK_RC(rc);                                              \
+                                                                           \
+        return;                                                            \
+    }
+
+#define OSHMEM_TYPE_FOP(type_name, type, prefix, op)                       \
+    type prefix##type_name##_atomic_##op(type *target, type value, int pe) \
+    {                                                                      \
+        int rc = OSHMEM_SUCCESS;                                           \
+        size_t size = 0;                                                   \
+        type out_value;                                                    \
+                                                                           \
+        RUNTIME_CHECK_INIT();                                              \
+        RUNTIME_CHECK_PE(pe);                                              \
+        RUNTIME_CHECK_ADDR(target);                                        \
+                                                                           \
+        size = sizeof(out_value);                                          \
+        rc = MCA_ATOMIC_CALL(op(                                           \
+            (void*)target,                                                 \
+            (void*)&out_value,                                             \
+            value,                                                         \
+            size,                                                          \
+            pe));                                                          \
+        RUNTIME_CHECK_RC(rc);                                              \
+                                                                           \
+        return out_value;                                                  \
+    }
 /* ******************************************************************** */
 
 struct oshmem_op_t;
@@ -92,7 +135,34 @@ struct mca_atomic_base_module_1_0_0_t {
                       uint64_t value,
                       size_t size,
                       int pe);
+    int (*atomic_and)(void *target,
+                      uint64_t value,
+                      size_t size,
+                      int pe);
+    int (*atomic_or)(void *target,
+                     uint64_t value,
+                     size_t size,
+                     int pe);
+    int (*atomic_xor)(void *target,
+                      uint64_t value,
+                      size_t size,
+                      int pe);
     int (*atomic_fadd)(void *target,
+                       void *prev,
+                       uint64_t value,
+                       size_t size,
+                       int pe);
+    int (*atomic_fand)(void *target,
+                       void *prev,
+                       uint64_t value,
+                       size_t size,
+                       int pe);
+    int (*atomic_for)(void *target,
+                      void *prev,
+                      uint64_t value,
+                      size_t size,
+                      int pe);
+    int (*atomic_fxor)(void *target,
                        void *prev,
                        uint64_t value,
                        size_t size,

@@ -463,6 +463,42 @@ OSHMEM_DECLSPEC long long shmem_longlong_fadd(long long *target, long long value
             long long*:   shmem_longlong_fadd)(dst, val, pe)
 #endif
 
+/* Atomic Fetch&And */
+OSHMEM_DECLSPEC int shmem_int_atomic_fand(int *target, int value, int pe);
+OSHMEM_DECLSPEC long shmem_long_atomic_fand(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long shmem_longlong_atomic_fand(long long *target, long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define shmem_atomic_fand(dst, val, pe)                             \
+    _Generic(&*(dst),                                               \
+            int*:         shmem_int_atomic_fand,                    \
+            long*:        shmem_long_atomic_fand,                   \
+            long long*:   shmem_longlong_atomic_fand)(dst, val, pe)
+#endif
+
+/* Atomic Fetch&Or */
+OSHMEM_DECLSPEC int shmem_int_atomic_for(int *target, int value, int pe);
+OSHMEM_DECLSPEC long shmem_long_atomic_for(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long shmem_longlong_atomic_for(long long *target, long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define shmem_atomic_for(dst, val, pe)                             \
+    _Generic(&*(dst),                                              \
+            int*:         shmem_int_atomic_for,                    \
+            long*:        shmem_long_atomic_for,                   \
+            long long*:   shmem_longlong_atomic_for)(dst, val, pe)
+#endif
+
+/* Atomic Fetch&Xor */
+OSHMEM_DECLSPEC int shmem_int_atomic_fxor(int *target, int value, int pe);
+OSHMEM_DECLSPEC long shmem_long_atomic_fxor(long *target, long value, int pe);
+OSHMEM_DECLSPEC long long shmem_longlong_atomic_fxor(long long *target, long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define shmem_atomic_fxor(dst, val, pe)                             \
+    _Generic(&*(dst),                                               \
+            int*:         shmem_int_atomic_fxor,                    \
+            long*:        shmem_long_atomic_fxor,                   \
+            long long*:   shmem_longlong_atomic_fxor)(dst, val, pe)
+#endif
+
 /* Atomic Fetch */
 OSHMEM_DECLSPEC int shmem_int_fetch(const int *target, int pe);
 OSHMEM_DECLSPEC long shmem_long_fetch(const long *target, int pe);
@@ -491,7 +527,7 @@ OSHMEM_DECLSPEC long long shmem_longlong_finc(long long *target, int pe);
             long long*:   shmem_longlong_finc)(dst, pe)
 #endif
 
-/* Atomic Add*/
+/* Atomic Add */
 OSHMEM_DECLSPEC void shmem_int_add(int *target, int value, int pe);
 OSHMEM_DECLSPEC void shmem_long_add(long *target, long value, int pe);
 OSHMEM_DECLSPEC void shmem_longlong_add(long long *target, long long value, int pe);
@@ -501,6 +537,42 @@ OSHMEM_DECLSPEC void shmem_longlong_add(long long *target, long long value, int 
             int*:         shmem_int_add,                    \
             long*:        shmem_long_add,                   \
             long long*:   shmem_longlong_add)(dst, val, pe)
+#endif
+
+/* Atomic And */
+OSHMEM_DECLSPEC void shmem_int_atomic_and(int *target, int value, int pe);
+OSHMEM_DECLSPEC void shmem_long_atomic_and(long *target, long value, int pe);
+OSHMEM_DECLSPEC void shmem_longlong_atomic_and(long long *target, long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define shmem_atomic_and(dst, val, pe)                             \
+    _Generic(&*(dst),                                              \
+            int*:         shmem_int_atomic_and,                    \
+            long*:        shmem_long_atomic_and,                   \
+            long long*:   shmem_longlong_atomic_and)(dst, val, pe)
+#endif
+
+/* Atomic Or */
+OSHMEM_DECLSPEC void shmem_int_atomic_or(int *target, int value, int pe);
+OSHMEM_DECLSPEC void shmem_long_atomic_or(long *target, long value, int pe);
+OSHMEM_DECLSPEC void shmem_longlong_atomic_or(long long *target, long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define shmem_atomic_or(dst, val, pe)                             \
+    _Generic(&*(dst),                                             \
+            int*:         shmem_int_atomic_or,                    \
+            long*:        shmem_long_atomic_or,                   \
+            long long*:   shmem_longlong_atomic_or)(dst, val, pe)
+#endif
+
+/* Atomic Xor */
+OSHMEM_DECLSPEC void shmem_int_atomic_xor(int *target, int value, int pe);
+OSHMEM_DECLSPEC void shmem_long_atomic_xor(long *target, long value, int pe);
+OSHMEM_DECLSPEC void shmem_longlong_atomic_xor(long long *target, long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define shmem_atomic_xor(dst, val, pe)                             \
+    _Generic(&*(dst),                                              \
+            int*:         shmem_int_atomic_xor,                    \
+            long*:        shmem_long_atomic_xor,                   \
+            long long*:   shmem_longlong_atomic_xor)(dst, val, pe)
 #endif
 
 /* Atomic Inc */
