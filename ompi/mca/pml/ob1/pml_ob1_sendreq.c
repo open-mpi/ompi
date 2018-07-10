@@ -18,6 +18,7 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -424,29 +425,31 @@ int mca_pml_ob1_send_request_start_buffered(
     des->des_cbfunc = mca_pml_ob1_rndv_completion;
     des->des_cbdata = sendreq;
 
-    /* buffer the remainder of the message */
-    rc = mca_pml_base_bsend_request_alloc((ompi_request_t*)sendreq);
-    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
-        mca_bml_base_free(bml_btl, des);
-        return rc;
+    /* buffer the remainder of the message if it is not buffered yet */
+    if( OPAL_LIKELY(sendreq->req_send.req_addr == sendreq->req_send.req_base.req_addr) ) {
+        rc = mca_pml_base_bsend_request_alloc((ompi_request_t*)sendreq);
+        if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+            mca_bml_base_free(bml_btl, des);
+            return rc;
+        }
+
+        iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)sendreq->req_send.req_addr) + max_data);
+        iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - max_data;
+
+        if((rc = opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+                                      &iov,
+                                      &iov_count,
+                                      &max_data)) < 0) {
+            mca_bml_base_free(bml_btl, des);
+            return rc;
+        }
+
+        /* re-init convertor for packed data */
+        opal_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor,
+                                         &(ompi_mpi_byte.dt.super),
+                                         sendreq->req_send.req_bytes_packed,
+                                         sendreq->req_send.req_addr );
     }
-
-    iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)sendreq->req_send.req_addr) + max_data);
-    iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - max_data;
-
-    if((rc = opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
-                                  &iov,
-                                  &iov_count,
-                                  &max_data)) < 0) {
-        mca_bml_base_free(bml_btl, des);
-        return rc;
-    }
-
-    /* re-init convertor for packed data */
-    opal_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor,
-                                     &(ompi_mpi_byte.dt.super),
-                                     sendreq->req_send.req_bytes_packed,
-                                     sendreq->req_send.req_addr );
 
     /* wait for ack and completion */
     sendreq->req_state = 2;
