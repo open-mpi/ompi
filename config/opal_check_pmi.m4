@@ -429,7 +429,9 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                        [Whether the external PMIx library is v1])
     AM_CONDITIONAL([OPAL_WANT_PRUN], [test "$opal_prun_happy" = "yes"])
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [$opal_external_pmix_version])
+    AS_IF([test "$opal_external_pmix_version" = "1.2.x"],
+          [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [$opal_external_pmix_version: WARNING - DYNAMIC OPS NOT SUPPORTED])],
+          [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [$opal_external_pmix_version])])
 
     OPAL_VAR_SCOPE_POP
 ])
