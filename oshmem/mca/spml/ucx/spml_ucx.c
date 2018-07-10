@@ -103,28 +103,11 @@ int mca_spml_ucx_enable(bool enable)
     return OSHMEM_SUCCESS;
 }
 
-
-static void mca_spml_ucx_waitall(void **reqs, int *count_p)
-{
-    int i;
-
-    SPML_UCX_VERBOSE(10, "waiting for %d disconnect requests", *count_p);
-    for (i = 0; i < *count_p; ++i) {
-        opal_common_ucx_wait_request(reqs[i], mca_spml_ucx_ctx_default.ucp_worker, "ucp_disconnect_nb");
-        reqs[i] = NULL;
-    }
-
-    *count_p = 0;
-}
-
 int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
-    int my_rank = oshmem_my_proc_id();
-    int num_reqs;
-    size_t max_reqs;
-    void *dreq, **dreqs;
-    ucp_ep_h ep;
-    size_t i, n;
+    opal_common_ucx_del_proc_t *del_procs;
+    size_t i;
+    int ret;
 
     oshmem_shmem_barrier();
 
@@ -132,53 +115,30 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
         return OSHMEM_SUCCESS;
     }
 
-    max_reqs = mca_spml_ucx.num_disconnect;
-    if (max_reqs > nprocs) {
-        max_reqs = nprocs;
-    }
-
-    dreqs = malloc(sizeof(*dreqs) * max_reqs);
-    if (dreqs == NULL) {
+    del_procs = malloc(sizeof(*del_procs) * nprocs);
+    if (del_procs == NULL) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    num_reqs = 0;
-
     for (i = 0; i < nprocs; ++i) {
-        n  = (i + my_rank) % nprocs;
-        ep = mca_spml_ucx_ctx_default.ucp_peers[n].ucp_conn;
-        if (ep == NULL) {
-            continue;
-        }
+        del_procs[i].ep   = mca_spml_ucx_ctx_default.ucp_peers[i].ucp_conn;
+        del_procs[i].vpid = i;
 
-        mca_spml_ucx_ctx_default.ucp_peers[n].ucp_conn = NULL;
-
-        SPML_UCX_VERBOSE(10, "disconnecting from peer %zu", n);
-        dreq = ucp_disconnect_nb(ep);
-        if (dreq != NULL) {
-            if (UCS_PTR_IS_ERR(dreq)) {
-                SPML_UCX_ERROR("ucp_disconnect_nb(%zu) failed: %s", n,
-                               ucs_status_string(UCS_PTR_STATUS(dreq)));
-                continue;
-            } else {
-                dreqs[num_reqs++] = dreq;
-                if (num_reqs >= mca_spml_ucx.num_disconnect) {
-                    mca_spml_ucx_waitall(dreqs, &num_reqs);
-                }
-            }
-        }
+        /* mark peer as disconnected */
+        mca_spml_ucx_ctx_default.ucp_peers[i].ucp_conn = NULL;
     }
-    /* num_reqs == 0 is processed by mca_pml_ucx_waitall routine,
-     * so suppress coverity warning */
-    /* coverity[uninit_use_in_call] */
-    mca_spml_ucx_waitall(dreqs, &num_reqs);
-    free(dreqs);
-    free(mca_spml_ucx.remote_addrs_tbl);
 
-    opal_common_ucx_mca_pmix_fence(mca_spml_ucx_ctx_default.ucp_worker);
+    ret = opal_common_ucx_del_procs(del_procs, nprocs, oshmem_my_proc_id(),
+                                    mca_spml_ucx.num_disconnect,
+                                    mca_spml_ucx_ctx_default.ucp_worker);
+
+    free(del_procs);
+    free(mca_spml_ucx.remote_addrs_tbl);
     free(mca_spml_ucx_ctx_default.ucp_peers);
+
     mca_spml_ucx_ctx_default.ucp_peers = NULL;
-    return OSHMEM_SUCCESS;
+
+    return ret;
 }
 
 /* TODO: move func into common place, use it with rkey exchng too */
