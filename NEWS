@@ -58,6 +58,23 @@ included in the vX.Y.Z section and be denoted as:
 Master (not on release branches yet)
 ------------------------------------
 
+**********************************************************************
+*  PRE-DEPRECATION WARNING: MPIR Support
+*
+* As was announced in summer 2017, Open MPI is deprecating support for
+* MPIR-based tools beginning with the future release of OMPI v5.0, with
+* full removal of that support tentatively planned for OMPI v6.0.
+*
+* This serves as a pre-deprecation warning to provide tools developers
+* with sufficient time to migrate to PMIx. Support for PMIx-based
+* tools will be rolled out during the OMPI v4.x series. No runtime
+* deprecation warnings will be output during this time.
+*
+* Runtime deprecation warnings will be output beginning with the OMPI v5.0
+* release whenever MPIR-based tools connect to Open MPI's mpirun/mpiexec
+* launcher.
+**********************************************************************
+
 - Fix rank-by algorithms to properly rank by object and span
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
