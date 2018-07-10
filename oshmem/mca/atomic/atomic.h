@@ -53,7 +53,7 @@ BEGIN_C_DECLS
             pe));                                                          \
         RUNTIME_CHECK_RC(rc);                                              \
                                                                            \
-        return ;                                                           \
+        return;                                                            \
     }
 
 #define OSHMEM_TYPE_FOP(type_name, type, prefix, op)                       \

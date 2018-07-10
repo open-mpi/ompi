@@ -22,7 +22,7 @@
  * These routines perform an atomic fetch-and-or operation.
  * The fetch and or routines retrieve the value at address target on PE pe, and update
  * target with the result of 'or' operation value to the retrieved value. The operation
- * must be completed * without the possibility of another process updating target between
+ * must be completed without the possibility of another process updating target between
  * the time of the fetch and the update.
  */
 #if OSHMEM_PROFILING
