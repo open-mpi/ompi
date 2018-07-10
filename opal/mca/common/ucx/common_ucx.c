@@ -140,3 +140,68 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
 
     return ret;
 }
+
+static void opal_common_ucx_wait_all_requests(void **reqs, int count, ucp_worker_h worker)
+{
+    int i;
+
+    MCA_COMMON_UCX_VERBOSE(2, "waiting for %d disconnect requests", count);
+    for (i = 0; i < count; ++i) {
+        opal_common_ucx_wait_request(reqs[i], worker, "ucp_disconnect_nb");
+        reqs[i] = NULL;
+    }
+}
+
+OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, size_t count,
+                                            size_t my_rank, size_t max_disconnect, ucp_worker_h worker)
+{
+    size_t num_reqs;
+    size_t max_reqs;
+    void *dreq, **dreqs;
+    size_t i;
+    size_t n;
+
+    MCA_COMMON_UCX_ASSERT(procs || !count);
+    MCA_COMMON_UCX_ASSERT(max_disconnect > 0);
+
+    max_reqs = (max_disconnect > count) ? count : max_disconnect;
+
+    dreqs = malloc(sizeof(*dreqs) * max_reqs);
+    if (dreqs == NULL) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    num_reqs = 0;
+
+    for (i = 0; i < count; ++i) {
+        n = (i + my_rank) % count;
+        if (procs[n].ep == NULL) {
+            continue;
+        }
+
+        MCA_COMMON_UCX_VERBOSE(2, "disconnecting from rank %zu", procs[n].vpid);
+        dreq = ucp_disconnect_nb(procs[n].ep);
+        if (dreq != NULL) {
+            if (UCS_PTR_IS_ERR(dreq)) {
+                MCA_COMMON_UCX_ERROR("ucp_disconnect_nb(%zu) failed: %s", procs[n].vpid,
+                                     ucs_status_string(UCS_PTR_STATUS(dreq)));
+                continue;
+            } else {
+                dreqs[num_reqs++] = dreq;
+                if (num_reqs >= max_disconnect) {
+                    opal_common_ucx_wait_all_requests(dreqs, num_reqs, worker);
+                    num_reqs = 0;
+                }
+            }
+        }
+    }
+    /* num_reqs == 0 is processed by opal_common_ucx_wait_all_requests routine,
+     * so suppress coverity warning */
+    /* coverity[uninit_use_in_call] */
+    opal_common_ucx_wait_all_requests(dreqs, num_reqs, worker);
+    free(dreqs);
+
+    opal_common_ucx_mca_pmix_fence(worker);
+
+    return OPAL_SUCCESS;
+}
