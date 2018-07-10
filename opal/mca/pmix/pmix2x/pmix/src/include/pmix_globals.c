@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
  *                         and Technology (RIST). All rights reserved.
@@ -37,60 +37,96 @@
 #include <ctype.h>
 #include PMIX_EVENT_HEADER
 
-#include "src/buffer_ops/types.h"
+#include "src/mca/bfrops/bfrops_types.h"
 #include "src/class/pmix_hash_table.h"
 #include "src/class/pmix_list.h"
 #include "src/threads/threads.h"
 
-pmix_lock_t pmix_global_lock = {
+PMIX_EXPORT pmix_lock_t pmix_global_lock = {
     .mutex = PMIX_MUTEX_STATIC_INIT,
     .cond = PMIX_CONDITION_STATIC_INIT,
     .active = false
 };
 
-static void cbcon(pmix_cb_t *p)
-{
-    PMIX_CONSTRUCT_LOCK(&p->lock);
-    p->checked = false;
-    PMIX_CONSTRUCT(&p->data, pmix_buffer_t);
-    p->cbfunc = NULL;
-    p->op_cbfunc = NULL;
-    p->value_cbfunc = NULL;
-    p->lookup_cbfunc = NULL;
-    p->spawn_cbfunc = NULL;
-    p->cbdata = NULL;
-    memset(p->nspace, 0, PMIX_MAX_NSLEN+1);
-    p->rank = -1;
-    p->key = NULL;
-    p->value = NULL;
-    p->procs = NULL;
-    p->info = NULL;
-    p->ninfo = 0;
-    p->nvals = 0;
-}
-static void cbdes(pmix_cb_t *p)
-{
-    PMIX_DESTRUCT_LOCK(&p->lock);
-    PMIX_DESTRUCT(&p->data);
-}
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_cb_t,
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_namelist_t,
                                 pmix_list_item_t,
-                                cbcon, cbdes);
+                                NULL, NULL);
+
+static void nscon(pmix_nspace_t *p)
+{
+    p->nspace = NULL;
+    p->nprocs = 0;
+    p->nlocalprocs = 0;
+    p->all_registered = false;
+    p->version_stored = false;
+    p->jobbkt = NULL;
+    p->ndelivered = 0;
+    PMIX_CONSTRUCT(&p->ranks, pmix_list_t);
+    memset(&p->compat, 0, sizeof(p->compat));
+}
+static void nsdes(pmix_nspace_t *p)
+{
+    if (NULL != p->nspace) {
+        free(p->nspace);
+    }
+    if (NULL != p->jobbkt) {
+        PMIX_RELEASE(p->jobbkt);
+    }
+    PMIX_LIST_DESTRUCT(&p->ranks);
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_t,
+                                pmix_list_item_t,
+                                nscon, nsdes);
+
+static void ncdcon(pmix_nspace_caddy_t *p)
+{
+    p->ns = NULL;
+}
+static void ncddes(pmix_nspace_caddy_t *p)
+{
+    if (NULL != p->ns) {
+        PMIX_RELEASE(p->ns);
+    }
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_caddy_t,
+                                pmix_list_item_t,
+                                ncdcon, ncddes);
+
+static void info_con(pmix_rank_info_t *info)
+{
+    info->peerid = -1;
+    info->gid = info->uid = 0;
+    info->pname.nspace = NULL;
+    info->pname.rank = PMIX_RANK_UNDEF;
+    info->modex_recvd = false;
+    info->proc_cnt = 0;
+    info->server_object = NULL;
+}
+static void info_des(pmix_rank_info_t *info)
+{
+    if (NULL != info->pname.nspace) {
+        free(info->pname.nspace);
+    }
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_rank_info_t,
+                                pmix_list_item_t,
+                                info_con, info_des);
 
 static void pcon(pmix_peer_t *p)
 {
+    p->proc_type = PMIX_PROC_UNDEF;
     p->finalized = false;
     p->info = NULL;
     p->proc_cnt = 0;
-    p->server_object = NULL;
     p->index = 0;
     p->sd = -1;
+    p->finalized = false;
     p->send_ev_active = false;
     p->recv_ev_active = false;
     PMIX_CONSTRUCT(&p->send_queue, pmix_list_t);
     p->send_msg = NULL;
     p->recv_msg = NULL;
-    memset(&p->compat, 0, sizeof(p->compat));
+    p->commit_cnt = 0;
 }
 static void pdes(pmix_peer_t *p)
 {
@@ -120,120 +156,16 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_peer_t,
                                 pmix_object_t,
                                 pcon, pdes);
 
-static void nscon(pmix_nspace_t *p)
-{
-    memset(p->nspace, 0, PMIX_MAX_NSLEN);
-    PMIX_CONSTRUCT(&p->nodes, pmix_list_t);
-    PMIX_CONSTRUCT(&p->internal, pmix_hash_table_t);
-    pmix_hash_table_init(&p->internal, 16);
-    PMIX_CONSTRUCT(&p->modex, pmix_hash_table_t);
-    pmix_hash_table_init(&p->modex, 256);
-    p->server = NULL;
-}
-static void nsdes(pmix_nspace_t *p)
-{
-    uint64_t key;
-    pmix_object_t *obj;
-
-    PMIX_LIST_DESTRUCT(&p->nodes);
-    PMIX_HASH_TABLE_FOREACH(key, uint64, obj, &p->internal) {
-        if (NULL != obj) {
-            PMIX_RELEASE(obj);
-        }
-    }
-    PMIX_DESTRUCT(&p->internal);
-    PMIX_HASH_TABLE_FOREACH(key, uint64, obj, &p->modex) {
-        if (NULL != obj) {
-            PMIX_RELEASE(obj);
-        }
-    }
-    PMIX_DESTRUCT(&p->modex);
-    if (NULL != p->server) {
-        PMIX_RELEASE(p->server);
-    }
-}
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_t,
-                                pmix_list_item_t,
-                                nscon, nsdes);
-
-static void ncon(pmix_nrec_t *p)
-{
-    p->name = NULL;
-    p->procs = NULL;
-}
-static void ndes(pmix_nrec_t *p)
-{
-    if (NULL != p->name) {
-        free(p->name);
-    }
-    if (NULL != p->procs) {
-        free(p->procs);
-    }
-}
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nrec_t,
-                                pmix_list_item_t,
-                                ncon, ndes);
-
-static void sncon(pmix_server_nspace_t *p)
-{
-    p->nlocalprocs = 0;
-    p->all_registered = false;
-    PMIX_CONSTRUCT(&p->job_info, pmix_buffer_t);
-    PMIX_CONSTRUCT(&p->ranks, pmix_list_t);
-    PMIX_CONSTRUCT(&p->mylocal, pmix_hash_table_t);
-    pmix_hash_table_init(&p->mylocal, 16);
-    PMIX_CONSTRUCT(&p->myremote, pmix_hash_table_t);
-    pmix_hash_table_init(&p->myremote, 16);
-    PMIX_CONSTRUCT(&p->remote, pmix_hash_table_t);
-    pmix_hash_table_init(&p->remote, 256);
-}
-static void sndes(pmix_server_nspace_t *p)
-{
-    uint64_t key;
-    pmix_peer_t * peer;
-    PMIX_DESTRUCT(&p->job_info);
-    PMIX_LIST_DESTRUCT(&p->ranks);
-    PMIX_HASH_TABLE_FOREACH(key, uint64, peer, &p->mylocal) {
-        PMIX_RELEASE(peer);
-    }
-    PMIX_DESTRUCT(&p->mylocal);
-    PMIX_HASH_TABLE_FOREACH(key, uint64, peer, &p->myremote) {
-        PMIX_RELEASE(peer);
-    }
-    PMIX_DESTRUCT(&p->myremote);
-    PMIX_DESTRUCT(&p->remote);
-}
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_server_nspace_t,
-                                pmix_object_t,
-                                sncon, sndes);
-
-static void info_con(pmix_rank_info_t *info)
-{
-    info->gid = info->uid = 0;
-    info->nptr = NULL;
-    info->rank = PMIX_RANK_WILDCARD;
-    info->modex_recvd = false;
-    info->proc_cnt = 0;
-    info->server_object = NULL;
-}
-static void info_des(pmix_rank_info_t *info)
-{
-    if (NULL!= info->nptr) {
-        PMIX_RELEASE(info->nptr);
-    }
-}
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_rank_info_t,
-                                pmix_list_item_t,
-                                info_con, info_des);
-
 static void scon(pmix_shift_caddy_t *p)
 {
     PMIX_CONSTRUCT_LOCK(&p->lock);
     p->codes = NULL;
     p->ncodes = 0;
-    p->nspace = NULL;
+    p->pname.nspace = NULL;
+    p->pname.rank = PMIX_RANK_UNDEF;
     p->data = NULL;
     p->ndata = 0;
+    p->key = NULL;
     p->info = NULL;
     p->ninfo = 0;
     p->directives = NULL;
@@ -251,6 +183,9 @@ static void scon(pmix_shift_caddy_t *p)
 static void scdes(pmix_shift_caddy_t *p)
 {
     PMIX_DESTRUCT_LOCK(&p->lock);
+    if (NULL != p->pname.nspace) {
+        free(p->pname.nspace);
+    }
     if (NULL != p->kv) {
         PMIX_RELEASE(p->kv);
     }
@@ -258,6 +193,42 @@ static void scdes(pmix_shift_caddy_t *p)
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
                                 pmix_object_t,
                                 scon, scdes);
+
+static void cbcon(pmix_cb_t *p)
+{
+    PMIX_CONSTRUCT_LOCK(&p->lock);
+    p->checked = false;
+    PMIX_CONSTRUCT(&p->data, pmix_buffer_t);
+    p->cbfunc.ptlfn = NULL;
+    p->cbdata = NULL;
+    p->pname.nspace = NULL;
+    p->pname.rank = PMIX_RANK_UNDEF;
+    p->scope = PMIX_SCOPE_UNDEF;
+    p->key = NULL;
+    p->value = NULL;
+    p->procs = NULL;
+    p->nprocs = 0;
+    p->info = NULL;
+    p->ninfo = 0;
+    p->nvals = 0;
+    PMIX_CONSTRUCT(&p->kvs, pmix_list_t);
+    p->copy = false;
+    p->timer_running = false;
+}
+static void cbdes(pmix_cb_t *p)
+{
+    if (p->timer_running) {
+        pmix_event_del(&p->ev);
+    }
+    if (NULL != p->pname.nspace) {
+        free(p->pname.nspace);
+    }
+    PMIX_DESTRUCT(&p->data);
+    PMIX_LIST_DESTRUCT(&p->kvs);
+}
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_cb_t,
+                                pmix_list_item_t,
+                                cbcon, cbdes);
 
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_info_caddy_t,
                                 pmix_list_item_t,
@@ -273,6 +244,7 @@ static void qcon(pmix_query_caddy_t *p)
     p->info = NULL;
     p->ninfo = 0;
     p->cbfunc = NULL;
+    p->valcbfunc = NULL;
     p->cbdata = NULL;
     p->relcbfunc = NULL;
 }
@@ -283,18 +255,3 @@ static void qdes(pmix_query_caddy_t *p)
 PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_query_caddy_t,
                                 pmix_object_t,
                                 qcon, qdes);
-
-static void jdcon(pmix_job_data_caddy_t *p)
-{
-    p->nsptr = NULL;
-    p->job_data = NULL;
-    p->dstore_fn = NULL;
-    p->hstore_fn = NULL;
-#if defined(PMIX_ENABLE_DSTORE) && (PMIX_ENABLE_DSTORE == 1)
-    p->bufs = NULL;
-#endif
-}
-
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_job_data_caddy_t,
-                                pmix_object_t,
-                                jdcon, NULL);

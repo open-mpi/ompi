@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies, Inc.
@@ -80,6 +80,7 @@ void parse_cmd(int argc, char **argv, test_params *params)
             fprintf(stderr, "\t--test-error test error handling api.\n");
             fprintf(stderr, "\t--test-replace N:k0,k1,...,k(N-1)   test key replace for N keys, k0,k1,k(N-1) - key indexes to replace  \n");
             fprintf(stderr, "\t--test-internal N  test store internal key, N - number of internal keys\n");
+            fprintf(stderr, "\t--gds <external gds name>           set GDS module \"--gds hash|ds12\", default is hash\n");
             exit(0);
         } else if (0 == strcmp(argv[i], "--exec") || 0 == strcmp(argv[i], "-e")) {
             i++;
@@ -190,6 +191,9 @@ void parse_cmd(int argc, char **argv, test_params *params)
             } else {
                 params->test_internal = 1;
             }
+        } else if(0 == strcmp(argv[i], "--gds") ) {
+            i++;
+            params->gds_mode = strdup(argv[i]);
         }
 
         else {
@@ -214,10 +218,14 @@ void parse_cmd(int argc, char **argv, test_params *params)
              *      <pmix-root-dir>/test/.libs/pmix_client
              * we need to do a step back in directory tree.
              */
-            asprintf(&params->binary, "%s/../pmix_client", argv[0]);
+            if (0 > asprintf(&params->binary, "%s/../pmix_client", argv[0])) {
+                exit(1);
+            }
             *basename = '/';
         } else {
-            asprintf(&params->binary, "pmix_client");
+            if (0 > asprintf(&params->binary, "pmix_client")) {
+                exit(1);
+            }
         }
     }
 
@@ -631,4 +639,3 @@ int get_all_ranks_from_namespace(test_params params, char *nspace, pmix_proc_t *
     }
     return PMIX_SUCCESS;
 }
-

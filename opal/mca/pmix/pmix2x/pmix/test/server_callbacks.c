@@ -157,10 +157,7 @@ pmix_status_t dmodex_fn(const pmix_proc_t *proc,
      * have multi-server capability yet, so we'll just
      * respond right away */
 
-    if (NULL != cbfunc) {
-        cbfunc(PMIX_ERR_NOT_FOUND, NULL, 0, cbdata, NULL, NULL);
-    }
-    return PMIX_SUCCESS;
+    return PMIX_ERR_NOT_FOUND;
 }
 
 pmix_status_t publish_fn(const pmix_proc_t *proc,
@@ -214,15 +211,19 @@ pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
             if (0 == strcmp(tinfo->data.key, keys[i])) {
                 (void)strncpy(pdata[i].proc.nspace, tinfo->namespace_published, PMIX_MAX_NSLEN);
                 pdata[i].proc.rank = tinfo->rank_published;
-                (void)strncpy(pdata[i].key, keys[i], strlen(keys[i])+1);
+                memset(pdata[i].key, 0, PMIX_MAX_KEYLEN+1);
+                (void)strncpy(pdata[i].key, keys[i], PMIX_MAX_KEYLEN);
                 pmix_value_xfer(&pdata[i].value, &tinfo->data.value);
                 ret++;
                 break;
             }
         }
     }
+    if (ret != ndata) {
+        return PMIX_ERR_NOT_FOUND;
+    }
     if (NULL != cbfunc) {
-        cbfunc((ret == ndata) ? PMIX_SUCCESS : PMIX_ERR_NOT_FOUND, pdata, ndata, cbdata);
+        cbfunc(PMIX_SUCCESS, pdata, ndata, cbdata);
     }
     PMIX_PDATA_FREE(pdata, ndata);
     return PMIX_SUCCESS;

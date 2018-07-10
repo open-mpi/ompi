@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -249,249 +249,249 @@ struct pmix_output_stream_t {
 
 };
 
-    /**
-     * Convenience typedef
-     */
-    typedef struct pmix_output_stream_t pmix_output_stream_t;
+/**
+ * Convenience typedef
+ */
+typedef struct pmix_output_stream_t pmix_output_stream_t;
 
-    /**
-     * Initializes the output stream system and opens a default
-     * "verbose" stream.
-     *
-     * @retval true Upon success.
-     * @retval false Upon failure.
-     *
-     * This should be the first function invoked in the output
-     * subsystem.  After this call, the default "verbose" stream is open
-     * and can be written to via calls to pmix_output_verbose() and
-     * pmix_output_error().
-     *
-     * By definition, the default verbose stream has a handle ID of 0,
-     * and has a verbose level of 0.
-     */
-    bool pmix_output_init(void);
+/**
+ * Initializes the output stream system and opens a default
+ * "verbose" stream.
+ *
+ * @retval true Upon success.
+ * @retval false Upon failure.
+ *
+ * This should be the first function invoked in the output
+ * subsystem.  After this call, the default "verbose" stream is open
+ * and can be written to via calls to pmix_output_verbose() and
+ * pmix_output_error().
+ *
+ * By definition, the default verbose stream has a handle ID of 0,
+ * and has a verbose level of 0.
+ */
+PMIX_EXPORT bool pmix_output_init(void);
 
-    /**
-     * Shut down the output stream system.
-     *
-     * Shut down the output stream system, including the default verbose
-     * stream.
-     */
-    void pmix_output_finalize(void);
+/**
+ * Shut down the output stream system.
+ *
+ * Shut down the output stream system, including the default verbose
+ * stream.
+ */
+PMIX_EXPORT void pmix_output_finalize(void);
 
-    /**
-     * Opens an output stream.
-     *
-     * @param lds A pointer to pmix_output_stream_t describing what the
-     * characteristics of the output stream should be.
-     *
-     * This function opens an output stream and returns an integer
-     * handle.  The caller is responsible for maintaining the handle and
-     * using it in successive calls to PMIX_OUTPUT(), pmix_output(),
-     * pmix_output_switch(), and pmix_output_close().
-     *
-     * If lds is NULL, the default descriptions will be used, meaning
-     * that output will only be sent to stderr.
-     *
-     * It is safe to have multiple threads invoke this function
-     * simultaneously; their execution will be serialized in an
-     * unspecified manner.
-     *
-     * Be sure to see pmix_output() for a description of what happens
-     * when open_open() / pmix_output() is directed to send output to a
-     * file but the process session directory does not yet exist.
-     */
-    int pmix_output_open(pmix_output_stream_t *lds);
+/**
+ * Opens an output stream.
+ *
+ * @param lds A pointer to pmix_output_stream_t describing what the
+ * characteristics of the output stream should be.
+ *
+ * This function opens an output stream and returns an integer
+ * handle.  The caller is responsible for maintaining the handle and
+ * using it in successive calls to PMIX_OUTPUT(), pmix_output(),
+ * pmix_output_switch(), and pmix_output_close().
+ *
+ * If lds is NULL, the default descriptions will be used, meaning
+ * that output will only be sent to stderr.
+ *
+ * It is safe to have multiple threads invoke this function
+ * simultaneously; their execution will be serialized in an
+ * unspecified manner.
+ *
+ * Be sure to see pmix_output() for a description of what happens
+ * when open_open() / pmix_output() is directed to send output to a
+ * file but the process session directory does not yet exist.
+ */
+PMIX_EXPORT int pmix_output_open(pmix_output_stream_t *lds);
 
-    /**
-     * Re-opens / redirects an output stream.
-     *
-     * @param output_id Stream handle to reopen
-     * @param lds A pointer to pmix_output_stream_t describing what the
-     * characteristics of the reopened output stream should be.
-     *
-     * This function redirects an existing stream into a new [set of]
-     * location[s], as specified by the lds parameter.  If the output_id
-     * passed is invalid, this call is effectively the same as opening a
-     * new stream with a specific stream handle.
-     */
-    int pmix_output_reopen(int output_id, pmix_output_stream_t *lds);
+/**
+ * Re-opens / redirects an output stream.
+ *
+ * @param output_id Stream handle to reopen
+ * @param lds A pointer to pmix_output_stream_t describing what the
+ * characteristics of the reopened output stream should be.
+ *
+ * This function redirects an existing stream into a new [set of]
+ * location[s], as specified by the lds parameter.  If the output_id
+ * passed is invalid, this call is effectively the same as opening a
+ * new stream with a specific stream handle.
+ */
+PMIX_EXPORT int pmix_output_reopen(int output_id, pmix_output_stream_t *lds);
 
-    /**
-     * Enables and disables output streams.
-     *
-     * @param output_id Stream handle to switch
-     * @param enable Boolean indicating whether to enable the stream
-     * output or not.
-     *
-     * @returns The previous enable state of the stream (true == enabled,
-     * false == disabled).
-     *
-     * The output of a stream can be temporarily disabled by passing an
-     * enable value to false, and later resumed by passing an enable
-     * value of true.  This does not close the stream -- it simply tells
-     * the pmix_output subsystem to intercept and discard any output sent
-     * to the stream via PMIX_OUTPUT() or pmix_output() until the output
-     * is re-enabled.
-     */
-    bool pmix_output_switch(int output_id, bool enable);
+/**
+ * Enables and disables output streams.
+ *
+ * @param output_id Stream handle to switch
+ * @param enable Boolean indicating whether to enable the stream
+ * output or not.
+ *
+ * @returns The previous enable state of the stream (true == enabled,
+ * false == disabled).
+ *
+ * The output of a stream can be temporarily disabled by passing an
+ * enable value to false, and later resumed by passing an enable
+ * value of true.  This does not close the stream -- it simply tells
+ * the pmix_output subsystem to intercept and discard any output sent
+ * to the stream via PMIX_OUTPUT() or pmix_output() until the output
+ * is re-enabled.
+ */
+PMIX_EXPORT bool pmix_output_switch(int output_id, bool enable);
 
-    /**
-     * \internal
-     *
-     * Reopens all existing output streams.
-     *
-     * This function should never be called by user applications; it is
-     * typically only invoked after a restart (i.e., in a new process)
-     * where output streams need to be re-initialized.
-     */
-    void pmix_output_reopen_all(void);
+/**
+ * \internal
+ *
+ * Reopens all existing output streams.
+ *
+ * This function should never be called by user applications; it is
+ * typically only invoked after a restart (i.e., in a new process)
+ * where output streams need to be re-initialized.
+ */
+PMIX_EXPORT void pmix_output_reopen_all(void);
 
-    /**
-     * Close an output stream.
-     *
-     * @param output_id Handle of the stream to close.
-     *
-     * Close an output stream.  No output will be sent to the stream
-     * after it is closed.  Be aware that output handles tend to be
-     * re-used; it is possible that after a stream is closed, if another
-     * stream is opened, it will get the same handle value.
-     */
-    void pmix_output_close(int output_id);
+/**
+ * Close an output stream.
+ *
+ * @param output_id Handle of the stream to close.
+ *
+ * Close an output stream.  No output will be sent to the stream
+ * after it is closed.  Be aware that output handles tend to be
+ * re-used; it is possible that after a stream is closed, if another
+ * stream is opened, it will get the same handle value.
+ */
+PMIX_EXPORT void pmix_output_close(int output_id);
 
-    /**
-     * Main function to send output to a stream.
-     *
-     * @param output_id Stream id returned from pmix_output_open().
-     * @param format printf-style format string.
-     * @param varargs printf-style varargs list to fill the string
-     * specified by the format parameter.
-     *
-     * This is the main function to send output to custom streams (note
-     * that output to the default "verbose" stream is handled through
-     * pmix_output_verbose() and pmix_output_error()).
-     *
-     * It is never necessary to send a trailing "\n" in the strings to
-     * this function; some streams requires newlines, others do not --
-     * this function will append newlines as necessary.
-     *
-     * Verbosity levels are ignored in this function.
-     *
-     * Note that for output streams that are directed to files, the
-     * files are stored under the process' session directory.  If the
-     * session directory does not exist when pmix_output() is invoked,
-     * the output will be discarded!  Once the session directory is
-     * created, pmix_output() will automatically create the file and
-     * writing to it.
-     */
-    void pmix_output(int output_id, const char *format, ...) __pmix_attribute_format__(__printf__, 2, 3);
+/**
+ * Main function to send output to a stream.
+ *
+ * @param output_id Stream id returned from pmix_output_open().
+ * @param format printf-style format string.
+ * @param varargs printf-style varargs list to fill the string
+ * specified by the format parameter.
+ *
+ * This is the main function to send output to custom streams (note
+ * that output to the default "verbose" stream is handled through
+ * pmix_output_verbose() and pmix_output_error()).
+ *
+ * It is never necessary to send a trailing "\n" in the strings to
+ * this function; some streams requires newlines, others do not --
+ * this function will append newlines as necessary.
+ *
+ * Verbosity levels are ignored in this function.
+ *
+ * Note that for output streams that are directed to files, the
+ * files are stored under the process' session directory.  If the
+ * session directory does not exist when pmix_output() is invoked,
+ * the output will be discarded!  Once the session directory is
+ * created, pmix_output() will automatically create the file and
+ * writing to it.
+ */
+PMIX_EXPORT void pmix_output(int output_id, const char *format, ...) __pmix_attribute_format__(__printf__, 2, 3);
 
-    /**
-     * Send output to a stream only if the passed verbosity level is
-     * high enough.
-     *
-     * @param output_id Stream id returned from pmix_output_open().
-     * @param level Target verbosity level.
-     * @param format printf-style format string.
-     * @param varargs printf-style varargs list to fill the string
-     * specified by the format parameter.
-     *
-     * Output is only sent to the stream if the current verbosity level
-     * is greater than or equal to the level parameter.  This mechanism
-     * can be used to send "information" kinds of output to user
-     * applications, but only when the user has asked for a high enough
-     * verbosity level.
-     *
-     * It is never necessary to send a trailing "\n" in the strings to
-     * this function; some streams requires newlines, others do not --
-     * this function will append newlines as necessary.
-     *
-     * This function is really a convenience wrapper around checking the
-     * current verbosity level set on the stream, and if the passed
-     * level is less than or equal to the stream's verbosity level, this
-     * function will effectively invoke pmix_output to send the output to
-     * the stream.
-     *
-     * @see pmix_output_set_verbosity()
-     */
-    void pmix_output_verbose(int verbose_level, int output_id,
-                                           const char *format, ...) __pmix_attribute_format__(__printf__, 3, 4);
+/**
+ * Send output to a stream only if the passed verbosity level is
+ * high enough.
+ *
+ * @param output_id Stream id returned from pmix_output_open().
+ * @param level Target verbosity level.
+ * @param format printf-style format string.
+ * @param varargs printf-style varargs list to fill the string
+ * specified by the format parameter.
+ *
+ * Output is only sent to the stream if the current verbosity level
+ * is greater than or equal to the level parameter.  This mechanism
+ * can be used to send "information" kinds of output to user
+ * applications, but only when the user has asked for a high enough
+ * verbosity level.
+ *
+ * It is never necessary to send a trailing "\n" in the strings to
+ * this function; some streams requires newlines, others do not --
+ * this function will append newlines as necessary.
+ *
+ * This function is really a convenience wrapper around checking the
+ * current verbosity level set on the stream, and if the passed
+ * level is less than or equal to the stream's verbosity level, this
+ * function will effectively invoke pmix_output to send the output to
+ * the stream.
+ *
+ * @see pmix_output_set_verbosity()
+ */
+PMIX_EXPORT void pmix_output_verbose(int verbose_level, int output_id,
+                                     const char *format, ...) __pmix_attribute_format__(__printf__, 3, 4);
 
-   /**
-    * Same as pmix_output_verbose(), but takes a va_list form of varargs.
-    */
-    void pmix_output_vverbose(int verbose_level, int output_id,
-                                            const char *format, va_list ap) __pmix_attribute_format__(__printf__, 3, 0);
+/**
+* Same as pmix_output_verbose(), but takes a va_list form of varargs.
+*/
+PMIX_EXPORT void pmix_output_vverbose(int verbose_level, int output_id,
+                                      const char *format, va_list ap) __pmix_attribute_format__(__printf__, 3, 0);
 
-    /**
-     * Set the verbosity level for a stream.
-     *
-     * @param output_id Stream id returned from pmix_output_open().
-     * @param level New verbosity level
-     *
-     * This function sets the verbosity level on a given stream.  It
-     * will be used for all future invocations of pmix_output_verbose().
-     */
-    void pmix_output_set_verbosity(int output_id, int level);
+/**
+ * Set the verbosity level for a stream.
+ *
+ * @param output_id Stream id returned from pmix_output_open().
+ * @param level New verbosity level
+ *
+ * This function sets the verbosity level on a given stream.  It
+ * will be used for all future invocations of pmix_output_verbose().
+ */
+PMIX_EXPORT void pmix_output_set_verbosity(int output_id, int level);
 
-    /**
-     * Get the verbosity level for a stream
-     *
-     * @param output_id Stream id returned from pmix_output_open()
-     * @returns Verbosity of stream
-     */
-    int pmix_output_get_verbosity(int output_id);
+/**
+ * Get the verbosity level for a stream
+ *
+ * @param output_id Stream id returned from pmix_output_open()
+ * @returns Verbosity of stream
+ */
+PMIX_EXPORT int pmix_output_get_verbosity(int output_id);
 
-    /**
-     * Set characteristics for output files.
-     *
-     * @param dir Directory where output files will go
-     * @param olddir If non-NULL, the directory where output files
-     * were previously opened
-     * @param prefix Prefix of files in the output directory
-     * @param oldprefix If non-NULL, the old prefix
-     *
-     * This function controls the final filename used for all new
-     * output streams that request output files.  Specifically, when
-     * pmix_output_stream_t::lds_want_file is true, the output
-     * filename will be of the form $dir/$prefix$suffix.
-     *
-     * The default value for the output directory is whatever is
-     * specified in the TMPDIR environment variable if it exists, or
-     * $HOME if it does not.  The default value for the prefix is
-     * "output-pid<pid>-" (where "<pid>" is replaced by the PID of the
-     * current process).
-     *
-     * If dir or prefix are NULL, new values are not set.  The strings
-     * represented by dir and prefix are copied into internal storage;
-     * it is safe to pass string constants or free() these values
-     * after pmix_output_set_output_file_info() returns.
-     *
-     * If olddir or oldprefix are not NULL, copies of the old
-     * directory and prefix (respectively) are returned in these
-     * parameters.  The caller is responsible for calling (free) on
-     * these values.  This allows one to get the old values, output an
-     * output file in a specific directory and/or with a specific
-     * prefix, and then restore the old values.
-     *
-     * Note that this function only affects the creation of \em new
-     * streams -- streams that have already started writing to output
-     * files are not affected (i.e., their output files are not moved
-     * to the new directory).  More specifically, the pmix_output
-     * system only opens/creates output files lazily -- so calling
-     * this function affects both new streams \em and any stream that
-     * was previously opened but had not yet output anything.
-     */
-    void pmix_output_set_output_file_info(const char *dir,
-                                                        const char *prefix,
-                                                        char **olddir,
-                                                        char **oldprefix);
+/**
+ * Set characteristics for output files.
+ *
+ * @param dir Directory where output files will go
+ * @param olddir If non-NULL, the directory where output files
+ * were previously opened
+ * @param prefix Prefix of files in the output directory
+ * @param oldprefix If non-NULL, the old prefix
+ *
+ * This function controls the final filename used for all new
+ * output streams that request output files.  Specifically, when
+ * pmix_output_stream_t::lds_want_file is true, the output
+ * filename will be of the form $dir/$prefix$suffix.
+ *
+ * The default value for the output directory is whatever is
+ * specified in the TMPDIR environment variable if it exists, or
+ * $HOME if it does not.  The default value for the prefix is
+ * "output-pid<pid>-" (where "<pid>" is replaced by the PID of the
+ * current process).
+ *
+ * If dir or prefix are NULL, new values are not set.  The strings
+ * represented by dir and prefix are copied into internal storage;
+ * it is safe to pass string constants or free() these values
+ * after pmix_output_set_output_file_info() returns.
+ *
+ * If olddir or oldprefix are not NULL, copies of the old
+ * directory and prefix (respectively) are returned in these
+ * parameters.  The caller is responsible for calling (free) on
+ * these values.  This allows one to get the old values, output an
+ * output file in a specific directory and/or with a specific
+ * prefix, and then restore the old values.
+ *
+ * Note that this function only affects the creation of \em new
+ * streams -- streams that have already started writing to output
+ * files are not affected (i.e., their output files are not moved
+ * to the new directory).  More specifically, the pmix_output
+ * system only opens/creates output files lazily -- so calling
+ * this function affects both new streams \em and any stream that
+ * was previously opened but had not yet output anything.
+ */
+PMIX_EXPORT void pmix_output_set_output_file_info(const char *dir,
+                                                  const char *prefix,
+                                                  char **olddir,
+                                                  char **oldprefix);
 
-    /**
-     * Same as pmix_output_verbose(), but pointer to buffer and size.
-     */
-    void pmix_output_hexdump(int verbose_level, int output_id,
-                                           void *ptr, int buflen);
+/**
+ * Same as pmix_output_verbose(), but pointer to buffer and size.
+ */
+PMIX_EXPORT void pmix_output_hexdump(int verbose_level, int output_id,
+                                     void *ptr, int buflen);
 
 #if PMIX_ENABLE_DEBUG
     /**

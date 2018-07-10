@@ -13,7 +13,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
@@ -401,8 +401,13 @@ char* pmix_find_absolute_path( char* app_name )
 
     if( NULL != abs_app_name ) {
         char* resolved_path = (char*)malloc(PMIX_PATH_MAX);
-        realpath( abs_app_name, resolved_path );
-        if( abs_app_name != app_name ) free(abs_app_name);
+        if (NULL == realpath( abs_app_name, resolved_path )) {
+            free(resolved_path);
+            return NULL;
+        }
+        if( abs_app_name != app_name ) {
+            free(abs_app_name);
+        }
         return resolved_path;
     }
     return NULL;

@@ -167,9 +167,16 @@ int main(int argc, char **argv)
         fprintf(stderr, "Client ns %s rank %d: PMIx_Get universe size failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
+    fprintf(stderr, "Client %s:%d universe size %d\n", myproc.nspace, myproc.rank, val->data.uint32);
+    /* get the number of procs in our job - univ size is the total number of allocated
+     * slots, not the number of procs in the job */
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&proc, PMIX_JOB_SIZE, NULL, 0, &val))) {
+        fprintf(stderr, "Client ns %s rank %d: PMIx_Get job size failed: %d\n", myproc.nspace, myproc.rank, rc);
+        goto done;
+    }
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
-    fprintf(stderr, "Client %s:%d universe size %d\n", myproc.nspace, myproc.rank, nprocs);
+    fprintf(stderr, "Client %s:%d num procs %d\n", myproc.nspace, myproc.rank, nprocs);
 
     /* put a few values */
     if (0 > asprintf(&tmp, "%s-%d-internal", myproc.nspace, myproc.rank)) {

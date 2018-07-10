@@ -41,6 +41,24 @@ If you feel you have received this warning in error, or wish to ignore
 it in the future, you can disable it by setting the PMIx MCA parameter
 "pmix_suppress_missing_data_warning=1"
 #
+[no-plugins]
+We were unable to find any usable plugins for the %s framework. This PMIx
+framework requires at least one plugin in order to operate. This can be caused
+by any of the following:
+
+* we were unable to build any of the plugins due to some combination
+  of configure directives and available system support
+
+* no plugin was selected due to some combination of MCA parameter
+  directives versus built plugins (i.e., you excluded all the plugins
+  that were built and/or could execute)
+
+* the PMIX_INSTALL_PREFIX environment variable, or the MCA parameter
+  "mca_base_component_path", is set and doesn't point to any location
+  that includes at least one usable plugin for this framework.
+
+Please check your installation and environment.
+#
 [ptl:message-too-large]
 A message has been received that exceeds the size limit:
 

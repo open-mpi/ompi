@@ -311,6 +311,7 @@ opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h.in
 opal/mca/pmix/pmix*/pmix/src/include/private/autogen/config.h
 opal/mca/hwloc/base/static-components.h.new.extern
 opal/mca/hwloc/base/static-components.h.new.struct
+opal/mca/pmix/pmix2x/pmix/include/pmix_common.h
 opal/mca/pmix/pmix2x/pmix/src/include/frameworks.h
 opal/mca/pmix/pmix2x/pmix/src/mca/pinstalldirs/config/pinstall_dirs.h
 opal/mca/pmix/pmix2x/pmix/config/autogen_found_items.m4

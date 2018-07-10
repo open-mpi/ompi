@@ -12,7 +12,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,8 +54,8 @@ BEGIN_C_DECLS
  *
  * The caller is responsible for freeing the returned string.
  */
-char *pmix_path_find(char *fname, char **pathv, int mode,
-                                   char **envv) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT char *pmix_path_find(char *fname, char **pathv, int mode,
+                                 char **envv) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
 /**
  *  Locates a file with certain permissions from a list of search
@@ -75,8 +75,8 @@ char *pmix_path_find(char *fname, char **pathv, int mode,
  *
  * The caller is responsible for freeing the returned string.
  */
-char *pmix_path_findv(char *fname, int mode,
-                                    char **envv, char *wrkdir) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT char *pmix_path_findv(char *fname, int mode,
+                                  char **envv, char *wrkdir) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 /**
  *  Detect if the requested path is absolute or relative.
  *
@@ -89,7 +89,7 @@ char *pmix_path_findv(char *fname, int mode,
  *  with special care as an absolute path on Windows starts
  *  with [A-Za-z]: or \\ instead of the usual / on UNIX.
  */
-bool pmix_path_is_absolute( const char *path );
+PMIX_EXPORT bool pmix_path_is_absolute( const char *path );
 
 /**
  * Find the absolute path for an executable and return it.
@@ -108,7 +108,7 @@ bool pmix_path_is_absolute( const char *path );
  * function will return NULL. Otherwise, an newly allocated string
  * will be returned.
  */
-char* pmix_find_absolute_path( char* app_name ) __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT char* pmix_find_absolute_path( char* app_name ) __pmix_attribute_warn_unused_result__;
 
 /**
  * Forms a complete pathname and checks it for existance and
@@ -123,7 +123,7 @@ char* pmix_find_absolute_path( char* app_name ) __pmix_attribute_warn_unused_res
  *
  * The caller is responsible for freeing the returned string.
  */
-char *pmix_path_access(char *fname, char *path, int mode) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT char *pmix_path_access(char *fname, char *path, int mode) __pmix_attribute_malloc__ __pmix_attribute_warn_unused_result__;
 
 
 /**
@@ -143,7 +143,7 @@ char *pmix_path_access(char *fname, char *path, int mode) __pmix_attribute_mallo
  * @retval true                If fname is on NFS, Lustre or Panasas
  * @retval false               otherwise
  */
-bool pmix_path_nfs(char *fname, char **fstype) __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT bool pmix_path_nfs(char *fname, char **fstype) __pmix_attribute_warn_unused_result__;
 
 /**
  * @brief Returns the disk usage of path.
@@ -154,9 +154,8 @@ bool pmix_path_nfs(char *fname, char **fstype) __pmix_attribute_warn_unused_resu
  * @retval PMIX_SUCCESS  If the operation was successful
  * @retval PMIX_ERROR    otherwise
  */
-int
-pmix_path_df(const char *path,
-             uint64_t *out_avail)__pmix_attribute_warn_unused_result__;
+PMIX_EXPORT int pmix_path_df(const char *path,
+                             uint64_t *out_avail)__pmix_attribute_warn_unused_result__;
 
 END_C_DECLS
 #endif /* PMIX_PATH_H */

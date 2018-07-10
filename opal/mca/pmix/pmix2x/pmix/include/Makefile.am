@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+# Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -13,7 +13,6 @@
 if WANT_PRIMARY_HEADERS
 include_HEADERS = \
         pmix.h \
-        pmix_common.h \
         pmix_server.h \
         pmix_tool.h
 
@@ -24,6 +23,7 @@ include_HEADERS += \
 endif
 
 nodist_include_HEADERS = \
+    pmix_common.h \
     pmix_version.h \
     pmix_rename.h
 

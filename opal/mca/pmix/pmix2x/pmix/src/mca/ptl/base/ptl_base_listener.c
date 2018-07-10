@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
@@ -79,9 +79,8 @@ static pmix_status_t setup_listeners(pmix_info_t *info, size_t ninfo, bool *need
     /* scan the directives to see if they want only one listener setup */
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
-            if (0 == strncmp(info[n].key, PMIX_SINGLE_LISTENER, PMIX_MAX_KEYLEN) &&
-                (PMIX_UNDEF == info[n].value.type || info[n].value.data.flag)) {
-                single = true;
+            if (0 == strncmp(info[n].key, PMIX_SINGLE_LISTENER, PMIX_MAX_KEYLEN)) {
+                single = PMIX_INFO_TRUE(&info[n]);
                 break;
             }
         }
@@ -155,7 +154,7 @@ void pmix_ptl_base_stop_listening(void)
     int i;
     pmix_listener_t *lt;
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "listen_thread: shutdown");
 
     if (!pmix_ptl_globals.listen_thread_active) {
@@ -190,7 +189,7 @@ static void* listen_thread(void *obj)
     fd_set readfds;
     pmix_listener_t *lt;
 
-    pmix_output_verbose(8, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                         "listen_thread: active");
 
 
@@ -281,7 +280,7 @@ static void* listen_thread(void *obj)
                     continue;
                 }
 
-                pmix_output_verbose(8, pmix_globals.debug_output,
+                pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                     "listen_thread: new connection: (%d, %d)",
                                     pending_connection->sd, pmix_socket_errno);
                 /* post the object */

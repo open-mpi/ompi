@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -863,7 +863,6 @@ int pmix_server_job_ctrl_fn(const opal_process_name_t *requestor,
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             continue;
         }
-
         if (0 == strcmp(val->key, OPAL_PMIX_JOB_CTRL_KILL)) {
             /* convert the list of targets to a pointer array */
             if (NULL == targets) {

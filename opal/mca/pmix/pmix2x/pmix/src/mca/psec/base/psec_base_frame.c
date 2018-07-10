@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -45,13 +45,6 @@
 
 /* Instantiate the global vars */
 pmix_psec_globals_t pmix_psec_globals = {{{0}}};
-pmix_psec_API_t pmix_psec = {
-    .get_available_modules = pmix_psec_base_get_available_modules,
-    .assign_module = pmix_psec_base_assign_module,
-    .create_cred = pmix_psec_base_create_cred,
-    .client_handshake = pmix_psec_base_client_handshake,
-    .validate_connection = pmix_psec_base_validate_connection
-};
 
 static pmix_status_t pmix_psec_close(void)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  *
  * NOTE: THE MUNGE CLIENT LIBRARY (libmunge) IS LICENSED AS LGPL
  *
@@ -33,7 +33,7 @@ static pmix_status_t munge_init(void);
 static void munge_finalize(void);
 static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
                                  char **cred, size_t *len);
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len);
 
@@ -128,19 +128,19 @@ static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len)
 {
-    uid_t uid;
-    gid_t gid;
+    uid_t euid;
+    gid_t egid;
     munge_err_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "psec: munge validate_cred %s", cred ? cred : "NULL");
 
     /* parse the inbound string */
-    if (EMUNGE_SUCCESS != (rc = munge_decode(cred, NULL, NULL, NULL, &uid, &gid))) {
+    if (EMUNGE_SUCCESS != (rc = munge_decode(cred, NULL, NULL, NULL, &euid, &egid))) {
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "psec: munge failed to decode credential: %s",
                             munge_strerror(rc));
@@ -148,12 +148,12 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
     }
 
     /* check uid */
-    if (uid != peer->info->uid) {
+    if (euid != uid) {
         return PMIX_ERR_INVALID_CRED;
     }
 
     /* check guid */
-    if (gid != peer->info->gid) {
+    if (egid != gid) {
         return PMIX_ERR_INVALID_CRED;
     }
 

@@ -33,7 +33,7 @@ static pmix_status_t none_init(void);
 static void none_finalize(void);
 static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
                                  char **cred, size_t *len);
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len);
 
@@ -67,7 +67,7 @@ static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len)
 {

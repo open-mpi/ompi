@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
@@ -38,7 +38,7 @@
 #include "src/mca/mca.h"
 #include "src/mca/base/pmix_mca_base_var.h"
 #include "src/mca/base/pmix_mca_base_framework.h"
-#include "src/buffer_ops/types.h"
+#include "src/mca/bfrops/bfrops_types.h"
 
 #include "ptl_types.h"
 
@@ -141,36 +141,22 @@ struct pmix_ptl_module_t {
 };
 typedef struct pmix_ptl_module_t pmix_ptl_module_t;
 
-/****    API MODULE DEFINITION    ****/
-/* set the notification callback function to the provided one */
-typedef pmix_status_t (*pmix_ptl_set_notification_cbfunc_fn_t)(pmix_ptl_cbfunc_t cbfunc);
 
-/* get a list of available support - caller must free results
- * when done. The list is returned as a comma-delimited string
- * of available components in priority order, suitable for
- * passing to the assign_module function */
-typedef char* (*pmix_ptl_get_available_modules_fn_t)(void);
+/*****    MACROS FOR EXECUTING PTL FUNCTIONS    *****/
+#define PMIX_PTL_SEND_RECV(r, p, b, c, d)               \
+    (r) = (p)->nptr->compat.ptl->send_recv((struct pmix_peer_t*)(p), b, c, d)
 
-/* Start listening for PMIx clients (server-side function) */
-typedef pmix_status_t (*pmix_ptl_start_listening_fn_t)(pmix_info_t *info, size_t ninfo);
+#define PMIX_PTL_SEND_ONEWAY(r, p, b, t)                \
+    (r) = (p)->nptr->compat.ptl->send((struct pmix_peer_t*)(p), b, t)
 
-/* Stop listening for PMIx clients and cleanup all rendezvous
- * points (server-side function) */
-typedef void (*pmix_ptl_stop_listening_fn_t)(void);
+#define PMIX_PTL_RECV(r, p, c, t)      \
+    (r) = (p)->nptr->compat.ptl->recv((struct pmix_peer_t*)(p), c, t)
 
-typedef struct {
-    pmix_ptl_set_notification_cbfunc_fn_t   set_notification_cbfunc;
-    pmix_ptl_get_available_modules_fn_t     get_available_modules;
-    pmix_ptl_send_recv_fn_t                 send_recv;
-    pmix_ptl_send_fn_t                      send_oneway;
-    pmix_ptl_recv_fn_t                      recv;
-    pmix_ptl_cancel_fn_t                    cancel;
-    pmix_ptl_connect_to_peer_fn_t           connect_to_peer;
-    pmix_ptl_start_listening_fn_t           start_listening;
-    pmix_ptl_stop_listening_fn_t            stop_listening;
-} pmix_ptl_API_t;
+#define PMIX_PTL_CANCEL(r, p, t)                        \
+    (r) = (p)->nptr->compat.ptl->cancel((struct pmix_peer_t*)(p), t)
 
-PMIX_EXPORT extern pmix_ptl_API_t pmix_ptl;
+extern pmix_status_t pmix_ptl_base_connect_to_peer(struct pmix_peer_t* peer,
+                                                   pmix_info_t info[], size_t ninfo);
 
 
 /****    COMPONENT STRUCTURE DEFINITION    ****/
@@ -196,9 +182,6 @@ struct pmix_ptl_base_component_t {
     pmix_ptl_base_setup_listener_fn_t               setup_listener;
 };
 typedef struct pmix_ptl_base_component_t pmix_ptl_base_component_t;
-
-
-/****    DEFINE SOME GENERAL ACCESS FUNCTIONS    ****/
 
 
 /*

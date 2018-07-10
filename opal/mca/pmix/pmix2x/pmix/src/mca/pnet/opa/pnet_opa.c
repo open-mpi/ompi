@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -115,7 +115,9 @@ static char* transports_print(uint64_t *unique_key)
      * number if the system has a different sized long (8 would be for
      * sizeof(int) == 4)).
      */
-    asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2);
+    if (0 > asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2)) {
+        return NULL;
+    }
 
     /* print the first number */
     int_ptr = (unsigned int*) &unique_key[0];

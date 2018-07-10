@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,13 +83,13 @@ BEGIN_C_DECLS
  *
  * The class for the list container.
  */
-PMIX_CLASS_DECLARATION(pmix_list_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_list_t);
 /**
  * \internal
  *
  * Base class for items that are put in list (pmix_list_t) containers.
  */
-PMIX_CLASS_DECLARATION(pmix_list_item_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_list_item_t);
 
 
 /**

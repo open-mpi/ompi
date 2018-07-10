@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016      Intel, Inc. All rights reserved
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,7 +49,7 @@ struct pmix_value_array_t
 };
 typedef struct pmix_value_array_t pmix_value_array_t;
 
-PMIX_CLASS_DECLARATION(pmix_value_array_t);
+PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_value_array_t);
 
 /**
  *  Initialize the array to hold items by value. This routine must

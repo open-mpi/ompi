@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -267,8 +267,8 @@ int main(int argc, char **argv)
          * so we know if the RM can stop-on-exec, or only supports stop-in-init */
         nq = 1;
         PMIX_QUERY_CREATE(query, nq);
-        PMIX_ARGV_APPEND(query[0].keys, PMIX_QUERY_SPAWN_SUPPORT);
-        PMIX_ARGV_APPEND(query[0].keys, PMIX_QUERY_DEBUG_SUPPORT);
+        PMIX_ARGV_APPEND(rc, query[0].keys, PMIX_QUERY_SPAWN_SUPPORT);
+        PMIX_ARGV_APPEND(rc, query[0].keys, PMIX_QUERY_DEBUG_SUPPORT);
         /* setup the caddy to retrieve the data */
         myquery_data.info = NULL;
         myquery_data.ninfo = 0;
@@ -333,8 +333,10 @@ int main(int argc, char **argv)
             PMIX_APP_CREATE(app, napps);
             /* setup the executable */
             app[0].cmd = strdup("client");
-            PMIX_ARGV_APPEND(app[0].argv, "./client");
-            getcwd(cwd, 1024);  // point us to our current directory
+            PMIX_ARGV_APPEND(rc, app[0].argv, "./client");
+            if (NULL == getcwd(cwd, 1024)) {  // point us to our current directory
+                goto done;
+            }
             app[0].cwd = strdup(cwd);
             app[0].maxprocs = 2;
             /* provide job-level directives so the apps do what the user requested */
@@ -359,7 +361,7 @@ int main(int argc, char **argv)
             /* setup the debugger */
             PMIX_APP_CREATE(debugger, 1);
             debugger[0].cmd = strdup("./debuggerd");
-            PMIX_ARGV_APPEND(debugger[0].argv, "./debuggerd");
+            PMIX_ARGV_APPEND(rc, debugger[0].argv, "./debuggerd");
             debugger[0].cwd = strdup(cwd);
             /* provide directives so the daemons go where we want, and
              * let the RM know these are debugger daemons */

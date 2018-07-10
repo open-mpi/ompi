@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -50,7 +50,7 @@ AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
  ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
-    PMIX_VAR_SCOPE_PUSH([pmix_event_dir pmix_event_libdir])
+    PMIX_VAR_SCOPE_PUSH([pmix_event_dir pmix_event_libdir pmix_event_defaults])
 
     AC_ARG_WITH([libevent],
                 [AC_HELP_STRING([--with-libevent=DIR],
@@ -67,17 +67,32 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
 
     AC_MSG_CHECKING([for libevent in])
     if test ! -z "$with_libevent" && test "$with_libevent" != "yes"; then
+        pmix_event_defaults=no
         pmix_event_dir=$with_libevent
         if test -d $with_libevent/lib; then
             pmix_event_libdir=$with_libevent/lib
         elif test -d $with_libevent/lib64; then
             pmix_event_libdir=$with_libevent/lib64
+        elif test -d $with_libevent; then
+            pmix_event_libdir=$with_libevent
         else
-            AC_MSG_RESULT([Could not find $with_libevent/lib or $with_libevent/lib64])
+            AC_MSG_RESULT([Could not find $with_libevent/lib, $with_libevent/lib64, or $with_libevent])
             AC_MSG_ERROR([Can not continue])
         fi
         AC_MSG_RESULT([$pmix_event_dir and $pmix_event_libdir])
     else
+        pmix_event_defaults=yes
+        pmix_event_dir=/usr/include
+        if test -d /usr/lib; then
+            pmix_event_libdir=/usr/lib
+        elif test -d /usr/lib64; then
+            pmix_event_libdir=/usr/lib64
+        else
+            AC_MSG_RESULT([not found])
+            AC_MSG_WARN([Could not find /usr/lib or /usr/lib64 - you may])
+            AC_MSG_WARN([to specify --with-libevent-libdir=<path>])
+            AC_MSG_ERROR([Can not continue])
+        fi
         AC_MSG_RESULT([(default search paths)])
     fi
     AS_IF([test ! -z "$with_libevent_libdir" && "$with_libevent_libdir" != "yes"],
@@ -92,11 +107,13 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
                        [$pmix_event_libdir],
                        [],
                        [AC_MSG_WARN([LIBEVENT SUPPORT NOT FOUND])
-                        AC_MSG_ERROR([CANNOT CONTINE])])
+                        AC_MSG_ERROR([CANNOT CONTINUE])])
 
-    PMIX_FLAGS_APPEND_UNIQ(CPPFLAGS, $pmix_libevent_CPPFLAGS)
-    PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_libevent_LIBS)
-    PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_libevent_LDFLAGS)
+    AS_IF([test "$pmix_event_defaults" = "no"],
+          [PMIX_FLAGS_APPEND_UNIQ(CPPFLAGS, $pmix_libevent_CPPFLAGS)
+           PMIX_FLAGS_APPEND_UNIQ(LIBS, $pmix_libevent_LIBS)
+           PMIX_FLAGS_APPEND_UNIQ(LDFLAGS, $pmix_libevent_LDFLAGS)])
+
 
     # Ensure that this libevent has the symbol
     # "evthread_set_lock_callbacks", which will only exist if

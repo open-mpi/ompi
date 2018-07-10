@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -208,7 +208,7 @@ int main(int argc, char **argv)
          * query the status of the allocation request */
         usleep(10);
         PMIX_QUERY_CREATE(query, 1);
-        PMIX_ARGV_APPEND(query[0].keys, PMIX_QUERY_ALLOC_STATUS);
+        PMIX_ARGV_APPEND(rc, query[0].keys, PMIX_QUERY_ALLOC_STATUS);
         PMIX_INFO_CREATE(query[0].qualifiers, 1);
         PMIX_INFO_LOAD(&query[0].qualifiers[0], PMIX_ALLOC_ID, myallocation, PMIX_STRING);
         mydata.active = true;

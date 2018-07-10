@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -65,7 +65,7 @@ BEGIN_C_DECLS
  * one of the two is NULL, the other list is simply copied to the
  * output.  If both are NULL, NULL is returned.
  */
-char **pmix_environ_merge(char **minor, char **major) __pmix_attribute_warn_unused_result__;
+PMIX_EXPORT char **pmix_environ_merge(char **minor, char **major) __pmix_attribute_warn_unused_result__;
 
 /**
  * Portable version of setenv(3), allowing editing of any
@@ -113,8 +113,8 @@ char **pmix_environ_merge(char **minor, char **major) __pmix_attribute_warn_unus
  *   pmix_setenv("foo", "bar", true, &my_env);
  * \endcode
  */
-pmix_status_t pmix_setenv(const char *name, const char *value,
-                              bool overwrite, char ***env) __pmix_attribute_nonnull__(1);
+PMIX_EXPORT pmix_status_t pmix_setenv(const char *name, const char *value,
+                                      bool overwrite, char ***env) __pmix_attribute_nonnull__(1);
 
 /**
  * Portable version of unsetenv(3), allowing editing of any
@@ -130,13 +130,13 @@ pmix_status_t pmix_setenv(const char *name, const char *value,
  * If \em name is found in \em env, the string corresponding to
  * that entry is freed and its entry is eliminated from the array.
  */
-pmix_status_t pmix_unsetenv(const char *name, char ***env) __pmix_attribute_nonnull__(1);
+PMIX_EXPORT pmix_status_t pmix_unsetenv(const char *name, char ***env) __pmix_attribute_nonnull__(1);
 
 /* A consistent way to retrieve the home and tmp directory on all supported
  * platforms.
  */
-const char* pmix_home_directory( void );
-const char* pmix_tmp_directory( void );
+PMIX_EXPORT const char* pmix_home_directory( void );
+PMIX_EXPORT const char* pmix_tmp_directory( void );
 
 /* Some care is needed with environ on OS X when dealing with shared
    libraries.  Handle that care here... */

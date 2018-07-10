@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -174,7 +174,10 @@ int main(int argc, char **argv)
 
     if( test_abort ){
         TEST_ERROR(("Test was aborted!"));
-        cli_kill_all();
+        /* do not simply kill the clients as that generates
+         * event notifications which these tests then print
+         * out, flooding the log */
+      //  cli_kill_all();
         test_fail = 1;
     }
 
@@ -203,4 +206,3 @@ int main(int argc, char **argv)
 
     return test_fail;
 }
-

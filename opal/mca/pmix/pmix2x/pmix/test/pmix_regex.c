@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +30,7 @@
 #include "src/util/pmix_environ.h"
 #include "src/util/output.h"
 #include "src/server/pmix_server_ops.h"
+#include "src/mca/preg/preg.h"
 
 #include "server_callbacks.h"
 #include "utils.h"
@@ -57,7 +58,7 @@ int main(int argc, char **argv)
     PMIx_generate_regex(TEST_NODES, &regex);
     fprintf(stderr, "REGEX: %s\n\n", regex);
     /* test reverse parsing */
-    rc = pmix_regex_parse_nodes(regex, &nodes);
+    rc = pmix_preg.parse_nodes(regex, &nodes);
     free(regex);
     if (PMIX_SUCCESS == rc) {
         regex = pmix_argv_join(nodes, ',');
@@ -73,7 +74,7 @@ int main(int argc, char **argv)
     PMIx_generate_ppn(TEST_PROCS, &regex);
     fprintf(stderr, "PPN: %s\n\n", regex);
     /* test reverse parsing */
-    rc = pmix_regex_parse_procs(regex, &procs);
+    rc = pmix_preg.parse_procs(regex, &procs);
     free(regex);
     if (PMIX_SUCCESS == rc) {
         regex = pmix_argv_join(procs, ';');
@@ -87,4 +88,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-

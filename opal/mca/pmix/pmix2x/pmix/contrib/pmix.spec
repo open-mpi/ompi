@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -192,7 +192,7 @@
 
 Summary: An extended/exascale implementation of PMI
 Name: %{?_name:%{_name}}%{!?_name:pmix}
-Version: 2.0.3
+Version: 2.1.2
 Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries
@@ -469,9 +469,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{_prefix}
 %endif
 # If the sysconfdir is not under the prefix, then list it explicitly.
-#%if !%{sysconfdir_in_prefix}
-#%{_sysconfdir}/*
-#%endif
+%if !%{sysconfdir_in_prefix}
+%{_sysconfdir}/*
+%endif
 # If %{install_in_opt}, then we're instaling PMIx to
 # /opt/pmix<version>.  But be sure to also explicitly mention
 # /opt/pmix so that it can be removed by RPM when everything under
@@ -497,6 +497,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Thu Sep 21 2017 Ralph Castain <rhc@open-mpi.org>
+- Add PMIx etc directory
+
 * Tue Sep 12 2017 Ralph Castain <rhc@open-mpi.org>
 - Port to pmix
 

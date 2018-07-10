@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +17,7 @@
 static pmix_mutex_t wait_sync_lock = PMIX_MUTEX_STATIC_INIT;
 static pmix_wait_sync_t* wait_sync_list = NULL;
 
-#define PMIX_WAIT_SYNC_PASS_OWNERSHIP(who)                  \
+#define PMIX_WAIT_SYNC_PASS_OWNERSHIP(who)             \
     do {                                               \
         pthread_mutex_lock( &(who)->lock);             \
         pthread_cond_signal( &(who)->condition );      \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -443,8 +443,8 @@ PMIX_EXPORT pmix_status_t PMIx_generate_ppn(const char *input, char **ppn);
  * as a collective operation call can occur before all the
  * procs have been started */
 PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
-                                                      pmix_info_t info[], size_t ninfo,
-                                                      pmix_op_cbfunc_t cbfunc, void *cbdata);
+                                          pmix_info_t info[], size_t ninfo,
+                                          pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Deregister an nspace and purge all objects relating to
  * it, including any client info from that nspace. This is

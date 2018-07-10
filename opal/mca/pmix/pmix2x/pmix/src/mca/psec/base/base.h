@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -46,14 +46,14 @@ BEGIN_C_DECLS
 /*
  * MCA Framework
  */
-extern pmix_mca_base_framework_t pmix_psec_base_framework;
+PMIX_EXPORT extern pmix_mca_base_framework_t pmix_psec_base_framework;
 /**
  * PSEC select function
  *
  * Cycle across available components and construct the list
  * of active modules
  */
-pmix_status_t pmix_psec_base_select(void);
+PMIX_EXPORT pmix_status_t pmix_psec_base_select(void);
 
 /**
  * Track an active component / module
@@ -78,15 +78,7 @@ typedef struct pmix_psec_globals_t pmix_psec_globals_t;
 extern pmix_psec_globals_t pmix_psec_globals;
 
 PMIX_EXPORT char* pmix_psec_base_get_available_modules(void);
-PMIX_EXPORT pmix_status_t pmix_psec_base_assign_module(struct pmix_peer_t *peer,
-                                                       const char *options);
-PMIX_EXPORT pmix_status_t pmix_psec_base_create_cred(struct pmix_peer_t *peer,
-                                                     pmix_listener_protocol_t protocol,
-                                                     char **cred, size_t *len);
-PMIX_EXPORT pmix_status_t pmix_psec_base_client_handshake(struct pmix_peer_t *peer, int sd);
-PMIX_EXPORT pmix_status_t pmix_psec_base_validate_connection(struct pmix_peer_t *peer,
-                                                             pmix_listener_protocol_t protocol,
-                                                             char *cred, size_t len);
+PMIX_EXPORT pmix_psec_module_t* pmix_psec_base_assign_module(const char *options);
 
 
 END_C_DECLS

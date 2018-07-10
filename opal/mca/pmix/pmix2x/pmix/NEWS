@@ -1,4 +1,4 @@
-Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
+Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
 Copyright (c) 2017      IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
@@ -20,11 +20,50 @@ other, a single NEWS-worthy item might apply to different series. For
 example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
-2.0.3 -- 23 Feb 2018
+
+2.1.2 -- TBD
 ----------------------
-**** NOTE: PMIx_Get in PMIx v2.x will fail when requesting information
-**** on any process whose nspace has not yet been registered with the
-**** PMIx server
+- Added PMIX_VERSION_RELEASE string to pmix_version.h
+- Added PMIX_SPAWNED and PMIX_PARENT_ID keys to all procs
+  started via PMIx_Spawn
+- Fixed faulty compares in PMI/PMI2 tests
+- Fixed bug in direct modex for data on remote node
+- Correctly transfer all cached job info to the client's
+  shared memory region upon first connection
+- Fix potential deadlock in PMIx_server_init in an error case
+- Fix uninitialized variable
+- Fix several memory and file descriptor leaks
+
+
+2.1.1 -- 5 Mar 2018
+----------------------
+- Fix direct modex when receiving new nspace
+- Resolve direct modex of job-level info
+- Fix a bug in attribute configuration checks
+- Fix a couple of bugs in unpacking of direct modex job-level data
+- Correcly handle application setup data during "instant on" launch
+- add a PMIX_BYTE_OBJECT_LOAD convenience macro
+- Fix two early "free" bugs
+- Add an example PMI-1 client program
+
+
+2.1.0 -- 1 Feb 2018
+----------------------
+**** NOTE: This release contains the first implementation of cross-version
+**** support. Servers using v2.1.0 are capable of supporting clients using
+**** PMIx versions v1.2 and above. Clients using v2.1.0 are able to interact
+**** with servers based on v1.2 and above.
+- Added cross-version communication support
+- Enable reporting of contact URI to stdout, stderr, or file (PR #538)
+- Enable support for remote tool connections (PR #540, #542)
+- Cleanup libevent configure logic to support default install paths (PR #541)
+- Debounce "unreachable" notifications for tools when they disconnect (PR #544)
+- Enable the regex generator to support node names that include multiple
+  sets of numbers
+
+
+2.0.3 -- 1 Feb 2018
+----------------------
 - Fix event notification so all sides of multi-library get notified
   of other library's existence
 - Update syslog protection to support Mac High Sierra OS
@@ -43,7 +82,6 @@ current release as well as the "stable" bug fix release branch.
 - Ensure we always complete PMIx_Finalize - don't return if something
   goes wrong in the middle of the procedure
 - Fix several tool connection issues
-- Fix a mismatch in data type on an MCA param
 
 
 2.0.2 -- 19 Oct 2017
@@ -69,8 +107,8 @@ current release as well as the "stable" bug fix release branch.
   operations to discover rendezvous files
 
 
-2.0.0 -- 22 Jun 2017
-----------------------
+2.0.0
+------
 **** NOTE: This release implements the complete PMIX v2.0 Standard
 **** and therefore includes a number of new APIs and features. These
 **** can be tracked by their RFC's in the RFC repository at:
@@ -125,6 +163,14 @@ current release as well as the "stable" bug fix release branch.
 - Fix a number of race condition issues that arose at scale
 - Enable PMIx servers to generate notifications to the host RM
   and to themselves
+
+
+1.2.5 -- 1 Feb 2018
+----------------------
+- Fix cross-version issue when v1.2 client interacts with v2.1 server (PR #564)
+- Update client connection for cross-version support (PR #591)
+- Fix write memory barrier ASM for PowerPC (PR #606)
+- Add protection from overly-large messages
 
 
 1.2.4 -- 13 Oct. 2017

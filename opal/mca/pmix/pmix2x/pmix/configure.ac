@@ -19,7 +19,7 @@
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -54,6 +54,19 @@ AC_CONFIG_MACRO_DIR(./config)
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 PMIX_LOAD_PLATFORM
+
+PMIX_TOP_BUILDDIR="`pwd`"
+AC_SUBST(PMIX_TOP_BUILDDIR)
+cd "$srcdir"
+PMIX_TOP_SRCDIR="`pwd`"
+AC_SUBST(PMIX_TOP_SRCDIR)
+cd "$PMIX_TOP_BUILDDIR"
+
+AC_MSG_NOTICE([builddir: $PMIX_TOP_BUILDDIR])
+AC_MSG_NOTICE([srcdir: $PMIX_TOP_SRCDIR])
+if test "$PMIX_TOP_BUILDDIR" != "$PMIX_TOP_SRCDIR"; then
+    AC_MSG_NOTICE([Detected VPATH build])
+fi
 
 # setup configure options (e.g., show_title and friends)
 PMIX_CONFIGURE_SETUP

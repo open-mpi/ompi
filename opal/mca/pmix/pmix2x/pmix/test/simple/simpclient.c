@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,11 +32,10 @@
 #include <time.h>
 
 #include "src/class/pmix_object.h"
-#include "src/buffer_ops/types.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"
 
-#define MAXCNT 2
+#define MAXCNT 1
 
 static volatile bool completed = false;
 static pmix_proc_t myproc;
@@ -252,6 +251,11 @@ int main(int argc, char **argv)
                     pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s failed: %s",
                                 myproc.nspace, myproc.rank, j, tmp, PMIx_Error_string(rc));
                     continue;
+                }
+                if (NULL == val) {
+                    pmix_output(0, "Client ns %s rank %d: NULL value returned",
+                                myproc.nspace, myproc.rank);
+                    break;
                 }
                 if (PMIX_UINT64 != val->type) {
                     pmix_output(0, "Client ns %s rank %d cnt %d: PMIx_Get %s returned wrong type: %d", myproc.nspace, myproc.rank, j, tmp, val->type);

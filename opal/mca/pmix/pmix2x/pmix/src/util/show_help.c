@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -161,11 +161,15 @@ static int open_file(const char *base, const char *topic)
             filename = pmix_os_path( false, search_dirs[i], base, NULL );
             pmix_show_help_yyin = fopen(filename, "r");
             if (NULL == pmix_show_help_yyin) {
-                asprintf(&err_msg, "%s: %s", filename, strerror(errno));
+                if (0 > asprintf(&err_msg, "%s: %s", filename, strerror(errno))) {
+                    return PMIX_ERR_OUT_OF_RESOURCE;
+                }
                 base_len = strlen(base);
                 if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
                     free(filename);
-                    asprintf(&filename, "%s%s%s.txt", search_dirs[i], PMIX_PATH_SEP, base);
+                    if (0 > asprintf(&filename, "%s%s%s.txt", search_dirs[i], PMIX_PATH_SEP, base)) {
+                        return PMIX_ERR_OUT_OF_RESOURCE;
+                    }
                     pmix_show_help_yyin = fopen(filename, "r");
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -31,7 +31,7 @@ static pmix_status_t native_init(void);
 static void native_finalize(void);
 static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
                                  char **cred, size_t *len);
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len);
 
@@ -91,7 +91,7 @@ static pmix_status_t create_cred(pmix_listener_protocol_t protocol,
     return PMIX_ERR_NOT_SUPPORTED;
 }
 
-static pmix_status_t validate_cred(pmix_peer_t *peer,
+static pmix_status_t validate_cred(int sd, uid_t uid, gid_t gid,
                                    pmix_listener_protocol_t protocol,
                                    char *cred, size_t len)
 {
@@ -105,7 +105,7 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
     socklen_t crlen = sizeof (ucred);
 #endif
     uid_t euid;
-    gid_t gid;
+    gid_t egid;
     char *ptr;
     size_t ln;
 
@@ -118,8 +118,8 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
 #if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) || defined(HAVE_STRUCT_UCRED_CR_UID))
         /* Ignore received 'cred' and validate ucred for socket instead. */
         pmix_output_verbose(2, pmix_globals.debug_output,
-                            "psec:native checking getsockopt on socket %d for peer credentials", peer->sd);
-        if (getsockopt (peer->sd, SOL_SOCKET, SO_PEERCRED, &ucred, &crlen) < 0) {
+                            "psec:native checking getsockopt on socket %d for peer credentials", sd);
+        if (getsockopt (sd, SOL_SOCKET, SO_PEERCRED, &ucred, &crlen) < 0) {
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "psec: getsockopt SO_PEERCRED failed: %s",
                                 strerror (pmix_socket_errno));
@@ -127,16 +127,16 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
         }
 #if defined(HAVE_STRUCT_UCRED_UID)
         euid = ucred.uid;
-        gid = ucred.gid;
+        egid = ucred.gid;
 #else
         euid = ucred.cr_uid;
-        gid = ucred.cr_gid;
+        egid = ucred.cr_gid;
 #endif
 
 #elif defined(HAVE_GETPEEREID)
         pmix_output_verbose(2, pmix_globals.debug_output,
-                            "psec:native checking getpeereid on socket %d for peer credentials", peer->sd);
-        if (0 != getpeereid(peer->sd, &euid, &gid)) {
+                            "psec:native checking getpeereid on socket %d for peer credentials", sd);
+        if (0 != getpeereid(sd, &euid, &egid)) {
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "psec: getsockopt getpeereid failed: %s",
                                 strerror (pmix_socket_errno));
@@ -147,22 +147,22 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
 #endif
 
         /* check uid */
-        if (euid != peer->info->uid) {
+        if (euid != uid) {
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "psec: socket cred contains invalid uid %u", euid);
             return PMIX_ERR_INVALID_CRED;
         }
 
         /* check gid */
-        if (gid != peer->info->gid) {
+        if (egid != gid) {
             pmix_output_verbose(2, pmix_globals.debug_output,
-                                "psec: socket cred contains invalid gid %u", gid);
+                                "psec: socket cred contains invalid gid %u", egid);
             return PMIX_ERR_INVALID_CRED;
         }
 
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "psec: native credential %u:%u valid",
-                            euid, gid);
+                            euid, egid);
         return PMIX_SUCCESS;
     }
 
@@ -175,7 +175,7 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
         }
         ln = len;
         euid = 0;
-        gid = 0;
+        egid = 0;
         if (sizeof(uid_t) <= ln) {
             memcpy(&euid, cred, sizeof(uid_t));
             ln -= sizeof(uid_t);
@@ -184,27 +184,27 @@ static pmix_status_t validate_cred(pmix_peer_t *peer,
             return PMIX_ERR_INVALID_CRED;
         }
         if (sizeof(gid_t) <= ln) {
-            memcpy(&gid, ptr, sizeof(gid_t));
+            memcpy(&egid, ptr, sizeof(gid_t));
         } else {
             return PMIX_ERR_INVALID_CRED;
         }
         /* check uid */
-        if (euid != peer->info->uid) {
+        if (euid != uid) {
             pmix_output_verbose(2, pmix_globals.debug_output,
                                 "psec: socket cred contains invalid uid %u", euid);
             return PMIX_ERR_INVALID_CRED;
         }
 
         /* check gid */
-        if (gid != peer->info->gid) {
+        if (egid != gid) {
             pmix_output_verbose(2, pmix_globals.debug_output,
-                                "psec: socket cred contains invalid gid %u", gid);
+                                "psec: socket cred contains invalid gid %u", egid);
             return PMIX_ERR_INVALID_CRED;
         }
 
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "psec: native credential %u:%u valid",
-                            euid, gid);
+                            euid, egid);
         return PMIX_SUCCESS;
     }
 

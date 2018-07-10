@@ -16,13 +16,112 @@ dnl Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2018      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
 dnl
+
+AC_DEFUN([PMIX_CC_HELPER],[
+    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper_tmp])
+    AC_MSG_CHECKING([$1])
+
+    pmix_prog_cc_c11_helper_tmp=0
+
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([$3],[$4])],[
+                       $2=yes
+                       pmix_prog_cc_c11_helper_tmp=1], [$2=no])
+
+    AC_DEFINE_UNQUOTED([$5], [$pmix_prog_cc_c11_helper_tmp], [$6])
+
+    AC_MSG_RESULT([$$2])
+    PMIX_VAR_SCOPE_POP
+])
+
+
+AC_DEFUN([PMIX_PROG_CC_C11_HELPER],[
+    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper_CFLAGS_save pmix_prog_cc_c11_helper__Thread_local_available pmix_prog_cc_c11_helper_atomic_var_available pmix_prog_cc_c11_helper__Atomic_available pmix_prog_cc_c11_helper__static_assert_available pmix_prog_cc_c11_helper__Generic_available])
+
+    pmix_prog_cc_c11_helper_CFLAGS_save=$CFLAGS
+    CFLAGS="$CFLAGS $1"
+
+    PMIX_CC_HELPER([if $CC $1 supports C11 _Thread_local], [pmix_prog_cc_c11_helper__Thread_local_available],
+                   [],[[static _Thread_local int  foo = 1;++foo;]], [PMIX_C_HAVE__THREAD_LOCAL],
+                   [Whether C compiler supports __Thread_local])
+
+    PMIX_CC_HELPER([if $CC $1 supports C11 atomic variables], [pmix_prog_cc_c11_helper_atomic_var_available],
+                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]], [PMIX_C_HAVE_ATOMIC_CONV_VAR],
+                   [Whether C compiler support atomic convenience variables in stdatomic.h])
+
+    PMIX_CC_HELPER([if $CC $1 supports C11 _Atomic keyword], [pmix_prog_cc_c11_helper__Atomic_available],
+                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]], [PMIX_C_HAVE__ATOMIC],
+                   [Whether C compiler supports __Atomic keyword])
+
+    PMIX_CC_HELPER([if $CC $1 supports C11 _Generic keyword], [pmix_prog_cc_c11_helper__Generic_available],
+                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]], [PMIX_C_HAVE__GENERIC],
+                   [Whether C compiler supports __Generic keyword])
+
+    PMIX_CC_HELPER([if $CC $1 supports C11 _Static_assert], [pmix_prog_cc_c11_helper__static_assert_available],
+                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]], [PMIX_C_HAVE__STATIC_ASSERT],
+                   [Whether C compiler support _Static_assert keyword])
+
+    dnl At this time Open MPI only needs thread local and the atomic convenience types for C11 support. These
+    dnl will likely be required in the future.
+    AS_IF([test "x$pmix_prog_cc_c11_helper__Thread_local_available" = "xyes" && test "x$pmix_prog_cc_c11_helper_atomic_var_available" = "xyes"],
+          [$2], [$3])
+
+    CFLAGS=$pmix_prog_cc_c11_helper_CFLAGS_save
+
+    PMIX_VAR_SCOPE_POP
+])
+
+AC_DEFUN([PMIX_PROG_CC_C11],[
+    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_flags])
+    if test -z "$pmix_cv_c11_supported" ; then
+        pmix_cv_c11_supported=no
+        pmix_cv_c11_flag_required=yes
+
+        AC_MSG_CHECKING([if $CC requires a flag for C11])
+
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if __STDC_VERSION__ < 201112L
+#error "Without any CLI flags, this compiler does not support C11"
+#endif
+                                           ]],[])],
+                          [pmix_cv_c11_flag_required=no])
+
+        AC_MSG_RESULT([$pmix_cv_c11_flag_required])
+
+        if test "x$pmix_cv_c11_flag_required" = "xno" ; then
+            AC_MSG_NOTICE([verifying $CC supports C11 without a flag])
+            PMIX_PROG_CC_C11_HELPER([], [], [pmix_cv_c11_flag_required=yes])
+        fi
+
+        if test "x$pmix_cv_c11_flag_required" = "xyes" ; then
+            pmix_prog_cc_c11_flags="-std=gnu11 -std=c11 -c11"
+
+            AC_MSG_NOTICE([checking if $CC supports C11 with a flag])
+            pmix_cv_c11_flag=
+            for flag in $(echo $pmix_prog_cc_c11_flags | tr ' ' '\n') ; do
+                PMIX_PROG_CC_C11_HELPER([$flag],[pmix_cv_c11_flag=$flag],[])
+                if test "x$pmix_cv_c11_flag" != "x" ; then
+                    CFLAGS="$CFLAGS $pmix_cv_c11_flag"
+                    AC_MSG_NOTICE([using $flag to enable C11 support])
+                    pmix_cv_c11_supported=yes
+                    break
+                fi
+            done
+        else
+            AC_MSG_NOTICE([no flag required for C11 support])
+            pmix_cv_c11_supported=yes
+        fi
+    fi
+
+    PMIX_VAR_SCOPE_POP
+])
+
 
 # PMIX_SETUP_CC()
 # ---------------
@@ -37,13 +136,32 @@ AC_DEFUN([PMIX_SETUP_CC],[
     AC_REQUIRE([_PMIX_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    # We require a C99 compiant compiler
-    # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
-    if test "x$ac_cv_prog_cc_c99" = xno ; then
-        AC_MSG_WARN([PMIx requires a C99 compiler])
-        AC_MSG_ERROR([Aborting.])
+    PMIX_PROG_CC_C11
+
+    if test $pmix_cv_c11_supported = no ; then
+        # It is not currently an error if C11 support is not available. Uncomment the
+        # following lines and update the warning when we require a C11 compiler.
+        # AC_MSG_WARNING([Open MPI requires a C11 (or newer) compiler])
+        # AC_MSG_ERROR([Aborting.])
+        # From Open MPI 1.7 on we require a C99 compiant compiler
+        AC_PROG_CC_C99
+        # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
+        if test "x$ac_cv_prog_cc_c99" = xno ; then
+            AC_MSG_WARN([Open MPI requires a C99 (or newer) compiler. C11 is recommended.])
+            AC_MSG_ERROR([Aborting.])
+        fi
+
+        # Get the correct result for C11 support flags now that the compiler flags have
+        # changed
+        PMIX_PROG_CC_C11_HELPER([],[],[])
     fi
 
+    # Check if compiler support __thread
+    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc__thread_available])
+    PMIX_CC_HELPER([if $CC $1 supports __thread], [pmix_prog_cc__thread_available],
+               [],[[static __thread int  foo = 1;++foo;]], [PMIX_C_HAVE___THREAD],
+               [Whether C compiler supports __thread])
+    PMIX_VAR_SCOPE_POP
 
     PMIX_C_COMPILER_VENDOR([pmix_c_vendor])
 
@@ -66,6 +184,48 @@ AC_DEFUN([PMIX_SETUP_CC],[
 # undef _GNU_SOURCE
 #endif])
            AC_DEFINE([_GNU_SOURCE])])
+
+    # Do we want code coverage
+    if test "$WANT_COVERAGE" = "1"; then
+        if test "$pmix_c_vendor" = "gnu" ; then
+            # For compilers > gcc-4.x, use --coverage for
+            # compiling and linking to circumvent trouble with
+            # libgcov.
+            CFLAGS_orig="$CFLAGS"
+            LDFLAGS_orig="$LDFLAGS"
+
+            CFLAGS="$CFLAGS_orig --coverage"
+            LDFLAGS="$LDFLAGS_orig --coverage"
+            PMIX_COVERAGE_FLAGS=
+
+            AC_CACHE_CHECK([if $CC supports --coverage],
+                      [pmix_cv_cc_coverage],
+                      [AC_TRY_COMPILE([], [],
+                                      [pmix_cv_cc_coverage="yes"],
+                                      [pmix_cv_cc_coverage="no"])])
+
+            if test "$pmix_cv_cc_coverage" = "yes" ; then
+                PMIX_COVERAGE_FLAGS="--coverage"
+                CLEANFILES="*.gcno ${CLEANFILES}"
+                CONFIG_CLEAN_FILES="*.gcda *.gcov ${CONFIG_CLEAN_FILES}"
+            else
+                PMIX_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
+                CLEANFILES="*.bb *.bbg ${CLEANFILES}"
+                CONFIG_CLEAN_FILES="*.da *.*.gcov ${CONFIG_CLEAN_FILES}"
+            fi
+            CFLAGS="$CFLAGS_orig $PMIX_COVERAGE_FLAGS"
+            LDFLAGS="$LDFLAGS_orig $PMIX_COVERAGE_FLAGS"
+
+            PMIX_FLAGS_UNIQ(CFLAGS)
+            PMIX_FLAGS_UNIQ(LDFLAGS)
+            AC_MSG_WARN([$PMIX_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
+
+            WANT_DEBUG=1
+        else
+            AC_MSG_WARN([Code coverage functionality is currently available only with GCC])
+            AC_MSG_ERROR([Configure: Cannot continue])
+       fi
+    fi
 
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
@@ -296,20 +456,13 @@ AC_DEFUN([PMIX_SETUP_CC],[
     PMIX_ENSURE_CONTAINS_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
-
-    ##################################
-    # C compiler characteristics
-    ##################################
-    # Does the compiler support "ident"-like constructs?
-    PMIX_CHECK_IDENT([CC], [CFLAGS], [c], [C])
-
 ])
 
 
 AC_DEFUN([_PMIX_START_SETUP_CC],[
     pmix_show_subtitle "C compiler and preprocessor"
 
-    # $%@#!@#% AIX!!  This has to be called before anything invokes the C
+	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
     # compiler.
     dnl AC_AIX
 ])
@@ -321,10 +474,10 @@ AC_DEFUN([_PMIX_PROG_CC],[
     #
     PMIX_VAR_SCOPE_PUSH([pmix_cflags_save dummy pmix_cc_arvgv0])
     pmix_cflags_save="$CFLAGS"
-    AC_PROG_CC_C99
+    AC_PROG_CC
     BASECC="`basename $CC`"
     CFLAGS="$pmix_cflags_save"
-    AC_DEFINE_UNQUOTED(PMIX_CC, "$CC", [PMIx underlying C compiler])
+    AC_DEFINE_UNQUOTED(PMIX_CC, "$CC", [OMPI underlying C compiler])
     set dummy $CC
     pmix_cc_argv0=[$]2
     PMIX_WHICH([$pmix_cc_argv0], [PMIX_CC_ABSOLUTE])

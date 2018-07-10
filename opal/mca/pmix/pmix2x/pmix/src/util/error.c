@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -169,6 +169,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "PMIX FILE MONITOR ALERT";
     case PMIX_MODEL_DECLARED:
         return "PMIX MODEL DECLARED";
+    case PMIX_ERR_TEMP_UNAVAILABLE:
+        return "PMIX TEMPORARILY UNAVAILABLE";
     case PMIX_SUCCESS:
         return "SUCCESS";
     default:

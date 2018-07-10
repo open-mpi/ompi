@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,7 +53,22 @@ typedef struct {
     size_t index;
     uint8_t precedence;
     char *locator;
+    pmix_proc_t source;  // who generated this event
+    /* When registering for events, callers can specify
+     * the range of sources from which they are willing
+     * to receive notifications - e.g., for callers to
+     * define different handlers for events coming from
+     * the RM vs those coming from their peers. We use
+     * the rng field to track these values upon registration.
+     */
     pmix_range_trkr_t rng;
+    /* For registration, we use the affected field to track
+     * the range of procs that, if affected by the event,
+     * should cause the handler to be called (subject, of
+     * course, to any rng constraints).
+     */
+    pmix_proc_t *affected;
+    size_t naffected;
     pmix_notification_fn_t evhdlr;
     void *cbobject;
     pmix_status_t *codes;
@@ -102,8 +117,11 @@ typedef struct pmix_event_chain_t {
     bool endchain;
     pmix_proc_t source;
     pmix_data_range_t range;
+    pmix_proc_t *affected;
+    size_t naffected;
     pmix_info_t *info;
     size_t ninfo;
+    size_t nallocated;
     pmix_info_t *results;
     size_t nresults;
     pmix_event_hdlr_t *evhdlr;
@@ -116,6 +134,13 @@ PMIX_CLASS_DECLARATION(pmix_event_chain_t);
  * status, passing it the provided info on the procs that were
  * affected, plus any additional info provided by the server */
 void pmix_invoke_local_event_hdlr(pmix_event_chain_t *chain);
+
+bool pmix_notify_check_range(pmix_range_trkr_t *rng,
+                             const pmix_proc_t *proc);
+
+bool pmix_notify_check_affected(pmix_proc_t *interested, size_t ninterested,
+                                pmix_proc_t *affected, size_t naffected);
+
 
 /* invoke the server event notification handler */
 pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
@@ -147,19 +172,14 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             ch->status = (e);                                                       \
             ch->range = (r);                                                        \
             (void)strncpy(ch->source.nspace,                                        \
-                          (p)->info->nptr->nspace,                                  \
+                          (p)->nptr->nspace,                                        \
                           PMIX_MAX_NSLEN);                                          \
-            ch->source.rank = (p)->info->rank;                                      \
-            ch->ninfo = 2;                                                          \
+            ch->source.rank = (p)->info->pname.rank;                                \
+            ch->ninfo = 0;                                                          \
+            ch->nallocated = 2;                                                     \
             ch->final_cbfunc = (f);                                                 \
             ch->final_cbdata = ch;                                                  \
-            PMIX_INFO_CREATE(ch->info, ch->ninfo);                                  \
-            PMIX_INFO_LOAD(&ch->info[0],                                            \
-                           PMIX_EVENT_HDLR_NAME,                                    \
-                           NULL, PMIX_STRING);                                      \
-            PMIX_INFO_LOAD(&ch->info[1],                                            \
-                           PMIX_EVENT_RETURN_OBJECT,                                \
-                           NULL, PMIX_POINTER);                                     \
+            PMIX_INFO_CREATE(ch->info, ch->nallocated);                             \
             /* cache it */                                                          \
             pmix_list_append(&pmix_globals.cached_events, &ch->super);              \
             ch->timer_active = true;                                                \
@@ -169,9 +189,9 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
         } else {                                                                    \
             /* add this peer to the array of sources */                             \
-            (void)strncpy(proc.nspace, (p)->info->nptr->nspace, PMIX_MAX_NSLEN);    \
-            proc.rank = (p)->info->rank;                                            \
-            ninfo = ch->ninfo + 1;                                                  \
+            (void)strncpy(proc.nspace, (p)->nptr->nspace, PMIX_MAX_NSLEN);          \
+            proc.rank = (p)->info->pname.rank;                                      \
+            ninfo = ch->nallocated + 1;                                             \
             PMIX_INFO_CREATE(info, ninfo);                                          \
             /* must keep the hdlr name and return object at the end, so prepend */  \
             PMIX_INFO_LOAD(&info[0], PMIX_PROCID,                                   \
@@ -179,9 +199,10 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             for (n=0; n < ch->ninfo; n++) {                                         \
                 PMIX_INFO_XFER(&info[n+1], &ch->info[n]);                           \
             }                                                                       \
-            PMIX_INFO_FREE(ch->info, ch->ninfo);                                    \
+            PMIX_INFO_FREE(ch->info, ch->nallocated);                               \
+            ch->nallocated = ninfo;                                                 \
             ch->info = info;                                                        \
-            ch->ninfo = ninfo;                                                      \
+            ch->ninfo = ninfo - 2;                                                  \
             /* reset the timer */                                                   \
             pmix_event_del(&ch->ev);                                                \
             PMIX_POST_OBJECT(ch);                                                   \

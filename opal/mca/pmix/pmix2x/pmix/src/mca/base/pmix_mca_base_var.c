@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -405,7 +405,13 @@ static void resolve_relative_paths(char **file_prefix, char *file_path, bool rel
     }
     else {
         /* Prepend the files to the search list */
-        asprintf(&tmp_str, "%s%c%s", *file_prefix, sep, *files);
+        if (0 > asprintf(&tmp_str, "%s%c%s", *file_prefix, sep, *files)) {
+            pmix_output(0, "OUT OF MEM");
+            free(*files);
+            free(tmp_str);
+            *files = NULL;
+            return;
+        }
         free (*files);
         *files = tmp_str;
     }
@@ -431,16 +437,13 @@ int pmix_mca_base_var_cache_files(bool rel_path_search)
     ret = asprintf(&pmix_mca_base_var_files, "%s"PMIX_PATH_SEP".pmix" PMIX_PATH_SEP
                    "mca-params.conf%c%s" PMIX_PATH_SEP "pmix-mca-params.conf",
                    home, ',', pmix_pinstall_dirs.sysconfdir);
-    if (PMIX_SUCCESS != ret) {
-        return ret;
-    }
 #else
     ret = asprintf(&pmix_mca_base_var_files, "%s" PMIX_PATH_SEP "pmix-mca-params.conf",
                    pmix_pinstall_dirs.sysconfdir);
-    if (PMIX_SUCCESS != ret) {
-        return ret;
-    }
 #endif
+    if (0 > ret) {
+        return PMIX_ERR_OUT_OF_RESOURCE;
+    }
 
     /* Initialize a parameter that says where MCA param files can be found.
        We may change this value so set the scope to PMIX_MCA_BASE_VAR_SCOPE_READONLY */
@@ -542,8 +545,11 @@ int pmix_mca_base_var_cache_files(bool rel_path_search)
         if (NULL != pmix_mca_base_param_file_path) {
             char *tmp_str = pmix_mca_base_param_file_path;
 
-            asprintf(&pmix_mca_base_param_file_path, "%s%c%s", force_agg_path, PMIX_ENV_SEP, tmp_str);
+            ret = asprintf(&pmix_mca_base_param_file_path, "%s%c%s", force_agg_path, PMIX_ENV_SEP, tmp_str);
             free(tmp_str);
+            if (0 > ret) {
+                return PMIX_ERR_OUT_OF_RESOURCE;
+            }
         } else {
             pmix_mca_base_param_file_path = strdup(force_agg_path);
         }
@@ -1027,7 +1033,7 @@ int pmix_mca_base_var_build_env(char ***env, int *num_env, bool internal)
 {
     pmix_mca_base_var_t *var;
     size_t i, len;
-    int ret;
+    int ret=0;
 
     /* Check for bozo cases */
 
@@ -1074,14 +1080,15 @@ int pmix_mca_base_var_build_env(char ***env, int *num_env, bool internal)
         pmix_argv_append(num_env, env, str);
         free(str);
 
+        ret = PMIX_SUCCESS;
         switch (var->mbv_source) {
         case PMIX_MCA_BASE_VAR_SOURCE_FILE:
         case PMIX_MCA_BASE_VAR_SOURCE_OVERRIDE:
-            asprintf (&str, "%sSOURCE_%s=FILE:%s", mca_prefix, var->mbv_full_name,
-                      pmix_mca_base_var_source_file (var));
+            ret = asprintf (&str, "%sSOURCE_%s=FILE:%s", mca_prefix, var->mbv_full_name,
+                            pmix_mca_base_var_source_file (var));
             break;
         case PMIX_MCA_BASE_VAR_SOURCE_COMMAND_LINE:
-            asprintf (&str, "%sSOURCE_%s=COMMAND_LINE", mca_prefix, var->mbv_full_name);
+            ret = asprintf (&str, "%sSOURCE_%s=COMMAND_LINE", mca_prefix, var->mbv_full_name);
             break;
         case PMIX_MCA_BASE_VAR_SOURCE_ENV:
         case PMIX_MCA_BASE_VAR_SOURCE_SET:
@@ -1097,10 +1104,12 @@ int pmix_mca_base_var_build_env(char ***env, int *num_env, bool internal)
             free(str);
         }
     }
+    if (ret < 0) {
+        ret = PMIX_ERR_OUT_OF_RESOURCE;
+    }
 
     /* All done */
-
-    return PMIX_SUCCESS;
+    return ret;
 
     /* Error condition */
 
@@ -2116,29 +2125,46 @@ int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t 
         }
 
         /* build the message*/
-        asprintf(&tmp, "mca:%s:%s:param:%s:", framework, component,
-                 full_name);
+        ret = asprintf(&tmp, "mca:%s:%s:param:%s:", framework, component, full_name);
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
 
         /* Output the value */
         char *colon = strchr(value_string, ':');
         if (NULL != colon) {
-            asprintf(out[0] + line++, "%svalue:\"%s\"", tmp, value_string);
+            ret = asprintf(out[0] + line++, "%svalue:\"%s\"", tmp, value_string);
         } else {
-            asprintf(out[0] + line++, "%svalue:%s", tmp, value_string);
+            ret = asprintf(out[0] + line++, "%svalue:%s", tmp, value_string);
+        }
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
         }
 
         /* Output the source */
-        asprintf(out[0] + line++, "%ssource:%s", tmp, source_string);
+        ret = asprintf(out[0] + line++, "%ssource:%s", tmp, source_string);
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
 
         /* Output whether it's read only or writable */
-        asprintf(out[0] + line++, "%sstatus:%s", tmp, PMIX_VAR_IS_DEFAULT_ONLY(var[0]) ? "read-only" : "writeable");
+        ret = asprintf(out[0] + line++, "%sstatus:%s", tmp, PMIX_VAR_IS_DEFAULT_ONLY(var[0]) ? "read-only" : "writeable");
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
 
         /* Output the info level of this parametere */
-        asprintf(out[0] + line++, "%slevel:%d", tmp, var->mbv_info_lvl + 1);
+        ret = asprintf(out[0] + line++, "%slevel:%d", tmp, var->mbv_info_lvl + 1);
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
 
         /* If it has a help message, output the help message */
         if (var->mbv_description) {
-            asprintf(out[0] + line++, "%shelp:%s", tmp, var->mbv_description);
+            ret = asprintf(out[0] + line++, "%shelp:%s", tmp, var->mbv_description);
+        }
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
         }
 
         if (NULL != var->mbv_enumerator) {
@@ -2152,18 +2178,30 @@ int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t 
                     continue;
                 }
 
-                asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
+                ret = asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
+                if (0 > ret) {
+                    return PMIX_ERR_OUT_OF_RESOURCE;
+                }
             }
         }
 
         /* Is this variable deprecated? */
-        asprintf(out[0] + line++, "%sdeprecated:%s", tmp, PMIX_VAR_IS_DEPRECATED(var[0]) ? "yes" : "no");
+        ret = asprintf(out[0] + line++, "%sdeprecated:%s", tmp, PMIX_VAR_IS_DEPRECATED(var[0]) ? "yes" : "no");
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
 
-        asprintf(out[0] + line++, "%stype:%s", tmp, pmix_var_type_names[var->mbv_type]);
+        ret = asprintf(out[0] + line++, "%stype:%s", tmp, pmix_var_type_names[var->mbv_type]);
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
 
         /* Does this parameter have any synonyms or is it a synonym? */
         if (PMIX_VAR_IS_SYNONYM(var[0])) {
-            asprintf(out[0] + line++, "%ssynonym_of:name:%s", tmp, original->mbv_full_name);
+            ret = asprintf(out[0] + line++, "%ssynonym_of:name:%s", tmp, original->mbv_full_name);
+            if (0 > ret) {
+                return PMIX_ERR_OUT_OF_RESOURCE;
+            }
         } else if (pmix_value_array_get_size(&var->mbv_synonyms)) {
             for (i = 0 ; i < synonym_count ; ++i) {
                 pmix_mca_base_var_t *synonym;
@@ -2173,7 +2211,10 @@ int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t 
                     continue;
                 }
 
-                asprintf(out[0] + line++, "%ssynonym:name:%s", tmp, synonym->mbv_full_name);
+                ret = asprintf(out[0] + line++, "%ssynonym:name:%s", tmp, synonym->mbv_full_name);
+                if (0 > ret) {
+                    return PMIX_ERR_OUT_OF_RESOURCE;
+                }
             }
         }
 
@@ -2187,25 +2228,37 @@ int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t 
             return PMIX_ERR_OUT_OF_RESOURCE;
         }
 
-        asprintf (out[0], "%s \"%s\" (current value: \"%s\", data source: %s, level: %d %s, type: %s",
-                  PMIX_VAR_IS_DEFAULT_ONLY(var[0]) ? "informational" : "parameter",
-                  full_name, value_string, source_string, var->mbv_info_lvl + 1,
-                  info_lvl_strings[var->mbv_info_lvl], pmix_var_type_names[var->mbv_type]);
+        ret = asprintf (out[0], "%s \"%s\" (current value: \"%s\", data source: %s, level: %d %s, type: %s",
+                        PMIX_VAR_IS_DEFAULT_ONLY(var[0]) ? "informational" : "parameter",
+                        full_name, value_string, source_string, var->mbv_info_lvl + 1,
+                        info_lvl_strings[var->mbv_info_lvl], pmix_var_type_names[var->mbv_type]);
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
 
         tmp = out[0][0];
         if (PMIX_VAR_IS_DEPRECATED(var[0])) {
-            asprintf (out[0], "%s, deprecated", tmp);
+            ret = asprintf (out[0], "%s, deprecated", tmp);
             free (tmp);
+            if (0 > ret) {
+                return PMIX_ERR_OUT_OF_RESOURCE;
+            }
             tmp = out[0][0];
         }
 
         /* Does this parameter have any synonyms or is it a synonym? */
         if (PMIX_VAR_IS_SYNONYM(var[0])) {
-            asprintf(out[0], "%s, synonym of: %s)", tmp, original->mbv_full_name);
+            ret = asprintf(out[0], "%s, synonym of: %s)", tmp, original->mbv_full_name);
             free (tmp);
+            if (0 > ret) {
+                return PMIX_ERR_OUT_OF_RESOURCE;
+            }
         } else if (synonym_count) {
-            asprintf(out[0], "%s, synonyms: ", tmp);
+            ret = asprintf(out[0], "%s, synonyms: ", tmp);
             free (tmp);
+            if (0 > ret) {
+                return PMIX_ERR_OUT_OF_RESOURCE;
+            }
 
             for (i = 0 ; i < synonym_count ; ++i) {
                 pmix_mca_base_var_t *synonym;
@@ -2217,21 +2270,30 @@ int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t 
 
                 tmp = out[0][0];
                 if (synonym_count == i+1) {
-                    asprintf(out[0], "%s%s)", tmp, synonym->mbv_full_name);
+                    ret = asprintf(out[0], "%s%s)", tmp, synonym->mbv_full_name);
                 } else {
-                    asprintf(out[0], "%s%s, ", tmp, synonym->mbv_full_name);
+                    ret = asprintf(out[0], "%s%s, ", tmp, synonym->mbv_full_name);
                 }
                 free(tmp);
+                if (0 > ret) {
+                    return PMIX_ERR_OUT_OF_RESOURCE;
+                }
             }
         } else {
-            asprintf(out[0], "%s)", tmp);
+            ret = asprintf(out[0], "%s)", tmp);
             free(tmp);
+            if (0 > ret) {
+                return PMIX_ERR_OUT_OF_RESOURCE;
+            }
         }
 
         line++;
 
         if (var->mbv_description) {
-            asprintf(out[0] + line++, "%s", var->mbv_description);
+            ret = asprintf(out[0] + line++, "%s", var->mbv_description);
+            if (0 > ret) {
+                return PMIX_ERR_OUT_OF_RESOURCE;
+            }
         }
 
         if (NULL != var->mbv_enumerator) {
@@ -2239,8 +2301,11 @@ int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t 
 
             ret = var->mbv_enumerator->dump(var->mbv_enumerator, &values);
             if (PMIX_SUCCESS == ret) {
-                asprintf (out[0] + line++, "Valid values: %s", values);
+                ret = asprintf (out[0] + line++, "Valid values: %s", values);
                 free (values);
+                if (0 > ret) {
+                    return PMIX_ERR_OUT_OF_RESOURCE;
+                }
             }
         }
     } else if (PMIX_MCA_BASE_VAR_DUMP_SIMPLE == output_type) {
@@ -2251,7 +2316,10 @@ int pmix_mca_base_var_dump(int vari, char ***out, pmix_mca_base_var_dump_type_t 
             return PMIX_ERR_OUT_OF_RESOURCE;
         }
 
-        asprintf(out[0], "%s=%s (%s)", var->mbv_full_name, value_string, source_string);
+        ret = asprintf(out[0], "%s=%s (%s)", var->mbv_full_name, value_string, source_string);
+        if (0 > ret) {
+            return PMIX_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     free (value_string);
