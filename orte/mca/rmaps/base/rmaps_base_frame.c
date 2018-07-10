@@ -69,6 +69,7 @@ static bool rmaps_base_display_devel_map = false;
 static bool rmaps_base_display_diffable_map = false;
 static char *rmaps_base_topo_file = NULL;
 static char *rmaps_dist_device = NULL;
+static bool rmaps_base_inherit = false;
 
 static int orte_rmaps_base_register(mca_base_register_flag_t flags)
 {
@@ -223,6 +224,12 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_topo_file);
 
+    rmaps_base_inherit = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "inherit",
+                                 "Whether child jobs shall inherit launch directives",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_inherit);
 
     return ORTE_SUCCESS;
 }
@@ -254,6 +261,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     orte_rmaps_base.mapping = 0;
     orte_rmaps_base.ranking = 0;
     orte_rmaps_base.device = NULL;
+    orte_rmaps_base.inherit = rmaps_base_inherit;
 
     /* if a topology file was given, then set our topology
      * from it. Even though our actual topology may differ,

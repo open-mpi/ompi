@@ -54,6 +54,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     orte_job_t *parent;
     orte_vpid_t nprocs;
     orte_app_context_t *app;
+    bool inherit = false;
 
     ORTE_ACQUIRE_OBJECT(caddy);
     jdata = caddy->jdata;
@@ -64,31 +65,35 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         "mca:rmaps: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
 
-    if (NULL == jdata->map->ppr && NULL != orte_rmaps_base.ppr) {
-        jdata->map->ppr = strdup(orte_rmaps_base.ppr);
+    /* if this is a dynamic job launch and they didn't explicitly
+     * request inheritance, then don't inherit the launch directives */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCH_PROXY, NULL, OPAL_NAME)) {
+        inherit = orte_rmaps_base.inherit;
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: dynamic job %s %s inherit launch directives",
+                            ORTE_JOBID_PRINT(jdata->jobid),
+                            inherit ? "will" : "will not");
+    } else {
+        /* initial launch always takes on MCA params */
+        inherit = true;
+    }
+
+    if (inherit) {
+        if (NULL == jdata->map->ppr && NULL != orte_rmaps_base.ppr) {
+            jdata->map->ppr = strdup(orte_rmaps_base.ppr);
+        }
+        if (0 == jdata->map->cpus_per_rank) {
+            jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+        }
     }
     if (NULL != jdata->map->ppr) {
         /* get the procs/object */
         ppx = strtoul(jdata->map->ppr, NULL, 10);
         if (NULL != strstr(jdata->map->ppr, "node")) {
             pernode = true;
-        } else {
-            pernode = false;
-        }
-    } else {
-        if (orte_rmaps_base_pernode) {
-            ppx = 1;
-            pernode = true;
-        } else if (0 < orte_rmaps_base_n_pernode) {
-            ppx = orte_rmaps_base_n_pernode;
-            pernode = true;
-        } else if (0 < orte_rmaps_base_n_persocket) {
-            ppx = orte_rmaps_base_n_persocket;
+        } else if (NULL != strstr(jdata->map->ppr, "socket")) {
             persocket = true;
         }
-    }
-    if (0 == jdata->map->cpus_per_rank) {
-        jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
     }
 
     /* compute the number of procs and check validity */
@@ -151,12 +156,13 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         "mca:rmaps: setting mapping policies for job %s nprocs %d",
                         ORTE_JOBID_PRINT(jdata->jobid), (int)nprocs);
 
-    if (!jdata->map->display_map) {
+    if (inherit && !jdata->map->display_map) {
         jdata->map->display_map = orte_rmaps_base.display_map;
     }
+
     /* set the default mapping policy IFF it wasn't provided */
     if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+        if (inherit && (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps mapping given by MCA param");
             jdata->map->mapping = orte_rmaps_base.mapping;
@@ -216,12 +222,13 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 
     /* check for no-use-local directive */
     if (!(ORTE_MAPPING_LOCAL_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
-        if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+        if (inherit && (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
         }
     }
 
-    /* ditto for rank policy */
+    /* we don't have logic to determine default rank policy, so
+     * just inherit it if they didn't give us one */
     if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
         jdata->map->ranking = orte_rmaps_base.ranking;
     }
@@ -230,7 +237,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * already (e.g., during the call to comm_spawn), then we don't
      * override it */
     if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+        if (inherit && OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
             /* if the user specified a default binding policy via
              * MCA param, then we use it - this can include a directive
              * to overload */
