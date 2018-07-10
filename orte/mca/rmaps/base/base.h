@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,6 +71,8 @@ typedef struct {
     orte_ranking_policy_t ranking;
     /* device specification for min distance mapping */
     char *device;
+    /* whether or not child jobs should inherit launch directives */
+    bool inherit;
 } orte_rmaps_base_t;
 
 /**
