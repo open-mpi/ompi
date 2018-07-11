@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2015 Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -91,7 +92,7 @@ typedef struct ompi_coll_portals4_tree_t {
 
 struct mca_coll_portals4_module_t {
     mca_coll_base_module_t super;
-    size_t coll_count;
+    opal_atomic_size_t coll_count;
 
     /* record handlers dedicated to fallback if offloaded operations are not supported */
     mca_coll_base_module_reduce_fn_t previous_reduce;

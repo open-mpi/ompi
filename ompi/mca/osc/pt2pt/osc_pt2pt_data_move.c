@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -56,7 +56,7 @@ struct osc_pt2pt_accumulate_data_t {
     int peer;
     ompi_datatype_t *datatype;
     ompi_op_t *op;
-    int request_count;
+    opal_atomic_int32_t request_count;
 };
 typedef struct osc_pt2pt_accumulate_data_t osc_pt2pt_accumulate_data_t;
 

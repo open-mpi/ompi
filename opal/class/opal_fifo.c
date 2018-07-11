@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -32,10 +32,10 @@ static void opal_fifo_construct (opal_fifo_t *fifo)
     fifo->opal_fifo_ghost.item_free = 0;
 
     fifo->opal_fifo_head.data.counter = 0;
-    fifo->opal_fifo_head.data.item = &fifo->opal_fifo_ghost;
+    fifo->opal_fifo_head.data.item = (intptr_t) &fifo->opal_fifo_ghost;
 
     fifo->opal_fifo_tail.data.counter = 0;
-    fifo->opal_fifo_tail.data.item = &fifo->opal_fifo_ghost;
+    fifo->opal_fifo_tail.data.item = (intptr_t) &fifo->opal_fifo_ghost;
 }
 
 OBJ_CLASS_INSTANCE(opal_fifo_t, opal_object_t, opal_fifo_construct, NULL);

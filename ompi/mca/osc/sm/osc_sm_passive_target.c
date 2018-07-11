@@ -28,7 +28,7 @@ lk_fetch_add32(ompi_osc_sm_module_t *module,
 {
     /* opal_atomic_add_fetch_32 is an add then fetch so delta needs to be subtracted out to get the
      * old value */
-    return opal_atomic_add_fetch_32((int32_t*) ((char*) &module->node_states[target].lock + offset),
+    return opal_atomic_add_fetch_32((opal_atomic_int32_t *) ((char*) &module->node_states[target].lock + offset),
                               delta) - delta;
 }
 
@@ -39,7 +39,7 @@ lk_add32(ompi_osc_sm_module_t *module,
          size_t offset,
          uint32_t delta)
 {
-    opal_atomic_add_fetch_32((int32_t*) ((char*) &module->node_states[target].lock + offset),
+    opal_atomic_add_fetch_32((opal_atomic_int32_t *) ((char*) &module->node_states[target].lock + offset),
                        delta);
 }
 

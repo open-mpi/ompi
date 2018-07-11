@@ -123,8 +123,8 @@ struct mca_btl_ofi_module_t {
     bool use_virt_addr;
     bool is_scalable_ep;
 
-    int64_t outstanding_rdma;
-    int64_t outstanding_send;
+    opal_atomic_int64_t outstanding_rdma;
+    opal_atomic_int64_t outstanding_send;
 
     /** linked list of BTL endpoints. this list is never searched so
      * there is no need for a complicated structure here at this time*/

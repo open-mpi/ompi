@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -65,7 +65,7 @@ int ompi_osc_pt2pt_frag_start (ompi_osc_pt2pt_module_t *module,
     ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, frag->target);
     int ret;
 
-    assert(0 == frag->pending && peer->active_frag != frag);
+    assert(0 == frag->pending && peer->active_frag != (intptr_t) frag);
 
     /* we need to signal now that a frag is outgoing to ensure the count sent
      * with the unlock message is correct */
@@ -93,7 +93,7 @@ int ompi_osc_pt2pt_frag_start (ompi_osc_pt2pt_module_t *module,
 
 static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_peer_t *peer)
 {
-    ompi_osc_pt2pt_frag_t *active_frag = peer->active_frag;
+    ompi_osc_pt2pt_frag_t *active_frag = (ompi_osc_pt2pt_frag_t *) peer->active_frag;
     int ret = OMPI_SUCCESS;
 
     if (NULL == active_frag) {
@@ -105,7 +105,7 @@ static int ompi_osc_pt2pt_flush_active_frag (ompi_osc_pt2pt_module_t *module, om
                          "osc pt2pt: flushing active fragment to target %d. pending: %d",
                          active_frag->target, active_frag->pending));
 
-    if (opal_atomic_compare_exchange_strong_ptr (&peer->active_frag, &active_frag, NULL)) {
+    if (opal_atomic_compare_exchange_strong_ptr (&peer->active_frag, (intptr_t *) &active_frag, 0)) {
         if (0 != OPAL_THREAD_ADD_FETCH32(&active_frag->pending, -1)) {
             /* communication going on while synchronizing; this is an rma usage bug */
             return OMPI_ERR_RMA_SYNC;

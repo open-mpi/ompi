@@ -75,7 +75,7 @@ struct ompi_coll_libnbc_component_t {
     mca_coll_base_component_2_0_0_t super;
     opal_free_list_t requests;
     opal_list_t active_requests;
-    int32_t active_comms;
+    opal_atomic_int32_t active_comms;
     opal_mutex_t lock;                /* protect access to the active_requests list */
 };
 typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;

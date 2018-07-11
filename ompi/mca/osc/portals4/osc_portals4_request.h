@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -18,7 +18,7 @@
 struct ompi_osc_portals4_request_t {
     ompi_request_t super;
     int32_t ops_expected;
-    volatile int32_t ops_committed;
+    opal_atomic_int32_t ops_committed;
 };
 typedef struct ompi_osc_portals4_request_t ompi_osc_portals4_request_t;
 

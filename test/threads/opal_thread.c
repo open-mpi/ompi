@@ -21,7 +21,7 @@
 
 /* Only have the body of this test if we have thread support */
 
-static volatile int count = 0;
+static opal_atomic_int_t count = 0;
 
 
 static void* thr1_run(opal_object_t* obj)

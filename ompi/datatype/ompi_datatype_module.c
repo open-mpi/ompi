@@ -383,7 +383,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         (PDST)->super.desc     = (PSRC)->super.desc;                                 \
         (PDST)->super.opt_desc = (PSRC)->super.opt_desc;                             \
         (PDST)->packed_description = (PSRC)->packed_description;                     \
-        (PSRC)->packed_description = NULL;                                           \
+        (PSRC)->packed_description = 0;                                              \
         /* transfer the ptypes */                                                    \
         (PDST)->super.ptypes = (PSRC)->super.ptypes;                                 \
         (PSRC)->super.ptypes = NULL;                                                 \

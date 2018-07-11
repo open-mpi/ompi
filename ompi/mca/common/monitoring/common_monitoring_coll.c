@@ -30,12 +30,12 @@ struct mca_monitoring_coll_data_t {
     int world_rank;
     int is_released;
     ompi_communicator_t*p_comm;
-    size_t o2a_count;
-    size_t o2a_size;
-    size_t a2o_count;
-    size_t a2o_size;
-    size_t a2a_count;
-    size_t a2a_size;
+    opal_atomic_size_t o2a_count;
+    opal_atomic_size_t o2a_size;
+    opal_atomic_size_t a2o_count;
+    opal_atomic_size_t a2o_size;
+    opal_atomic_size_t a2a_count;
+    opal_atomic_size_t a2a_size;
 };
 
 /* Collectives operation monitoring */
