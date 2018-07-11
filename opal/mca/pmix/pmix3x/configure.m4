@@ -13,7 +13,7 @@
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -77,9 +77,7 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
     LDFLAGS=$opal_pmix_pmix3x_save_LDFLAGS
     LIBS=$opal_pmix_pmix3x_save_LIBS
 
-    # If we are not building the internal pmix, then check to see
-    # if we are linking to an external v2.x library. If not, then
-    # do not use this component.  NOTE: we still did all the
+    # See if we are using the internal version. NOTE: we still did all the
     # above configury so that all the proper GNU Autotools
     # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=pmix in
     # this directory's Makefile.am, we still need the Autotools "make
