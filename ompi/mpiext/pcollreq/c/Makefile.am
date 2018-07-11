@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -7,13 +9,16 @@
 # $HEADER$
 #
 
-# We must set these #defines so that the inner OMPI MPI prototype
-# header files do the Right Thing.
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
+SUBDIRS = profile
+
+# OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
+# to be replaced by PMPI_*.
+# In this directory, we need it to be 0
+
+AM_CPPFLAGS     = -DOMPI_BUILD_MPI_PROFILING=0
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-# Convenience libtool library that will be slurped up into libmpi.la.
 noinst_LTLIBRARIES = libmpiext_pcollreq_c.la
 
 # This is where the top-level header file (that is included in
@@ -28,8 +33,34 @@ ompi_HEADERS = mpiext_pcollreq_c.h
 # conventions.
 libmpiext_pcollreq_c_la_SOURCES = \
         $(ompi_HEADERS) \
-        mpiext_pcollreq.c
-libmpiext_pcollreq_c_la_LDFLAGS = -module -avoid-version
+        mpiext_pcollreq_c.c
+
+if BUILD_MPI_BINDINGS_LAYER
+libmpiext_pcollreq_c_la_SOURCES += \
+        allgather_init.c \
+        allgatherv_init.c \
+        allreduce_init.c \
+        alltoall_init.c \
+        alltoallv_init.c \
+        alltoallw_init.c \
+        barrier_init.c \
+        bcast_init.c \
+        exscan_init.c \
+        gather_init.c \
+        gatherv_init.c \
+        reduce_init.c \
+        reduce_scatter_block_init.c \
+        reduce_scatter_init.c \
+        scan_init.c \
+        scatter_init.c \
+        scatterv_init.c \
+        \
+        neighbor_allgather_init.c \
+        neighbor_allgatherv_init.c \
+        neighbor_alltoall_init.c \
+        neighbor_alltoallv_init.c \
+        neighbor_alltoallw_init.c
+endif
 
 # Man page installation
 nodist_man_MANS = \
