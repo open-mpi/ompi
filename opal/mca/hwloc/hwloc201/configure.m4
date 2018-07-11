@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
-# Copyright (c) 2015-2017 Research Organization for Information Science
+# Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
@@ -17,7 +17,7 @@
 #
 # Priority
 #
-AC_DEFUN([MCA_opal_hwloc_hwloc201_PRIORITY], [90])
+AC_DEFUN([MCA_opal_hwloc_hwloc201_PRIORITY], [80])
 
 #
 # Force this component to compile in static-only mode
