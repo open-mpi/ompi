@@ -275,9 +275,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         posts_size += OPAL_ALIGN_PAD_AMOUNT(posts_size, 64);
         if (0 == ompi_comm_rank (module->comm)) {
             char *data_file;
-            ret = asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d",
-                           mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
-                           OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm));
+            ret = asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%d",
+                            mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
+                            OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid, ompi_comm_get_cid(module->comm));
             if (ret < 0) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
