@@ -21,8 +21,14 @@ static void mca_btl_vader_sc_emu_aop_complete (mca_btl_base_module_t *btl, mca_b
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) desc;
     void *local_address = frag->rdma.local_address;
+    void *context = frag->rdma.context;
+    void *cbdata = frag->rdma.cbdata;
+    mca_btl_base_rdma_completion_fn_t cbfunc = frag->rdma.cbfunc;
 
-    frag->rdma.cbfunc (btl, endpoint, local_address, NULL, frag->rdma.context, frag->rdma.cbdata, status);
+    /* return the fragment first since the callback may call put/get/amo and could use this fragment */
+    MCA_BTL_VADER_FRAG_RETURN(frag);
+
+    cbfunc (btl, endpoint, local_address, NULL, context, cbdata, status);
 }
 
 int mca_btl_vader_emu_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
@@ -50,12 +56,18 @@ static void mca_btl_vader_sc_emu_afop_complete (mca_btl_base_module_t *btl, mca_
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) desc;
     mca_btl_vader_sc_emu_hdr_t *hdr;
     void *local_address = frag->rdma.local_address;
+    void *context = frag->rdma.context;
+    void *cbdata = frag->rdma.cbdata;
+    mca_btl_base_rdma_completion_fn_t cbfunc = frag->rdma.cbfunc;
 
     hdr = (mca_btl_vader_sc_emu_hdr_t *) frag->segments[0].seg_addr.pval;
 
     *((int64_t *) frag->rdma.local_address) = hdr->operand[0];
 
-    frag->rdma.cbfunc (btl, endpoint, local_address, NULL, frag->rdma.context, frag->rdma.cbdata, status);
+    /* return the fragment first since the callback may call put/get/amo and could use this fragment */
+    MCA_BTL_VADER_FRAG_RETURN(frag);
+
+    cbfunc (btl, endpoint, local_address, NULL, context, cbdata, status);
 }
 
 int mca_btl_vader_emu_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
