@@ -379,6 +379,9 @@ static void mca_btl_vader_check_single_copy (void)
 {
     int initial_mechanism = mca_btl_vader_component.single_copy_mechanism;
 
+    /* single-copy emulation is always used to support AMO's right now */
+    mca_btl_vader_sc_emu_init ();
+
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
         /* try to create an xpmem segment for the entire address space */
@@ -462,7 +465,6 @@ static void mca_btl_vader_check_single_copy (void)
     }
 
     if (MCA_BTL_VADER_EMUL == mca_btl_vader_component.single_copy_mechanism) {
-        mca_btl_vader_sc_emu_init ();
         /* limit to the maximum fragment size */
         mca_btl_vader.super.btl_put_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
         mca_btl_vader.super.btl_get_limit = mca_btl_vader.super.btl_max_send_size - sizeof (mca_btl_vader_sc_emu_hdr_t);
