@@ -294,7 +294,7 @@ static inline int a2aw_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
 static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
                                      void *buf, const int *counts, const int *displs,
                                      struct ompi_datatype_t * const * types) {
-  ptrdiff_t gap;
+  ptrdiff_t gap = 0;
   int res;
 
   for (int i = 1; i < (p+1)/2; i++) {

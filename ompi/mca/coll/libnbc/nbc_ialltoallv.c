@@ -50,7 +50,7 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
   MPI_Aint sndext, rcvext;
   NBC_Schedule *schedule;
   char *rbuf, *sbuf, inplace;
-  ptrdiff_t gap, span;
+  ptrdiff_t gap = 0, span;
   void * tmpbuf = NULL;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
