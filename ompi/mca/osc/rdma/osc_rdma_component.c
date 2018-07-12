@@ -759,9 +759,14 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 ex_peer->size = temp[i].size;
             }
 
-            if (module->use_cpu_atomics && MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+            if (module->use_cpu_atomics && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank)) {
                 /* base is local and cpu atomics are available */
-                ex_peer->super.base = (uintptr_t) module->segment_base + offset;
+                if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+                    ex_peer->super.base = (uintptr_t) module->segment_base + offset;
+                } else {
+                    ex_peer->super.base = (uintptr_t) *base;
+                }
+
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
                 offset += temp[i].size;
             } else {
