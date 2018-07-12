@@ -388,7 +388,8 @@ OBJ_CLASS_INSTANCE(ompi_coll_libnbc_module_t,
 static int
 request_start(size_t count, ompi_request_t ** requests)
 {
-    int i, res;
+    int res;
+    size_t i;
 
     NBC_DEBUG(5, " ** request_start **\n");
 
