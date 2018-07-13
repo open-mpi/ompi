@@ -61,7 +61,7 @@ typedef struct mca_mtl_mxm_component_t {
 } mca_mtl_mxm_component_t;
 
 
-OMPI_DECLSPEC mca_mtl_mxm_component_t mca_mtl_mxm_component;
+extern mca_mtl_mxm_component_t mca_mtl_mxm_component;
 
 
 static inline mxm_conn_h ompi_mtl_mxm_conn_lookup(struct ompi_communicator_t* comm, int rank) {
