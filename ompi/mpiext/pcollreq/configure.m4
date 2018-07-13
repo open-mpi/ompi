@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -19,6 +19,7 @@ AC_DEFUN([OMPI_MPIEXT_pcollreq_CONFIG],[
         ompi/mpiext/pcollreq/c/profile/Makefile
         ompi/mpiext/pcollreq/mpif-h/Makefile
         ompi/mpiext/pcollreq/mpif-h/profile/Makefile
+        ompi/mpiext/pcollreq/use-mpi/Makefile
     ])
 
     AS_IF([test "$ENABLE_pcollreq" = "1" || \
