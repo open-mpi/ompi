@@ -36,6 +36,7 @@ typedef struct ompi_osc_ucx_component {
     ucp_worker_h ucp_worker;
     bool enable_mpi_threads;
     opal_free_list_t requests; /* request free list for the r* communication variants */
+    bool env_initialized; /* UCX environment is initialized or not */
     int num_incomplete_req_ops;
     unsigned int priority;
 } ompi_osc_ucx_component_t;
