@@ -101,7 +101,7 @@ static inline void mca_atomic_mxm_req_init(mxm_send_req_t *sreq, int pe, void *t
 
     nlong_order = mca_atomic_mxm_order(nlong);
 
-    mkey = mca_spml_ikrit_get_mkey(pe, target, MXM_PTL_RDMA, &remote_addr);
+    mkey = mca_spml_ikrit_get_mkey(pe, target, MXM_PTL_RDMA, &remote_addr, mca_atomic_mxm_spml_self);
 
     /* mxm request init */
     sreq->base.state        = MXM_REQ_NEW;

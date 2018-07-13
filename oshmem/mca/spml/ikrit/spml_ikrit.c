@@ -151,6 +151,8 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 
 static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *, uint32_t seg, int remote_pe, int tr_id);
 
+static mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva);
+
 mca_spml_ikrit_t mca_spml_ikrit = {
     {
         /* Init mca_spml_base_module_t */
@@ -176,7 +178,8 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_base_memuse_hook,
 
         (void*)&mca_spml_ikrit
-    }
+    },
+    mca_spml_ikrit_get_mkey_slow
 };
 
 static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *mkey, uint32_t seg, int dst_pe, int tr_id)
@@ -197,6 +200,7 @@ static void mca_spml_ikrit_cache_mkeys(sshmem_mkey_t *mkey, uint32_t seg, int ds
     }
 }
 
+static
 mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva)
 {
     sshmem_mkey_t *mkey;
@@ -578,7 +582,7 @@ static inline int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     void *rva;
     mxm_mem_key_t *mkey;
 
-    mkey = mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_RDMA, &rva);
+    mkey = mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_RDMA, &rva, &mca_spml_ikrit);
 
     SPML_VERBOSE_FASTPATH(100,
                           "get: pe:%d ptl=%d src=%p -> dst: %p sz=%d. src_rva=%p",
@@ -613,7 +617,7 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
     if (ptl_id != MXM_PTL_SHM)
         return OSHMEM_ERROR;
 
-    if (NULL != mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_SHM, &rva))
+    if (NULL != mca_spml_ikrit_get_mkey(src, src_addr, MXM_PTL_SHM, &rva, &mca_spml_ikrit))
         return OSHMEM_ERROR;
 
     SPML_VERBOSE_FASTPATH(100,
@@ -798,7 +802,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     }
 
     ptl_id = get_ptl_id(dst);
-    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva, &mca_spml_ikrit);
 
     if (OPAL_UNLIKELY(NULL == mkey)) {
         memcpy((void *) (unsigned long) rva, src_addr, size);
@@ -885,7 +889,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     static int count;
 
     ptl_id = get_ptl_id(dst);
-    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva);
+    mkey = mca_spml_ikrit_get_mkey(dst, dst_addr, ptl_id, &rva, &mca_spml_ikrit);
 
     SPML_VERBOSE_FASTPATH(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
                           dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva);
