@@ -34,7 +34,8 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_spml_ucx_la_SOURCES = $(ucx_sources)
 mca_spml_ucx_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
-	$(spml_ucx_LIBS)
+						 $(spml_ucx_LIBS) \
+						 $(top_builddir)/oshmem/mca/spml/libmca_spml.la
 mca_spml_ucx_la_LDFLAGS = -module -avoid-version $(spml_ucx_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

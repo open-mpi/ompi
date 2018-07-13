@@ -43,6 +43,9 @@
 #define SPML_UCX_PUT_DEBUG    0
 #endif
 
+static
+spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva);
+
 mca_spml_ucx_t mca_spml_ucx = {
     {
         /* Init mca_spml_base_module_t */
@@ -74,7 +77,9 @@ mca_spml_ucx_t mca_spml_ucx = {
     NULL,   /* ucp_peers */
     0,      /* using_mem_hooks */
     1,      /* num_disconnect */
-    0       /* heap_reg_nb */
+    0,      /* heap_reg_nb */
+    0,      /* enabled */
+    mca_spml_ucx_get_mkey_slow
 };
 
 int mca_spml_ucx_enable(bool enable)
@@ -330,6 +335,7 @@ error:
 }
 
 
+static
 spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva)
 {
     sshmem_mkey_t *r_mkey;
@@ -550,7 +556,7 @@ int mca_spml_ucx_get(void *src_addr, size_t size, void *dst_addr, int src)
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva, &mca_spml_ucx);
     status = ucp_get(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
@@ -563,7 +569,7 @@ int mca_spml_ucx_get_nb(void *src_addr, size_t size, void *dst_addr, int src, vo
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva, &mca_spml_ucx);
     status = ucp_get_nbi(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
@@ -576,7 +582,7 @@ int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva, &mca_spml_ucx);
     status = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
@@ -589,7 +595,7 @@ int mca_spml_ucx_put_nb(void* dst_addr, size_t size, void* src_addr, int dst, vo
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva);
+    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva, &mca_spml_ucx);
     status = ucp_put_nbi(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
                      (uint64_t)rva, ucx_mkey->rkey);
 
