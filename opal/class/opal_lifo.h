@@ -74,7 +74,32 @@ static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t 
     return opal_atomic_cmpset_128 (&addr->value, old.value, new_p.value);
 }
 
+__opal_attribute_always_inline__
+static inline void opal_read_counted_pointer (volatile opal_counted_pointer_t *addr, opal_counted_pointer_t *value)
+{
+    /* most platforms do not read the value atomically so make sure we read the counted pointer in a specific order */
+    value->data.counter = addr->data.counter;
+    opal_atomic_rmb ();
+    value->data.item = addr->data.item;
+}
+
 #endif
+
+/**
+ * @brief Helper function for lifo/fifo to sleep this thread if excessive contention is detected
+ */
+static inline void _opal_lifo_release_cpu (void)
+{
+    /* NTH: there are many ways to cause the current thread to be suspended. This one
+     * should work well in most cases. Another approach would be to use poll (NULL, 0, ) but
+     * the interval will be forced to be in ms (instead of ns or us). Note that there
+     * is a performance improvement for the lifo test when this call is made on detection
+     * of contention but it may not translate into actually MPI or application performance
+     * improvements. */
+    static struct timespec interval = { .tv_sec = 0, .tv_nsec = 100 };
+    nanosleep (&interval, NULL);
+}
+
 
 /* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
  * atomicity is insured via the compare-and-swap operation, if not we simply do a read
@@ -142,10 +167,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
     opal_list_item_t *item;
 
     do {
-
-        old_head.data.counter = lifo->opal_lifo_head.data.counter;
-        opal_atomic_rmb ();
-        old_head.data.item = item = (opal_list_item_t*)lifo->opal_lifo_head.data.item;
+        opal_read_counted_pointer (&lifo->opal_lifo_head, &old_head);
+        item = (opal_list_item_t *) old_head.data.item;
 
         if (item == &lifo->opal_lifo_ghost) {
             return NULL;
@@ -186,18 +209,6 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
 }
 
 #if OPAL_HAVE_ATOMIC_LLSC_PTR
-
-static inline void _opal_lifo_release_cpu (void)
-{
-    /* NTH: there are many ways to cause the current thread to be suspended. This one
-     * should work well in most cases. Another approach would be to use poll (NULL, 0, ) but
-     * the interval will be forced to be in ms (instead of ns or us). Note that there
-     * is a performance improvement for the lifo test when this call is made on detection
-     * of contention but it may not translate into actually MPI or application performance
-     * improvements. */
-    static struct timespec interval = { .tv_sec = 0, .tv_nsec = 100 };
-    nanosleep (&interval, NULL);
-}
 
 /* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
  * is empty so we return NULL.
