@@ -25,16 +25,20 @@
  */
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_int_atomic_and      = pshmem_int_atomic_and
-#pragma weak shmem_long_atomic_and     = pshmem_long_atomic_and
-#pragma weak shmem_longlong_atomic_and = pshmem_longlong_atomic_and
-#pragma weak shmemx_int32_atomic_and   = pshmemx_int32_atomic_and
-#pragma weak shmemx_int64_atomic_and   = pshmemx_int64_atomic_and
+#pragma weak shmem_uint_atomic_and      = pshmem_uint_atomic_and
+#pragma weak shmem_ulong_atomic_and     = pshmem_ulong_atomic_and
+#pragma weak shmem_ulonglong_atomic_and = pshmem_ulonglong_atomic_and
+#pragma weak shmemx_int32_atomic_and    = pshmemx_int32_atomic_and
+#pragma weak shmemx_int64_atomic_and    = pshmemx_int64_atomic_and
+#pragma weak shmemx_uint32_atomic_and   = pshmemx_uint32_atomic_and
+#pragma weak shmemx_uint64_atomic_and   = pshmemx_uint64_atomic_and
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-OSHMEM_TYPE_OP(_int, int, shmem, and)
-OSHMEM_TYPE_OP(_long, long, shmem, and)
-OSHMEM_TYPE_OP(_longlong, long long, shmem, and)
-OSHMEM_TYPE_OP(_int32, int32_t, shmemx, and)
-OSHMEM_TYPE_OP(_int64, int64_t, shmemx, and)
+OSHMEM_TYPE_OP(uint, unsigned int, shmem, and)
+OSHMEM_TYPE_OP(ulong, unsigned long, shmem, and)
+OSHMEM_TYPE_OP(ulonglong, unsigned long long, shmem, and)
+OSHMEM_TYPE_OP(int32, int32_t, shmemx, and)
+OSHMEM_TYPE_OP(int64, int64_t, shmemx, and)
+OSHMEM_TYPE_OP(uint32, uint32_t, shmemx, and)
+OSHMEM_TYPE_OP(uint64, uint64_t, shmemx, and)

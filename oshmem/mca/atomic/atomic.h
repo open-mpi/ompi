@@ -35,48 +35,48 @@ BEGIN_C_DECLS
 
 #define OSHMEM_ATOMIC_PTR_2_INT(ptr, size) ((size) == 8 ? *(uint64_t*)(ptr) : *(uint32_t*)(ptr))
 
-#define OSHMEM_TYPE_OP(type_name, type, prefix, op)                        \
-    void prefix##type_name##_atomic_##op(type *target, type value, int pe) \
-    {                                                                      \
-        int rc = OSHMEM_SUCCESS;                                           \
-        size_t size = 0;                                                   \
-                                                                           \
-        RUNTIME_CHECK_INIT();                                              \
-        RUNTIME_CHECK_PE(pe);                                              \
-        RUNTIME_CHECK_ADDR(target);                                        \
-                                                                           \
-        size = sizeof(value);                                              \
-        rc = MCA_ATOMIC_CALL(op(                                           \
-            (void*)target,                                                 \
-            value,                                                         \
-            size,                                                          \
-            pe));                                                          \
-        RUNTIME_CHECK_RC(rc);                                              \
-                                                                           \
-        return;                                                            \
+#define OSHMEM_TYPE_OP(type_name, type, prefix, op)                           \
+    void prefix##_##type_name##_atomic_##op(type *target, type value, int pe) \
+    {                                                                         \
+        int rc = OSHMEM_SUCCESS;                                              \
+        size_t size = 0;                                                      \
+                                                                              \
+        RUNTIME_CHECK_INIT();                                                 \
+        RUNTIME_CHECK_PE(pe);                                                 \
+        RUNTIME_CHECK_ADDR(target);                                           \
+                                                                              \
+        size = sizeof(value);                                                 \
+        rc = MCA_ATOMIC_CALL(op(                                              \
+            (void*)target,                                                    \
+            value,                                                            \
+            size,                                                             \
+            pe));                                                             \
+        RUNTIME_CHECK_RC(rc);                                                 \
+                                                                              \
+        return;                                                               \
     }
 
-#define OSHMEM_TYPE_FOP(type_name, type, prefix, op)                       \
-    type prefix##type_name##_atomic_##op(type *target, type value, int pe) \
-    {                                                                      \
-        int rc = OSHMEM_SUCCESS;                                           \
-        size_t size = 0;                                                   \
-        type out_value;                                                    \
-                                                                           \
-        RUNTIME_CHECK_INIT();                                              \
-        RUNTIME_CHECK_PE(pe);                                              \
-        RUNTIME_CHECK_ADDR(target);                                        \
-                                                                           \
-        size = sizeof(out_value);                                          \
-        rc = MCA_ATOMIC_CALL(op(                                           \
-            (void*)target,                                                 \
-            (void*)&out_value,                                             \
-            value,                                                         \
-            size,                                                          \
-            pe));                                                          \
-        RUNTIME_CHECK_RC(rc);                                              \
-                                                                           \
-        return out_value;                                                  \
+#define OSHMEM_TYPE_FOP(type_name, type, prefix, op)                                \
+    type prefix##_##type_name##_atomic_fetch_##op(type *target, type value, int pe) \
+    {                                                                               \
+        int rc = OSHMEM_SUCCESS;                                                    \
+        size_t size = 0;                                                            \
+        type out_value;                                                             \
+                                                                                    \
+        RUNTIME_CHECK_INIT();                                                       \
+        RUNTIME_CHECK_PE(pe);                                                       \
+        RUNTIME_CHECK_ADDR(target);                                                 \
+                                                                                    \
+        size = sizeof(out_value);                                                   \
+        rc = MCA_ATOMIC_CALL(f##op(                                                 \
+            (void*)target,                                                          \
+            (void*)&out_value,                                                      \
+            value,                                                                  \
+            size,                                                                   \
+            pe));                                                                   \
+        RUNTIME_CHECK_RC(rc);                                                       \
+                                                                                    \
+        return out_value;                                                           \
     }
 /* ******************************************************************** */
 

@@ -27,16 +27,20 @@
  */
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_int_atomic_for      = pshmem_int_atomic_for
-#pragma weak shmem_long_atomic_for     = pshmem_long_atomic_for
-#pragma weak shmem_longlong_atomic_for = pshmem_longlong_atomic_for
-#pragma weak shmemx_int32_atomic_for   = pshmemx_int32_atomic_for
-#pragma weak shmemx_int64_atomic_for   = pshmemx_int64_atomic_for
+#pragma weak shmem_uint_atomic_fetch_or      = pshmem_uint_atomic_fetch_or
+#pragma weak shmem_ulong_atomic_fetch_or     = pshmem_ulong_atomic_fetch_or
+#pragma weak shmem_ulonglong_atomic_fetch_or = pshmem_ulonglong_atomic_fetch_or
+#pragma weak shmemx_int32_atomic_fetch_or    = pshmemx_int32_atomic_fetch_or
+#pragma weak shmemx_int64_atomic_fetch_or    = pshmemx_int64_atomic_fetch_or
+#pragma weak shmemx_uint32_atomic_fetch_or   = pshmemx_uint32_atomic_fetch_or
+#pragma weak shmemx_uint64_atomic_fetch_or   = pshmemx_uint64_atomic_fetch_or
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-OSHMEM_TYPE_FOP(_int, int, shmem, for)
-OSHMEM_TYPE_FOP(_long, long, shmem, for)
-OSHMEM_TYPE_FOP(_longlong, long long, shmem, for)
-OSHMEM_TYPE_FOP(_int32, int32_t, shmemx, for)
-OSHMEM_TYPE_FOP(_int64, int64_t, shmemx, for)
+OSHMEM_TYPE_FOP(uint, unsigned int, shmem, or)
+OSHMEM_TYPE_FOP(ulong, unsigned long, shmem, or)
+OSHMEM_TYPE_FOP(ulonglong, unsigned long long, shmem, or)
+OSHMEM_TYPE_FOP(int32, int32_t, shmemx, or)
+OSHMEM_TYPE_FOP(int64, int64_t, shmemx, or)
+OSHMEM_TYPE_FOP(uint32, uint32_t, shmemx, or)
+OSHMEM_TYPE_FOP(uint64, uint64_t, shmemx, or)

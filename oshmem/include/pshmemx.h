@@ -90,16 +90,22 @@ OSHMEM_DECLSPEC int32_t pshmemx_int32_fadd(int32_t *target, int32_t value, int p
 OSHMEM_DECLSPEC int64_t pshmemx_int64_fadd(int64_t *target, int64_t value, int pe);
 
 /* Atomic Fetch&And */
-OSHMEM_DECLSPEC int32_t pshmemx_int32_atomic_fand(int32_t *target, int32_t value, int pe);
-OSHMEM_DECLSPEC int64_t pshmemx_int64_atomic_fand(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC int32_t pshmemx_int32_atomic_fetch_and(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC int64_t pshmemx_int64_atomic_fetch_and(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC uint32_t pshmemx_uint32_atomic_fetch_and(uint32_t *target, uint32_t value, int pe);
+OSHMEM_DECLSPEC uint64_t pshmemx_uint64_atomic_fetch_and(uint64_t *target, uint64_t value, int pe);
 
 /* Atomic Fetch&Or */
-OSHMEM_DECLSPEC int32_t pshmemx_int32_atomic_for(int32_t *target, int32_t value, int pe);
-OSHMEM_DECLSPEC int64_t pshmemx_int64_atomic_for(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC int32_t pshmemx_int32_atomic_fetch_or(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC int64_t pshmemx_int64_atomic_fetch_or(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC uint32_t pshmemx_uint32_atomic_fetch_or(uint32_t *target, uint32_t value, int pe);
+OSHMEM_DECLSPEC uint64_t pshmemx_uint64_atomic_fetch_or(uint64_t *target, uint64_t value, int pe);
 
 /* Atomic Fetch&Xor */
-OSHMEM_DECLSPEC int32_t pshmemx_int32_atomic_fxor(int32_t *target, int32_t value, int pe);
-OSHMEM_DECLSPEC int64_t pshmemx_int64_atomic_fxor(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC int32_t pshmemx_int32_atomic_fetch_xor(int32_t *target, int32_t value, int pe);
+OSHMEM_DECLSPEC int64_t pshmemx_int64_atomic_fetch_xor(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC uint32_t pshmemx_uint32_atomic_fetch_xor(uint32_t *target, uint32_t value, int pe);
+OSHMEM_DECLSPEC uint64_t pshmemx_uint64_atomic_fetch_xor(uint64_t *target, uint64_t value, int pe);
 
 /* Atomic Fetch */
 OSHMEM_DECLSPEC int32_t pshmemx_int32_fetch(const int32_t *target, int pe);
@@ -116,14 +122,20 @@ OSHMEM_DECLSPEC void pshmemx_int64_add(int64_t *target, int64_t value, int pe);
 /* Atomic And */
 OSHMEM_DECLSPEC void pshmemx_int32_atomic_and(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC void pshmemx_int64_atomic_and(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_uint32_atomic_and(uint32_t *target, uint32_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_uint64_atomic_and(uint64_t *target, uint64_t value, int pe);
 
 /* Atomic Or */
 OSHMEM_DECLSPEC void pshmemx_int32_atomic_or(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC void pshmemx_int64_atomic_or(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_uint32_atomic_or(uint32_t *target, uint32_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_uint64_atomic_or(uint64_t *target, uint64_t value, int pe);
 
 /* Atomic Xor */
 OSHMEM_DECLSPEC void pshmemx_int32_atomic_xor(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC void pshmemx_int64_atomic_xor(int64_t *target, int64_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_uint32_atomic_xor(uint32_t *target, uint32_t value, int pe);
+OSHMEM_DECLSPEC void pshmemx_uint64_atomic_xor(uint64_t *target, uint64_t value, int pe);
 
 /* Atomic Inc */
 OSHMEM_DECLSPEC void pshmemx_int32_inc(int32_t *target, int pe);
