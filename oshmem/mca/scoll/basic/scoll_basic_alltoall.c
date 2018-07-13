@@ -75,7 +75,7 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
     /* quiet is needed because scoll level barrier does not
      * guarantee put completion
      */
-    MCA_SPML_CALL(quiet());
+    MCA_SPML_CALL(quiet(oshmem_ctx_default));
 
     /* Wait for operation completion */
     SCOLL_VERBOSE(14, "[#%d] Wait for operation completion", group->my_pe);
@@ -138,7 +138,7 @@ static int a2as_alg_simple(struct oshmem_group_t *group,
 
         dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx, &dst_pe_idx);
         for (elem_idx = 0; elem_idx < nelems; elem_idx++) {
-            rc = MCA_SPML_CALL(put(
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, 
                         get_stride_elem(target, tst, nelems, element_size,
                                         dst_blk_idx, elem_idx),
                         element_size,
@@ -178,7 +178,7 @@ static int a2a_alg_simple(struct oshmem_group_t *group,
     for (src_blk_idx = 0; src_blk_idx < group->proc_count; src_blk_idx++) {
 
         dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx, &dst_pe_idx);
-        rc = MCA_SPML_CALL(put(dst_blk,
+        rc = MCA_SPML_CALL(put(oshmem_ctx_default, dst_blk,
                                 nelems * element_size,
                                 get_stride_elem(source, 1, nelems,
                                                 element_size, dst_pe_idx, 0),

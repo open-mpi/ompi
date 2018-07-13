@@ -212,7 +212,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
                 memset(target_cur, 0, nlong);
 
                 /* Get data from the current peer */
-                rc = MCA_SPML_CALL(get((void *)source, nlong, target_cur, pe_cur));
+                rc = MCA_SPML_CALL(get(oshmem_ctx_default, (void *)source, nlong, target_cur, pe_cur));
 
                 /* Do reduction operation */
                 if (rc == OSHMEM_SUCCESS) {
@@ -305,21 +305,21 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
          it is expected that shmem_long_cswap() will make it faster.
        */
             do {
-                MCA_SPML_CALL(get((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+                MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
             } while (value != my_id);
 
             SCOLL_VERBOSE(14,
                           "[#%d] round = %d send data to #%d",
                           group->my_pe, round, peer_pe);
-            rc = MCA_SPML_CALL(put(target, nlong, target_cur, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, target, nlong, target_cur, peer_pe));
 
-            MCA_SPML_CALL(fence());
+            MCA_SPML_CALL(fence(oshmem_ctx_default));
 
             SCOLL_VERBOSE(14,
                           "[#%d] round = %d signals to #%d",
                           group->my_pe, round, peer_pe);
             value = peer_id;
-            rc = MCA_SPML_CALL(put((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
 #endif
             SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
             value = SHMEM_SYNC_RUN;
@@ -340,7 +340,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
                 (peer_id < group->proc_count) && (rc == OSHMEM_SUCCESS);
                 peer_id++) {
             peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
-            rc = MCA_SPML_CALL(put((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
         }
     }
 
@@ -423,15 +423,15 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] is extra send data to #%d",
                       group->my_pe, peer_pe);
-        rc = MCA_SPML_CALL(put(target, nlong, target_cur, peer_pe));
+        rc = MCA_SPML_CALL(put(oshmem_ctx_default, target, nlong, target_cur, peer_pe));
 
-        MCA_SPML_CALL(fence());
+        MCA_SPML_CALL(fence(oshmem_ctx_default));
 
         SCOLL_VERBOSE(14,
                       "[#%d] is extra and signal to #%d",
                       group->my_pe, peer_pe);
         value = SHMEM_SYNC_RUN;
-        rc = MCA_SPML_CALL(put((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+        rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
 
         SCOLL_VERBOSE(14, "[#%d] wait", group->my_pe);
         value = SHMEM_SYNC_RUN;
@@ -449,7 +449,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
                               "[#%d] signal to #%d that I am ready",
                               group->my_pe, peer_pe);
                 value = SHMEM_SYNC_WAIT;
-                rc = MCA_SPML_CALL(put((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+                rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
             }
 
             SCOLL_VERBOSE(14,
@@ -482,21 +482,21 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
          it is expected that shmem_long_cswap() will make it faster.
        */
             do {
-                MCA_SPML_CALL(get((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+                MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
             } while (value != (round - 1));
 
             SCOLL_VERBOSE(14,
                           "[#%d] round = %d send data to #%d",
                           group->my_pe, round, peer_pe);
-            rc = MCA_SPML_CALL(put(target, nlong, target_cur, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, target, nlong, target_cur, peer_pe));
 
-            MCA_SPML_CALL(fence());
+            MCA_SPML_CALL(fence(oshmem_ctx_default));
 
             SCOLL_VERBOSE(14,
                           "[#%d] round = %d signals to #%d",
                           group->my_pe, round, peer_pe);
             value = SHMEM_SYNC_RUN;
-            rc = MCA_SPML_CALL(put((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
 #endif
 
             SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
@@ -522,13 +522,13 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
             SCOLL_VERBOSE(14,
                           "[#%d] is extra send data to #%d",
                           group->my_pe, peer_pe);
-            rc = MCA_SPML_CALL(put(target, nlong, target_cur, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, target, nlong, target_cur, peer_pe));
 
-            MCA_SPML_CALL(fence());
+            MCA_SPML_CALL(fence(oshmem_ctx_default));
 
             SCOLL_VERBOSE(14, "[#%d] signals to #%d", group->my_pe, peer_pe);
             value = SHMEM_SYNC_RUN;
-            rc = MCA_SPML_CALL(put((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
         }
     }
 

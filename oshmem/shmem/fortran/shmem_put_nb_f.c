@@ -48,7 +48,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_putmem_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length),
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -67,7 +67,7 @@ void shmem_character_put_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T sourc
     size_t character_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_character.dt, &character_type_size);
 
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * character_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -86,7 +86,7 @@ void shmem_complex_put_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source,
     size_t complex_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_cplex.dt, &complex_type_size);
 
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * complex_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -105,7 +105,7 @@ void shmem_double_put_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, 
     size_t double_precision_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_dblprec.dt, &double_precision_type_size);
 
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * double_precision_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -124,7 +124,7 @@ void shmem_integer_put_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source,
     size_t integer_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_integer.dt, &integer_type_size);
 
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * integer_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -143,7 +143,7 @@ void shmem_logical_put_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source,
     size_t logical_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_logical.dt, &logical_type_size);
 
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * logical_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -162,7 +162,7 @@ void shmem_real_put_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MP
     size_t real_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_real.dt, &real_type_size);
 
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * real_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -178,7 +178,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_put4_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * 4,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -194,7 +194,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_put8_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * 8,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -210,7 +210,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_put32_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * 4,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -226,7 +226,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_put64_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * 8,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));
@@ -242,7 +242,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_put128_nbi_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(put_nb(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put_nb(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * 16,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe), NULL));

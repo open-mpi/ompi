@@ -25,12 +25,9 @@
  * of target. The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_CSWAP(type_name, type, prefix)    \
-    type prefix##type_name##_cswap(type *target, type cond, type value, int pe) \
-    {                                                               \
+#define DO_SHMEM_TYPE_ATOMIC_COMPARE_SWAP(ctx, type, target, cond, value, pe, out_value) do { \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
-        uint64_t out_value;                                         \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
@@ -38,19 +35,42 @@
                                                                     \
         size = sizeof(value);                                       \
         rc = MCA_ATOMIC_CALL(cswap(                                 \
+            ctx,                                                    \
             (void*)target,                                          \
-            &out_value,                                             \
+            (uint64_t*)&out_value,                                  \
             OSHMEM_ATOMIC_PTR_2_INT(&cond, sizeof(cond)),           \
             OSHMEM_ATOMIC_PTR_2_INT(&value, sizeof(value)),         \
             size,                                                   \
             pe));                                                   \
         RUNTIME_CHECK_RC(rc);                                       \
-                                                                    \
+    } while (0)
+
+#define SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(type_name, type, prefix) \
+    type prefix##_ctx##type_name##_atomic_compare_swap(shmem_ctx_t ctx, type *target, type cond, type value, int pe) \
+    {                                                               \
+        type out_value;                                             \
+        DO_SHMEM_TYPE_ATOMIC_COMPARE_SWAP(ctx, type, target, cond, value,  \
+                                   pe, out_value);                  \
+        return out_value;                                           \
+    }
+
+#define SHMEM_TYPE_ATOMIC_COMPARE_SWAP(type_name, type, prefix)     \
+    type prefix##type_name##_atomic_compare_swap(type *target, type cond, type value, int pe) \
+    {                                                               \
+        type out_value;                                             \
+        DO_SHMEM_TYPE_ATOMIC_COMPARE_SWAP(oshmem_ctx_default, type, target, \
+                                   cond, value, pe, out_value);     \
         return out_value;                                           \
     }
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_ctx_int_atomic_compare_swap = pshmem_ctx_int_atomic_compare_swap
+#pragma weak shmem_ctx_long_atomic_compare_swap = pshmem_ctx_long_atomic_compare_swap
+#pragma weak shmem_ctx_longlong_atomic_compare_swap = pshmem_ctx_longlong_atomic_compare_swap
+#pragma weak shmem_int_atomic_compare_swap = pshmem_int_atomic_compare_swap
+#pragma weak shmem_long_atomic_compare_swap = pshmem_long_atomic_compare_swap
+#pragma weak shmem_longlong_atomic_compare_swap = pshmem_longlong_atomic_compare_swap
 #pragma weak shmem_int_cswap = pshmem_int_cswap
 #pragma weak shmem_long_cswap = pshmem_long_cswap
 #pragma weak shmem_longlong_cswap = pshmem_longlong_cswap
@@ -58,6 +78,23 @@
 #pragma weak shmemx_int64_cswap = pshmemx_int64_cswap
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
+
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_int, int, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_long, long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_longlong, long long, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_int, int, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_long, long, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_longlong, long long, shmem)
+
+/* deprecated APIs */
+#define SHMEM_TYPE_CSWAP(type_name, type, prefix)                   \
+    type prefix##type_name##_cswap(type *target, type cond, type value, int pe) \
+    {                                                               \
+        type out_value;                                             \
+        DO_SHMEM_TYPE_ATOMIC_COMPARE_SWAP(oshmem_ctx_default, type, target, \
+                                   cond, value, pe, out_value);     \
+        return out_value;                                           \
+    }
 
 SHMEM_TYPE_CSWAP(_int, int, shmem)
 SHMEM_TYPE_CSWAP(_long, long, shmem)

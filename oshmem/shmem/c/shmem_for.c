@@ -19,7 +19,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * These routines perform an atomic fetch-and-or operation.
+ * These routines perfetch_orm an atomic fetch-and-or operation.
  * The fetch and or routines retrieve the value at address target on PE pe, and update
  * target with the result of 'or' operation value to the retrieved value. The operation
  * must be completed without the possibility of another process updating target between
@@ -30,6 +30,9 @@
 #pragma weak shmem_uint_atomic_fetch_or      = pshmem_uint_atomic_fetch_or
 #pragma weak shmem_ulong_atomic_fetch_or     = pshmem_ulong_atomic_fetch_or
 #pragma weak shmem_ulonglong_atomic_fetch_or = pshmem_ulonglong_atomic_fetch_or
+#pragma weak shmem_ctx_uint_atomic_fetch_or  = pshmem_ctx_uint_atomic_fetch_or
+#pragma weak shmem_ctx_ulong_atomic_fetch_or = pshmem_ctx_ulong_atomic_fetch_or
+#pragma weak shmem_ctx_ulonglong_atomic_fetch_or = pshmem_ctx_ulonglong_atomic_fetch_or
 #pragma weak shmemx_int32_atomic_fetch_or    = pshmemx_int32_atomic_fetch_or
 #pragma weak shmemx_int64_atomic_fetch_or    = pshmemx_int64_atomic_fetch_or
 #pragma weak shmemx_uint32_atomic_fetch_or   = pshmemx_uint32_atomic_fetch_or
@@ -40,6 +43,9 @@
 OSHMEM_TYPE_FOP(uint, unsigned int, shmem, or)
 OSHMEM_TYPE_FOP(ulong, unsigned long, shmem, or)
 OSHMEM_TYPE_FOP(ulonglong, unsigned long long, shmem, or)
+OSHMEM_CTX_TYPE_FOP(uint, unsigned int, shmem, or)
+OSHMEM_CTX_TYPE_FOP(ulong, unsigned long, shmem, or)
+OSHMEM_CTX_TYPE_FOP(ulonglong, unsigned long long, shmem, or)
 OSHMEM_TYPE_FOP(int32, int32_t, shmemx, or)
 OSHMEM_TYPE_FOP(int64, int64_t, shmemx, or)
 OSHMEM_TYPE_FOP(uint32, uint32_t, shmemx, or)

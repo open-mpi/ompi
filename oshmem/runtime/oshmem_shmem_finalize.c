@@ -74,6 +74,8 @@ int oshmem_shmem_finalize(void)
         if (OSHMEM_SUCCESS == ret) {
             oshmem_shmem_initialized = false;
         }
+
+        SHMEM_MUTEX_DESTROY(shmem_internal_mutex_alloc);
     }
 
     /* Note: ompi_mpi_state is set atomically in ompi_mpi_init() and

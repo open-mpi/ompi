@@ -53,7 +53,12 @@ static inline void _shfree(void* ptr)
     shmem_barrier_all();
 #endif
 
+    SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
+
     rc = MCA_MEMHEAP_CALL(free(ptr));
+
+    SHMEM_MUTEX_UNLOCK(shmem_internal_mutex_alloc);
+
     if (OSHMEM_SUCCESS != rc) {
         SHMEM_API_VERBOSE(10, "shfree failure.");
     }

@@ -107,6 +107,10 @@ MPI_Comm oshmem_comm_world = {0};
 
 opal_thread_t *oshmem_mpi_main_thread = NULL;
 
+shmem_internal_mutex_t shmem_internal_mutex_alloc = {0};
+
+shmem_ctx_t oshmem_ctx_default = NULL;
+
 static int _shmem_init(int argc, char **argv, int requested, int *provided);
 
 #if OSHMEM_OPAL_THREAD_ENABLE
@@ -156,6 +160,8 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
 
         PMPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
         OMPI_TIMING_NEXT("PMPI_Comm_dup");
+
+        SHMEM_MUTEX_INIT(shmem_internal_mutex_alloc);
 
         ret = _shmem_init(argc, argv, requested, provided);
         OMPI_TIMING_NEXT("_shmem_init");
@@ -249,6 +255,9 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 {
     int ret = OSHMEM_SUCCESS;
     char *error = NULL;
+
+    oshmem_mpi_thread_requested = requested;
+    oshmem_mpi_thread_provided = requested;
 
     /* Register the OSHMEM layer's MCA parameters */
     if (OSHMEM_SUCCESS != (ret = oshmem_shmem_register_params())) {
@@ -360,6 +369,10 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
         error = "mca_scoll_enable() failed";
         goto error;
     }
+
+    (*provided) = oshmem_mpi_thread_provided;
+
+    oshmem_mpi_thread_multiple = (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE) ? true : false;
 
     error: if (ret != OSHMEM_SUCCESS) {
         const char *err_msg = opal_strerror(ret);

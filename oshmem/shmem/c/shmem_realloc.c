@@ -45,7 +45,11 @@ static inline void* _shrealloc(void *ptr, size_t size)
 
     RUNTIME_CHECK_INIT();
 
+    SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
+
     rc = MCA_MEMHEAP_CALL(realloc(size, ptr, &pBuff));
+
+    SHMEM_MUTEX_UNLOCK(shmem_internal_mutex_alloc);
 
     if (OSHMEM_SUCCESS != rc) {
         SHMEM_API_VERBOSE(1,

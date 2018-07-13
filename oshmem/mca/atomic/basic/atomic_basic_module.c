@@ -93,7 +93,8 @@ int mca_atomic_basic_finalize(void)
 }
 
 static inline
-int mca_atomic_basic_fop(void *target,
+int mca_atomic_basic_fop(shmem_ctx_t ctx,
+                         void *target,
                          void *prev,
                          uint64_t value,
                          size_t size,
@@ -103,9 +104,9 @@ int mca_atomic_basic_fop(void *target,
     int rc = OSHMEM_SUCCESS;
     long long temp_value = 0;
 
-    atomic_basic_lock(pe);
+    atomic_basic_lock(ctx, pe);
 
-    rc = MCA_SPML_CALL(get(target, size, (void*)&temp_value, pe));
+    rc = MCA_SPML_CALL(get(ctx, target, size, (void*)&temp_value, pe));
 
     memcpy(prev, (void*) &temp_value, size);
 
@@ -114,17 +115,18 @@ int mca_atomic_basic_fop(void *target,
                     size / op->dt_size);
 
     if (rc == OSHMEM_SUCCESS) {
-        rc = MCA_SPML_CALL(put(target, size, (void*)&temp_value, pe));
+        rc = MCA_SPML_CALL(put(ctx, target, size, (void*)&temp_value, pe));
         shmem_quiet();
     }
 
-    atomic_basic_unlock(pe);
+    atomic_basic_unlock(ctx, pe);
 
     return rc;
 }
 
 static inline
-int mca_atomic_basic_op(void *target,
+int mca_atomic_basic_op(shmem_ctx_t ctx,
+                        void *target,
                         uint64_t value,
                         size_t size,
                         int pe,
@@ -132,69 +134,72 @@ int mca_atomic_basic_op(void *target,
 {
     long long prev;
 
-    return mca_atomic_basic_fop(target, &prev, value, size, pe, op);
+    return mca_atomic_basic_fop(ctx, target, &prev, value, size, pe, op);
 }
 
-static int mca_atomic_basic_add(void *target, uint64_t value,
+static int mca_atomic_basic_add(shmem_ctx_t ctx, void *target, uint64_t value,
                                 size_t size, int pe)
 {
-    return mca_atomic_basic_op(target, value, size, pe,
+    return mca_atomic_basic_op(ctx, target, value, size, pe,
                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
 }
 
-static int mca_atomic_basic_and(void *target, uint64_t value,
+static int mca_atomic_basic_and(shmem_ctx_t ctx,
+                                void *target, uint64_t value,
                                 size_t size, int pe)
 {
-    return mca_atomic_basic_op(target, value, size, pe,
+    return mca_atomic_basic_op(ctx, target, value, size, pe,
                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_and_int64));
 }
 
-static int mca_atomic_basic_or(void *target, uint64_t value,
+static int mca_atomic_basic_or(shmem_ctx_t ctx, void *target, uint64_t value,
                                size_t size, int pe)
 {
-    return mca_atomic_basic_op(target, value, size, pe,
+    return mca_atomic_basic_op(ctx, target, value, size, pe,
                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_or_int64));
 }
 
-static int mca_atomic_basic_xor(void *target, uint64_t value,
+static int mca_atomic_basic_xor(shmem_ctx_t ctx,
+                                void *target, uint64_t value,
                                 size_t size, int pe)
 {
-    return mca_atomic_basic_op(target, value, size, pe,
+    return mca_atomic_basic_op(ctx, target, value, size, pe,
                                MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_xor_int64));
 }
 
-static int mca_atomic_basic_fadd(void *target, void *prev, uint64_t value,
+static int mca_atomic_basic_fadd(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
                                  size_t size, int pe)
 {
-    return mca_atomic_basic_fop(target, prev, value, size, pe,
+    return mca_atomic_basic_fop(ctx, target, prev, value, size, pe,
                                 MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_sum_int64));
 }
 
-static int mca_atomic_basic_fand(void *target, void *prev, uint64_t value,
+static int mca_atomic_basic_fand(shmem_ctx_t ctx,
+                                 void *target, void *prev, uint64_t value,
                                  size_t size, int pe)
 {
-    return mca_atomic_basic_fop(target, prev, value, size, pe,
+    return mca_atomic_basic_fop(ctx, target, prev, value, size, pe,
                                 MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_and_int64));
 }
 
-static int mca_atomic_basic_for(void *target, void *prev, uint64_t value,
+static int mca_atomic_basic_for(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
                                 size_t size, int pe)
 {
-    return mca_atomic_basic_fop(target, prev, value, size, pe,
+    return mca_atomic_basic_fop(ctx, target, prev, value, size, pe,
                                 MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_or_int64));
 }
 
-static int mca_atomic_basic_fxor(void *target, void *prev, uint64_t value,
+static int mca_atomic_basic_fxor(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
                                  size_t size, int pe)
 {
-    return mca_atomic_basic_fop(target, prev, value, size, pe,
+    return mca_atomic_basic_fop(ctx, target, prev, value, size, pe,
                                 MCA_BASIC_OP(size, oshmem_op_sum_int32, oshmem_op_xor_int64));
 }
 
-static int mca_atomic_basic_swap(void *target, void *prev, uint64_t value,
+static int mca_atomic_basic_swap(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
                                  size_t size, int pe)
 {
-    return mca_atomic_basic_fop(target, prev, value, size, pe,
+    return mca_atomic_basic_fop(ctx, target, prev, value, size, pe,
                                 MCA_BASIC_OP(size, oshmem_op_swap_int32, oshmem_op_swap_int64));
 }
 
@@ -223,7 +228,7 @@ mca_atomic_basic_query(int *priority)
     return NULL ;
 }
 
-void atomic_basic_lock(int pe)
+void atomic_basic_lock(shmem_ctx_t ctx, int pe)
 {
     int index = -1;
     int me = oshmem_my_proc_id();
@@ -235,15 +240,15 @@ void atomic_basic_lock(int pe)
     do {
         /* announce that we need the resource */
         do {
-            MCA_SPML_CALL(put((void*)(atomic_lock_sync + me), sizeof(lock_required), (void*)&lock_required, root_pe));
-            MCA_SPML_CALL(get((void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
+            MCA_SPML_CALL(put(ctx, (void*)(atomic_lock_sync + me), sizeof(lock_required), (void*)&lock_required, root_pe));
+            MCA_SPML_CALL(get(ctx, (void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
         } while (local_lock_sync[me] != lock_required);
 
-        MCA_SPML_CALL(get((void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
+        MCA_SPML_CALL(get(ctx, (void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
         while (index != me) {
             if (local_lock_sync[index] != ATOMIC_LOCK_IDLE) {
-                MCA_SPML_CALL(get((void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
-                MCA_SPML_CALL(get((void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
+                MCA_SPML_CALL(get(ctx, (void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
+                MCA_SPML_CALL(get(ctx, (void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
             } else {
                 index = (index + 1) % num_pe;
             }
@@ -251,8 +256,8 @@ void atomic_basic_lock(int pe)
 
         /* now tentatively claim the resource */
         do {
-            MCA_SPML_CALL(put((void*)(atomic_lock_sync + me), sizeof(lock_active), (void*)&lock_active, root_pe));
-            MCA_SPML_CALL(get((void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
+            MCA_SPML_CALL(put(ctx, (void*)(atomic_lock_sync + me), sizeof(lock_active), (void*)&lock_active, root_pe));
+            MCA_SPML_CALL(get(ctx, (void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
         } while (local_lock_sync[me] != lock_active);
 
         index = 0;
@@ -262,15 +267,15 @@ void atomic_basic_lock(int pe)
             index = index + 1;
         }
 
-        MCA_SPML_CALL(get((void*)atomic_lock_turn, sizeof(*atomic_lock_turn), (void*)local_lock_turn, root_pe));
+        MCA_SPML_CALL(get(ctx, (void*)atomic_lock_turn, sizeof(*atomic_lock_turn), (void*)local_lock_turn, root_pe));
     } while (!((index >= num_pe)
             && ((*local_lock_turn == me)
                     || (local_lock_sync[*local_lock_turn] == ATOMIC_LOCK_IDLE))));
 
-    MCA_SPML_CALL(put((void*)atomic_lock_turn, sizeof(me), (void*)&me, root_pe));
+    MCA_SPML_CALL(put(ctx, (void*)atomic_lock_turn, sizeof(me), (void*)&me, root_pe));
 }
 
-void atomic_basic_unlock(int pe)
+void atomic_basic_unlock(shmem_ctx_t ctx, int pe)
 {
     int index = -1;
     int me = oshmem_my_proc_id();
@@ -278,17 +283,17 @@ void atomic_basic_unlock(int pe)
     char lock_idle = ATOMIC_LOCK_IDLE;
     int root_pe = pe;
 
-    MCA_SPML_CALL(get((void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
-    MCA_SPML_CALL(get((void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
+    MCA_SPML_CALL(get(ctx, (void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
+    MCA_SPML_CALL(get(ctx, (void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
 
     do {
         index = (index + 1) % num_pe;
     } while (local_lock_sync[index] == ATOMIC_LOCK_IDLE);
 
-    MCA_SPML_CALL(put((void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
+    MCA_SPML_CALL(put(ctx, (void*)atomic_lock_turn, sizeof(index), (void*)&index, root_pe));
 
     do {
-        MCA_SPML_CALL(put((void*)(atomic_lock_sync + me), sizeof(lock_idle), (void*)&lock_idle, root_pe));
-        MCA_SPML_CALL(get((void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
+        MCA_SPML_CALL(put(ctx, (void*)(atomic_lock_sync + me), sizeof(lock_idle), (void*)&lock_idle, root_pe));
+        MCA_SPML_CALL(get(ctx, (void*)atomic_lock_sync, num_pe * sizeof(*atomic_lock_sync), (void*)local_lock_sync, root_pe));
     } while (local_lock_sync[me] != lock_idle);
 }

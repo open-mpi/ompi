@@ -83,6 +83,14 @@ typedef struct mxm_peer mxm_peer_t;
 
 typedef mxm_mem_key_t *(*mca_spml_ikrit_get_mkey_slow_fn_t)(int pe, void *va, int ptl_id, void **rva);
 
+struct mca_spml_ikrit_ctx {
+    int temp;
+};
+
+typedef struct mca_spml_ikrit_ctx mca_spml_ikrit_ctx_t;
+
+extern mca_spml_ikrit_ctx_t mca_spml_ikrit_ctx_default;
+
 struct mca_spml_ikrit_t {
     mca_spml_base_module_t super;
 
@@ -137,21 +145,28 @@ typedef struct spml_ikrit_mxm_ep_conn_info_t {
 extern mca_spml_ikrit_t mca_spml_ikrit;
 
 extern int mca_spml_ikrit_enable(bool enable);
-extern int mca_spml_ikrit_get(void* dst_addr,
+extern int mca_spml_ikrit_ctx_create(long options,
+                                     shmem_ctx_t *ctx);
+extern void mca_spml_ikrit_ctx_destroy(shmem_ctx_t ctx);
+extern int mca_spml_ikrit_get(shmem_ctx_t ctx,
+                              void* dst_addr,
                               size_t size,
                               void* src_addr,
                               int src);
-extern int mca_spml_ikrit_get_nb(void* src_addr,
+extern int mca_spml_ikrit_get_nb(shmem_ctx_t ctx,
+                                 void* src_addr,
                                  size_t size,
                                  void* dst_addr,
                                  int src,
                                  void **handle);
 
-extern int mca_spml_ikrit_put(void* dst_addr,
+extern int mca_spml_ikrit_put(shmem_ctx_t ctx,
+                              void* dst_addr,
                               size_t size,
                               void* src_addr,
                               int dst);
-extern int mca_spml_ikrit_put_nb(void* dst_addr,
+extern int mca_spml_ikrit_put_nb(shmem_ctx_t ctx,
+                                 void* dst_addr,
                                  size_t size,
                                  void* src_addr,
                                  int dst,
@@ -174,7 +189,7 @@ extern int mca_spml_ikrit_oob_get_mkeys(int pe,
 
 extern int mca_spml_ikrit_add_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs);
-extern int mca_spml_ikrit_fence(void);
+extern int mca_spml_ikrit_fence(shmem_ctx_t ctx);
 extern int spml_ikrit_progress(void);
 
 /* the functionreturns NULL if data can be directly copied via shared memory 

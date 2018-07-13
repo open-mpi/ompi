@@ -384,6 +384,8 @@ static int spml_ikrit_mxm_init(void)
         mca_spml_ikrit.mxm_hw_rdma_ep = mca_spml_ikrit.mxm_ep;
     }
 
+    oshmem_ctx_default = (shmem_ctx_t) &mca_spml_ikrit_ctx_default;
+
     return OSHMEM_SUCCESS;
 }
 

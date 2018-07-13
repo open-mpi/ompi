@@ -35,7 +35,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_int4_add_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fint *pe)
 {
-    MCA_ATOMIC_CALL(add(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(add(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         FPTR_2_INT(value, sizeof(ompi_fortran_integer4_t)),
         sizeof(ompi_fortran_integer4_t),
         OMPI_FINT_2_INT(*pe)));

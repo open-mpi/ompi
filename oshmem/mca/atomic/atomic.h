@@ -35,9 +35,7 @@ BEGIN_C_DECLS
 
 #define OSHMEM_ATOMIC_PTR_2_INT(ptr, size) ((size) == 8 ? *(uint64_t*)(ptr) : *(uint32_t*)(ptr))
 
-#define OSHMEM_TYPE_OP(type_name, type, prefix, op)                           \
-    void prefix##_##type_name##_atomic_##op(type *target, type value, int pe) \
-    {                                                                         \
+#define DO_SHMEM_TYPE_OP(ctx, type_name, type, op, target, value, pe) do {    \
         int rc = OSHMEM_SUCCESS;                                              \
         size_t size = 0;                                                      \
                                                                               \
@@ -47,6 +45,7 @@ BEGIN_C_DECLS
                                                                               \
         size = sizeof(value);                                                 \
         rc = MCA_ATOMIC_CALL(op(                                              \
+            ctx,                                                              \
             (void*)target,                                                    \
             value,                                                            \
             size,                                                             \
@@ -54,11 +53,23 @@ BEGIN_C_DECLS
         RUNTIME_CHECK_RC(rc);                                                 \
                                                                               \
         return;                                                               \
+    } while (0)
+
+#define OSHMEM_TYPE_OP(type_name, type, prefix, op)                           \
+    void prefix##_##type_name##_atomic_##op(type *target, type value, int pe) \
+    {                                                                         \
+        DO_SHMEM_TYPE_OP(oshmem_ctx_default, type_name, type, op,             \
+                         target, value, pe);                                  \
     }
 
-#define OSHMEM_TYPE_FOP(type_name, type, prefix, op)                                \
-    type prefix##_##type_name##_atomic_fetch_##op(type *target, type value, int pe) \
-    {                                                                               \
+#define OSHMEM_CTX_TYPE_OP(type_name, type, prefix, op)                       \
+    void prefix##_ctx_##type_name##_atomic_##op(shmem_ctx_t ctx, type *target, type value, int pe) \
+    {                                                                         \
+        DO_SHMEM_TYPE_OP(ctx, type_name, type, op,                            \
+                         target, value, pe);                                  \
+    }
+
+#define DO_OSHMEM_TYPE_FOP(ctx, type_name, type, op, target, value, pe) do {        \
         int rc = OSHMEM_SUCCESS;                                                    \
         size_t size = 0;                                                            \
         type out_value;                                                             \
@@ -69,6 +80,7 @@ BEGIN_C_DECLS
                                                                                     \
         size = sizeof(out_value);                                                   \
         rc = MCA_ATOMIC_CALL(f##op(                                                 \
+            ctx,                                                                    \
             (void*)target,                                                          \
             (void*)&out_value,                                                      \
             value,                                                                  \
@@ -77,7 +89,22 @@ BEGIN_C_DECLS
         RUNTIME_CHECK_RC(rc);                                                       \
                                                                                     \
         return out_value;                                                           \
+    } while (0)
+
+#define OSHMEM_TYPE_FOP(type_name, type, prefix, op)                                \
+    type prefix##_##type_name##_atomic_fetch_##op(type *target, type value, int pe) \
+    {                                                                               \
+        DO_OSHMEM_TYPE_FOP(oshmem_ctx_default, type_name, type, op,                 \
+                           target, value, pe);                                      \
     }
+
+#define OSHMEM_CTX_TYPE_FOP(type_name, type, prefix, op)                   \
+    type prefix##_ctx_##type_name##_atomic_fetch_##op(shmem_ctx_t ctx, type *target, type value, int pe) \
+    {                                                                      \
+        DO_OSHMEM_TYPE_FOP(ctx, type_name, type, op,                       \
+                           target, value, pe);                             \
+    }
+
 /* ******************************************************************** */
 
 struct oshmem_op_t;
@@ -131,48 +158,58 @@ struct mca_atomic_base_module_1_0_0_t {
     opal_object_t super;
 
     /* Collective function pointers */
-    int (*atomic_add)(void *target,
+    int (*atomic_add)(shmem_ctx_t ctx,
+                      void *target,
                       uint64_t value,
                       size_t size,
                       int pe);
-    int (*atomic_and)(void *target,
+    int (*atomic_and)(shmem_ctx_t ctx,
+                      void *target,
                       uint64_t value,
                       size_t size,
                       int pe);
-    int (*atomic_or)(void *target,
+    int (*atomic_or)(shmem_ctx_t ctx,
+                     void *target,
                      uint64_t value,
                      size_t size,
                      int pe);
-    int (*atomic_xor)(void *target,
+    int (*atomic_xor)(shmem_ctx_t ctx,
+                      void *target,
                       uint64_t value,
                       size_t size,
                       int pe);
-    int (*atomic_fadd)(void *target,
+    int (*atomic_fadd)(shmem_ctx_t ctx,
+                       void *target,
                        void *prev,
                        uint64_t value,
                        size_t size,
                        int pe);
-    int (*atomic_fand)(void *target,
+    int (*atomic_fand)(shmem_ctx_t ctx,
+                       void *target,
                        void *prev,
                        uint64_t value,
                        size_t size,
                        int pe);
-    int (*atomic_for)(void *target,
+    int (*atomic_for)(shmem_ctx_t ctx,
+                      void *target,
                       void *prev,
                       uint64_t value,
                       size_t size,
                       int pe);
-    int (*atomic_fxor)(void *target,
+    int (*atomic_fxor)(shmem_ctx_t ctx,
+                       void *target,
                        void *prev,
                        uint64_t value,
                        size_t size,
                        int pe);
-    int (*atomic_swap)(void *target,
+    int (*atomic_swap)(shmem_ctx_t ctx,
+                       void *target,
                        void *prev,
                        uint64_t value,
                        size_t size,
                        int pe);
-    int (*atomic_cswap)(void *target,
+    int (*atomic_cswap)(shmem_ctx_t ctx,
+                        void *target,
                         uint64_t *prev, /* prev is used internally by wrapper, we may
                                            always use 64-bit value */
                         uint64_t cond,

@@ -26,6 +26,7 @@ OSHMEM_API_SOURCES = \
 	shmem_align.c \
 	shmem_query.c \
 	shmem_p.c \
+	shmem_context.c \
 	shmem_put.c \
 	shmem_g.c \
 	shmem_get.c \
@@ -36,6 +37,7 @@ OSHMEM_API_SOURCES = \
 	shmem_pe_accessible.c \
 	shmem_addr_accessible.c \
 	shmem_barrier.c \
+	shmem_sync.c \
 	shmem_fence.c \
 	shmem_quiet.c \
 	shmem_wait.c \

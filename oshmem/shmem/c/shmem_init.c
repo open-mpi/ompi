@@ -28,24 +28,33 @@
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_init = pshmem_init
+#pragma weak shmem_init_thread = pshmem_init_thread
 #pragma weak start_pes = pstart_pes
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 extern int oshmem_shmem_globalexit_status;
 
-static inline void _shmem_init(void);
+static inline void _shmem_init(int required, int *provided);
 
 void shmem_init(void)
 {
+    int provided;
     /* spec says that npes are ignored for now */
-    _shmem_init();
+    _shmem_init(SHMEM_THREAD_SINGLE, &provided);
+}
+
+int shmem_init_thread(int requested, int *provided)
+{
+    _shmem_init(requested, provided);
+    return 0;
 }
 
 void start_pes(int npes)
 {
+    int provided;
     /* spec says that npes are ignored for now */
-    _shmem_init();
+    _shmem_init(SHMEM_THREAD_SINGLE, &provided);
 }
 
 static void shmem_onexit(int exitcode, void *arg)
@@ -54,11 +63,9 @@ static void shmem_onexit(int exitcode, void *arg)
     shmem_finalize();
 }
 
-static inline void _shmem_init(void)
+static inline void _shmem_init(int required, int *provided)
 {
     int err = OSHMEM_SUCCESS;
-    int provided;
-    int required = SHMEM_THREAD_SINGLE;
 
     if (oshmem_shmem_initialized) {
         /*
@@ -67,7 +74,7 @@ static inline void _shmem_init(void)
         return;
     }
 
-    err = oshmem_shmem_init(0, NULL, required, &provided);
+    err = oshmem_shmem_init(0, NULL, required, provided);
     if (OSHMEM_SUCCESS != err) {
         /* since spec does not propagete error to user we can only abort */
         SHMEM_API_ERROR("SHMEM failed to initialize - aborting");

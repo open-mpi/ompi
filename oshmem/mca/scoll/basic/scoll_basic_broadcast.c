@@ -143,13 +143,13 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
                 SCOLL_VERBOSE(15,
                               "[#%d] send data to #%d",
                               group->my_pe, pe_cur);
-                rc = MCA_SPML_CALL(put(target, nlong, (void *)source, pe_cur));
+                rc = MCA_SPML_CALL(put(oshmem_ctx_default, target, nlong, (void *)source, pe_cur));
             }
         }
         /* quiet is needed because scoll level barrier does not
          * guarantee put completion
          */
-        MCA_SPML_CALL(quiet());
+        MCA_SPML_CALL(quiet(oshmem_ctx_default));
     }
 
     if (rc == OSHMEM_SUCCESS) {
@@ -233,17 +233,17 @@ static int _algorithm_binomial_tree(struct oshmem_group_t *group,
                           "[#%d] check remote pe is ready to receive #%d",
                           group->my_pe, peer_pe);
             do {
-                rc = MCA_SPML_CALL(get((void*)pSync, sizeof(long), (void*)pSync, peer_pe));
+                rc = MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(long), (void*)pSync, peer_pe));
             } while ((OSHMEM_SUCCESS == rc) && (pSync[0] != SHMEM_SYNC_READY));
 
             SCOLL_VERBOSE(14, "[#%d] send data to #%d", group->my_pe, peer_pe);
-            rc = MCA_SPML_CALL(put(target, nlong, (my_id == root_id ? (void *)source : target), peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, target, nlong, (my_id == root_id ? (void *)source : target), peer_pe));
 
-            MCA_SPML_CALL(fence());
+            MCA_SPML_CALL(fence(oshmem_ctx_default));
 
             SCOLL_VERBOSE(14, "[#%d] signals to #%d", group->my_pe, peer_pe);
             value = nlong;
-            rc = MCA_SPML_CALL(put((void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
             if (OSHMEM_SUCCESS != rc) {
                 break;
             }

@@ -105,6 +105,11 @@ enum {
 #define SHMEM_UNDEFINED          -32766                  /* undefined stuff */
 
 
+#define SHMEM_CTX_PRIVATE       (1<<0)
+#define SHMEM_CTX_SERIALIZED    (1<<1)
+#define SHMEM_CTX_NOSTORE       (1<<2)
+
+
 #ifndef UNREFERENCED_PARAMETER
 #define UNREFERENCED_PARAMETER(P) ((void)P)
 #endif

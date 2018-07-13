@@ -48,6 +48,7 @@ OSHMEM_API_SOURCES = \
 	pshmem_pe_accessible.c \
 	pshmem_addr_accessible.c \
 	pshmem_barrier.c \
+	pshmem_sync.c \
 	pshmem_fence.c \
 	pshmem_quiet.c \
 	pshmem_wait.c \

@@ -38,7 +38,7 @@ ompi_fortran_integer8_t shmem_int8_cswap_f(FORTRAN_POINTER_T target, MPI_Fint *c
 {
     ompi_fortran_integer8_t out_value = 0;
 
-    MCA_ATOMIC_CALL(cswap(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(cswap(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         (void *)&out_value,
         FPTR_2_INT(cond, sizeof(out_value)),
         FPTR_2_INT(value, sizeof(out_value)),
