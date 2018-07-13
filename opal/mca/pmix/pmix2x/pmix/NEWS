@@ -21,7 +21,7 @@ example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
 
-2.1.2 -- TBD
+2.1.2 -- 6 July 2018
 ----------------------
 - Added PMIX_VERSION_RELEASE string to pmix_version.h
 - Added PMIX_SPAWNED and PMIX_PARENT_ID keys to all procs
@@ -32,6 +32,7 @@ current release as well as the "stable" bug fix release branch.
   shared memory region upon first connection
 - Fix potential deadlock in PMIx_server_init in an error case
 - Fix uninitialized variable
+- Fix several memory and file descriptor leaks
 
 
 2.1.1 -- 5 Mar 2018
