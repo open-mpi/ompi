@@ -29,25 +29,27 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
+#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Iexscan = PMPI_Iexscan
+#pragma weak MPIX_Exscan_init = PMPIX_Exscan_init
 #endif
-#define MPI_Iexscan PMPI_Iexscan
+#define MPIX_Exscan_init PMPIX_Exscan_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Iexscan";
+static const char FUNC_NAME[] = "MPIX_Exscan_init";
 
 
-int MPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
-                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+int MPIX_Exscan_init(const void *sendbuf, void *recvbuf, int count,
+                     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
+                     MPI_Info info, MPI_Request *request)
 {
     int err;
 
-    SPC_RECORD(OMPI_SPC_IEXSCAN, 1);
+    SPC_RECORD(OMPI_SPC_EXSCAN_INIT, 1);
 
     MEMCHECKER(
         memchecker_datatype(datatype);
@@ -83,9 +85,9 @@ int MPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll->coll_iexscan(sendbuf, recvbuf, count,
-                                    datatype, op, comm, request,
-                                    comm->c_coll->coll_iexscan_module);
+    err = comm->c_coll->coll_exscan_init(sendbuf, recvbuf, count,
+                                         datatype, op, comm, info, request,
+                                         comm->c_coll->coll_exscan_init_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

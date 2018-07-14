@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST).  All rights reserved.
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,26 +29,28 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Igatherv = PMPI_Igatherv
+#pragma weak MPIX_Gatherv_init = PMPIX_Gatherv_init
 #endif
-#define MPI_Igatherv PMPI_Igatherv
+#define MPIX_Gatherv_init PMPIX_Gatherv_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Igatherv";
+static const char FUNC_NAME[] = "MPIX_Gatherv_init";
 
 
-int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                 void *recvbuf, const int recvcounts[], const int displs[],
-                 MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
+int MPIX_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                      void *recvbuf, const int recvcounts[], const int displs[],
+                      MPI_Datatype recvtype, int root, MPI_Comm comm,
+                      MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
 
-    SPC_RECORD(OMPI_SPC_IGATHERV, 1);
+    SPC_RECORD(OMPI_SPC_GATHERV_INIT, 1);
 
     MEMCHECKER(
         ptrdiff_t ext;
@@ -193,8 +195,9 @@ int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_igatherv(sendbuf, sendcount, sendtype, recvbuf,
-                                     recvcounts, displs, recvtype,
-                                     root, comm, request, comm->c_coll->coll_igatherv_module);
+    err = comm->c_coll->coll_gatherv_init(sendbuf, sendcount, sendtype, recvbuf,
+                                          recvcounts, displs, recvtype,
+                                          root, comm, info, request,
+                                          comm->c_coll->coll_gatherv_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

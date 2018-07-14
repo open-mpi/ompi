@@ -35,26 +35,27 @@
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ineighbor_alltoallw = PMPI_Ineighbor_alltoallw
+#pragma weak MPIX_Neighbor_alltoallw_init = PMPIX_Neighbor_alltoallw_init
 #endif
-#define MPI_Ineighbor_alltoallw PMPI_Ineighbor_alltoallw
+#define MPIX_Neighbor_alltoallw_init PMPIX_Neighbor_alltoallw_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Ineighbor_alltoallw";
+static const char FUNC_NAME[] = "MPIX_Neighbor_alltoallw_init";
 
 
-int MPI_Ineighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[],
-                            const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
-                            const MPI_Aint rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
-                            MPI_Request *request)
+int MPIX_Neighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[],
+                                 const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
+                                 const MPI_Aint rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
+                                 MPI_Info info, MPI_Request *request)
 {
     int i, err;
     int indegree, outdegree;
 
-    SPC_RECORD(OMPI_SPC_INEIGHBOR_ALLTOALLW, 1);
+    SPC_RECORD(OMPI_SPC_NEIGHBOR_ALLTOALLW_INIT, 1);
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -144,9 +145,10 @@ int MPI_Ineighbor_alltoallw(const void *sendbuf, const int sendcounts[], const M
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes,
-                                                recvbuf, recvcounts, rdispls, recvtypes, comm, request,
-                                                comm->c_coll->coll_ineighbor_alltoallw_module);
+    err = comm->c_coll->coll_neighbor_alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes,
+                                                     recvbuf, recvcounts, rdispls, recvtypes, comm,
+                                                     info, request,
+                                                     comm->c_coll->coll_neighbor_alltoallw_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

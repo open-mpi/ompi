@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -16,7 +16,6 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,27 +32,27 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
-#include "ompi/mca/topo/topo.h"
-#include "ompi/mca/topo/base/base.h"
+#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ineighbor_allgatherv = PMPI_Ineighbor_allgatherv
+#pragma weak MPIX_Allgatherv_init = PMPIX_Allgatherv_init
 #endif
-#define MPI_Ineighbor_allgatherv PMPI_Ineighbor_allgatherv
+#define MPIX_Allgatherv_init PMPIX_Allgatherv_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Ineighbor_allgatherv";
+static const char FUNC_NAME[] = "MPIX_Allgatherv_init";
 
 
-int MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                             void *recvbuf, const int recvcounts[], const int displs[],
-                             MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+int MPIX_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                         void *recvbuf, const int recvcounts[], const int displs[],
+                         MPI_Datatype recvtype, MPI_Comm comm,
+                         MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
 
-    SPC_RECORD(OMPI_SPC_INEIGHBOR_ALLGATHERV, 1);
+    SPC_RECORD(OMPI_SPC_ALLGATHERV_INIT, 1);
 
     MEMCHECKER(
         int rank;
@@ -73,7 +72,11 @@ int MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
         }
 
         /* check whether the actual send buffer is defined. */
-        if (MPI_IN_PLACE != sendbuf) {
+        if (MPI_IN_PLACE == sendbuf) {
+            memchecker_call(&opal_memchecker_base_isdefined,
+                            (char *)(recvbuf)+displs[rank]*ext,
+                            recvcounts[rank], recvtype);
+        } else {
             memchecker_datatype(sendtype);
             memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         }
@@ -86,19 +89,19 @@ int MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
 
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_comm_invalid(comm) || OMPI_COMM_IS_INTER(comm)) {
+        if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
-        } else if (! OMPI_COMM_IS_TOPO(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
-                                          FUNC_NAME);
-        } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+        } else if ((MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
+                   MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         } else if (MPI_DATATYPE_NULL == recvtype) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
         }
 
-        OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+        if (MPI_IN_PLACE != sendbuf) {
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+        }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
       /* We always define the remote group to be the same as the local
@@ -116,37 +119,15 @@ int MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
         if (NULL == displs) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER, FUNC_NAME);
         }
-
-        if( OMPI_COMM_IS_CART(comm) ) {
-            const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
-            if( 0 > cart->ndims ) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-            }
-        }
-        else if( OMPI_COMM_IS_GRAPH(comm) ) {
-            int degree;
-            mca_topo_base_graph_neighbors_count(comm, ompi_comm_rank(comm), &degree);
-            if( 0 > degree ) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-            }
-        }
-        else if( OMPI_COMM_IS_DIST_GRAPH(comm) ) {
-            const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
-            int indegree  = dist_graph->indegree;
-            int outdegree = dist_graph->outdegree;
-            if( indegree <  0 || outdegree <  0 ) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-            }
-        }
     }
 
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_ineighbor_allgatherv(sendbuf, sendcount, sendtype,
-                                                 recvbuf, (int *) recvcounts, (int *) displs,
-                                                 recvtype, comm, request,
-                                                 comm->c_coll->coll_ineighbor_allgatherv_module);
+    err = comm->c_coll->coll_allgatherv_init(sendbuf, sendcount, sendtype,
+                                             recvbuf, recvcounts, displs,
+                                             recvtype, comm, info, request,
+                                             comm->c_coll->coll_allgatherv_init_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 
