@@ -317,13 +317,16 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     }
 
     /* convert the array of info */
-    if (NULL != info) {
+    if (NULL != info && 0 < ninfo) {
         cd->info = OBJ_NEW(opal_list_t);
         for (n=0; n < ninfo; n++) {
             iptr = OBJ_NEW(opal_value_t);
+            /* ensure that this key is NULL terminated */
+            info[n].key[PMIX_MAX_KEYLEN] = '\0';
             iptr->key = strdup(info[n].key);
             if (OPAL_SUCCESS != (rc = pmix2x_value_unload(iptr, &info[n].value))) {
                 OPAL_ERROR_LOG(rc);
+                opal_output(0, "KEY %s FAILED VALUE TRANSLATION", info[n].key);
                 OBJ_RELEASE(iptr);
                 continue;
             }
@@ -332,7 +335,7 @@ void pmix2x_event_hdlr(size_t evhdlr_registration_id,
     }
 
     /* convert the array of prior results */
-    if (NULL != results) {
+    if (NULL != results && 0 < nresults) {
         for (n=0; n < nresults; n++) {
             iptr = OBJ_NEW(opal_value_t);
             iptr->key = strdup(results[n].key);
