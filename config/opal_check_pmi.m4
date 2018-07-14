@@ -338,25 +338,11 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                   # if it does exist, then we need to parse it to find
                   # the actual release series
                   AS_IF([test "$opal_external_pmix_version_found" = "0"],
-                        [AC_MSG_CHECKING([version 4x])
+                        [AC_MSG_CHECKING([version 3x or above])
                          AC_PREPROC_IFELSE([AC_LANG_PROGRAM([
                                                       #include <pmix_version.h>
-                                                      #if (PMIX_VERSION_MAJOR != 4L)
-                                                      #error "not version 4"
-                                                      #endif
-                                                      ], [])],
-                                           [AC_MSG_RESULT([found])
-                                            opal_external_pmix_version=4x
-                                            opal_external_pmix_version_found=1
-                                            opal_external_pmix_happy=yes],
-                                           [AC_MSG_RESULT([not found])])])
-
-                  AS_IF([test "$opal_external_pmix_version_found" = "0"],
-                        [AC_MSG_CHECKING([version 3x])
-                         AC_PREPROC_IFELSE([AC_LANG_PROGRAM([
-                                                      #include <pmix_version.h>
-                                                      #if (PMIX_VERSION_MAJOR != 3L)
-                                                      #error "not version 3"
+                                                      #if (PMIX_VERSION_MAJOR < 3L)
+                                                      #error "not version 3 or above"
                                                       #endif
                                                       ], [])],
                                            [AC_MSG_RESULT([found])
