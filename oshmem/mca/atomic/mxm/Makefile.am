@@ -35,7 +35,7 @@ mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_atomic_mxm_la_SOURCES = $(mxm_sources)
 mca_atomic_mxm_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
-	$(atomic_mxm_LIBS)
+	$(atomic_mxm_LIBS) $(top_builddir)/oshmem/mca/spml/libmca_spml.la
 mca_atomic_mxm_la_LDFLAGS = -module -avoid-version $(atomic_mxm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

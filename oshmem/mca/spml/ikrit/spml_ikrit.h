@@ -81,8 +81,12 @@ struct mxm_peer {
 
 typedef struct mxm_peer mxm_peer_t;
 
+typedef mxm_mem_key_t *(*mca_spml_ikrit_get_mkey_slow_fn_t)(int pe, void *va, int ptl_id, void **rva);
+
 struct mca_spml_ikrit_t {
     mca_spml_base_module_t super;
+
+    mca_spml_ikrit_get_mkey_slow_fn_t get_mkey_slow;
 
     mxm_context_opts_t *mxm_ctx_opts;
     mxm_ep_opts_t *mxm_ep_opts;
@@ -173,25 +177,26 @@ extern int mca_spml_ikrit_del_procs(ompi_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_fence(void);
 extern int spml_ikrit_progress(void);
 
-mxm_mem_key_t *mca_spml_ikrit_get_mkey_slow(int pe, void *va, int ptl_id, void **rva);
-
 /* the functionreturns NULL if data can be directly copied via shared memory 
  * else it returns mxm mem key
  *
  * the function will abort() if va is not symmetric var address.
  */
-static inline mxm_mem_key_t *mca_spml_ikrit_get_mkey(int pe, void *va, int ptl_id, void **rva) 
+static inline mxm_mem_key_t *mca_spml_ikrit_get_mkey(int pe, void *va, int ptl_id, void **rva,
+                                                     mca_spml_ikrit_t *module)
 {
     spml_ikrit_mkey_t *mkey;
 
     if (OPAL_UNLIKELY(MXM_PTL_RDMA != ptl_id)) {
-        return mca_spml_ikrit_get_mkey_slow(pe, va, ptl_id, rva);
+        assert(module->get_mkey_slow);
+        return module->get_mkey_slow(pe, va, ptl_id, rva);
     }
 
-    mkey = mca_spml_ikrit.mxm_peers[pe].mkeys;
+    mkey = module->mxm_peers[pe].mkeys;
     mkey = (spml_ikrit_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
     if (OPAL_UNLIKELY(NULL == mkey)) {
-        return mca_spml_ikrit_get_mkey_slow(pe, va, ptl_id, rva);
+        assert(module->get_mkey_slow);
+        return module->get_mkey_slow(pe, va, ptl_id, rva);
     }
     *rva = map_segment_va2rva(&mkey->super, va);
     return &mkey->key;
