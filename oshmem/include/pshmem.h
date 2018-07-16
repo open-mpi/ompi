@@ -379,39 +379,39 @@ OSHMEM_DECLSPEC long long pshmem_longlong_fadd(long long *target, long long valu
 #endif
 
 /* Atomic Fetch&And */
-OSHMEM_DECLSPEC int pshmem_int_atomic_fand(int *target, int value, int pe);
-OSHMEM_DECLSPEC long pshmem_long_atomic_fand(long *target, long value, int pe);
-OSHMEM_DECLSPEC long long pshmem_longlong_atomic_fand(long long *target, long long value, int pe);
-#if OSHMEMP_HAVE_C11
-#define pshmem_atomic_fand(dst, val, pe)                             \
-    _Generic(&*(dst),                                                \
-            int*:         pshmem_int_atomic_fand,                    \
-            long*:        pshmem_long_atomic_fand,                   \
-            long long*:   pshmem_longlong_atomic_fand)(dst, val, pe)
+OSHMEM_DECLSPEC unsigned int pshmem_uint_atomic_fetch_and(unsigned int *target, unsigned int value, int pe);
+OSHMEM_DECLSPEC unsigned long pshmem_ulong_atomic_fetch_and(unsigned long *target, unsigned long value, int pe);
+OSHMEM_DECLSPEC unsigned long long pshmem_ulonglong_atomic_fetch_and(unsigned long long *target, unsigned long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define pshmem_atomic_fetch_and(dst, val, pe)                                      \
+    _Generic(&*(dst),                                                              \
+            unsigned int*:         pshmem_uint_atomic_fetch_and,                   \
+            unsigned long*:        pshmem_ulong_atomic_fetch_and,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_fetch_and)(dst, val, pe)
 #endif
 
 /* Atomic Fetch&Or */
-OSHMEM_DECLSPEC int pshmem_int_atomic_for(int *target, int value, int pe);
-OSHMEM_DECLSPEC long pshmem_long_atomic_for(long *target, long value, int pe);
-OSHMEM_DECLSPEC long long pshmem_longlong_atomic_for(long long *target, long long value, int pe);
-#if OSHMEMP_HAVE_C11
-#define pshmem_atomic_for(dst, val, pe)                             \
-    _Generic(&*(dst),                                               \
-            int*:         pshmem_int_atomic_for,                    \
-            long*:        pshmem_long_atomic_for,                   \
-            long long*:   pshmem_longlong_atomic_for)(dst, val, pe)
+OSHMEM_DECLSPEC unsigned int pshmem_uint_atomic_fetch_or(unsigned int *target, unsigned int value, int pe);
+OSHMEM_DECLSPEC unsigned long pshmem_ulong_atomic_fetch_or(unsigned long *target, unsigned long value, int pe);
+OSHMEM_DECLSPEC unsigned long long pshmem_ulonglong_atomic_fetch_or(unsigned long long *target, unsigned long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define pshmem_atomic_fetch_or(dst, val, pe)                                      \
+    _Generic(&*(dst),                                                             \
+            unsigned int*:         pshmem_uint_atomic_fetch_or,                   \
+            unsigned long*:        pshmem_ulong_atomic_fetch_or,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_fetch_or)(dst, val, pe)
 #endif
 
 /* Atomic Fetch&Xor */
-OSHMEM_DECLSPEC int pshmem_int_atomic_fxor(int *target, int value, int pe);
-OSHMEM_DECLSPEC long pshmem_long_atomic_fxor(long *target, long value, int pe);
-OSHMEM_DECLSPEC long long pshmem_longlong_atomic_fxor(long long *target, long long value, int pe);
-#if OSHMEMP_HAVE_C11
-#define pshmem_atomic_fxor(dst, val, pe)                             \
-    _Generic(&*(dst),                                                \
-            int*:         pshmem_int_atomic_fxor,                    \
-            long*:        pshmem_long_atomic_fxor,                   \
-            long long*:   pshmem_longlong_atomic_fxor)(dst, val, pe)
+OSHMEM_DECLSPEC unsigned int pshmem_uint_atomic_fetch_xor(unsigned int *target, unsigned int value, int pe);
+OSHMEM_DECLSPEC unsigned long pshmem_ulong_atomic_fetch_xor(unsigned long *target, unsigned long value, int pe);
+OSHMEM_DECLSPEC unsigned long long pshmem_ulonglong_atomic_fetch_xor(unsigned long long *target, unsigned long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define pshmem_atomic_fetch_xor(dst, val, pe)                                      \
+    _Generic(&*(dst),                                                              \
+            unsigned int*:         pshmem_uint_atomic_fetch_xor,                   \
+            unsigned long*:        pshmem_ulong_atomic_fetch_xor,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_fetch_xor)(dst, val, pe)
 #endif
 
 /* Atomic Fetch */
@@ -455,39 +455,39 @@ OSHMEM_DECLSPEC void pshmem_longlong_add(long long *target, long long value, int
 #endif
 
 /* Atomic And */
-OSHMEM_DECLSPEC void pshmem_int_atomic_and(int *target, int value, int pe);
-OSHMEM_DECLSPEC void pshmem_long_atomic_and(long *target, long value, int pe);
-OSHMEM_DECLSPEC void pshmem_longlong_atomic_and(long long *target, long long value, int pe);
-#if OSHMEMP_HAVE_C11
-#define pshmem_atomic_and(dst, val, pe)                             \
-    _Generic(&*(dst),                                               \
-            int*:         pshmem_int_atomic_and,                    \
-            long*:        pshmem_long_atomic_and,                   \
-            long long*:   pshmem_longlong_atomic_and)(dst, val, pe)
+OSHMEM_DECLSPEC void pshmem_uint_atomic_and(unsigned int *target, unsigned int value, int pe);
+OSHMEM_DECLSPEC void pshmem_ulong_atomic_and(unsigned long *target, unsigned long value, int pe);
+OSHMEM_DECLSPEC void pshmem_ulonglong_atomic_and(unsigned long long *target, unsigned long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define pshmem_atomic_and(dst, val, pe)                                      \
+    _Generic(&*(dst),                                                        \
+            unsigned int*:         pshmem_uint_atomic_and,                   \
+            unsigned long*:        pshmem_ulong_atomic_and,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_and)(dst, val, pe)
 #endif
 
 /* Atomic Or */
-OSHMEM_DECLSPEC void pshmem_int_atomic_or(int *target, int value, int pe);
-OSHMEM_DECLSPEC void pshmem_long_atomic_or(long *target, long value, int pe);
-OSHMEM_DECLSPEC void pshmem_longlong_atomic_or(long long *target, long long value, int pe);
-#if OSHMEMP_HAVE_C11
-#define pshmem_atomic_or(dst, val, pe)                             \
-    _Generic(&*(dst),                                              \
-            int*:         pshmem_int_atomic_or,                    \
-            long*:        pshmem_long_atomic_or,                   \
-            long long*:   pshmem_longlong_atomic_or)(dst, val, pe)
+OSHMEM_DECLSPEC void pshmem_uint_atomic_or(unsigned int *target, unsigned int value, int pe);
+OSHMEM_DECLSPEC void pshmem_ulong_atomic_or(unsigned long *target, unsigned long value, int pe);
+OSHMEM_DECLSPEC void pshmem_ulonglong_atomic_or(unsigned long long *target, unsigned long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define pshmem_atomic_or(dst, val, pe)                                      \
+    _Generic(&*(dst),                                                       \
+            unsigned int*:         pshmem_uint_atomic_or,                   \
+            unsigned long*:        pshmem_ulong_atomic_or,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_or)(dst, val, pe)
 #endif
 
 /* Atomic Xor */
-OSHMEM_DECLSPEC void pshmem_int_atomic_xor(int *target, int value, int pe);
-OSHMEM_DECLSPEC void pshmem_long_atomic_xor(long *target, long value, int pe);
-OSHMEM_DECLSPEC void pshmem_longlong_atomic_xor(long long *target, long long value, int pe);
-#if OSHMEMP_HAVE_C11
-#define pshmem_atomic_xor(dst, val, pe)                             \
-    _Generic(&*(dst),                                               \
-            int*:         pshmem_int_atomic_xor,                    \
-            long*:        pshmem_long_atomic_xor,                   \
-            long long*:   pshmem_longlong_atomic_xor)(dst, val, pe)
+OSHMEM_DECLSPEC void pshmem_uint_atomic_xor(unsigned int *target, unsigned int value, int pe);
+OSHMEM_DECLSPEC void pshmem_ulong_atomic_xor(unsigned long *target, unsigned long value, int pe);
+OSHMEM_DECLSPEC void pshmem_ulonglong_atomic_xor(unsigned long long *target, unsigned long long value, int pe);
+#if OSHMEM_HAVE_C11
+#define pshmem_atomic_xor(dst, val, pe)                                      \
+    _Generic(&*(dst),                                                        \
+            unsigned int*:         pshmem_uint_atomic_xor,                   \
+            unsigned long*:        pshmem_ulong_atomic_xor,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_xor)(dst, val, pe)
 #endif
 
 /* Atomic Inc */
