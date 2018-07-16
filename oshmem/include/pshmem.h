@@ -462,8 +462,8 @@ OSHMEM_DECLSPEC void pshmem_ulonglong_atomic_and(unsigned long long *target, uns
 #define pshmem_atomic_and(dst, val, pe)                                      \
     _Generic(&*(dst),                                                        \
             unsigned int*:         pshmem_uint_atomic_and,                   \
-            unsigned iong*:        pshmem_ulong_atomic_and,                  \
-            unsigned iong long*:   pshmem_ulonglong_atomic_and)(dst, val, pe)
+            unsigned long*:        pshmem_ulong_atomic_and,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_and)(dst, val, pe)
 #endif
 
 /* Atomic Or */
@@ -474,8 +474,8 @@ OSHMEM_DECLSPEC void pshmem_ulonglong_atomic_or(unsigned long long *target, unsi
 #define pshmem_atomic_or(dst, val, pe)                                      \
     _Generic(&*(dst),                                                       \
             unsigned int*:         pshmem_uint_atomic_or,                   \
-            unsigned iong*:        pshmem_ulong_atomic_or,                  \
-            unsigned iong long*:   pshmem_ulonglong_atomic_or)(dst, val, pe)
+            unsigned long*:        pshmem_ulong_atomic_or,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_or)(dst, val, pe)
 #endif
 
 /* Atomic Xor */
@@ -486,8 +486,8 @@ OSHMEM_DECLSPEC void pshmem_ulonglong_atomic_xor(unsigned long long *target, uns
 #define pshmem_atomic_xor(dst, val, pe)                                      \
     _Generic(&*(dst),                                                        \
             unsigned int*:         pshmem_uint_atomic_xor,                   \
-            unsigned iong*:        pshmem_ulong_atomic_xor,                  \
-            unsigned iong long*:   pshmem_ulonglong_atomic_xor)(dst, val, pe)
+            unsigned long*:        pshmem_ulong_atomic_xor,                  \
+            unsigned long long*:   pshmem_ulonglong_atomic_xor)(dst, val, pe)
 #endif
 
 /* Atomic Inc */

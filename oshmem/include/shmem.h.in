@@ -547,8 +547,8 @@ OSHMEM_DECLSPEC void shmem_ulonglong_atomic_and(unsigned long long *target, unsi
 #define shmem_atomic_and(dst, val, pe)                             \
     _Generic(&*(dst),                                              \
             unsigned int*:         shmem_uint_atomic_and,                   \
-            unsigned iong*:        shmem_ulong_atomic_and,                  \
-            unsigned iong long*:   shmem_ulonglong_atomic_and)(dst, val, pe)
+            unsigned long*:        shmem_ulong_atomic_and,                  \
+            unsigned long long*:   shmem_ulonglong_atomic_and)(dst, val, pe)
 #endif
 
 /* Atomic Or */
@@ -559,8 +559,8 @@ OSHMEM_DECLSPEC void shmem_ulonglong_atomic_or(unsigned long long *target, unsig
 #define shmem_atomic_or(dst, val, pe)                             \
     _Generic(&*(dst),                                             \
             unsigned int*:         shmem_uint_atomic_or,                   \
-            unsigned iong*:        shmem_ulong_atomic_or,                  \
-            unsigned iong long*:   shmem_ulonglong_atomic_or)(dst, val, pe)
+            unsigned long*:        shmem_ulong_atomic_or,                  \
+            unsigned long long*:   shmem_ulonglong_atomic_or)(dst, val, pe)
 #endif
 
 /* Atomic Xor */
@@ -571,8 +571,8 @@ OSHMEM_DECLSPEC void shmem_ulonglong_atomic_xor(unsigned long long *target, unsi
 #define shmem_atomic_xor(dst, val, pe)                             \
     _Generic(&*(dst),                                              \
             unsigned int*:         shmem_uint_atomic_xor,                   \
-            unsigned iong*:        shmem_ulong_atomic_xor,                  \
-            unsigned iong long*:   shmem_ulonglong_atomic_xor)(dst, val, pe)
+            unsigned long*:        shmem_ulong_atomic_xor,                  \
+            unsigned long long*:   shmem_ulonglong_atomic_xor)(dst, val, pe)
 #endif
 
 /* Atomic Inc */
