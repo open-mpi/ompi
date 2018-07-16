@@ -110,15 +110,28 @@ static int mca_spml_ucx_component_register(void)
 
 int spml_ucx_progress(void)
 {
-    ucp_worker_progress(mca_spml_ucx.ucp_worker);
+    ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker);
     return 1;
 }
 
 static int mca_spml_ucx_component_open(void)
 {
+    return OSHMEM_SUCCESS;
+}
+
+static int mca_spml_ucx_component_close(void)
+{
+    return OSHMEM_SUCCESS;
+}
+
+static int spml_ucx_init(void)
+{
     ucs_status_t err;
     ucp_config_t *ucp_config;
     ucp_params_t params;
+    ucp_context_attr_t attr;
+    ucp_worker_params_t wkr_params;
+    ucp_worker_attr_t wkr_attr;
 
     err = ucp_config_read("OSHMEM", NULL, &ucp_config);
     if (UCS_OK != err) {
@@ -128,9 +141,14 @@ static int mca_spml_ucx_component_open(void)
     opal_common_ucx_mca_register();
 
     memset(&params, 0, sizeof(params));
-    params.field_mask = UCP_PARAM_FIELD_FEATURES|UCP_PARAM_FIELD_ESTIMATED_NUM_EPS;
+    params.field_mask = UCP_PARAM_FIELD_FEATURES|UCP_PARAM_FIELD_ESTIMATED_NUM_EPS|UCP_PARAM_FIELD_MT_WORKERS_SHARED;
     params.features   = UCP_FEATURE_RMA|UCP_FEATURE_AMO32|UCP_FEATURE_AMO64;
     params.estimated_num_eps = ompi_proc_world_size();
+    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
+        params.mt_workers_shared = 1;
+    } else {
+        params.mt_workers_shared = 0;
+    }
 
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
     ucp_config_release(ucp_config);
@@ -138,32 +156,42 @@ static int mca_spml_ucx_component_open(void)
         return OSHMEM_ERROR;
     }
 
-    return OSHMEM_SUCCESS;
-}
-
-static int mca_spml_ucx_component_close(void)
-{
-    if (mca_spml_ucx.ucp_context) {
-        ucp_cleanup(mca_spml_ucx.ucp_context);
-        mca_spml_ucx.ucp_context = NULL;
+    attr.field_mask = UCP_ATTR_FIELD_THREAD_MODE;
+    err = ucp_context_query(mca_spml_ucx.ucp_context, &attr);
+    if (err != UCS_OK) {
+        return OSHMEM_ERROR;
     }
-    opal_common_ucx_mca_deregister();
-    return OSHMEM_SUCCESS;
-}
 
-static int spml_ucx_init(void)
-{
-    ucp_worker_params_t params;
-    ucs_status_t err;
+    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE &&
+        attr.thread_mode != UCS_THREAD_MODE_MULTI) {
+        oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
+    }
 
-    params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-    params.thread_mode = UCS_THREAD_MODE_SINGLE;
+    OBJ_CONSTRUCT(&(mca_spml_ucx.ctx_list), opal_list_t);
+    SHMEM_MUTEX_INIT(mca_spml_ucx.internal_mutex);
 
-    err = ucp_worker_create(mca_spml_ucx.ucp_context, &params,
-                            &mca_spml_ucx.ucp_worker);
+    wkr_params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
+    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
+        wkr_params.thread_mode = UCS_THREAD_MODE_MULTI;
+    } else {
+        wkr_params.thread_mode = UCS_THREAD_MODE_SINGLE;
+    }
+
+    err = ucp_worker_create(mca_spml_ucx.ucp_context, &wkr_params,
+                            &mca_spml_ucx_ctx_default.ucp_worker);
     if (UCS_OK != err) {
         return OSHMEM_ERROR;
     }
+
+    wkr_attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
+    err = ucp_worker_query(mca_spml_ucx_ctx_default.ucp_worker, &wkr_attr);
+
+    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE &&
+        wkr_attr.thread_mode != UCS_THREAD_MODE_MULTI) {
+        oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
+    }
+
+    oshmem_ctx_default = (shmem_ctx_t) &mca_spml_ucx_ctx_default;
 
     return OSHMEM_SUCCESS;
 }
@@ -192,13 +220,22 @@ static int mca_spml_ucx_component_fini(void)
 {
     opal_progress_unregister(spml_ucx_progress);
         
-    if (mca_spml_ucx.ucp_worker) {
-        ucp_worker_destroy(mca_spml_ucx.ucp_worker);
+    if (mca_spml_ucx_ctx_default.ucp_worker) {
+        ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker);
     }
     if(!mca_spml_ucx.enabled)
         return OSHMEM_SUCCESS; /* never selected.. return success.. */
 
     mca_spml_ucx.enabled = false;  /* not anymore */
+
+    OBJ_DESTRUCT(&(mca_spml_ucx.ctx_list));
+    SHMEM_MUTEX_DESTROY(mca_spml_ucx.internal_mutex);
+
+    if (mca_spml_ucx.ucp_context) {
+        ucp_cleanup(mca_spml_ucx.ucp_context);
+        mca_spml_ucx.ucp_context = NULL;
+    }
+
     return OSHMEM_SUCCESS;
 }
 

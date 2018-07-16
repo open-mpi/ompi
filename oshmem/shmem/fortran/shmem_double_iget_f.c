@@ -44,7 +44,7 @@ void shmem_double_iget_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI
 
     for (i=0; i<length; i++)
     {
-        MCA_SPML_CALL(get((uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * double_type_size,
+        MCA_SPML_CALL(get(oshmem_ctx_default, (uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * double_type_size,
             double_type_size,
             (uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * double_type_size,
             OMPI_FINT_2_INT(*pe)));

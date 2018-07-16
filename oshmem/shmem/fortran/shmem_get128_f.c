@@ -33,7 +33,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
 
 void shmem_get128_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(get(FPTR_2_VOID_PTR(source),
+    MCA_SPML_CALL(get(oshmem_ctx_default, FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*len) * 16,
         FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*pe)));

@@ -37,7 +37,7 @@ void shmem_int8_inc_f(FORTRAN_POINTER_T target, MPI_Fint *pe)
 {
     ompi_fortran_integer8_t value = 1;
 
-    MCA_ATOMIC_CALL(add(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(add(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         value,
         sizeof(value),
         OMPI_FINT_2_INT(*pe)));

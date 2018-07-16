@@ -67,6 +67,11 @@ OSHMEM_DECLSPEC int mca_spml_base_wait(void* addr,
                                        void* value,
                                        int datatype);
 OSHMEM_DECLSPEC int mca_spml_base_wait_nb(void* handle);
+OSHMEM_DECLSPEC int mca_spml_base_test(void* addr,
+                                       int cmp,
+                                       void* value,
+                                       int datatype,
+                                       int *out_value);
 OSHMEM_DECLSPEC int mca_spml_base_oob_get_mkeys(int pe,
                                                 uint32_t seg,
                                                 sshmem_mkey_t *mkeys);

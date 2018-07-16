@@ -24,7 +24,8 @@
 
 #include "atomic_mxm.h"
 
-int mca_atomic_mxm_swap(void *target,
+int mca_atomic_mxm_swap(shmem_ctx_t ctx,
+                        void *target,
                         void *prev,
                         uint64_t value,
                         size_t nlong,
@@ -43,7 +44,8 @@ int mca_atomic_mxm_swap(void *target,
     return OSHMEM_SUCCESS;
 }
 
-int mca_atomic_mxm_cswap(void *target,
+int mca_atomic_mxm_cswap(shmem_ctx_t ctx,
+                         void *target,
                          uint64_t *prev,
                          uint64_t cond,
                          uint64_t value,

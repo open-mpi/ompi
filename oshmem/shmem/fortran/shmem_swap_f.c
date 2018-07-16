@@ -38,7 +38,7 @@ MPI_Fint shmem_swap_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T value, MPI_Fin
     MPI_Fint out_value = 0;
     ompi_datatype_type_size(&ompi_mpi_integer.dt, &integer_type_size);
 
-    MCA_ATOMIC_CALL(swap(FPTR_2_VOID_PTR(target),
+    MCA_ATOMIC_CALL(swap(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         (void *)&out_value,
         FPTR_2_INT(value, integer_type_size),
         integer_type_size,

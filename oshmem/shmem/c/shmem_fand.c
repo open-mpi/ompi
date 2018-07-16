@@ -30,6 +30,9 @@
 #pragma weak shmem_uint_atomic_fetch_and      = pshmem_uint_atomic_fetch_and
 #pragma weak shmem_ulong_atomic_fetch_and     = pshmem_ulong_atomic_fetch_and
 #pragma weak shmem_ulonglong_atomic_fetch_and = pshmem_ulonglong_atomic_fetch_and
+#pragma weak shmem_ctx_uint_atomic_fetch_and  = pshmem_ctx_uint_atomic_fetch_and
+#pragma weak shmem_ctx_ulong_atomic_fetch_and = pshmem_ctx_ulong_atomic_fetch_and
+#pragma weak shmem_ctx_ulonglong_atomic_fetch_and = pshmem_ctx_ulonglong_atomic_fetch_and
 #pragma weak shmemx_int32_atomic_fetch_and    = pshmemx_int32_atomic_fetch_and
 #pragma weak shmemx_int64_atomic_fetch_and    = pshmemx_int64_atomic_fetch_and
 #pragma weak shmemx_uint32_atomic_fetch_and   = pshmemx_uint32_atomic_fetch_and
@@ -42,6 +45,9 @@
 OSHMEM_TYPE_FOP(uint, unsigned int, shmem, and)
 OSHMEM_TYPE_FOP(ulong, unsigned long, shmem, and)
 OSHMEM_TYPE_FOP(ulonglong, unsigned long long, shmem, and)
+OSHMEM_CTX_TYPE_FOP(uint, unsigned int, shmem, and)
+OSHMEM_CTX_TYPE_FOP(ulong, unsigned long, shmem, and)
+OSHMEM_CTX_TYPE_FOP(ulonglong, unsigned long long, shmem, and)
 OSHMEM_TYPE_FOP(int32, int32_t, shmemx, and)
 OSHMEM_TYPE_FOP(int64, int64_t, shmemx, and)
 OSHMEM_TYPE_FOP(uint32, uint32_t, shmemx, and)

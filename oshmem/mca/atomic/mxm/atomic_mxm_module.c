@@ -32,7 +32,8 @@ int mca_atomic_mxm_finalize(void)
     return OSHMEM_SUCCESS;
 }
 
-static int mca_atomic_mxm_op_not_implemented(void *target,
+static int mca_atomic_mxm_op_not_implemented(shmem_ctx_t ctx,
+                                             void *target,
                                              uint64_t value,
                                              size_t size,
                                              int pe)
@@ -40,7 +41,8 @@ static int mca_atomic_mxm_op_not_implemented(void *target,
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
-static int mca_atomic_mxm_fop_not_implemented(void *target,
+static int mca_atomic_mxm_fop_not_implemented(shmem_ctx_t ctx,
+                                              void *target,
                                               void *prev,
                                               uint64_t value,
                                               size_t size,

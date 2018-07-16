@@ -25,7 +25,8 @@
 
 #include "atomic_mxm.h"
 
-int mca_atomic_mxm_add(void *target,
+int mca_atomic_mxm_add(shmem_ctx_t ctx,
+                       void *target,
                        uint64_t value,
                        size_t size,
                        int pe)
@@ -44,7 +45,8 @@ int mca_atomic_mxm_add(void *target,
     return OSHMEM_SUCCESS;
 }
 
-int mca_atomic_mxm_fadd(void *target,
+int mca_atomic_mxm_fadd(shmem_ctx_t ctx,
+                        void *target,
                         void *prev,
                         uint64_t value,
                         size_t size,

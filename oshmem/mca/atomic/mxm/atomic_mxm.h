@@ -42,21 +42,25 @@ int mca_atomic_mxm_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_mxm_query(int *priority);
 
-int mca_atomic_mxm_add(void *target,
+int mca_atomic_mxm_add(shmem_ctx_t ctx,
+                       void *target,
                        uint64_t value,
                        size_t nlong,
                        int pe);
-int mca_atomic_mxm_fadd(void *target,
+int mca_atomic_mxm_fadd(shmem_ctx_t ctx,
+                        void *target,
                         void *prev,
                         uint64_t value,
                         size_t nlong,
                         int pe);
-int mca_atomic_mxm_swap(void *target,
+int mca_atomic_mxm_swap(shmem_ctx_t ctx,
+                        void *target,
                         void *prev,
                         uint64_t value,
                         size_t nlong,
                         int pe);
-int mca_atomic_mxm_cswap(void *target,
+int mca_atomic_mxm_cswap(shmem_ctx_t ctx,
+                         void *target,
                          uint64_t *prev,
                          uint64_t cond,
                          uint64_t value,

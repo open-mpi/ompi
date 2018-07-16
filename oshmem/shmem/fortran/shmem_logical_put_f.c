@@ -37,7 +37,7 @@ void shmem_logical_put_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI
     size_t logical_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_logical.dt, &logical_type_size);
 
-    MCA_SPML_CALL(put(FPTR_2_VOID_PTR(target),
+    MCA_SPML_CALL(put(oshmem_ctx_default, FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*length) * logical_type_size,
         FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe)));

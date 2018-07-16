@@ -198,7 +198,7 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
         mca_scoll_fca_component.rcounts[i] = -1;
     }
     _internal_barrier(fca_module);
-    MCA_SPML_CALL(put((void *)&mca_scoll_fca_component.rcounts[my_id], (size_t)sizeof(info_size), (void *)&info_size, root_pe));
+    MCA_SPML_CALL(put(oshmem_ctx_default, (void *)&mca_scoll_fca_component.rcounts[my_id], (size_t)sizeof(info_size), (void *)&info_size, root_pe));
 
     if (root_pe == comm->my_pe) {
         int value = -1;
@@ -233,7 +233,7 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
     if (root_pe == comm->my_pe) {
         for (i = 0; i < comm->proc_count; i++) {
             if (mca_scoll_fca_component.rcounts[i] > 0) {
-                MCA_SPML_CALL(get((void *)mca_scoll_fca_component.my_info_exchangeable, mca_scoll_fca_component.rcounts[i], (void*)(((char*)all_info)+disps[i]),comm->proc_array[i]->super.proc_name.vpid));
+                MCA_SPML_CALL(get(oshmem_ctx_default, (void *)mca_scoll_fca_component.my_info_exchangeable, mca_scoll_fca_component.rcounts[i], (void*)(((char*)all_info)+disps[i]),comm->proc_array[i]->super.proc_name.vpid));
             }
         }
     }
@@ -269,7 +269,7 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
     _internal_barrier(fca_module);
 
     if (root_pe != comm->my_pe) {
-        MCA_SPML_CALL(get((void *)mca_scoll_fca_component.ret,sizeof(int), (void *)mca_scoll_fca_component.ret, root_pe));
+        MCA_SPML_CALL(get(oshmem_ctx_default, (void *)mca_scoll_fca_component.ret,sizeof(int), (void *)mca_scoll_fca_component.ret, root_pe));
     }
 
     /* Examine comm_new return value */
@@ -294,7 +294,7 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
 
         _internal_barrier(fca_module);
         if (root_pe != comm->my_pe) {
-            MCA_SPML_CALL(get((void *)mca_scoll_fca_component.fca_comm_desc_exchangeable, sizeof(fca_module->fca_comm_desc), (void *)&fca_module->fca_comm_desc, root_pe));
+            MCA_SPML_CALL(get(oshmem_ctx_default, (void *)mca_scoll_fca_component.fca_comm_desc_exchangeable, sizeof(fca_module->fca_comm_desc), (void *)&fca_module->fca_comm_desc, root_pe));
         }
 
         _internal_barrier(fca_module);

@@ -269,13 +269,13 @@ static uint64_t shmem_lock_cswap(void *target,
     uint64_t prev_value = 0;
 
     if (target_size == 8) {
-        MCA_ATOMIC_CALL(cswap( target, (void*)&prev_value, cond, value, target_size, pe));
+        MCA_ATOMIC_CALL(cswap(oshmem_ctx_default, target, (void*)&prev_value, cond, value, target_size, pe));
     } else if (target_size == 4) {
         uint32_t prev_value_32 = 0;
         uint32_t cond32 = (uint32_t) cond;
         uint32_t value32 = (uint32_t) value;
 
-        MCA_ATOMIC_CALL(cswap( target, (void*)&prev_value_32, cond32, value32, target_size, pe));
+        MCA_ATOMIC_CALL(cswap(oshmem_ctx_default, target, (void*)&prev_value_32, cond32, value32, target_size, pe));
 
         prev_value = prev_value_32;
     }

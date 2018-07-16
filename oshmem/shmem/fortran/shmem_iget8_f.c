@@ -41,7 +41,7 @@ void shmem_iget8_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint 
 
     for (i=0; i<length; i++)
     {
-        MCA_SPML_CALL(get((uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * 8,
+        MCA_SPML_CALL(get(oshmem_ctx_default, (uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * 8,
             8,
             (uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * 8,
             OMPI_FINT_2_INT(*pe)));
