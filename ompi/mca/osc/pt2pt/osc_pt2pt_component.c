@@ -35,6 +35,7 @@
 #include "osc_pt2pt_data_move.h"
 
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/pml/base/base.h"
 
 static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
@@ -290,6 +291,13 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 int flavor)
 {
     if (MPI_WIN_FLAVOR_SHARED == flavor) return -1;
+
+    /* OSC pt2pt can't work over UCX PML, so disable it in case if UCX PML is selected */
+    if (!strcmp(mca_pml_base_selected_component.pmlm_version.mca_component_name, "ucx")) {
+        OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
+                             "Can not use osc/pt2pt because pml ucx component selected"));
+        return -1;
+    }
 
     return 10;
 }
