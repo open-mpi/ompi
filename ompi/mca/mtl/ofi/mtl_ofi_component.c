@@ -467,6 +467,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->caps               = FI_TAGGED;      /* Tag matching interface    */
     hints->tx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->msg_order = FI_ORDER_SAS;
+    hints->rx_attr->op_flags = FI_COMPLETION;
+    hints->tx_attr->op_flags = FI_COMPLETION;
 
     hints->domain_attr->threading        = FI_THREAD_UNSPEC;
 
@@ -691,7 +693,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      */
     ret = fi_ep_bind(ompi_mtl_ofi.ep,
                      (fid_t)ompi_mtl_ofi.cq,
-                     FI_SEND | FI_RECV);
+                     FI_TRANSMIT | FI_RECV | FI_SELECTIVE_COMPLETION);
     if (0 != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_bind CQ-EP failed: %s\n",
