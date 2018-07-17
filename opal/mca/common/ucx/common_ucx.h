@@ -53,10 +53,11 @@ BEGIN_C_DECLS
     }
 
 typedef struct opal_common_ucx_module {
-    int output;
-    int verbose;
-    int progress_iterations;
-    int registered;
+    int  output;
+    int  verbose;
+    int  progress_iterations;
+    int  registered;
+    bool opal_mem_hooks;
 } opal_common_ucx_module_t;
 
 extern opal_common_ucx_module_t opal_common_ucx;
