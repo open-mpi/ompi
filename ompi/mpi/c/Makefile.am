@@ -431,13 +431,6 @@ libmpi_c_mpi_la_SOURCES = \
 	win_unlock_all.c \
         win_wait.c
 
-if OMPI_ENABLE_GREQUEST_EXTENSIONS
-libmpi_c_mpi_la_SOURCES += \
-        grequestx_class_allocate.c \
-        grequestx_class_create.c \
-        grequestx_start.c
-endif
-
 if OMPI_ENABLE_MPI1_COMPAT
 libmpi_c_mpi_la_SOURCES += \
         address.c \

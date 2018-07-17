@@ -139,9 +139,6 @@
 /* Whether in include MPI-1 compatibility */
 #undef OMPI_ENABLE_MPI1_COMPAT
 
-/* Whether we support Grequest extensions */
-#undef OMPI_ENABLE_GREQUEST_EXTENSIONS
-
 /* Whether we have float _Complex  or not */
 #undef HAVE_FLOAT__COMPLEX
 
@@ -408,12 +405,6 @@ typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
 typedef int (MPI_Grequest_query_function)(void *, MPI_Status *);
 typedef int (MPI_Grequest_free_function)(void *);
 typedef int (MPI_Grequest_cancel_function)(void *, int);
-
-#if OMPI_ENABLE_GREQUEST_EXTENSIONS
-typedef int (MPIX_Grequest_poll_function)(void *, MPI_Status *);
-typedef int (MPIX_Grequest_wait_function)(int, void **, double, MPI_Status *);
-typedef int MPIX_Grequest_class;
-#endif /* OMPI_ENABLE_GREQUEST_EXTENSIONS */
 
 #if !OMPI_OMIT_MPI1_COMPAT_DECLS
 /*
@@ -1509,23 +1500,6 @@ OMPI_DECLSPEC  int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
                                       MPI_Grequest_free_function *free_fn,
                                       MPI_Grequest_cancel_function *cancel_fn,
                                       void *extra_state, MPI_Request *request);
-#if OMPI_ENABLE_GREQUEST_EXTENSIONS
-OMPI_DECLSPEC  int MPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
-                                       MPI_Grequest_free_function *free_fn,
-                                       MPI_Grequest_cancel_function *cancel_fn,
-                                       MPIX_Grequest_poll_function *poll_fn,
-                                       void *extra_state,
-                                       MPI_Request *request);
-OMPI_DECLSPEC  int MPIX_Grequest_class_create(MPI_Grequest_query_function *query_fn,
-                                              MPI_Grequest_free_function *free_fn,
-                                              MPI_Grequest_cancel_function *cancel_fn,
-                                              MPIX_Grequest_poll_function *poll_fn,
-                                              MPIX_Grequest_wait_function *wait_fn,
-                                              MPIX_Grequest_class *greq_class);
-OMPI_DECLSPEC  int MPIX_Grequest_class_allocate(MPIX_Grequest_class greq_class,
-                                                void *extra_state,
-                                                MPI_Request *request);
-#endif /* OMPI_ENABLE_GREQUEST_EXTENSIONS */
 OMPI_DECLSPEC  MPI_Fint MPI_Group_c2f(MPI_Group group);
 OMPI_DECLSPEC  int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
 OMPI_DECLSPEC  int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
@@ -2187,23 +2161,6 @@ OMPI_DECLSPEC  int PMPI_Grequest_start(MPI_Grequest_query_function *query_fn,
                                        MPI_Grequest_free_function *free_fn,
                                        MPI_Grequest_cancel_function *cancel_fn,
                                        void *extra_state, MPI_Request *request);
-#if OMPI_ENABLE_GREQUEST_EXTENSIONS
-OMPI_DECLSPEC  int PMPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
-                                        MPI_Grequest_free_function *free_fn,
-                                        MPI_Grequest_cancel_function *cancel_fn,
-                                        MPIX_Grequest_poll_function *poll_fn,
-                                        void *extra_state,
-                                        MPI_Request *request);
-OMPI_DECLSPEC  int PMPIX_Grequest_class_create(MPI_Grequest_query_function *query_fn,
-                                               MPI_Grequest_free_function *free_fn,
-                                               MPI_Grequest_cancel_function *cancel_fn,
-                                               MPIX_Grequest_poll_function *poll_fn,
-                                               MPIX_Grequest_wait_function *wait_fn,
-                                               MPIX_Grequest_class *greq_class);
-OMPI_DECLSPEC  int PMPIX_Grequest_class_allocate(MPIX_Grequest_class greq_class,
-                                                 void *extra_state,
-                                                 MPI_Request *request);
-#endif /* OMPI_ENABLE_GREQUEST_EXTENSIONS */
 OMPI_DECLSPEC  MPI_Fint PMPI_Group_c2f(MPI_Group group);
 OMPI_DECLSPEC  int PMPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
 OMPI_DECLSPEC  int PMPI_Group_difference(MPI_Group group1, MPI_Group group2,
