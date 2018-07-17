@@ -7,4 +7,4 @@
 # $HEADER$
 #
 
-SUBDIRS = c
+SUBDIRS = c mpif-h

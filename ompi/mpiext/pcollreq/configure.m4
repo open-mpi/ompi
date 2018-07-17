@@ -17,6 +17,8 @@ AC_DEFUN([OMPI_MPIEXT_pcollreq_CONFIG],[
         ompi/mpiext/pcollreq/Makefile
         ompi/mpiext/pcollreq/c/Makefile
         ompi/mpiext/pcollreq/c/profile/Makefile
+        ompi/mpiext/pcollreq/mpif-h/Makefile
+        ompi/mpiext/pcollreq/mpif-h/profile/Makefile
     ])
 
     AS_IF([test "$ENABLE_pcollreq" = "1" || \
