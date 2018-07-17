@@ -105,6 +105,12 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_int8_cswap_f.c \
                     shmem_int4_fadd_f.c \
                     shmem_int8_fadd_f.c \
+                    shmem_int4_fand_f.c \
+                    shmem_int8_fand_f.c \
+                    shmem_int4_for_f.c \
+                    shmem_int8_for_f.c \
+                    shmem_int4_fxor_f.c \
+                    shmem_int8_fxor_f.c \
                     shmem_int4_fetch_f.c \
                     shmem_int8_fetch_f.c \
                     shmem_real4_fetch_f.c \
@@ -113,6 +119,12 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_int8_finc_f.c \
                     shmem_int4_add_f.c \
                     shmem_int8_add_f.c \
+                    shmem_int4_and_f.c \
+                    shmem_int8_and_f.c \
+                    shmem_int4_or_f.c \
+                    shmem_int8_or_f.c \
+                    shmem_int4_xor_f.c \
+                    shmem_int8_xor_f.c \
                     shmem_int4_wait_f.c \
                     shmem_int8_wait_f.c \
                     shmem_wait_f.c \
