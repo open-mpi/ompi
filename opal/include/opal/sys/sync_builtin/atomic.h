@@ -149,7 +149,7 @@ static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *addr, int64_
 #endif
 
 #if OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128
-static inline bool opal_atomic_compare_exchange_strong_128 (opal_atomic_opal_int128_t *addr,
+static inline bool opal_atomic_compare_exchange_strong_128 (opal_atomic_int128_t *addr,
                                                             opal_int128_t *oldval, opal_int128_t newval)
 {
     opal_int128_t prev = __sync_val_compare_and_swap (addr, *oldval, newval);

@@ -155,11 +155,9 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
              * update the head */
 
             /* wait for next pointer to be updated by push */
-            while (ghost == item->opal_list_next) {
+            do {
                 opal_atomic_rmb ();
-            }
-
-            opal_atomic_rmb ();
+            } while (ghost == item->opal_list_next);
 
             /* update the head with the real next value. note that no other thread
              * will be attempting to update the head until after it has been updated

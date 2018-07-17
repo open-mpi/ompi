@@ -58,6 +58,12 @@
 #include "opal/sys/architecture.h"
 #include "opal_stdatomic.h"
 
+#if OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11
+
+#include "atomic_stdc.h"
+
+#else /* !OPAL_C_HAVE__ATOMIC */
+
 /* do some quick #define cleanup in cases where we are doing
    testing... */
 #ifdef OPAL_DISABLE_INLINE_ASM
@@ -146,6 +152,8 @@ enum {
     OPAL_ATOMIC_LOCK_UNLOCKED = 0,
     OPAL_ATOMIC_LOCK_LOCKED = 1
 };
+
+#define OPAL_ATOMIC_LOCK_INIT {.u = {.lock = OPAL_ATOMIC_LOCK_UNLOCKED}}
 
 /**********************************************************************
  *
@@ -642,6 +650,8 @@ static inline intptr_t opal_atomic_fetch_sub_ptr( opal_atomic_intptr_t* addr, vo
  * in assembly
  */
 #include "opal/sys/atomic_impl.h"
+
+#endif /* !OPAL_C_HAVE__ATOMIC */
 
 END_C_DECLS
 
