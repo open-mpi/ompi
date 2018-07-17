@@ -705,11 +705,11 @@ OSHMEM_DECLSPEC unsigned int pshmem_ctx_uint_atomic_fetch_and(shmem_ctx_t ctx, u
 OSHMEM_DECLSPEC unsigned long pshmem_ctx_ulong_atomic_fetch_and(shmem_ctx_t ctx, unsigned long *target, unsigned long value, int pe);
 OSHMEM_DECLSPEC unsigned long long pshmem_ctx_ulonglong_atomic_fetch_and(shmem_ctx_t ctx, unsigned long long *target, unsigned long long value, int pe);
 #if OSHMEMP_HAVE_C11
-#define pshmem_atomic_fetch_and(ctx, dst, val, pe)                   \
-    _Generic(&*(dst),                                                \
-            int*:         pshmem_ctx_uint_atomic_fetch_and,          \
-            long*:        pshmem_ctx_ulong_atomic_fetch_and,         \
-            long long*:   pshmem_ctx_ulonglong_atomic_fetch_and)(ctx, dst, val, pe)
+#define pshmem_atomic_fetch_and(ctx, dst, val, pe)                            \
+    _Generic(&*(dst),                                                         \
+            unsigned int*:         pshmem_ctx_uint_atomic_fetch_and,          \
+            unsigned long*:        pshmem_ctx_ulong_atomic_fetch_and,         \
+            unsigned long long*:   pshmem_ctx_ulonglong_atomic_fetch_and)(ctx, dst, val, pe)
 #endif
 
 OSHMEM_DECLSPEC unsigned int pshmem_uint_atomic_fetch_and(unsigned int *target, unsigned int value, int pe);
@@ -752,7 +752,7 @@ OSHMEM_DECLSPEC unsigned long pshmem_ctx_ulong_atomic_fetch_xor(shmem_ctx_t ctx,
 OSHMEM_DECLSPEC unsigned long long pshmem_ctx_ulonglong_atomic_fetch_xor(shmem_ctx_t ctx, unsigned long long *target, unsigned long long value, int pe);
 #if OSHMEM_HAVE_C11
 #define pshmem_atomic_fetch_xor(ctx, dst, val, pe)                                     \
-    _Generic(&*(dst),                                                                 \
+    _Generic(&*(dst),                                                                  \
             unsigned int*:         pshmem_ctx_uint_atomic_fetch_xor,                   \
             unsigned long*:        pshmem_ctx_ulong_atomic_fetch_xor,                  \
             unsigned long long*:   pshmem_ctx_ulonglong_atomic_fetch_xor)(ctx, dst, val, pe)

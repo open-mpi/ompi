@@ -794,13 +794,13 @@ OSHMEM_DECLSPEC long long shmem_longlong_fadd(long long *target, long long value
 /* Atomic Fetch&And */
 OSHMEM_DECLSPEC unsigned int shmem_ctx_uint_atomic_fetch_and(shmem_ctx_t ctx, unsigned int *target, unsigned int value, int pe);
 OSHMEM_DECLSPEC unsigned long shmem_ctx_ulong_atomic_fetch_and(shmem_ctx_t ctx, unsigned long *target, unsigned long value, int pe);
-OSHMEM_DECLSPEC unsigned long long shmem_ctx_ulonglong_atomic_fetch_and(shmem_ctx_t ctx, long long *target, unsigned long long value, int pe);
+OSHMEM_DECLSPEC unsigned long long shmem_ctx_ulonglong_atomic_fetch_and(shmem_ctx_t ctx, unsigned long long *target, unsigned long long value, int pe);
 #if OSHMEM_HAVE_C11
-#define shmem_atomic_fetch_and(ctx, dst, val, pe)                   \
-    _Generic(&*(dst),                                               \
-            int*:         shmem_ctx_uint_atomic_fetch_and,          \
-            long*:        shmem_ctx_ulong_atomic_fetch_and,         \
-            long long*:   shmem_ctx_ulonglong_atomic_fetch_and)(ctx, dst, val, pe)
+#define shmem_atomic_fetch_and(ctx, dst, val, pe)                            \
+    _Generic(&*(dst),                                                        \
+            unsigned int*:         shmem_ctx_uint_atomic_fetch_and,          \
+            unsigned long*:        shmem_ctx_ulong_atomic_fetch_and,         \
+            unsigned long long*:   shmem_ctx_ulonglong_atomic_fetch_and)(ctx, dst, val, pe)
 #endif
 
 OSHMEM_DECLSPEC unsigned int shmem_uint_atomic_fetch_and(unsigned int *target, unsigned int value, int pe);
