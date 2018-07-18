@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -290,6 +290,19 @@ int btl_openib_register_mca_params(void)
                                           &mca_btl_openib_component.device_type);
     if (0 > tmp) ret = tmp;
     OBJ_RELEASE(new_enum);
+
+    /*
+     * Provide way for using to override policy of ignoring IB HCAs
+     */
+
+    mca_btl_openib_component.allow_ib = false;
+    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                          "allow_ib",
+                                          "Override policy since Open MPI 4.0 of ignoring IB HCAs for openib BTL",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL,
+                                          0, 0, OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_openib_component.allow_ib);
 
     CHECK(reg_int("max_btls", NULL,
                   "Maximum number of device ports to use "
