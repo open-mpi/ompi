@@ -24,16 +24,12 @@
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
-module mpi_f08
+module ompi_mpifh_bindings
 
-  use mpi_f08_types
-  use mpi_f08_interfaces  ! this module contains the  mpi_f08 interface declarations
-  use pmpi_f08_interfaces ! this module contains the pmpi_f08 interface declarations
-  use mpi_f08_callbacks   ! this module contains the mpi_f08 attribute callback subroutines
-  use mpi_f08_interfaces_callbacks ! this module contains the mpi_f08 callback interfaces
+!
+! Declaration of the interfaces to the ompi impl files
+! e.g., send_f.c
+!
+#include "mpi-f-interfaces-bind.h"
 
-! The sizeof interfaces
-
-  include "sizeof_f08.h"
-
-end module mpi_f08
+end module ompi_mpifh_bindings
