@@ -57,7 +57,6 @@ void req_completion(void *request, ucs_status_t status) {
         ompi_request_complete(&(req->external_req->super), true);
         ucp_request_release(req);
         mca_osc_ucx_component.num_incomplete_req_ops--;
-        mca_osc_ucx_component.init_in_progress = 0;
         assert(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
     }
 }

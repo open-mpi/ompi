@@ -50,7 +50,7 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
     .ucp_worker             = NULL,
     .env_initialized        = false,
     .num_incomplete_req_ops = 0,
-    .init_in_progress       = 1
+    .num_modules            = 0
 };
 
 ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
@@ -111,8 +111,7 @@ static int component_register(void) {
 
 static int progress_callback(void) {
     if ((mca_osc_ucx_component.ucp_worker != NULL) &&
-        (mca_osc_ucx_component.num_incomplete_req_ops +
-         mca_osc_ucx_component.init_in_progress > 0)) {
+        mca_osc_ucx_component.num_modules) {
         ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
     }
     return 0;
@@ -361,6 +360,8 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto error_nomem;
     }
+
+    mca_osc_ucx_component.num_modules++;
 
     /* fill in the function pointer part */
     memcpy(module, &ompi_osc_ucx_module_template, sizeof(ompi_osc_base_module_t));
@@ -645,6 +646,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     }
     if (progress_registered) opal_progress_unregister(progress_callback);
     if (module) free(module);
+    mca_osc_ucx_component.num_modules--;
 
 error_nomem:
     if (env_initialized == true) {
@@ -812,6 +814,7 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     ompi_comm_free(&module->comm);
 
     free(module);
+    mca_osc_ucx_component.num_modules--;
 
     return ret;
 }
