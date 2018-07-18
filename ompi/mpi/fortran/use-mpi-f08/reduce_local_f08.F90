@@ -13,7 +13,8 @@ subroutine MPI_Reduce_local_f08(inbuf,inoutbuf,count,datatype,op,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op
    use :: ompi_mpifh_bindings, only : ompi_reduce_local_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, inoutbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: inoutbuf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
