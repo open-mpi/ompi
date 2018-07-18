@@ -62,6 +62,9 @@ libmpiext_pcollreq_c_la_SOURCES += \
         neighbor_alltoallw_init.c
 endif
 
+libmpiext_pcollreq_c_la_LIBADD = \
+        profile/libpmpiext_pcollreq_c.la
+
 # Man page installation
 nodist_man_MANS = \
         MPIX_Allgather_init.3 \
