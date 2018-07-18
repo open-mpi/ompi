@@ -17,6 +17,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Sandia National Laboratories
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,6 +85,23 @@ append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
     }
     opal_list_append(queue, (opal_list_item_t*)frag);
 }
+
+#if MCA_PML_OB1_CUSTOM_MATCH
+
+static void
+append_frag_to_umq(custom_match_umq *queue, mca_btl_base_module_t *btl,
+                   mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
+                   size_t num_segments, mca_pml_ob1_recv_frag_t* frag)
+{
+  if(NULL == frag) {
+    MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
+    MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
+  }
+  custom_match_umq_append(queue, hdr->hdr_tag, hdr->hdr_src, frag);
+}
+
+#endif
+
 
 /**
  * Append an unexpected descriptor to an ordered queue.
@@ -713,6 +732,9 @@ static mca_pml_ob1_recv_request_t *match_incomming(
     mca_pml_sequence_t wild_recv_seq, specific_recv_seq;
     int tag = hdr->hdr_tag;
 
+#if MCA_PML_OB1_CUSTOM_MATCH
+    return custom_match_prq_find_dequeue_verify(comm->prq, hdr->hdr_tag, hdr->hdr_src);
+#else
     specific_recv = get_posted_recv(&proc->specific_receives);
     wild_recv = get_posted_recv(&comm->wild_receives);
 
@@ -751,8 +773,11 @@ static mca_pml_ob1_recv_request_t *match_incomming(
     }
 
     return NULL;
+#endif
 }
 
+
+#if MCA_PML_OB1_CUSTOM_MATCH
 static mca_pml_ob1_recv_request_t *match_incomming_no_any_source (
         mca_pml_ob1_match_hdr_t *hdr, mca_pml_ob1_comm_t *comm,
         mca_pml_ob1_comm_proc_t *proc)
@@ -773,6 +798,7 @@ static mca_pml_ob1_recv_request_t *match_incomming_no_any_source (
 
     return NULL;
 }
+#endif
 
 static mca_pml_ob1_recv_request_t*
 match_one(mca_btl_base_module_t *btl,
@@ -790,11 +816,15 @@ match_one(mca_btl_base_module_t *btl,
     mca_pml_ob1_comm_t *comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
 
     do {
+#if !MCA_PML_OB1_CUSTOM_MATCH
+        match = match_incomming(hdr, comm, proc);
+#else
         if (!OMPI_COMM_CHECK_ASSERT_NO_ANY_SOURCE (comm_ptr)) {
             match = match_incomming(hdr, comm, proc);
         } else {
             match = match_incomming_no_any_source (hdr, comm, proc);
         }
+#endif
 
         /* if match found, process data */
         if(OPAL_LIKELY(NULL != match)) {
@@ -834,8 +864,13 @@ match_one(mca_btl_base_module_t *btl,
         }
 
         /* if no match found, place on unexpected queue */
+#if MCA_PML_OB1_CUSTOM_MATCH
+        append_frag_to_umq(comm->umq, btl, hdr, segments,
+                            num_segments, frag);
+#else
         append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
                             num_segments, frag);
+#endif
         SPC_RECORD(OMPI_SPC_UNEXPECTED, 1);
         SPC_RECORD(OMPI_SPC_UNEXPECTED_IN_QUEUE, 1);
         SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_UNEXPECTED_IN_QUEUE, OMPI_SPC_UNEXPECTED_IN_QUEUE);

@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Sandia National Laboratories
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,32 @@
 #include "opal/class/opal_list.h"
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
+
+#define MCA_PML_OB1_CUSTOM_MATCH 1/** TODO: move this to config parameter */
+#define MCA_PML_OB1_CUSTOM_MATCH_ARRAYS 0
+#define MCA_PML_OB1_CUSTOM_MATCH_FUZZY_BYTE 0
+#define MCA_PML_OB1_CUSTOM_MATCH_FUZZY_SHORT 0
+#define MCA_PML_OB1_CUSTOM_MATCH_FUZZY_WORD 0
+#define MCA_PML_OB1_CUSTOM_MATCH_VECTOR 0
+
+#if MCA_PML_OB1_CUSTOM_MATCH
+
+#if MCA_PML_OB1_CUSTOM_MATCH_ARRAYS
+#include "ompi/mca/pml/ob1/custommatch/arrays.h"
+#elif MCA_PML_OB1_CUSTOM_MATCH_FUZZY_BYTE
+#include "ompi/mca/pml/ob1/custommatch/fuzzy512-byte.h"
+#elif MCA_PML_OB1_CUSTOM_MATCH_FUZZY_SHORT
+#include "ompi/mca/pml/ob1/custommatch/fuzzy512-short.h"
+#elif MCA_PML_OB1_CUSTOM_MATCH_FUZZY_WORD
+#include "ompi/mca/pml/ob1/custommatch/fuzzy512-word.h"
+#elif MCA_PML_OB1_CUSTOM_MATCH_VECTOR
+#include "ompi/mca/pml/ob1/custommatch/vectors.h"
+#else
+#include "ompi/mca/pml/ob1/custommatch/linkedlist.h" //Default Custom Match is single linked list
+#endif
+
+#endif
+
 BEGIN_C_DECLS
 
 
@@ -41,8 +69,10 @@ struct mca_pml_ob1_comm_proc_t {
     int32_t send_sequence; /**< send side sequence number */
 #endif
     struct mca_pml_ob1_recv_frag_t* frags_cant_match;  /**< out-of-order fragment queues */
+#if !MCA_PML_OB1_CUSTOM_MATCH
     opal_list_t specific_receives; /**< queues of unmatched specific receives */
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
+#endif
 };
 typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 
@@ -56,11 +86,17 @@ struct mca_pml_comm_t {
     opal_object_t super;
     volatile uint32_t recv_sequence;  /**< recv request sequence number - receiver side */
     opal_mutex_t matching_lock;   /**< matching lock */
+#if !MCA_PML_OB1_CUSTOM_MATCH
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
+#endif
     opal_mutex_t proc_lock;
     mca_pml_ob1_comm_proc_t **procs;
     size_t num_procs;
     size_t last_probed;
+#if MCA_PML_OB1_CUSTOM_MATCH
+    custom_match_prq* prq;
+    custom_match_umq* umq;
+#endif
 };
 typedef struct mca_pml_comm_t mca_pml_ob1_comm_t;
 
