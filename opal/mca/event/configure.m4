@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -8,12 +8,12 @@ dnl
 dnl $HEADER$
 dnl
 
-# There will only be one component used in this framework, and it will
-# be selected at configure time by priority.  Components must set
-# their priorities in their configure.m4 files.  They must also set
-# the shell variable $opal_event_base_include to a header file name
-# (relative to opal/mca/event) that will be included in
-# opal/mca/event/event.h.
+dnl There will only be one component used in this framework, and it will
+dnl be selected at configure time by priority.  Components must set
+dnl their priorities in their configure.m4 files.  They must also set
+dnl the shell variable $opal_event_base_include to a header file name
+dnl (relative to opal/mca/event) that will be included in
+dnl opal/mca/event/event.h.
 
 dnl We only want one winning component (vs. STOP_AT_FIRST_PRIORITY,
 dnl which will allow all components of the same priority who succeed to
