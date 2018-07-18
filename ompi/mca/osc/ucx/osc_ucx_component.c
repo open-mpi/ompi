@@ -45,7 +45,12 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
         .osc_query = component_query,
         .osc_select = component_select,
         .osc_finalize = component_finalize,
-    }
+    },
+    .ucp_context            = NULL,
+    .ucp_worker             = NULL,
+    .env_initialized        = false,
+    .num_incomplete_req_ops = 0,
+    .init_in_progress       = 1
 };
 
 ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
@@ -105,24 +110,19 @@ static int component_register(void) {
 }
 
 static int progress_callback(void) {
-    if (mca_osc_ucx_component.ucp_worker != NULL &&
-        mca_osc_ucx_component.num_incomplete_req_ops > 0) {
+    if ((mca_osc_ucx_component.ucp_worker != NULL) &&
+        (mca_osc_ucx_component.num_incomplete_req_ops +
+         mca_osc_ucx_component.init_in_progress > 0)) {
         ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
     }
     return 0;
 }
 
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads) {
-    int ret = OMPI_SUCCESS;
-
-    mca_osc_ucx_component.ucp_context = NULL;
-    mca_osc_ucx_component.ucp_worker = NULL;
     mca_osc_ucx_component.enable_mpi_threads = enable_mpi_threads;
-    mca_osc_ucx_component.env_initialized = false;
-    mca_osc_ucx_component.num_incomplete_req_ops = 0;
 
     opal_common_ucx_mca_register();
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 static int component_finalize(void) {
