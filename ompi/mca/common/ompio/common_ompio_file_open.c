@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -480,23 +481,74 @@ int mca_common_ompio_file_delete (const char *filename,
                                   struct opal_info_t *info)
 {
     int ret = OMPI_SUCCESS;
+    ompio_file_t *fh = NULL;
 
     /* No locking required for file_delete according to my understanding.
        One thread will succeed, the other ones silently ignore the 
        error that the file is already deleted.
     */
-    ret = unlink(filename);
 
-    if (0 > ret ) {
-        if ( ENOENT == errno ) {
-            return MPI_ERR_NO_SUCH_FILE;
-        } else {
-            opal_output (0, "mca_common_ompio_file_delete: Could not remove file %s errno = %d %s\n", filename,
-                         errno, strerror(errno));
-            return MPI_ERR_ACCESS;
-        }
+    /* Create an incomplete file handle, it will basically only
+       contain the filename. It is needed to select the correct
+       component in the fs framework and call the file_remove
+       function corresponding to the file type. 
+    */
+    ret = mca_common_ompio_create_incomplete_file_handle(filename, &fh);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
+    ret = mca_fs_base_file_select (fh, NULL);
+    if (OMPI_SUCCESS != ret) {
+        opal_output(1, "error in mca_common_ompio_file_delete: "
+                       "mca_fs_base_file_select() failed\n");
+        free(fh);
+        return ret;
+    }
+
+    ret = fh->f_fs->fs_file_delete (filename, NULL);
+    free(fh);
+
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+    return OMPI_SUCCESS;
+}
+
+int mca_common_ompio_create_incomplete_file_handle (const char *filename,
+                                                    ompio_file_t **fh)
+{
+    ompio_file_t *file;
+
+    if (NULL == filename) {
+        opal_output(1, "error in mca_common_ompio_create_incomplete_file_handle"
+                       ", filename is NULL.\n");
+        return OMPI_ERROR;
+    }
+
+    file = calloc(1, sizeof(ompio_file_t));
+    if (NULL == file) {
+        opal_output(1, "Out of memory.\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+
+    /* Do not use communicator */
+    file->f_comm = MPI_COMM_NULL;
+    file->f_rank = OMPIO_ROOT;
+
+    /* TODO:
+        - Maybe copy the info for the info layer
+        - Maybe do the same as a file open: first create an ompi_file_t,
+            then allocate f_io_selected_data,
+            then use the ompio_file_t stored in this data structure
+    */
+
+    /* We don't need to create a copy of the filename,
+       this file handle is only temporary. */
+    file->f_filename = filename;
+
+    *fh = file;
     return OMPI_SUCCESS;
 }
 
