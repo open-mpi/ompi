@@ -250,6 +250,9 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     /* ask for capabilities */
     hints.caps = MCA_BTL_OFI_REQUIRED_CAPS;
 
+    /* Ask for completion context */
+    hints.mode = FI_CONTEXT;
+
     hints.fabric_attr = &fabric_attr;
     hints.domain_attr = &domain_attr;
     hints.ep_attr = &ep_attr;
