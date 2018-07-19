@@ -26,6 +26,7 @@ static int component_query(struct ompi_win_t *win, void **base, size_t size, int
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
+static void ompi_osc_ucx_unregister_progress(void);
 
 ompi_osc_ucx_component_t mca_osc_ucx_component = {
     { /* ompi_osc_base_component_t */
@@ -234,6 +235,20 @@ static inline int mem_map(void **base, size_t size, ucp_mem_h *memh_ptr,
  error:
     ucp_mem_unmap(mca_osc_ucx_component.ucp_context, (*memh_ptr));
     return ret;
+}
+
+static void ompi_osc_ucx_unregister_progress()
+{
+    int ret;
+
+    mca_osc_ucx_component.num_modules--;
+    OSC_UCX_ASSERT(mca_osc_ucx_component.num_modules >= 0);
+    if (0 == mca_osc_ucx_component.num_modules) {
+        ret = opal_progress_unregister(progress_callback);
+        if (OMPI_SUCCESS != ret) {
+            OSC_UCX_VERBOSE(1, "opal_progress_unregister failed: %d", ret);
+        }
+    }
 }
 
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
@@ -643,14 +658,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     }
     if (module) {
         free(module);
-        mca_osc_ucx_component.num_modules--;
-        OSC_UCX_ASSERT(mca_osc_ucx_component.num_modules >= 0);
-        if (0 == mca_osc_ucx_component.num_modules) {
-            ret = opal_progress_unregister(progress_callback);
-            if (OMPI_SUCCESS != ret) {
-                OSC_UCX_VERBOSE(1, "opal_progress_unregister failed: %d", ret);
-            }
-        }
+        ompi_osc_ucx_unregister_progress();
     }
 
 error_nomem:
@@ -819,14 +827,7 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     ompi_comm_free(&module->comm);
 
     free(module);
-    mca_osc_ucx_component.num_modules--;
-    OSC_UCX_ASSERT(mca_osc_ucx_component.num_modules >= 0);
-    if (0 == mca_osc_ucx_component.num_modules) {
-        ret = opal_progress_unregister(progress_callback);
-        if (OMPI_SUCCESS != ret) {
-            OSC_UCX_VERBOSE(1, "opal_progress_unregister failed: %d", ret);
-        }
-    }
+    ompi_osc_ucx_unregister_progress();
 
     return ret;
 }
