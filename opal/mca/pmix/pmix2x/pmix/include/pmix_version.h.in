@@ -18,4 +18,7 @@
 #define PMIX_VERSION_MAJOR @pmixmajor@
 #define PMIX_VERSION_MINOR @pmixminor@
 #define PMIX_VERSION_RELEASE @pmixrelease@
+
+#define PMIX_NUMERIC_VERSION 0x00020103
+
 #endif
