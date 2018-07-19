@@ -38,6 +38,7 @@ typedef struct ompi_osc_ucx_component {
     opal_free_list_t requests; /* request free list for the r* communication variants */
     bool env_initialized; /* UCX environment is initialized or not */
     int num_incomplete_req_ops;
+    int num_modules;
     unsigned int priority;
 } ompi_osc_ucx_component_t;
 
