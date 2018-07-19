@@ -375,7 +375,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                                                       #endif
                                                       ], [])],
                                            [AC_MSG_RESULT([found])
-                                            opal_external_pmix_version=1.2.x
+                                            opal_external_pmix_version=1x
                                             opal_external_pmix_version_found=1
                                             opal_external_have_pmix1=1
                                             opal_external_pmix_happy=yes],
@@ -402,6 +402,15 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AC_MSG_WARN([header/library files were not found])
            AC_MSG_ERROR([Cannot continue])])
 
+    # Final check - if they didn't point us explicitly at an external version
+    # but we found one anyway, use the internal version if it is higher
+    AS_IF([test "$opal_external_pmix_version" != "internal" && (test -z "$with_pmix" || test "$with_pmix" = "yes")],
+          [AS_IF([test "$opal_external_pmix_version" != "3x"],
+                 [AC_MSG_WARN([discovered external PMIx version is less than internal version 3.x])
+                  AC_MSG_WARN([using internal PMIx])
+                  opal_external_pmix_version=internal
+                  opal_external_pmix_happy=no])])
+
     AC_MSG_CHECKING([PMIx version to be used])
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [AC_MSG_RESULT([external($opal_external_pmix_version)])
@@ -415,8 +424,8 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                        [Whether the external PMIx library is v1])
     AM_CONDITIONAL([OPAL_WANT_PRUN], [test "$opal_prun_happy" = "yes"])
 
-    AS_IF([test "$opal_external_pmix_version" = "1.2.x"],
-          [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [$opal_external_pmix_version: WARNING - DYNAMIC OPS NOT SUPPORTED])],
+    AS_IF([test "$opal_external_pmix_version" = "1x"],
+          [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [1.2.x: WARNING - DYNAMIC OPS NOT SUPPORTED])],
           [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [$opal_external_pmix_version])])
 
     OPAL_VAR_SCOPE_POP
