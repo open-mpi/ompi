@@ -198,8 +198,8 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
         for (n=0; n < cd->ninfo; n++) {
             PMIX_INFO_XFER(&cd->info[n], &chain->info[n]);
             if (0 == strncmp(cd->info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
-                cd->nondefault = true;
-                chain->nondefault = true;
+                cd->nondefault = PMIX_INFO_TRUE(&info[n]);
+                chain->nondefault = cd->nondefault;
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
                 /* provides an array of pmix_proc_t identifying the procs
                  * that are to receive this notification, or a single pmix_proc_t  */
@@ -972,8 +972,8 @@ static void _notify_client_event(int sd, short args, void *cbdata)
         for (n=0; n < cd->ninfo; n++) {
             PMIX_INFO_XFER(&chain->info[n], &cd->info[n]);
             if (0 == strncmp(cd->info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
-                cd->nondefault = true;
-                chain->nondefault = true;
+                cd->nondefault = PMIX_INFO_TRUE(&cd->info[n]);
+                chain->nondefault = cd->nondefault;
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
                 /* provides an array of pmix_proc_t identifying the procs
                  * that are to receive this notification, or a single pmix_proc_t  */
@@ -1087,7 +1087,7 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
-                cd->nondefault = true;
+                cd->nondefault = PMIX_INFO_TRUE(&info[n]);
             } else if (0 == strncmp(info[n].key, PMIX_EVENT_CUSTOM_RANGE, PMIX_MAX_KEYLEN)) {
                 /* provides an array of pmix_proc_t identifying the procs
                  * that are to receive this notification, or a single pmix_proc_t  */
