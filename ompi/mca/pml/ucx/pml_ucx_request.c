@@ -85,10 +85,10 @@ mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
                                         ompi_request_t *tmp_req)
 {
     preq->ompi.req_status = tmp_req->req_status;
-    ompi_request_complete(&preq->ompi, true);
-    mca_pml_ucx_persistent_request_detach(preq, tmp_req);
     mca_pml_ucx_request_reset(tmp_req);
+    mca_pml_ucx_persistent_request_detach(preq, tmp_req);
     ucp_request_free(tmp_req);
+    ompi_request_complete(&preq->ompi, true);
 }
 
 static inline void mca_pml_ucx_preq_completion(ompi_request_t *tmp_req)
