@@ -38,7 +38,7 @@ static int frag_send_cb (ompi_request_t *request)
     mark_outgoing_completion(module);
     opal_free_list_return (&mca_osc_pt2pt_component.frags, &frag->super);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
 
     return 1;
 }
