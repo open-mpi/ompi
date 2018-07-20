@@ -239,7 +239,7 @@ static int ompi_osc_pt2pt_control_send_unbuffered_cb (ompi_request_t *request)
     /* free the temporary buffer */
     free (ctx);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
     return 1;
 }
 
@@ -436,7 +436,7 @@ static int osc_pt2pt_incoming_req_complete (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
     return 1;
 }
 
@@ -457,7 +457,7 @@ static int osc_pt2pt_get_post_send_cb (ompi_request_t *request)
     /* mark this as a completed "incoming" request */
     mark_incoming_completion (module, rank);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
     return 1;
 }
 
@@ -694,7 +694,7 @@ static int accumulate_cb (ompi_request_t *request)
 
     mark_incoming_completion (module, rank);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
     return ret;
 }
 
@@ -772,7 +772,7 @@ static int replace_cb (ompi_request_t *request)
     /* unlock the accumulate lock */
     ompi_osc_pt2pt_accumulate_unlock (module);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
     return 1;
 }
 
@@ -1441,7 +1441,7 @@ static int process_large_datatype_request_cb (ompi_request_t *request)
     /* free the datatype buffer */
     osc_pt2pt_gc_add_buffer (module, &ddt_buffer->super);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
     return 1;
 }
 

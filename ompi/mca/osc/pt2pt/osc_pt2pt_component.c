@@ -45,6 +45,7 @@ static int component_query(struct ompi_win_t *win, void **base, size_t size, int
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
+static void free_completed_requests(void);
 
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
     { /* ompi_osc_base_component_t */
@@ -151,6 +152,18 @@ static int component_register (void)
     return OMPI_SUCCESS;
 }
 
+static void free_completed_requests()
+{
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+    while (!opal_list_is_empty(&mca_osc_pt2pt_component.completed_requests_list)) {
+        opal_list_item_t *item = opal_list_remove_first(&mca_osc_pt2pt_component.completed_requests_list);
+        ompi_osc_pt2pt_completed_request_t *request = container_of(item, ompi_osc_pt2pt_completed_request_t, super);
+
+        opal_free_list_return(&mca_osc_pt2pt_component.completed_requests, &request->free_super);
+    }
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
+}
+
 static int component_progress (void)
 {
     int pending_count = opal_list_get_size (&mca_osc_pt2pt_component.pending_operations);
@@ -199,7 +212,18 @@ static int component_progress (void)
         OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.pending_operations_lock);
     }
 
+    free_completed_requests();
+
     return 1;
+}
+
+static int completed_request_init(opal_free_list_item_t *item, void *ctx)
+{
+    ompi_osc_pt2pt_completed_request_t *c_req;
+
+    c_req = container_of(item, ompi_osc_pt2pt_completed_request_t, free_super);
+    memset(&c_req->super, 0, sizeof(c_req->super));
+    return OPAL_SUCCESS;
 }
 
 static int
@@ -214,6 +238,7 @@ component_init(bool enable_progress_threads,
 
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.completed_requests_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_operations_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_receives, opal_list_t);
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.pending_receives_lock, opal_mutex_t);
@@ -251,6 +276,19 @@ component_init(bool enable_progress_threads,
         return ret;
     }
 
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.completed_requests, opal_free_list_t);
+    ret = opal_free_list_init (&mca_osc_pt2pt_component.completed_requests,
+                               sizeof(ompi_osc_pt2pt_completed_request_t), 8,
+                               OBJ_CLASS(ompi_osc_pt2pt_completed_request_t),
+                               0, 0, 0, -1, 32, NULL, 0, NULL,
+                               completed_request_init, NULL);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: opal_free_list_init failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+
     return ret;
 }
 
@@ -271,9 +309,13 @@ component_finalize(void)
                     (int) num_modules);
     }
 
+    free_completed_requests();
+
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.frags);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.modules);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.lock);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.completed_requests);
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.completed_requests_list);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.requests);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_operations);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.pending_operations_lock);

@@ -46,7 +46,7 @@ static int ompi_osc_pt2pt_comm_complete (ompi_request_t *request)
 
     mark_outgoing_completion(module);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
 
     return 1;
 }
@@ -101,7 +101,7 @@ static int ompi_osc_pt2pt_dt_send_complete (ompi_request_t *request)
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
     assert (NULL != module);
 
-    ompi_request_free (&request);
+    ompi_osc_pt2pt_request_schedule(request);
 
     return 1;
 }

@@ -72,6 +72,12 @@ struct ompi_osc_pt2pt_component_t {
     /** Free list of requests */
     opal_free_list_t requests;
 
+    /** Free list of completed requests */
+    opal_free_list_t completed_requests;
+
+    /** List of requests scheduled to free */
+    opal_list_t completed_requests_list;
+
     /** PT2PT component buffer size */
     unsigned int buffer_size;
 

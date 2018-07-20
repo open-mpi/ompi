@@ -61,3 +61,23 @@ OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_request_t,
                    ompi_request_t,
                    request_construct,
                    NULL);
+
+static int completed_request_free(ompi_osc_pt2pt_completed_request_t **com_req)
+{
+    if (*com_req && (*com_req)->request) {
+        ompi_request_free(&(*com_req)->request);
+        (*com_req)->request = NULL;
+    }
+    *com_req = NULL;
+    return OMPI_SUCCESS;
+}
+
+static void completed_request_construct(ompi_osc_pt2pt_completed_request_t *com_req)
+{
+    com_req->request = NULL;
+}
+
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_completed_request_t,
+                   opal_free_list_item_t,
+                   completed_request_construct,
+                   completed_request_free);

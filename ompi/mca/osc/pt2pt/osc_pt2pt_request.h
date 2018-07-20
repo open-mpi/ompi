@@ -20,6 +20,11 @@
 #include "ompi/request/request.h"
 #include "opal/util/output.h"
 
+#ifndef container_of
+#define container_of(ptr, type, member) ( \
+        (type *)( ((char *)(ptr)) - offsetof(type,member) ))
+#endif
+
 struct ompi_osc_pt2pt_request_t {
     ompi_request_t super;
 
@@ -33,6 +38,14 @@ struct ompi_osc_pt2pt_request_t {
 };
 typedef struct ompi_osc_pt2pt_request_t ompi_osc_pt2pt_request_t;
 OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_request_t);
+
+struct ompi_osc_pt2pt_completed_request_t {
+    opal_free_list_item_t free_super;
+    opal_list_item_t super;
+    ompi_request_t *request;
+};
+typedef struct ompi_osc_pt2pt_completed_request_t ompi_osc_pt2pt_completed_request_t;
+OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_completed_request_t);
 
 /* REQUEST_ALLOC is only called from "top-level" functions (pt2pt_rput,
    pt2pt_rget, etc.), so it's ok to spin here... */
@@ -68,10 +81,29 @@ static inline void ompi_osc_pt2pt_request_complete (ompi_osc_pt2pt_request_t *re
         request->super.req_status.MPI_ERROR = mpi_error;
 
         /* mark the request complete at the mpi level */
-        ompi_request_complete (&request->super, true);
+        ompi_request_complete(&request->super, true);
     } else {
         OMPI_OSC_PT2PT_REQUEST_RETURN (request);
     }
+}
+
+static inline void ompi_osc_pt2pt_request_schedule(ompi_request_t *request)
+{
+    opal_free_list_item_t *item;
+    ompi_osc_pt2pt_completed_request_t *c_req;
+
+    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
+    item = opal_free_list_get(&mca_osc_pt2pt_component.completed_requests);
+    if (item) {
+        c_req          = container_of(item, ompi_osc_pt2pt_completed_request_t, free_super);
+        c_req->request = request;
+
+        opal_list_append(&mca_osc_pt2pt_component.completed_requests_list, &c_req->super);
+    } else {
+        /* failed to create entry - then try to remove request directly */
+        ompi_request_free(&request);
+    }
+    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
 }
 
 #endif /* OMPI_OSC_PT2PT_REQUEST_H */
