@@ -14,6 +14,12 @@
 
 #include "btl_uct_frag.h"
 
+struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src (mca_btl_base_module_t *btl,
+                                                           mca_btl_base_endpoint_t *endpoint,
+                                                           opal_convertor_t *convertor,
+                                                           uint8_t order, size_t reserve,
+                                                           size_t *size, uint32_t flags);
+
 int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, opal_convertor_t *convertor,
                        void *header, size_t header_size, size_t payload_size, uint8_t order, uint32_t flags,
                        mca_btl_base_tag_t tag, mca_btl_base_descriptor_t **descriptor);

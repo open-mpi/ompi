@@ -62,7 +62,7 @@ struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep (struct mca_btl_base_module_t
             break;
         }
 
-        BTL_VERBOSE(("endpoint initialized. new endpoint: %p", ep));
+        BTL_VERBOSE(("endpoint initialized. new endpoint: %p", (void *) ep));
 
         /* add this endpoint to the connection lookup table */
         (void) opal_hash_table_set_value_uint64 (&uct_module->id_to_endpoint, (intptr_t) proc, ep);
@@ -344,6 +344,7 @@ mca_btl_uct_module_t mca_btl_uct_module_template = {
         .btl_flush          = mca_btl_uct_flush,
 
         .btl_sendi          = mca_btl_uct_sendi,
+        .btl_prepare_src    = mca_btl_uct_prepare_src,
         .btl_send           = mca_btl_uct_send,
         .btl_alloc          = mca_btl_uct_alloc,
         .btl_free           = mca_btl_uct_free,
@@ -370,12 +371,12 @@ mca_btl_uct_module_t mca_btl_uct_module_template = {
 
 OBJ_CLASS_INSTANCE(mca_btl_uct_reg_t, opal_free_list_item_t, NULL, NULL);
 
-void mca_btl_uct_md_construct (mca_btl_uct_md_t *md)
+static void mca_btl_uct_md_construct (mca_btl_uct_md_t *md)
 {
     md->uct_md = NULL;
 }
 
-void mca_btl_uct_md_destruct (mca_btl_uct_md_t *md)
+static void mca_btl_uct_md_destruct (mca_btl_uct_md_t *md)
 {
     if (md->uct_md) {
         uct_md_close (md->uct_md);
