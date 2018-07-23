@@ -5,7 +5,7 @@
 # Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
-# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -56,7 +56,7 @@ AC_DEFUN([MCA_opal_event_external_POST_CONFIG],[
 AC_DEFUN([MCA_opal_event_external_CONFIG],[
     AC_CONFIG_FILES([opal/mca/event/external/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([opal_event_external_CPPFLAGS_save opal_event_external_CFLAGS_save opal_event_external_LDFLAGS_save opal_event_external_LIBS_save opal_event_dir opal_event_external_support opal_event_summary_msg])
+    OPAL_VAR_SCOPE_PUSH([opal_event_external_CPPFLAGS_save opal_event_external_CFLAGS_save opal_event_external_LDFLAGS_save opal_event_external_LIBS_save opal_event_dir opal_event_summary_msg])
 
     # Make some processing below easier ($with_libevent==yes and
     # $with_libevent==no has already been filtered out).
