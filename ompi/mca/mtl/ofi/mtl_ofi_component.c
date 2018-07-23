@@ -387,10 +387,10 @@ ompi_mtl_ofi_check_fi_remote_cq_data(int fi_version,
 }
 
 static void
-ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode) {
+ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode, int *bits_for_cid) {
     switch (ofi_tag_mode) {
         case MTL_OFI_TAG_1:
-            ompi_mtl_ofi.base.mtl_max_contextid = (int)((1ULL << MTL_OFI_CID_BIT_COUNT_1 ) - 1);
+            *bits_for_cid = (int) MTL_OFI_CID_BIT_COUNT_1;
             ompi_mtl_ofi.base.mtl_max_tag = (int)((1ULL << (MTL_OFI_TAG_BIT_COUNT_1 - 1)) - 1);
 
             ompi_mtl_ofi.source_rank_tag_mask = MTL_OFI_SOURCE_TAG_MASK_1;
@@ -405,7 +405,7 @@ ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode) {
             ompi_mtl_ofi.sync_proto_mask = MTL_OFI_PROTO_MASK_1;
         break;
         case MTL_OFI_TAG_2:
-            ompi_mtl_ofi.base.mtl_max_contextid = (int)((1ULL << MTL_OFI_CID_BIT_COUNT_2 ) - 1);
+            *bits_for_cid = (int) MTL_OFI_CID_BIT_COUNT_2;
             ompi_mtl_ofi.base.mtl_max_tag = (int)((1ULL << (MTL_OFI_TAG_BIT_COUNT_2 - 1)) - 1);
 
             ompi_mtl_ofi.source_rank_tag_mask = MTL_OFI_SOURCE_TAG_MASK_2;
@@ -420,7 +420,7 @@ ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode) {
             ompi_mtl_ofi.sync_proto_mask = MTL_OFI_PROTO_MASK_2;
         break;
         default: /* use FI_REMOTE_CQ_DATA */
-            ompi_mtl_ofi.base.mtl_max_contextid = (int)((1ULL << MTL_OFI_CID_BIT_COUNT_DATA ) - 1);
+            *bits_for_cid = (int) MTL_OFI_CID_BIT_COUNT_DATA;
             ompi_mtl_ofi.base.mtl_max_tag = (int)((1ULL << (MTL_OFI_TAG_BIT_COUNT_DATA - 1)) - 1);
 
             ompi_mtl_ofi.mpi_tag_mask = MTL_OFI_TAG_MASK_DATA;
@@ -444,6 +444,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_av_attr av_attr = {0};
     char ep_name[FI_NAME_MAX] = {0};
     size_t namelen;
+    int ofi_tag_leading_zeros;
+    int ofi_tag_bits_for_cid;
 
     /**
      * Hints to filter providers
@@ -558,7 +560,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                 ompi_mtl_ofi.fi_cq_data = false;
                 if (MTL_OFI_TAG_AUTO == ofi_tag_mode) {
                    /* Fallback to MTL_OFI_TAG_1 */
-                   ompi_mtl_ofi_define_tag_mode(MTL_OFI_TAG_1);
+                   ompi_mtl_ofi_define_tag_mode(MTL_OFI_TAG_1, &ofi_tag_bits_for_cid);
                 } else { /* MTL_OFI_TAG_FULL */
                    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: OFI provider %s does not support FI_REMOTE_CQ_DATA\n",
@@ -569,13 +571,36 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                 /* Use FI_REMTOTE_CQ_DATA */
                 ompi_mtl_ofi.fi_cq_data = true;
                 prov = prov_cq_data;
-                ompi_mtl_ofi_define_tag_mode(MTL_OFI_TAG_FULL);
+                ompi_mtl_ofi_define_tag_mode(MTL_OFI_TAG_FULL, &ofi_tag_bits_for_cid);
             }
     } else { /* MTL_OFI_TAG_1 or MTL_OFI_TAG_2 */
         ompi_mtl_ofi.fi_cq_data = false;
-        ompi_mtl_ofi_define_tag_mode(ofi_tag_mode);
+        ompi_mtl_ofi_define_tag_mode(ofi_tag_mode, &ofi_tag_bits_for_cid);
     }
 
+    /**
+     * Check for potential bits in the OFI tag that providers may be reserving
+     * for internal usage (see mem_tag_format in fi_endpoint man page).
+     */
+
+    ofi_tag_leading_zeros = 0;
+    while (!((prov->ep_attr->mem_tag_format << ofi_tag_leading_zeros++) &
+           (uint64_t) MTL_OFI_HIGHEST_TAG_BIT) &&
+           /* Do not keep looping if the provider does not support enough bits */
+           (ofi_tag_bits_for_cid >= MTL_OFI_MINIMUM_CID_BITS)){
+       ofi_tag_bits_for_cid--;
+    }
+
+    if (ofi_tag_bits_for_cid < MTL_OFI_MINIMUM_CID_BITS) {
+        opal_show_help("help-mtl-ofi.txt", "Not enough bits for CID", true,
+                       prov->fabric_attr->prov_name,
+                       prov->fabric_attr->prov_name,
+                       ompi_process_info.nodename, __FILE__, __LINE__);
+        goto error;
+    }
+
+    /* Update the maximum supported Communicator ID */
+    ompi_mtl_ofi.base.mtl_max_contextid = (int)((1ULL << ofi_tag_bits_for_cid) - 1);
     ompi_mtl_ofi.num_peers = 0;
 
     /**
