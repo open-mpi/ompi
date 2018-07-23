@@ -312,8 +312,8 @@ int mca_btl_uct_endpoint_connect (mca_btl_uct_module_t *uct_btl, mca_btl_uct_end
         return OPAL_ERR_UNREACH;
     }
 
-    BTL_VERBOSE(("checking endpoint %p with context id %d. cached uct ep: %p, ready: %d", endpoint, context_id,
-                 tl_endpoint->uct_ep, !!(MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & tl_endpoint->flags)));
+    BTL_VERBOSE(("checking endpoint %p with context id %d. cached uct ep: %p, ready: %d", (void *) endpoint, context_id,
+                 (void *) tl_endpoint->uct_ep, !!(MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & tl_endpoint->flags)));
 
     opal_mutex_lock (&endpoint->ep_lock);
     if (MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & tl_endpoint->flags) {

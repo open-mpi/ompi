@@ -190,7 +190,7 @@ static int mca_btl_uct_modex_send (void)
     uint8_t *modex_data;
     int rc;
 
-    for (unsigned i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
+    for (int i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
         modex_size += mca_btl_uct_module_modex_size (mca_btl_uct_component.modules[i]);
     }
 
@@ -199,7 +199,7 @@ static int mca_btl_uct_modex_send (void)
 
     modex->module_count = mca_btl_uct_component.module_count;
 
-    for (unsigned i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
+    for (int i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
         mca_btl_uct_module_t *module = mca_btl_uct_component.modules[i];
         size_t name_len = strlen (module->md_name);
 
@@ -434,7 +434,7 @@ static mca_btl_base_module_t **mca_btl_uct_component_init (int *num_btl_modules,
     return base_modules;
 }
 
-int mca_btl_uct_tl_progress (mca_btl_uct_tl_t *tl, int starting_index)
+static int mca_btl_uct_tl_progress (mca_btl_uct_tl_t *tl, int starting_index)
 {
     unsigned int ret = 0;
 
@@ -488,7 +488,7 @@ static int mca_btl_uct_component_progress (void)
     int starting_index = mca_btl_uct_get_context_index ();
     unsigned ret = 0;
 
-    for (unsigned i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
+    for (int i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
         mca_btl_uct_module_t *module = mca_btl_uct_component.modules[i];
 
         /* unlike ucp, uct actually tells us something useful! its almost like it was "inspired"
