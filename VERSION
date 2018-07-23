@@ -16,7 +16,7 @@
 # <major>.<minor>.<release>.
 
 major=4
-minor=0
+minor=1
 release=0
 
 # greek is generally used for alpha or beta release tags.  If it is
