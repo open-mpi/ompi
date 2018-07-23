@@ -31,8 +31,8 @@ BEGIN_C_DECLS
 mca_btl_base_endpoint_t *mca_btl_uct_endpoint_create (opal_proc_t *proc);
 int mca_btl_uct_endpoint_connect (mca_btl_uct_module_t *module, mca_btl_uct_endpoint_t *endpoint, int ep_index, void *ep_addr, int tl_index);
 
-static int mca_btl_uct_endpoint_test_am (mca_btl_uct_module_t *module, mca_btl_uct_endpoint_t *endpoint,
-                                         mca_btl_uct_device_context_t *context, uct_ep_h *ep_handle)
+static inline int mca_btl_uct_endpoint_test_am (mca_btl_uct_module_t *module, mca_btl_uct_endpoint_t *endpoint,
+                                                mca_btl_uct_device_context_t *context, uct_ep_h *ep_handle)
 {
     int tl_index = module->am_tl->tl_index;
     int ep_index = context->context_id;

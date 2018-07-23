@@ -38,7 +38,6 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/threads/tsd.h"
-#include <ucp/api/ucp.h>
 #include <uct/api/uct.h>
 
 #include "btl_uct_types.h"
