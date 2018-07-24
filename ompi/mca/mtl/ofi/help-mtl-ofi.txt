@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2013-2017 Intel, Inc. All rights reserved
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved
 #
 # Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
@@ -16,3 +16,11 @@ unusual; your job may behave unpredictably (and/or abort) after this.
   Local host: %s
   Location: %s:%d
   Error: %s (%zd)
+#
+[Not enough bits for CID]
+OFI provider "%s" does not have enough free bits in its tag to fit the MPI
+Communicator ID. See the mem_tag_format of the provider by running:
+fi_info -v -p %s
+
+  Local host: %s
+  Location: %s:%d

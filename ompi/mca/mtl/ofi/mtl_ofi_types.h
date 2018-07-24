@@ -88,12 +88,15 @@ typedef struct mca_mtl_ofi_component_t {
  * More details of the tags are in the README file (mtl_ofi_tag_mode).
 */
 
+#define MTL_OFI_MINIMUM_CID_BITS        (8)
+
 /* Support FI_REMOTE_CQ_DATA, send the source rank in the CQ data (4 Bytes is the minimum)
  *  01234567 01234567 01234567 012345  67  01234567 01234567 01234567 01234567
  *                                   |    |
  *           context_id              |prot|          message tag
  */
 #define MTL_OFI_PROTO_BIT_COUNT         (2)
+#define MTL_OFI_HIGHEST_TAG_BIT         (0x8000000000000000ULL)
 
 #define MTL_OFI_CID_MASK_DATA           (0xFFFFFFFC00000000ULL)
 #define MTL_OFI_CID_BIT_COUNT_DATA      (30)
