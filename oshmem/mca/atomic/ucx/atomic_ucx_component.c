@@ -70,7 +70,7 @@ mca_atomic_base_component_t mca_atomic_ucx_component = {
 
     /* Initialization / querying functions */
 
-    mca_atomic_ucx_init,
+    mca_atomic_ucx_startup,
     mca_atomic_ucx_finalize,
     mca_atomic_ucx_query
 };

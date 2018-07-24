@@ -31,7 +31,7 @@ OSHMEM_DECLSPEC void atomic_basic_unlock(shmem_ctx_t ctx, int pe);
 
 /* API functions */
 
-int mca_atomic_basic_init(bool enable_progress_threads, bool enable_threads);
+int mca_atomic_basic_startup(bool enable_progress_threads, bool enable_threads);
 int mca_atomic_basic_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_basic_query(int *priority);

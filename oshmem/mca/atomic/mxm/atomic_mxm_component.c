@@ -66,7 +66,7 @@ mca_atomic_base_component_t mca_atomic_mxm_component = {
 
     /* Initialization / querying functions */
 
-    .atomic_init = mca_atomic_mxm_init,
+    .atomic_startup = mca_atomic_mxm_startup,
     .atomic_finalize  = mca_atomic_mxm_finalize,
     .atomic_query = mca_atomic_mxm_query,
 };
