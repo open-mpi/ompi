@@ -22,7 +22,7 @@
  * Initial query function that is invoked during initialization, allowing
  * this module to indicate what level of thread support it provides.
  */
-int mca_atomic_mxm_init(bool enable_progress_threads, bool enable_threads)
+int mca_atomic_mxm_startup(bool enable_progress_threads, bool enable_threads)
 {
     return OSHMEM_SUCCESS;
 }
