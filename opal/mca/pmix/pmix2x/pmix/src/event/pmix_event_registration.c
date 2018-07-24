@@ -391,11 +391,11 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
             chain->status = ncd->status;
             (void)strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
             chain->source.rank = pmix_globals.myid.rank;
-            /* we already left space for evhandler name plus
-             * a callback object when we cached the notification */
-            chain->ninfo = ncd->ninfo;
-            PMIX_INFO_CREATE(chain->info, chain->ninfo);
+            /* we always leave space for event hdlr name and a callback object */
+            chain->nallocated = ncd->ninfo + 2;
+            PMIX_INFO_CREATE(chain->info, chain->nallocated);
             if (0 < cd->ninfo) {
+                chain->ninfo = ncd->ninfo;
                 /* need to copy the info */
                 for (n=0; n < ncd->ninfo; n++) {
                     PMIX_INFO_XFER(&chain->info[n], &ncd->info[n]);

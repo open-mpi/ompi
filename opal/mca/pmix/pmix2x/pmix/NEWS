@@ -21,7 +21,14 @@ example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
 
-2.1.2 -- TBD
+2.1.3 -- TBD
+----------------------
+- Fixed memory corruption bug in event notification
+  system due to uninitialized variable
+- Add numeric version definition
+
+
+2.1.2 -- 6 July 2018
 ----------------------
 - Added PMIX_VERSION_RELEASE string to pmix_version.h
 - Added PMIX_SPAWNED and PMIX_PARENT_ID keys to all procs
