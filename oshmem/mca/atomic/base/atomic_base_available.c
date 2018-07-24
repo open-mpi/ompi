@@ -104,7 +104,7 @@ static int init_query(const mca_base_component_t * component,
         mca_atomic_base_component_t *atomic =
                 (mca_atomic_base_component_t *) component;
 
-        ret = atomic->atomic_init(enable_progress_threads, enable_threads);
+        ret = atomic->atomic_startup(enable_progress_threads, enable_threads);
     } else {
         /* Unrecognized coll API version */
 

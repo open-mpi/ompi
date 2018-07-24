@@ -135,7 +135,7 @@ struct mca_atomic_base_component_1_0_0_t {
     mca_base_component_data_t atomic_data;
 
     /** Component initialization function */
-    mca_atomic_base_component_init_fn_t atomic_init;
+    mca_atomic_base_component_init_fn_t atomic_startup;
     mca_atomic_base_component_finalize_fn_t atomic_finalize;
     mca_atomic_base_component_query_fn_t atomic_query;
 
