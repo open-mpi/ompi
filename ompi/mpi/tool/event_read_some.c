@@ -22,7 +22,7 @@
 #endif
 
 
-int MPI_T_event_read_some (MPI_T_event event, void *array_of_buffers[])
+int MPI_T_event_read_some (MPI_T_event_instance event, void *array_of_buffers[])
 {
     int ret;
 

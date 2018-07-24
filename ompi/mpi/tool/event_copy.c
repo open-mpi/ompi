@@ -14,7 +14,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_event_get_time = PMPI_T_event_get_time
+#pragma weak MPI_T_event_copy = PMPI_T_event_copy
 #endif
 
 #if OMPI_PROFILING_DEFINES
@@ -22,19 +22,12 @@
 #endif
 
 
-int MPI_T_event_get_time (MPI_T_event event, double *event_time)
+int MPI_T_event_copy (MPI_T_event_instance event, void *buffer)
 {
-    double mca_time;
-    int ret;
-
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ret = mca_base_event_get_time (event, &mca_time);
-
-    /* NTH: NEED to shift this to be based on wtime */
-    *event_time = mca_time;
-
-    return ompit_opal_to_mpit_error (ret);
+    mca_base_event_copy (event, buffer);
+    return MPI_SUCCESS;
 }

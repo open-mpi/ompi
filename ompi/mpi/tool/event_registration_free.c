@@ -14,7 +14,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_event_get_index_by_handle = PMPI_T_event_get_index_by_handle
+#pragma weak MPI_T_event_registration_free = PMPI_T_event_registration_free
 #endif
 
 #if OMPI_PROFILING_DEFINES
@@ -22,18 +22,29 @@
 #endif
 
 
-int MPI_T_event_get_index_by_handle (MPI_T_event_handle handle, int *event_index)
+int MPI_T_event_registration_free (MPI_T_event_free_cb_function free_cb_function,
+                                   MPI_T_event_registration *handle)
 {
+    int ret = MPI_SUCCESS;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    if (MPI_PARAM_CHECK && (NULL == event_index || NULL == handle)) {
-        return MPI_ERR_ARG;
-    }
-
     ompi_mpit_lock ();
-    *event_index = handle->event->event_index;
 
-    return MPI_SUCCESS;
+    do {
+        /* Check that this is a valid handle */
+        if (MPI_T_EVENT_REGISTRATION_NULL == *handle) {
+            ret = MPI_T_ERR_INVALID_HANDLE;
+            break;
+        }
+
+        mca_base_event_registration_free (*handle, (mca_base_event_registration_free_cb_fn_t) free_cb_function);
+        *handle = MPI_T_EVENT_REGISTRATION_NULL;
+    } while (0);
+
+    ompi_mpit_unlock ();
+
+    return ret;
 }

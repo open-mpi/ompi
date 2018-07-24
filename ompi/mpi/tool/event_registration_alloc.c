@@ -14,7 +14,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_event_handle_alloc = PMPI_T_event_handle_alloc
+#pragma weak MPI_T_event_registration_alloc = PMPI_T_event_registration_alloc
 #endif
 
 #if OMPI_PROFILING_DEFINES
@@ -22,9 +22,9 @@
 #endif
 
 
-int MPI_T_event_handle_alloc (int event_index, void *obj_handle,
-                              void *user_data, MPI_T_event_cb_function event_cb_function,
-                              MPI_T_event_handle *event_handle)
+int MPI_T_event_registration_alloc (int event_index, void *obj_handle,
+                                    void *user_data, MPI_T_event_cb_function event_cb_function,
+                                    MPI_T_event_registration *event_registration)
 {
     mca_base_event_t * const event;
     int ret;
@@ -50,8 +50,8 @@ int MPI_T_event_handle_alloc (int event_index, void *obj_handle,
             break;
         }
 
-        ret = mca_base_event_handle_alloc (event, obj_handle, user_data, (mca_base_event_cb_fn_t) event_cb_function,
-                                           event_handle);
+        ret = mca_base_event_registration_alloc (event, obj_handle, user_data, (mca_base_event_cb_fn_t) event_cb_function,
+                                                 event_registration);
     } while (0);
 
     ompi_mpit_unlock ();

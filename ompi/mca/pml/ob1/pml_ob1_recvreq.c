@@ -79,7 +79,7 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
     recvreq->req_recv.req_base.req_free_called = true;
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
                           MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                          recvreq->req_recv.req_base.req_comm, &recvreq);
+                          recvreq->req_recv.req_base.req_comm, NULL, &recvreq);
 
     if( true == recvreq->req_recv.req_base.req_pml_complete ) {
         /* make buffer defined when the request is compeleted,
@@ -457,7 +457,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 
     void *req = &(recvreq->req_recv.req_base);
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, &req);
+                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
                                   &(recvreq->req_recv.req_base), frag->rdma_length,
@@ -1102,7 +1102,7 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
         req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
         ompi_communicator_t *comm = req->req_recv.req_base.req_comm;
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_POSTED_INSERT].event,
-                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, &req);
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
     }
 }
 
@@ -1267,7 +1267,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
      * the cost of the request lock.
      */
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, &req);
+                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
 
     /* assign sequence number */
     req->req_recv.req_base.req_sequence = ob1_comm->recv_sequence++;
@@ -1306,7 +1306,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     if(OPAL_UNLIKELY(NULL == frag)) {
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
-                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, &req);
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
         /* We didn't find any matches.  Record this irecv so we can match
            it when the message comes in. */
         if(OPAL_LIKELY(req->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
@@ -1323,14 +1323,12 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     } else {
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
             hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
-                                   req->req_recv.req_base.req_comm,
-                                   hdr->hdr_match.hdr_src,
-                                   hdr->hdr_match.hdr_tag,
-                                   PERUSE_RECV);
 
-            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
-                                    &(req->req_recv.req_base), PERUSE_RECV);
+            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_REMOVE].event,
+                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &hdr->hdr_match);
+
+            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
+                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
 
 #if MCA_PML_OB1_CUSTOM_MATCH
             custom_match_umq_remove_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq, hold_prev, hold_elem, hold_index);

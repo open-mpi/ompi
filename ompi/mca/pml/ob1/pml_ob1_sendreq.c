@@ -13,7 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
@@ -105,7 +105,7 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
         sendreq->req_send.req_base.req_free_called = true;
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
                               MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                              sendreq->req_send.req_base.req_comm, &sendreq);
+                              sendreq->req_send.req_base.req_comm, NULL, &sendreq);
 
         if( true == sendreq->req_send.req_base.req_pml_complete ) {
             /* make buffer defined when the request is compeleted,
@@ -167,7 +167,7 @@ mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,
         void *req = &(sendreq->req_send.req_base);
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
                               MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                              sendreq->req_send.req_base.req_comm, &req);
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
     }
 
     /* signal request completion */
@@ -204,7 +204,7 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
         void *req = &(sendreq->req_send.req_base);
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
                               MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                              sendreq->req_send.req_base.req_comm, &req);
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
     }
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
@@ -753,7 +753,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
         void *req = &(sendreq->req_send.req_base);
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
                               MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                              sendreq->req_send.req_base.req_comm, &req);
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
     }
 
     /* send */
@@ -1052,7 +1052,7 @@ cannot_pack:
         void *req = &(sendreq->req_send.req_base);
         mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
                               MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                              sendreq->req_send.req_base.req_comm, &req);
+                              sendreq->req_send.req_base.req_comm, NULL, &req);
 
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
          /* At this point, check to see if the BTL is doing an asynchronous
@@ -1203,7 +1203,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
     void *req = &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base);
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
                           MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
-                          sendreq->req_send.req_base.req_comm, &req);
+                          sendreq->req_send.req_base.req_comm, NULL, &req);
 
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,

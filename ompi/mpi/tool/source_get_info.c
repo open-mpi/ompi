@@ -3,7 +3,6 @@
  * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,7 +13,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_event_get_index_by_name = PMPI_T_event_get_index_by_name
+#pragma weak MPI_T_source_get_info = PMPI_T_source_get_info
 #endif
 
 #if OMPI_PROFILING_DEFINES
@@ -22,27 +21,33 @@
 #endif
 
 
-int MPI_T_event_get_index_by_name (const char *name, int *event_index)
+int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc, int *desc_len, int *ordering)
 {
-    mca_base_event_t *event;
-    int ret;
-
+    mca_base_source_t *source;
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    if (MPI_PARAM_CHECK && (NULL == event_index || NULL == name)) {
-        return MPI_ERR_ARG;
-    }
-
     ompi_mpit_lock ();
-    ret = mca_base_event_get_by_fullname (name, &event);
+    source = mca_base_source_get (source_id);
     ompi_mpit_unlock ();
-    if (OPAL_SUCCESS != ret) {
-        return MPI_T_ERR_INVALID_NAME;
+    if (OPAL_UNLIKELY(NULL == source)) {
+        return MPI_T_ERR_INVALID_INDEX;
     }
 
-    *event_index = event->event_index;
+    if (name && name_len) {
+        strncpy (name, source->source_name, *name_len);
+        *name_len = strlen (name);
+    }
+
+    if (desc && desc_len) {
+        strncpy (desc, source->source_description, *desc_len);
+        *desc_len = strlen (desc);
+    }
+
+    if (ordering) {
+        *ordering = source->source_ordered;
+    }
 
     return MPI_SUCCESS;
 }

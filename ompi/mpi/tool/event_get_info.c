@@ -16,19 +16,20 @@
 /* needed to convert between opal and ompi datatypes until a function is provided */
 #include "ompi/datatype/ompi_datatype_internal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
+
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_event_get_info = PMPI_T_event_get_info
 #endif
 
-#if OMPI_PROFILING_DEFINES
 #include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
 int MPI_T_event_get_info (int event_index, char *name, int *name_len,
                           int *verbosity, MPI_Datatype *array_of_datatypes,
-                          int *num_datatypes, MPI_T_enum *enumtype, int *extent,
-                          char *desc, int *desc_len, int *bind)
+                          MPI_Aint *array_of_displacements, int *num_datatypes,
+                          MPI_T_enum *enumtype, int *extent, char *desc, int *desc_len,
+                          int *bind)
 {
     mca_base_event_t * const event;
     int ret, max_datatypes;
@@ -58,26 +59,35 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
         mpit_copy_string (name, name_len, event->event_name);
         mpit_copy_string (desc, desc_len, event->event_description);
 
-        if (num_datatypes && array_of_datatypes) {
-            max_datatypes = *num_datatypes < (int) (event->event_datatype_count + 1) ? *num_datatypes - 1 : event->event_datatype_count;
-            for (int i = 0 ; i < max_datatypes ; i++) {
-                ompi_datatype_t *ompi_datatype = NULL;
+        max_datatypes = num_datatypes ? (*num_datatypes < (int) (event->event_datatype_count + 1) ? *num_datatypes - 1 : event->event_datatype_count) : 0;
 
-                for (int j = 0 ; j < OMPI_DATATYPE_MPI_MAX_PREDEFINED ; ++j) {
-                    if (ompi_datatype_basicDatatypes[j]->super.id == event->event_datatypes[i]->id) {
-                        ompi_datatype = (ompi_datatype_t *) ompi_datatype_basicDatatypes[j];
-                        break;
+        if (max_datatypes) {
+            if (array_of_datatypes) {
+                for (int i = 0 ; i < max_datatypes ; i++) {
+                    ompi_datatype_t *ompi_datatype = NULL;
+
+                    for (int j = 0 ; j < OMPI_DATATYPE_MPI_MAX_PREDEFINED ; ++j) {
+                        if (ompi_datatype_basicDatatypes[j]->super.id == event->event_datatypes[i]->id) {
+                            ompi_datatype = (ompi_datatype_t *) ompi_datatype_basicDatatypes[j];
+                            break;
+                        }
                     }
+
+                    assert (NULL != ompi_datatype);
+
+                    array_of_datatypes[i] = ompi_datatype;
                 }
 
-                assert (NULL != ompi_datatype);
+                array_of_datatypes[max_datatypes] = MPI_DATATYPE_NULL;
+            }
 
-                array_of_datatypes[i] = ompi_datatype;
+            if (array_of_displacements) {
+                for (int i = 0 ; i < max_datatypes ; i++) {
+                    array_of_displacements[i] = (MPI_Aint) event->event_offsets[i];
+                }
             }
 
             *num_datatypes = max_datatypes;
-
-            array_of_datatypes[max_datatypes] = MPI_DATATYPE_NULL;
         }
 
         if (verbosity) {

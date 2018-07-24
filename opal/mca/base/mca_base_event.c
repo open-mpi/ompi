@@ -38,27 +38,6 @@ static int mca_base_event_get_by_fullname_internal (const char *full_name, mca_b
 static int mca_base_event_get_by_name_internal (const char *project, const char *framework, const char *component, const char *name,
                                                 mca_base_event_t **event, bool invalidok);
 
-static double mca_base_event_default_time_source (void)
-{
-    double time_value;
-
-#if OPAL_HAVE_CLOCK_GETTIME
-    struct timespec current;
-
-    clock_gettime (CLOCK_MONOTONIC, &current);
-    time_value = (double) current.tv_sec + ((double) current.tv_nsec) / 1000000000.0;
-#else
-    struct timeval current;
-
-    gettimeofday (&current, NULL);
-    time_value = (double) current.tv_sec + ((double) current.tv_usec) / 1000000.0;
-#endif
-
-    return time_value;
-}
-
-double (*mca_base_event_time_source) (void) = mca_base_event_default_time_source;
-
 /***************************************************************************************************/
 
 int mca_base_event_init (void)
@@ -106,15 +85,6 @@ int mca_base_event_finalize (void)
     return OPAL_SUCCESS;
 }
 
-void mca_base_event_set_time_source (double (*time_source) (void))
-{
-    if (time_source) {
-        mca_base_event_time_source = time_source;
-    } else {
-        mca_base_event_time_source = mca_base_event_default_time_source;
-    }
-}
-
 /***************************************************************************************************/
 
 
@@ -145,7 +115,7 @@ static int mca_base_event_get_by_name_internal (const char *project, const char 
     char *full_name;
     int ret;
 
-    ret = mca_base_var_generate_full_name4 (NULL, framework, component, name, &full_name);
+    ret = mca_base_var_generate_full_name4 (project, framework, component, name, &full_name);
     if (OPAL_SUCCESS != ret) {
         return OPAL_ERROR;
     }
@@ -162,13 +132,13 @@ int mca_base_event_get_by_name (const char *project, const char *framework, cons
     return mca_base_event_get_by_name_internal (project, framework, component, name, event, false);
 }
 
-int mca_base_handle_get_event (mca_base_event_handle_t *handle, mca_base_event_t **event)
+int mca_base_registration_get_event (mca_base_event_registration_t *registration, mca_base_event_t **event)
 {
-    if (OPAL_UNLIKELY(NULL == handle)) {
+    if (OPAL_UNLIKELY(NULL == registration)) {
         return OPAL_ERR_BAD_PARAM;
     }
 
-    *event = handle->event;
+    *event = registration->event;
 
     return OPAL_SUCCESS;
 }
@@ -208,7 +178,7 @@ int mca_base_event_get_count (int *count)
 int mca_base_event_register (const char *project, const char *framework, const char *component, const char *name,
                              const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
                              unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int extent, int bind,
-                             uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out)
+                             int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out)
 {
     int ret, group_index;
     mca_base_event_t *event;
@@ -239,7 +209,7 @@ int mca_base_event_register (const char *project, const char *framework, const c
 
         do {
             /* generate the variable's full name */
-            ret = mca_base_var_generate_full_name4 (NULL, framework, component, name, &event->event_name);
+            ret = mca_base_var_generate_full_name4 (project, framework, component, name, &event->event_name);
             if (OPAL_SUCCESS != ret) {
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 break;
@@ -283,7 +253,7 @@ int mca_base_event_register (const char *project, const char *framework, const c
     }
 
     event->event_verbosity = verbosity;
-    event->event_source = -1;
+    event->event_source = mca_base_source_get (source);
     event->event_extent = extent;
 
     if (event->event_enumerator) {
@@ -320,12 +290,12 @@ int mca_base_event_register (const char *project, const char *framework, const c
 int mca_base_component_event_register (const mca_base_component_t *component, const char *name,
                                        const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
                                        unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int extent, int bind,
-                                       uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out)
+                                       int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out)
 {
     /* invalidate this variable if the component's group is deregistered */
     return mca_base_event_register (component->mca_project_name, component->mca_type_name, component->mca_component_name,
                                     name, description, verbosity, datatypes, offsets, num_datatypes, enumerator, extent, bind,
-                                    flags | MCA_BASE_EVENT_FLAG_IWG, notify, ctx, event_out);
+                                    source, flags | MCA_BASE_EVENT_FLAG_IWG, notify, ctx, event_out);
 }
 
 int mca_base_component_event_register_list (const mca_base_component_t *component, mca_base_event_list_item_t *list, int count)
@@ -337,7 +307,8 @@ int mca_base_component_event_register_list (const mca_base_component_t *componen
         mca_base_event_list_item_t *item = list + i;
         if (NULL != item->elements && NULL != item->elements[0]) {
             char *full_name;
-            ret = mca_base_var_generate_full_name4 (NULL, component->mca_type_name, component->mca_component_name, item->name, &full_name);
+            ret = mca_base_var_generate_full_name4 (component->mca_project_name, component->mca_type_name, component->mca_component_name,
+                                                    item->name, &full_name);
             if (OPAL_SUCCESS != ret) {
                 return OPAL_ERROR;
             }
@@ -347,8 +318,8 @@ int mca_base_component_event_register_list (const mca_base_component_t *componen
 
         ret =  mca_base_event_register (component->mca_project_name, component->mca_type_name, component->mca_component_name,
                                         item->name, item->desc, item->verbosity, item->datatypes, item->offsets, item->num_datatypes,
-                                        new_enum, item->extent, item->bind, item->flags | MCA_BASE_EVENT_FLAG_IWG, item->notify, item->ctx,
-                                        &item->event);
+                                        new_enum, item->extent, item->bind, item->source, item->flags | MCA_BASE_EVENT_FLAG_IWG,
+                                        item->notify, item->ctx, &item->event);
 
         if (new_enum) {
             OBJ_RELEASE(new_enum);
@@ -371,41 +342,42 @@ int mca_base_event_mark_invalid (mca_base_event_t *event)
 
     return OPAL_SUCCESS;
 }
-int mca_base_event_handle_alloc (mca_base_event_t *event, void *obj_handle, void *user_data,
-                                 mca_base_event_cb_fn_t event_cbfn, mca_base_event_handle_t **handle)
+
+int mca_base_event_registration_alloc (mca_base_event_t *event, void *obj_registration, void *user_data,
+                                 mca_base_event_cb_fn_t event_cbfn, mca_base_event_registration_t **registration)
 {
-    mca_base_event_handle_t *event_handle = NULL;
+    mca_base_event_registration_t *event_registration = NULL;
 
     if (0 == event->event_bind) {
         /* ignore binding object */
-        obj_handle = NULL;
-    } else if (0 != event->event_bind && NULL == obj_handle) {
+        obj_registration = NULL;
+    } else if (0 != event->event_bind && NULL == obj_registration) {
         /* this is an application error. what is the correct error code? */
         return OPAL_ERR_BAD_PARAM;
     }
 
-    /* allocate and initialize the handle */
-    event_handle = OBJ_NEW(mca_base_event_handle_t);
-    if (NULL == event_handle) {
+    /* allocate and initialize the registration */
+    event_registration = OBJ_NEW(mca_base_event_registration_t);
+    if (NULL == event_registration) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    event_handle->obj_handle = (NULL == obj_handle ? NULL : *(void**)obj_handle);
-    event_handle->event = event;
-    event_handle->user_data = user_data;
-    event_handle->event_cb = event_cbfn;
-    event_handle->obj_handle = obj_handle;
+    event_registration->obj_registration = (NULL == obj_registration ? NULL : *(void**)obj_registration);
+    event_registration->event = event;
+    event_registration->user_data = user_data;
+    event_registration->event_cb = event_cbfn;
+    event_registration->obj_registration = obj_registration;
 
-    *handle = event_handle;
-    opal_list_append (&event->event_bound_handles, &event_handle->super);
+    *registration = event_registration;
+    opal_list_append (&event->event_bound_registrations, &event_registration->super);
 
     return OPAL_SUCCESS;
 }
 
-void mca_base_event_handle_free (mca_base_event_handle_t *handle, mca_base_event_handle_free_cb_fn_t cbfn)
+void mca_base_event_registration_free (mca_base_event_registration_t *registration, mca_base_event_registration_free_cb_fn_t cbfn)
 {
-    handle->free_cb = cbfn;
-    OBJ_RELEASE(handle);
+    registration->free_cb = cbfn;
+    OBJ_RELEASE(registration);
 }
 
 int mca_base_event_dump(int index, char ***out, mca_base_var_dump_type_t output_type)
@@ -501,18 +473,19 @@ int mca_base_event_dump(int index, char ***out, mca_base_var_dump_type_t output_
     return OPAL_SUCCESS;
 }
 
-void mca_base_event_raise_internal (mca_base_event_t *event, mca_base_cb_safety_t cb_safety, void *obj, void *data)
+void mca_base_event_raise_internal (mca_base_event_t *event, mca_base_cb_safety_t cb_safety, void *obj, mca_base_source_t *source, void *data)
 {
-    mca_base_raised_event_t revent = {.re_timestamp = mca_base_event_time_source (),
+    mca_base_raised_event_t revent = {.re_timestamp = source ? source->source_time () : event->event_source->source_time (),
+                                      .re_source = source ? source->source_index  : event->event_source->source_index,
                                       .re_data = data, .re_event = event};
-    mca_base_event_handle_t *handle;
+    mca_base_event_registration_t *registration;
 
-    OPAL_LIST_FOREACH(handle, &event->event_bound_handles, mca_base_event_handle_t) {
-        if (handle->obj_handle != obj) {
+    OPAL_LIST_FOREACH(registration, &event->event_bound_registrations, mca_base_event_registration_t) {
+        if (registration->obj_registration != obj) {
             continue;
         }
 
-        handle->event_cb (&revent, handle, cb_safety, handle->user_data);
+        registration->event_cb (&revent, registration, cb_safety, registration->user_data);
     }
 }
 
@@ -520,7 +493,7 @@ void mca_base_event_raise_internal (mca_base_event_t *event, mca_base_cb_safety_
 static void mca_base_event_contructor (mca_base_event_t *event)
 {
     memset ((char *) event + sizeof (event->super), 0, sizeof (*event) - sizeof (event->super));
-    OBJ_CONSTRUCT(&event->event_bound_handles, opal_list_t);
+    OBJ_CONSTRUCT(&event->event_bound_registrations, opal_list_t);
 }
 
 static void mca_base_event_destructor (mca_base_event_t *event)
@@ -534,31 +507,31 @@ static void mca_base_event_destructor (mca_base_event_t *event)
 
     free (event->event_datatypes);
 
-    OBJ_DESTRUCT(&event->event_bound_handles);
+    OBJ_DESTRUCT(&event->event_bound_registrations);
 }
 
 OBJ_CLASS_INSTANCE(mca_base_event_t, opal_object_t, mca_base_event_contructor, mca_base_event_destructor);
 
-/* mca_base_event_handle_t class */
-static void mca_base_event_handle_constructor (mca_base_event_handle_t *handle)
+/* mca_base_event_registration_t class */
+static void mca_base_event_registration_constructor (mca_base_event_registration_t *registration)
 {
-    memset ((char *) handle + sizeof (handle->super), 0, sizeof (*handle) - sizeof (handle->super));
+    memset ((char *) registration + sizeof (registration->super), 0, sizeof (*registration) - sizeof (registration->super));
 }
 
-static void mca_base_event_handle_destructor (mca_base_event_handle_t *handle)
+static void mca_base_event_registration_destructor (mca_base_event_registration_t *registration)
 {
-    /* remove this handle from the event's list */
-    if (handle->event) {
-        opal_list_remove_item (&handle->event->event_bound_handles, &handle->super);
+    /* remove this registration from the event's list */
+    if (registration->event) {
+        opal_list_remove_item (&registration->event->event_bound_registrations, &registration->super);
     }
 
-    if (handle->free_cb) {
-        handle->free_cb (handle, MCA_BASE_CALLBACK_SAFETY_NONE, handle->user_data);
+    if (registration->free_cb) {
+        registration->free_cb (registration, MCA_BASE_CALLBACK_SAFETY_BASIC, registration->user_data);
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_base_event_handle_t, opal_list_item_t, mca_base_event_handle_constructor,
-                   mca_base_event_handle_destructor);
+OBJ_CLASS_INSTANCE(mca_base_event_registration_t, opal_list_item_t, mca_base_event_registration_constructor,
+                   mca_base_event_registration_destructor);
 
 
 /* query functions */
@@ -566,6 +539,11 @@ int mca_base_event_get_time (mca_base_raised_event_t *revent, double *event_time
 {
     *event_time = revent->re_timestamp;
     return OPAL_SUCCESS;
+}
+
+void mca_base_event_get_source (mca_base_raised_event_t *revent, int *source_index)
+{
+    *source_index = revent->re_source;
 }
 
 int mca_base_event_read (mca_base_raised_event_t *revent, unsigned int element_index, void *buffer)
@@ -579,6 +557,13 @@ int mca_base_event_read (mca_base_raised_event_t *revent, unsigned int element_i
     memcpy (buffer, revent->re_data + event->event_offsets[element_index], event->event_datatypes[element_index]->size);
 
     return OPAL_SUCCESS;
+}
+
+void mca_base_event_copy (mca_base_raised_event_t *revent, void *buffer)
+{
+    mca_base_event_t *event = revent->re_event;
+
+    memcpy (buffer, revent->re_data, event->event_extent);
 }
 
 int mca_base_event_read_some (mca_base_raised_event_t *revent, void *array_of_buffers[])
@@ -605,7 +590,7 @@ int mca_base_event_read_all (mca_base_raised_event_t *revent, void *array_of_buf
     return OPAL_SUCCESS;
 }
 
-void mca_base_event_handle_set_dropped_handler (mca_base_event_handle_t *handle, mca_base_event_dropped_cb_fn_t cbfn)
+void mca_base_event_registration_set_dropped_handler (mca_base_event_registration_t *registration, mca_base_event_dropped_cb_fn_t cbfn)
 {
-    handle->dropped_cb = cbfn;
+    registration->dropped_cb = cbfn;
 }

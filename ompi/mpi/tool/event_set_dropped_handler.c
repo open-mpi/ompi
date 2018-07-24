@@ -21,7 +21,7 @@
 #include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-int MPI_T_event_set_dropped_handler (MPI_T_event_handle handle, MPI_T_event_dropped_cb_function dropped_cb_function)
+int MPI_T_event_set_dropped_handler (MPI_T_event_registration handle, MPI_T_event_dropped_cb_function dropped_cb_function)
 
 {
     if (!mpit_is_initialized ()) {
@@ -29,11 +29,11 @@ int MPI_T_event_set_dropped_handler (MPI_T_event_handle handle, MPI_T_event_drop
     }
 
     /* Check that this is a valid handle */
-    if (MPI_T_EVENT_HANDLE_NULL == handle) {
+    if (MPI_T_EVENT_REGISTRATION_NULL == handle) {
         return MPI_T_ERR_INVALID_HANDLE;
     }
 
-    mca_base_event_handle_set_dropped_handler (handle, (mca_base_event_dropped_cb_fn_t) dropped_cb_function);
+    mca_base_event_registration_set_dropped_handler (handle, (mca_base_event_dropped_cb_fn_t) dropped_cb_function);
 
     return MPI_SUCCESS;
 }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -23,7 +23,7 @@
 
 int MPI_T_event_get_index (const char *name, int *event_index)
 {
-    int ret;
+    mca_base_event_t *event = NULL;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
@@ -33,9 +33,14 @@ int MPI_T_event_get_index (const char *name, int *event_index)
         return MPI_ERR_ARG;
     }
 
-    mpit_lock ();
-    ret = mca_base_event_find_by_name (name, event_index);
-    mpit_unlock ();
+    ompi_mpit_lock ();
+    (void) mca_base_event_get_by_fullname (name, &event);
+    ompi_mpit_unlock ();
 
-    return ompit_opal_to_mpit_error (ret);
+    if (NULL == event) {
+        return MPI_T_ERR_INVALID_NAME;
+    }
+
+    *event_index = event->event_index;
+    return MPI_SUCCESS;
 }

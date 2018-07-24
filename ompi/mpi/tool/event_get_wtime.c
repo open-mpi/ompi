@@ -14,7 +14,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_event_handle_free = PMPI_T_event_handle_free
+#pragma weak MPI_T_event_get_wtime = PMPI_T_event_get_wtime
 #endif
 
 #if OMPI_PROFILING_DEFINES
@@ -22,29 +22,15 @@
 #endif
 
 
-int MPI_T_event_handle_free (MPI_T_event_free_cb_function free_cb_function,
-                             MPI_T_event_handle *handle)
+int MPI_T_event_get_wtime (MPI_T_event_instance event, double *event_time)
 {
-    int ret = MPI_SUCCESS;
+    int ret;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
+    ret = mca_base_event_get_time (event, event_time);
 
-    do {
-        /* Check that this is a valid handle */
-        if (MPI_T_EVENT_HANDLE_NULL == *handle) {
-            ret = MPI_T_ERR_INVALID_HANDLE;
-            break;
-        }
-
-        mca_base_event_handle_free (*handle, (mca_base_event_handle_free_cb_fn_t) free_cb_function);
-        *handle = MPI_T_EVENT_HANDLE_NULL;
-    } while (0);
-
-    ompi_mpit_unlock ();
-
-    return ret;
+    return ompit_opal_to_mpit_error (ret);
 }

@@ -1,3 +1,4 @@
+
 # -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
@@ -76,18 +77,20 @@ nodist_libmpi_pmpit_la_SOURCES = \
 	ppvar_start.c \
 	ppvar_stop.c \
 	ppvar_write.c \
-	pevent_get_index_by_handle.c \
-	pevent_get_index_by_name.c \
+	pevent_get_index.c \
 	pevent_get_info.c \
 	pevent_get_num.c \
 	pevent_get_source.c \
-	pevent_get_time.c \
-	pevent_handle_alloc.c \
-	pevent_handle_free.c \
+	pevent_get_wtime.c \
+	pevent_registration_alloc.c \
+	pevent_registration_free.c \
 	pevent_read.c \
+	pevent_copy.c \
 	pevent_read_all.c \
 	pevent_read_some.c \
-	pevent_set_dropped_handler.c
+	pevent_set_dropped_handler.c \
+	psource_get_num.c \
+	psource_get_info.c
 
 #
 # Sym link in the sources from the real MPI directory

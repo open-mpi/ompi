@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -18,7 +18,6 @@
 #include "ompi/include/ompi_config.h"
 #include "opal/util/string_copy.h"
 #include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/base/mca_base_pvar.h"
 #include "opal/mca/base/mca_base_event.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"

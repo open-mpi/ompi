@@ -22,13 +22,12 @@
 #endif
 
 
-int MPI_T_event_get_source (MPI_T_event event, int *source_index)
+int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index)
 {
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* not available right now */
-    *source_index = -1;
+    mca_base_event_get_source (event, source_index);
     return MPI_SUCCESS;
 }

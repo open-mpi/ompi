@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -48,6 +48,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
+#include "opal/mca/base/mca_base_source.h"
 #include "opal/mca/base/mca_base_event.h"
 
 BEGIN_C_DECLS
