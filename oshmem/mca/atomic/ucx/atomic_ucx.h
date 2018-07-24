@@ -37,7 +37,7 @@ OSHMEM_DECLSPEC void atomic_ucx_unlock(int pe);
 
 /* API functions */
 
-int mca_atomic_ucx_init(bool enable_progress_threads, bool enable_threads);
+int mca_atomic_ucx_startup(bool enable_progress_threads, bool enable_threads);
 int mca_atomic_ucx_finalize(void);
 mca_atomic_base_module_t*
 mca_atomic_ucx_query(int *priority);
