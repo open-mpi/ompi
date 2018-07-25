@@ -20,8 +20,8 @@
 #include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc, int *desc_len, int *ordering)
+int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc, int *desc_len, MPI_T_order *ordering,
+                           MPI_Count *ticks_per_second)
 {
     mca_base_source_t *source;
     if (!mpit_is_initialized ()) {
@@ -47,6 +47,10 @@ int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc,
 
     if (ordering) {
         *ordering = source->source_ordered;
+    }
+
+    if (ticks_per_second) {
+        *ticks_per_second = source->source_ticks;
     }
 
     return MPI_SUCCESS;

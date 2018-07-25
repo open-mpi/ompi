@@ -58,9 +58,9 @@ typedef void (*mca_base_event_dropped_cb_fn_t) (int count, struct mca_base_event
 
 typedef struct mca_base_raised_event_t {
     struct mca_base_event_t *re_event;
-    int     re_source;
-    double  re_timestamp;
-    int8_t *re_data;
+    int      re_source;
+    uint64_t re_timestamp;
+    int8_t  *re_data;
 } mca_base_raised_event_t;
 
 typedef struct mca_base_event_t {
@@ -206,7 +206,7 @@ OPAL_DECLSPEC int mca_base_event_get_by_name (const char *project, const char *f
 OPAL_DECLSPEC int mca_base_registration_get_event (mca_base_event_registration_t *registration, mca_base_event_t **event);
 OPAL_DECLSPEC int mca_base_event_get_by_fullname (const char *full_name, mca_base_event_t **event);
 
-OPAL_DECLSPEC int mca_base_event_get_time (mca_base_raised_event_t *revent, double *event_time);
+OPAL_DECLSPEC int mca_base_event_get_time (mca_base_raised_event_t *revent, uint64_t *event_time);
 OPAL_DECLSPEC void mca_base_event_get_source (mca_base_raised_event_t *revent, int *source_index);
 OPAL_DECLSPEC int mca_base_event_read (mca_base_raised_event_t *revent, unsigned int element_index, void *buffer);
 OPAL_DECLSPEC void mca_base_event_copy (mca_base_raised_event_t *revent, void *buffer);

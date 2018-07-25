@@ -535,7 +535,7 @@ OBJ_CLASS_INSTANCE(mca_base_event_registration_t, opal_list_item_t, mca_base_eve
 
 
 /* query functions */
-int mca_base_event_get_time (mca_base_raised_event_t *revent, double *event_time)
+int mca_base_event_get_time (mca_base_raised_event_t *revent, uint64_t *event_time)
 {
     *event_time = revent->re_timestamp;
     return OPAL_SUCCESS;

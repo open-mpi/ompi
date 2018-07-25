@@ -52,9 +52,6 @@ int MPI_T_init_thread (int required, int *provided)
             break;
         }
 
-        /* ensure the time source is the same as MPI_Wtime() */
-        mca_base_source_set_time_source (MCA_BASE_SOURCE_DEFAULT_SOURCE, MPI_Wtime);
-
         /* register all parameters */
         rc = ompi_info_register_framework_params (NULL);
         if (OMPI_SUCCESS != rc) {

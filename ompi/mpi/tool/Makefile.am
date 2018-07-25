@@ -41,10 +41,9 @@ libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
                      pvar_get_index.c category_get_index.c \
                      event_get_index.c event_copy.c \
                      event_get_info.c event_get_num.c event_get_source.c \
-                     event_get_wtime.c event_registration_alloc.c event_registration_free.c \
-                     event_read.c event_read_all.c event_read_some.c \
-                     event_set_dropped_handler.c source_get_num.c \
-                     source_get_info.c
+                     event_get_timestamp.c event_registration_alloc.c event_registration_free.c \
+                     event_read.c event_set_dropped_handler.c source_get_num.c \
+                     source_get_info.c source_get_timestamp.c
 
 # Conditionally install the header files
 

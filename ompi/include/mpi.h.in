@@ -816,11 +816,24 @@ enum {
   MPI_T_PVAR_CLASS_GENERIC
 };
 
+/*
+ * MPIT callback safety levels
+ */
 typedef enum {
-  MPI_T_CALLBACK_REQUIRE_BASIC,
+  MPI_T_CALLBACK_REQUIRE_MPI_RESTRICTED,
   MPI_T_CALLBACK_REQUIRE_THREAD_SAFE,
   MPI_T_CALLBACK_REQUIRE_ASYNC_SIGNAL_SAFE
 } MPI_T_cb_safety;
+
+/*
+ * MPIT source ordering
+ */
+enum ompi_mpi_t_order_t {
+  MPI_T_ORDERED,
+  MPI_T_UNORDERED,
+};
+
+typedef enum ompi_mpi_t_order_t MPI_T_order;
 
 /*
  * MPI Tool event functions
@@ -2689,15 +2702,15 @@ OMPI_DECLSPEC  int PMPI_T_event_registration_free (MPI_T_event_free_cb_function 
 OMPI_DECLSPEC  int PMPI_T_event_set_dropped_handler (MPI_T_event_registration handle,
                                                      MPI_T_event_dropped_cb_function dropped_cb_function);
 OMPI_DECLSPEC  int PMPI_T_event_read (MPI_T_event_instance event, int element_index, void *buffer);
-OMPI_DECLSPEC  int PMPI_T_event_read_some (MPI_T_event_instance event, void *array_of_buffers[]);
-OMPI_DECLSPEC  int PMPI_T_event_read_all (MPI_T_event_instance event, void *array_of_buffers[]);
 OMPI_DECLSPEC  int PMPI_T_event_copy (MPI_T_event_instance event, void *buffer);
-OMPI_DECLSPEC  int PMPI_T_event_get_wtime (MPI_T_event_instance event, double *event_time);
+OMPI_DECLSPEC  int PMPI_T_event_get_timestamp (MPI_T_event_instance event, MPI_Count *event_time);
 OMPI_DECLSPEC  int PMPI_T_event_get_source (MPI_T_event_instance event, int *source_index);
 
 OMPI_DECLSPEC  int PMPI_T_source_get_num (int *num_source);
 OMPI_DECLSPEC  int PMPI_T_source_get_info (int source_id, char *name, int *name_len,
-                                           char *desc, int *desc_len, int *ordering);
+                                           char *desc, int *desc_len, MPI_T_order *ordering,
+                                           MPI_Count *ticks_per_second);
+OMPI_DECLSPEC  int PMPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
 
   /*
    * Tool MPI API
@@ -2780,15 +2793,15 @@ OMPI_DECLSPEC  int MPI_T_event_registration_free (MPI_T_event_free_cb_function f
 OMPI_DECLSPEC  int MPI_T_event_set_dropped_handler (MPI_T_event_registration handle,
                                                     MPI_T_event_dropped_cb_function dropped_cb_function);
 OMPI_DECLSPEC  int MPI_T_event_read (MPI_T_event_instance event, int element_index, void *buffer);
-OMPI_DECLSPEC  int MPI_T_event_read_some (MPI_T_event_instance event, void *array_of_buffers[]);
-OMPI_DECLSPEC  int MPI_T_event_read_all (MPI_T_event_instance event, void *array_of_buffers[]);
 OMPI_DECLSPEC  int MPI_T_event_copy (MPI_T_event_instance event, void *buffer);
-OMPI_DECLSPEC  int MPI_T_event_get_wtime (MPI_T_event_instance event, double *event_time);
+OMPI_DECLSPEC  int MPI_T_event_get_timestamp (MPI_T_event_instance event, MPI_Count *event_time);
 OMPI_DECLSPEC  int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index);
 
 OMPI_DECLSPEC  int MPI_T_source_get_num (int *num_source);
 OMPI_DECLSPEC  int MPI_T_source_get_info (int source_id, char *name, int *name_len,
-                                          char *desc, int *desc_len, int *ordering);
+                                          char *desc, int *desc_len, MPI_T_order *ordering,
+                                          MPI_Count *ticks_per_second);
+OMPI_DECLSPEC  int MPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp);
 
 /*
  * Even though MPI_Copy_function and MPI_Delete_function are

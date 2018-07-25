@@ -81,16 +81,15 @@ nodist_libmpi_pmpit_la_SOURCES = \
 	pevent_get_info.c \
 	pevent_get_num.c \
 	pevent_get_source.c \
-	pevent_get_wtime.c \
+	pevent_get_timestamp.c \
 	pevent_registration_alloc.c \
 	pevent_registration_free.c \
 	pevent_read.c \
 	pevent_copy.c \
-	pevent_read_all.c \
-	pevent_read_some.c \
 	pevent_set_dropped_handler.c \
 	psource_get_num.c \
-	psource_get_info.c
+	psource_get_info.c \
+	psource_get_timestamp.c
 
 #
 # Sym link in the sources from the real MPI directory

@@ -31,23 +31,32 @@ static int source_count;
 
 int mca_base_source_default_source = -1;
 
-static double mca_base_source_default_time_source (void)
+static uint64_t mca_base_source_default_time_source (void)
 {
-    double time_value;
+    uint64_t time_value;
 
 #if OPAL_HAVE_CLOCK_GETTIME
     struct timespec current;
 
     clock_gettime (CLOCK_MONOTONIC, &current);
-    time_value = (double) current.tv_sec + ((double) current.tv_nsec) / 1000000000.0;
+    time_value = 1000000000ul * current.tv_sec + current.tv_nsec;
 #else
     struct timeval current;
 
     gettimeofday (&current, NULL);
-    time_value = (double) current.tv_sec + ((double) current.tv_usec) / 1000000.0;
+    time_value = 1000000ul * current.tv_sec + current.tv_usec;
 #endif
 
     return time_value;
+}
+
+static uint64_t mca_base_source_default_time_source_ticks (void)
+{
+#if OPAL_HAVE_CLOCK_GETTIME
+    return 1000000000;
+#else
+    return 1000000;
+#endif
 }
 
 /***************************************************************************************************/
@@ -64,7 +73,8 @@ int mca_base_source_init (void)
 
         mca_base_source_default_source = mca_base_source_register ("opal", "mca", "base", "default_source",
                                                                    "Default source for MCA events", true,
-                                                                   mca_base_source_default_time_source);
+                                                                   mca_base_source_default_time_source,
+                                                                   mca_base_source_default_time_source_ticks ());
 
     }
 
@@ -98,7 +108,7 @@ mca_base_source_t *mca_base_source_get (int source_index)
     return opal_pointer_array_get_item (&registered_sources, source_index);
 }
 
-int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t time_source)
+int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t time_source, uint64_t time_ticks)
 {
     mca_base_source_t *source = mca_base_source_get (source_index);
 
@@ -108,9 +118,11 @@ int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t
 
     if (!time_source) {
         time_source = mca_base_source_default_time_source;
+        time_ticks = mca_base_source_default_time_source_ticks ();
     }
 
     source->source_time = time_source;
+    source->source_ticks = time_ticks;
 
     return OPAL_SUCCESS;
 }
@@ -141,7 +153,7 @@ static inline int mca_base_source_get_by_name (const char *name, mca_base_source
 }
 
 int mca_base_source_register (const char *project, const char *framework, const char *component, const char *name,
-                              const char *description, bool ordered, mca_base_source_time_fn_t source_time)
+                              const char *description, bool ordered, mca_base_source_time_fn_t source_time, uint64_t source_ticks)
 {
     mca_base_source_t *source;
     char *source_name;
@@ -195,18 +207,20 @@ int mca_base_source_register (const char *project, const char *framework, const 
     source->source_ordered = ordered;
     if (NULL == source_time) {
         source_time = mca_base_source_default_time_source;
+        source_ticks = mca_base_source_default_time_source_ticks ();
     }
 
     source->source_time = source_time;
+    source->source_ticks = source_ticks;
 
     return OPAL_SUCCESS;
 }
 int mca_base_component_source_register (const mca_base_component_t *component, const char *name, const char *description, bool ordered,
-                                        mca_base_source_time_fn_t source_time)
+                                        mca_base_source_time_fn_t source_time, uint64_t source_ticks)
 {
     /* invalidate this variable if the component's group is deregistered */
     return mca_base_source_register (component->mca_project_name, component->mca_type_name, component->mca_component_name,
-                                     name, description, ordered, source_time);
+                                     name, description, ordered, source_time, source_ticks);
 }
 
 /* mca_base_source_t class */

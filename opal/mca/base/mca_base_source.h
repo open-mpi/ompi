@@ -19,7 +19,7 @@ enum {
     MCA_BASE_SOURCE_DEFAULT_SOURCE,
 };
 
-typedef double (*mca_base_source_time_fn_t) (void);
+typedef uint64_t (*mca_base_source_time_fn_t) (void);
 
 typedef struct mca_base_source_t {
     /** Make this an opal object */
@@ -39,6 +39,9 @@ typedef struct mca_base_source_t {
 
     /** Time source (never NULL) */
     mca_base_source_time_fn_t source_time;
+
+    /** Time source ticks per second */
+    uint64_t source_ticks;
 } mca_base_source_t;
 
 OBJ_CLASS_DECLARATION(mca_base_source_t);
@@ -53,12 +56,12 @@ OPAL_DECLSPEC int mca_base_source_get_count (int *count);
 OPAL_DECLSPEC int mca_base_source_dump(int index, char ***out, mca_base_var_dump_type_t output_type);
 
 OPAL_DECLSPEC int mca_base_source_register (const char *project, const char *framework, const char *component, const char *name,
-                                            const char *description, bool ordered, mca_base_source_time_fn_t source_time);
+                                            const char *description, bool ordered, mca_base_source_time_fn_t source_time, uint64_t source_ticks);
 
 OPAL_DECLSPEC int mca_base_component_source_register (const mca_base_component_t *component, const char *name, const char *description,
-                                                      bool ordered, mca_base_source_time_fn_t source_time);
+                                                      bool ordered, mca_base_source_time_fn_t source_time, uint64_t source_ticks);
 
-OPAL_DECLSPEC int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t time_source);
+OPAL_DECLSPEC int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t time_source, uint64_t time_ticks);
 
 OPAL_DECLSPEC mca_base_source_t *mca_base_source_get (int source_index);
 
