@@ -48,47 +48,47 @@ static
 spml_ucx_mkey_t * mca_spml_ucx_get_mkey_slow(int pe, void *va, void **rva);
 
 mca_spml_ucx_t mca_spml_ucx = {
-    {
+    .super = {
         /* Init mca_spml_base_module_t */
-        mca_spml_ucx_add_procs,
-        mca_spml_ucx_del_procs,
-        mca_spml_ucx_enable,
-        mca_spml_ucx_register,
-        mca_spml_ucx_deregister,
-        mca_spml_base_oob_get_mkeys,
-        mca_spml_ucx_ctx_create,
-        mca_spml_ucx_ctx_destroy,
-        mca_spml_ucx_put,
-        mca_spml_ucx_put_nb,
-        mca_spml_ucx_get,
-        mca_spml_ucx_get_nb,
-        mca_spml_ucx_recv,
-        mca_spml_ucx_send,
-        mca_spml_base_wait,
-        mca_spml_base_wait_nb,
-        mca_spml_base_test,
-        mca_spml_ucx_fence,
-        mca_spml_ucx_quiet,
-        mca_spml_ucx_rmkey_unpack,
-        mca_spml_ucx_rmkey_free,
-        mca_spml_ucx_rmkey_ptr,
-        mca_spml_ucx_memuse_hook,
-        (void*)&mca_spml_ucx
+        .spml_add_procs     = mca_spml_ucx_add_procs,
+        .spml_del_procs     = mca_spml_ucx_del_procs,
+        .spml_enable        = mca_spml_ucx_enable,
+        .spml_register      = mca_spml_ucx_register,
+        .spml_deregister    = mca_spml_ucx_deregister,
+        .spml_oob_get_mkeys = mca_spml_base_oob_get_mkeys,
+        .spml_ctx_create    = mca_spml_ucx_ctx_create,
+        .spml_ctx_destroy   = mca_spml_ucx_ctx_destroy,
+        .spml_put           = mca_spml_ucx_put,
+        .spml_put_nb        = mca_spml_ucx_put_nb,
+        .spml_get           = mca_spml_ucx_get,
+        .spml_get_nb        = mca_spml_ucx_get_nb,
+        .spml_recv          = mca_spml_ucx_recv,
+        .spml_send          = mca_spml_ucx_send,
+        .spml_wait          = mca_spml_base_wait,
+        .spml_wait_nb       = mca_spml_base_wait_nb,
+        .spml_test          = mca_spml_base_test,
+        .spml_fence         = mca_spml_ucx_fence,
+        .spml_quiet         = mca_spml_ucx_quiet,
+        .spml_rmkey_unpack  = mca_spml_ucx_rmkey_unpack,
+        .spml_rmkey_free    = mca_spml_ucx_rmkey_free,
+        .spml_rmkey_ptr     = mca_spml_ucx_rmkey_ptr,
+        .spml_memuse_hook   = mca_spml_ucx_memuse_hook,
+        .self               = (void*)&mca_spml_ucx
     },
 
-    NULL,   /* ucp_context */
-    1,      /* num_disconnect */
-    0,      /* heap_reg_nb */
-    0,      /* enabled */
-    mca_spml_ucx_get_mkey_slow
+    .ucp_context            = NULL,
+    .num_disconnect         = 1,
+    .heap_reg_nb            = 0,
+    .enabled                = 0,
+    .get_mkey_slow          = mca_spml_ucx_get_mkey_slow
 };
 
 OBJ_CLASS_INSTANCE(mca_spml_ucx_ctx_list_item_t, opal_list_item_t, NULL, NULL);
 
 mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default = {
-    NULL,   /* ucp_worker */
-    NULL,   /* ucp_peers */
-    0       /* options */
+    .ucp_worker = NULL,
+    .ucp_peers  = NULL,
+    .options    = 0
 };
 
 int mca_spml_ucx_enable(bool enable)
