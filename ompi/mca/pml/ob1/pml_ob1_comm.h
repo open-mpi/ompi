@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
@@ -31,30 +31,11 @@
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
 
-#define MCA_PML_OB1_CUSTOM_MATCH 1/** TODO: move this to config parameter */
-#define MCA_PML_OB1_CUSTOM_MATCH_ARRAYS 0
-#define MCA_PML_OB1_CUSTOM_MATCH_FUZZY_BYTE 0
-#define MCA_PML_OB1_CUSTOM_MATCH_FUZZY_SHORT 0
-#define MCA_PML_OB1_CUSTOM_MATCH_FUZZY_WORD 0
-#define MCA_PML_OB1_CUSTOM_MATCH_VECTOR 0
+/* NTH: at some point we need to untangle the headers. this declaration is needed
+ * for headers included by the custom match code. */
+typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 
-#if MCA_PML_OB1_CUSTOM_MATCH
-
-#if MCA_PML_OB1_CUSTOM_MATCH_ARRAYS
-#include "ompi/mca/pml/ob1/custommatch/arrays.h"
-#elif MCA_PML_OB1_CUSTOM_MATCH_FUZZY_BYTE
-#include "ompi/mca/pml/ob1/custommatch/fuzzy512-byte.h"
-#elif MCA_PML_OB1_CUSTOM_MATCH_FUZZY_SHORT
-#include "ompi/mca/pml/ob1/custommatch/fuzzy512-short.h"
-#elif MCA_PML_OB1_CUSTOM_MATCH_FUZZY_WORD
-#include "ompi/mca/pml/ob1/custommatch/fuzzy512-word.h"
-#elif MCA_PML_OB1_CUSTOM_MATCH_VECTOR
-#include "ompi/mca/pml/ob1/custommatch/vectors.h"
-#else
-#include "ompi/mca/pml/ob1/custommatch/linkedlist.h" //Default Custom Match is single linked list
-#endif
-
-#endif
+#include "custommatch/pml_ob1_custom_match.h"
 
 BEGIN_C_DECLS
 
@@ -74,7 +55,6 @@ struct mca_pml_ob1_comm_proc_t {
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
 #endif
 };
-typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_proc_t);
 

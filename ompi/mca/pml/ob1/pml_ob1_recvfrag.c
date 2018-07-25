@@ -728,13 +728,11 @@ static mca_pml_ob1_recv_request_t *match_incomming(
         mca_pml_ob1_match_hdr_t *hdr, mca_pml_ob1_comm_t *comm,
         mca_pml_ob1_comm_proc_t *proc)
 {
+#if !MCA_PML_OB1_CUSTOM_MATCH
     mca_pml_ob1_recv_request_t *specific_recv, *wild_recv;
     mca_pml_sequence_t wild_recv_seq, specific_recv_seq;
     int tag = hdr->hdr_tag;
 
-#if MCA_PML_OB1_CUSTOM_MATCH
-    return custom_match_prq_find_dequeue_verify(comm->prq, hdr->hdr_tag, hdr->hdr_src);
-#else
     specific_recv = get_posted_recv(&proc->specific_receives);
     wild_recv = get_posted_recv(&comm->wild_receives);
 
@@ -773,11 +771,12 @@ static mca_pml_ob1_recv_request_t *match_incomming(
     }
 
     return NULL;
+#else
+    return custom_match_prq_find_dequeue_verify(comm->prq, hdr->hdr_tag, hdr->hdr_src);
 #endif
 }
 
-
-#if MCA_PML_OB1_CUSTOM_MATCH
+#if !MCA_PML_OB1_CUSTOM_MATCH
 static mca_pml_ob1_recv_request_t *match_incomming_no_any_source (
         mca_pml_ob1_match_hdr_t *hdr, mca_pml_ob1_comm_t *comm,
         mca_pml_ob1_comm_proc_t *proc)
@@ -816,7 +815,7 @@ match_one(mca_btl_base_module_t *btl,
     mca_pml_ob1_comm_t *comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
 
     do {
-#if !MCA_PML_OB1_CUSTOM_MATCH
+#if MCA_PML_OB1_CUSTOM_MATCH
         match = match_incomming(hdr, comm, proc);
 #else
         if (!OMPI_COMM_CHECK_ASSERT_NO_ANY_SOURCE (comm_ptr)) {

@@ -1108,22 +1108,13 @@ recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
     }
 
 #if !MCA_PML_OB1_CUSTOM_MATCH
-    opal_list_t* unexpected_frags = &proc->unexpected_frags;
-#endif
-
-    mca_pml_ob1_recv_frag_t* frag;
     int tag = req->req_recv.req_base.req_tag;
+    opal_list_t* unexpected_frags = &proc->unexpected_frags;
+    mca_pml_ob1_recv_frag_t* frag;
 
-
-#if MCA_PML_OB1_CUSTOM_MATCH
-    return custom_match_umq_find_verify_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq,
-                                             req->req_recv.req_base.req_tag,
-                                             req->req_recv.req_base.req_peer,
-                                             hold_prev, hold_elem, hold_index);
-#endif
-
-    if(opal_list_get_size(unexpected_frags) == 0)
+    if(opal_list_get_size(unexpected_frags) == 0) {
         return NULL;
+    }
 
     if( OMPI_ANY_TAG == tag ) {
         OPAL_LIST_FOREACH(frag, unexpected_frags, mca_pml_ob1_recv_frag_t) {
@@ -1137,6 +1128,12 @@ recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
         }
     }
     return NULL;
+#else
+    return custom_match_umq_find_verify_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq,
+                                             req->req_recv.req_base.req_tag,
+                                             req->req_recv.req_base.req_peer,
+                                             hold_prev, hold_elem, hold_index);
+#endif
 }
 
 /*
@@ -1146,7 +1143,7 @@ recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
 #if MCA_PML_OB1_CUSTOM_MATCH
 static mca_pml_ob1_recv_frag_t*
 recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
-                     mca_pml_ob1_comm_proc_t **p
+                     mca_pml_ob1_comm_proc_t **p,
                      custom_match_umq_node** hold_prev,
                      custom_match_umq_node** hold_elem,
                      int* hold_index)
@@ -1158,27 +1155,23 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
 {
     mca_pml_ob1_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
     mca_pml_ob1_comm_proc_t **procp = comm->procs;
-    size_t i;
-
 
 #if MCA_PML_OB1_CUSTOM_MATCH
     mca_pml_ob1_recv_frag_t* frag;
-    frag = custom_match_umq_find_verify_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq,
-                                    req->req_recv.req_base.req_tag,
-                                    req->req_recv.req_base.req_peer,
-                                    hold_prev, hold_elem, hold_index);
+    frag = custom_match_umq_find_verify_hold (comm->umq, req->req_recv.req_base.req_tag,
+                                              req->req_recv.req_base.req_peer,
+                                              hold_prev, hold_elem, hold_index);
 
-    *p = NULL;
-    if(frag)
-    {
-       *p = procp[frag->hdr.hdr_match.hdr_src];
-       req->req_recv.req_base.req_proc = procp[frag->hdr.hdr_match.hdr_src]->ompi_proc;
-       prepare_recv_req_converter(req);
+    if (frag) {
+        *p = procp[frag->hdr.hdr_match.hdr_src];
+        req->req_recv.req_base.req_proc = procp[frag->hdr.hdr_match.hdr_src]->ompi_proc;
+        prepare_recv_req_converter(req);
+    } else {
+        *p = NULL;
     }
 
-     return frag;
-#endif
-
+    return frag;
+#else
 
     /*
      * Loop over all the outstanding messages to find one that matches.
@@ -1188,7 +1181,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
      *
      * In order to avoid starvation do this in a round-robin fashion.
      */
-    for (i = comm->last_probed + 1; i < comm->num_procs; i++) {
+    for (size_t i = comm->last_probed + 1; i < comm->num_procs; i++) {
         mca_pml_ob1_recv_frag_t* frag;
 
         /* loop over messages from the current proc */
@@ -1200,7 +1193,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
             return frag; /* match found */
         }
     }
-    for (i = 0; i <= comm->last_probed; i++) {
+    for (size_t i = 0; i <= comm->last_probed; i++) {
         mca_pml_ob1_recv_frag_t* frag;
 
         /* loop over messages from the current proc */
@@ -1215,6 +1208,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
 
     *p = NULL;
     return NULL;
+#endif
 }
 
 
@@ -1224,8 +1218,14 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     mca_pml_ob1_comm_t *ob1_comm = comm->c_pml_comm;
     mca_pml_ob1_comm_proc_t* proc;
     mca_pml_ob1_recv_frag_t* frag;
-    opal_list_t *queue;
     mca_pml_ob1_hdr_t* hdr;
+#if MCA_PML_OB1_CUSTOM_MATCH
+    custom_match_umq_node* hold_prev;
+    custom_match_umq_node* hold_elem;
+    int hold_index;
+#else
+    opal_list_t *queue;
+#endif
 
     /* init/re-init the request */
     req->req_lock = 0;
@@ -1236,12 +1236,6 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     req->req_rdma_idx = 0;
     req->req_pending = false;
     req->req_ack_sent = false;
-
-#if MCA_PML_OB1_CUSTOM_MATCH
-    custom_match_umq_node* hold_prev;
-    custom_match_umq_node* hold_elem;
-    custom_match_hold_index;
-#endif
 
     MCA_PML_BASE_RECV_START(&req->req_recv);
 
@@ -1262,8 +1256,8 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         frag = recv_req_match_wild(req, &proc, &hold_prev, &hold_elem, &hold_index);
 #else
         frag = recv_req_match_wild(req, &proc);
-#endif
         queue = &ob1_comm->wild_receives;
+#endif
 #if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         /* As we are in a homogeneous environment we know that all remote
          * architectures are exactly the same as the local one. Therefore,
@@ -1282,8 +1276,8 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         frag = recv_req_match_specific_proc(req, proc, &hold_prev, &hold_elem, &hold_index);
 #else
         frag = recv_req_match_specific_proc(req, proc);
-#endif
         queue = &proc->specific_receives;
+#endif
         /* wildcard recv will be prepared on match */
         prepare_recv_req_converter(req);
     }
@@ -1296,9 +1290,9 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         if(OPAL_LIKELY(req->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
                        req->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE))
 #if MCA_PML_OB1_CUSTOM_MATCH
-        custom_match_prq_append(ob1_comm->prq, req,
-                                req->req_recv.req_base.req_tag,
-                                req->req_recv.req_base.req_peer);
+            custom_match_prq_append(ob1_comm->prq, req,
+                                    req->req_recv.req_base.req_tag,
+                                    req->req_recv.req_base.req_peer);
 #else
             append_recv_req_to_queue(queue, req);
 #endif

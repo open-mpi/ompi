@@ -261,7 +261,11 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         add_fragment_to_unexpected:
             /* We're now expecting the next sequence number. */
             pml_proc->expected_sequence++;
+#if !MCA_PML_OB1_CUSTOM_MATCH
             opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
+#else
+            custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
+#endif
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
                                    hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             /* And now the ugly part. As some fragments can be inserted in the cant_match list,
@@ -533,6 +537,7 @@ static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
                 header);
 }
 
+#if !MCA_PML_OB1_CUSTOM_MATCH
 static void mca_pml_ob1_dump_frag_list(opal_list_t* queue, bool is_req)
 {
     opal_list_item_t* item;
@@ -565,6 +570,7 @@ static void mca_pml_ob1_dump_frag_list(opal_list_t* queue, bool is_req)
         }
     }
 }
+#endif
 
 void mca_pml_ob1_dump_cant_match(mca_pml_ob1_recv_frag_t* queue)
 {
@@ -603,7 +609,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
 
 #if MCA_PML_OB1_CUSTOM_MATCH
      opal_output(0, "expected receives\n");
-     custom_match_prq_dump(pml_comm->pro);
+     custom_match_prq_dump(pml_comm->prq);
      opal_output(0, "unexpected frag\n");
      custom_match_umq_dump(pml_comm->umq);
 #endif
