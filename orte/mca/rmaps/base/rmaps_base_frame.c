@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -603,7 +603,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                                        char **device, char *inspec)
 {
     char *ck;
-    char *ptr;
+    char *ptr, *cptr;
     orte_mapping_policy_t tmp;
     int rc;
     size_t len;
@@ -667,20 +667,26 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                     return ORTE_ERR_SILENT;
                 }
                 ptr++; // move past the colon
-                /* check the remaining string for modifiers - may be none, so
-                 * don't emit an error message if the modifier isn't recognized
-                 */
-                if (ORTE_ERR_SILENT == (rc = check_modifiers(ptr, &tmp)) &&
-                    ORTE_ERR_BAD_PARAM != rc) {
-                    free(spec);
-                    return ORTE_ERR_SILENT;
+                /* at this point, ck is pointing to the number of procs/object
+                 * and ptr is pointing to the beginning of the string that describes
+                 * the object plus any modifiers. We first check to see if there
+                 * is a comma indicating that there are modifiers to the request */
+                if (NULL != (cptr = strchr(ptr, ','))) {
+                    /* there are modifiers, so we terminate the object string
+                     * at the location of the first comma */
+                    *cptr = '\0';
+                    /* step over that comma */
+                    cptr++;
+                    /* now check for modifiers  - may be none, so
+                     * don't emit an error message if the modifier
+                     * isn't recognized */
+                    if (ORTE_ERR_SILENT == (rc = check_modifiers(cptr, &tmp)) &&
+                        ORTE_ERR_BAD_PARAM != rc) {
+                        free(spec);
+                        return ORTE_ERR_SILENT;
+                    }
                 }
-                /* if we found something, then we need to adjust the string */
-                if (ORTE_SUCCESS == rc) {
-                    ptr--;
-                    *ptr = '\0';
-                }
-                /* now get the pattern */
+                /* now save the pattern */
                 orte_rmaps_base.ppr = strdup(ck);
                 ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_PPR);
                 ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
