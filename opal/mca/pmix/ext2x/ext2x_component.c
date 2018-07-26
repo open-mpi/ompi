@@ -118,12 +118,12 @@ static int external_open(void)
     OBJ_CONSTRUCT(&mca_pmix_ext2x_component.dmdx, opal_list_t);
 
     version = PMIx_Get_version();
-    if ('2' != version[0]) {
+    if ('2' >= version[0]) {
         opal_show_help("help-pmix-base.txt",
                        "incorrect-pmix", true, version, "v2.x");
         return OPAL_ERROR;
     }
-    if (0 == strncmp(version, "2.1", 3)) {
+    if (0 != strncmp(version, "2.0", 3)) {
         mca_pmix_ext2x_component.legacy_get = false;
     }
 

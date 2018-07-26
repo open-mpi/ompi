@@ -118,7 +118,7 @@ static int external_open(void)
     OBJ_CONSTRUCT(&mca_pmix_pmix3x_component.dmdx, opal_list_t);
 
     version = PMIx_Get_version();
-    if ('3' != version[0]) {
+    if ('3' > version[0]) {
         opal_show_help("help-pmix-base.txt",
                        "incorrect-pmix", true, version, "v3.x");
         return OPAL_ERROR;

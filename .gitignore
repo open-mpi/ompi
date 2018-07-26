@@ -251,6 +251,29 @@ ompi/mpiext/cuda/c/MPIX_Query_cuda_support.3
 ompi/mpiext/cuda/c/mpiext_cuda_c.h
 
 ompi/mpiext/pcollreq/c/MPIX_*.3
+ompi/mpiext/pcollreq/c/profile/pallgather_init.c
+ompi/mpiext/pcollreq/c/profile/pallgatherv_init.c
+ompi/mpiext/pcollreq/c/profile/pallreduce_init.c
+ompi/mpiext/pcollreq/c/profile/palltoall_init.c
+ompi/mpiext/pcollreq/c/profile/palltoallv_init.c
+ompi/mpiext/pcollreq/c/profile/palltoallw_init.c
+ompi/mpiext/pcollreq/c/profile/pbarrier_init.c
+ompi/mpiext/pcollreq/c/profile/pbcast_init.c
+ompi/mpiext/pcollreq/c/profile/pexscan_init.c
+ompi/mpiext/pcollreq/c/profile/pgather_init.c
+ompi/mpiext/pcollreq/c/profile/pgatherv_init.c
+ompi/mpiext/pcollreq/c/profile/pmpiext_pcollreq_c.h
+ompi/mpiext/pcollreq/c/profile/pneighbor_allgather_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_allgatherv_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_alltoall_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_alltoallv_init.c
+ompi/mpiext/pcollreq/c/profile/pneighbor_alltoallw_init.c
+ompi/mpiext/pcollreq/c/profile/preduce_init.c
+ompi/mpiext/pcollreq/c/profile/preduce_scatter_block_init.c
+ompi/mpiext/pcollreq/c/profile/preduce_scatter_init.c
+ompi/mpiext/pcollreq/c/profile/pscan_init.c
+ompi/mpiext/pcollreq/c/profile/pscatter_init.c
+ompi/mpiext/pcollreq/c/profile/pscatterv_init.c
 
 ompi/tools/mpisync/mpisync
 ompi/tools/mpisync/mpirun_prof
