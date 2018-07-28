@@ -26,25 +26,25 @@ mca_pml_base_component_2_0_0_t mca_pml_ucx_component = {
 
     /* First, the mca_base_component_t struct containing meta
      * information about the component itself */
-    {
+    .pmlm_version = {
          MCA_PML_BASE_VERSION_2_0_0,
 
-         "ucx", /* MCA component name */
-         OMPI_MAJOR_VERSION,  /* MCA component major version */
-         OMPI_MINOR_VERSION,  /* MCA component minor version */
-         OMPI_RELEASE_VERSION,  /* MCA component release version */
-         mca_pml_ucx_component_open,  /* component open */
-         mca_pml_ucx_component_close,  /* component close */
-         NULL,
-         mca_pml_ucx_component_register,
+         .mca_component_name            = "ucx",
+         .mca_component_major_version   = OMPI_MAJOR_VERSION,
+         .mca_component_minor_version   = OMPI_MINOR_VERSION,
+         .mca_component_release_version = OMPI_RELEASE_VERSION,
+         .mca_open_component            = mca_pml_ucx_component_open,
+         .mca_close_component           = mca_pml_ucx_component_close,
+         .mca_query_component           = NULL,
+         .mca_register_component_params = mca_pml_ucx_component_register,
      },
-     {
+     .pmlm_data = {
          /* This component is not checkpoint ready */
-         MCA_BASE_METADATA_PARAM_NONE
+         .param_field                   = MCA_BASE_METADATA_PARAM_NONE
      },
 
-     mca_pml_ucx_component_init,  /* component init */
-     mca_pml_ucx_component_fini   /* component finalize */
+     .pmlm_init                         = mca_pml_ucx_component_init,
+     .pmlm_finalize                     = mca_pml_ucx_component_fini
 };
 
 static int mca_pml_ucx_component_register(void)
