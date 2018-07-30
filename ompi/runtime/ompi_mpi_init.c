@@ -678,18 +678,31 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
                  * at a time, so we will need to wait when we
                  * get there */
                 active = true;
-                opal_pmix.fence_nb(NULL, true, fence_release, (void*)&active);
+                ret = opal_pmix.fence_nb(NULL, true, fence_release, 
+                                         (void*)&active);
             } else {
-                opal_pmix.fence_nb(NULL, true, NULL, NULL);
+                ret = opal_pmix.fence_nb(NULL, true, NULL, NULL);
+            }
+            if (OMPI_SUCCESS != ret) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
             }
         } else if (!opal_pmix_base_async_modex) {
             active = true;
-            opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
-                               fence_release, (void*)&active);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL,
+                    opal_pmix_collect_all_data, fence_release,
+                    (void*)&active))) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
+            }
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         }
     } else {
-        opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+        if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 
+                opal_pmix_collect_all_data))) {
+            error = "opal_pmix.fence() failed";
+            goto error;
+        }
     }
 
     OMPI_TIMING_NEXT("modex");
@@ -867,11 +880,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         } else {
             active = true;
             if (NULL != opal_pmix.fence_nb) {
-                opal_pmix.fence_nb(NULL, false,
-                                   fence_release, (void*)&active);
+                if (OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, false,
+                                   fence_release, (void*)&active))) {
+                    error = "opal_pmix.fence_nb() failed";
+                    goto error;
+                }
                 OMPI_LAZY_WAIT_FOR_COMPLETION(active);
             } else {
-                opal_pmix.fence(NULL, false);
+                if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, false))) {
+                    error = "opal_pmix.fence() failed";
+                    goto error;
+                }
             }
         }
     }
