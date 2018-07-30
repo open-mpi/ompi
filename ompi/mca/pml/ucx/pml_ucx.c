@@ -389,6 +389,7 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
     void *dreq, **dreqs;
     ucp_ep_h ep;
     size_t i;
+    int ret;
 
     max_reqs = ompi_pml_ucx.num_disconnect;
     if (max_reqs > nprocs) {
@@ -433,7 +434,10 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
     mca_pml_ucx_waitall(dreqs, &num_reqs);
     free(dreqs);
 
-    opal_common_ucx_mca_pmix_fence(ompi_pml_ucx.ucp_worker);
+    if (OMPI_SUCCESS != (ret = opal_common_ucx_mca_pmix_fence(
+                                ompi_pml_ucx.ucp_worker))) {
+        return ret;
+    }
 
     return OMPI_SUCCESS;
 }
