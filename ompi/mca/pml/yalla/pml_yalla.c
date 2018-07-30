@@ -265,6 +265,7 @@ int mca_pml_yalla_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     size_t i;
+    int ret;
 
     if (ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
         PML_YALLA_VERBOSE(3, "%s", "using bulk powerdown");
@@ -276,7 +277,9 @@ int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
         PML_YALLA_VERBOSE(2, "disconnected from rank %s", OPAL_NAME_PRINT(procs[i]->super.proc_name));
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = NULL;
     }
-    opal_pmix.fence(NULL, 0);
+    if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+        return ret;
+    }
     return OMPI_SUCCESS;
 }
 

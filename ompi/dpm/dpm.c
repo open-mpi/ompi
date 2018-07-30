@@ -596,6 +596,12 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
     } else {
         ret = opal_pmix.disconnect(&coll);
     }
+    if (OMPI_SUCCESS != ret) {
+        OMPI_ERROR_LOG(ret);
+        OPAL_LIST_DESTRUCT(&coll);
+        return ret;
+    }
+
     OPAL_LIST_DESTRUCT(&coll);
 
     return ret;
