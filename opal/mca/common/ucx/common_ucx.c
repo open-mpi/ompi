@@ -97,14 +97,21 @@ static void opal_common_ucx_mca_fence_complete_cb(int status, void *fenced)
     *(int*)fenced = 1;
 }
 
-OPAL_DECLSPEC void opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
+OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
 {
     volatile int fenced = 0;
+    int ret = OPAL_SUCCESS;
 
-    opal_pmix.fence_nb(NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void*)&fenced);
+    if (OPAL_SUCCESS != (ret = opal_pmix.fence_nb(NULL, 0,
+                    opal_common_ucx_mca_fence_complete_cb, (void*)&fenced))){
+        return ret;
+    }
+
     while (!fenced) {
         ucp_worker_progress(worker);
     }
+
+    return ret;
 }
 
 
@@ -127,6 +134,7 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, s
     void *dreq, **dreqs;
     size_t i;
     size_t n;
+    int ret = OPAL_SUCCESS;
 
     MCA_COMMON_UCX_ASSERT(procs || !count);
     MCA_COMMON_UCX_ASSERT(max_disconnect > 0);
@@ -168,7 +176,9 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, s
     opal_common_ucx_wait_all_requests(dreqs, num_reqs, worker);
     free(dreqs);
 
-    opal_common_ucx_mca_pmix_fence(worker);
+    if (OPAL_SUCCESS != (ret = opal_common_ucx_mca_pmix_fence(worker))) {
+        return ret;
+    }
 
     return OPAL_SUCCESS;
 }
