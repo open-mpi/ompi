@@ -343,15 +343,38 @@ allreduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
 static int
 allreduce_kary_tree_bottom(ompi_coll_portals4_request_t *request)
 {
+    int ret;
+
     if (request->u.allreduce.is_optim) {
         PtlAtomicSync();
 
         if (request->u.allreduce.child_nb) {
-            PtlCTFree(request->u.allreduce.ack_ct_h);
+            ret = PtlCTFree(request->u.allreduce.ack_ct_h);
+            if (PTL_OK != ret) {
+                opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                        "%s:%d: PtlCTFree failed: %d\n",
+                        __FILE__, __LINE__, ret);
+                return OMPI_ERROR;
+            }
         }
 
-        PtlMEUnlink(request->u.allreduce.data_me_h);
-        PtlCTFree(request->u.allreduce.trig_ct_h);
+        do {
+            ret = PtlMEUnlink(request->u.allreduce.data_me_h);
+        } while (PTL_IN_USE == ret);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                    "%s:%d: PtlMEUnlink failed: %d\n",
+                    __FILE__, __LINE__, ret);
+            return OMPI_ERROR;
+        }
+
+        ret = PtlCTFree(request->u.allreduce.trig_ct_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                    "%s:%d: PtlCTFree failed: %d\n",
+                    __FILE__, __LINE__, ret);
+            return OMPI_ERROR;
+        }
     }
 
     return (OMPI_SUCCESS);
