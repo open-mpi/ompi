@@ -460,7 +460,9 @@ cleanup_gather_handles(ompi_coll_portals4_request_t *request)
     /**********************************/
     /* Cleanup Gather Handles             */
     /**********************************/
-    ret = PtlMEUnlink(request->u.gather.gather_meh);
+    do {
+        ret = PtlMEUnlink(request->u.gather.gather_meh);
+    } while (PTL_IN_USE == ret);
     if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
     ret = PtlCTFree(request->u.gather.gather_cth);
@@ -484,7 +486,9 @@ cleanup_sync_handles(ompi_coll_portals4_request_t *request)
     /**********************************/
     /* Cleanup Sync Handles             */
     /**********************************/
-    ret = PtlMEUnlink(request->u.gather.sync_meh);
+    do {
+        ret = PtlMEUnlink(request->u.gather.sync_meh);
+    } while (PTL_IN_USE == ret);
     if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
     ret = PtlCTFree(request->u.gather.sync_cth);

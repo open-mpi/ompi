@@ -285,7 +285,9 @@ portals4_close(void)
     mca_coll_portals4_component.data_md_h = PTL_INVALID_HANDLE;
 
     if (!PtlHandleIsEqual(mca_coll_portals4_component.finish_me_h, PTL_INVALID_HANDLE)) {
-        ret = PtlMEUnlink(mca_coll_portals4_component.finish_me_h);
+        do {
+            ret = PtlMEUnlink(mca_coll_portals4_component.finish_me_h);
+        } while (PTL_IN_USE == ret);
         if (PTL_OK != ret) {
             opal_output_verbose(1, ompi_coll_base_framework.framework_output,
                     "%s:%d: PtlMEUnlink failed: %d\n",
@@ -293,7 +295,9 @@ portals4_close(void)
         }
     }
     if (!PtlHandleIsEqual(mca_coll_portals4_component.unex_me_h, PTL_INVALID_HANDLE)) {
-        ret = PtlMEUnlink(mca_coll_portals4_component.unex_me_h);
+        do {
+            ret = PtlMEUnlink(mca_coll_portals4_component.unex_me_h);
+        } while (PTL_IN_USE == ret);
         if (PTL_OK != ret) {
             opal_output_verbose(1, ompi_coll_base_framework.framework_output,
                     "%s:%d: PtlMEUnlink failed: %d\n",
