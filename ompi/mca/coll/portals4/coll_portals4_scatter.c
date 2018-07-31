@@ -253,14 +253,8 @@ cleanup_scatter_handles(ompi_coll_portals4_request_t *request)
     /**********************************/
     do {
         ret = PtlMEUnlink(request->u.scatter.scatter_meh);
-        if (PTL_IN_USE == ret) {
-            opal_output(ompi_coll_base_framework.framework_output,
-                        "%s:%4d: scatter_meh still in use (ret=%d, rank %2d)",
-                        __FILE__, __LINE__, ret, request->u.scatter.my_rank);
-            continue;
-        }
-        if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
-    } while (ret == PTL_IN_USE);
+    } while (PTL_IN_USE == ret);
+    if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
     ret = PtlCTFree(request->u.scatter.scatter_cth);
     if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
@@ -292,14 +286,8 @@ cleanup_sync_handles(ompi_coll_portals4_request_t *request)
     /**********************************/
     do {
         ret = PtlMEUnlink(request->u.scatter.sync_meh);
-        if (PTL_IN_USE == ret) {
-            opal_output(ompi_coll_base_framework.framework_output,
-                        "%s:%4d: sync_meh still in use (ret=%d, rank %2d)",
-                        __FILE__, __LINE__, ret, request->u.scatter.my_rank);
-            continue;
-        }
-        if (PTL_OK != ret) { ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
-    } while (ret == PTL_IN_USE);
+    } while (PTL_IN_USE == ret);
+    if (PTL_OK != ret) { ptl_ret = ret; ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
 
     ret = PtlCTFree(request->u.scatter.sync_cth);
     if (PTL_OK != ret) { ptl_ret = ret; ret = OMPI_ERROR; line = __LINE__; goto err_hdlr; }
