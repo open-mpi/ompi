@@ -52,9 +52,6 @@ typedef struct mca_mtl_ofi_module_t {
     /** Maximum number of CQ events to read in OFI Progress */
     int ofi_progress_event_count;
 
-    /** CQ event storage */
-    struct fi_cq_tagged_entry *progress_entries;
-
     /** Use FI_REMOTE_CQ_DATA*/
     bool fi_cq_data;
 
