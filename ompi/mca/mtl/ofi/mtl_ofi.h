@@ -40,13 +40,6 @@
 #include "mtl_ofi_endpoint.h"
 #include "mtl_ofi_compat.h"
 
-#define MTL_OFI_RETRY_UNTIL_DONE(FUNC)         \
-    do {                                       \
-        do {                                   \
-            ret = FUNC;                        \
-            if(OPAL_LIKELY(0 == ret)) {break;} \
-        } while(-FI_EAGAIN == ret);            \
-    } while(0);
 
 BEGIN_C_DECLS
 
@@ -134,6 +127,24 @@ ompi_mtl_ofi_progress(void)
     return count;
 }
 
+/**
+ * When attempting to execute an OFI operation we need to handle
+ * resource overrun cases. When a call to an OFI OP fails with -FI_EAGAIN
+ * the OFI mtl will attempt to progress any pending Completion Queue
+ * events that may prevent additional operations to be enqueued.
+ * If the call to ofi progress is successful, then the function call
+ * will be retried.
+ */
+#define MTL_OFI_RETRY_UNTIL_DONE(FUNC, RETURN)         \
+    do {                                               \
+        do {                                           \
+            RETURN = FUNC;                             \
+            if (OPAL_LIKELY(0 == RETURN)) {break;}     \
+            if (OPAL_LIKELY(RETURN == -FI_EAGAIN)) {   \
+                ompi_mtl_ofi_progress();               \
+            }                                          \
+        } while (OPAL_LIKELY(-FI_EAGAIN == RETURN));   \
+    } while (0);
 
 /* MTL interface functions */
 int ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl);
@@ -281,7 +292,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
                                           src_addr,
                                           match_bits | ompi_mtl_ofi.sync_send_ack,
                                           0, /* Exact match, no ignore bits */
-                                          (void *) &ack_req->ctx));
+                                          (void *) &ack_req->ctx), ret);
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_trecv failed: %s(%zd)",
@@ -302,15 +313,14 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
                                             length,
                                             comm->c_my_rank,
                                             endpoint->peer_fiaddr,
-                                            match_bits));
+                                            match_bits), ret);
         } else {
             MTL_OFI_RETRY_UNTIL_DONE(fi_tinject(ompi_mtl_ofi.ep,
                                             start,
                                             length,
                                             endpoint->peer_fiaddr,
-                                            match_bits));
+                                            match_bits), ret);
         }
-
         if (OPAL_UNLIKELY(0 > ret)) {
             char *fi_api = ompi_mtl_ofi.fi_cq_data ? "fi_tinjectddata" : "fi_tinject";
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
@@ -334,7 +344,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
                                           comm->c_my_rank,
                                           endpoint->peer_fiaddr,
                                           match_bits,
-                                          (void *) &ofi_req->ctx));
+                                          (void *) &ofi_req->ctx), ret);
         } else {
             MTL_OFI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
                                           start,
@@ -342,7 +352,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
                                           NULL,
                                           endpoint->peer_fiaddr,
                                           match_bits,
-                                          (void *) &ofi_req->ctx));
+                                          (void *) &ofi_req->ctx), ret);
         }
         if (OPAL_UNLIKELY(0 > ret)) {
             char *fi_api = ompi_mtl_ofi.fi_cq_data ? "fi_tsendddata" : "fi_send";
@@ -517,7 +527,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
         tagged_msg.data = 0;
 
         MTL_OFI_RETRY_UNTIL_DONE(fi_tsendmsg(ompi_mtl_ofi.ep,
-                                 &tagged_msg, 0));
+                                 &tagged_msg, 0), ret);
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_tsendmsg failed: %s(%zd)",
@@ -621,7 +631,7 @@ ompi_mtl_ofi_irecv(struct mca_mtl_base_module_t *mtl,
                                       remote_addr,
                                       match_bits,
                                       mask_bits,
-                                      (void *)&ofi_req->ctx));
+                                      (void *)&ofi_req->ctx), ret);
     if (OPAL_UNLIKELY(0 > ret)) {
         if (NULL != ofi_req->buffer) {
             free(ofi_req->buffer);
@@ -734,7 +744,7 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     msg.context = (void *)&ofi_req->ctx;
     msg.data = 0;
 
-    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags), ret);
     if (OPAL_UNLIKELY(0 > ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_trecvmsg failed: %s(%zd)",
@@ -833,7 +843,7 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     ofi_req.completion_count = 1;
     ofi_req.match_state = 0;
 
-    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags), ret);
     if (-FI_ENOMSG == ret) {
         /**
          * The search request completed but no matching message was found.
@@ -928,7 +938,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     ofi_req->match_state = 0;
     ofi_req->mask_bits = mask_bits;
 
-    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags), ret);
     if (-FI_ENOMSG == ret) {
         /**
          * The search request completed but no matching message was found.
