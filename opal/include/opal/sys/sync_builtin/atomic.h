@@ -45,7 +45,16 @@ static inline void opal_atomic_wmb(void)
     __sync_synchronize();
 }
 
+// This avoids a duplicate definition in PMIx <v1.2.5 (Open MPI v2.1.x
+// has PMIx 1.2.4).  This was fixed in PMIx v1.2.5, but it is not
+// worth updating the embedded PMIx in Open MPI v2.1.x because a) the
+// OMPI v2.1.x series is nearing its end of life, and b) it's
+// convenient/simple to say that the PMIx forward compatibility story
+// starts with Open MPI v3.0.x (vs. a specific release in the Open MPI
+// v2.1.x series).
+#ifndef MB
 #define MB() opal_atomic_mb()
+#endif
 
 /**********************************************************************
  *
