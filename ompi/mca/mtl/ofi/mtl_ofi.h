@@ -1013,8 +1013,11 @@ ompi_mtl_ofi_cancel(struct mca_mtl_base_module_t *mtl,
                      */
                     while (!ofi_req->super.ompi_req->req_status._cancelled) {
                         opal_progress();
+                        if (ofi_req->req_started)
+                            goto ofi_cancel_not_possible;
                     }
                 } else {
+ofi_cancel_not_possible:
                     /**
                      * Could not cancel the request.
                      */
