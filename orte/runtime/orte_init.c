@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
@@ -216,6 +217,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* let the pmix server register params */
         pmix_server_register_params();
+        opal_set_using_threads (true);
         OPAL_TIMING_ENV_NEXT(tmng, "pmix_server_register_params");
     }
 
