@@ -190,10 +190,6 @@ static void backend_fatal_aggregate(char *type,
     const char* usable_prefix = unknown_prefix;
     const char* usable_err_msg = unknown_error;
 
-    int32_t state = ompi_mpi_state;
-    assert(state < OMPI_MPI_STATE_INIT_COMPLETED ||
-           state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
-
     arg = va_arg(arglist, char*);
     va_end(arglist);
 
