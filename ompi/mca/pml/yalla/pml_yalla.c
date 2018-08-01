@@ -3,6 +3,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ mca_pml_yalla_module_t ompi_pml_yalla = {
         NULL, /* FT */
         1ul << ((sizeof(mxm_ctxid_t)*8) - 1),
         1ul << ((sizeof(mxm_tag_t)*8 - 1) - 1),
+        0 /* flags */
     },
     NULL,
     NULL,

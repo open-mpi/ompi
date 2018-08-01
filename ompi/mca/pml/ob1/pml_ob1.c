@@ -20,6 +20,7 @@
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
+ * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,7 +80,8 @@ mca_pml_ob1_t mca_pml_ob1 = {
         mca_pml_ob1_dump,
         mca_pml_ob1_ft_event,
         65535,
-        INT_MAX
+        INT_MAX,
+        0 /* flags */
     }
 };
 
@@ -1057,4 +1059,3 @@ int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2)
 
     return 0;
 }
-
