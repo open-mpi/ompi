@@ -84,17 +84,17 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=30:2:10
+libmpi_so_version=30:3:10
 libmpi_cxx_so_version=30:0:10
-libmpi_mpifh_so_version=32:0:12
-libmpi_usempi_tkr_so_version=31:0:11
-libmpi_usempi_ignore_tkr_so_version=31:0:11
-libmpi_usempif08_so_version=31:0:11
+libmpi_mpifh_so_version=32:1:12
+libmpi_usempi_tkr_so_version=32:0:12
+libmpi_usempi_ignore_tkr_so_version=31:1:11
+libmpi_usempif08_so_version=31:1:11
 
-libopen_rte_so_version=30:3:10
-libopen_pal_so_version=30:3:10
+libopen_rte_so_version=30:4:10
+libopen_pal_so_version=30:4:10
 libmpi_java_so_version=30:0:10
-liboshmem_so_version=30:2:10
+liboshmem_so_version=30:3:10
 libompitrace_so_version=30:0:10
 
 # "Common" components install standalone libraries that are run-time
@@ -112,4 +112,4 @@ libmca_opal_common_cuda_so_version=30:0:10
 libmca_opal_common_libfabric_so_version=30:0:10
 libmca_opal_common_sm_so_version=30:1:10
 libmca_opal_common_ugni_so_version=30:0:10
-libmca_opal_common_verbs_so_version=30:0:10
+libmca_opal_common_verbs_so_version=30:1:10
