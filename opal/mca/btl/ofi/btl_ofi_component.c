@@ -33,26 +33,28 @@
 #include "btl_ofi.h"
 #include "btl_ofi_endpoint.h"
 #include "btl_ofi_rdma.h"
+#include "btl_ofi_frag.h"
 
-#define MCA_BTL_OFI_REQUIRED_CAPS       (FI_RMA | FI_ATOMIC)
+#define MCA_BTL_OFI_ONE_SIDED_REQUIRED_CAPS       (FI_RMA | FI_ATOMIC)
+#define MCA_BTL_OFI_TWO_SIDED_REQUIRED_CAPS       (FI_MSG)
+
 #define MCA_BTL_OFI_REQUESTED_MR_MODE   (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
 
 static char *prov_include;
-static char *prov_exclude;
 static char *ofi_progress_mode;
 static bool disable_sep;
 static int mca_btl_ofi_init_device(struct fi_info *info);
 
 /* validate information returned from fi_getinfo().
  * return OPAL_ERROR if we dont have what we need. */
-static int validate_info(struct fi_info *info)
+static int validate_info(struct fi_info *info, uint64_t required_caps)
 {
     int mr_mode;
 
     BTL_VERBOSE(("validating device: %s", info->domain_attr->name));
 
     /* we need exactly all the required bits */
-    if ((info->caps & MCA_BTL_OFI_REQUIRED_CAPS) != MCA_BTL_OFI_REQUIRED_CAPS) {
+    if ((info->caps & required_caps) != required_caps) {
         BTL_VERBOSE(("unsupported caps"));
         return OPAL_ERROR;
     }
@@ -83,7 +85,26 @@ static int validate_info(struct fi_info *info)
 /* Register the MCA parameters */
 static int mca_btl_ofi_component_register(void)
 {
+    char *msg;
     mca_btl_ofi_module_t *module = &mca_btl_ofi_module_template;
+
+    asprintf(&msg, "BTL OFI mode of operation. Valid values are: %d = One-Sided only, %d=Two-Sided only, "
+                   "%d = Both one and two sided. BTL OFI is only optimized for one-sided communication",
+                   MCA_BTL_OFI_MODE_ONE_SIDED,
+                   MCA_BTL_OFI_MODE_TWO_SIDED,
+                   MCA_BTL_OFI_MODE_FULL_SUPPORT);
+    if (NULL == msg) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    mca_btl_ofi_component.mode = MCA_BTL_OFI_MODE_ONE_SIDED;
+    (void)mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
+                                          "mode",
+                                          msg,
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_ofi_component.mode);
 
     /* fi_getinfo with prov_name == NULL means ALL provider.
      * Since now we are using the first valid info returned, I'm not sure
@@ -99,19 +120,6 @@ static int mca_btl_ofi_component_register(void)
                                           OPAL_INFO_LVL_4,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &prov_include);
-
-    /* TODO: this param has not been implemented. Not sure if we need it. " */
-    prov_exclude = NULL;
-    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
-                                          "provider_exclude",
-                                          "Comma-delimited list of OFI providers that are not considered for use "
-                                          "(default: \"sockets,mxm\"; empty value means that all providers will "
-                                          " be considered). "
-                                          "Mutually exclusive with btl_ofi_provider_include.",
-                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                          OPAL_INFO_LVL_4,
-                                          MCA_BASE_VAR_SCOPE_READONLY,
-                                          &prov_exclude);
 
     mca_btl_ofi_component.num_cqe_read = MCA_BTL_OFI_NUM_CQE_READ;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
@@ -146,13 +154,13 @@ static int mca_btl_ofi_component_register(void)
     disable_sep = false;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "disable_sep",
-                                          "force btl/ofi to never use scalable endpoint. ",
+                                          "force btl/ofi to never use scalable endpoint.",
                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &disable_sep);
 
-    mca_btl_ofi_component.progress_threshold = MCA_BTL_OFI_PROGRESS_THRESHOLD;
+    mca_btl_ofi_component.progress_threshold = MCA_BTL_OFI_DEFAULT_PROGRESS_THRESHOLD;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
                                           "progress_threshold",
                                           "number of outstanding operation before btl will progress "
@@ -163,7 +171,17 @@ static int mca_btl_ofi_component_register(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_btl_ofi_component.progress_threshold);
 
-    /* for now we want this component to lose to btl/ugni and btl/vader */
+    mca_btl_ofi_component.rd_num = MCA_BTL_OFI_DEFAULT_RD_NUM;
+    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
+                                          "rd_num",
+                                          "Number of receive descriptor posted per context.",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_5,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_ofi_component.rd_num);
+
+
+    /* for now we want this component to lose to the MTL. */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
 
     return mca_btl_base_param_register (&mca_btl_ofi_component.super.btl_version,
@@ -226,6 +244,26 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     struct fi_tx_attr tx_attr = {0};
     struct fi_fabric_attr fabric_attr = {0};
     struct fi_domain_attr domain_attr = {0};
+    uint64_t required_caps;
+
+    switch (mca_btl_ofi_component.mode) {
+
+        case MCA_BTL_OFI_MODE_TWO_SIDED:
+            mca_btl_ofi_component.two_sided_enabled = true;
+            required_caps = MCA_BTL_OFI_TWO_SIDED_REQUIRED_CAPS;
+            break;
+
+        case MCA_BTL_OFI_MODE_FULL_SUPPORT:
+            mca_btl_ofi_component.two_sided_enabled = true;
+            required_caps = MCA_BTL_OFI_ONE_SIDED_REQUIRED_CAPS |
+                            MCA_BTL_OFI_TWO_SIDED_REQUIRED_CAPS;
+            break;
+
+        default:
+            /* default to only one sided. */
+            required_caps = MCA_BTL_OFI_ONE_SIDED_REQUIRED_CAPS;
+            break;
+    }
 
     /* Select the provider */
     fabric_attr.prov_name = prov_include;
@@ -248,7 +286,9 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     ep_attr.type = FI_EP_RDM;
 
     /* ask for capabilities */
-    hints.caps = MCA_BTL_OFI_REQUIRED_CAPS;
+    /* TODO: catch the caps here. */
+    hints.caps = required_caps;
+    hints.mode = FI_CONTEXT;
 
     hints.fabric_attr = &fabric_attr;
     hints.domain_attr = &domain_attr;
@@ -282,7 +322,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     info = info_list;
 
     while(info) {
-        rc = validate_info(info);
+        rc = validate_info(info, required_caps);
         if (OPAL_SUCCESS == rc) {
             /* Device passed sanity check, let's make a module.
              * We only pick the first device we found valid */
@@ -334,13 +374,15 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
     mca_btl_ofi_module_t *module;
 
-    /* allocate module */
-    module = (mca_btl_ofi_module_t*) calloc(1, sizeof(mca_btl_ofi_module_t));
+    module = mca_btl_ofi_module_alloc(mca_btl_ofi_component.mode);
     if (NULL == module) {
-        BTL_ERROR(("failed to allocate memory for OFI module"));
+        BTL_VERBOSE(("failed allocating ofi module"));
         goto fail;
     }
-    *module = mca_btl_ofi_module_template;
+
+    /* If the user ask for two sided support, something bad is happening
+     * to the MTL, so we will take maximum priority to supersede the MTL. */
+    module->super.btl_exclusivity    = MCA_BTL_EXCLUSIVITY_DEFAULT;
 
     /* make a copy of the given info to store on the module */
     ofi_info = fi_dupinfo(info);
@@ -483,6 +525,13 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     /* create endpoint list */
     OBJ_CONSTRUCT(&module->endpoints, opal_list_t);
     OBJ_CONSTRUCT(&module->module_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&module->id_to_endpoint, opal_hash_table_t);
+
+    rc = opal_hash_table_init (&module->id_to_endpoint, 512);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("error initializing hash table."));
+        goto fail;
+    }
 
     /* create and send the modex for this device */
     namelen = sizeof(ep_name);
@@ -493,6 +542,21 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
                         fi_strerror(-rc)
                         ));
         goto fail;
+    }
+
+
+    /* If we have two-sided support. */
+    if (TWO_SIDED_ENABLED) {
+
+        /* post wildcard recvs */
+        for (int i=0; i < module->num_contexts; i++) {
+            rc = mca_btl_ofi_post_recvs((mca_btl_base_module_t*) module,
+                                        &module->contexts[i],
+                                        mca_btl_ofi_component.rd_num);
+            if (OPAL_SUCCESS != rc) {
+                goto fail;
+            }
+        }
     }
 
     /* post our endpoint name so peer can use it to connect to us */
@@ -578,81 +642,6 @@ static int mca_btl_ofi_component_progress (void)
                 }
             }
         }
-    }
-
-    return events;
-}
-
-int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
-
-    int ret = 0;
-    int events_read;
-    int events = 0;
-    struct fi_cq_entry cq_entry[MCA_BTL_OFI_MAX_CQ_READ_ENTRIES];
-    struct fi_cq_err_entry cqerr = {0};
-
-    mca_btl_ofi_completion_t *comp;
-
-    ret = fi_cq_read(context->cq, &cq_entry, mca_btl_ofi_component.num_cqe_read);
-
-    if (0 < ret) {
-        events_read = ret;
-        for (int i = 0; i < events_read; i++) {
-            if (NULL != cq_entry[i].op_context) {
-                ++events;
-                comp = (mca_btl_ofi_completion_t*) cq_entry[i].op_context;
-                mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t*)comp->btl;
-
-                switch (comp->type) {
-                case MCA_BTL_OFI_TYPE_GET:
-                case MCA_BTL_OFI_TYPE_PUT:
-                case MCA_BTL_OFI_TYPE_AOP:
-                case MCA_BTL_OFI_TYPE_AFOP:
-                case MCA_BTL_OFI_TYPE_CSWAP:
-
-                    /* call the callback */
-                    if (comp->cbfunc) {
-                        comp->cbfunc (comp->btl, comp->endpoint,
-                                         comp->local_address, comp->local_handle,
-                                         comp->cbcontext, comp->cbdata, OPAL_SUCCESS);
-                    }
-
-                    /* return the completion handler */
-                    opal_free_list_return(comp->my_list, (opal_free_list_item_t*) comp);
-
-                    MCA_BTL_OFI_NUM_RDMA_DEC(ofi_btl);
-                    break;
-
-                default:
-                    /* catasthrophic */
-                    BTL_ERROR(("unknown completion type"));
-                    MCA_BTL_OFI_ABORT();
-                }
-            }
-        }
-    } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
-        ret = fi_cq_readerr(context->cq, &cqerr, 0);
-
-        /* cq readerr failed!? */
-        if (0 > ret) {
-            BTL_ERROR(("%s:%d: Error returned from fi_cq_readerr: %s(%d)",
-                       __FILE__, __LINE__, fi_strerror(-ret), ret));
-        } else {
-            BTL_ERROR(("fi_cq_readerr: (provider err_code = %d)\n",
-                       cqerr.prov_errno));
-        }
-        MCA_BTL_OFI_ABORT();
-    }
-#ifdef FI_EINTR
-    /* sometimes, sockets provider complain about interupt. We do nothing. */
-    else if (OPAL_UNLIKELY(ret == -FI_EINTR)) {
-
-    }
-#endif
-    /* If the error is not FI_EAGAIN, report the error and abort. */
-    else if (OPAL_UNLIKELY(ret != -FI_EAGAIN)) {
-        BTL_ERROR(("fi_cq_read returned error %d:%s", ret, fi_strerror(-ret)));
-        MCA_BTL_OFI_ABORT();
     }
 
     return events;

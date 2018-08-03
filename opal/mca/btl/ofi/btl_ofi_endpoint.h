@@ -51,7 +51,7 @@ typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t mca_btl_ofi_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_ofi_endpoint_t);
 
-int ofi_comp_list_init(opal_free_list_t *comp_list);
+int init_context_freelists(mca_btl_ofi_context_t *context);
 
 mca_btl_base_endpoint_t *mca_btl_ofi_endpoint_create (opal_proc_t *proc, struct fid_ep *ep);
 
