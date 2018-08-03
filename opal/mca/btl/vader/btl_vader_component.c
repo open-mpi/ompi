@@ -375,6 +375,7 @@ static int mca_btl_base_vader_modex_send (void)
     return rc;
 }
 
+#if OPAL_BTL_VADER_HAVE_XPMEM || OPAL_BTL_VADER_HAVE_CMA || OPAL_BTL_VADER_HAVE_KNEM
 static void mca_btl_vader_select_next_single_copy_mechanism (void)
 {
     for (int i = 0 ; single_copy_mechanisms[i].value != MCA_BTL_VADER_NONE ; ++i) {
@@ -384,10 +385,13 @@ static void mca_btl_vader_select_next_single_copy_mechanism (void)
         }
     }
 }
+#endif
 
 static void mca_btl_vader_check_single_copy (void)
 {
+#if OPAL_BTL_VADER_HAVE_XPMEM || OPAL_BTL_VADER_HAVE_CMA || OPAL_BTL_VADER_HAVE_KNEM
     int initial_mechanism = mca_btl_vader_component.single_copy_mechanism;
+#endif
 
     /* single-copy emulation is always used to support AMO's right now */
     mca_btl_vader_sc_emu_init ();
@@ -531,7 +535,6 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     mca_btl_vader_check_single_copy ();
 
     if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
-        const char *base_dir = opal_process_info.proc_session_dir;
         char *sm_file;
 
         rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%x.%d", mca_btl_vader_component.backing_directory,
