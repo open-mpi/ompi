@@ -38,6 +38,8 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 
+#include "opal/class/opal_hash_table.h"
+
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_errno.h>
@@ -47,18 +49,31 @@
 
 BEGIN_C_DECLS
 #define MCA_BTL_OFI_MAX_MODULES         16
-#define MCA_BTL_OFI_MAX_CQ_READ_ENTRIES 128
 #define MCA_BTL_OFI_NUM_CQE_READ        64
-#define MCA_BTL_OFI_PROGRESS_THRESHOLD  64
+
+#define MCA_BTL_OFI_DEFAULT_RD_NUM              10
+#define MCA_BTL_OFI_DEFAULT_MAX_CQE             128
+#define MCA_BTL_OFI_DEFAULT_PROGRESS_THRESHOLD  64
 
 #define MCA_BTL_OFI_ABORT(args)     mca_btl_ofi_exit(args)
 
-enum mca_btl_ofi_type {
-    MCA_BTL_OFI_TYPE_PUT = 1,
+#define TWO_SIDED_ENABLED           mca_btl_ofi_component.two_sided_enabled
+
+enum mca_btl_ofi_mode {
+    MCA_BTL_OFI_MODE_ONE_SIDED = 0,
+    MCA_BTL_OFI_MODE_TWO_SIDED,
+    MCA_BTL_OFI_MODE_FULL_SUPPORT,
+    MCA_BTL_OFI_MODE_TOTAL
+};
+
+enum mca_btl_ofi_hdr_type {
+    MCA_BTL_OFI_TYPE_PUT = 0,
     MCA_BTL_OFI_TYPE_GET,
     MCA_BTL_OFI_TYPE_AOP,
     MCA_BTL_OFI_TYPE_AFOP,
     MCA_BTL_OFI_TYPE_CSWAP,
+    MCA_BTL_OFI_TYPE_SEND,
+    MCA_BTL_OFI_TYPE_RECV,
     MCA_BTL_OFI_TYPE_TOTAL
 };
 
@@ -75,7 +90,9 @@ struct mca_btl_ofi_context_t {
     /* completion info freelist */
     /* We have it per context to reduce the thread contention
      * on the freelist. Things can get really slow. */
-    opal_free_list_t comp_list;
+    opal_free_list_t rdma_comp_list;
+    opal_free_list_t frag_comp_list;
+    opal_free_list_t frag_list;
 
     /* for thread locking */
     volatile int32_t lock;
@@ -107,12 +124,14 @@ struct mca_btl_ofi_module_t {
     bool is_scalable_ep;
 
     int64_t outstanding_rdma;
+    int64_t outstanding_send;
 
     /** linked list of BTL endpoints. this list is never searched so
      * there is no need for a complicated structure here at this time*/
     opal_list_t endpoints;
 
     opal_mutex_t module_lock;
+    opal_hash_table_t id_to_endpoint;
 
     /** registration cache */
     mca_rcache_base_module_t *rcache;
@@ -132,6 +151,9 @@ struct mca_btl_ofi_component_t {
     int num_contexts_per_module;
     int num_cqe_read;
     int progress_threshold;
+    int mode;
+    int rd_num;
+    bool two_sided_enabled;
 
     size_t namelen;
 
@@ -160,32 +182,73 @@ typedef struct mca_btl_ofi_reg_t mca_btl_ofi_reg_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_ofi_reg_t);
 
+struct mca_btl_ofi_header_t {
+    mca_btl_base_tag_t tag;
+    size_t len;
+};
+typedef struct mca_btl_ofi_header_t mca_btl_ofi_header_t;
+
+struct mca_btl_ofi_base_frag_t {
+    mca_btl_base_descriptor_t base;
+    mca_btl_base_segment_t segments[2];
+
+    int context_id;
+    struct mca_btl_ofi_module_t *btl;
+    struct mca_btl_base_endpoint_t *endpoint;
+    opal_free_list_t *free_list;
+    mca_btl_ofi_header_t hdr;
+};
+
+typedef struct mca_btl_ofi_base_frag_t mca_btl_ofi_base_frag_t;
+
+OBJ_CLASS_DECLARATION(mca_btl_ofi_base_frag_t);
+
+
+struct mca_btl_ofi_completion_context_t {
+    struct fi_context ctx;
+    void *comp;
+};
+
+typedef struct mca_btl_ofi_completion_context_t mca_btl_ofi_completion_context_t;
+
 /* completion structure store information needed
  * for RDMA callbacks */
-struct mca_btl_ofi_completion_t {
+struct mca_btl_ofi_base_completion_t {
     opal_free_list_item_t comp_list;
+
     opal_free_list_t *my_list;
 
     struct mca_btl_base_module_t *btl;
     struct mca_btl_base_endpoint_t *endpoint;
     struct mca_btl_ofi_context_t *my_context;
-    uint32_t type;
+    int type;
+};
+typedef struct mca_btl_ofi_base_completion_t mca_btl_ofi_base_completion_t;
 
+struct mca_btl_ofi_rdma_completion_t {
+    mca_btl_ofi_base_completion_t base;
+    mca_btl_ofi_completion_context_t comp_ctx;
     void *local_address;
     mca_btl_base_registration_handle_t *local_handle;
 
-    /* information for atomic op */
     uint64_t operand;
     uint64_t compare;
 
     mca_btl_base_rdma_completion_fn_t cbfunc;
     void *cbcontext;
     void *cbdata;
-
 };
-typedef struct mca_btl_ofi_completion_t mca_btl_ofi_completion_t;
+typedef struct mca_btl_ofi_rdma_completion_t mca_btl_ofi_rdma_completion_t;
 
-OBJ_CLASS_DECLARATION(mca_btl_ofi_completion_t);
+struct mca_btl_ofi_frag_completion_t {
+    mca_btl_ofi_base_completion_t base;
+    mca_btl_ofi_completion_context_t comp_ctx;
+    mca_btl_ofi_base_frag_t *frag;
+};
+typedef struct mca_btl_ofi_frag_completion_t mca_btl_ofi_frag_completion_t;
+
+OBJ_CLASS_DECLARATION(mca_btl_ofi_rdma_completion_t);
+OBJ_CLASS_DECLARATION(mca_btl_ofi_frag_completion_t);
 
 /**
  * Initiate an asynchronous put.
@@ -288,6 +351,10 @@ int mca_btl_ofi_reg_mem (void *reg_data, void *base, size_t size,
 int mca_btl_ofi_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg);
 
 int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context);
+
+mca_btl_ofi_module_t * mca_btl_ofi_module_alloc (int mode);
+
+int mca_btl_ofi_post_recvs(mca_btl_base_module_t* module, mca_btl_ofi_context_t *context, int count);
 void mca_btl_ofi_exit(void);
 
 /* thread atomics */

@@ -42,7 +42,7 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
-    mca_btl_ofi_completion_t *comp = NULL;
+    mca_btl_ofi_rdma_completion_t *comp = NULL;
     mca_btl_ofi_context_t *ofi_context;
 
     ofi_context = get_ofi_context(ofi_btl);
@@ -53,12 +53,12 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
     fi_op = to_fi_op(op);
 
-    comp = mca_btl_ofi_completion_alloc(btl, endpoint,
-                                        ofi_context,
-                                        local_address,
-                                        local_handle,
-                                        cbfunc, cbcontext, cbdata,
-                                        MCA_BTL_OFI_TYPE_AFOP);
+    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint,
+                                             ofi_context,
+                                             local_address,
+                                             local_handle,
+                                             cbfunc, cbcontext, cbdata,
+                                             MCA_BTL_OFI_TYPE_AFOP);
 
     /* copy the operand because it might get freed from upper layer */
     comp->operand = (uint64_t) operand;
@@ -70,7 +70,7 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
                          local_address, local_handle->desc,     /* results */
                          btl_endpoint->peer_addr,               /* remote addr */
                          remote_address, remote_handle->rkey,   /* remote buffer */
-                         fi_datatype, fi_op, comp);
+                         fi_datatype, fi_op, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -95,7 +95,7 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
 
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
-    mca_btl_ofi_completion_t *comp = NULL;
+    mca_btl_ofi_rdma_completion_t *comp = NULL;
     mca_btl_ofi_context_t *ofi_context;
 
     ofi_context = get_ofi_context(ofi_btl);
@@ -106,12 +106,12 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
 
     fi_op = to_fi_op(op);
 
-    comp = mca_btl_ofi_completion_alloc(btl, endpoint,
-                                        ofi_context,
-                                        NULL,
-                                        NULL,
-                                        cbfunc, cbcontext, cbdata,
-                                        MCA_BTL_OFI_TYPE_AOP);
+    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint,
+                                             ofi_context,
+                                             NULL,
+                                             NULL,
+                                             cbfunc, cbcontext, cbdata,
+                                             MCA_BTL_OFI_TYPE_AOP);
 
     /* copy the operand because it might get freed from upper layer */
     comp->operand = (uint64_t) operand;
@@ -122,7 +122,7 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
                    (void*) &comp->operand, 1, NULL,       /* operand */
                    btl_endpoint->peer_addr,               /* remote addr */
                    remote_address, remote_handle->rkey,   /* remote buffer */
-                   fi_datatype, fi_op, comp);
+                   fi_datatype, fi_op, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -144,9 +144,10 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     int rc;
     int fi_datatype = FI_UINT64;
 
+    mca_btl_ofi_rdma_completion_t *comp = NULL;
+
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
-    mca_btl_ofi_completion_t *comp = NULL;
     mca_btl_ofi_context_t *ofi_context;
 
     ofi_context = get_ofi_context(ofi_btl);
@@ -155,12 +156,12 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
         fi_datatype = FI_UINT32;
     }
 
-    comp = mca_btl_ofi_completion_alloc(btl, endpoint,
-                                        ofi_context,
-                                        local_address,
-                                        local_handle,
-                                        cbfunc, cbcontext, cbdata,
-                                        MCA_BTL_OFI_TYPE_CSWAP);
+    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint,
+                                             ofi_context,
+                                             local_address,
+                                             local_handle,
+                                             cbfunc, cbcontext, cbdata,
+                                             MCA_BTL_OFI_TYPE_CSWAP);
 
     /* copy the operand because it might get freed from upper layer */
     comp->operand = (uint64_t) value;
@@ -177,7 +178,7 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
                            remote_address, remote_handle->rkey,
                            fi_datatype,
                            FI_CSWAP,
-                           comp);
+                           &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
         return OPAL_ERR_OUT_OF_RESOURCE;

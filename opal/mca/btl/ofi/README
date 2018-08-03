@@ -86,3 +86,25 @@ Known Problems:
     - sockets provider uses progress thread and can cause segfault in finalize as we free
       the resources while progress thread is still using it. sleep(1) was put in
       mca_btl_ofi_componenet_close() for this reason.
+    - sockets provider deadlock in two-sided mode. Might be something about buffered recv.
+      (August 2018).
+
+========================================
+
+Scalable Endpoint
+
+This BTL will try to use scalable endpoint to create communication context. This will increase
+multithreaded performance for some application. The default number of context created is 1 and
+can be tuned VIA MCA parameter "btl_ofi_num_contexts_per_module". It is advised that the number
+of context should be equal to number of physical core for optimal performance.
+
+User can disable scalable endpoint by MCA parameter "btl_ofi_disable_sep".
+With scalable endpoint disbled, the BTL will alias OFI endpoint to both tx and rx context.
+
+========================================
+
+Two sided communication
+
+Two sided communication is added later on to BTL OFI to enable non tag-matching provider
+to be able to use in Open MPI with this BTL. However, the support is only for "functional"
+and has not been optimized for performance at this point. (August 2018)
