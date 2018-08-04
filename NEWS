@@ -53,10 +53,40 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-2.1.4 -- TBD
-------------
+2.1.4 -- August, 2018
+---------------------
 
 Bug fixes/minor improvements:
+- Fix a problem with MPI_INIT_THREAD segfaulting on OS-X.
+  Thanks to LG Igarithm for reporting.
+- Fix a problem when using an external libevent with Cygwin.
+  Thanks to Marco Atzeri for providing the fix.
+- Add support for Qlogic FastLinQ QL41000 and Broadcomm Cumulus
+  RoCE devices.
+- Fix an issue with MPI_FINALIZED that could result in
+  hangs when invoked in certain cases.  Thanks to Andrew Gaspar
+  for reporting.
+- Fix dummy variable names used in Fortran modules to
+  conform with the MPI standard.  Thanks to Themos
+  Tsikas for reporting.
+- Fix a problem with missing definition of mpi_sizeof
+  in the Fortran modules when using NAG Fortran compiler.
+  Thanks to Themos Tsikas for reporting.
+- Fix a problem when ORTE node aliasing attribute
+  is not set.
+- Do not build memkind mpool component if installed
+  memkind is version 1.4 or higher.
+- Fix issue with multiple invocations of srun within a
+  SLURM allocation.  Thanks to Gregory Lee for reporting.
+- Fix problem with using Java 10 with the Java bindings
+  Thanks to Bryce Glover for reporting.
+- Add support HDR Infiniband devices.
+- Improve detection of NAG compiler at configure stage.
+  Thanks to Themos Tsikas for reporting.
+- Fix an issue when using CMA in the vader BTL.  Thanks to
+  Heiko Bauke for reporting
+- Fix a problem with PMI library detection during configure.
+  Thanks to Davide Vanzo for reporting.
 - Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
   still not a supported platform, but it is no longer automatically
   disabled.  See
