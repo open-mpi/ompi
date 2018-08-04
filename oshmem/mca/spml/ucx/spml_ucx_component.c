@@ -38,26 +38,25 @@ mca_spml_base_component_2_0_0_t mca_spml_ucx_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
-    {
-      MCA_SPML_BASE_VERSION_2_0_0,
-    
-      "ucx",                        /* MCA component name */
-      OSHMEM_MAJOR_VERSION,           /* MCA component major version */
-      OSHMEM_MINOR_VERSION,           /* MCA component minor version */
-      OSHMEM_RELEASE_VERSION,         /* MCA component release version */
-      mca_spml_ucx_component_open,  /* component open */
-      mca_spml_ucx_component_close, /* component close */
-      NULL,
-      mca_spml_ucx_component_register
+    .spmlm_version = {
+        MCA_SPML_BASE_VERSION_2_0_0,
+
+        .mca_component_name            = "ucx",
+        .mca_component_major_version   = OSHMEM_MAJOR_VERSION,
+        .mca_component_minor_version   = OSHMEM_MINOR_VERSION,
+        .mca_component_release_version = OSHMEM_RELEASE_VERSION,
+        .mca_open_component            = mca_spml_ucx_component_open,
+        .mca_close_component           = mca_spml_ucx_component_close,
+        .mca_query_component           = NULL,
+        .mca_register_component_params = mca_spml_ucx_component_register
     },
-    {
+    .spmlm_data = {
         /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
+        .param_field                   = MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
-    mca_spml_ucx_component_init,    /* component init */
-    mca_spml_ucx_component_fini     /* component finalize */
-    
+    .spmlm_init                        = mca_spml_ucx_component_init,
+    .spmlm_finalize                    = mca_spml_ucx_component_fini
 };
 
 

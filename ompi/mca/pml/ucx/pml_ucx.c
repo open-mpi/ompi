@@ -49,33 +49,33 @@
 #define MODEX_KEY "pml-ucx"
 
 mca_pml_ucx_module_t ompi_pml_ucx = {
-    {
-        mca_pml_ucx_add_procs,
-        mca_pml_ucx_del_procs,
-        mca_pml_ucx_enable,
-        NULL,
-        mca_pml_ucx_add_comm,
-        mca_pml_ucx_del_comm,
-        mca_pml_ucx_irecv_init,
-        mca_pml_ucx_irecv,
-        mca_pml_ucx_recv,
-        mca_pml_ucx_isend_init,
-        mca_pml_ucx_isend,
-        mca_pml_ucx_send,
-        mca_pml_ucx_iprobe,
-        mca_pml_ucx_probe,
-        mca_pml_ucx_start,
-        mca_pml_ucx_improbe,
-        mca_pml_ucx_mprobe,
-        mca_pml_ucx_imrecv,
-        mca_pml_ucx_mrecv,
-        mca_pml_ucx_dump,
-        NULL, /* FT */
-        1ul << (PML_UCX_CONTEXT_BITS),
-        1ul << (PML_UCX_TAG_BITS - 1),
+    .super = {
+        .pml_add_procs     = mca_pml_ucx_add_procs,
+        .pml_del_procs     = mca_pml_ucx_del_procs,
+        .pml_enable        = mca_pml_ucx_enable,
+        .pml_progress      = NULL,
+        .pml_add_comm      = mca_pml_ucx_add_comm,
+        .pml_del_comm      = mca_pml_ucx_del_comm,
+        .pml_irecv_init    = mca_pml_ucx_irecv_init,
+        .pml_irecv         = mca_pml_ucx_irecv,
+        .pml_recv          = mca_pml_ucx_recv,
+        .pml_isend_init    = mca_pml_ucx_isend_init,
+        .pml_isend         = mca_pml_ucx_isend,
+        .pml_send          = mca_pml_ucx_send,
+        .pml_iprobe        = mca_pml_ucx_iprobe,
+        .pml_probe         = mca_pml_ucx_probe,
+        .pml_start         = mca_pml_ucx_start,
+        .pml_improbe       = mca_pml_ucx_improbe,
+        .pml_mprobe        = mca_pml_ucx_mprobe,
+        .pml_imrecv        = mca_pml_ucx_imrecv,
+        .pml_mrecv         = mca_pml_ucx_mrecv,
+        .pml_dump          = mca_pml_ucx_dump,
+        .pml_ft_event      = NULL,
+        .pml_max_contextid = 1ul << (PML_UCX_CONTEXT_BITS),
+        .pml_max_tag       = 1ul << (PML_UCX_TAG_BITS - 1)
     },
-    NULL,   /* ucp_context */
-    NULL    /* ucp_worker */
+    .ucp_context           = NULL,
+    .ucp_worker            = NULL
 };
 
 #define PML_UCX_REQ_ALLOCA() \
