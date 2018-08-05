@@ -68,7 +68,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (March 2018):
+base as of this writing (August 2018):
 
 General notes
 -------------
@@ -151,10 +151,7 @@ General notes
 Platform Notes
 --------------
 
-- ARM and POWER users may experience intermittent hangs when Open MPI
-  is compiled with low optimization settings, due to an issue with our
-  atomic list implementation.  We recommend compiling with -O3
-  optimization, both for performance reasons and to avoid this hang.
+None.
 
 
 Compiler Notes
@@ -523,6 +520,15 @@ MPI Functionality and Features
 
   Currently, MPI File operations are not thread safe even if MPI is
   initialized for MPI_THREAD_MULTIPLE support.
+
+  The "pt2pt" MPI one-sided component does not support
+  MPI_THREAD_MULTIPLE (and will not be fixed in the v2.1.x series).
+  The "rdma" MPI one-sided component must be used for
+  MPI_THREAD_MULTIPLE scenarios, but the "rdma" component is not
+  supported with all BTLs.  Users needing MPI_THREAD_MULTIPLE with
+  one-sided operations that are not supported with the "rdma"
+  one-sided component in the Open MPI v2.x series should consider
+  upgrading to the v4.x Open MPI series.
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
   portable C datatype can be found that matches the Fortran type
