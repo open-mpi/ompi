@@ -458,7 +458,10 @@ static int rte_init(void)
     if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
         /* need to commit the data before we fence */
         opal_pmix.commit();
-        opal_pmix.fence(NULL, 0);
+        if (ORTE_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            error = "opal_pmix.fence() failed";
+            goto error;
+        }
     }
     OPAL_TIMING_ENV_NEXT(rte_init, "rte_init_done");
     

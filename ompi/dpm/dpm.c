@@ -589,7 +589,11 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
 
     /* ensure we tell the host RM to disconnect us - this
      * is a blocking operation so just use a fence */
-    ret = opal_pmix.fence(&coll, false);
+    if (OMPI_SUCCESS != (ret = opal_pmix.fence(&coll, false))) {
+        OMPI_ERROR_LOG(ret);
+        OPAL_LIST_DESTRUCT(&coll);
+        return ret;
+    }
     OPAL_LIST_DESTRUCT(&coll);
 
     return ret;
