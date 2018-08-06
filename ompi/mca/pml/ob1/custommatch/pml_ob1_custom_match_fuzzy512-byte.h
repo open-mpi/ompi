@@ -107,7 +107,7 @@ static inline void* custom_match_prq_find_verify(custom_match_prq* list, int tag
         {
             for(i = elem->start; i <= elem->end; i++)
             {
-                if((0x1 << i & result) && elem->value[i])
+                if((0x1l << i & result) && elem->value[i])
                 {
                     mca_pml_base_request_t *req = (mca_pml_base_request_t *)elem->value[i];
                     if((req->req_peer == peer || req->req_peer == OMPI_ANY_SOURCE) && (req->req_tag == tag || req->req_tag == OMPI_ANY_TAG))
