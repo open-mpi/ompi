@@ -319,8 +319,6 @@ int NBC_Progress(NBC_Handle *handle) {
   bool flag;
   unsigned long size = 0;
   char *delim;
-  int i;
-  ompi_status_public_t status;
 
   if (handle->nbc_complete) {
     return NBC_OK;

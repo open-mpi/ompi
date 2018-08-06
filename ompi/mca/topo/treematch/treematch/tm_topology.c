@@ -141,7 +141,14 @@ double ** topology_to_arch(hwloc_topology_t topology)
   double **arch = NULL;
 
   nb_proc = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+  if( nb_proc <= 0 ) {  /* if multiple levels with PUs */
+      return NULL;
+  }
   arch = (double**)MALLOC(sizeof(double*)*nb_proc);
+  if( NULL == arch ) {
+      return NULL;
+  }
+
   for( i = 0 ; i < nb_proc ; i++ ){
     obj_proc1 = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,i);
     arch[obj_proc1->os_index] = (double*)MALLOC(sizeof(double)*nb_proc);
