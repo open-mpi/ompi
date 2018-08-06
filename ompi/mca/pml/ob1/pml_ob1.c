@@ -18,6 +18,8 @@
  *                         reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018      Sandia National Laboratories
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -244,7 +246,11 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         pml_proc = mca_pml_ob1_peer_lookup(comm, hdr->hdr_src);
 
         if (OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+#if !MCA_PML_OB1_CUSTOM_MATCH
             opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
+#else
+            custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
+#endif
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
                                    hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             continue;
@@ -255,7 +261,11 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         add_fragment_to_unexpected:
             /* We're now expecting the next sequence number. */
             pml_proc->expected_sequence++;
+#if !MCA_PML_OB1_CUSTOM_MATCH
             opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
+#else
+            custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
+#endif
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
                                    hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             /* And now the ugly part. As some fragments can be inserted in the cant_match list,
@@ -527,6 +537,7 @@ static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
                 header);
 }
 
+#if !MCA_PML_OB1_CUSTOM_MATCH
 static void mca_pml_ob1_dump_frag_list(opal_list_t* queue, bool is_req)
 {
     opal_list_item_t* item;
@@ -559,6 +570,7 @@ static void mca_pml_ob1_dump_frag_list(opal_list_t* queue, bool is_req)
         }
     }
 }
+#endif
 
 void mca_pml_ob1_dump_cant_match(mca_pml_ob1_recv_frag_t* queue)
 {
@@ -587,10 +599,20 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     opal_output(0, "Communicator %s [%p](%d) rank %d recv_seq %d num_procs %lu last_probed %lu\n",
                 comm->c_name, (void*) comm, comm->c_contextid, comm->c_my_rank,
                 pml_comm->recv_sequence, pml_comm->num_procs, pml_comm->last_probed);
+
+#if !MCA_PML_OB1_CUSTOM_MATCH
     if( opal_list_get_size(&pml_comm->wild_receives) ) {
         opal_output(0, "expected MPI_ANY_SOURCE fragments\n");
         mca_pml_ob1_dump_frag_list(&pml_comm->wild_receives, true);
     }
+#endif
+
+#if MCA_PML_OB1_CUSTOM_MATCH
+     opal_output(0, "expected receives\n");
+     custom_match_prq_dump(pml_comm->prq);
+     opal_output(0, "unexpected frag\n");
+     custom_match_umq_dump(pml_comm->umq);
+#endif
 
     /* iterate through all procs on communicator */
     for( i = 0; i < (int)pml_comm->num_procs; i++ ) {
@@ -608,18 +630,22 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
                     proc->send_sequence);
 
         /* dump all receive queues */
-        if( opal_list_get_size(&proc->specific_receives) ) {
+#if !MCA_PML_OB1_CUSTOM_MATCH
+       if( opal_list_get_size(&proc->specific_receives) ) {
             opal_output(0, "expected specific receives\n");
             mca_pml_ob1_dump_frag_list(&proc->specific_receives, true);
         }
+#endif
         if( NULL != proc->frags_cant_match ) {
             opal_output(0, "out of sequence\n");
             mca_pml_ob1_dump_cant_match(proc->frags_cant_match);
         }
+#if !MCA_PML_OB1_CUSTOM_MATCH
         if( opal_list_get_size(&proc->unexpected_frags) ) {
             opal_output(0, "unexpected frag\n");
             mca_pml_ob1_dump_frag_list(&proc->unexpected_frags, false);
         }
+#endif
         /* dump all btls used for eager messages */
         for( n = 0; n < ep->btl_eager.arr_size; n++ ) {
             mca_bml_base_btl_t* bml_btl = &ep->btl_eager.bml_btls[n];
