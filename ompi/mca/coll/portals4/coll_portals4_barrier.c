@@ -206,7 +206,9 @@ barrier_hypercube_bottom(ompi_coll_portals4_request_t *request)
     int ret;
 
     /* cleanup */
-    ret = PtlMEUnlink(request->u.barrier.data_me_h);
+    do {
+        ret = PtlMEUnlink(request->u.barrier.data_me_h);
+    } while (PTL_IN_USE == ret);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_coll_base_framework.framework_output,
                 "%s:%d: PtlMEUnlink failed: %d\n",
