@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # Copyright (c) 2015-2016 Research Organization for Information Science
@@ -86,6 +86,21 @@ EOF
 #                              [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
+    # We know that the external event component will be configured
+    # before this one because of its priority.  This component is only
+    # needed if the external component was not successful in selecting
+    # itself.
+    AC_MSG_CHECKING([if event external component succeeded])
+    AS_IF([test "$opal_event_external_support" = "yes"],
+          [AC_MSG_RESULT([yes])
+           AC_MSG_NOTICE([event:external succeeded, so this component will be skipped])
+           $2],
+          [AC_MSG_RESULT([no])
+           AC_MSG_NOTICE([event:external failed, so this component will be used])
+           MCA_opal_event_libevent2022_BACKEND_CONFIG($1, $2)])
+])
+
+AC_DEFUN([MCA_opal_event_libevent2022_BACKEND_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([CFLAGS_save CPPFLAGS_save libevent_file event_args libevent_happy])
 
     AC_CONFIG_FILES([opal/mca/event/libevent2022/Makefile])

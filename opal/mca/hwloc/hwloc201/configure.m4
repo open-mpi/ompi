@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -69,6 +69,21 @@ AC_DEFUN([MCA_opal_hwloc_hwloc201_POST_CONFIG],[
 # MCA_hwloc_hwloc201_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([MCA_opal_hwloc_hwloc201_CONFIG],[
+    # We know that the external hwloc component will be configured
+    # before this one because of its priority.  This component is only
+    # needed if the external component was not successful in selecting
+    # itself.
+    AC_MSG_CHECKING([if hwloc external component succeeded])
+    AS_IF([test "$opal_hwloc_external_support" = "yes"],
+          [AC_MSG_RESULT([yes])
+           AC_MSG_NOTICE([hwloc:external succeeded, so this component will be skipped])
+           $2],
+          [AC_MSG_RESULT([no])
+           AC_MSG_NOTICE([hwloc:external failed, so this component will be used])
+           MCA_opal_hwloc_hwloc201_BACKEND_CONFIG($1, $2)])
+])
+
+AC_DEFUN([MCA_opal_hwloc_hwloc201_BACKEND_CONFIG],[
     # Hwloc needs to know if we have Verbs support
     AC_REQUIRE([OPAL_CHECK_VERBS_DIR])
 
@@ -80,19 +95,11 @@ AC_DEFUN([MCA_opal_hwloc_hwloc201_CONFIG],[
     opal_hwloc_hwloc201_basedir=opal/mca/hwloc/hwloc201
     opal_hwloc_hwloc201_support=no
 
-    AS_IF([test "$with_hwloc" = "internal" || test -z "$with_hwloc" || test "$with_hwloc" = "yes"],
-          [opal_hwloc_external="no"],
-          [opal_hwloc_external="yes"])
-
     opal_hwloc_hwloc201_save_CPPFLAGS=$CPPFLAGS
     opal_hwloc_hwloc201_save_LDFLAGS=$LDFLAGS
     opal_hwloc_hwloc201_save_LIBS=$LIBS
 
-    # Run the hwloc configuration - if no external hwloc, then set the prefixi
-    # to minimize the chance that someone will use the internal symbols
-    AS_IF([test "$opal_hwloc_external" = "no" &&
-           test "$with_hwloc" != "future"],
-          [HWLOC_SET_SYMBOL_PREFIX([opal_hwloc201_])])
+    HWLOC_SET_SYMBOL_PREFIX([opal_hwloc201_])
 
     # save XML or graphical options
     opal_hwloc_hwloc201_save_cairo=$enable_cairo
