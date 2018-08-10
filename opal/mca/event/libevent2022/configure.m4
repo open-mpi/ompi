@@ -14,9 +14,9 @@
 #
 AC_DEFUN([MCA_opal_event_libevent2022_PRIORITY], [80])
 
-#
-# Force this component to compile in static-only mode
-#
+dnl
+dnl Force this component to compile in static-only mode
+dnl
 AC_DEFUN([MCA_opal_event_libevent2022_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     $4="static"
@@ -82,9 +82,9 @@ EOF
           ])
 ])
 
-# MCA_event_libevent2022_CONFIG([action-if-can-compile],
-#                              [action-if-cant-compile])
-# ------------------------------------------------
+dnl MCA_event_libevent2022_CONFIG([action-if-can-compile],
+dnl                              [action-if-cant-compile])
+dnl ------------------------------------------------
 AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
     # We know that the external event component will be configured
     # before this one because of its priority.  This component is only
