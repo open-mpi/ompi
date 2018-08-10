@@ -24,7 +24,8 @@ AC_DEFUN([MCA_opal_event_libevent2022_COMPILE_MODE], [
 ])
 
 AC_DEFUN([MCA_opal_event_libevent2022_POST_CONFIG], [
-    AM_CONDITIONAL(OPAL_EVENT_HAVE_THREAD_SUPPORT, test "$enable_event_thread_support" = "yes")
+    AM_CONDITIONAL(OPAL_EVENT_HAVE_THREAD_SUPPORT,
+                   [test "$enable_event_thread_support" = "yes"])
     AS_IF([test "$1" = "1"],
           [ # Build libevent/include/event2/event-config.h.  If we
            # don't do it here, then libevent's Makefile.am will build
