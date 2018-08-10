@@ -35,8 +35,8 @@ AC_DEFUN([MCA_opal_event_libevent2022_POST_CONFIG], [
            # copied from libevent's Makefile.am.
 
            AC_CONFIG_COMMANDS([opal/mca/event/libevent2022/libevent/include/event2/event-config.h],
-                              [libevent_basedir="opal/mca/event/libevent2022"
-                               libevent_file="$libevent_basedir/libevent/include/event2/event-config.h"
+                              [opal_event_libevent2022_basedir="opal/mca/event/libevent2022"
+                               libevent_file="$opal_event_libevent2022_basedir/libevent/include/event2/event-config.h"
                                rm -f "$libevent_file.new"
                                cat > "$libevent_file.new" <<EOF
 /* event2/event-config.h
@@ -56,7 +56,7 @@ EOF
 
                                sed -e 's/#define /#define _EVENT_/' \
                                    -e 's/#undef /#undef _EVENT_/' \
-                                   -e 's/#ifndef /#ifndef _EVENT_/' < "$libevent_basedir/libevent/config.h" >> "$libevent_file.new"
+                                   -e 's/#ifndef /#ifndef _EVENT_/' < "$opal_event_libevent2022_basedir/libevent/config.h" >> "$libevent_file.new"
                                echo "#endif" >> "$libevent_file.new"
 
                                # Only make a new .h libevent_file if the
@@ -75,7 +75,7 @@ EOF
 
            # Add some stuff to CPPFLAGS so that the rest of the source
            # tree can be built
-           libevent_file=$libevent_basedir/libevent
+           libevent_file=$opal_event_libevent2022_basedir/libevent
            CPPFLAGS="-I$OPAL_TOP_SRCDIR/$libevent_file -I$OPAL_TOP_SRCDIR/$libevent_file/include $CPPFLAGS"
            AS_IF([test "$OPAL_TOP_BUILDDIR" != "$OPAL_TOP_SRCDIR"],
                  [CPPFLAGS="-I$OPAL_TOP_BUILDDIR/$libevent_file/include $CPPFLAGS"])
@@ -87,6 +87,9 @@ dnl MCA_event_libevent2022_CONFIG([action-if-can-compile],
 dnl                              [action-if-cant-compile])
 dnl ------------------------------------------------
 AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/event/libevent2022/Makefile])
+    opal_event_libevent2022_basedir="opal/mca/event/libevent2022"
+
     # We know that the external event component will be configured
     # before this one because of its priority.  This component is only
     # needed if the external component was not successful in selecting
@@ -94,18 +97,37 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
     AC_MSG_CHECKING([if event external component succeeded])
     AS_IF([test "$opal_event_external_support" = "yes"],
           [AC_MSG_RESULT([yes])
-           AC_MSG_NOTICE([event:external succeeded, so this component will be skipped])
-           $2],
+           AC_MSG_NOTICE([event:external succeeded, so this component will be configured, but then will be skipped])
+           MCA_opal_event_libevent2022_FAKE_CONFIG($2)],
           [AC_MSG_RESULT([no])
            AC_MSG_NOTICE([event:external failed, so this component will be used])
-           MCA_opal_event_libevent2022_BACKEND_CONFIG($1, $2)])
+           MCA_opal_event_libevent2022_REAL_CONFIG($1, $2)])
 ])
 
-AC_DEFUN([MCA_opal_event_libevent2022_BACKEND_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([CFLAGS_save CPPFLAGS_save libevent_file event_args libevent_happy])
+dnl
+dnl This macro is invoked when event:external is going to be used (and
+dnl this component is *not* going to be used).
+dnl
+dnl $1: action if this component can compile
+dnl (we still invoke $1 so that "make distclean" and friends will work)
+dnl
+AC_DEFUN([MCA_opal_event_libevent2022_FAKE_CONFIG],[
+    MCA_opal_event_libevent2022_SUB_CONFIGURE([], [], [])
+    AC_MSG_NOTICE([remember: event:external will be used; this component was configured, but will be skipped])
+    $1
+])
 
-    AC_CONFIG_FILES([opal/mca/event/libevent2022/Makefile])
-    libevent_basedir="opal/mca/event/libevent2022"
+dnl
+dnl This macro has a bunch of side effects.  It is only meant to be
+dnl invoked when this component is going to be used (i.e., when
+dnl event:external is *not* going to be used).  If this macro is invoked
+dnl when event:external is used, Terrible Things will happen.
+dnl
+dnl $1: action if this component can compile
+dnl $2: action if this component cannot compile
+dnl
+AC_DEFUN([MCA_opal_event_libevent2022_REAL_CONFIG],[
+    OPAL_VAR_SCOPE_PUSH([CFLAGS_save CPPFLAGS_save libevent_file event_args libevent_happy])
 
     CFLAGS_save="$CFLAGS"
     CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
@@ -175,14 +197,14 @@ AC_DEFUN([MCA_opal_event_libevent2022_BACKEND_CONFIG],[
 
     AC_MSG_RESULT([$event_args])
 
+    # Invoke the embedded configure script.
     # We define "random" to be "opal_random" so that Libevent will not
     # use random(3) internally (and potentially unexpectedly perturb
     # values returned by rand(3) to the application).
-
     CPPFLAGS="$CPPFLAGS -Drandom=opal_random"
-    OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent],
-        [$event_args $opal_subdir_args 'CPPFLAGS=$CPPFLAGS'],
-        [libevent_happy="yes"], [libevent_happy="no"])
+    MCA_opal_event_libevent2022_SUB_CONFIGURE([$event_args],
+                                              [libevent_happy="yes"],
+                                              [libevent_happy="no"])
     if test "$libevent_happy" = "no"; then
         AC_MSG_WARN([Event library failed to configure])
         AC_MSG_ERROR([Cannot continue])
@@ -200,26 +222,34 @@ AC_DEFUN([MCA_opal_event_libevent2022_BACKEND_CONFIG],[
     # the value in the generated libevent/config.h (NOT
     # libevent/include/event2/event-config.h!).  Otherwise, set it to
     # 0.
-    libevent_file=$libevent_basedir/libevent/config.h
+    libevent_file=$opal_event_libevent2022_basedir/libevent/config.h
 
-    # If we are not building the internal libevent, then indicate that
-    # this component should not be built.  NOTE: we still did all the
-    # above configury so that all the proper GNU Autotools
-    # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=libevent in
-    # this directory's Makefile.am, we still need the Autotools "make
-    # distclean" infrastructure to work properly).
-
-    AS_IF([test "$with_libevent" != "internal" && test -n "$with_libevent" && test "$with_libevent" != "yes"],
-          [AC_MSG_WARN([using an external libevent; disqualifying this component])
-           libevent_happy=no],
-
-          [AS_IF([test "$libevent_happy" = "yes" && test -r $libevent_file],
-            [OPAL_HAVE_WORKING_EVENTOPS=`grep HAVE_WORKING_EVENTOPS $libevent_file | awk '{print [$]3 }'`
-              $1],
-            [$2
-              OPAL_HAVE_WORKING_EVENTOPS=0])
-          ]
-    )
+    AS_IF([test "$libevent_happy" = "yes" && test -r $libevent_file],
+          [OPAL_HAVE_WORKING_EVENTOPS=`grep HAVE_WORKING_EVENTOPS $libevent_file | awk '{print [$]3 }'`
+           $1],
+          [$2
+           OPAL_HAVE_WORKING_EVENTOPS=0])
 
     OPAL_VAR_SCOPE_POP
+])
+
+dnl Call configure in the embedded libevent.
+dnl
+dnl We still do this so that all the proper GNU Autotools
+dnl infrastructure is setup properly (e.g., w.r.t. SUBDIRS=libevent in
+dnl this directorys Makefile.am, we still need the Autotools "make
+dnl distclean" infrastructure to work properly).
+dnl
+dnl $1: extra configure arguments
+dnl $2: action on success
+dnl $3: action on failure
+dnl
+AC_DEFUN([MCA_opal_event_libevent2022_SUB_CONFIGURE],[
+    # We define "random" to be "opal_random" so that Libevent will not
+    # use random(3) internally (and potentially unexpectedly perturb
+    # values returned by rand(3) to the application).
+
+    OPAL_CONFIG_SUBDIR([$opal_event_libevent2022_basedir/libevent],
+        [$1 $opal_subdir_args 'CPPFLAGS=$CPPFLAGS'],
+        [$2], [$3])
 ])
