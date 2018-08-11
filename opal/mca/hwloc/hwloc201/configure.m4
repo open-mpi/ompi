@@ -69,27 +69,23 @@ AC_DEFUN([MCA_opal_hwloc_hwloc201_POST_CONFIG],[
 # MCA_hwloc_hwloc201_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([MCA_opal_hwloc_hwloc201_CONFIG],[
-    # We know that the external hwloc component will be configured
-    # before this one because of its priority.  This component is only
-    # needed if the external component was not successful in selecting
-    # itself.
-    AC_MSG_CHECKING([if hwloc external component succeeded])
-    AS_IF([test "$opal_hwloc_external_support" = "yes"],
-          [AC_MSG_RESULT([yes])
-           AC_MSG_NOTICE([hwloc:external succeeded, so this component will be skipped])
-           $2],
-          [AC_MSG_RESULT([no])
-           AC_MSG_NOTICE([hwloc:external failed, so this component will be used])
-           MCA_opal_hwloc_hwloc201_BACKEND_CONFIG($1, $2)])
-])
-
-AC_DEFUN([MCA_opal_hwloc_hwloc201_BACKEND_CONFIG],[
     # Hwloc needs to know if we have Verbs support
     AC_REQUIRE([OPAL_CHECK_VERBS_DIR])
 
     AC_CONFIG_FILES([opal/mca/hwloc/hwloc201/Makefile])
 
     OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc201_save_CPPFLAGS opal_hwloc_hwloc201_save_LDFLAGS opal_hwloc_hwloc201_save_LIBS opal_hwloc_hwloc201_save_cairo opal_hwloc_hwloc201_save_xml opal_hwloc_hwloc201_save_mode opal_hwloc_hwloc201_basedir opal_hwloc_hwloc201_file opal_hwloc_hwloc201_save_cflags CPPFLAGS_save LIBS_save opal_hwloc_external])
+
+    # We know that the external hwloc component will be configured
+    # before this one because of its priority.  This component is only
+    # needed if the external component was not successful in selecting
+    # itself.  Print out a message explaining this.
+    AC_MSG_CHECKING([if hwloc external component succeeded])
+    AS_IF([test "$opal_hwloc_external_support" = "yes"],
+          [AC_MSG_RESULT([yes])
+           AC_MSG_NOTICE([hwloc:external succeeded, so this component will be configured, but then will be skipped])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_NOTICE([hwloc:external failed, so this component will be used])])
 
     # default to this component not providing support
     opal_hwloc_hwloc201_basedir=opal/mca/hwloc/hwloc201
@@ -98,8 +94,6 @@ AC_DEFUN([MCA_opal_hwloc_hwloc201_BACKEND_CONFIG],[
     opal_hwloc_hwloc201_save_CPPFLAGS=$CPPFLAGS
     opal_hwloc_hwloc201_save_LDFLAGS=$LDFLAGS
     opal_hwloc_hwloc201_save_LIBS=$LIBS
-
-    HWLOC_SET_SYMBOL_PREFIX([opal_hwloc201_])
 
     # save XML or graphical options
     opal_hwloc_hwloc201_save_cairo=$enable_cairo
@@ -143,6 +137,12 @@ AC_DEFUN([MCA_opal_hwloc_hwloc201_BACKEND_CONFIG],[
     AS_IF([test -n "$opal_datatype_cuda_CPPFLAGS"],
           [CPPFLAGS="$CPPFLAGS $opal_datatype_cuda_CPPFLAGS"])
 
+    # Only set the symbol prefix if this component is being used
+    # (i.e., if the external component is not being used).
+    AS_IF([test "$opal_hwloc_external_support" = "no"],
+          [HWLOC_SET_SYMBOL_PREFIX([opal_hwloc201_])])
+
+    # Do the bulk of the hwloc core setup
     HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc201/hwloc],
               [AC_MSG_CHECKING([whether hwloc configure succeeded])
                AC_MSG_RESULT([yes])
@@ -202,8 +202,8 @@ AC_DEFUN([MCA_opal_hwloc_hwloc201_BACKEND_CONFIG],[
     # infrastructure is setup properly (e.g., w.r.t. SUBDIRS=hwloc in
     # this directory's Makefile.am, we still need the Autotools "make
     # distclean" infrastructure to work properly).
-    AS_IF([test "$opal_hwloc_external" = "yes"],
-          [AC_MSG_WARN([using an external hwloc; disqualifying this component])
+    AS_IF([test "$opal_hwloc_external_support" = "yes"],
+          [AC_MSG_NOTICE([using an external hwloc; disqualifying this component])
            opal_hwloc_hwloc201_support=no],
           [AC_DEFINE([HAVE_DECL_HWLOC_OBJ_OSDEV_COPROC], [1])
            AC_DEFINE([HAVE_HWLOC_TOPOLOGY_DUP], [1])])
