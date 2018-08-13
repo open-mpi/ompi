@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -51,8 +51,8 @@ static inline void mca_btl_vader_fbox_set_header (mca_btl_vader_fbox_hdr_t *hdr,
                                                   uint16_t seq, uint32_t size)
 {
     mca_btl_vader_fbox_hdr_t tmp = {.data = {.tag = tag, .seq = seq, .size = size}};
-    hdr->ival = tmp.ival;
     opal_atomic_wmb ();
+    hdr->ival = tmp.ival;
 }
 
 /* attempt to reserve a contiguous segment from the remote ep */
