@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -171,9 +171,10 @@ opal_progress_finalize(void)
 
 static int opal_progress_events(void)
 {
+    static volatile int32_t lock = 0;
     int events = 0;
 
-    if( opal_progress_event_flag != 0 ) {
+    if( opal_progress_event_flag != 0 && !OPAL_THREAD_SWAP_32(&lock, 1) ) {
 #if OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
 #if OPAL_PROGRESS_ONLY_USEC_NATIVE
@@ -201,6 +202,7 @@ static int opal_progress_events(void)
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 
 #endif /* OPAL_HAVE_WORKING_EVENTOPS */
+        lock = 0;
     }
 
     return events;
