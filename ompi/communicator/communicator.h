@@ -671,6 +671,14 @@ int ompi_comm_overlapping_groups (int size, struct ompi_proc_t ** lprocs,
 int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
+/**
+ * This is a routine determining automatically wether the local or the
+ * remote group will be first in an operation spanning both sides of an
+ * inter-comm.
+ * It does not communicate to exchange the "high" values; used in some
+ * CID allocation algorithms.
+ */
+int ompi_comm_determine_first_auto ( ompi_communicator_t* intercomm );
 
 OMPI_DECLSPEC int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                                       ompi_communicator_t *bridgecomm, const void *arg0,
