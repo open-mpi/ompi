@@ -58,6 +58,18 @@ included in the vX.Y.Z section and be denoted as:
 3.1.2 -- August, 2018
 ------------------------
 
+- A subtle race condition bug was discovered in the "vader" BTL
+  (shared memory communications) that, in rare instances, can cause
+  MPI processes to crash or incorrectly classify (or effectively drop)
+  an MPI message sent via shared memory.  If you are using the "ob1"
+  PML with "vader" for shared memory communication (note that vader is
+  the default for shared memory communication with ob1), you need to
+  upgrade to v3.1.2 or later to fix this issue.  You may also upgrade
+  to the following versions to fix this issue:
+  - Open MPI v2.1.5 (expected end of August, 2018) or later in the
+    v2.1.x series
+  - Open MPI v3.0.1 (released March, 2018) or later in the v3.0.x
+    series
 - Assorted Portals 4.0 bug fixes.
 - Fix for possible data corruption in MPI_BSEND.
 - Move shared memory file for vader btl into /dev/shm on Linux.
