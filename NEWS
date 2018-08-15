@@ -246,6 +246,51 @@ Known issues:
 - MPI_Connect/accept between applications started by different mpirun
   commands will fail, even if ompi-server is running.
 
+2.1.4 -- August, 2018
+---------------------
+
+Bug fixes/minor improvements:
+- Disable the POWER 7/BE block in configure.  Note that POWER 7/BE is
+  still not a supported platform, but it is no longer automatically
+  disabled.  See
+  https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
+  for more information.
+- Fix bug with request-based one-sided MPI operations when using the
+  "rdma" component.
+- Fix issue with large data structure in the TCP BTL causing problems
+  in some environments.  Thanks to @lgarithm for reporting the issue.
+- Minor Cygwin build fixes.
+- Minor fixes for the openib BTL:
+  - Support for the QLogic RoCE HCA
+  - Support for the Boradcom Cumulus RoCE HCA
+  - Enable support for HDR link speeds
+- Fix MPI_FINALIZED hang if invoked from an attribute destructor
+  during the MPI_COMM_SELF destruction in MPI_FINALIZE.  Thanks to
+  @AndrewGaspar for reporting the issue.
+- Java fixes:
+  - Modernize Java framework detection, especially on OS X/MacOS.
+    Thanks to Bryce Glover for reporting and submitting the fixes.
+  - Prefer "javac -h" to "javah" to support newer Java frameworks.
+- Fortran fixes:
+  - Use conformant dummy parameter names for Fortran bindings.  Thanks
+    to Themos Tsikas for reporting and submitting the fixes.
+  - Build the MPI_SIZEOF() interfaces in the "TKR"-style "mpi" module
+    whenever possible.  Thanks to Themos Tsikas for reporting the
+    issue.
+  - Fix array of argv handling for the Fortran bindings of
+    MPI_COMM_SPAWN_MULTIPLE (and its associated man page).
+  - Make NAG Fortran compiler support more robust in configure.
+- Disable the "pt2pt" one-sided MPI component when MPI_THREAD_MULTIPLE
+  is used.  This component is simply not safe in MPI_THREAD_MULTIPLE
+  scenarios, and will not be fixed in the v2.1.x series.
+- Make the "external" hwloc component fail gracefully if it is tries
+  to use an hwloc v2.x.y installation.  hwloc v2.x.y will not be
+  supported in the Open MPI v2.1.x series.
+- Fix "vader" shared memory support for messages larger than 2GB.
+  Thanks to Heiko Bauke for the bug report.
+- Configure fixes for external PMI directory detection.  Thanks to
+  Davide Vanzo for the report.
+
 2.1.3 -- March, 2018
 --------------------
 
