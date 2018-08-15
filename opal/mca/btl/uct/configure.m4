@@ -33,6 +33,17 @@ AC_DEFUN([MCA_opal_btl_uct_CONFIG],[
     OMPI_CHECK_UCX([btl_uct],
                    [btl_uct_happy="yes"],
                    [btl_uct_happy="no"])
+    if test "$btl_uct_happy" = "yes" ; then
+        OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save])
+
+        CPPFLAGS_save="$CPPFLAGS"
+        CPPFLAGS="$CPPFLAGS $btl_uct_CPPFLAGS"
+
+        AC_CHECK_DECLS([UCT_PROGRESS_THREAD_SAFE], [], [], [[#include <uct/api/uct.h>]])
+
+        CPPFLAGS="$CPPFLAGS_save"
+        OPAL_VAR_SCOPE_POP
+    fi
 
     AS_IF([test "$btl_uct_happy" = "yes"],
           [$1

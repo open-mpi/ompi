@@ -111,7 +111,6 @@ static uint64_t mca_btl_uct_cap_to_btl_atomic_flag[][2] = {
 static void mca_btl_uct_module_set_atomic_flags (mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
 {
     uint64_t cap_flags = tl->uct_iface_attr.cap.flags;
-    uint32_t flags = 0;
 
     module->super.btl_atomic_flags = 0;
 
@@ -173,7 +172,7 @@ static ucs_status_t mca_btl_uct_conn_req_cb (void *arg, void *data, size_t lengt
     int32_t ep_flags;
     int rc;
 
-    BTL_VERBOSE(("got connection request for endpoint %p. length = %lu", endpoint, length));
+    BTL_VERBOSE(("got connection request for endpoint %p. length = %lu", (void *) endpoint, length));
 
     if (NULL == endpoint) {
         BTL_ERROR(("could not create endpoint for connection request"));
@@ -200,7 +199,6 @@ static ucs_status_t mca_btl_uct_conn_req_cb (void *arg, void *data, size_t lengt
      * an endpoint can be used. */
     if ((ep_flags & (MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY | MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC)) ==
         (MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY | MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC)) {
-        mca_btl_uct_device_context_t *tl_context = mca_btl_uct_module_get_tl_context_specific (module, module->comm_tls[req->tl_index], req->context_id);
         mca_btl_uct_base_frag_t *frag;
 
         /* to avoid a race with send adding pending frags grab the lock here */
@@ -280,13 +278,17 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create (mca_btl_uct_module_t *
             break;
         }
 
-        BTL_VERBOSE(("enabling progress for tl %p context id %d", tl, context_id));
+        BTL_VERBOSE(("enabling progress for tl %p context id %d", (void *) tl, context_id));
 
+#if HAVE_DECL_UCT_PROGRESS_THREAD_SAFE
         uct_iface_progress_enable (context->uct_iface, UCT_PROGRESS_THREAD_SAFE | UCT_PROGRESS_SEND |
                                    UCT_PROGRESS_RECV);
+#else
+        uct_iface_progress_enable (context->uct_iface, UCT_PROGRESS_SEND | UCT_PROGRESS_RECV);
+#endif
 
 	if (context_id > 0 && tl == module->am_tl) {
-	    BTL_VERBOSE(("installing AM handler for tl %p context id %d", tl, context_id));
+	    BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
 	    uct_iface_set_am_handler (context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
                                       context, UCT_CB_FLAG_SYNC);
 	}
