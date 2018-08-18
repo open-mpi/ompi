@@ -257,7 +257,7 @@ __sync_add_and_fetch(&tmp, 1);],
      opal_asm_sync_have_64bit=0])
 
   AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
-		     [Whether 64-bit is supported by the __sync builtin atomics])
+                     [Whether 64-bit is supported by the __sync builtin atomics])
 
   # Check for 128-bit support
   OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
@@ -844,7 +844,7 @@ AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
     AC_MSG_CHECKING([if have Sparc v8+/v9 support])
     sparc_result=0
     OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-	casa [%o0] 0x80, %o1, %o2],
+        casa [%o0] 0x80, %o1, %o2],
                 [sparc_result=1],
                 [sparc_result=0])
     if test "$sparc_result" = "1" ; then
@@ -993,7 +993,7 @@ return ret;
 
     if test "$asm_result" = "yes" ; then
         OPAL_C_GCC_INLINE_ASSEMBLY=1
-	opal_cv_asm_inline_supported="yes"
+        opal_cv_asm_inline_supported="yes"
     else
         OPAL_C_GCC_INLINE_ASSEMBLY=0
     fi
@@ -1069,7 +1069,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
               [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
-	aarch64*)
+        aarch64*)
             opal_cv_asm_arch="ARM64"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_ASM_ARM_VERSION=8
@@ -1177,11 +1177,11 @@ AC_MSG_ERROR([Can not continue.])
             ;;
         esac
 
-	if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
-		test "$opal_asm_sync_have_64bit" = "0" ; then
-	    # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
-	    opal_cv_asm_builtin="BUILTIN_NO"
-	fi
+        if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
+                test "$opal_asm_sync_have_64bit" = "0" ; then
+            # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
+            opal_cv_asm_builtin="BUILTIN_NO"
+        fi
 
       if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" || test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
@@ -1204,7 +1204,7 @@ AC_MSG_ERROR([Can not continue.])
             ;;
          esac
 
-	 opal_cv_asm_inline_supported="no"
+         opal_cv_asm_inline_supported="no"
          # now that we know our architecture, try to inline assemble
          OPAL_CHECK_INLINE_C_GCC([$OPAL_GCC_INLINE_ASSIGN])
 
