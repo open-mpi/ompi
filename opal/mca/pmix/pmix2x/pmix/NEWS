@@ -21,11 +21,24 @@ example, a bug might be fixed in the master, and then moved to the
 current release as well as the "stable" bug fix release branch.
 
 
-2.1.3 -- TBD
+2.1.4 -- 18 Sep 2018
+----------------------
+- Updated configury to silence warnings on older compilers
+- Implement job control and sensor APIs
+- Update sensor support
+- Fix a few bugs in the event notification system and provide some
+  missing implementation (support for specifying target procs to
+  receive the event).
+- Add PMIX_PROC_TERMINATED constant
+- Properly deal with EOPNOTSUPP from getsockopt() on ARM
+
+
+2.1.3 -- 23 Aug 2018
 ----------------------
 - Fixed memory corruption bug in event notification
   system due to uninitialized variable
 - Add numeric version definition
+- Transfer all cached data to client dstore upon first connect
 
 
 2.1.2 -- 6 July 2018

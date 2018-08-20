@@ -2,7 +2,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  *
- * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,7 @@ BEGIN_C_DECLS
 
 typedef struct {
     pmix_psensor_base_component_t super;
+    bool recv_active;
     pmix_list_t trackers;
 } pmix_psensor_heartbeat_component_t;
 

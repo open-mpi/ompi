@@ -13,8 +13,10 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,9 +55,6 @@
 #endif
 #ifdef HAVE_SYS_STATVFS_H
 #include <sys/statvfs.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-#include <sys/mount.h>
 #endif
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
