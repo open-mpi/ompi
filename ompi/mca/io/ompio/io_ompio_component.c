@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,10 @@
 #include "ompi/mca/fs/base/base.h"
 #include "io_ompio.h"
 #include "ompi/mca/common/ompio/common_ompio_request.h"
+
+#ifdef HAVE_IME_NATIVE_H
+#include "ompi/mca/fs/ime/fs_ime.h"
+#endif
 
 #if OPAL_CUDA_SUPPORT
 #include "ompi/mca/common/ompio/common_ompio_cuda.h"
@@ -281,6 +286,10 @@ static int close_component(void)
 #endif
 
     OBJ_DESTRUCT(&mca_io_ompio_mutex);
+
+#ifdef HAVE_IME_NATIVE_H
+    mca_fs_ime_native_fini();
+#endif
 
     return OMPI_SUCCESS;
 }
