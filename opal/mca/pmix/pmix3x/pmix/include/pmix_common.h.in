@@ -781,6 +781,7 @@ typedef int pmix_status_t;
 #define PMIX_LAUNCH_DIRECTIVE                   (PMIX_ERR_OP_BASE - 24)
 #define PMIX_LAUNCHER_READY                     (PMIX_ERR_OP_BASE - 25)
 #define PMIX_OPERATION_IN_PROGRESS              (PMIX_ERR_OP_BASE - 26)
+#define PMIX_OPERATION_SUCCEEDED                (PMIX_ERR_OP_BASE - 27)
 
 
 /* define a starting point for system error constants so
