@@ -66,6 +66,7 @@
 #include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/base/base.h"
 #include "src/mca/preg/preg.h"
+#include "src/mca/psensor/base/base.h"
 #include "src/mca/ptl/base/base.h"
 #include "src/hwloc/hwloc-internal.h"
 
@@ -397,6 +398,16 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         }
     }
 
+    /* open the psensor framework */
+    if (PMIX_SUCCESS != (rc = pmix_mca_base_framework_open(&pmix_psensor_base_framework, 0))) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return rc;
+    }
+    if (PMIX_SUCCESS != (rc = pmix_psensor_base_select())) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return rc;
+    }
+
     /* setup the wildcard recv for inbound messages from clients */
     req = PMIX_NEW(pmix_ptl_posted_recv_t);
     req->tag = UINT32_MAX;
@@ -511,6 +522,8 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     if (NULL != pmix_server_globals.tmpdir) {
         free(pmix_server_globals.tmpdir);
     }
+    /* close the psensor framework */
+    (void)pmix_mca_base_framework_close(&pmix_psensor_base_framework);
     /* close the pnet framework */
     (void)pmix_mca_base_framework_close(&pmix_pnet_base_framework);
 
@@ -3227,6 +3240,9 @@ void pmix_server_message_handler(struct pmix_peer_t *pr,
         if (NULL == reply) {
             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
             return;
+        }
+        if (PMIX_OPERATION_SUCCEEDED == ret) {
+            ret = PMIX_SUCCESS;
         }
         PMIX_BFROPS_PACK(rc, pr, reply, &ret, 1, PMIX_STATUS);
         if (PMIX_SUCCESS != rc) {
