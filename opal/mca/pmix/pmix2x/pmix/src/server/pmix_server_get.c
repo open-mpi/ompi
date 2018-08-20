@@ -611,12 +611,12 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, pmix_rank_t rank,
     /* retrieve the data for the specific rank they are asking about */
     if (PMIX_RANK_WILDCARD != rank) {
         if (!PMIX_PROC_IS_SERVER(peer) && !peer->commit_cnt) {
-            /* this condition works only for local requests, server does
-             * count commits for local ranks, and check this count when
+            /* this condition works only for local requests, server does 
+             * count commits for local ranks, and check this count when 
              * local request.
-             * if that request performs for remote rank on the remote
+             * if that request performs for remote rank on the remote 
              * node (by direct modex) so `peer->commit_cnt` should be ignored,
-             * it is can not be counted for the remote side and this condition
+             * it is can not be counted for the remote side and this condition 
              * does not matter for remote case */
             return PMIX_ERR_NOT_FOUND;
         }
