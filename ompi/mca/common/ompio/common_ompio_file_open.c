@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2017 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -164,15 +164,6 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
         goto fn_fail;
     }
 
-    /* Set default file view */
-    mca_common_ompio_set_view(ompio_fh,
-                              0,
-                              &ompi_mpi_byte.dt,
-                              &ompi_mpi_byte.dt,
-                              "native",
-                              info);
-
-    
     if ( true == use_sharedfp ) {
 	/* open the file once more for the shared file pointer if required.           
         ** Can be disabled by the user if no shared file pointer operations
@@ -191,6 +182,15 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 	}
     }
 
+    /* Set default file view */
+    mca_common_ompio_set_view(ompio_fh,
+                              0,
+                              &ompi_mpi_byte.dt,
+                              &ompi_mpi_byte.dt,
+                              "native",
+                              info);
+
+    
 
     /* If file has been opened in the append mode, move the internal
        file pointer of OMPIO to the very end of the file. */
@@ -506,7 +506,7 @@ int mca_common_ompio_file_delete (const char *filename,
         return ret;
     }
 
-    ret = fh->f_fs->fs_file_delete (filename, NULL);
+    ret = fh->f_fs->fs_file_delete ( (char *)filename, NULL);
     free(fh);
 
     if (OMPI_SUCCESS != ret) {
