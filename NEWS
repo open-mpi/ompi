@@ -36,6 +36,24 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
+3.0.3 -- August, 2018
+---------------------
+
+- Assorted Portals 4.0 bug fixes.
+- Fix for possible data corruption in MPI_BSEND.
+- Move shared memory file for vader btl into /dev/shm on Linux.
+- Fix for MPI_ISCATTER/MPI_ISCATTERV Fortran interfaces with MPI_IN_PLACE.
+- Upgrade PMIx to v2.1.3.
+- Fix for Power9 built-in atomics.
+- Numerous One-sided bug fixes.
+- Fix for race condition in uGNI BTL.
+- Improve handling of large number of interfaces with TCP BTL.
+- Numerous UCX bug fixes.
+- Add support for QLogic and Broadcom Cumulus RoCE HCAs to Open IB BTL.
+- Add patcher support for aarch64.
+- Fix hang on Power and ARM when Open MPI was built with low compiler
+  optimization settings.
+
 3.0.2 -- June, 2018
 -------------------
 
@@ -59,7 +77,6 @@ it is possible for items to appear more than once in the list.
   disabled.  See
   https://github.com/open-mpi/ompi/issues/4349#issuecomment-374970982
   for more information.
-
 
 3.0.1 -- March, 2018
 ----------------------
