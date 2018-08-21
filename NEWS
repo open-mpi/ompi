@@ -246,6 +246,23 @@ Known issues:
 - MPI_Connect/accept between applications started by different mpirun
   commands will fail, even if ompi-server is running.
 
+2.1.5 -- August 2018
+--------------------
+
+- A subtle race condition bug was discovered in the "vader" BTL
+  (shared memory communications) that, in rare instances, can cause
+  MPI processes to crash or incorrectly classify (or effectively drop)
+  an MPI message sent via shared memory.  If you are using the "ob1"
+  PML with "vader" for shared memory communication (note that vader is
+  the default for shared memory communication with ob1), you need to
+  upgrade to v2.1.5 to fix this issue.  You may also upgrade to the
+  following versions to fix this issue:
+  - Open MPI v3.0.1 (released March, 2018) or later in the v3.0.x
+    series
+  - Open MPI v3.1.2 (expected end of August, 2018) or later
+- A link issue was fixed when the UCX library was not located in the
+  linker-default search paths.
+
 2.1.4 -- August, 2018
 ---------------------
 
