@@ -1595,17 +1595,6 @@ end subroutine PMPI_Type_dup
 end interface
 
 
-interface PMPI_Type_extent
-
-subroutine PMPI_Type_extent(datatype, extent, ierror)
-  integer, intent(in) :: datatype
-  integer, intent(out) :: extent
-  integer, intent(out) :: ierror
-end subroutine PMPI_Type_extent
-
-end interface
-
-
 interface PMPI_Type_free
 
 subroutine PMPI_Type_free(datatype, ierror)
