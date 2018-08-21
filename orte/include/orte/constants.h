@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,6 +93,7 @@ enum {
     ORTE_ERR_PROC_ABORTING                  = OPAL_ERR_PROC_ABORTING,
     ORTE_ERR_NODE_DOWN                      = OPAL_ERR_NODE_DOWN,
     ORTE_ERR_NODE_OFFLINE                   = OPAL_ERR_NODE_OFFLINE,
+    ORTE_OPERATION_SUCCEEDED                = OPAL_OPERATION_SUCCEEDED,
 
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!

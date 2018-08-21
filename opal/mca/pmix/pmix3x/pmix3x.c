@@ -364,36 +364,12 @@ void pmix3x_event_hdlr(size_t evhdlr_registration_id,
     return;
 }
 
-static void cleanup_cbfunc(pmix_status_t status,
-                           pmix_info_t *info, size_t ninfo,
-                           void *cbdata,
-                           pmix_release_cbfunc_t release_fn,
-                           void *release_cbdata)
-{
-    opal_pmix_lock_t *lk = (opal_pmix_lock_t*)cbdata;
-
-    OPAL_POST_OBJECT(lk);
-
-    /* let the library release the data and cleanup from
-     * the operation */
-    if (NULL != release_fn) {
-        release_fn(release_cbdata);
-    }
-
-    /* release the block */
-    lk->status = pmix3x_convert_rc(status);
-    OPAL_PMIX_WAKEUP_THREAD(lk);
-}
-
 static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool jobscope)
 {
-    opal_pmix_lock_t lk;
     pmix_info_t pinfo[3];
     size_t n, ninfo=0;
     pmix_status_t rc;
     int ret;
-
-    OPAL_PMIX_CONSTRUCT_LOCK(&lk);
 
     if (ignore) {
         /* they want this path ignored */
@@ -415,18 +391,12 @@ static int pmix3x_register_cleanup(char *path, bool directory, bool ignore, bool
 
     /* if they want this applied to the job, then indicate so */
     if (jobscope) {
-        rc = PMIx_Job_control_nb(NULL, 0, pinfo, ninfo, cleanup_cbfunc, (void*)&lk);
+        rc = PMIx_Job_control_nb(NULL, 0, pinfo, ninfo, NULL, NULL);
     } else {
         /* only applies to us */
-        rc = PMIx_Job_control_nb(&mca_pmix_pmix3x_component.myproc, 1, pinfo, ninfo, cleanup_cbfunc, (void*)&lk);
+        rc = PMIx_Job_control_nb(&mca_pmix_pmix3x_component.myproc, 1, pinfo, ninfo, NULL, NULL);
     }
-    if (PMIX_SUCCESS != rc) {
-        ret = pmix3x_convert_rc(rc);
-    } else {
-        OPAL_PMIX_WAIT_THREAD(&lk);
-        ret = lk.status;
-    }
-    OPAL_PMIX_DESTRUCT_LOCK(&lk);
+    ret = pmix3x_convert_rc(rc);
     for (n=0; n < ninfo; n++) {
         PMIX_INFO_DESTRUCT(&pinfo[n]);
     }
@@ -536,6 +506,10 @@ pmix_status_t pmix3x_convert_opalrc(int rc)
         return PMIX_ERROR;
     case OPAL_SUCCESS:
         return PMIX_SUCCESS;
+
+    case OPAL_OPERATION_SUCCEEDED:
+        return PMIX_OPERATION_SUCCEEDED;
+
     default:
         return rc;
     }
@@ -629,6 +603,10 @@ int pmix3x_convert_rc(pmix_status_t rc)
         return OPAL_ERROR;
     case PMIX_SUCCESS:
         return OPAL_SUCCESS;
+
+    case PMIX_OPERATION_SUCCEEDED:
+        return OPAL_OPERATION_SUCCEEDED;
+
     default:
         return rc;
     }

@@ -440,6 +440,7 @@ pmix_status_t ext2x_convert_opalrc(int rc)
     case OPAL_ERROR:
         return PMIX_ERROR;
     case OPAL_SUCCESS:
+    case OPAL_OPERATION_SUCCEEDED:
         return PMIX_SUCCESS;
     default:
         return rc;
