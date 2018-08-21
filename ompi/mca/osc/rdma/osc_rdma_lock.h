@@ -40,7 +40,7 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, struct 
                                          ompi_osc_rdma_pending_op_cb_fn_t cbfunc, void *cbdata, void *cbcontext)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    int ret;
+    int ret = OPAL_ERROR;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
     assert (NULL != pending_op);
