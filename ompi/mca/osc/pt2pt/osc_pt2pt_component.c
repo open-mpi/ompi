@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -68,43 +68,41 @@ ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
 
 
 ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
-    {
-        NULL, /* shared_query */
+    .super = {
+        .osc_win_attach = ompi_osc_pt2pt_attach,
+        .osc_win_detach = ompi_osc_pt2pt_detach,
+        .osc_free = ompi_osc_pt2pt_free,
 
-        ompi_osc_pt2pt_attach,
-        ompi_osc_pt2pt_detach,
-        ompi_osc_pt2pt_free,
+        .osc_put = ompi_osc_pt2pt_put,
+        .osc_get = ompi_osc_pt2pt_get,
+        .osc_accumulate = ompi_osc_pt2pt_accumulate,
+        .osc_compare_and_swap = ompi_osc_pt2pt_compare_and_swap,
+        .osc_fetch_and_op = ompi_osc_pt2pt_fetch_and_op,
+        .osc_get_accumulate = ompi_osc_pt2pt_get_accumulate,
 
-        ompi_osc_pt2pt_put,
-        ompi_osc_pt2pt_get,
-        ompi_osc_pt2pt_accumulate,
-        ompi_osc_pt2pt_compare_and_swap,
-        ompi_osc_pt2pt_fetch_and_op,
-        ompi_osc_pt2pt_get_accumulate,
+        .osc_rput = ompi_osc_pt2pt_rput,
+        .osc_rget = ompi_osc_pt2pt_rget,
+        .osc_raccumulate = ompi_osc_pt2pt_raccumulate,
+        .osc_rget_accumulate = ompi_osc_pt2pt_rget_accumulate,
 
-        ompi_osc_pt2pt_rput,
-        ompi_osc_pt2pt_rget,
-        ompi_osc_pt2pt_raccumulate,
-        ompi_osc_pt2pt_rget_accumulate,
+        .osc_fence = ompi_osc_pt2pt_fence,
 
-        ompi_osc_pt2pt_fence,
+        .osc_start = ompi_osc_pt2pt_start,
+        .osc_complete = ompi_osc_pt2pt_complete,
+        .osc_post = ompi_osc_pt2pt_post,
+        .osc_wait = ompi_osc_pt2pt_wait,
+        .osc_test = ompi_osc_pt2pt_test,
 
-        ompi_osc_pt2pt_start,
-        ompi_osc_pt2pt_complete,
-        ompi_osc_pt2pt_post,
-        ompi_osc_pt2pt_wait,
-        ompi_osc_pt2pt_test,
+        .osc_lock = ompi_osc_pt2pt_lock,
+        .osc_unlock = ompi_osc_pt2pt_unlock,
+        .osc_lock_all = ompi_osc_pt2pt_lock_all,
+        .osc_unlock_all = ompi_osc_pt2pt_unlock_all,
 
-        ompi_osc_pt2pt_lock,
-        ompi_osc_pt2pt_unlock,
-        ompi_osc_pt2pt_lock_all,
-        ompi_osc_pt2pt_unlock_all,
-
-        ompi_osc_pt2pt_sync,
-        ompi_osc_pt2pt_flush,
-        ompi_osc_pt2pt_flush_all,
-        ompi_osc_pt2pt_flush_local,
-        ompi_osc_pt2pt_flush_local_all,
+        .osc_sync = ompi_osc_pt2pt_sync,
+        .osc_flush = ompi_osc_pt2pt_flush,
+        .osc_flush_all = ompi_osc_pt2pt_flush_all,
+        .osc_flush_local = ompi_osc_pt2pt_flush_local,
+        .osc_flush_local_all = ompi_osc_pt2pt_flush_local_all,
     }
 };
 
