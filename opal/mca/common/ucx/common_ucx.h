@@ -66,6 +66,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void);
 OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void);
 OPAL_DECLSPEC void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status);
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker);
+OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component);
 
 static inline
 int opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h worker,
