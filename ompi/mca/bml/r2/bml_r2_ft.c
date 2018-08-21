@@ -155,7 +155,10 @@ int mca_bml_r2_ft_event(int state)
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
              */
-            opal_pmix.fence(NULL, 0);
+            if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                opal_output(0, "bml:r2: ft_event(Restart): Failed to fence complete\n");
+                return ret;
+            }
 
             /*
              * Re-open the BTL framework to get the full list of components.
@@ -224,7 +227,10 @@ int mca_bml_r2_ft_event(int state)
          * Barrier to make all processes have been successfully restarted before
          * we try to remove some restart only files.
          */
-        opal_pmix.fence(NULL, 0);
+        if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            opal_output(0, "bml:r2: ft_event(Restart): Failed to fence complete\n");
+            return ret;
+        }
 
         /*
          * Re-open the BTL framework to get the full list of components.

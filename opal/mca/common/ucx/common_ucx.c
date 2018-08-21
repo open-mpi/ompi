@@ -97,13 +97,19 @@ static void opal_common_ucx_mca_fence_complete_cb(int status, void *fenced)
     *(int*)fenced = 1;
 }
 
-OPAL_DECLSPEC void opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
+OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
 {
     volatile int fenced = 0;
+    int ret = OPAL_SUCCESS;
 
-    opal_pmix.fence_nb(NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void*)&fenced);
+    if (OPAL_SUCCESS != (ret = opal_pmix.fence_nb(NULL, 0,
+                    opal_common_ucx_mca_fence_complete_cb, (void*)&fenced))){
+        return ret;
+    }
+
     while (!fenced) {
         ucp_worker_progress(worker);
     }
-}
 
+    return ret;
+}

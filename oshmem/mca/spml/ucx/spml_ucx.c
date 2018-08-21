@@ -125,6 +125,7 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
     void *dreq, **dreqs;
     ucp_ep_h ep;
     size_t i, n;
+    int ret;
 
     oshmem_shmem_barrier();
 
@@ -175,7 +176,10 @@ int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
     free(dreqs);
     free(mca_spml_ucx.remote_addrs_tbl);
 
-    opal_common_ucx_mca_pmix_fence(mca_spml_ucx_ctx_default.ucp_worker);
+    if (OSHMEM_SUCCESS != (ret = opal_common_ucx_mca_pmix_fence(
+                               mca_spml_ucx_ctx_default.ucp_worker))) {
+        return ret;
+    }
     free(mca_spml_ucx_ctx_default.ucp_peers);
     mca_spml_ucx_ctx_default.ucp_peers = NULL;
     return OSHMEM_SUCCESS;

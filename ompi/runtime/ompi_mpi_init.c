@@ -662,9 +662,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 #if (OPAL_ENABLE_TIMING)
     if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex && 
             opal_pmix_collect_all_data) {
-        opal_pmix.fence(NULL, 0);
+        if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            error = "timing: pmix-barrier-1 failed";
+            goto error;
+        }
         OMPI_TIMING_NEXT("pmix-barrier-1");
-        opal_pmix.fence(NULL, 0);
+        if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            error = "timing: pmix-barrier-2 failed";
+            goto error;
+        }
         OMPI_TIMING_NEXT("pmix-barrier-2");
     }
 #endif
@@ -687,19 +693,32 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
             background_fence = true;
             active = true;
             OPAL_POST_OBJECT(&active);
-            opal_pmix.fence_nb(NULL, true, fence_release, (void*)&active);
+            if( OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, true,
+                                                    fence_release,
+                                                    (void*)&active))) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
+            }
+
         } else if (!opal_pmix_base_async_modex) {
             /* we want to do the modex */
             active = true;
             OPAL_POST_OBJECT(&active);
-            opal_pmix.fence_nb(NULL, opal_pmix_collect_all_data,
-                               fence_release, (void*)&active);
+            if( OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL,
+                opal_pmix_collect_all_data, fence_release, (void*)&active))) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
+            }
             /* cannot just wait on thread as we need to call opal_progress */
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         }
         /* otherwise, we don't want to do the modex, so fall thru */
     } else if (!opal_pmix_base_async_modex || opal_pmix_collect_all_data) {
-        opal_pmix.fence(NULL, opal_pmix_collect_all_data);
+        if( OMPI_SUCCESS != (ret = opal_pmix.fence(NULL,
+                                                opal_pmix_collect_all_data))) {
+            error = "opal_pmix.fence() failed";
+            goto error;
+        }
     }
 
     OMPI_TIMING_NEXT("modex");
@@ -877,11 +896,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         if (NULL != opal_pmix.fence_nb) {
             active = true;
             OPAL_POST_OBJECT(&active);
-            opal_pmix.fence_nb(NULL, false,
-                               fence_release, (void*)&active);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, false,
+                               fence_release, (void*)&active))) {
+                error = "opal_pmix.fence_nb() failed";
+                goto error;
+            }
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
-            opal_pmix.fence(NULL, false);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, false))) {
+                error = "opal_pmix.fence() failed";
+                goto error;
+            }
         }
     }
 
