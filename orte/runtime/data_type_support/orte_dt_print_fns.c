@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -442,9 +442,12 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
  */
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type)
 {
-    char *tmp, *tmp2, *pfx2;
-    hwloc_obj_t loc=NULL, bd=NULL;
-    char locale[1024], bind[1024];
+    char *tmp, *tmp3, *pfx2;
+    hwloc_obj_t loc=NULL;
+    char locale[1024], tmp1[1024], tmp2[1024];
+    hwloc_cpuset_t mycpus;
+    char *str=NULL, *cpu_bitmap=NULL;
+
 
     /* set default result */
     *output = NULL;
@@ -470,10 +473,6 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     }
 
     if (!orte_devel_level_output) {
-        hwloc_cpuset_t mycpus;
-        char tmp1[1024], tmp2[1024];
-        char *str=NULL, *cpu_bitmap=NULL;
-
         if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
             NULL != src->node->topology && NULL != src->node->topology->topo) {
             mycpus = hwloc_bitmap_alloc();
@@ -509,10 +508,10 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
 
     asprintf(&tmp, "\n%sData for proc: %s", pfx2, ORTE_NAME_PRINT(&src->name));
 
-    asprintf(&tmp2, "%s\n%s\tPid: %ld\tLocal rank: %lu\tNode rank: %lu\tApp rank: %d", tmp, pfx2,
+    asprintf(&tmp3, "%s\n%s\tPid: %ld\tLocal rank: %lu\tNode rank: %lu\tApp rank: %d", tmp, pfx2,
              (long)src->pid, (unsigned long)src->local_rank, (unsigned long)src->node_rank, src->app_rank);
     free(tmp);
-    tmp = tmp2;
+    tmp = tmp3;
 
     if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&loc, OPAL_PTR)) {
         if (NULL != loc) {
@@ -525,23 +524,26 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     } else {
         strcpy(locale, "UNKNOWN");
     }
-    if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
-        if (NULL != bd) {
-            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(bind, sizeof(bind), src->node->topology->topo, bd->cpuset)) {
-                strcpy(bind, "UNBOUND");
-            }
-        } else {
-            strcpy(bind, "UNBOUND");
-        }
+    if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
+        NULL != src->node->topology && NULL != src->node->topology->topo) {
+        mycpus = hwloc_bitmap_alloc();
+        hwloc_bitmap_list_sscanf(mycpus, cpu_bitmap);
+        opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), src->node->topology->topo, mycpus);
     } else {
-        strcpy(bind, "UNBOUND");
+        snprintf(tmp2, sizeof(tmp2), "UNBOUND");
     }
-    asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n%s\tBinding: %s", tmp, pfx2,
-             orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, pfx2, bind);
+    asprintf(&tmp3, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n%s\tBinding: %s", tmp, pfx2,
+             orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, pfx2,  tmp2);
     free(tmp);
+    if (NULL != str) {
+        free(str);
+    }
+    if (NULL != cpu_bitmap) {
+        free(cpu_bitmap);
+    }
 
     /* set the return */
-    *output = tmp2;
+    *output = tmp3;
 
     free(pfx2);
     return ORTE_SUCCESS;
