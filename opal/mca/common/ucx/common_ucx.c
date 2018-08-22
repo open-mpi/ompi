@@ -39,7 +39,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
     static int registered = 0;
     static int hook_index;
     if (!registered) {
-        mca_base_var_register("opal", "ucx", "*", "verbose",
+        mca_base_var_register("opal", "opal_common", "ucx", "verbose",
                               "Verbose level of the UCX components",
                               MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                               OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
