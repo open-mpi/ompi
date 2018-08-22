@@ -52,12 +52,17 @@ BEGIN_C_DECLS
                             __VA_ARGS__);                                   \
     }
 
+/* progress loop to allow call UCX/opal progress */
+/* used C99 for-statement variable initialization */
+#define MCA_COMMON_UCX_PROGRESS_LOOP(_worker)                            \
+    for (int iter = 0;; (++iter % opal_common_ucx.progress_iterations) ? \
+                        (void)ucp_worker_progress(_worker) : opal_progress())
+
 #define MCA_COMMON_UCX_WAIT_LOOP(_request, _worker, _msg, _completed)                    \
-    while (1) {                                                                          \
+    do {                                                                                 \
         ucs_status_t status;                                                             \
-        int i;                                                                           \
         /* call UCX progress */                                                          \
-        for (i = 0; i < opal_common_ucx.progress_iterations; i++) {                      \
+        MCA_COMMON_UCX_PROGRESS_LOOP(_worker) {                                          \
             if (UCS_INPROGRESS != (status = opal_common_ucx_request_status(_request))) { \
                 _completed;                                                              \
                 if (OPAL_LIKELY(UCS_OK == status)) {                                     \
@@ -70,12 +75,8 @@ BEGIN_C_DECLS
                     return OPAL_ERROR;                                                   \
                 }                                                                        \
             }                                                                            \
-            ucp_worker_progress(_worker);                                                \
         }                                                                                \
-        /* call OPAL progress on every opal_common_ucx_progress_iterations */            \
-        /* calls to UCX progress */                                                      \
-        opal_progress();                                                                 \
-    }
+    } while (0)
 
 typedef struct opal_common_ucx_module {
     int  output;
