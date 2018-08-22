@@ -74,16 +74,6 @@ OSHMEM_DECLSPEC extern shmem_ctx_t oshmem_ctx_default;
     } while (0)
 
 
-/*
- * SHMEM_Init_thread constants
- */
-enum {
-    SHMEM_THREAD_SINGLE,
-    SHMEM_THREAD_FUNNELED,
-    SHMEM_THREAD_SERIALIZED,
-    SHMEM_THREAD_MULTIPLE
-};
-
 /** Bitflags to be used for the modex exchange for the various thread
  *  levels. Required to support heterogeneous environments */
 #define OSHMEM_THREADLEVEL_SINGLE_BF     0x00000001
