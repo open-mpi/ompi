@@ -176,7 +176,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
 {
     int err, flag;
     opal_info_entry_t *iterator;
-    char savedkey[OPAL_MAX_INFO_KEY];
+    char savedkey[OPAL_MAX_INFO_KEY + 1]; // iterator->ie_key has this as its size
     char savedval[OPAL_MAX_INFO_VAL];
     char *valptr, *pkey;
     int is_IN_key;
@@ -194,7 +194,7 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
          if (0 == strncmp(iterator->ie_key, OPAL_INFO_SAVE_PREFIX,
              strlen(OPAL_INFO_SAVE_PREFIX)))
         {
-             pkey += 5;
+             pkey += strlen(OPAL_INFO_SAVE_PREFIX);
 
              is_IN_key = 1;
              exists_IN_key = 1;
@@ -207,9 +207,9 @@ int opal_info_dup_mode (opal_info_t *info, opal_info_t **newinfo,
              exists_reg_key = 1;
 
 // see if there is an __IN_<key> for the current <key>
-             if (strlen(iterator->ie_key) + 5 < OPAL_MAX_INFO_KEY) {
-                 snprintf(savedkey, OPAL_MAX_INFO_KEY,
-                     OPAL_INFO_SAVE_PREFIX "%s", iterator->ie_key);
+             if (strlen(OPAL_INFO_SAVE_PREFIX) + strlen(pkey) < OPAL_MAX_INFO_KEY) {
+                 snprintf(savedkey, OPAL_MAX_INFO_KEY+1,
+                     OPAL_INFO_SAVE_PREFIX "%s", pkey);
 // (the prefix macro is a string, so the unreadable part above is a string concatenation)
                  opal_info_get_nolock (info, savedkey, OPAL_MAX_INFO_VAL,
                                        savedval, &flag);
