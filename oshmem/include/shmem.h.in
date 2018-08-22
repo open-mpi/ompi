@@ -55,7 +55,6 @@ extern "C" {
 #endif
 
 #if OSHMEM_HAVE_C11
-#define __OSHMEM_VAR_EXPAND(_arg) _arg
 #define __OSHMEM_VAR_ARG1_EXPAND(_arg1, ...) _arg1
 #define __OSHMEM_VAR_ARG1(...) __OSHMEM_VAR_ARG1_EXPAND(__VA_ARGS__, _extra)
 #define __OSHMEM_VAR_ARG2(_arg1, ...) __OSHMEM_VAR_ARG1_EXPAND(__VA_ARGS__, _extra)
