@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl Copyright (c) 2004-2018 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -506,7 +506,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-# Declare some variables; use OPAL_VAR_SCOPE_END to ensure that they
+# Declare some variables; use OPAL_VAR_SCOPE_POP to ensure that they
 # are cleaned up / undefined.
 AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
 
@@ -524,7 +524,7 @@ AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
         eval $opal_str
 
         if test "x$opal_str" != "x"; then
-            AC_MSG_WARN([Found configure shell variable clash!])
+            AC_MSG_WARN([Found configure shell variable clash at line $LINENO!])
             AC_MSG_WARN([[OPAL_VAR_SCOPE_PUSH] called on "$opal_var",])
             AC_MSG_WARN([but it is already defined with value "$opal_str"])
             AC_MSG_WARN([This usually indicates an error in configure.])
