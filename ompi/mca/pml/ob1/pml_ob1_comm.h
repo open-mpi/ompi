@@ -44,11 +44,7 @@ struct mca_pml_ob1_comm_proc_t {
     opal_object_t super;
     struct ompi_proc_t* ompi_proc;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
-#if OPAL_ENABLE_MULTI_THREADS
     volatile int32_t send_sequence; /**< send side sequence number */
-#else
-    int32_t send_sequence; /**< send side sequence number */
-#endif
     struct mca_pml_ob1_recv_frag_t* frags_cant_match;  /**< out-of-order fragment queues */
 #if !MCA_PML_OB1_CUSTOM_MATCH
     opal_list_t specific_receives; /**< queues of unmatched specific receives */

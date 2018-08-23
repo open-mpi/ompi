@@ -65,8 +65,5 @@ THREAD_LIBS="$PTHREAD_LIBS"
 
 OPAL_CHECK_PTHREAD_PIDS
 
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [1],
-                   [Whether we should enable thread support within the OPAL code base])
-
 ])dnl
 

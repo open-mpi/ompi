@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -357,9 +360,8 @@ void orte_info_do_config(bool want_all)
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
 
     /* setup strings that require allocation */
-    asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)",
-             "posix",
-             OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
+    asprintf(&threads, "%s (OPAL: yes, ORTE progress: yes, Event lib: yes)",
+             "posix");
 
     asprintf(&ft_support, "%s (checkpoint thread: %s)",
              OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;

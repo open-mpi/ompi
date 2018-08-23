@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -45,9 +45,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
          * completes - and create a new request.
          */
 
-#if OPAL_ENABLE_MULTI_THREADS
         opal_atomic_rmb();
-#endif
 
         /* start the request */
         switch(pml_request->req_type) {
