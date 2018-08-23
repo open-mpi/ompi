@@ -17,14 +17,12 @@ static void ompi_osc_rdma_sync_constructor (ompi_osc_rdma_sync_t *rdma_sync)
     rdma_sync->type = OMPI_OSC_RDMA_SYNC_TYPE_NONE;
     rdma_sync->epoch_active = false;
     rdma_sync->outstanding_rdma.counter = 0;
-    OBJ_CONSTRUCT(&rdma_sync->aggregations, opal_list_t);
     OBJ_CONSTRUCT(&rdma_sync->lock, opal_mutex_t);
     OBJ_CONSTRUCT(&rdma_sync->demand_locked_peers, opal_list_t);
 }
 
 static void ompi_osc_rdma_sync_destructor (ompi_osc_rdma_sync_t *rdma_sync)
 {
-    OBJ_DESTRUCT(&rdma_sync->aggregations);
     OBJ_DESTRUCT(&rdma_sync->lock);
     OBJ_DESTRUCT(&rdma_sync->demand_locked_peers);
 }

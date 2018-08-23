@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -44,9 +44,6 @@ struct ompi_osc_rdma_peer_t {
 
     /** peer flags */
     volatile int32_t flags;
-
-    /** aggregation support */
-    ompi_osc_rdma_aggregation_t *aggregate;
 };
 typedef struct ompi_osc_rdma_peer_t ompi_osc_rdma_peer_t;
 
@@ -163,13 +160,6 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
  * intended to be called from anywhere else.
  */
 struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_module_t *module, int peer_id);
-
-/**
- * @brief flush queued aggregated operation
- *
- * @param[in] peer            osc rdma peer
- */
-int ompi_osc_rdma_peer_aggregate_flush (ompi_osc_rdma_peer_t *peer);
 
 /**
  * @brief lookup the btl endpoint for a peer

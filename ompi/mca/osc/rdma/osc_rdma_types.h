@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -170,40 +170,6 @@ struct ompi_osc_rdma_state_t {
     unsigned char      regions[];
 };
 typedef struct ompi_osc_rdma_state_t ompi_osc_rdma_state_t;
-
-struct ompi_osc_rdma_aggregation_t {
-    opal_list_item_t super;
-
-    /** associated peer */
-    struct ompi_osc_rdma_peer_t *peer;
-
-    /** aggregation buffer frag */
-    struct ompi_osc_rdma_frag_t *frag;
-
-    /** synchronization object */
-    struct ompi_osc_rdma_sync_t *sync;
-
-    /** aggregation buffer */
-    char *buffer;
-
-    /** target for the operation */
-    osc_rdma_base_t target_address;
-
-    /** handle for target memory address */
-    mca_btl_base_registration_handle_t *target_handle;
-
-    /** buffer size */
-    size_t buffer_size;
-
-    /** buffer used */
-    size_t buffer_used;
-
-    /** type */
-    int type;
-};
-typedef struct ompi_osc_rdma_aggregation_t ompi_osc_rdma_aggregation_t;
-
-OBJ_CLASS_DECLARATION(ompi_osc_rdma_aggregation_t);
 
 typedef void (*ompi_osc_rdma_pending_op_cb_fn_t) (void *, void *, int);
 
