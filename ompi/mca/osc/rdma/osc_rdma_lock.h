@@ -68,7 +68,7 @@ static inline int ompi_osc_rdma_lock_btl_fop (ompi_osc_rdma_module_t *module, om
     }
 
     if (NULL != frag) {
-        if (*result) {
+        if (NULL != result) {
             *result = *temp;
         }
         ompi_osc_rdma_frag_complete (frag);
