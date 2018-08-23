@@ -472,7 +472,11 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->rx_attr->op_flags = FI_COMPLETION;
     hints->tx_attr->op_flags = FI_COMPLETION;
 
-    hints->domain_attr->threading        = FI_THREAD_UNSPEC;
+    if (enable_mpi_threads) {
+        hints->domain_attr->threading = FI_THREAD_SAFE;
+    } else {
+        hints->domain_attr->threading = FI_THREAD_DOMAIN;
+    }
 
     switch (control_progress) {
     case MTL_OFI_PROG_AUTO:
