@@ -269,7 +269,7 @@ int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endp
     /* message with header */
     const size_t msg_size = total_size + 8;
     mca_btl_uct_am_header_t am_header;
-    ucs_status_t ucs_status;
+    ucs_status_t ucs_status = UCS_OK;
     uct_ep_h ep_handle;
     int rc;
 

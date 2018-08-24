@@ -765,7 +765,7 @@ static void print_ranks(opal_list_t *statlist)
     opal_list_item_t *item;
     opal_pstats_t *stats, *pstats;
     int32_t minrank;
-    char pretty_time[10];
+    char pretty_time[32];
     int i;
 
     /* sort the results by rank */

@@ -107,7 +107,7 @@ MPI_Comm oshmem_comm_world = {0};
 
 opal_thread_t *oshmem_mpi_main_thread = NULL;
 
-shmem_internal_mutex_t shmem_internal_mutex_alloc = {0};
+shmem_internal_mutex_t shmem_internal_mutex_alloc = {{0}};
 
 shmem_ctx_t oshmem_ctx_default = NULL;
 

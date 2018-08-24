@@ -122,7 +122,7 @@ int opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h worker,
     if (OPAL_LIKELY(UCS_OK == request)) {
         return OPAL_SUCCESS;
     } else if (OPAL_UNLIKELY(UCS_PTR_IS_ERR(request))) {
-        MCA_COMMON_UCX_VERBOSE(1, "%s failed: %d, %s", msg ? msg : __FUNCTION__,
+        MCA_COMMON_UCX_VERBOSE(1, "%s failed: %d, %s", msg ? msg : __func__,
                                UCS_PTR_STATUS(request),
                                ucs_status_string(UCS_PTR_STATUS(request)));
         return OPAL_ERROR;
