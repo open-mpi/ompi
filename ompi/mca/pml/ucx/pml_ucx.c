@@ -441,7 +441,7 @@ int mca_pml_ucx_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
     req->flags          = 0;
     req->buffer         = buf;
     req->count          = count;
-    req->datatype       = mca_pml_ucx_get_datatype(datatype);
+    req->datatype.datatype = mca_pml_ucx_get_datatype(datatype);
 
     PML_UCX_MAKE_RECV_TAG(req->tag, req->recv.tag_mask, tag, src, comm);
 
@@ -551,10 +551,10 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
     req->send.mode      = mode;
     req->send.ep        = ep;
     if (MCA_PML_BASE_SEND_BUFFERED == mode) {
-        req->ompi_datatype = datatype;
+        req->datatype.ompi_datatype = datatype;
         OBJ_RETAIN(datatype);
     } else {
-        req->datatype = mca_pml_ucx_get_datatype(datatype);
+        req->datatype.datatype = mca_pml_ucx_get_datatype(datatype);
     }
 
     *request = &req->ompi;
@@ -917,8 +917,8 @@ int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
             tmp_req = (ompi_request_t*)mca_pml_ucx_common_send(preq->send.ep,
                                                                preq->buffer,
                                                                preq->count,
-                                                               preq->ompi_datatype,
-                                                               preq->datatype,
+                                                               preq->datatype.ompi_datatype,
+                                                               preq->datatype.datatype,
                                                                preq->tag,
                                                                preq->send.mode,
                                                                mca_pml_ucx_psend_completion);
@@ -926,7 +926,8 @@ int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
             PML_UCX_VERBOSE(8, "start recv request %p", (void*)preq);
             tmp_req = (ompi_request_t*)ucp_tag_recv_nb(ompi_pml_ucx.ucp_worker,
                                                        preq->buffer, preq->count,
-                                                       preq->datatype, preq->tag,
+                                                       preq->datatype.datatype,
+                                                       preq->tag,
                                                        preq->recv.tag_mask,
                                                        mca_pml_ucx_precv_completion);
         }
