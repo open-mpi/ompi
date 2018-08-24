@@ -150,7 +150,11 @@ int app_coord_init()
                              "app) Startup Barrier..."));
     }
 
-    opal_pmix.fence(NULL, 0);
+    if (ORTE_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
@@ -216,7 +220,11 @@ int app_coord_finalize()
                              "app) Shutdown Barrier..."));
     }
 
-    opal_pmix.fence(NULL, 0);
+    if (ORTE_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
