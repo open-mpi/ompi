@@ -259,7 +259,13 @@ int ompi_mpi_finalize(void)
              * communications/actions to complete.  See
              * https://github.com/open-mpi/ompi/issues/1576 for the
              * original bug report. */
-            opal_pmix.fence_nb(NULL, 0, fence_cbfunc, (void*)&active);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence_nb(NULL, 0, fence_cbfunc,
+                                                          (void*)&active))) {
+                OMPI_ERROR_LOG(ret);
+                /* Reset the active flag to false, to avoid waiting for
+                 * completion when the fence was failed. */
+                active = false;
+            }
             OMPI_LAZY_WAIT_FOR_COMPLETION(active);
         } else {
             /* However, we cannot guarantee that the provided PMIx has
@@ -270,7 +276,9 @@ int ompi_mpi_finalize(void)
             ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
             comm->c_coll->coll_barrier(comm, comm->c_coll->coll_barrier_module);
 
-            opal_pmix.fence(NULL, 0);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                OMPI_ERROR_LOG(ret);
+            }
         }
     }
 

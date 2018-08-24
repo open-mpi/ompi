@@ -797,7 +797,10 @@ int mca_pml_ob1_ft_event( int state )
     if(OPAL_CRS_CHECKPOINT == state) {
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
-            opal_pmix.fence(NULL, 0);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+                return ret;
+            }
         }
 
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
@@ -808,7 +811,10 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
-                opal_pmix.fence(NULL, 0);
+                if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                    opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+                    return ret;
+                }
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
@@ -908,13 +914,19 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
-                opal_pmix.fence(NULL, 0);
+                if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                    opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+                    return ret;
+                }
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
 
         if (opal_cr_continue_like_restart && !first_continue_pass) {
-            opal_pmix.fence(NULL, 0);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+                return ret;
+            }
 
             /*
              * Startup the PML stack now that the modex is running again
@@ -926,7 +938,10 @@ int mca_pml_ob1_ft_event( int state )
             }
 
             /* Is this barrier necessary ? JJH */
-            opal_pmix.fence(NULL, 0);
+            if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+                return ret;
+            }
 
             if( NULL != procs ) {
                 for(p = 0; p < (int)num_procs; ++p) {
@@ -939,7 +954,10 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
-                opal_pmix.fence(NULL, 0);
+                if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+                    opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+                    return ret;
+                }
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
         }
@@ -952,7 +970,10 @@ int mca_pml_ob1_ft_event( int state )
          * Exchange the modex information once again.
          * BTLs will have republished their modex information.
          */
-        opal_pmix.fence(NULL, 0);
+        if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+            return ret;
+        }
 
         /*
          * Startup the PML stack now that the modex is running again
@@ -964,7 +985,10 @@ int mca_pml_ob1_ft_event( int state )
         }
 
         /* Is this barrier necessary ? JJH */
-        opal_pmix.fence(NULL, 0);
+        if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
+            opal_output(0, "pml:ob1: ft_event(Restart): Failed to fence complete");
+            return ret;
+        }
 
         if( NULL != procs ) {
             for(p = 0; p < (int)num_procs; ++p) {
