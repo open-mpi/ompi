@@ -762,7 +762,6 @@ int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,
     if (ucp_msg != NULL) {
         *matched = 1;
         mca_pml_ucx_set_recv_status_safe(mpi_status, UCS_OK, &info);
-        progress_count = 0;
     } else  {
         (++progress_count % opal_common_ucx.progress_iterations) ?
             (void)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
@@ -812,7 +811,6 @@ int mca_pml_ucx_improbe(int src, int tag, struct ompi_communicator_t* comm,
         PML_UCX_VERBOSE(8, "got message %p (%p)", (void*)*message, (void*)ucp_msg);
         *matched         = 1;
         mca_pml_ucx_set_recv_status_safe(mpi_status, UCS_OK, &info);
-        progress_count = 0;
     } else  {
         (++progress_count % opal_common_ucx.progress_iterations) ?
             (void)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
