@@ -54,8 +54,8 @@ BEGIN_C_DECLS
 
 /* progress loop to allow call UCX/opal progress */
 /* used C99 for-statement variable initialization */
-#define MCA_COMMON_UCX_PROGRESS_LOOP(_worker)                            \
-    for (int iter = 0;; (++iter % opal_common_ucx.progress_iterations) ? \
+#define MCA_COMMON_UCX_PROGRESS_LOOP(_worker)                                 \
+    for (unsigned iter = 0;; (++iter % opal_common_ucx.progress_iterations) ? \
                         (void)ucp_worker_progress(_worker) : opal_progress())
 
 #define MCA_COMMON_UCX_WAIT_LOOP(_request, _worker, _msg, _completed)                    \
@@ -63,7 +63,8 @@ BEGIN_C_DECLS
         ucs_status_t status;                                                             \
         /* call UCX progress */                                                          \
         MCA_COMMON_UCX_PROGRESS_LOOP(_worker) {                                          \
-            if (UCS_INPROGRESS != (status = opal_common_ucx_request_status(_request))) { \
+            status = opal_common_ucx_request_status(_request);                           \
+            if (UCS_INPROGRESS != status) {                                              \
                 _completed;                                                              \
                 if (OPAL_LIKELY(UCS_OK == status)) {                                     \
                     return OPAL_SUCCESS;                                                 \

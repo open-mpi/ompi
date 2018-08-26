@@ -748,7 +748,7 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
 int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,
                          int *matched, ompi_status_public_t* mpi_status)
 {
-    static int ucx_progress_cntr = 0;
+    static unsigned progress_count = 0;
 
     ucp_tag_t ucp_tag, ucp_tag_mask;
     ucp_tag_recv_info_t info;
@@ -762,9 +762,9 @@ int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,
     if (ucp_msg != NULL) {
         *matched = 1;
         mca_pml_ucx_set_recv_status_safe(mpi_status, UCS_OK, &info);
-        ucx_progress_cntr = 0;
+        progress_count = 0;
     } else  {
-        (++ucx_progress_cntr % opal_common_ucx.progress_iterations) ?
+        (++progress_count % opal_common_ucx.progress_iterations) ?
             (void)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
         *matched = 0;
     }
@@ -796,7 +796,7 @@ int mca_pml_ucx_improbe(int src, int tag, struct ompi_communicator_t* comm,
                         int *matched, struct ompi_message_t **message,
                         ompi_status_public_t* mpi_status)
 {
-    static int ucx_progress_cntr = 0;
+    static unsigned progress_count = 0;
 
     ucp_tag_t ucp_tag, ucp_tag_mask;
     ucp_tag_recv_info_t info;
@@ -812,9 +812,9 @@ int mca_pml_ucx_improbe(int src, int tag, struct ompi_communicator_t* comm,
         PML_UCX_VERBOSE(8, "got message %p (%p)", (void*)*message, (void*)ucp_msg);
         *matched         = 1;
         mca_pml_ucx_set_recv_status_safe(mpi_status, UCS_OK, &info);
-        ucx_progress_cntr = 0;
+        progress_count = 0;
     } else  {
-        (++ucx_progress_cntr % opal_common_ucx.progress_iterations) ?
+        (++progress_count % opal_common_ucx.progress_iterations) ?
             (void)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
         *matched = 0;
     }
