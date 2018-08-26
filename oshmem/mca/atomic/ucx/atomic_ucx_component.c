@@ -86,6 +86,8 @@ static int ucx_register(void)
                                      MCA_BASE_VAR_SCOPE_ALL_EQ,
                                      &mca_atomic_ucx_component.priority);
 
+    opal_common_ucx_mca_var_register(&mca_atomic_ucx_component.atomic_version);
+
     return OSHMEM_SUCCESS;
 }
 
