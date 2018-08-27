@@ -97,9 +97,6 @@ struct ompi_osc_rdma_sync_t {
     /** outstanding rdma operations on epoch */
     ompi_osc_rdma_sync_aligned_counter_t outstanding_rdma __opal_attribute_aligned__(64);
 
-    /** aggregated operations in this epoch */
-    opal_list_t aggregations;
-
     /** lock to protect sync structure members */
     opal_mutex_t lock;
 };

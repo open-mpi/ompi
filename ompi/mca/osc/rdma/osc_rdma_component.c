@@ -223,16 +223,6 @@ static int ompi_osc_rdma_component_register (void)
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.max_attach);
     free(description_str);
 
-    mca_osc_rdma_component.aggregation_limit = 1024;
-    asprintf(&description_str, "Maximum size of an aggregated put/get. Messages are aggregated for consecutive"
-             "put and get operations. In some cases this may lead to higher latency but "
-             "should also lead to higher bandwidth utilization. Set to 0 to disable (default: %d)",
-             mca_osc_rdma_component.aggregation_limit);
-    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "aggregation_limit",
-                                            description_str, MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.aggregation_limit);
-    free(description_str);
-
     mca_osc_rdma_component.priority = 101;
     asprintf(&description_str, "Priority of the osc/rdma component (default: %d)",
              mca_osc_rdma_component.priority);
@@ -336,24 +326,6 @@ static int ompi_osc_rdma_component_init (bool enable_progress_threads,
                             __FILE__, __LINE__, ret);
     }
 
-    OBJ_CONSTRUCT(&mca_osc_rdma_component.aggregate, opal_free_list_t);
-
-    if (!enable_mpi_threads && mca_osc_rdma_component.aggregation_limit) {
-        ret = opal_free_list_init (&mca_osc_rdma_component.aggregate,
-                                   sizeof(ompi_osc_rdma_aggregation_t), 8,
-                                   OBJ_CLASS(ompi_osc_rdma_aggregation_t), 0, 0,
-                                   32, 128, 32, NULL, 0, NULL, NULL, NULL);
-
-        if (OPAL_SUCCESS != ret) {
-            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                                "%s:%d: opal_free_list_init failed: %d\n",
-                                __FILE__, __LINE__, ret);
-        }
-    } else {
-        /* only enable put aggregation when not using threads */
-        mca_osc_rdma_component.aggregation_limit = 0;
-    }
-
     return ret;
 }
 
@@ -373,7 +345,6 @@ int ompi_osc_rdma_component_finalize (void)
     OBJ_DESTRUCT(&mca_osc_rdma_component.requests);
     OBJ_DESTRUCT(&mca_osc_rdma_component.request_gc);
     OBJ_DESTRUCT(&mca_osc_rdma_component.buffer_gc);
-    OBJ_DESTRUCT(&mca_osc_rdma_component.aggregate);
 
     return OMPI_SUCCESS;
 }
@@ -1355,53 +1326,3 @@ static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *ke
  */
     return module->no_locks ? "true" : "false";
 }
-
-#if 0  // stale code?
-static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct opal_info_t *info)
-{
-    ompi_osc_rdma_module_t *module = GET_MODULE(win);
-    bool temp;
-
-    temp = check_config_value_bool ("no_locks", info);
-    if (temp && !module->no_locks) {
-        /* clean up the lock hash. it is up to the user to ensure no lock is
-         * outstanding from this process when setting the info key */
-        OBJ_DESTRUCT(&module->outstanding_locks);
-        OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
-
-        module->no_locks = true;
-        win->w_flags |= OMPI_WIN_NO_LOCKS;
-    } else if (!temp && module->no_locks) {
-        int world_size = ompi_comm_size (module->comm);
-        int init_limit = world_size > 256 ? 256 : world_size;
-        int ret;
-
-        ret = opal_hash_table_init (&module->outstanding_locks, init_limit);
-        if (OPAL_SUCCESS != ret) {
-            return ret;
-        }
-
-        module->no_locks = false;
-        win->w_flags &= ~OMPI_WIN_NO_LOCKS;
-    }
-
-    /* enforce collectiveness... */
-    return module->comm->c_coll->coll_barrier(module->comm,
-                                             module->comm->c_coll->coll_barrier_module);
-}
-
-
-static int ompi_osc_rdma_get_info (struct ompi_win_t *win, struct opal_info_t **info_used)
-{
-    opal_info_t *info = OBJ_NEW(opal_info_t);
-
-    if (NULL == info) {
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
-
-    *info_used = info;
-
-    return OMPI_SUCCESS;
-}
-#endif
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_aggregation_t, opal_list_item_t, NULL, NULL);
