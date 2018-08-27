@@ -13,6 +13,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,8 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
+#include "ompi/mca/fs/fs.h"
+#include "ompi/mca/fs/base/base.h"
 
 /*
  * Local types
@@ -67,6 +70,8 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component
 static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t *info);
 
 static int delete_file(avail_io_t *avail, const char *filename, struct opal_info_t *info);
+
+extern opal_mutex_t ompi_mpi_ompio_bootstrap_mutex;
 
 
 /*
@@ -142,8 +147,25 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
     }
     OBJ_RELEASE(selectable);
 
-    /* Finally -- delete the file with the selected component */
+    if (!strcmp (selected.ai_component.v2_0_0.io_version.mca_component_name,
+                 "ompio")) {
+        int ret;
 
+        opal_mutex_lock(&ompi_mpi_ompio_bootstrap_mutex);
+        if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_fs_base_framework, 0))) {
+            opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
+            return err;
+        }
+        opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
+
+        if (OMPI_SUCCESS !=
+            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            return err;
+        }
+    }
+
+    
+    /* Finally -- delete the file with the selected component */
     if (OMPI_SUCCESS != (err = delete_file(&selected, filename, info))) {
         return err;
     }
