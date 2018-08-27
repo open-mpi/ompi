@@ -324,6 +324,14 @@ int orte_submit_init(int argc, char *argv[],
      * exit with a giant warning flag
      */
     if (0 == geteuid() && !orte_cmd_options.run_as_root) {
+        /* check for two envars that allow override of this protection */
+        char *r1, *r2;
+        if (NULL != (r1 = getenv("OMPI_ALLOW_RUN_AS_ROOT")) &&
+            NULL != (r2 = getenv("OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"))) {
+            if (0 == strcmp(r1, "1") && 0 == strcmp(r2, "1")) {
+                goto moveon;
+            }
+        }
         /* show_help is not yet available, so print an error manually */
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         if (orte_cmd_options.help) {
@@ -338,13 +346,17 @@ int orte_submit_init(int argc, char *argv[],
 
         fprintf(stderr, "We strongly suggest that you run %s as a non-root user.\n\n", orte_basename);
 
-        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
-        fprintf(stderr, "option to your command line.  However, we reiterate our strong advice\n");
-        fprintf(stderr, "against doing so - please do so at your own risk.\n");
+        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root option\n");
+        fprintf(stderr, "to the cmd line or by setting two environment variables in the following way:\n");
+        fprintf(stderr, "the variable OMPI_ALLOW_RUN_AS_ROOT=1 to indicate the desire to override this\n");
+        fprintf(stderr, "protection, and OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 to confirm the choice and\n");
+        fprintf(stderr, "add one more layer of certainty that you want to do so.\n");
+        fprintf(stderr, "We reiterate our advice against doing so - please proceed at your own risk.\n");
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         exit(1);
     }
 
+  moveon:
     /* process any mca params */
     rc = mca_base_cmd_line_process_args(orte_cmd_line, &environ, &environ);
     if (ORTE_SUCCESS != rc) {
