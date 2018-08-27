@@ -32,8 +32,12 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_FCNTL_H
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#else
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
 #endif
 
 #include <string.h>
