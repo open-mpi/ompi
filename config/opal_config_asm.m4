@@ -2,14 +2,14 @@ dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2015 The University of Tennessee and The University
+dnl Copyright (c) 2004-2018 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -24,65 +24,211 @@ dnl
 dnl $HEADER$
 dnl
 
+dnl This is a C test to see if 128-bit __atomic_compare_exchange_n()
+dnl actually works (e.g., it compiles and links successfully on
+dnl ARM64+clang, but returns incorrect answers as of August 2018).
+AC_DEFUN([OPAL_ATOMIC_COMPARE_EXCHANGE_N_TEST_SOURCE],[[
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
+typedef union {
+    uint64_t fake@<:@2@:>@;
+    __int128 real;
+} ompi128;
+
+static void test1(void)
+{
+    // As of Aug 2018, we could not figure out a way to assign 128-bit
+    // constants -- the compilers would not accept it.  So use a fake
+    // union to assign 2 uin64_t's to make a single __int128.
+    ompi128 ptr      = { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
+    ompi128 expected = { .fake = { 0x11EEDDCCBBAA0099, 0x88776655443322FF }};
+    ompi128 desired  = { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
+    bool r = __atomic_compare_exchange_n(&ptr.real, &expected.real,
+                                         desired.real, true,
+                                         __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+    if ( !(r == false && ptr.real == expected.real)) {
+        exit(1);
+    }
+}
+
+static void test2(void)
+{
+    ompi128 ptr =      { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
+    ompi128 expected = ptr;
+    ompi128 desired =  { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
+    bool r = __atomic_compare_exchange_n(&ptr.real, &expected.real,
+                                         desired.real, true,
+                                         __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+    if (!(r == true && ptr.real == desired.real)) {
+        exit(2);
+    }
+}
+
+int main(int argc, char** argv)
+{
+    test1();
+    test2();
+    return 0;
+}
+]])
+
+dnl ------------------------------------------------------------------
+
+dnl This is a C test to see if 128-bit __sync_bool_compare_and_swap()
+dnl actually works (e.g., it compiles and links successfully on
+dnl ARM64+clang, but returns incorrect answers as of August 2018).
+AC_DEFUN([OPAL_SYNC_BOOL_COMPARE_AND_SWAP_TEST_SOURCE],[[
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
+typedef union {
+    uint64_t fake@<:@2@:>@;
+    __int128 real;
+} ompi128;
+
+static void test1(void)
+{
+    // As of Aug 2018, we could not figure out a way to assign 128-bit
+    // constants -- the compilers would not accept it.  So use a fake
+    // union to assign 2 uin64_t's to make a single __int128.
+    ompi128 ptr    = { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
+    ompi128 oldval = { .fake = { 0x11EEDDCCBBAA0099, 0x88776655443322FF }};
+    ompi128 newval = { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
+    bool r = __sync_bool_compare_and_swap(&ptr.real, oldval.real, newval.real);
+    if (!(r == false && ptr.real != newval.real)) {
+        exit(1);
+    }
+}
+
+static void test2(void)
+{
+    ompi128 ptr    = { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
+    ompi128 oldval = ptr;
+    ompi128 newval = { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
+    bool r = __sync_bool_compare_and_swap(&ptr.real, oldval.real, newval.real);
+    if (!(r == true && ptr.real == newval.real)) {
+        exit(2);
+    }
+}
+
+int main(int argc, char** argv)
+{
+    test1();
+    test2();
+    return 0;
+}
+]])
+
+dnl ------------------------------------------------------------------
+
+dnl
+dnl Check to see if a specific function is linkable.
+dnl
+dnl Check with:
+dnl 1. No compiler/linker flags.
+dnl 2. CFLAGS += -mcx16
+dnl 3. LIBS += -latomic
+dnl 4. Finally, if it links ok with any of #1, #2, or #3, actually try
+dnl to run the test code (if we're not cross-compiling) and verify
+dnl that it actually gives us the correct result.
+dnl
+dnl Note that we unfortunately can't use AC SEARCH_LIBS because its
+dnl check incorrectly fails (because these functions are special compiler
+dnl intrinsics -- SEARCH_LIBS tries with "check FUNC()", which the
+dnl compiler complains doesn't match the internal prototype).  So we have
+dnl to use our own LINK_IFELSE tests.  Indeed, since these functions are
+dnl so special, we actually need a valid source code that calls the
+dnl functions with correct arguments, etc.  It's not enough, for example,
+dnl to do the usual "try to set a function pointer to the symbol" trick to
+dnl determine if these functions are available, because the compiler may
+dnl not implement these as actual symbols.  So just try to link a real
+dnl test code.
+dnl
+dnl $1: function name to print
+dnl $2: program to test
+dnl $3: action if any of 1, 2, or 3 succeeds
+dnl #4: action if all of 1, 2, and 3 fail
+dnl
+AC_DEFUN([OPAL_ASM_CHECK_ATOMIC_FUNC],[
+    OPAL_VAR_SCOPE_PUSH([opal_asm_check_func_happy opal_asm_check_func_CFLAGS_save opal_asm_check_func_LIBS_save])
+
+    opal_asm_check_func_CFLAGS_save=$CFLAGS
+    opal_asm_check_func_LIBS_save=$LIBS
+
+    dnl Check with no compiler/linker flags
+    AC_MSG_CHECKING([for $1])
+    AC_LINK_IFELSE([$2],
+        [opal_asm_check_func_happy=1
+         AC_MSG_RESULT([yes])],
+        [opal_asm_check_func_happy=0
+         AC_MSG_RESULT([no])])
+
+    dnl If that didn't work, try again with CFLAGS+=mcx16
+    AS_IF([test $opal_asm_check_func_happy -eq 0],
+        [AC_MSG_CHECKING([for $1 with -mcx16])
+         CFLAGS="$CFLAGS -mcx16"
+         AC_LINK_IFELSE([$2],
+             [opal_asm_check_func_happy=1
+              AC_MSG_RESULT([yes])],
+             [opal_asm_check_func_happy=0
+              CFLAGS=$opal_asm_check_func_CFLAGS_save
+              AC_MSG_RESULT([no])])
+         ])
+
+    dnl If that didn't work, try again with LIBS+=-latomic
+    AS_IF([test $opal_asm_check_func_happy -eq 0],
+        [AC_MSG_CHECKING([for $1 with -latomic])
+         LIBS="$LIBS -latomic"
+         AC_LINK_IFELSE([$2],
+             [opal_asm_check_func_happy=1
+              AC_MSG_RESULT([yes])],
+             [opal_asm_check_func_happy=0
+              LIBS=$opal_asm_check_func_LIBS_save
+              AC_MSG_RESULT([no])])
+         ])
+
+    dnl If we have it, try it and make sure it gives a correct result.
+    dnl As of Aug 2018, we know that it links but does *not* work on clang
+    dnl 6 on ARM64.
+    AS_IF([test $opal_asm_check_func_happy -eq 1],
+        [AC_MSG_CHECKING([if $1() gives correct results])
+         AC_RUN_IFELSE([$2],
+              [AC_MSG_RESULT([yes])],
+              [opal_asm_check_func_happy=0
+               AC_MSG_RESULT([no])],
+              [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+         ])
+
+    dnl If we were unsuccessful, restore CFLAGS/LIBS
+    AS_IF([test $opal_asm_check_func_happy -eq 0],
+        [CFLAGS=$opal_asm_check_func_CFLAGS_save
+         LIBS=$opal_asm_check_func_LIBS_save])
+
+    dnl Run the user actions
+    AS_IF([test $opal_asm_check_func_happy -eq 1], [$3], [$4])
+
+    OPAL_VAR_SCOPE_POP
+])
+
+dnl ------------------------------------------------------------------
 
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
+  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result])
 
-  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result CFLAGS_save])
+  # Do we have __sync_bool_compare_and_swap?
+  # Use a special macro because we need to check with a few different
+  # CFLAGS/LIBS.
+  OPAL_ASM_CHECK_ATOMIC_FUNC([__sync_bool_compare_and_swap],
+      [AC_LANG_SOURCE(OPAL_SYNC_BOOL_COMPARE_AND_SWAP_TEST_SOURCE)],
+      [sync_bool_compare_and_swap_128_result=1],
+      [sync_bool_compare_and_swap_128_result=0])
 
-  AC_ARG_ENABLE([cross-cmpset128],[AC_HELP_STRING([--enable-cross-cmpset128],
-                [enable the use of the __sync builtin atomic compare-and-swap 128 when cross compiling])])
-
-  sync_bool_compare_and_swap_128_result=0
-
-  if test ! "$enable_cross_cmpset128" = "yes" ; then
-      AC_MSG_CHECKING([for processor support of __sync builtin atomic compare-and-swap on 128-bit values])
-
-      AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);])],
-	  [AC_MSG_RESULT([yes])
-	      sync_bool_compare_and_swap_128_result=1],
-	  [AC_MSG_RESULT([no])],
-	  [AC_MSG_RESULT([no (cross compiling)])])
-
-      if test $sync_bool_compare_and_swap_128_result = 0 ; then
-	  CFLAGS_save=$CFLAGS
-	  CFLAGS="$CFLAGS -mcx16"
-
-	  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
-	  AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);])],
-              [AC_MSG_RESULT([yes])
-		  sync_bool_compare_and_swap_128_result=1
-		  CFLAGS_save="$CFLAGS"],
-              [AC_MSG_RESULT([no])],
-	      [AC_MSG_RESULT([no (cross compiling)])])
-
-	  CFLAGS=$CFLAGS_save
-      fi
-  else
-      AC_MSG_CHECKING([for compiler support of __sync builtin atomic compare-and-swap on 128-bit values])
-
-      # Check if the compiler supports the __sync builtin
-      AC_TRY_LINK([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
-	  [AC_MSG_RESULT([yes])
-	      sync_bool_compare_and_swap_128_result=1],
-	  [AC_MSG_RESULT([no])])
-
-      if test $sync_bool_compare_and_swap_128_result = 0 ; then
-	  CFLAGS_save=$CFLAGS
-	  CFLAGS="$CFLAGS -mcx16"
-
-	  AC_MSG_CHECKING([for __sync builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
-	  AC_TRY_LINK([], [__int128 x = 0; __sync_bool_compare_and_swap (&x, 0, 1);],
-              [AC_MSG_RESULT([yes])
-		  sync_bool_compare_and_swap_128_result=1
-		  CFLAGS_save="$CFLAGS"],
-              [AC_MSG_RESULT([no])])
-
-	  CFLAGS=$CFLAGS_save
-      fi
-  fi
-
-  AC_DEFINE_UNQUOTED([OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128], [$sync_bool_compare_and_swap_128_result],
-	[Whether the __sync builtin atomic compare and swap supports 128-bit values])
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128],
+        [$sync_bool_compare_and_swap_128_result],
+        [Whether the __sync builtin atomic compare and swap supports 128-bit values])
 
   OPAL_VAR_SCOPE_POP
 ])
@@ -111,7 +257,7 @@ __sync_add_and_fetch(&tmp, 1);],
      opal_asm_sync_have_64bit=0])
 
   AC_DEFINE_UNQUOTED([OPAL_ASM_SYNC_HAVE_64BIT],[$opal_asm_sync_have_64bit],
-		     [Whether 64-bit is supported by the __sync builtin atomics])
+                     [Whether 64-bit is supported by the __sync builtin atomics])
 
   # Check for 128-bit support
   OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
@@ -119,73 +265,45 @@ __sync_add_and_fetch(&tmp, 1);],
 
 
 AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
+  OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_n_128_result atomic_compare_exchange_n_128_CFLAGS_save atomic_compare_exchange_n_128_LIBS_save])
 
-  OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_n_128_result CFLAGS_save])
+  atomic_compare_exchange_n_128_CFLAGS_save=$CFLAGS
+  atomic_compare_exchange_n_128_LIBS_save=$LIBS
 
-  AC_ARG_ENABLE([cross-cmpset128],[AC_HELP_STRING([--enable-cross-cmpset128],
-                [enable the use of the __sync builtin atomic compare-and-swap 128 when cross compiling])])
+  # Do we have __sync_bool_compare_and_swap?
+  # Use a special macro because we need to check with a few different
+  # CFLAGS/LIBS.
+  OPAL_ASM_CHECK_ATOMIC_FUNC([__atomic_compare_exchange_n],
+      [AC_LANG_SOURCE(OPAL_ATOMIC_COMPARE_EXCHANGE_N_TEST_SOURCE)],
+      [atomic_compare_exchange_n_128_result=1],
+      [atomic_compare_exchange_n_128_result=0])
 
-  atomic_compare_exchange_n_128_result=0
-
-  if test ! "$enable_cross_cmpset128" = "yes" ; then
-      AC_MSG_CHECKING([for processor support of __atomic builtin atomic compare-and-swap on 128-bit values])
-
-      AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);])],
-	  [AC_MSG_RESULT([yes])
-	      atomic_compare_exchange_n_128_result=1],
-	  [AC_MSG_RESULT([no])],
-	  [AC_MSG_RESULT([no (cross compiling)])])
-
-      if test $atomic_compare_exchange_n_128_result = 0 ; then
-	  CFLAGS_save=$CFLAGS
-	  CFLAGS="$CFLAGS -mcx16"
-
-	  AC_MSG_CHECKING([for __atomic builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
-          AC_RUN_IFELSE([AC_LANG_PROGRAM([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);])],
-              [AC_MSG_RESULT([yes])
-		  atomic_compare_exchange_n_128_result=1
-		  CFLAGS_save="$CFLAGS"],
-              [AC_MSG_RESULT([no])],
-	      [AC_MSG_RESULT([no (cross compiling)])])
-
-	  CFLAGS=$CFLAGS_save
-      fi
-
-      if test $atomic_compare_exchange_n_128_result = 1 ; then
-         AC_MSG_CHECKING([if __int128 atomic compare-and-swap is always lock-free])
-          AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_always_lock_free(16, 0)) { return 1; }])],
+  # If we have it and it works, check to make sure it is always lock
+  # free.
+  AS_IF([test $atomic_compare_exchange_n_128_result -eq 1],
+        [AC_MSG_CHECKING([if __int128 atomic compare-and-swap is always lock-free])
+         AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_always_lock_free(16, 0)) { return 1; }])],
               [AC_MSG_RESULT([yes])],
-              [AC_MSG_RESULT([no])
-                 OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
-                 atomic_compare_exchange_n_128_result=0],
-             [AC_MSG_RESULT([no (cross compiling)])])
-      fi
-  else
-      AC_MSG_CHECKING([for compiler support of __atomic builtin atomic compare-and-swap on 128-bit values])
+              [atomic_compare_exchange_n_128_result=0
+               # If this test fails, need to reset CFLAGS/LIBS (the
+               # above tests atomically set CFLAGS/LIBS or not; this
+               # test is running after the fact, so we have to undo
+               # the side-effects of setting CFLAGS/LIBS if the above
+               # tests passed).
+               CFLAGS=$atomic_compare_exchange_n_128_CFLAGS_save
+               LIBS=$atomic_compare_exchange_n_128_LIBS_save
+               AC_MSG_RESULT([no])],
+              [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+        ])
 
-      # Check if the compiler supports the __atomic builtin
-      AC_TRY_LINK([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);],
-	  [AC_MSG_RESULT([yes])
-	      atomic_compare_exchange_n_128_result=1],
-	  [AC_MSG_RESULT([no])])
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128],
+        [$atomic_compare_exchange_n_128_result],
+        [Whether the __atomic builtin atomic compare swap is both supported and lock-free on 128-bit values])
 
-      if test $atomic_compare_exchange_n_128_result = 0 ; then
-	  CFLAGS_save=$CFLAGS
-	  CFLAGS="$CFLAGS -mcx16"
-
-	  AC_MSG_CHECKING([for __atomic builtin atomic compare-and-swap on 128-bit values with -mcx16 flag])
-          AC_TRY_LINK([], [__int128 x = 0, y = 0; __atomic_compare_exchange_n (&x, &y, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);],
-              [AC_MSG_RESULT([yes])
-		  atomic_compare_exchange_n_128_result=1
-		  CFLAGS_save="$CFLAGS"],
-              [AC_MSG_RESULT([no])])
-
-	  CFLAGS=$CFLAGS_save
-      fi
-  fi
-
-  AC_DEFINE_UNQUOTED([OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128], [$atomic_compare_exchange_n_128_result],
-	[Whether the __atomic builtin atomic compare and swap is lock-free on 128-bit values])
+  dnl If we could not find decent support for 128-bits __atomic let's
+  dnl try the GCC _sync
+  AS_IF([test $atomic_compare_exchange_n_128_result -eq 0],
+      [OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128])
 
   OPAL_VAR_SCOPE_POP
 ])
@@ -726,7 +844,7 @@ AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
     AC_MSG_CHECKING([if have Sparc v8+/v9 support])
     sparc_result=0
     OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-	casa [%o0] 0x80, %o1, %o2],
+        casa [%o0] 0x80, %o1, %o2],
                 [sparc_result=1],
                 [sparc_result=0])
     if test "$sparc_result" = "1" ; then
@@ -745,35 +863,8 @@ dnl
 dnl OPAL_CHECK_CMPXCHG16B
 dnl
 dnl #################################################################
-AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
-    OPAL_VAR_SCOPE_PUSH([cmpxchg16b_result])
-
-    AC_ARG_ENABLE([cross-cmpxchg16b],[AC_HELP_STRING([--enable-cross-cmpxchg16b],
-                  [enable the use of the cmpxchg16b instruction when cross compiling])])
-
-    if test ! "$enable_cross_cmpxchg16b" = "yes" ; then
-	AC_MSG_CHECKING([if processor supports x86_64 16-byte compare-and-exchange])
-	AC_RUN_IFELSE([AC_LANG_PROGRAM([[unsigned char tmp[16];]],[[
-    __asm__ __volatile__ ("lock cmpxchg16b (%%rsi)" : : "S" (tmp) : "memory", "cc");]])],
-            [AC_MSG_RESULT([yes])
-		cmpxchg16b_result=1],
-            [AC_MSG_RESULT([no])
-		cmpxchg16b_result=0],
-            [AC_MSG_RESULT([no (cross-compiling)])
-		cmpxchg16b_result=0])
-    else
-	AC_MSG_CHECKING([if assembler supports x86_64 16-byte compare-and-exchange])
-
-	OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-		cmpxchg16b 0],
-            [AC_MSG_RESULT([yes])
-		cmpxchg16b_result=1],
-            [AC_MSG_RESULT([no])
-		cmpxchg16b_result=0])
-    fi
-    if test "$cmpxchg16b_result" = 1; then
-        AC_MSG_CHECKING([if compiler correctly handles volatile 128bits])
-        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdint.h>
+AC_DEFUN([OPAL_CMPXCHG16B_TEST_SOURCE],[[
+#include <stdint.h>
 #include <assert.h>
 
 union opal_counted_pointer_t {
@@ -787,8 +878,10 @@ union opal_counted_pointer_t {
     int128_t value;
 #endif
 };
-typedef union opal_counted_pointer_t opal_counted_pointer_t;],
-                                       [volatile opal_counted_pointer_t a;
+typedef union opal_counted_pointer_t opal_counted_pointer_t;
+
+int main(int argc, char* argv) {
+    volatile opal_counted_pointer_t a;
     opal_counted_pointer_t b;
 
     a.data.counter = 0;
@@ -813,12 +906,28 @@ typedef union opal_counted_pointer_t opal_counted_pointer_t;],
     return (a.value != b.value);
 #else
     return 0;
-#endif])],
-                    [AC_MSG_RESULT([yes])],
-                    [AC_MSG_RESULT([no])
-                     cmpxchg16b_result=0],
-                    [AC_MSG_RESULT([untested, assuming ok])])
-    fi
+#endif
+}
+]])
+
+AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
+    OPAL_VAR_SCOPE_PUSH([cmpxchg16b_result])
+
+    OPAL_ASM_CHECK_ATOMIC_FUNC([cmpxchg16b],
+                               [AC_LANG_PROGRAM([[unsigned char tmp[16];]],
+                                                [[__asm__ __volatile__ ("lock cmpxchg16b (%%rsi)" : : "S" (tmp) : "memory", "cc");]])],
+                               [cmpxchg16b_result=1],
+                               [cmpxchg16b_result=0])
+    # If we have it, make sure it works.
+    AS_IF([test $cmpxchg16b_result -eq 1],
+          [AC_MSG_CHECKING([if cmpxchg16b_result works])
+           AC_RUN_IFELSE([AC_LANG_SOURCE(OPAL_CMPXCHG16B_TEST_SOURCE)],
+                         [AC_MSG_RESULT([yes])],
+                         [cmpxchg16b_result=0
+                          AC_MSG_RESULT([no])],
+                         [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+          ])
+
     AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
         [Whether the processor supports the cmpxchg16b instruction])
     OPAL_VAR_SCOPE_POP
@@ -884,7 +993,7 @@ return ret;
 
     if test "$asm_result" = "yes" ; then
         OPAL_C_GCC_INLINE_ASSEMBLY=1
-	opal_cv_asm_inline_supported="yes"
+        opal_cv_asm_inline_supported="yes"
     else
         OPAL_C_GCC_INLINE_ASSEMBLY=0
     fi
@@ -960,7 +1069,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
               [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
-	aarch64*)
+        aarch64*)
             opal_cv_asm_arch="ARM64"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_ASM_ARM_VERSION=8
@@ -1068,11 +1177,11 @@ AC_MSG_ERROR([Can not continue.])
             ;;
         esac
 
-	if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
-		test "$opal_asm_sync_have_64bit" = "0" ; then
-	    # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
-	    opal_cv_asm_builtin="BUILTIN_NO"
-	fi
+        if test "x$OPAL_ASM_SUPPORT_64BIT" = "x1" && test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" &&
+                test "$opal_asm_sync_have_64bit" = "0" ; then
+            # __sync builtins exist but do not implement 64-bit support. Fall back on inline asm.
+            opal_cv_asm_builtin="BUILTIN_NO"
+        fi
 
       if test "$opal_cv_asm_builtin" = "BUILTIN_SYNC" || test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
@@ -1095,7 +1204,7 @@ AC_MSG_ERROR([Can not continue.])
             ;;
          esac
 
-	 opal_cv_asm_inline_supported="no"
+         opal_cv_asm_inline_supported="no"
          # now that we know our architecture, try to inline assemble
          OPAL_CHECK_INLINE_C_GCC([$OPAL_GCC_INLINE_ASSIGN])
 
