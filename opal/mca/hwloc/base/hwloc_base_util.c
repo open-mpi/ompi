@@ -16,6 +16,8 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (C) 2018      Mellanox Technologies, Ltd. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1857,9 +1859,18 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
             if (!strcmp(device_obj->name, device_name)) {
                 /* find numa node containing this device */
                 obj = device_obj->parent;
+#if HWLOC_API_VERSION < 0x20000
                 while ((obj != NULL) && (obj->type != HWLOC_OBJ_NODE)) {
                     obj = obj->parent;
                 }
+#else
+                while (obj && !obj->memory_arity) {
+                    obj = obj->parent; /* no memory child, walk up */
+                }
+                if (obj != NULL) {
+                    obj = obj->memory_first_child;
+                }
+#endif
                 if (obj == NULL) {
                     opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                             "hwloc:base:get_sorted_numa_list: NUMA node closest to %s wasn't found.",
