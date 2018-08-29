@@ -107,6 +107,8 @@ static int component_register(void) {
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.priority);
     free(description_str);
 
+    opal_common_ucx_mca_var_register(&mca_osc_ucx_component.super.osc_version);
+
     return OMPI_SUCCESS;
 }
 
