@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2017 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -62,45 +62,40 @@ ompi_osc_portals4_component_t mca_osc_portals4_component = {
 
 ompi_osc_portals4_module_t ompi_osc_portals4_module_template = {
     {
-        NULL, /* shared_query */
+        .osc_win_attach = ompi_osc_portals4_attach,
+        .osc_win_detach = ompi_osc_portals4_detach,
+        .osc_free = ompi_osc_portals4_free,
 
-        ompi_osc_portals4_attach,
-        ompi_osc_portals4_detach,
-        ompi_osc_portals4_free,
+        .osc_put = ompi_osc_portals4_put,
+        .osc_get = ompi_osc_portals4_get,
+        .osc_accumulate = ompi_osc_portals4_accumulate,
+        .osc_compare_and_swap = ompi_osc_portals4_compare_and_swap,
+        .osc_fetch_and_op = ompi_osc_portals4_fetch_and_op,
+        .osc_get_accumulate = ompi_osc_portals4_get_accumulate,
 
-        ompi_osc_portals4_put,
-        ompi_osc_portals4_get,
-        ompi_osc_portals4_accumulate,
-        ompi_osc_portals4_compare_and_swap,
-        ompi_osc_portals4_fetch_and_op,
-        ompi_osc_portals4_get_accumulate,
+        .osc_rput = ompi_osc_portals4_rput,
+        .osc_rget = ompi_osc_portals4_rget,
+        .osc_raccumulate = ompi_osc_portals4_raccumulate,
+        .osc_rget_accumulate = ompi_osc_portals4_rget_accumulate,
 
-        ompi_osc_portals4_rput,
-        ompi_osc_portals4_rget,
-        ompi_osc_portals4_raccumulate,
-        ompi_osc_portals4_rget_accumulate,
+        .osc_fence = ompi_osc_portals4_fence,
 
-        ompi_osc_portals4_fence,
+        .osc_start = ompi_osc_portals4_start,
+        .osc_complete = ompi_osc_portals4_complete,
+        .osc_post = ompi_osc_portals4_post,
+        .osc_wait = ompi_osc_portals4_wait,
+        .osc_test = ompi_osc_portals4_test,
 
-        ompi_osc_portals4_start,
-        ompi_osc_portals4_complete,
-        ompi_osc_portals4_post,
-        ompi_osc_portals4_wait,
-        ompi_osc_portals4_test,
+        .osc_lock = ompi_osc_portals4_lock,
+        .osc_unlock = ompi_osc_portals4_unlock,
+        .osc_lock_all = ompi_osc_portals4_lock_all,
+        .osc_unlock_all = ompi_osc_portals4_unlock_all,
 
-        ompi_osc_portals4_lock,
-        ompi_osc_portals4_unlock,
-        ompi_osc_portals4_lock_all,
-        ompi_osc_portals4_unlock_all,
-
-        ompi_osc_portals4_sync,
-        ompi_osc_portals4_flush,
-        ompi_osc_portals4_flush_all,
-        ompi_osc_portals4_flush_local,
-        ompi_osc_portals4_flush_local_all,
-
-        ompi_osc_portals4_set_info,
-        ompi_osc_portals4_get_info
+        .osc_sync = ompi_osc_portals4_sync,
+        .osc_flush = ompi_osc_portals4_flush,
+        .osc_flush_all = ompi_osc_portals4_flush_all,
+        .osc_flush_local = ompi_osc_portals4_flush_local,
+        .osc_flush_local_all = ompi_osc_portals4_flush_local_all,
     }
 };
 
@@ -681,38 +676,4 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
     free(module);
 
     return ret;
-}
-
-
-int
-ompi_osc_portals4_set_info(struct ompi_win_t *win, struct opal_info_t *info)
-{
-    ompi_osc_portals4_module_t *module =
-        (ompi_osc_portals4_module_t*) win->w_osc_module;
-
-    /* enforce collectiveness... */
-    return module->comm->c_coll->coll_barrier(module->comm,
-                                             module->comm->c_coll->coll_barrier_module);
-}
-
-
-int
-ompi_osc_portals4_get_info(struct ompi_win_t *win, struct opal_info_t **info_used)
-{
-    ompi_osc_portals4_module_t *module =
-        (ompi_osc_portals4_module_t*) win->w_osc_module;
-
-    opal_info_t *info = OBJ_NEW(opal_info_t);
-    if (NULL == info) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-
-    opal_info_set(info, "no_locks",  (module->state.lock == LOCK_ILLEGAL) ? "true" : "false");
-    if (module->atomic_max < mca_osc_portals4_component.matching_atomic_max) {
-        opal_info_set(info, "accumulate_ordering", "none");
-    } else {
-        opal_info_set(info, "accumulate_ordering", "rar,war,raw,waw");
-    }
-
-    *info_used = info;
-
-    return OMPI_SUCCESS;
 }
