@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
@@ -86,6 +86,7 @@ mca_pmix_pmix3x_component_t mca_pmix_pmix3x_component = {
 static int external_register(void)
 {
     mca_base_component_t *component = &mca_pmix_pmix3x_component.super.base_version;
+    char *tmp = NULL;
 
     mca_pmix_pmix3x_component.silence_warning = false;
     (void) mca_base_component_var_register (component, "silence_warning",
@@ -97,6 +98,7 @@ static int external_register(void)
 
     asprintf(&pmix_library_version,
              "PMIx library version %s (embedded in Open MPI)", PMIx_Get_version());
+    tmp = pmix_library_version;
     (void) mca_base_component_var_register(component, "library_version",
                                            "Version of the underlying PMIx library",
                                            MCA_BASE_VAR_TYPE_STRING,
@@ -104,6 +106,7 @@ static int external_register(void)
                                            OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
                                            &pmix_library_version);
+    free(tmp);
 
     return OPAL_SUCCESS;
 }
@@ -131,6 +134,7 @@ static int external_close(void)
     OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.jobids);
     OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.events);
     OPAL_LIST_DESTRUCT(&mca_pmix_pmix3x_component.dmdx);
+
     return OPAL_SUCCESS;
 }
 

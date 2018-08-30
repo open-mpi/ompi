@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -119,6 +121,7 @@ static int ompi_hook_base_close( void )
     if( OMPI_SUCCESS != ret ) {
         return ret;
     }
+    OBJ_RELEASE(additional_callback_components);
     ompi_hook_is_framework_open = false;
 
     return OMPI_SUCCESS;

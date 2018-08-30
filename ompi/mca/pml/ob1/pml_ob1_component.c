@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -321,8 +323,14 @@ int mca_pml_ob1_component_fini(void)
     if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
         return rc;
 
-    if(!mca_pml_ob1.enabled)
+    if(!mca_pml_ob1.enabled) {
+        if( NULL != mca_pml_ob1.allocator ) {
+            (void)mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator);
+            mca_pml_ob1.allocator = NULL;
+        }
+
         return OMPI_SUCCESS; /* never selected.. return success.. */
+    }
     mca_pml_ob1.enabled = false;  /* not anymore */
 
     /* return the static receive/send requests to the respective free list and
