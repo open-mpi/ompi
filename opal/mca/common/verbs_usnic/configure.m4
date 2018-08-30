@@ -69,6 +69,21 @@ AC_DEFUN([MCA_opal_common_verbs_usnic_CONFIG],[
                                   [common_verbs_usnic_happy=0])
           ])
 
+    AS_IF([test $common_verbs_usnic_happy -eq 1],
+          [AC_CHECK_MEMBER([struct ibv_device.ops],
+                           [],
+                           [AC_MSG_WARN([--with-verbs-usnic specified, but the verbs.h does not])
+                            AC_MSG_WARN([have the required member fields.  It is highly likely])
+                            AC_MSG_WARN([that you do not need --with-verbs-usnic.  Try configuring])
+                            AC_MSG_WARN([and building Open MPI without it; if you get warnings])
+                            AC_MSG_WARN([about usnic IB devices anyway, please let us know.])
+                            AC_MSG_WARN([Since you asked for --with-verbs-usnic and we cannot])
+                            AC_MSG_WARN([deliver it, configure will now abort.])
+                            AC_MSG_ERROR([Cannot continue])
+                           ],
+                          [#include <infiniband/verbs.h>])
+           ])
+
     AC_DEFINE_UNQUOTED([OPAL_COMMON_VERBS_USNIC_HAPPY],
                        [$common_verbs_usnic_happy],
                        [Whether the common/usnic_verbs component is being built or not])
