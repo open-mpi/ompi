@@ -52,6 +52,7 @@
 #include "src/class/pmix_list.h"
 #include "src/mca/bfrops/bfrops.h"
 #include "src/mca/plog/plog.h"
+#include "src/mca/psensor/psensor.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
 #include "src/util/output.h"
@@ -2536,10 +2537,8 @@ pmix_status_t pmix_server_job_ctrl(pmix_peer_t *peer,
         PMIX_LIST_DESTRUCT(&cachefiles);
         if (cnt == (int)cd->ninfo) {
             /* nothing more to do */
-            if (NULL != cbfunc) {
-                cbfunc(PMIX_SUCCESS, NULL, 0, cd, NULL, NULL);
-            }
-            return PMIX_SUCCESS;
+            rc = PMIX_SUCCESS;
+            goto exit;
         }
     }
 
@@ -2575,9 +2574,6 @@ pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
     pmix_output_verbose(2, pmix_server_globals.base_output,
                         "recvd monitor request from client");
 
-    if (NULL == pmix_host_server.monitor) {
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
 
     cd = PMIX_NEW(pmix_query_caddy_t);
     if (NULL == cd) {
@@ -2618,6 +2614,24 @@ pmix_status_t pmix_server_monitor(pmix_peer_t *peer,
             PMIX_ERROR_LOG(rc);
             goto exit;
         }
+    }
+
+    /* see if they are requesting one of the monitoring
+     * methods we internally support */
+    rc = pmix_psensor.start(peer, error, &monitor, cd->info, cd->ninfo);
+    if (PMIX_SUCCESS == rc) {
+        rc = PMIX_OPERATION_SUCCEEDED;
+        goto exit;
+    }
+    if (PMIX_ERR_NOT_SUPPORTED != rc) {
+        goto exit;
+    }
+
+    /* if we don't internally support it, see if
+     * our host does */
+    if (NULL == pmix_host_server.monitor) {
+        rc = PMIX_ERR_NOT_SUPPORTED;
+        goto exit;
     }
 
     /* setup the requesting peer name */

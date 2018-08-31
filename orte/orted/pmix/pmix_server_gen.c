@@ -1186,5 +1186,5 @@ int pmix_server_job_ctrl_fn(const opal_process_name_t *requestor,
         }
     }
 
-    return ORTE_SUCCESS;
+    return ORTE_OPERATION_SUCCEEDED;
 }

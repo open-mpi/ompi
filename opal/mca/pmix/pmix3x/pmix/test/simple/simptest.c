@@ -107,6 +107,18 @@ static void log_fn(const pmix_proc_t *client,
                    const pmix_info_t data[], size_t ndata,
                    const pmix_info_t directives[], size_t ndirs,
                    pmix_op_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t alloc_fn(const pmix_proc_t *client,
+                              pmix_alloc_directive_t directive,
+                              const pmix_info_t data[], size_t ndata,
+                              pmix_info_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t jctrl_fn(const pmix_proc_t *requestor,
+                              const pmix_proc_t targets[], size_t ntargets,
+                              const pmix_info_t directives[], size_t ndirs,
+                              pmix_info_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t mon_fn(const pmix_proc_t *requestor,
+                            const pmix_info_t *monitor, pmix_status_t error,
+                            const pmix_info_t directives[], size_t ndirs,
+                            pmix_info_cbfunc_t cbfunc, void *cbdata);
 
 static pmix_server_module_t mymodule = {
     .client_connected = connected,
@@ -125,7 +137,10 @@ static pmix_server_module_t mymodule = {
     .notify_event = notify_event,
     .query = query_fn,
     .tool_connected = tool_connect_fn,
-    .log = log_fn
+    .log = log_fn,
+    .allocate = alloc_fn,
+    .job_control = jctrl_fn,
+    .monitor = mon_fn
 };
 
 typedef struct {
@@ -1072,6 +1087,31 @@ static void log_fn(const pmix_proc_t *client,
         cbfunc(PMIX_SUCCESS, cbdata);
     }
 }
+
+static pmix_status_t alloc_fn(const pmix_proc_t *client,
+                              pmix_alloc_directive_t directive,
+                              const pmix_info_t data[], size_t ndata,
+                              pmix_info_cbfunc_t cbfunc, void *cbdata)
+{
+    return PMIX_SUCCESS;
+}
+
+static pmix_status_t jctrl_fn(const pmix_proc_t *requestor,
+                              const pmix_proc_t targets[], size_t ntargets,
+                              const pmix_info_t directives[], size_t ndirs,
+                              pmix_info_cbfunc_t cbfunc, void *cbdata)
+{
+    return PMIX_OPERATION_SUCCEEDED;
+}
+
+static pmix_status_t mon_fn(const pmix_proc_t *requestor,
+                            const pmix_info_t *monitor, pmix_status_t error,
+                            const pmix_info_t directives[], size_t ndirs,
+                            pmix_info_cbfunc_t cbfunc, void *cbdata)
+{
+    return PMIX_ERR_NOT_SUPPORTED;
+}
+
 
 static void wait_signal_callback(int fd, short event, void *arg)
 {

@@ -1621,6 +1621,7 @@ int pmix3x_job_control(opal_list_t *targets,
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
         return OPAL_ERR_NOT_INITIALIZED;
     }
+abort();
 
     /* create the caddy */
     op = OBJ_NEW(pmix3x_opcaddy_t);
