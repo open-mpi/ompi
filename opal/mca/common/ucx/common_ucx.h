@@ -52,6 +52,33 @@ BEGIN_C_DECLS
                             __VA_ARGS__);                                   \
     }
 
+/* progress loop to allow call UCX/opal progress */
+/* used C99 for-statement variable initialization */
+#define MCA_COMMON_UCX_PROGRESS_LOOP(_worker)                                 \
+    for (unsigned iter = 0;; (++iter % opal_common_ucx.progress_iterations) ? \
+                        (void)ucp_worker_progress(_worker) : opal_progress())
+
+#define MCA_COMMON_UCX_WAIT_LOOP(_request, _worker, _msg, _completed)                    \
+    do {                                                                                 \
+        ucs_status_t status;                                                             \
+        /* call UCX progress */                                                          \
+        MCA_COMMON_UCX_PROGRESS_LOOP(_worker) {                                          \
+            status = opal_common_ucx_request_status(_request);                           \
+            if (UCS_INPROGRESS != status) {                                              \
+                _completed;                                                              \
+                if (OPAL_LIKELY(UCS_OK == status)) {                                     \
+                    return OPAL_SUCCESS;                                                 \
+                } else {                                                                 \
+                    MCA_COMMON_UCX_VERBOSE(1, "%s failed: %d, %s",                       \
+                                           (_msg) ? (_msg) : __FUNCTION__,               \
+                                           UCS_PTR_STATUS(_request),                     \
+                                           ucs_status_string(UCS_PTR_STATUS(_request))); \
+                    return OPAL_ERROR;                                                   \
+                }                                                                        \
+            }                                                                            \
+        }                                                                                \
+    } while (0)
+
 typedef struct opal_common_ucx_module {
     int  output;
     int  verbose;
@@ -69,15 +96,21 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker);
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component);
 
 static inline
+ucs_status_t opal_common_ucx_request_status(ucs_status_ptr_t request)
+{
+#if !HAVE_DECL_UCP_REQUEST_CHECK_STATUS
+    ucp_tag_recv_info_t info;
+
+    return ucp_request_test(request, &info);
+#else
+    return ucp_request_check_status(request);
+#endif
+}
+
+static inline
 int opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h worker,
                                  const char *msg)
 {
-    ucs_status_t status;
-    int i;
-#if !HAVE_DECL_UCP_REQUEST_CHECK_STATUS
-    ucp_tag_recv_info_t info;
-#endif
-
     /* check for request completed or failed */
     if (OPAL_LIKELY(UCS_OK == request)) {
         return OPAL_SUCCESS;
@@ -88,32 +121,7 @@ int opal_common_ucx_wait_request(ucs_status_ptr_t request, ucp_worker_h worker,
         return OPAL_ERROR;
     }
 
-    while (1) {
-        /* call UCX progress */
-        for (i = 0; i < opal_common_ucx.progress_iterations; i++) {
-            if (UCS_INPROGRESS != (status =
-#if HAVE_DECL_UCP_REQUEST_CHECK_STATUS
-                ucp_request_check_status(request)
-#else
-                ucp_request_test(request, &info)
-#endif
-                )) {
-                ucp_request_free(request);
-                if (OPAL_LIKELY(UCS_OK == status)) {
-                    return OPAL_SUCCESS;
-                } else {
-                    MCA_COMMON_UCX_VERBOSE(1, "%s failed: %d, %s", msg ? msg : __FUNCTION__,
-                                           UCS_PTR_STATUS(request),
-                                           ucs_status_string(UCS_PTR_STATUS(request)));
-                    return OPAL_ERROR;
-                }
-            }
-            ucp_worker_progress(worker);
-        }
-        /* call OPAL progress on every opal_common_ucx_progress_iterations
-         * calls to UCX progress */
-        opal_progress();
-    }
+    MCA_COMMON_UCX_WAIT_LOOP(request, worker, msg, ucp_request_free(request));
 }
 
 static inline
