@@ -104,6 +104,8 @@ static int mca_spml_ucx_component_register(void)
                                     "Use non-blocking memory registration for shared heap",
                                     &mca_spml_ucx.heap_reg_nb);
 
+    opal_common_ucx_mca_var_register(&mca_spml_ucx_component.spmlm_version);
+
     return OSHMEM_SUCCESS;
 }
 
