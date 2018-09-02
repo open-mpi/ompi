@@ -142,7 +142,7 @@ int orterun(int argc, char *argv[])
      * us to proceed if the allow-run-as-root flag was given. Otherwise,
      * exit with a giant warning flag
      */
-    if (0 == geteuid() && !orte_cmd_options.run_as_root) {
+    if (0 == geteuid() && !orte_cmd_options.run_as_root && !defined(__HAIKU__)) {
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         if (NULL != orte_cmd_options.help) {
             fprintf(stderr, "%s cannot provide the help message when run as root.\n", orte_basename);

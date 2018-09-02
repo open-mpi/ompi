@@ -389,7 +389,7 @@ int prun(int argc, char *argv[])
      * us to proceed if the allow-run-as-root flag was given. Otherwise,
      * exit with a giant warning flag
      */
-    if (0 == geteuid() && !orte_cmd_options.run_as_root) {
+    if (0 == geteuid() && !orte_cmd_options.run_as_root && !defined(__HAIKU__)) {
         /* show_help is not yet available, so print an error manually */
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         if (orte_cmd_options.help) {
