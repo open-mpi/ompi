@@ -1284,6 +1284,24 @@ static int register_variable (const char *project_name, const char *framework_na
     /* Developer error. Storage can not be NULL and type must exist */
     assert (((flags & MCA_BASE_VAR_FLAG_SYNONYM) || NULL != storage) && type >= 0 && type < MCA_BASE_VAR_TYPE_MAX);
 
+    /* Developer error: check max length of strings */
+    if (NULL != project_name &&
+        strlen(project_name) > MCA_BASE_MAX_PROJECT_NAME_LEN) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    if (NULL != framework_name &&
+        strlen(framework_name) > MCA_BASE_MAX_TYPE_NAME_LEN) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    if (NULL != component_name &&
+        strlen(component_name) > MCA_BASE_MAX_COMPONENT_NAME_LEN) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    if (NULL != variable_name &&
+        strlen(variable_name) > MCA_BASE_MAX_VARIABLE_NAME_LEN) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
 #if OPAL_ENABLE_DEBUG
     /* Developer error: check for alignments */
     uintptr_t align = 0;
@@ -1584,12 +1602,17 @@ int mca_base_var_register_synonym (int synonym_for, const char *project_name,
 
 static int var_get_env (mca_base_var_t *var, const char *name, char **source, char **value)
 {
-    char envvar[128];
-    int ret;
+    const char source_prefix[] = "SOURCE_";
+    const int max_len = strlen(mca_prefix) + strlen(source_prefix) +
+        strlen(name) + 1;
+    char *envvar = alloca(max_len);
+    if (NULL == envvar) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
 
-    ret = snprintf(envvar, 128, "%s%s", mca_prefix, name);
+    int ret;
+    ret = snprintf(envvar, max_len, "%s%s", mca_prefix, name);
     if (0 > ret) {
-        opal_output(0, "Variable string too short to hold %s%s\n", mca_prefix, name);
         return OPAL_ERROR;
     }
     *value = getenv(envvar);
@@ -1598,9 +1621,9 @@ static int var_get_env (mca_base_var_t *var, const char *name, char **source, ch
         return OPAL_ERR_NOT_FOUND;
     }
 
-    ret = snprintf(envvar, 128, "%sSOURCE_%s", mca_prefix, name);
-    if( ret >= 128 ) {
-        opal_output(0, "Variable string too short to hold %sSOURCE_%s\n", mca_prefix, name);
+    ret = snprintf(envvar, max_len, "%s%s%s", mca_prefix,
+                   source_prefix, name);
+    if( 0 > ret ) {
         return OPAL_ERROR;
     }
     *source = getenv(envvar);

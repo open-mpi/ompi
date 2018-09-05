@@ -256,6 +256,10 @@ typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
  * Maximum length of MCA component string names.
  */
 #define MCA_BASE_MAX_COMPONENT_NAME_LEN 63
+/**
+ * Maximum length of MCA component variable names.
+ */
+#define MCA_BASE_MAX_VARIABLE_NAME_LEN 63
 
 /**
  * Component flags (mca_component_flags field)
