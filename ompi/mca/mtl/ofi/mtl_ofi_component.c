@@ -512,8 +512,11 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * FI_VERSION provides binary backward and forward compatibility support
      * Specify the version of OFI is coded to, the provider will select struct
      * layouts that are compatible with this version.
+     *
+     * We start by asking for API version 1.5 -- that has
+     * FI_MR_SCALABLE implied by default.
      */
-    fi_version = FI_VERSION(1, 0);
+    fi_version = FI_VERSION(1, 5);
 
     /**
      * fi_getinfo:  returns information about fabric  services for reaching a
@@ -527,9 +530,25 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                      hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
     if (FI_ENODATA == -ret) {
+        // If we got nothing back, try again with FI_VERSION(1, 0) and
+        // explicitly set the FI_MR_SCALABLE flag.
+        fi_version = FI_VERSION(1, 0);
+        hints->domain_attr->mr_mode = FI_MR_SCALABLE;
+
+        ret = fi_getinfo(fi_version, /* OFI version requested                */
+                         NULL,       /* Optional name or fabric to resolve   */
+                         NULL,       /* Optional service name or port to req */
+                         0ULL,       /* Optional flag                        */
+                         hints,      /* In: Hints to filter providers        */
+                         &providers);/* Out: List of matching providers      */
+
         // It is not an error if no information is returned.
-        goto error;
-    } else if (0 != ret) {
+        if (FI_ENODATA == -ret) {
+            goto error;
+        }
+    }
+
+    if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_getinfo",
                        ompi_process_info.nodename, __FILE__, __LINE__,
