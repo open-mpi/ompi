@@ -2808,7 +2808,6 @@ btl_openib_component_init(int *num_btl_modules,
     ib_devs = opal_ibv_get_device_list(&num_devs);
 
     if(0 == num_devs || NULL == ib_devs) {
-        mca_btl_base_error_no_nics("OpenFabrics (openib)", "device");
         goto no_btls;
     }
 
