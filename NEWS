@@ -58,27 +58,33 @@ included in the vX.Y.Z section and be denoted as:
 4.0.0 -- September, 2018
 ------------------------
 
-**********************************************************************
-*  PRE-DEPRECATION WARNING: MPIR Support
-*
-* As was announced in summer 2017, Open MPI is deprecating support for
-* MPIR-based tools beginning with the future release of OMPI v5.0, with
-* full removal of that support tentatively planned for OMPI v6.0.
-*
-* This serves as a pre-deprecation warning to provide tools developers
-* with sufficient time to migrate to PMIx. Support for PMIx-based
-* tools will be rolled out during the OMPI v4.x series. No runtime
-* deprecation warnings will be output during this time.
-*
-* Runtime deprecation warnings will be output beginning with the OMPI v5.0
-* release whenever MPIR-based tools connect to Open MPI's mpirun/mpiexec
-* launcher.
-**********************************************************************
-
-- Fix rank-by algorithms to properly rank by object and span
+- OSHMEM updated to the OpenSHMEM 1.4 API.
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
   a MXM or UCX library is found.
+- A UCX BTL was added for enhanced MPI RMA support using UCX
+- With this release,  OpenIB BTL now only supports iWarp and RoCE by default.
+- Updated internal HWLOC to 2.0.1
+- Updated internal PMIx to 3.0.1
+- Change the priority for selecting external verses internal HWLOC
+  and PMIx packages to build.  Starting with this release, configure
+  by default selects available external HWLOC and PMIx packages over
+  the internal ones.
+- Updated internal ROMIO to 3.2.1.
+- Removed support for the MXM MTL.
+- Improved CUDA support when using UCX.
+- Improved support for two phase MPI I/O operations when using OMPIO.
+- Added support for Software-based Performance Counters, see
+  https://github.com/davideberius/ompi/wiki/How-to-Use-Software-Based-Performance-Counters-(SPCs)-in-Open-MPI
+- Various improvements to MPI RMA performance when using RDMA
+  capable interconnects.
+- Fix problems with use of newer map-by mpirun options.  Thanks to
+  Tony Reina for reporting.
+- Fix rank-by algorithms to properly rank by object and span
+- Allow for running as root of two environment variables are set.
+  Requested by Axel Huebl.
+- Fix a problem with building the Java bindings when using Java 10.
+  Thanks to Bryce Glover for reporting.
 
 3.1.2 -- August, 2018
 ------------------------
