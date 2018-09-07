@@ -1190,9 +1190,6 @@ if (-e "orcm") {
 
 #---------------------------------------------------------------------------
 
-$full_hostname = `hostname`;
-chomp($full_hostname);
-
 $m4 = "dnl
 dnl \$HEADER\$
 dnl
