@@ -3,7 +3,7 @@
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2018      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 
@@ -52,7 +52,7 @@ date="Unreleased developer copy"
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
 # Interface Versions" chapter from the GNU Libtool documentation.  The
-# first Open MPI release to programmatically specify these versions was
+# first Open MPI release to programatically specify these versions was
 # v1.3.4 (note that Libtool defaulted all prior releases to 0:0:0).
 # All changes in these version numbers are dictated by the Open MPI
 # release managers (not individual developers).  Notes:
@@ -84,17 +84,17 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=0:0:0
-libmpi_cxx_so_version=0:0:0
-libmpi_mpifh_so_version=0:0:0
-libmpi_usempi_tkr_so_version=0:0:0
-libmpi_usempi_ignore_tkr_so_version=0:0:0
-libmpi_usempif08_so_version=0:0:0
-libopen_rte_so_version=0:0:0
-libopen_pal_so_version=0:0:0
-libmpi_java_so_version=0:0:0
-liboshmem_so_version=0:0:0
-libompitrace_so_version=0:0:0
+libmpi_so_version=60:0:20
+libmpi_cxx_so_version=60:0:20
+libmpi_mpifh_so_version=61:0:21
+libmpi_usempi_tkr_so_version=60:0:20
+libmpi_usempi_ignore_tkr_so_version=60:0:20
+libmpi_usempif08_so_version=60:0:20
+libopen_rte_so_version=60:0:20
+libopen_pal_so_version=60:0:20
+libmpi_java_so_version=60:0:20
+liboshmem_so_version=60:0:20
+libompitrace_so_version=60:0:20
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
@@ -102,16 +102,16 @@ libompitrace_so_version=0:0:0
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=0:0:0
-libmca_ompi_common_monitoring_so_version=0:0:0
+libmca_ompi_common_ompio_so_version=60:0:19
+libmca_ompi_common_monitoring_so_version=60:0:10
 
 # ORTE layer
-libmca_orte_common_alps_so_version=0:0:0
+libmca_orte_common_alps_so_version=60:0:20
 
 # OPAL layer
-libmca_opal_common_cuda_so_version=0:0:0
-libmca_opal_common_ofi_so_version=0:0:0
-libmca_opal_common_sm_so_version=0:0:0
-libmca_opal_common_ucx_so_version=0:0:0
-libmca_opal_common_ugni_so_version=0:0:0
-libmca_opal_common_verbs_so_version=0:0:0
+libmca_opal_common_cuda_so_version=60:0:20
+libmca_opal_common_ofi_so_version=60:0:20
+libmca_opal_common_sm_so_version=60:0:20
+libmca_opal_common_ucx_so_version=60:0:20
+libmca_opal_common_ugni_so_version=60:0:20
+libmca_opal_common_verbs_so_version=60:0:20
