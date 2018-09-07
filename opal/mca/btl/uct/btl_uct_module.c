@@ -288,6 +288,10 @@ int mca_btl_uct_finalize (mca_btl_base_module_t* btl)
     mca_btl_uct_endpoint_t *endpoint;
     uint64_t key;
 
+    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
+        opal_mem_hooks_unregister_release (mca_btl_uct_mem_release_cb);
+    }
+
     /* clean up any leftover endpoints */
     OPAL_HASH_TABLE_FOREACH(key, uint64, endpoint, &uct_module->id_to_endpoint) {
         OBJ_RELEASE(endpoint);
