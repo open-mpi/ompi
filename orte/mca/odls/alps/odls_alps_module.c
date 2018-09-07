@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,7 +14,7 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Rutgers, The State University of New Jersey.
@@ -109,6 +110,7 @@
 #include <dirent.h>
 #endif
 
+#include <ctype.h>
 
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -289,59 +291,30 @@ static void send_error_show_help(int fd, int exit_status,
     exit(exit_status);
 }
 
-static int close_open_file_descriptors(int write_fd, orte_iof_base_io_conf_t opts)
-{
-    int rc, fd;
-    DIR *dir = NULL;
-    struct dirent *files;
-    int app_alps_filedes[2], alps_app_filedes[2];
-
-    dir = opendir("/proc/self/fd");
+static int close_open_file_descriptors(int write_fd,
+                                      orte_iof_base_io_conf_t opts) {
+    DIR *dir = opendir("/proc/self/fd");
     if (NULL == dir) {
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
-
-    /* close all file descriptors w/ exception of stdin/stdout/stderr,
-       the pipe used for the IOF INTERNAL messages, and the pipe up to
-       the parent. Be careful to retain all of the pipe fd's set up
-       by the apshephered. These are needed for obtaining RDMA credentials,
-       synchronizing with aprun, etc. */
-
-    rc = alps_app_lli_pipes(app_alps_filedes,alps_app_filedes);
-    if (0 != rc) {
-        closedir(dir);
-        return ORTE_ERR_FILE_OPEN_FAILURE;
-    }
-
-    while ((files = readdir(dir)) != NULL) {
-        if(!strncmp(files->d_name,".",1) || !strncmp(files->d_name,"..",2)) continue;
-
-        fd = strtoul(files->d_name, NULL, 10);
-        if (EINVAL == errno || ERANGE == errno) {
+    struct dirent *files;
+    while (NULL != (files = readdir(dir))) {
+        if (!isdigit(files->d_name[0])) {
+            continue;
+        }
+        int fd = strtol(files->d_name, NULL, 10);
+        if (errno == EINVAL || errno == ERANGE) {
             closedir(dir);
             return ORTE_ERR_TYPE_MISMATCH;
         }
-
-        /*
-         * skip over the pipes we have open to apshepherd or slurmd
-         */
-
-        if (fd == XTAPI_FD_IDENTITY) continue;
-        if (fd == XTAPI_FD_RESILIENCY) continue;
-        if ((fd == app_alps_filedes[0]) ||
-            (fd == app_alps_filedes[1]) ||
-            (fd == alps_app_filedes[0]) ||
-            (fd == alps_app_filedes[1])) continue;
-
         if (fd >=3 &&
 #if OPAL_PMIX_V1
             fd != opts.p_internal[1] &&
 #endif
             fd != write_fd) {
-                        close(fd);
+            close(fd);
         }
     }
-
     closedir(dir);
     return ORTE_SUCCESS;
 }
@@ -368,14 +341,18 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
            always outputs a nice, single message indicating what
            happened
         */
-        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&cd->opts, &cd->env))) {
-            ORTE_ERROR_LOG(i);
-            send_error_show_help(write_fd, 1,
-                                 "help-orte-odls-alps.txt",
-                                 "iof setup failed",
-                                 orte_process_info.nodename, cd->app->app);
-            /* Does not return */
-        }
+
+	if (ORTE_FLAG_TEST(cd->jdata, ORTE_JOB_FLAG_FORWARD_OUTPUT)) {
+	    if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&cd->opts, &cd->env))) {
+		ORTE_ERROR_LOG(i);
+		send_error_show_help(write_fd, 1,
+				     "help-orte-odls-alps.txt",
+				     "iof setup failed",
+				     orte_process_info.nodename, cd->app->app);
+		/* Does not return */
+	    }
+	}
+
 
         /* now set any child-level controls such as binding */
         orte_rtc.set(cd->jdata, cd->child, &cd->env, write_fd);
