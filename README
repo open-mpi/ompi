@@ -507,7 +507,6 @@ MPI Functionality and Features
   - yalla
 
   (1) The cm PML and the following MTLs support MPI_THREAD_MULTIPLE:
-      - MXM
       - ofi (Libfabric)
       - portals4
 
@@ -522,8 +521,7 @@ MPI Functionality and Features
       - vader (shared memory)
 
   The openib BTL's RDMACM based connection setup mechanism is also not
-  thread safe.  The default UDCM method should be used for
-  applications requiring MPI_THREAD_MULTIPLE support.
+  thread safe.
 
   Currently, MPI File operations are not thread safe even if MPI is
   initialized for MPI_THREAD_MULTIPLE support.
@@ -560,7 +558,7 @@ MPI Functionality and Features
 OpenSHMEM Functionality and Features
 ------------------------------------
 
-- All OpenSHMEM-1.3 functionality is supported.
+- All OpenSHMEM-1.4 functionality is supported.
 
 
 MPI Collectives
@@ -601,7 +599,7 @@ Network Support
   - "ob1" supports a variety of networks that can be used in
     combination with each other:
 
-    - OpenFabrics: InfiniBand, iWARP, and RoCE
+    - OpenFabrics: iWARP and RoCE
     - Loopback (send-to-self)
     - Shared memory
     - TCP
@@ -1122,36 +1120,6 @@ RUN-TIME SYSTEM SUPPORT
 
 MISCELLANEOUS SUPPORT LIBRARIES
 
---with-blcr=<directory>
-  Specify the directory where the Berkeley Labs Checkpoint / Restart
-  (BLCR) libraries and header files are located.  This option is
-  generally only necessary if the BLCR headers and libraries are not
-  in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-blcr-libdir=<directory>
-  Look in directory for the BLCR libraries.  By default, Open MPI will
-  look in <blcr directory>/lib and <blcr directory>/lib64, which
-  covers most cases.  This option is only needed for special
-  configurations.
-
---with-dmtcp=<directory>
-  Specify the directory where the Distributed MultiThreaded
-  Checkpointing (DMTCP) libraries and header files are located.  This
-  option is generally only necessary if the DMTCP headers and
-  libraries are not in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-dmtcp-libdir=<directory>
-  Look in directory for the DMTCP libraries.  By default, Open MPI
-  will look in <dmtcp directory>/lib and <dmtcp directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
-
 --with-libevent(=value)
   This option specifies where to find the libevent support headers and
   library.  The following VALUEs are permitted:
@@ -1360,11 +1328,6 @@ MISCELLANEOUS FUNCTIONALITY
   However, it may be necessary to disable the memory manager in order
   to build Open MPI statically.
 
---with-ft=TYPE
-  Specify the type of fault tolerance to enable.  Options: LAM
-  (LAM/MPI-like), cr (Checkpoint/Restart).  Fault tolerance support is
-  disabled unless this option is specified.
-
 --enable-peruse
   Enable the PERUSE MPI data analysis interface.
 
@@ -1372,6 +1335,9 @@ MISCELLANEOUS FUNCTIONALITY
   Enable support for running on heterogeneous clusters (e.g., machines
   with different endian representations).  Heterogeneous support is
   disabled by default because it imposes a minor performance penalty.
+
+ --enable-spc
+  Enable software-based performance counters capability.
 
   *** THIS FUNCTIONALITY IS CURRENTLY BROKEN - DO NOT USE ***
 
