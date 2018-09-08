@@ -529,7 +529,6 @@
 #define shmem_int_wait_until         pshmem_int_wait_until
 #define shmem_long_wait_until        pshmem_long_wait_until
 #define shmem_longlong_wait_until    pshmem_longlong_wait_until
-#define shmem_wait_until             pshmem_wait_until
 #define shmemx_int32_wait_until      pshmemx_int32_wait_until
 #define shmemx_int64_wait_until      pshmemx_int64_wait_until
 
