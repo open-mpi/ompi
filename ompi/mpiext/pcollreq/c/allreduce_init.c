@@ -15,6 +15,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,8 +107,8 @@ int MPIX_Allreduce_init(const void *sendbuf, void *recvbuf, int count,
      * So handle that case.
      */
     if (0 == count) {
-        *request = &ompi_request_empty;
-        return MPI_SUCCESS;
+        err = ompi_request_persistent_noop_create(request);
+        OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
