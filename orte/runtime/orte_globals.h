@@ -588,9 +588,6 @@ ORTE_DECLSPEC extern char *orte_daemon_cores;
 /* Max time to wait for stack straces to return */
 ORTE_DECLSPEC extern int orte_stack_trace_wait_timeout;
 
-/* enable PMIx-based "instant on" support */
-ORTE_DECLSPEC extern bool orte_enable_instant_on_support;
-
 END_C_DECLS
 
 #endif /* ORTE_RUNTIME_ORTE_GLOBALS_H */
