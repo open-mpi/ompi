@@ -15,7 +15,7 @@
  * Copyright (c) 2010-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -237,7 +237,7 @@ static int mca_mpool_memkind_close(void)
     opal_output_close (mca_mpool_memkind_component.output);
     mca_mpool_memkind_component.output = -1;
 
-    OBJ_DESTRUCT(&mca_mpool_memkind_component.module_list);
+    OPAL_LIST_DESTRUCT(&mca_mpool_memkind_component.module_list);
 
     if (mca_mpool_memkind_policy_enum) {
         OBJ_RELEASE(mca_mpool_memkind_policy_enum);

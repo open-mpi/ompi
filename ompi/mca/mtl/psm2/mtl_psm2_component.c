@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved
- * Copyright (c) 2017      Research Organization for Information Science
+ * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -277,7 +277,7 @@ ompi_mtl_psm2_component_open(void)
 
   /* Component available only if Omni-Path hardware is present */
   res = glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf);
-  if (globbuf.gl_pathc > 0) {
+  if (globbuf.gl_pathc > 0 || GLOB_NOMATCH==res) {
       globfree(&globbuf);
   }
   if (0 != res) {
