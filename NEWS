@@ -78,6 +78,7 @@ included in the vX.Y.Z section and be denoted as:
   https://github.com/davideberius/ompi/wiki/How-to-Use-Software-Based-Performance-Counters-(SPCs)-in-Open-MPI
 - Various improvements to MPI RMA performance when using RDMA
   capable interconnects.
+- Update memkind component to use the memkind 1.6 public API.
 - Fix problems with use of newer map-by mpirun options.  Thanks to
   Tony Reina for reporting.
 - Fix rank-by algorithms to properly rank by object and span
