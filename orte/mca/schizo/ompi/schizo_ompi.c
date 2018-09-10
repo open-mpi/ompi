@@ -509,12 +509,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Forward mpirun port to compute node daemons so all will use it",
       OPAL_CMD_LINE_OTYPE_LAUNCH },
 
-    /* enable instant-on support */
-    { "orte_enable_instant_on_support", '\0', "enable-instant-on-support", "enable-instant-on-support", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Enable PMIx-based instant on launch support (experimental)",
-      OPAL_CMD_LINE_OTYPE_LAUNCH },
-
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
