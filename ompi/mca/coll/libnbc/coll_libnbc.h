@@ -71,6 +71,7 @@ BEGIN_C_DECLS
 
 extern bool libnbc_ibcast_skip_dt_decision;
 extern int libnbc_iexscan_algorithm;
+extern int libnbc_ireduce_algorithm;
 extern int libnbc_iscan_algorithm;
 
 struct ompi_coll_libnbc_component_t {
