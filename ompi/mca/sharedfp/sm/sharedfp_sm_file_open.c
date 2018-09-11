@@ -44,7 +44,7 @@
 #include <semaphore.h>
 #include <sys/mman.h>
 #include <libgen.h>
-
+#include <unistd.h>
 
 int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
                                const char* filename,
@@ -65,7 +65,9 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     int sm_fd;
     int rank;
     uint32_t comm_cid;
-
+    int int_pid;
+    pid_t my_pid;
+    
     /*----------------------------------------------------*/
     /*Open the same file again without shared file pointer*/
     /*----------------------------------------------------*/
@@ -134,7 +136,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     ** For sharedfp we also want to put the file backed shared memory into the tmp directory
     */
     filename_basename = basename(filename);
-    /* format is "%s/%s_cid-%d.sm", see below */
+    /* format is "%s/%s_cid-%d-%d.sm", see below */
     sm_filename_length = strlen(ompi_process_info.job_session_dir) + 1 + strlen(filename_basename) + 5 + (3*sizeof(uint32_t)+1) + 4;
     sm_filename = (char*) malloc( sizeof(char) * sm_filename_length);
     if (NULL == sm_filename) {
@@ -146,7 +148,21 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     }
 
     comm_cid = ompi_comm_get_cid(comm);
-    sprintf(sm_filename, "%s/%s_cid-%d.sm", ompi_process_info.job_session_dir, filename_basename, comm_cid);
+    if ( 0 == fh->f_rank ) {
+        my_pid = getpid();
+        int_pid = (int) my_pid;
+    }
+    err = comm->c_coll->coll_bcast (&int_pid, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0,"mca_sharedfp_sm_file_open: Error in bcast operation \n");
+        free(sm_filename);
+        free(sm_data);
+        free(sh);
+        return err;
+    }
+    snprintf(sm_filename, sm_filename_length, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+             filename_basename, comm_cid, int_pid);
+
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
