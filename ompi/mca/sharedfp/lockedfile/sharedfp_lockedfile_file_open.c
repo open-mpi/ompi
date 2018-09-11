@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #endif
 #include <fcntl.h>
+#include <unistd.h>
 
 int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 				       const char* filename,
@@ -48,6 +49,9 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     struct mca_sharedfp_base_data_t* sh;
     mca_io_ompio_file_t * shfileHandle, *ompio_fh;
     mca_io_ompio_data_t *data;
+
+    pid_t my_pid;
+    int int_pid;
 
     /*------------------------------------------------------------*/
     /*Open the same file again without shared file pointer support*/
@@ -109,7 +113,19 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
                                comm->c_coll->coll_bcast_module );
  
-    size_t filenamelen = strlen(filename) + 16;
+    if ( 0 == fh->f_rank ) {
+        my_pid = getpid();
+        int_pid = (int) my_pid;
+    }
+    err = comm->c_coll->coll_bcast (&int_pid, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module );
+    if ( OMPI_SUCCESS != err ) {
+        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error in bcast operation\n", fh->f_rank);
+        free (sh);
+        free(module_data);
+        return err;
+    }
+
+    size_t filenamelen = strlen(filename) + 24;
     lockedfilename = (char*)malloc(sizeof(char) * filenamelen);
     if ( NULL == lockedfilename ) {
 	free (shfileHandle);
@@ -117,7 +133,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         free (module_data);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    snprintf(lockedfilename, filenamelen, "%s-%u%s",filename,masterjobid,".lock");
+    snprintf(lockedfilename, filenamelen, "%s-%u-%d%s",filename,masterjobid,int_pid,".lock");
     module_data->filename = lockedfilename;
 
     /*-------------------------------------------------*/
