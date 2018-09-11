@@ -32,7 +32,7 @@
 mca_btl_base_descriptor_t *mca_btl_ofi_alloc(
                                 mca_btl_base_module_t *btl,
                                 mca_btl_base_endpoint_t *endpoint,
-                                uint64_t order, size_t size, uint32_t flags);
+                                uint8_t order, size_t size, uint32_t flags);
 
 int mca_btl_ofi_free (mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des);
 

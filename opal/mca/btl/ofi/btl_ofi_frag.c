@@ -64,7 +64,7 @@ mca_btl_ofi_frag_completion_t *mca_btl_ofi_frag_completion_alloc
 mca_btl_base_descriptor_t *mca_btl_ofi_alloc(
                                 mca_btl_base_module_t *btl,
                                 mca_btl_base_endpoint_t *endpoint,
-                                uint64_t order, size_t size, uint32_t flags)
+                                uint8_t order, size_t size, uint32_t flags)
 {
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t*) btl;
     mca_btl_ofi_base_frag_t *frag = NULL;

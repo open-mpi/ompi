@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -1157,8 +1157,18 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         mqs_fetch_data( proc, ompi_datatype + i_info->ompi_datatype_t.offset.name,
                         64, data_name );
         if( '\0' != data_name[0] ) {
-            snprintf( (char*)res->extra_text[1], 64, "Data: %d * %s",
-                      (int)res->desired_length, data_name );
+            // res->extra_text[x] is only 64 chars long -- same as
+            // data_name.  If you try to snprintf it into
+            // res->extra_text with additional text, some compilers
+            // will warn that we might truncate the string (because it
+            // can see the static char array lengths).  So just put
+            // data_name in res->extra_text[2] (vs. extra_text[1]),
+            // where it is guaranteed to fit.
+            data_name[4] = '\0';
+            snprintf( (char*)res->extra_text[1], 64, "Data: %d",
+                      (int)res->desired_length);
+            snprintf( (char*)res->extra_text[2], 64, "%s",
+                      data_name );
         }
         /* And now compute the real length as specified by the user */
         res->desired_length *=
