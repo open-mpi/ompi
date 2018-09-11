@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,7 @@
 
 static const char *path_sep = OPAL_PATH_SEP;
 
-char *opal_os_path(bool relative, ...)
+char *opal_os_path(int relative, ...)
 {
     va_list ap;
     char *element, *path;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -48,9 +48,9 @@ static char **search_dirs = NULL;
  * Local functions
  */
 static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist);
+                                    int want_error_header, va_list arglist);
 static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...);
+                                   int want_error_header, ...);
 
 opal_show_help_fn_t opal_show_help = opal_show_help_internal;
 opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
@@ -89,7 +89,7 @@ int opal_show_help_finalize(void)
  * not optimization.  :-)
  */
 static int array2string(char **outstring,
-                        bool want_error_header, char **lines)
+                        int want_error_header, char **lines)
 {
     int i, count;
     size_t len;
@@ -293,7 +293,7 @@ static int load_array(char ***array, const char *filename, const char *topic)
 }
 
 char *opal_show_help_vstring(const char *filename, const char *topic,
-                             bool want_error_header, va_list arglist)
+                             int want_error_header, va_list arglist)
 {
     int rc;
     char *single_string, *output, **array = NULL;
@@ -317,7 +317,7 @@ char *opal_show_help_vstring(const char *filename, const char *topic,
 }
 
 char *opal_show_help_string(const char *filename, const char *topic,
-                            bool want_error_handler, ...)
+                            int want_error_handler, ...)
 {
     char *output;
     va_list arglist;
@@ -331,7 +331,7 @@ char *opal_show_help_string(const char *filename, const char *topic,
 }
 
 static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    bool want_error_header, va_list arglist)
+                                    int want_error_header, va_list arglist)
 {
     char *output;
 
@@ -349,7 +349,7 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic,
 }
 
 static int opal_show_help_internal(const char *filename, const char *topic,
-                                   bool want_error_header, ...)
+                                   int want_error_header, ...)
 {
     va_list arglist;
     int rc;
