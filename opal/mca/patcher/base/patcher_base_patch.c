@@ -115,7 +115,7 @@ static void flush_and_invalidate_cache (unsigned long a)
                       "isb":: "r" (a));
 #endif
 }
-#endif   // HAVE___CLEAR_CACHE
+#endif   // !HAVE___CLEAR_CACHE
 
 // modify protection of memory range
 static void ModifyMemoryProtection (uintptr_t addr, size_t length, int prot)
