@@ -1013,15 +1013,33 @@ NETWORKING SUPPORT / OPTIONS
   configurations.
 
 --with-verbs-usnic
+  Note that this option is no longer necessary in recent Linux distro
+  versions.  If your Linux distro uses the "rdma-core" package (instead
+  of a standalone "libibverbs" package), not only do you not need this
+  option, you shouldn't use it, either.  More below.
+
   This option will activate support in Open MPI for disabling a
   dire-sounding warning message from libibverbs that Cisco usNIC
   devices are not supported (because Cisco usNIC devices are supported
   through libfabric, not libibverbs).  This libibverbs warning can
   also be suppressed by installing the "no op" libusnic_verbs plugin
   for libibverbs (see https://github.com/cisco/libusnic_verbs, or
-  download binaries from cisco.com).  This option is disabled by
-  default because it causes libopen-pal.so to depend on libibverbs.so,
-  which is undesirable to many downstream packagers.
+  download binaries from cisco.com).
+
+  This option is disabled by default for two reasons:
+
+  1. It causes libopen-pal.so to depend on libibverbs.so, which is
+     undesirable to many downstream packagers.
+  2. As mentioned above, recent versions of the libibverbs library
+     (included in the "rdma-core" package) do not have the bug that
+     will emit dire-sounding warnings about usnic devices.  Indeed,
+     the --with-verbs-usnic option will enable code in Open MPI that
+     is actually incompatible with rdma-core (i.e., cause Open MPI to
+     fail to compile).
+
+   If you enable --with-verbs-usnic and your system uses the rdma-core
+   package, configure will safely abort with a helpful message telling
+   you that you should not use --with-verbs-usnic.
 
 --with-usnic
   Abort configure if Cisco usNIC support cannot be built.
