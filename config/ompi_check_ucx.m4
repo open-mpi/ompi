@@ -78,7 +78,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                             [ucp/api/ucp.h],
                                             [ucp],
                                             [ucp_cleanup],
-                                            [],
+                                            [-luct -lucm -lucs],
                                             [$ompi_check_ucx_dir],
                                             [$ompi_check_ucx_libdir],
                                             [ompi_check_ucx_happy="yes"],
