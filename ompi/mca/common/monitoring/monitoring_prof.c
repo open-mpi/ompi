@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013-2017 Inria.  All rights reserved.
  * Copyright (c) 2013-2015 Bull SAS.  All rights reserved.
- * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -42,10 +42,30 @@ writing 4x4 matrix to monitoring_avg.mat
 
 */
 
+#include "ompi_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
 #include <string.h>
+#include <stdbool.h>
+
+#if OMPI_BUILD_FORTRAN_BINDINGS
+// Set these #defines in the same way that
+// ompi/mpi/fortran/mpif-h/Makefile.am does when compiling the real
+// Fortran mpif.h bindings.  They set behaviors in the Fortran header
+// files so that we can compile properly.
+#define OMPI_BUILD_MPI_PROFILING 0
+#define OMPI_COMPILING_FORTRAN_WRAPPERS 1
+#endif
+
+#include "opal/threads/thread_usage.h"
+
+#include "ompi/include/mpi.h"
+#include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#if OMPI_BUILD_FORTRAN_BINDINGS
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
+#endif
 
 static MPI_T_pvar_session session;
 static int comm_world_size;
@@ -383,12 +403,6 @@ int write_mat(char * filename, size_t * mat, unsigned int dim)
  * MPI binding for fortran
  */
 
-#include <stdbool.h>
-#include "ompi_config.h"
-#include "opal/threads/thread_usage.h"
-#include "ompi/mpi/fortran/base/constants.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
-
 void monitoring_prof_mpi_init_f2c( MPI_Fint * );
 void monitoring_prof_mpi_finalize_f2c( MPI_Fint * );
 
@@ -423,8 +437,6 @@ void monitoring_prof_mpi_finalize_f2c( MPI_Fint *ierr ) {
 #pragma weak MPI_Finalize_f = monitoring_prof_mpi_finalize_f2c
 #pragma weak MPI_Finalize_f08 = monitoring_prof_mpi_finalize_f2c
 #elif OMPI_BUILD_FORTRAN_BINDINGS
-#define OMPI_F77_PROTOTYPES_MPI_H
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
                            mpi_init,
