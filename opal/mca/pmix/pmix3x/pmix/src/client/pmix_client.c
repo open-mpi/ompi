@@ -169,14 +169,9 @@ static void pmix_client_notify_recv(struct pmix_peer_t *peer,
             PMIX_RELEASE(chain);
             goto error;
         }
-        /* check for non-default flag */
-        for (cnt=0; cnt < (int)ninfo; cnt++) {
-            if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
-                chain->nondefault = PMIX_INFO_TRUE(&chain->info[cnt]);
-                break;
-            }
-        }
     }
+    /* prep the chain for processing */
+    pmix_prep_event_chain(chain, chain->info, ninfo, false);
 
     pmix_output_verbose(2, pmix_client_globals.base_output,
                         "[%s:%d] pmix:client_notify_recv - processing event %s, calling errhandler",

@@ -45,6 +45,7 @@
 #include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
 #include "src/util/show_help.h"
+#include "src/mca/psensor/psensor.h"
 
 #include "src/mca/ptl/base/base.h"
 
@@ -148,6 +149,9 @@ void pmix_ptl_base_lost_connection(pmix_peer_t *peer, pmix_status_t err)
                 }
             }
         }
+        /* cleanup any sensors that are monitoring them */
+        pmix_psensor.stop(peer, NULL);
+
         if (!peer->finalized && !PMIX_PROC_IS_TOOL(peer)) {
             /* if this peer already called finalize, then
              * we are just seeing their connection go away

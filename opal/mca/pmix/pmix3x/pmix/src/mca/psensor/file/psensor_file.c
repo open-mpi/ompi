@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
- * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -258,7 +258,9 @@ static pmix_status_t stop(pmix_peer_t *requestor, char *id)
     cd = PMIX_NEW(file_caddy_t);
     PMIX_RETAIN(requestor);
     cd->requestor = requestor;
-    cd->id = strdup(id);
+    if (NULL != id) {
+        cd->id = strdup(id);
+    }
 
     /* need to push into our event base to add this to our trackers */
     pmix_event_assign(&cd->ev, pmix_psensor_base.evbase, -1,

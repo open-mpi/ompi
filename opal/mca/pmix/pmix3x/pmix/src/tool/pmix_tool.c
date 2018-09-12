@@ -162,30 +162,9 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
             PMIX_RELEASE(chain);
             goto error;
         }
-        /* check for directives */
-        for (cnt=0; cnt < (int)ninfo; cnt++) {
-            if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
-                chain->nondefault = PMIX_INFO_TRUE(&chain->info[cnt]);
-            } else if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_AFFECTED_PROC, PMIX_MAX_KEYLEN)) {
-                PMIX_PROC_CREATE(chain->affected, 1);
-                if (NULL == chain->affected) {
-                    PMIX_RELEASE(chain);
-                    goto error;
-                }
-                chain->naffected = 1;
-                memcpy(chain->affected, chain->info[cnt].value.data.proc, sizeof(pmix_proc_t));
-            } else if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_AFFECTED_PROCS, PMIX_MAX_KEYLEN)) {
-                chain->naffected = chain->info[cnt].value.data.darray->size;
-                PMIX_PROC_CREATE(chain->affected, chain->naffected);
-                if (NULL == chain->affected) {
-                    chain->naffected = 0;
-                    PMIX_RELEASE(chain);
-                    goto error;
-                }
-                memcpy(chain->affected, chain->info[cnt].value.data.darray->array, chain->naffected * sizeof(pmix_proc_t));
-            }
-        }
     }
+    /* prep the chain for processing */
+    pmix_prep_event_chain(chain, chain->info, ninfo, false);
 
     pmix_output_verbose(2, pmix_client_globals.event_output,
                         "[%s:%d] pmix:tool_notify_recv - processing event %s from source %s:%d, calling errhandler",

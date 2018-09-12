@@ -1933,6 +1933,47 @@ static void local_cbfunc(pmix_status_t status, void *cbdata)
     PMIX_RELEASE(cd);
 }
 
+static void intermed_step(pmix_status_t status, void *cbdata)
+{
+    pmix_notify_caddy_t *cd = (pmix_notify_caddy_t*)cbdata;
+    pmix_status_t rc;
+
+    if (PMIX_SUCCESS != status) {
+        rc = status;
+        goto complete;
+    }
+
+    /* check the range directive - if it is LOCAL, then we are
+     * done. Otherwise, it needs to go up to our
+     * host for dissemination */
+    if (PMIX_RANGE_LOCAL == cd->range) {
+        rc = PMIX_SUCCESS;
+        goto complete;
+    }
+
+    if (NULL == pmix_host_server.notify_event) {
+        rc = PMIX_ERR_NOT_SUPPORTED;
+        goto complete;
+    }
+
+    /* pass it to our host RM for distribution */
+    rc = pmix_host_server.notify_event(cd->status, &cd->source, cd->range,
+                                       cd->info, cd->ninfo, local_cbfunc, cd);
+    if (PMIX_SUCCESS == rc) {
+        /* let the callback function respond for us */
+        return;
+    }
+    if (PMIX_OPERATION_SUCCEEDED == rc) {
+        rc = PMIX_SUCCESS;  // local_cbfunc will not be called
+    }
+
+  complete:
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(rc, cd->cbdata);
+    }
+    PMIX_RELEASE(cd);
+}
+
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,
                                                   pmix_op_cbfunc_t cbfunc,
@@ -1941,13 +1982,11 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
     int32_t cnt;
     pmix_status_t rc;
     pmix_notify_caddy_t *cd;
+    size_t ninfo;
 
     pmix_output_verbose(2, pmix_server_globals.event_output,
-                        "recvd event notification from client");
-
-    if (NULL == pmix_host_server.notify_event) {
-        return PMIX_ERR_NOT_SUPPORTED;
-    }
+                        "%s:%d recvd event notification from client",
+                        pmix_globals.myid.nspace, pmix_globals.myid.rank);
 
     cd = PMIX_NEW(pmix_notify_caddy_t);
     if (NULL == cd) {
@@ -1977,44 +2016,36 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
 
     /* unpack the info keys */
     cnt = 1;
-    PMIX_BFROPS_UNPACK(rc, peer, buf, &cd->ninfo, &cnt, PMIX_SIZE);
+    PMIX_BFROPS_UNPACK(rc, peer, buf, &ninfo, &cnt, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         PMIX_ERROR_LOG(rc);
         goto exit;
     }
-    if (0 < cd->ninfo) {
-        PMIX_INFO_CREATE(cd->info, cd->ninfo);
-        if (NULL == cd->info) {
-            rc = PMIX_ERR_NOMEM;
-            goto exit;
-        }
-        cnt = cd->ninfo;
+    cd->ninfo = ninfo + 1;
+    PMIX_INFO_CREATE(cd->info, cd->ninfo);
+    if (NULL == cd->info) {
+        rc = PMIX_ERR_NOMEM;
+        goto exit;
+    }
+    if (0 < ninfo) {
+        cnt = ninfo;
         PMIX_BFROPS_UNPACK(rc, peer, buf, cd->info, &cnt, PMIX_INFO);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
             goto exit;
         }
     }
-
-    /* check the range directive - if it is LOCAL, then we just
-     * process it ourselves. Otherwise, it needs to go up to our
-     * host for dissemination */
-    if (PMIX_RANGE_LOCAL == cd->range) {
-        if (PMIX_SUCCESS != (rc = pmix_server_notify_client_of_event(cd->status,
-                                                                     &cd->source,
-                                                                     cd->range,
-                                                                     cd->info, cd->ninfo,
-                                                                     local_cbfunc, cd))) {
-            goto exit;
-        }
-        return PMIX_SUCCESS;
+    /* add an info object to mark that we recvd this internally */
+    PMIX_INFO_LOAD(&cd->info[ninfo], PMIX_SERVER_INTERNAL_NOTIFY, NULL, PMIX_BOOL);
+    /* process it */
+    if (PMIX_SUCCESS != (rc = pmix_server_notify_client_of_event(cd->status,
+                                                                 &cd->source,
+                                                                 cd->range,
+                                                                 cd->info, cd->ninfo,
+                                                                 intermed_step, cd))) {
+        goto exit;
     }
-
-    /* when we receive an event from a client, we just pass it to
-     * our host RM for distribution - if any targeted recipients
-     * are local to us, the host RM will let us know */
-    pmix_host_server.notify_event(cd->status, &cd->source, cd->range,
-                                  cd->info, cd->ninfo, local_cbfunc, cd);
+    /* tell the switchyard we will handle it from here */
     return PMIX_SUCCESS;
 
   exit:

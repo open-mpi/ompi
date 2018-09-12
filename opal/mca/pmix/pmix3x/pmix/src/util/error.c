@@ -202,7 +202,8 @@ PMIX_EXPORT const char* PMIx_Error_string(pmix_status_t errnum)
         return "LAUNCHER-READY";
     case PMIX_OPERATION_IN_PROGRESS:
         return "OPERATION-IN-PROGRESS";
-
+    case PMIX_PROC_TERMINATED:
+        return "PROC-TERMINATED";
 
     case PMIX_ERR_NODE_DOWN:
         return "NODE-DOWN";
