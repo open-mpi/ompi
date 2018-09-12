@@ -1189,9 +1189,11 @@ int pmix3x_value_unload(opal_value_t *kv,
             /* handle the various types */
             if (PMIX_INFO == v->data.darray->type) {
                 pmix_info_t *iptr = (pmix_info_t*)v->data.darray->array;
-                if (NULL != iptr[n].key) {
-                    ival->key = strdup(iptr[n].key);
+                if (NULL == iptr) {
+                    rc = OPAL_ERR_BAD_PARAM;
+                    break;
                 }
+                ival->key = strdup(iptr[n].key);
                 rc = pmix3x_value_unload(ival, &iptr[n].value);
                 if (OPAL_SUCCESS != rc) {
                     OPAL_LIST_RELEASE(lt);
