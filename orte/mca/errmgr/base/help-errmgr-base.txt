@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -105,3 +107,6 @@ An internal error has occurred in ORTE:
 %s
 
 This is something that should be reported to the developers.
+#
+[normal-termination-but]
+%s job %s terminated normally, but %d %s. Per user-direction, the job has been aborted.

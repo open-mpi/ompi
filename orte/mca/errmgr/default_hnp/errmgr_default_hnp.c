@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -839,14 +841,11 @@ static void default_hnp_abort(orte_job_t *jdata)
     i32ptr = &i32;
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NUM_NONZERO_EXIT, (void**)&i32ptr, OPAL_INT32)) {
         /* warn user */
-        opal_output(orte_clean_output,
-                    "-------------------------------------------------------\n"
-                    "%s job %s terminated normally, but %d %s. Per user-direction, the job has been aborted.\n"
-                    "-------------------------------------------------------",
-                    (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "Primary" : "Child",
-                    (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
-                    i32, (1 == i32) ? "process returned\na non-zero exit code" :
-                    "processes returned\nnon-zero exit codes");
+        orte_show_help("help-errmgr-base.txt", "normal-termination-but", true, 
+                       (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "Primary" : "Child",
+                       (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
+                       i32, (1 == i32) ? "process returned\na non-zero exit code" :
+                       "processes returned\nnon-zero exit codes");
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
