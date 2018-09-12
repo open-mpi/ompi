@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +40,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/threads.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/base/state_private.h"
@@ -845,10 +848,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
         }
 
         /* warn user */
-        opal_output(orte_clean_output,
-                    "-------------------------------------------------------\n"
-                    "While %s job %s terminated normally, %d %s. Further examination may be required.\n"
-                    "-------------------------------------------------------",
+        orte_show_help("help-state-base.txt", "normal-termination-but", true,
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "the primary" : "child",
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
                     i32, (1 == i32) ? "process returned\na non-zero exit code." :
