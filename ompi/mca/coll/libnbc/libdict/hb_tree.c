@@ -90,7 +90,6 @@ hb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	dct->_insert = (insert_func)hb_tree_insert;
 	dct->_probe = (probe_func)hb_tree_probe;
 	dct->_search = (search_func)hb_tree_search;
-	dct->_csearch = (csearch_func)hb_tree_csearch;
 	dct->_remove = (remove_func)hb_tree_remove;
 	dct->_empty = (empty_func)hb_tree_empty;
 	dct->_walk = (walk_func)hb_tree_walk;
@@ -168,12 +167,6 @@ hb_tree_search(hb_tree *tree, const void *key)
 	}
 
 	return NULL;
-}
-
-const void *
-hb_tree_csearch(const hb_tree *tree, const void *key)
-{
-	return hb_tree_csearch((hb_tree *)tree, key);
 }
 
 int

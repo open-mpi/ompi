@@ -26,7 +26,6 @@ void	 hb_tree_destroy __P((hb_tree *tree, int del));
 int hb_tree_insert __P((hb_tree *tree, void *key, void *dat, int overwrite));
 int hb_tree_probe __P((hb_tree *tree, void *key, void **dat));
 void *hb_tree_search __P((hb_tree *tree, const void *key));
-const void *hb_tree_csearch __P((const hb_tree *tree, const void *key));
 int hb_tree_remove __P((hb_tree *tree, const void *key, int del));
 void hb_tree_empty __P((hb_tree *tree, int del));
 void hb_tree_walk __P((hb_tree *tree, dict_vis_func visit));
