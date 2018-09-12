@@ -26,7 +26,7 @@ release=0
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -86,7 +86,7 @@ date="Unreleased developer copy"
 
 libmpi_so_version=60:0:20
 libmpi_cxx_so_version=60:0:20
-libmpi_mpifh_so_version=61:0:21
+libmpi_mpifh_so_version=60:0:20
 libmpi_usempi_tkr_so_version=60:0:20
 libmpi_usempi_ignore_tkr_so_version=60:0:20
 libmpi_usempif08_so_version=60:0:20
