@@ -39,6 +39,13 @@
 #define PMIX_EVENT_ORDER_PREPEND    0x10
 #define PMIX_EVENT_ORDER_APPEND     0x20
 
+/* define an internal attribute for marking that the
+ * server processed an event before passing it up
+ * to its host in case it comes back down - avoids
+ * infinite loop */
+#define PMIX_SERVER_INTERNAL_NOTIFY   "pmix.srvr.internal.notify"
+
+
 /* define a struct for tracking registration ranges */
 typedef struct {
     pmix_data_range_t range;
@@ -117,8 +124,15 @@ typedef struct pmix_event_chain_t {
     bool endchain;
     pmix_proc_t source;
     pmix_data_range_t range;
+    /* When generating events, callers can specify
+     * the range of targets to receive notifications.
+     */
+    pmix_proc_t *targets;
+    size_t ntargets;
+    /* the processes that we affected by the event */
     pmix_proc_t *affected;
     size_t naffected;
+    /* any info provided by the event generator */
     pmix_info_t *info;
     size_t ninfo;
     size_t nallocated;
@@ -129,6 +143,13 @@ typedef struct pmix_event_chain_t {
     void *final_cbdata;
 } pmix_event_chain_t;
 PMIX_CLASS_DECLARATION(pmix_event_chain_t);
+
+/* prepare a chain for processing by cycling across provided
+ * info structs and translating those supported by the event
+ * system into the chain object*/
+pmix_status_t pmix_prep_event_chain(pmix_event_chain_t *chain,
+                                    const pmix_info_t *info, size_t ninfo,
+                                    bool xfer);
 
 /* invoke the error handler that is registered against the given
  * status, passing it the provided info on the procs that were
@@ -146,7 +167,7 @@ bool pmix_notify_check_affected(pmix_proc_t *interested, size_t ninterested,
 pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
                                                  const pmix_proc_t *source,
                                                  pmix_data_range_t range,
-                                                 pmix_info_t info[], size_t ninfo,
+                                                 const pmix_info_t info[], size_t ninfo,
                                                  pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 void pmix_event_timeout_cb(int fd, short flags, void *arg);

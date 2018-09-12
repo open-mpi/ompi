@@ -192,7 +192,7 @@
 
 Summary: An extended/exascale implementation of PMI
 Name: %{?_name:%{_name}}%{!?_name:pmix}
-Version: 2.1.3rc1
+Version: 2.1.4
 Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries

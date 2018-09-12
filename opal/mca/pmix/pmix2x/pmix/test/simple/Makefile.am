@@ -24,7 +24,9 @@ AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_builddir)/src/include -I$(top_buildd
 headers = simptest.h
 
 noinst_PROGRAMS = simptest simpclient simppub simpdyn simpft simpdmodex \
-                  test_pmix simptool simpdie simplegacy stability quietclient
+                  test_pmix simptool simpdie simplegacy stability quietclient \
+                  test_pmix simptool simpdie simplegacy \
+                  stability quietclient simpjctrl
 
 simptest_SOURCES = $(headers) \
         simptest.c
@@ -96,4 +98,10 @@ quietclient_SOURCES = $(headers) \
         quietclient.c
 quietclient_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
 quietclient_LDADD = \
+    $(top_builddir)/src/libpmix.la
+
+simpjctrl_SOURCES = \
+        simpjctrl.c
+simpjctrl_LDFLAGS = $(PMIX_PKG_CONFIG_LDFLAGS)
+simpjctrl_LDADD = \
     $(top_builddir)/src/libpmix.la

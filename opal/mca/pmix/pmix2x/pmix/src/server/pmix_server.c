@@ -65,6 +65,7 @@
 #include "src/mca/bfrops/base/base.h"
 #include "src/mca/gds/base/base.h"
 #include "src/mca/preg/preg.h"
+#include "src/mca/psensor/base/base.h"
 #include "src/mca/ptl/base/base.h"
 
 /* the server also needs access to client operations
@@ -276,6 +277,16 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     PMIX_RETAIN(pmix_globals.mypeer->info);
     pmix_client_globals.myserver->info = pmix_globals.mypeer->info;
 
+    /* open the psensor framework */
+    if (PMIX_SUCCESS != (rc = pmix_mca_base_framework_open(&pmix_psensor_base_framework, 0))) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return rc;
+    }
+    if (PMIX_SUCCESS != (rc = pmix_psensor_base_select())) {
+        PMIX_RELEASE_THREAD(&pmix_global_lock);
+        return rc;
+    }
+
     /* setup the wildcard recv for inbound messages from clients */
     req = PMIX_NEW(pmix_ptl_posted_recv_t);
     req->tag = UINT32_MAX;
@@ -357,6 +368,10 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     if (NULL != gds_mode) {
         free(gds_mode);
     }
+
+    /* close the psensor framework */
+    (void)pmix_mca_base_framework_close(&pmix_psensor_base_framework);
+
     pmix_rte_finalize();
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -841,6 +856,7 @@ static void _deregister_client(int sd, short args, void *cbdata)
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info;
     pmix_nspace_t *nptr, *tmp;
+    pmix_peer_t *peer;
 
     PMIX_ACQUIRE_OBJECT(cd);
 
@@ -863,6 +879,9 @@ static void _deregister_client(int sd, short args, void *cbdata)
     /* find and remove this client */
     PMIX_LIST_FOREACH(info, &nptr->ranks, pmix_rank_info_t) {
         if (info->pname.rank == cd->proc.rank) {
+            if (NULL != (peer = (pmix_peer_t*)pmix_pointer_array_get_item(&pmix_server_globals.clients, info->peerid))) {
+                pmix_psensor.stop(peer, NULL);
+            }
             pmix_list_remove_item(&nptr->ranks, &info->super);
             PMIX_RELEASE(info);
             break;
@@ -2362,6 +2381,9 @@ static void server_message_handler(struct pmix_peer_t *pr,
         if (NULL == reply) {
             PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
             return;
+        }
+        if (PMIX_OPERATION_SUCCEEDED == ret) {
+            ret = PMIX_SUCCESS;
         }
         PMIX_BFROPS_PACK(rc, pr, reply, &ret, 1, PMIX_STATUS);
         if (PMIX_SUCCESS != rc) {

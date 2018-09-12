@@ -25,52 +25,44 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([PMIX_CC_HELPER],[
-    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper_tmp])
+    PMIX_VAR_SCOPE_PUSH([pmix_cc_helper_result])
     AC_MSG_CHECKING([$1])
 
-    pmix_prog_cc_c11_helper_tmp=0
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([$3],[$4])],
+                   [$2=1
+                    pmix_cc_helper_result=yes],
+                   [$2=0
+                    pmix_cc_helper_result=no])
 
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([$3],[$4])],[
-                       $2=yes
-                       pmix_prog_cc_c11_helper_tmp=1], [$2=no])
-
-    AC_DEFINE_UNQUOTED([$5], [$pmix_prog_cc_c11_helper_tmp], [$6])
-
-    AC_MSG_RESULT([$$2])
+    AC_MSG_RESULT([$pmix_cc_helper_result])
     PMIX_VAR_SCOPE_POP
 ])
 
 
 AC_DEFUN([PMIX_PROG_CC_C11_HELPER],[
-    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper_CFLAGS_save pmix_prog_cc_c11_helper__Thread_local_available pmix_prog_cc_c11_helper_atomic_var_available pmix_prog_cc_c11_helper__Atomic_available pmix_prog_cc_c11_helper__static_assert_available pmix_prog_cc_c11_helper__Generic_available])
+    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper_CFLAGS_save])
 
     pmix_prog_cc_c11_helper_CFLAGS_save=$CFLAGS
     CFLAGS="$CFLAGS $1"
 
     PMIX_CC_HELPER([if $CC $1 supports C11 _Thread_local], [pmix_prog_cc_c11_helper__Thread_local_available],
-                   [],[[static _Thread_local int  foo = 1;++foo;]], [PMIX_C_HAVE__THREAD_LOCAL],
-                   [Whether C compiler supports __Thread_local])
+                   [],[[static _Thread_local int  foo = 1;++foo;]])
 
     PMIX_CC_HELPER([if $CC $1 supports C11 atomic variables], [pmix_prog_cc_c11_helper_atomic_var_available],
-                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]], [PMIX_C_HAVE_ATOMIC_CONV_VAR],
-                   [Whether C compiler support atomic convenience variables in stdatomic.h])
+                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]])
 
     PMIX_CC_HELPER([if $CC $1 supports C11 _Atomic keyword], [pmix_prog_cc_c11_helper__Atomic_available],
-                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]], [PMIX_C_HAVE__ATOMIC],
-                   [Whether C compiler supports __Atomic keyword])
+                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]])
 
     PMIX_CC_HELPER([if $CC $1 supports C11 _Generic keyword], [pmix_prog_cc_c11_helper__Generic_available],
-                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]], [PMIX_C_HAVE__GENERIC],
-                   [Whether C compiler supports __Generic keyword])
+                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]])
 
     PMIX_CC_HELPER([if $CC $1 supports C11 _Static_assert], [pmix_prog_cc_c11_helper__static_assert_available],
-                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]], [PMIX_C_HAVE__STATIC_ASSERT],
-                   [Whether C compiler support _Static_assert keyword])
+                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]])
 
-    dnl At this time Open MPI only needs thread local and the atomic convenience types for C11 support. These
-    dnl will likely be required in the future.
-    AS_IF([test "x$pmix_prog_cc_c11_helper__Thread_local_available" = "xyes" && test "x$pmix_prog_cc_c11_helper_atomic_var_available" = "xyes"],
-          [$2], [$3])
+    AS_IF([test $pmix_prog_cc_c11_helper__Thread_local_available -eq 1 && test $pmix_prog_cc_c11_helper_atomic_var_available -eq 1],
+          [$2],
+          [$3])
 
     CFLAGS=$pmix_prog_cc_c11_helper_CFLAGS_save
 
@@ -136,6 +128,8 @@ AC_DEFUN([PMIX_SETUP_CC],[
     AC_REQUIRE([_PMIX_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
+    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc_c11_helper__Thread_local_available pmix_prog_cc_c11_helper_atomic_var_available pmix_prog_cc_c11_helper__Atomic_available pmix_prog_cc_c11_helper__static_assert_available pmix_prog_cc_c11_helper__Generic_available pmix_prog_cc__thread_available])
+
     PMIX_PROG_CC_C11
 
     if test $pmix_cv_c11_supported = no ; then
@@ -157,11 +151,32 @@ AC_DEFUN([PMIX_SETUP_CC],[
     fi
 
     # Check if compiler support __thread
-    PMIX_VAR_SCOPE_PUSH([pmix_prog_cc__thread_available])
     PMIX_CC_HELPER([if $CC $1 supports __thread], [pmix_prog_cc__thread_available],
-               [],[[static __thread int  foo = 1;++foo;]], [PMIX_C_HAVE___THREAD],
-               [Whether C compiler supports __thread])
-    PMIX_VAR_SCOPE_POP
+                    [],[[static __thread int  foo = 1;++foo;]])
+
+
+    PMIX_CC_HELPER([if $CC $1 supports C11 _Thread_local], [pmix_prog_cc_c11_helper__Thread_local_available],
+                   [],[[static _Thread_local int  foo = 1;++foo;]])
+
+    dnl At this time, PMIx only needs thread local and the atomic convenience tyes for C11 suport. These
+    dnl will likely be required in the future.
+    AC_DEFINE_UNQUOTED([PMIX_C_HAVE__THREAD_LOCAL], [$pmix_prog_cc_c11_helper__Thread_local_available],
+                       [Whether C compiler supports __Thread_local])
+
+    AC_DEFINE_UNQUOTED([PMIX_C_HAVE_ATOMIC_CONV_VAR], [$pmix_prog_cc_c11_helper_atomic_var_available],
+                       [Whether C compiler supports atomic convenience variables in stdatomic.h])
+
+    AC_DEFINE_UNQUOTED([PMIX_C_HAVE__ATOMIC], [$pmix_prog_cc_c11_helper__Atomic_available],
+                       [Whether C compiler supports __Atomic keyword])
+
+    AC_DEFINE_UNQUOTED([PMIX_C_HAVE__GENERIC], [$pmix_prog_cc_c11_helper__Generic_available],
+                       [Whether C compiler supports __Generic keyword])
+
+    AC_DEFINE_UNQUOTED([PMIX_C_HAVE__STATIC_ASSERT], [$pmix_prog_cc_c11_helper__static_assert_available],
+                       [Whether C compiler supports _Static_assert keyword])
+
+    AC_DEFINE_UNQUOTED([PMIX_C_HAVE___THREAD], [$pmix_prog_cc__thread_available],
+                       [Whether C compiler supports __thread])
 
     PMIX_C_COMPILER_VENDOR([pmix_c_vendor])
 
@@ -456,6 +471,7 @@ AC_DEFUN([PMIX_SETUP_CC],[
     PMIX_ENSURE_CONTAINS_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
+    PMIX_VAR_SCOPE_POP
 ])
 
 

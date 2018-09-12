@@ -591,6 +591,7 @@ typedef int pmix_status_t;
 /* monitoring */
 #define PMIX_MONITOR_HEARTBEAT_ALERT            (PMIX_ERR_V2X_BASE -  9)
 #define PMIX_MONITOR_FILE_ALERT                 (PMIX_ERR_V2X_BASE - 10)
+#define PMIX_PROC_TERMINATED                    (PMIX_ERR_V2X_BASE - 11)
 
 /* define a starting point for operational error constants so
  * we avoid renumbering when making additions */
@@ -602,6 +603,9 @@ typedef int pmix_status_t;
 #define PMIX_ERR_UPDATE_ENDPOINTS               (PMIX_ERR_OP_BASE - 16)
 #define PMIX_MODEL_DECLARED                     (PMIX_ERR_OP_BASE - 17)
 #define PMIX_GDS_ACTION_COMPLETE                (PMIX_ERR_OP_BASE - 18)
+/* gap created by v3 definitions */
+#define PMIX_OPERATION_SUCCEEDED                (PMIX_ERR_OP_BASE - 27)
+/* gap for group codes */
 
 /* define a starting point for system error constants so
  * we avoid renumbering when making additions */
@@ -748,6 +752,19 @@ typedef uint8_t pmix_alloc_directive_t;
 /* define a value boundary beyond which implementers are free
  * to define their own directive values */
 #define PMIX_ALLOC_EXTERNAL     128
+
+
+/* declare a convenience macro for checking keys */
+#define PMIX_CHECK_KEY(a, b) \
+    (0 == strncmp((a)->key, (b), PMIX_MAX_KEYLEN))
+
+/* define a convenience macro for checking nspaces */
+#define PMIX_CHECK_NSPACE(a, b) \
+    (0 == strncmp((a), (b), PMIX_MAX_NSLEN))
+
+/* define a convenience macro for checking names */
+#define PMIX_CHECK_PROCID(a, b) \
+    (PMIX_CHECK_NSPACE((a)->nspace, (b)->nspace) && ((a)->rank == (b)->rank || (PMIX_RANK_WILDCARD == (a)->rank || PMIX_RANK_WILDCARD == (b)->rank)))
 
 
 /****    PMIX BYTE OBJECT    ****/
@@ -1086,11 +1103,11 @@ struct pmix_info_t {
         (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
         pmix_value_load(&((m)->value), (v), (t));       \
     } while (0)
-#define PMIX_INFO_XFER(d, s)                                \
-    do {                                                    \
-        (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN); \
-        (d)->flags = (s)->flags;                      \
-        pmix_value_xfer(&(d)->value, &(s)->value);          \
+#define PMIX_INFO_XFER(d, s)                                        \
+    do {                                                            \
+        (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);         \
+        (d)->flags = (s)->flags;                                    \
+        pmix_value_xfer(&(d)->value, (pmix_value_t*)&(s)->value);   \
     } while(0)
 
 #define PMIX_INFO_REQUIRED(m)       \
