@@ -77,6 +77,7 @@ static int PatchLoadImm (uintptr_t addr, unsigned int reg, size_t value)
 
 #endif
 
+#if !HAVE___CLEAR_CACHE
 static void flush_and_invalidate_cache (unsigned long a)
 {
 #if OPAL_ASSEMBLY_ARCH == OPAL_IA32
@@ -114,6 +115,7 @@ static void flush_and_invalidate_cache (unsigned long a)
                       "isb":: "r" (a));
 #endif
 }
+#endif   // HAVE___CLEAR_CACHE
 
 // modify protection of memory range
 static void ModifyMemoryProtection (uintptr_t addr, size_t length, int prot)
