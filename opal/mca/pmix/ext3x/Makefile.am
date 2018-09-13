@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -37,19 +37,6 @@ else
 component_noinst = libmca_pmix_ext3x.la
 component_install =
 endif
-
-#
-# Generate ext3x sources from the pmix3x component
-#
-$(nodist_headers):
-	pmix3xname=`echo $@ | sed -e s/ext3x/pmix3x/g` ; \
-	$(SED) 's/pmix3x/ext3x/g' $(top_srcdir)/opal/mca/pmix/pmix3x/$$pmix3xname > $@
-
-$(sources): $(nodist_headers)
-
-$(nodist_sources): $(nodist_headers)
-	pmix3xname=`echo $@ | sed -e s/ext3x/pmix3x/g` ; \
-	$(SED) 's/pmix3x/ext3x/g' $(top_srcdir)/opal/mca/pmix/pmix3x/$$pmix3xname > $@
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)

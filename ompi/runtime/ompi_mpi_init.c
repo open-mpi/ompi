@@ -17,7 +17,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies Ltd. All rights reserved.
@@ -531,7 +531,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* we want to go first */
     OBJ_CONSTRUCT(&info, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup(OPAL_PMIX_EVENT_ORDER_PREPEND);
+    kv->key = strdup(OPAL_PMIX_EVENT_HDLR_PREPEND);
     opal_list_append(&info, &kv->super);
     /* give it a name so we can distinguish it */
     kv = OBJ_NEW(opal_value_t);
@@ -660,7 +660,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     opal_pmix.commit();
     OMPI_TIMING_NEXT("commit");
 #if (OPAL_ENABLE_TIMING)
-    if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex && 
+    if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
             opal_pmix_collect_all_data) {
         if (OMPI_SUCCESS != (ret = opal_pmix.fence(NULL, 0))) {
             error = "timing: pmix-barrier-1 failed";
