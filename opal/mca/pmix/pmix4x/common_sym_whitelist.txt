@@ -1,0 +1,6 @@
+# Ignore symbols in this component that are auto-generated and we
+# can't do anything about them (e.g., flex/bison symbols).
+pmix_util_keyval_yyleng
+pmix_util_keyval_yytext
+pmix_show_help_yyleng
+pmix_show_help_yytext

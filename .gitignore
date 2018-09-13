@@ -391,12 +391,12 @@ opal/mca/pmix/pmix*/pmix/examples/pub
 opal/mca/pmix/pmix*/pmix/examples/server
 opal/mca/pmix/pmix*/pmix/examples/tool
 
-opal/mca/pmix/ext3x/ext3x.c
-opal/mca/pmix/ext3x/ext3x.h
-opal/mca/pmix/ext3x/ext3x_client.c
-opal/mca/pmix/ext3x/ext3x_component.c
-opal/mca/pmix/ext3x/ext3x_server_north.c
-opal/mca/pmix/ext3x/ext3x_server_south.c
+opal/mca/pmix/ext4x/ext4x.c
+opal/mca/pmix/ext4x/ext4x.h
+opal/mca/pmix/ext4x/ext4x_client.c
+opal/mca/pmix/ext4x/ext4x_component.c
+opal/mca/pmix/ext4x/ext4x_server_north.c
+opal/mca/pmix/ext4x/ext4x_server_south.c
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1
