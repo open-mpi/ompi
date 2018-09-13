@@ -151,7 +151,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     char *nidmap;
     orte_proc_t *dmn, *proc;
     opal_value_t *val = NULL, *kv;
-    opal_list_t *modex;
+    opal_list_t *modex, ilist;
     int n;
 
     /* get the job data pointer */
@@ -432,11 +432,31 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
 
     /* get any application prep info */
     if (NULL != opal_pmix.server_setup_application) {
+        OBJ_CONSTRUCT(&ilist, opal_list_t);
+        /* request to allocate network resources */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_ALLOC_NETWORK_ID);
+        kv->type = OPAL_STRING;
+        asprintf(&kv->data.string, "%s.net", ORTE_JOBID_PRINT(jdata->jobid));
+        opal_list_append(&ilist, &kv->super);
+        /* ask for security keys */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_ALLOC_NETWORK_SEC_KEY);
+        kv->type = OPAL_BOOL;
+        kv->data.flag = true;
+        opal_list_append(&ilist, &kv->super);
+        /* ask for envars to be forwarded */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_SETUP_APP_ENVARS);
+        kv->type = OPAL_BOOL;
+        kv->data.flag = true;
+        opal_list_append(&ilist, &kv->super);
         /* we don't want to block here because it could
          * take some indeterminate time to get the info */
-        if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_application(jdata->jobid, NULL, setup_cbfunc, jdata))) {
+        if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_application(jdata->jobid, &ilist, setup_cbfunc, jdata))) {
             ORTE_ERROR_LOG(rc);
         }
+        OPAL_LIST_DESTRUCT(&ilist);
         return rc;
     }
 
