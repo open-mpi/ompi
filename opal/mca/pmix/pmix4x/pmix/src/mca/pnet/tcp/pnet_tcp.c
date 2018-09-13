@@ -329,8 +329,8 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
     /* check directives to see if a crypto key and/or
      * network resource allocations requested */
     PMIX_CONSTRUCT(&mylist, pmix_list_t);
-    if (0 == strncmp(info->key, PMIX_SETUP_APP_ENVARS, PMIX_MAX_KEYLEN) ||
-        0 == strncmp(info->key, PMIX_SETUP_APP_ALL, PMIX_MAX_KEYLEN)) {
+    if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ENVARS) ||
+        PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ALL)) {
         if (NULL != mca_pnet_tcp_component.include) {
         pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                             "pnet: tcp harvesting envars %s excluding %s",
@@ -342,7 +342,7 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
             return rc;
         }
         return PMIX_SUCCESS;
-    } else if (0 != strncmp(info->key, PMIX_ALLOC_NETWORK, PMIX_MAX_KEYLEN)) {
+    } else if (PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK)) {
         /* not a network allocation request */
         return PMIX_SUCCESS;
     }

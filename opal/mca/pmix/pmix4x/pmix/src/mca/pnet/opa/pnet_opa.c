@@ -251,12 +251,13 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
         return PMIX_ERR_TAKE_NEXT_OPTION;
     }
 
-    if (0 == strncmp(info->key, PMIX_SETUP_APP_ENVARS, PMIX_MAX_KEYLEN)) {
+    if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ENVARS)) {
         envars = PMIX_INFO_TRUE(info);
-    } else if (0 == strncmp(info->key, PMIX_SETUP_APP_ALL, PMIX_MAX_KEYLEN)) {
+    } else if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_ALL)) {
         envars = PMIX_INFO_TRUE(info);
         seckeys = PMIX_INFO_TRUE(info);
-    } else if (0 == strncmp(info->key, PMIX_SETUP_APP_NONENVARS, PMIX_MAX_KEYLEN)) {
+    } else if (PMIX_CHECK_KEY(info, PMIX_SETUP_APP_NONENVARS) ||
+               PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK_SEC_KEY)) {
         seckeys = PMIX_INFO_TRUE(info);
     }
 
@@ -362,6 +363,14 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
                     return PMIX_ERR_NOMEM;
                 }
                 pmix_value_xfer(kv->value, &info[n].value);
+                if (PMIX_ENVAR == kv->value->type) {
+                    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                        "pnet:opa:setup_local_network adding %s=%s to environment",
+                                        kv->value->data.envar.envar, kv->value->data.envar.value);
+                } else {
+                    pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
+                                        "pnet:opa:setup_local_network loading blob");
+                }
                 pmix_list_append(&nptr->setup_data, &kv->super);
             }
         }
