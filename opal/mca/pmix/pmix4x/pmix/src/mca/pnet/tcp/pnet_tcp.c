@@ -342,7 +342,7 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
             return rc;
         }
         return PMIX_SUCCESS;
-    } else if (PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK)) {
+    } else if (!PMIX_CHECK_KEY(info, PMIX_ALLOC_NETWORK)) {
         /* not a network allocation request */
         return PMIX_SUCCESS;
     }

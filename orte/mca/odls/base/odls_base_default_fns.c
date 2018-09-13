@@ -684,6 +684,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
                 0 == strcmp(kv->key, OPAL_PMIX_UNSET_ENVAR) ||
                 0 == strcmp(kv->key, OPAL_PMIX_PREPEND_ENVAR) ||
                 0 == strcmp(kv->key, OPAL_PMIX_APPEND_ENVAR)) {
+                opal_output_verbose(5, orte_odls_base_framework.framework_output,
+                                    "ORTE:ODLS ADDING ENVAR %s", kv->data.envar.envar);
                 opal_list_prepend(&cache, &kv->super);
             } else {
                 /* need to pass it to pmix.setup_local_support */
