@@ -75,7 +75,7 @@ struct ompi_datatype_t {
     struct opal_hash_table_t *d_keyhash;         /**< Attribute fields */
 
     void*              args;                     /**< Data description for the user */
-    void*              packed_description;       /**< Packed description of the datatype */
+    opal_atomic_intptr_t packed_description;       /**< Packed description of the datatype */
     uint64_t           pml_data;                 /**< PML-specific information */
     /* --- cacheline 6 boundary (384 bytes) --- */
     char               name[MPI_MAX_OBJECT_NAME];/**< Externally visible name */

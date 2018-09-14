@@ -456,7 +456,7 @@ void ompi_spc_timer_stop(unsigned int event_id, opal_timer_t *cycles)
     /* This is denoted unlikely because the counters will often be turned off. */
     if( OPAL_UNLIKELY(IS_SPC_BIT_SET(ompi_spc_attached_event, event_id)) ) {
         *cycles = opal_timer_base_get_cycles() - *cycles;
-        OPAL_THREAD_ADD_FETCH_SIZE_T(&ompi_spc_events[event_id].value, (ompi_spc_value_t)*cycles);
+        OPAL_THREAD_ADD_FETCH_SIZE_T(&ompi_spc_events[event_id].value, (size_t) *cycles);
     }
 }
 

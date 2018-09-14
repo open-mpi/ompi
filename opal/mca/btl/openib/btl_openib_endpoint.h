@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
@@ -117,17 +117,17 @@ typedef struct mca_btl_openib_rem_info_t {
  *  Agggregates all per peer qp info for an endpoint
  */
 typedef struct mca_btl_openib_endpoint_pp_qp_t {
-    int32_t sd_credits;  /**< this rank's view of the credits
+    opal_atomic_int32_t sd_credits;  /**< this rank's view of the credits
                           *  available for sending:
                           *  this is the credits granted by the
                           *  remote peer which has some relation to the
                           *  number of receive buffers posted remotely
                           */
-    int32_t  rd_posted;   /**< number of descriptors posted to the nic*/
-    int32_t  rd_credits;  /**< number of credits to return to peer */
-    int32_t  cm_received; /**< Credit messages received */
-    int32_t  cm_return;   /**< how may credits to return */
-    int32_t  cm_sent;     /**< Outstanding number of credit messages */
+    opal_atomic_int32_t  rd_posted;   /**< number of descriptors posted to the nic*/
+    opal_atomic_int32_t  rd_credits;  /**< number of credits to return to peer */
+    opal_atomic_int32_t  cm_received; /**< Credit messages received */
+    opal_atomic_int32_t  cm_return;   /**< how may credits to return */
+    opal_atomic_int32_t  cm_sent;     /**< Outstanding number of credit messages */
 } mca_btl_openib_endpoint_pp_qp_t;
 
 
@@ -141,8 +141,8 @@ typedef struct mca_btl_openib_endpoint_srq_qp_t {
 typedef struct mca_btl_openib_qp_t {
     struct ibv_qp *lcl_qp;
     uint32_t lcl_psn;
-    volatile int32_t  sd_wqe;      /**< number of available send wqe entries */
-    int32_t  sd_wqe_inflight;
+    opal_atomic_int32_t  sd_wqe;      /**< number of available send wqe entries */
+    opal_atomic_int32_t  sd_wqe_inflight;
     int wqe_count;
     int users;
     opal_mutex_t lock;
@@ -154,7 +154,7 @@ typedef struct mca_btl_openib_endpoint_qp_t {
                                      available */
     opal_list_t no_wqe_pending_frags[2]; /**< put fragments here if there is no wqe
                                     available  */
-    int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
+    opal_atomic_int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
     mca_btl_openib_send_control_frag_t *credit_frag;
     size_t ib_inline_max;          /**< max size of inline send*/
     union {
@@ -226,7 +226,7 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_put_frags;
 
     /** number of available get tokens */
-    int32_t                     get_tokens;
+    opal_atomic_int32_t         get_tokens;
 
     /** subnet id of this endpoint*/
     uint64_t subnet_id;
@@ -235,7 +235,7 @@ struct mca_btl_base_endpoint_t {
     struct ib_address_t *ib_addr;
 
     /** number of eager received */
-    int32_t eager_recv_count;
+    opal_atomic_int32_t eager_recv_count;
     /** info about remote RDMA buffer */
     mca_btl_openib_eager_rdma_remote_t eager_rdma_remote;
     /** info about local RDMA buffer */

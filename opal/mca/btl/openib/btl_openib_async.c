@@ -4,7 +4,7 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
@@ -38,7 +38,7 @@
 
 static opal_list_t ignore_qp_err_list;
 static opal_mutex_t ignore_qp_err_list_lock;
-static int32_t btl_openib_async_device_count = 0;
+static opal_atomic_int32_t btl_openib_async_device_count = 0;
 
 struct mca_btl_openib_async_poll {
     int active_poll_size;

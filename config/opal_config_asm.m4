@@ -13,7 +13,7 @@ dnl Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
+dnl Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
@@ -114,6 +114,58 @@ static void test2(void)
     }
 }
 
+int main(int argc, char** argv)
+{
+    test1();
+    test2();
+    return 0;
+}
+]])
+
+dnl This is a C test to see if 128-bit __atomic_compare_exchange_n()
+dnl actually works (e.g., it compiles and links successfully on
+dnl ARM64+clang, but returns incorrect answers as of August 2018).
+AC_DEFUN([OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_TEST_SOURCE],[[
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdatomic.h>
+
+typedef union {
+    uint64_t fake@<:@2@:>@;
+    _Atomic __int128 real;
+} ompi128;
+
+static void test1(void)
+{
+    // As of Aug 2018, we could not figure out a way to assign 128-bit
+    // constants -- the compilers would not accept it.  So use a fake
+    // union to assign 2 uin64_t's to make a single __int128.
+    ompi128 ptr      = { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
+    ompi128 expected = { .fake = { 0x11EEDDCCBBAA0099, 0x88776655443322FF }};
+    ompi128 desired  = { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
+    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real,
+                                             desired.real, true,
+					     atomic_relaxed, atomic_relaxed);
+    if ( !(r == false && ptr.real == expected.real)) {
+        exit(1);
+    }
+}
+
+static void test2(void)
+{
+    ompi128 ptr =      { .fake = { 0xFFEEDDCCBBAA0099, 0x8877665544332211 }};
+    ompi128 expected = ptr;
+    ompi128 desired =  { .fake = { 0x1122DDCCBBAA0099, 0x887766554433EEFF }};
+    bool r = atomic_compare_exchange_strong (&ptr.real, &expected.real,
+                                             desired.real, true,
+					     atomic_relaxed, atomic_relaxed);
+    if (!(r == true && ptr.real == desired.real)) {
+        exit(2);
+    }
+}
+
+vvvvvvvvvvvvvvvvvvvv
 int main(int argc, char** argv)
 {
     test1();
@@ -303,6 +355,71 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
   dnl If we could not find decent support for 128-bits __atomic let's
   dnl try the GCC _sync
   AS_IF([test $atomic_compare_exchange_n_128_result -eq 0],
+      [OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128])
+
+  OPAL_VAR_SCOPE_POP
+])
+
+AC_DEFUN([OPAL_CHECK_GCC_ATOMIC_BUILTINS], [
+  AC_MSG_CHECKING([for __atomic builtin atomics])
+
+  AC_TRY_LINK([
+#include <stdint.h>
+uint32_t tmp, old = 0;
+uint64_t tmp64, old64 = 0;], [
+__atomic_thread_fence(__ATOMIC_SEQ_CST);
+__atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+__atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
+__atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
+    [AC_MSG_RESULT([yes])
+     $1],
+    [AC_MSG_RESULT([no])
+     $2])
+
+  # Check for 128-bit support
+  OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
+])
+
+AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
+  OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_result atomic_compare_exchange_CFLAGS_save atomic_compare_exchange_LIBS_save])
+
+  atomic_compare_exchange_CFLAGS_save=$CFLAGS
+  atomic_compare_exchange_LIBS_save=$LIBS
+
+  # Do we have C11 atomics on 128-bit integers?
+  # Use a special macro because we need to check with a few different
+  # CFLAGS/LIBS.
+  OPAL_ASM_CHECK_ATOMIC_FUNC([atomic_compare_exchange_strong_16],
+      [AC_LANG_SOURCE(OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_TEST_SOURCE)],
+      [atomic_compare_exchange_result=1],
+      [atomic_compare_exchange_result=0])
+
+  # If we have it and it works, check to make sure it is always lock
+  # free.
+  AS_IF([test $atomic_compare_exchange_result -eq 1],
+        [AC_MSG_CHECKING([if C11 __int128 atomic compare-and-swap is always lock-free])
+         AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdatomic.h>], [_Atomic __int128_t x; if (!atomic_is_lock_free(&x)) { return 1; }])],
+              [AC_MSG_RESULT([yes])],
+              [atomic_compare_exchange_result=0
+               # If this test fails, need to reset CFLAGS/LIBS (the
+               # above tests atomically set CFLAGS/LIBS or not; this
+               # test is running after the fact, so we have to undo
+               # the side-effects of setting CFLAGS/LIBS if the above
+               # tests passed).
+               CFLAGS=$atomic_compare_exchange_CFLAGS_save
+               LIBS=$atomic_compare_exchange_LIBS_save
+               AC_MSG_RESULT([no])],
+              [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+        ])
+
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_C11_CSWAP_INT128],
+        [$atomic_compare_exchange_result],
+        [Whether C11 atomic compare swap is both supported and lock-free on 128-bit values])
+
+  dnl If we could not find decent support for 128-bits atomic let's
+  dnl try the GCC _sync
+  AS_IF([test $atomic_compare_exchange_result -eq 0],
       [OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128])
 
   OPAL_VAR_SCOPE_POP
@@ -1020,17 +1137,27 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
     AC_REQUIRE([AM_PROG_AS])
 
+    AC_ARG_ENABLE([c11-atomics],[AC_HELP_STRING([--enable-c11-atomics],
+                  [Enable use of C11 atomics if available (default: enabled)])])
+
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of __sync builtin atomics (default: enabled)])])
+         [Enable use of __sync builtin atomics (default: disabled)])])
 
-    opal_cv_asm_builtin="BUILTIN_NO"
-    AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
-          [OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])])
-    AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" != "no"],
-          [OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])])
-    AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
-          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
+    OPAL_CHECK_C11_CSWAP_INT128
+
+    if test "x$enable_c11_atomics" != "xno" && test "$opal_cv_c11_supported" = "yes" ; then
+        opal_cv_asm_builtin="BUILTIN_C11"
+        OPAL_CHECK_C11_CSWAP_INT128
+    else
+        opal_cv_asm_builtin="BUILTIN_NO"
+        AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
+              [OPAL_CHECK_GCC_ATOMIC_BUILTINS([opal_cv_asm_builtin="BUILTIN_GCC"], [])])
+        AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
+              [OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])])
+        AS_IF([test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes"],
+              [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
+    fi
 
         OPAL_CHECK_ASM_PROC
         OPAL_CHECK_ASM_TEXT

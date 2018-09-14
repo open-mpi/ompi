@@ -198,7 +198,7 @@ struct opal_object_t {
     uint64_t obj_magic_id;
 #endif
     opal_class_t *obj_class;            /**< class descriptor */
-    volatile int32_t obj_reference_count;   /**< reference count */
+    opal_atomic_int32_t obj_reference_count;   /**< reference count */
 #if OPAL_ENABLE_DEBUG
    const char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
    int   cls_init_lineno;           /**< In debug mode store the line number where the object get contructed */

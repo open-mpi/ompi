@@ -72,7 +72,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
             }
         }
 
-        if (!opal_atomic_compare_exchange_strong_ptr (&module->rdma_frag, &(void *){NULL}, curr)) {
+        if (!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &module->rdma_frag, &(intptr_t){0}, (intptr_t) curr)) {
             ompi_osc_rdma_deregister (module, curr->handle);
             curr->handle = NULL;
 

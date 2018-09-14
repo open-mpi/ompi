@@ -95,7 +95,7 @@ struct ompi_osc_portals4_module_t {
     ptl_handle_md_t req_md_h; /* memory descriptor with event completion used by this window */
     ptl_handle_me_t data_me_h; /* data match list entry (MB are CID | OSC_PORTALS4_MB_DATA) */
     ptl_handle_me_t control_me_h; /* match list entry for control data (node_state_t).  Match bits are (CID | OSC_PORTALS4_MB_CONTROL). */
-    int64_t opcount;
+    opal_atomic_int64_t opcount;
     ptl_match_bits_t match_bits; /* match bits for module.  Same as cid for comm in most cases. */
 
     ptl_iovec_t     *origin_iovec_list; /* list of memory segments that compose the noncontiguous region */

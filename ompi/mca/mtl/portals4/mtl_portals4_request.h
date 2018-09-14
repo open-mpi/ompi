@@ -54,8 +54,8 @@ struct ompi_mtl_portals4_isend_request_t {
     struct ompi_mtl_portals4_pending_request_t *pending;
 #endif
     ptl_size_t length;
-    int32_t pending_get;
-    uint32_t event_count;
+    opal_atomic_int32_t pending_get;
+    opal_atomic_uint32_t event_count;
 };
 typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
 
@@ -76,7 +76,7 @@ struct ompi_mtl_portals4_recv_request_t {
     void *delivery_ptr;
     size_t delivery_len;
     volatile bool req_started;
-    int32_t pending_reply;
+    opal_atomic_int32_t pending_reply;
 #if OPAL_ENABLE_DEBUG
     uint64_t opcount;
     ptl_hdr_data_t hdr_data;

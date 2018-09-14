@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
@@ -378,7 +378,7 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
          * was not in "connect" or "bad" flow (failed to allocate memory)
          * and changed the pointer back to NULL
          */
-        if(!opal_atomic_compare_exchange_strong_ptr(&endpoint->eager_rdma_local.base.pval, (void *) &_tmp_ptr, (void *) 1)) {
+        if(!opal_atomic_compare_exchange_strong_ptr((opal_atomic_intptr_t *) &endpoint->eager_rdma_local.base.pval, (intptr_t *) &_tmp_ptr, 1)) {
             if (NULL != endpoint->eager_rdma_local.reg) {
                 endpoint->endpoint_btl->device->rcache->rcache_deregister (endpoint->endpoint_btl->device->rcache,
                                                                            &endpoint->eager_rdma_local.reg->base);
@@ -899,8 +899,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
-    if(!opal_atomic_compare_exchange_strong_ptr (&endpoint->eager_rdma_local.base.pval, (void *) &_tmp_ptr,
-                                                 (void *) 1)) {
+    if(!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &endpoint->eager_rdma_local.base.pval, (intptr_t *) &_tmp_ptr, 1)) {
         return;
     }
 
@@ -990,7 +989,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         do {
             _tmp_ptr = NULL;
             p = &device->eager_rdma_buffers[device->eager_rdma_buffers_count];
-        } while(!opal_atomic_compare_exchange_strong_ptr (p, (void *) &_tmp_ptr, endpoint));
+        } while(!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) p, (intptr_t *) &_tmp_ptr, (intptr_t) endpoint));
 
         OPAL_THREAD_ADD_FETCH32(&openib_btl->eager_rdma_channels, 1);
         /* from this point progress function starts to poll new buffer */

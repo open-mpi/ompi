@@ -135,7 +135,7 @@ static int mca_mpool_hugepage_register(void)
                                              "hugepage component", OPAL_INFO_LVL_3, MCA_BASE_PVAR_CLASS_SIZE,
                                              MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, MCA_BASE_VAR_BIND_NO_OBJECT,
                                              MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                             NULL, NULL, NULL, &mca_mpool_hugepage_component.bytes_allocated);
+                                             NULL, NULL, NULL, (void *) &mca_mpool_hugepage_component.bytes_allocated);
 
     return OPAL_SUCCESS;
 }

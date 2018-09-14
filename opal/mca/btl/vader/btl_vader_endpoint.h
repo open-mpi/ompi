@@ -62,7 +62,7 @@ typedef struct mca_btl_base_endpoint_t {
 
     int32_t peer_smp_rank;  /**< my peer's SMP process rank.  Used for accessing
                              *   SMP specfic data structures. */
-    volatile size_t send_count;    /**< number of fragments sent to this peer */
+    opal_atomic_size_t send_count;    /**< number of fragments sent to this peer */
     char *segment_base;     /**< start of the peer's segment (in the address space
                              *   of this process) */
 

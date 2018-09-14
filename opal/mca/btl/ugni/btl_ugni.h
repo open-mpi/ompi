@@ -114,7 +114,7 @@ struct mca_btl_ugni_device_t {
     int dev_index;
 
     /** number of SMSG connections */
-    volatile int32_t smsg_connections;
+    opal_atomic_int32_t smsg_connections;
 
     /** boolean indicating that the device was recently flushed */
     volatile bool flushed;
@@ -168,7 +168,7 @@ typedef struct mca_btl_ugni_module_t {
     gni_ep_handle_t wildcard_ep;
     struct mca_btl_base_endpoint_t *local_ep;
 
-    volatile int32_t active_datagrams;
+    opal_atomic_int32_t active_datagrams;
     opal_event_t connection_event;
 
     struct mca_btl_ugni_endpoint_attr_t wc_remote_attr, wc_local_attr;
@@ -188,13 +188,13 @@ typedef struct mca_btl_ugni_module_t {
     opal_pointer_array_t pending_smsg_frags_bb;
 
     int32_t reg_max;
-    volatile int32_t reg_count;
+    opal_atomic_int32_t reg_count;
 
     /* used to calculate the fraction of registered memory resources
      * this rank should be limited too */
     int nlocal_procs;
 
-    volatile int32_t active_rdma_count;
+    opal_atomic_int32_t active_rdma_count;
 
     mca_rcache_base_module_t *rcache;
 } mca_btl_ugni_module_t;

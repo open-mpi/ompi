@@ -166,7 +166,7 @@ typedef enum ompi_spc_counters {
 /* There is currently no support for atomics on long long values so we will default to
  * size_t for now until support for such atomics is implemented.
  */
-typedef size_t ompi_spc_value_t;
+typedef opal_atomic_size_t ompi_spc_value_t;
 
 /* A structure for storing the event data */
 typedef struct ompi_spc_s{

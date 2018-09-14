@@ -70,7 +70,7 @@ typedef struct mca_btl_base_endpoint_t {
     bool dg_posted;
 
     /** protect against re-entry to SMSG */
-    int32_t smsg_progressing;
+    opal_atomic_int32_t smsg_progressing;
 
     int index;
 } mca_btl_base_endpoint_t;

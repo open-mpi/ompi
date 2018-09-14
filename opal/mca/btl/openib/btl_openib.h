@@ -237,7 +237,7 @@ struct mca_btl_openib_component_t {
     int     apm_lmc;
     int     apm_ports;
     unsigned int buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
-    int32_t error_counter;           /**< Counts number on error events that we got on all devices */
+    opal_atomic_int32_t error_counter;           /**< Counts number on error events that we got on all devices */
     opal_event_base_t *async_evbase; /**< Async event base */
     bool use_async_event_thread;     /**< Use the async event handler */
     mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
@@ -404,8 +404,8 @@ typedef struct mca_btl_openib_device_t {
 #endif
     int xrc_fd;
 #endif
-    int32_t non_eager_rdma_endpoints;
-    int32_t eager_rdma_buffers_count;
+    opal_atomic_int32_t non_eager_rdma_endpoints;
+    opal_atomic_int32_t eager_rdma_buffers_count;
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;
     /**< frags for control massages */
     opal_free_list_t send_free_control;
@@ -428,8 +428,8 @@ struct mca_btl_openib_module_pp_qp_t {
 
 struct mca_btl_openib_module_srq_qp_t {
     struct ibv_srq *srq;
-    int32_t rd_posted;
-    int32_t sd_credits;  /* the max number of outstanding sends on a QP when using SRQ */
+    opal_atomic_int32_t rd_posted;
+    opal_atomic_int32_t sd_credits;  /* the max number of outstanding sends on a QP when using SRQ */
                          /*  i.e. the number of frags that  can be outstanding (down counter) */
     opal_list_t pending_frags[2];    /**< list of high/low prio frags */
     /** The number of receive buffers that can be post in the current time.
@@ -487,12 +487,12 @@ struct mca_btl_openib_module_t {
     int apm_port;                      /**< Alternative port that may be used for APM */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
-    int32_t num_peers;
+    opal_atomic_int32_t num_peers;
 
     opal_mutex_t ib_lock;              /**< module level lock */
 
     size_t eager_rdma_frag_size;                /**< length of eager frag */
-    volatile int32_t eager_rdma_channels;  /**< number of open RDMA channels */
+    opal_atomic_int32_t eager_rdma_channels;  /**< number of open RDMA channels */
 
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
 

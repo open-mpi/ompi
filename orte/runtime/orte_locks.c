@@ -25,12 +25,12 @@
 #include "orte/runtime/orte_locks.h"
 
 /* for everyone */
-opal_atomic_lock_t orte_finalize_lock = {{0}};
+opal_atomic_lock_t orte_finalize_lock = OPAL_ATOMIC_LOCK_INIT;
 
 /* for HNPs */
-opal_atomic_lock_t orte_abort_inprogress_lock = {{0}};
-opal_atomic_lock_t orte_jobs_complete_lock = {{0}};
-opal_atomic_lock_t orte_quit_lock = {{0}};
+opal_atomic_lock_t orte_abort_inprogress_lock = OPAL_ATOMIC_LOCK_INIT;
+opal_atomic_lock_t orte_jobs_complete_lock = OPAL_ATOMIC_LOCK_INIT;
+opal_atomic_lock_t orte_quit_lock = OPAL_ATOMIC_LOCK_INIT;
 
 int orte_locks_init(void)
 {

@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010-2016 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -157,7 +157,7 @@ int ompi_osc_pt2pt_lock_remote (ompi_osc_pt2pt_module_t *module, int target, omp
 
 static inline int ompi_osc_pt2pt_unlock_remote (ompi_osc_pt2pt_module_t *module, int target, ompi_osc_pt2pt_sync_t *lock)
 {
-    int32_t frag_count = opal_atomic_swap_32 ((int32_t *) module->epoch_outgoing_frag_count + target, -1);
+    int32_t frag_count = opal_atomic_swap_32 ((opal_atomic_int32_t *) module->epoch_outgoing_frag_count + target, -1);
     ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
     int lock_type = lock->sync.lock.type;
     ompi_osc_pt2pt_header_unlock_t unlock_req;
@@ -178,10 +178,13 @@ static inline int ompi_osc_pt2pt_unlock_remote (ompi_osc_pt2pt_module_t *module,
     unlock_req.lock_ptr = (uint64_t) (uintptr_t) lock;
     OSC_PT2PT_HTON(&unlock_req, module, target);
 
-    if (peer->active_frag && peer->active_frag->remain_len < sizeof (unlock_req)) {
-        /* the peer should expect one more packet */
-        ++unlock_req.frag_count;
-        --module->epoch_outgoing_frag_count[target];
+    if (peer->active_frag) {
+        ompi_osc_pt2pt_frag_t *active_frag = (ompi_osc_pt2pt_frag_t *) peer->active_frag;
+        if  (active_frag->remain_len < sizeof (unlock_req)) {
+            /* the peer should expect one more packet */
+            ++unlock_req.frag_count;
+            --module->epoch_outgoing_frag_count[target];
+        }
     }
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
@@ -204,7 +207,7 @@ static inline int ompi_osc_pt2pt_flush_remote (ompi_osc_pt2pt_module_t *module, 
 {
     ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
     ompi_osc_pt2pt_header_flush_t flush_req;
-    int32_t frag_count = opal_atomic_swap_32 ((int32_t *) module->epoch_outgoing_frag_count + target, -1);
+    int32_t frag_count = opal_atomic_swap_32 ((opal_atomic_int32_t *) module->epoch_outgoing_frag_count + target, -1);
     int ret;
 
     (void) OPAL_THREAD_ADD_FETCH32(&lock->sync_expected, 1);
@@ -218,10 +221,13 @@ static inline int ompi_osc_pt2pt_flush_remote (ompi_osc_pt2pt_module_t *module, 
 
     /* XXX -- TODO -- since fragment are always delivered in order we do not need to count anything but long
      * requests. once that is done this can be removed. */
-    if (peer->active_frag && (peer->active_frag->remain_len < sizeof (flush_req))) {
-        /* the peer should expect one more packet */
-        ++flush_req.frag_count;
-        --module->epoch_outgoing_frag_count[target];
+    if (peer->active_frag) {
+        ompi_osc_pt2pt_frag_t *active_frag = (ompi_osc_pt2pt_frag_t *) peer->active_frag;
+        if (active_frag->remain_len < sizeof (flush_req)) {
+            /* the peer should expect one more packet */
+            ++flush_req.frag_count;
+            --module->epoch_outgoing_frag_count[target];
+        }
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "flushing to target %d, frag_count: %d",

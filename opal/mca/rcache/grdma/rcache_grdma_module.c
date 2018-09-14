@@ -215,7 +215,7 @@ static inline void mca_rcache_grdma_add_to_lru (mca_rcache_grdma_module_t *rcach
     opal_atomic_wmb ();
 
     /* mark this registration as being in the LRU */
-    opal_atomic_fetch_or_32 ((volatile int32_t *) &grdma_reg->flags, MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU);
+    opal_atomic_fetch_or_32 ((opal_atomic_int32_t *) &grdma_reg->flags, MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU);
 
     opal_mutex_unlock (&rcache_grdma->cache->vma_module->vma_lock);
 }
@@ -263,7 +263,7 @@ static int mca_rcache_grdma_check_cached (mca_rcache_base_registration_t *grdma_
     }
 
     /* This segment fits fully within an existing segment. */
-    (void) opal_atomic_fetch_add_32 ((volatile int32_t *) &rcache_grdma->stat_cache_hit, 1);
+    (void) opal_atomic_fetch_add_32 ((opal_atomic_int32_t *) &rcache_grdma->stat_cache_hit, 1);
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
                          "returning existing registration %p. references %d", (void *) grdma_reg, ref_cnt));
     return 1;
@@ -321,7 +321,7 @@ static int mca_rcache_grdma_register (mca_rcache_base_module_t *rcache, void *ad
         /* get updated access flags */
         access_flags = find_args.access_flags;
 
-        OPAL_THREAD_ADD_FETCH32((volatile int32_t *) &rcache_grdma->stat_cache_miss, 1);
+        OPAL_THREAD_ADD_FETCH32((opal_atomic_int32_t *) &rcache_grdma->stat_cache_miss, 1);
     }
 
     item = opal_free_list_get_mt (&rcache_grdma->reg_list);
@@ -447,7 +447,7 @@ typedef struct gc_add_args_t gc_add_args_t;
 static int mca_rcache_grdma_add_to_gc (mca_rcache_base_registration_t *grdma_reg)
 {
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) grdma_reg->rcache;
-    uint32_t flags = opal_atomic_fetch_or_32 ((volatile int32_t *) &grdma_reg->flags, MCA_RCACHE_FLAGS_INVALID);
+    uint32_t flags = opal_atomic_fetch_or_32 ((opal_atomic_int32_t *) &grdma_reg->flags, MCA_RCACHE_FLAGS_INVALID);
 
     if ((flags & MCA_RCACHE_FLAGS_INVALID) || 0 != grdma_reg->ref_count) {
         /* nothing to do */

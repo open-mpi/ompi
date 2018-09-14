@@ -48,11 +48,12 @@ union opal_counted_pointer_t {
         /** update counter used when cmpset_128 is available */
         uint64_t counter;
         /** list item pointer */
-        volatile opal_list_item_t * volatile item;
+        volatile opal_atomic_intptr_t item;
     } data;
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && HAVE_OPAL_INT128_T
     /** used for atomics when there is a cmpset that can operate on
      * two 64-bit values */
+    opal_atomic_int128_t atomic_value;
     opal_int128_t value;
 #endif
 };
@@ -65,17 +66,17 @@ typedef union opal_counted_pointer_t opal_counted_pointer_t;
  * to allow the upper level to detect if this element is the first one in the
  * list (if the list was empty before this operation).
  */
-static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t *addr, opal_counted_pointer_t *old,
+static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t * volatile addr, opal_counted_pointer_t *old,
                                                 opal_list_item_t *item)
 {
     opal_counted_pointer_t new_p;
-    new_p.data.item = item;
+    new_p.data.item = (intptr_t) item;
     new_p.data.counter = old->data.counter + 1;
-    return opal_atomic_compare_exchange_strong_128 (&addr->value, &old->value, new_p.value);
+    return opal_atomic_compare_exchange_strong_128 (&addr->atomic_value, &old->value, new_p.value);
 }
 
 __opal_attribute_always_inline__
-static inline void opal_read_counted_pointer (volatile opal_counted_pointer_t *addr, opal_counted_pointer_t *value)
+static inline void opal_read_counted_pointer (volatile opal_counted_pointer_t * volatile addr, opal_counted_pointer_t *value)
 {
     /* most platforms do not read the value atomically so make sure we read the counted pointer in a specific order */
     value->data.counter = addr->data.counter;
@@ -151,7 +152,7 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
         opal_atomic_wmb ();
 
         /* to protect against ABA issues it is sufficient to only update the counter in pop */
-        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, &next, item)) {
+        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, (intptr_t *) &next, (intptr_t) item)) {
             return next;
         }
         /* DO some kind of pause to release the bus */
@@ -200,7 +201,7 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
     do {
         item->opal_list_next = next;
         opal_atomic_wmb();
-        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, &next, item)) {
+        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, (intptr_t *) &next, (intptr_t) item)) {
             opal_atomic_wmb ();
             /* now safe to pop this item */
             item->item_free = 0;
@@ -254,7 +255,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 
     while ((item=(opal_list_item_t *)lifo->opal_lifo_head.data.item) != ghost) {
         /* ensure it is safe to pop the head */
-        if (opal_atomic_swap_32((volatile int32_t *) &item->item_free, 1)) {
+        if (opal_atomic_swap_32((opal_atomic_int32_t *) &item->item_free, 1)) {
             continue;
         }
 
@@ -262,8 +263,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 
         head = item;
         /* try to swap out the head pointer */
-        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, &head,
-                                                     (void *) item->opal_list_next)) {
+        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, (intptr_t *) &head,
+                                                     (intptr_t) item->opal_list_next)) {
             break;
         }
 
@@ -294,7 +295,7 @@ static inline opal_list_item_t *opal_lifo_push_st (opal_lifo_t *lifo,
 {
     item->opal_list_next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
     item->item_free = 0;
-    lifo->opal_lifo_head.data.item = item;
+    lifo->opal_lifo_head.data.item = (intptr_t) item;
     return (opal_list_item_t *) item->opal_list_next;
 }
 
@@ -302,7 +303,7 @@ static inline opal_list_item_t *opal_lifo_pop_st (opal_lifo_t *lifo)
 {
     opal_list_item_t *item;
     item = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
-    lifo->opal_lifo_head.data.item = (opal_list_item_t *) item->opal_list_next;
+    lifo->opal_lifo_head.data.item = (intptr_t) item->opal_list_next;
     if (item == &lifo->opal_lifo_ghost) {
         return NULL;
     }

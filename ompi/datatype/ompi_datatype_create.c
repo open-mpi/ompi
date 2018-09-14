@@ -36,7 +36,7 @@ static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
     datatype->id                 = -1;
     datatype->d_keyhash          = NULL;
     datatype->name[0]            = '\0';
-    datatype->packed_description = NULL;
+    datatype->packed_description = 0;
     datatype->pml_data           = 0;
 }
 
@@ -46,10 +46,10 @@ static void __ompi_datatype_release(ompi_datatype_t * datatype)
         ompi_datatype_release_args( datatype );
         datatype->args = NULL;
     }
-    if( NULL != datatype->packed_description ) {
-        free( datatype->packed_description );
-        datatype->packed_description = NULL;
-    }
+
+    free ((void *) datatype->packed_description );
+    datatype->packed_description = 0;
+
     if( datatype->d_f_to_c_index >= 0 ) {
         opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
         datatype->d_f_to_c_index = -1;
