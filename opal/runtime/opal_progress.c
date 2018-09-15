@@ -171,7 +171,7 @@ opal_progress_finalize(void)
 
 static int opal_progress_events(void)
 {
-    static volatile int32_t lock = 0;
+    static opal_atomic_int32_t lock = 0;
     int events = 0;
 
     if( opal_progress_event_flag != 0 && !OPAL_THREAD_SWAP_32(&lock, 1) ) {
