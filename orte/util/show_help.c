@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
@@ -591,7 +591,7 @@ void orte_show_help_finalize(void)
 }
 
 int orte_show_help(const char *filename, const char *topic,
-                   bool want_error_header, ...)
+                   int want_error_header, ...)
 {
     int rc = ORTE_SUCCESS;
     va_list arglist;
@@ -623,7 +623,7 @@ static void cbfunc(int status, void *cbdata)
 }
 
 int orte_show_help_norender(const char *filename, const char *topic,
-                            bool want_error_header, const char *output)
+                            int want_error_header, const char *output)
 {
     int rc = ORTE_SUCCESS;
     int8_t have_output = 1;

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +63,13 @@ BEGIN_C_DECLS
  * provided path elements, separated by the path separator character
  * appropriate to the local operating system. The path_name string has been malloc'd
  * and therefore the user is responsible for free'ing the field.
-*/
-OPAL_DECLSPEC char *opal_os_path(bool relative, ...) __opal_attribute_malloc__ __opal_attribute_sentinel__ __opal_attribute_warn_unused_result__;
+ *
+ * Note that the "relative" argument is int instead of bool, because
+ * passing a parameter that undergoes default argument promotion to
+ * va_start() has undefined behavior (according to clang warnings on
+ * MacOS High Sierra).
+ */
+OPAL_DECLSPEC char *opal_os_path(int relative, ...) __opal_attribute_malloc__ __opal_attribute_sentinel__ __opal_attribute_warn_unused_result__;
 
 /**
  * Convert the path to be OS friendly. On UNIX this function will

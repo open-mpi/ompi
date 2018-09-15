@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -78,7 +78,7 @@ ORTE_DECLSPEC void orte_show_help_finalize(void);
  * (e.g., cray).
  */
 ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic,
-                                 bool want_error_header, ...);
+                                 int want_error_header, ...);
 
 /**
  * Exactly the same as orte_show_help, but pass in a rendered string,
@@ -86,7 +86,7 @@ ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic,
  */
 ORTE_DECLSPEC int orte_show_help_norender(const char *filename,
                                           const char *topic,
-                                          bool want_error_header,
+                                          int want_error_header,
                                           const char *output);
 
 /**
