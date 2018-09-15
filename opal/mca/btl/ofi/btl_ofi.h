@@ -95,7 +95,7 @@ struct mca_btl_ofi_context_t {
     opal_free_list_t frag_list;
 
     /* for thread locking */
-    volatile int32_t lock;
+    opal_atomic_int32_t lock;
 };
 typedef struct mca_btl_ofi_context_t mca_btl_ofi_context_t;
 
