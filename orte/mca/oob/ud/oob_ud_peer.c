@@ -6,6 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,6 +74,7 @@ int mca_oob_ud_peer_update_with_uri (mca_oob_ud_peer_t *peer, const char *uri)
 
     rc = mca_oob_ud_parse_uri (uri, &qp_num, &lid, &port_num);
     if (ORTE_SUCCESS != rc) {
+        /* Only non-SUCCESS value is BAD_PARAM */
         return rc;
     }
 
@@ -107,8 +109,7 @@ int mca_oob_ud_peer_update_with_uri (mca_oob_ud_peer_t *peer, const char *uri)
         }
 
         if (NULL == peer->peer_ah) {
-            free (peer);
-            return ORTE_ERROR;
+            return ORTE_ERR_UNREACH;
         }
     }
 
