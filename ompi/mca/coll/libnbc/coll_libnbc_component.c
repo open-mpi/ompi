@@ -46,6 +46,14 @@ static int libnbc_priority = 10;
 static bool libnbc_in_progress = false;     /* protect from recursive calls */
 bool libnbc_ibcast_skip_dt_decision = true;
 
+int libnbc_iexscan_algorithm = 0;             /* iexscan user forced algorithm */
+static mca_base_var_enum_value_t iexscan_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "recursive_doubling"},
+    {0, NULL}
+};
+
 int libnbc_iscan_algorithm = 0;             /* iscan user forced algorithm */
 static mca_base_var_enum_value_t iscan_algorithms[] = {
     {0, "ignore"},
@@ -166,6 +174,16 @@ libnbc_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_ibcast_skip_dt_decision);
+
+    libnbc_iexscan_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_iexscan_algorithms", iexscan_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "iexscan_algorithm",
+                                    "Which iexscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_iexscan_algorithm);
+    OBJ_RELEASE(new_enum);
 
     libnbc_iscan_algorithm = 0;
     (void) mca_base_var_enum_create("coll_libnbc_iscan_algorithms", iscan_algorithms, &new_enum);
