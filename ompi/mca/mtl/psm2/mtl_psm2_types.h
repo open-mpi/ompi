@@ -50,17 +50,6 @@ struct mca_mtl_psm2_module_t {
     psm2_mq_t	 mq;
     psm2_epid_t  epid;
     psm2_epaddr_t epaddr;
-    char *psm2_devices;
-    char *psm2_memory;
-    unsigned long psm2_mq_sendreqs_max;
-    unsigned long psm2_mq_recvreqs_max;
-    unsigned long psm2_mq_rndv_hfi_threshold;
-    unsigned long psm2_mq_rndv_shm_threshold;
-    unsigned long psm2_max_contexts_per_job;
-    unsigned long psm2_tracemask;
-    bool psm2_recvthread;
-    bool psm2_shared_contexts;
-    unsigned long psm2_opa_sl;
 };
 
 typedef struct mca_mtl_psm2_module_t mca_mtl_psm2_module_t;
