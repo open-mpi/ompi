@@ -7,8 +7,8 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -108,7 +108,7 @@ int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t *
   
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
         *request = &ompi_request_null.request;
         return res;
     }
@@ -195,7 +195,7 @@ int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_reque
   
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
         *request = &ompi_request_null.request;
         return res;
     }
