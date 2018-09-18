@@ -5,8 +5,8 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -167,7 +167,7 @@ int ompi_coll_libnbc_ineighbor_alltoallw(const void *sbuf, const int *scounts, c
     }
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
         *request = &ompi_request_null.request;
         return res;
     }
