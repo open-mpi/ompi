@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +59,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPIX_NEIGHBOR_ALLTOALL_INIT,
 #pragma weak MPIX_Neighbor_alltoall_init_f08 = ompix_neighbor_alltoall_init_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPIX_NEIGHBOR_ALLTOALL,
+OMPI_GENERATE_F77_BINDINGS (MPIX_NEIGHBOR_ALLTOALL_INIT,
                             mpix_neighbor_alltoall_init,
                             mpix_neighbor_alltoall_init_,
                             mpix_neighbor_alltoall_init__,
