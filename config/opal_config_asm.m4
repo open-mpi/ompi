@@ -165,7 +165,6 @@ static void test2(void)
     }
 }
 
-vvvvvvvvvvvvvvvvvvvv
 int main(int argc, char** argv)
 {
     test1();
