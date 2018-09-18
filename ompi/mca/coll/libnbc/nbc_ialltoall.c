@@ -292,7 +292,7 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
   
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
         *request = &ompi_request_null.request;
         return res;
     }
@@ -376,7 +376,7 @@ int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Da
   
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
         *request = &ompi_request_null.request;
         return res;
     }
