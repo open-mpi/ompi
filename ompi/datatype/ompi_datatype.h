@@ -166,7 +166,7 @@ OMPI_DECLSPEC int32_t ompi_datatype_destroy( ompi_datatype_t** type);
  * Datatype creation functions
  */
 static inline int32_t
-ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, uint32_t count,
+ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, size_t count,
                    ptrdiff_t disp, ptrdiff_t extent )
 {
     return opal_datatype_add( &pdtBase->super, &pdtAdd->super, count, disp, extent );
