@@ -73,6 +73,7 @@ included in the vX.Y.Z section and be denoted as:
 - Updated internal ROMIO to 3.2.1.
 - Removed support for the MXM MTL.
 - Improved CUDA support when using UCX.
+- Enable use of CUDA allocated buffers for OMPIO.
 - Improved support for two phase MPI I/O operations when using OMPIO.
 - Added support for Software-based Performance Counters, see
   https://github.com/davideberius/ompi/wiki/How-to-Use-Software-Based-Performance-Counters-(SPCs)-in-Open-MPI
