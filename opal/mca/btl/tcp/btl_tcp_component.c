@@ -1372,7 +1372,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* get the current timeout value so we can reset to it */
     if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &rcvtimeo_save_len)) {
-        if (ENOPROTOOPT == errno) {
+        if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
             sockopt = false;
         } else {
             opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
