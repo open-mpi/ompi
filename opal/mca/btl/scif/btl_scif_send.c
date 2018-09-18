@@ -106,7 +106,7 @@ static void mark_buffer (struct mca_btl_base_endpoint_t *endpoint)
 
         endpoint->send_buffer.start = endpoint->send_buffer.startp[0];
     } else {
-        MB();
+        opal_atomic_wmb();
         endpoint->send_buffer.endp[0] = endpoint->send_buffer.end;
    }
 }
