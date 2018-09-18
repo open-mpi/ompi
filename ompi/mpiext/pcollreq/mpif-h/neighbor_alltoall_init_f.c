@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,7 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPIX_NEIGHBOR_ALLTOALL = ompix_neighbor_alltoall_init_f
+#pragma weak PMPIX_NEIGHBOR_ALLTOALL_INIT = ompix_neighbor_alltoall_init_f
 #pragma weak pmpix_neighbor_alltoall_init = ompix_neighbor_alltoall_init_f
 #pragma weak pmpix_neighbor_alltoall_init_ = ompix_neighbor_alltoall_init_f
 #pragma weak pmpix_neighbor_alltoall_init__ = ompix_neighbor_alltoall_init_f
@@ -38,7 +39,7 @@
 #pragma weak PMPIX_Neighbor_alltoall_init_f = ompix_neighbor_alltoall_init_f
 #pragma weak PMPIX_Neighbor_alltoall_init_f08 = ompix_neighbor_alltoall_init_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPIX_NEIGHBOR_ALLTOALL,
+OMPI_GENERATE_F77_BINDINGS (PMPIX_NEIGHBOR_ALLTOALL_INIT,
                             pmpix_neighbor_alltoall_init,
                             pmpix_neighbor_alltoall_init_,
                             pmpix_neighbor_alltoall_init__,
@@ -49,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPIX_NEIGHBOR_ALLTOALL,
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_NEIGHBOR_ALLTOALL = ompix_neighbor_alltoall_init_f
+#pragma weak MPIX_NEIGHBOR_ALLTOALL_INIT = ompix_neighbor_alltoall_init_f
 #pragma weak mpix_neighbor_alltoall_init = ompix_neighbor_alltoall_init_f
 #pragma weak mpix_neighbor_alltoall_init_ = ompix_neighbor_alltoall_init_f
 #pragma weak mpix_neighbor_alltoall_init__ = ompix_neighbor_alltoall_init_f
@@ -58,7 +59,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPIX_NEIGHBOR_ALLTOALL,
 #pragma weak MPIX_Neighbor_alltoall_init_f08 = ompix_neighbor_alltoall_init_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPIX_NEIGHBOR_ALLTOALL,
+OMPI_GENERATE_F77_BINDINGS (MPIX_NEIGHBOR_ALLTOALL_INIT,
                             mpix_neighbor_alltoall_init,
                             mpix_neighbor_alltoall_init_,
                             mpix_neighbor_alltoall_init__,

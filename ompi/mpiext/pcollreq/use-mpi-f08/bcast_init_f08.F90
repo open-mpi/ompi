@@ -5,6 +5,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -25,4 +26,4 @@ subroutine MPIX_Bcast_init_f08(buffer,count,datatype,root,comm,info,request,ierr
    call ompix_bcast_init_f(buffer,count,datatype%MPI_VAL,root,comm%MPI_VAL,info%MPI_VAL,request%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
- end subroutine MPIX_Bcast_init_f08
+end subroutine MPIX_Bcast_init_f08
