@@ -8,8 +8,8 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -185,7 +185,7 @@ int ompi_coll_libnbc_igather(const void* sendbuf, int sendcount, MPI_Datatype se
   
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
         *request = &ompi_request_null.request;
         return res;
     }
@@ -265,7 +265,7 @@ int ompi_coll_libnbc_igather_inter(const void* sendbuf, int sendcount, MPI_Datat
   
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle ((ompi_coll_libnbc_request_t *)request);
+        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
         *request = &ompi_request_null.request;
         return res;
     }
