@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -378,13 +378,13 @@ int ompi_request_default_wait_some(size_t count,
                                    int * indices,
                                    ompi_status_public_t * statuses)
 {
-    size_t num_requests_null_inactive=0, num_requests_done=0;
+    size_t num_requests_null_inactive, num_requests_done, num_active_reqs;
     int rc = MPI_SUCCESS;
     ompi_request_t **rptr = NULL;
     ompi_request_t *request = NULL;
     ompi_wait_sync_t sync;
     size_t sync_sets = 0, sync_unsets = 0;
-    
+
     if (OPAL_UNLIKELY(0 == count)) {
         *outcount = MPI_UNDEFINED;
         return OMPI_SUCCESS;
@@ -397,6 +397,7 @@ int ompi_request_default_wait_some(size_t count,
     rptr = requests;
     num_requests_null_inactive = 0;
     num_requests_done = 0;
+    num_active_reqs = 0;
     for (size_t i = 0; i < count; i++, rptr++) {
         request = *rptr;
         /*
@@ -407,14 +408,14 @@ int ompi_request_default_wait_some(size_t count,
             num_requests_null_inactive++;
             continue;
         }
-        indices[i] = OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync);
-        if( !indices[i] ) {
+        indices[num_active_reqs] = OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, &sync);
+        if( !indices[num_active_reqs] ) {
             /* If the request is completed go ahead and mark it as such */
             assert( REQUEST_COMPLETE(request) );
             num_requests_done++;
         }
+        num_active_reqs++;
     }
-    sync_sets = count - num_requests_null_inactive - num_requests_done;
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;
@@ -423,6 +424,7 @@ int ompi_request_default_wait_some(size_t count,
         return rc;
     }
 
+    sync_sets = num_active_reqs - num_requests_done;
     if( 0 == num_requests_done ) {
         /* One completed request is enough to satisfy the some condition */
         SYNC_WAIT(&sync);
@@ -433,6 +435,7 @@ int ompi_request_default_wait_some(size_t count,
 
     rptr = requests;
     num_requests_done = 0;
+    num_active_reqs = 0;
     for (size_t i = 0; i < count; i++, rptr++) {
         request = *rptr;
 
@@ -452,13 +455,14 @@ int ompi_request_default_wait_some(size_t count,
          * either slowly (in case of partial completion)
          * OR in parallel with `i` (in case of full set completion)  
          */
-        if( !indices[i] ){
+        if( !indices[num_active_reqs] ) {
             indices[num_requests_done++] = i;
         } else if( !OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, &sync, REQUEST_PENDING) ) {
             indices[num_requests_done++] = i;
         }
+        num_active_reqs++;
     }
-    sync_unsets = count - num_requests_null_inactive - num_requests_done;
+    sync_unsets = num_active_reqs - num_requests_done;
 
     if( sync_sets == sync_unsets ){
         /* nobody knows about us,
