@@ -9,7 +9,7 @@
 
 subroutine PMPI_Type_delete_attr_f08(datatype,type_keyval,ierror)
    use :: mpi_f08_types, only : MPI_Datatype
-   use :: mpi_f08, only : ompi_type_delete_attr_f
+   use :: ompi_mpifh_bindings, only : ompi_type_delete_attr_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: type_keyval

@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Comm_get_name_f08(comm,comm_name,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_MAX_OBJECT_NAME
-   use :: mpi_f08, only : ompi_comm_get_name_f
+   use :: ompi_mpifh_bindings, only : ompi_comm_get_name_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    CHARACTER(LEN=*), INTENT(OUT) :: comm_name

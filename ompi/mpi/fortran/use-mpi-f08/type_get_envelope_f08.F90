@@ -3,12 +3,14 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Type_get_envelope_f08(datatype,num_integers,num_addresses, &
                                      num_datatypes,combiner,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_type_get_envelope_f
+   use :: ompi_mpifh_bindings, only : ompi_type_get_envelope_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(OUT) :: num_integers, num_addresses, num_datatypes, combiner

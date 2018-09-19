@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Ibarrier_f08(comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Request
-   use :: mpi_f08, only : ompi_ibarrier_f
+   use :: ompi_mpifh_bindings, only : ompi_ibarrier_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request

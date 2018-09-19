@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Type_get_true_extent_x_f08(datatype,true_lb,true_extent,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
-   use :: mpi_f08, only : ompi_type_get_true_extent_x_f
+   use :: ompi_mpifh_bindings, only : ompi_type_get_true_extent_x_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: true_lb, true_extent
