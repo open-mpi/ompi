@@ -308,7 +308,7 @@ static int mca_btl_scif_progress_recvs (mca_btl_base_endpoint_t *ep)
         hdr = (mca_btl_scif_frag_hdr_t *) (ep->recv_buffer.buffer + start);
 
         /* force all prior reads to complete before continuing */
-        MB();
+        opal_atomic_rmb ();
 
         BTL_VERBOSE(("got frag with header {.tag = %d, .size = %d} from offset %u",
                      hdr->tag, hdr->size, start));
