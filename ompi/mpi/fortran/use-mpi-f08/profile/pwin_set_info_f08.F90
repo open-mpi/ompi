@@ -1,12 +1,12 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2018 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Win_set_info_f08(win,info,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_Info
-   use :: mpi_f08, only : ompi_win_set_info_f
+   use :: ompi_mpifh_bindings, only : ompi_win_set_info_f
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Info), INTENT(IN) :: info

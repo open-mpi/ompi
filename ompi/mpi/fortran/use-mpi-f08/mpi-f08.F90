@@ -13,7 +13,7 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2016-2017 Research Organization for Information Science
+! Copyright (c) 2016-2018 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
@@ -31,13 +31,6 @@ module mpi_f08
   use pmpi_f08_interfaces ! this module contains the pmpi_f08 interface declarations
   use mpi_f08_callbacks   ! this module contains the mpi_f08 attribute callback subroutines
   use mpi_f08_interfaces_callbacks ! this module contains the mpi_f08 callback interfaces
-
-!
-! Declaration of the interfaces to the ompi impl files
-! e.g., send_f.c
-!
-#include "mpi-f-interfaces-bind.h"
-#include "pmpi-f-interfaces-bind.h"
 
 ! The sizeof interfaces
 

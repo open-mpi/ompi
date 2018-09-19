@@ -3,6 +3,8 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -10,7 +12,7 @@
 subroutine MPI_Pack_external_f08(datarep,inbuf,incount,datatype,outbuf,outsize, &
                                  position,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_pack_external_f
+   use :: ompi_mpifh_bindings, only : ompi_pack_external_f
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf

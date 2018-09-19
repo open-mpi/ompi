@@ -3,6 +3,8 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -10,7 +12,7 @@
 subroutine PMPI_Alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,&
                               recvcounts,rdispls,recvtype,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
-   use :: mpi_f08, only : ompi_alltoallv_f
+   use :: ompi_mpifh_bindings, only : ompi_alltoallv_f
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
    INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)

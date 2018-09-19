@@ -9,7 +9,7 @@
 
 subroutine PMPI_Type_match_size_f08(typeclass,size,datatype,ierror)
    use :: mpi_f08_types, only : MPI_Datatype
-   use :: mpi_f08, only : ompi_type_match_size_f
+   use :: ompi_mpifh_bindings, only : ompi_type_match_size_f
    implicit none
    INTEGER, INTENT(IN) :: typeclass, size
    TYPE(MPI_Datatype), INTENT(OUT) :: datatype

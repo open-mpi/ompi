@@ -9,7 +9,7 @@
 
 subroutine PMPI_Type_dup_f08(oldtype,newtype,ierror)
    use :: mpi_f08_types, only : MPI_Datatype
-   use :: mpi_f08, only : ompi_type_dup_f
+   use :: ompi_mpifh_bindings, only : ompi_type_dup_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: oldtype
    TYPE(MPI_Datatype), INTENT(OUT) :: newtype

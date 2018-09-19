@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Group_translate_ranks_f08(group1,n,ranks1,group2,ranks2,ierror)
    use :: mpi_f08_types, only : MPI_Group
-   use :: mpi_f08, only : ompi_group_translate_ranks_f
+   use :: ompi_mpifh_bindings, only : ompi_group_translate_ranks_f
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group1, group2
    INTEGER, INTENT(IN) :: n
