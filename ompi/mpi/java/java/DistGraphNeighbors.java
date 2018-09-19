@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,9 +68,9 @@ public final class DistGraphNeighbors
 	}
 
 	/**
-	 * Gets a process for which the calling processs is a destination.
+	 * Gets a process for which the calling process is a destination.
 	 * @param i source index
-	 * @return process for which the calling processs is a destination
+	 * @return process for which the calling process is a destination
 	 */
 	public int getSource(int i)
 	{

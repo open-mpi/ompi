@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,7 +121,7 @@ public class Request implements Freeable
 	 * Adds a receive buffer to this Request object.  This method
 	 * should be called by the internal api whenever a persistent
 	 * request is created and any time a request object, that has
-	 * an associated buffer, is returned from an opperation to protect
+	 * an associated buffer, is returned from an operation to protect
 	 * the buffer from getting prematurely garbage collected.
 	 * @param buf buffer to add to the array list
 	 */
@@ -133,7 +134,7 @@ public class Request implements Freeable
 	 * Adds a send buffer to this Request object.  This method
 	 * should be called by the internal api whenever a persistent
 	 * request is created and any time a request object, that has
-	 * an associated buffer, is returned from an opperation to protect
+	 * an associated buffer, is returned from an operation to protect
 	 * the buffer from getting prematurely garbage collected.
 	 * @param buf buffer to add to the array list
 	 */
@@ -287,7 +288,7 @@ public class Request implements Freeable
 	 * <p>If some request completed, the index in array of {@code requests}
 	 * for that request can be obtained from the returned status object.
 	 * The corresponding element in array of {@code requests} becomes inactive.
-	 * If no request completed, {testAny} returns {@code null}.
+	 * If no request completed, {@code testAnyStatus} returns {@code null}.
 	 * @param requests array of requests
 	 * @return status object if one request completed, {@code null} otherwise.
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
@@ -307,7 +308,7 @@ public class Request implements Freeable
 	 * Tests for completion of either one or none of the operations
 	 * associated with active requests.
 	 * <p>Java binding of the MPI operation {@code MPI_TESTANY}.
-	 * <p>If some request completed, ii becomes inactive.
+	 * <p>If some request completed, it becomes inactive.
 	 * @param requests array of requests
 	 * @return index of operation that completed, or {@code MPI.UNDEFINED}
 	 * if none completed.
