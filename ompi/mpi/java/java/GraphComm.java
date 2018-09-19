@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -151,7 +152,7 @@ public final class GraphComm extends Intracomm
 	 * and {@code MPI_GRAPH_NEIGHBORS}.
 	 * <p>The number of neighbors can be extracted from the size of the result.
 	 * @param rank rank of a process in the group of this communicator
-	 * @return array of ranks of neighbouring processes to one specified
+	 * @return array of ranks of neighboring processes to one specified
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public int[] getNeighbors(int rank) throws MPIException
