@@ -852,13 +852,5 @@ uninstall-local:
 	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
 	  rm -f $(DESTDIR)$(libdir)/$$file; \
 	done
-else
-
-# Need to have empty targets because AM can't handle having an
-# AM_CONDITIONAL was targets in the "if" statement but not in the
-# "else".  :-(
-
-install-exec-hook:
-uninstall-local:
 
 endif
