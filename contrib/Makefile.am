@@ -88,12 +88,8 @@ EXTRA_DIST = \
         platform/lanl/darwin/mic-common \
         platform/lanl/darwin/debug \
         platform/lanl/darwin/debug.conf \
-        platform/lanl/darwin/debug-mic \
-        platform/lanl/darwin/debug-mic.conf \
         platform/lanl/darwin/optimized \
         platform/lanl/darwin/optimized.conf \
-        platform/lanl/darwin/optimized-mic \
-        platform/lanl/darwin/optimized-mic.conf \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
 	platform/ibm/debug-ppc32-gcc \
