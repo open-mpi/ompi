@@ -603,7 +603,6 @@ Network Support
     - Loopback (send-to-self)
     - Shared memory
     - TCP
-    - Intel Phi SCIF
     - SMCUDA
     - Cisco usNIC
     - uGNI (Cray Gemini, Aries)
@@ -997,9 +996,6 @@ NETWORKING SUPPORT / OPTIONS
   look in <psm2 directory>/lib and <psm2 directory>/lib64, which
   covers most cases.  This option is only needed for special
   configurations.
-
---with-scif=<dir>
-  Look in directory for Intel SCIF support libraries
 
 --with-verbs=<directory>
   Specify the directory where the verbs (also known as OpenFabrics
