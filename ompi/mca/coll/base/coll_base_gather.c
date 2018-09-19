@@ -326,6 +326,15 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
     return MPI_SUCCESS;
  error_hndl:
     if (NULL != reqs) {
+        /* find a real error code */
+        if (MPI_ERR_IN_STATUS == ret) {
+            for( i = 0; i < size; i++ ) {
+                if (MPI_REQUEST_NULL == reqs[i]) continue;
+                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+                ret = reqs[i]->req_status.MPI_ERROR;
+                break;
+            }
+        }
         ompi_coll_base_free_reqs(reqs, size);
     }
     OPAL_OUTPUT (( ompi_coll_base_framework.framework_output,
