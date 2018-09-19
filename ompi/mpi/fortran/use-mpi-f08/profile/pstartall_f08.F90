@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Startall_f08(count,array_of_requests,ierror)
    use :: mpi_f08_types, only : MPI_Request
-   use :: mpi_f08, only : ompi_startall_f
+   use :: ompi_mpifh_bindings, only : ompi_startall_f
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)

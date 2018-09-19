@@ -3,10 +3,12 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Get_processor_name_f08(name,resultlen,ierror)
-   use :: mpi_f08, only : ompi_get_processor_name_f
+   use :: ompi_mpifh_bindings, only : ompi_get_processor_name_f
    implicit none
    character(len=*), intent(out) :: name
    integer, intent(out) :: resultlen

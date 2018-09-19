@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Type_get_extent_f08(datatype,lb,extent,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_type_get_extent_f
+   use :: ompi_mpifh_bindings, only : ompi_type_get_extent_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: lb, extent

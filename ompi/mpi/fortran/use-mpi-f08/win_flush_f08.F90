@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2014 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Win_flush_f08(rank,win,ierror)
    use :: mpi_f08_types, only : MPI_Win
-   use :: mpi_f08, only : ompi_win_flush_f
+   use :: ompi_mpifh_bindings, only : ompi_win_flush_f
    implicit none
    INTEGER, INTENT(IN) :: rank
    TYPE(MPI_Win), INTENT(IN) :: win

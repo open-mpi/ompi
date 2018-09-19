@@ -3,12 +3,14 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Dist_graph_neighbors_f08(comm,maxindegree,sources,sourceweights,&
                                         maxoutdegree,destinations,destweights,ierror)
    use :: mpi_f08_types, only : MPI_Comm
-   use :: mpi_f08, only : ompi_dist_graph_neighbors_f
+   use :: ompi_mpifh_bindings, only : ompi_dist_graph_neighbors_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: maxindegree, maxoutdegree

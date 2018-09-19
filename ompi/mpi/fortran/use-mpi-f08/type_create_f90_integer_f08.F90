@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Type_create_f90_integer_f08(r,newtype,ierror)
    use :: mpi_f08_types, only : MPI_Datatype
-   use :: mpi_f08, only : ompi_type_create_f90_integer_f
+   use :: ompi_mpifh_bindings, only : ompi_type_create_f90_integer_f
    implicit none
    INTEGER, INTENT(IN) :: r
    TYPE(MPI_Datatype), INTENT(OUT) :: newtype

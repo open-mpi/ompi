@@ -3,10 +3,12 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Error_string_f08(errorcode,string,resultlen,ierror)
-   use :: mpi_f08, only : ompi_error_string_f
+   use :: ompi_mpifh_bindings, only : ompi_error_string_f
    implicit none
    integer, intent(in) :: errorcode
    character(len=*), intent(out) :: string
