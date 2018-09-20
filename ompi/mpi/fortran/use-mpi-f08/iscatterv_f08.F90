@@ -3,6 +3,8 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -10,7 +12,7 @@
 subroutine MPI_Iscatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,&
                             recvcount,recvtype,root,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
-   use :: mpi_f08, only : ompi_iscatterv_f
+   use :: ompi_mpifh_bindings, only : ompi_iscatterv_f
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
    INTEGER, INTENT(IN) :: recvcount, root

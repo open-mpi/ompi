@@ -3,11 +3,13 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Comm_idup_f08(comm,newcomm,request,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Request
-   use :: mpi_f08, only : ompi_comm_idup_f
+   use :: ompi_mpifh_bindings, only : ompi_comm_idup_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: newcomm

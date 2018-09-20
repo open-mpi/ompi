@@ -9,7 +9,7 @@
 
 subroutine PMPI_Type_set_attr_f08(datatype,type_keyval,attribute_val,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_type_set_attr_f
+   use :: ompi_mpifh_bindings, only : ompi_type_set_attr_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: type_keyval

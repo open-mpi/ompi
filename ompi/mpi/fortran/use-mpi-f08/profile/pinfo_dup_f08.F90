@@ -3,11 +3,13 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Info_dup_f08(info,newinfo,ierror)
    use :: mpi_f08_types, only : MPI_Info
-   use :: mpi_f08, only : ompi_info_dup_f
+   use :: ompi_mpifh_bindings, only : ompi_info_dup_f
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Info), INTENT(OUT) :: newinfo

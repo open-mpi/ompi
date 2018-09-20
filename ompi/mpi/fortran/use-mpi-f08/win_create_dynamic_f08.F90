@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2018 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 
@@ -8,7 +8,7 @@
 
 subroutine MPI_Win_create_dynamic_f08(info,comm,win,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win
-   use :: mpi_f08, only : ompi_win_create_dynamic_f
+   use :: ompi_mpifh_bindings, only : ompi_win_create_dynamic_f
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Comm), INTENT(IN) :: comm
