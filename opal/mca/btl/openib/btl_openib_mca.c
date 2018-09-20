@@ -573,7 +573,7 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_bool("cuda_async_recv", NULL,
                    "Enable or disable CUDA async recv copies "
                    "(true = async; false = sync)",
-                   true, &mca_btl_openib_component.cuda_async_recv));
+                   false, &mca_btl_openib_component.cuda_async_recv));
     /* Also make the max send size larger for better GPU buffer performance */
     mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
     /* Turn of message coalescing - not sure if it works with GPU buffers */
