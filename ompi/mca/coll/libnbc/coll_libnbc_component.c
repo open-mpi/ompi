@@ -46,6 +46,13 @@ static int libnbc_priority = 10;
 static bool libnbc_in_progress = false;     /* protect from recursive calls */
 bool libnbc_ibcast_skip_dt_decision = true;
 
+int libnbc_iscan_algorithm = 0;             /* iscan user forced algorithm */
+static mca_base_var_enum_value_t iscan_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "recursive_doubling"},
+    {0, NULL}
+};
 
 static int libnbc_open(void);
 static int libnbc_close(void);
@@ -128,6 +135,8 @@ libnbc_close(void)
 static int
 libnbc_register(void)
 {
+    mca_base_var_enum_t *new_enum = NULL;
+
     /* Use a low priority, but allow other components to be lower */
     libnbc_priority = 10;
     (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
@@ -157,6 +166,16 @@ libnbc_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &libnbc_ibcast_skip_dt_decision);
+
+    libnbc_iscan_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_iscan_algorithms", iscan_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "iscan_algorithm",
+                                    "Which iscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_iscan_algorithm);
+    OBJ_RELEASE(new_enum);
 
     return OMPI_SUCCESS;
 }
