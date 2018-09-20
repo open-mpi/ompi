@@ -317,6 +317,17 @@ static void model_registration_callback(pmix_status_t status,
     DEBUG_WAKEUP_THREAD(lock);
 }
 
+static void set_handler_default(int sig)
+{
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+
+    sigaction(sig, &act, (struct sigaction *)0);
+}
+
 int main(int argc, char **argv)
 {
     char **client_env=NULL;
@@ -570,14 +581,22 @@ int main(int argc, char **argv)
             PMIx_server_finalize();
             return -1;
         }
-        child = PMIX_NEW(wait_tracker_t);
-        child->pid = pid;
-        pmix_list_append(&children, &child->super);
-
         if (pid == 0) {
+            sigset_t sigs;
+            set_handler_default(SIGTERM);
+            set_handler_default(SIGINT);
+            set_handler_default(SIGHUP);
+            set_handler_default(SIGPIPE);
+            set_handler_default(SIGCHLD);
+            sigprocmask(0, 0, &sigs);
+            sigprocmask(SIG_UNBLOCK, &sigs, 0);
             execve(executable, client_argv, client_env);
             /* Does not return */
             exit(0);
+        } else {
+            child = PMIX_NEW(wait_tracker_t);
+            child->pid = pid;
+            pmix_list_append(&children, &child->super);
         }
     }
     free(executable);
@@ -596,8 +615,7 @@ int main(int argc, char **argv)
     n=0;
     PMIX_LIST_FOREACH(child, &children, wait_tracker_t) {
         if (0 != child->exit_code) {
-            fprintf(stderr, "Child %d exited with status %d - test FAILED\n", n, child->exit_code);
-            goto done;
+            fprintf(stderr, "Child %d [%d] exited with status %d - test FAILED\n", n, child->pid, child->exit_code);
         }
         ++n;
     }
@@ -1024,7 +1042,8 @@ static pmix_status_t notify_event(pmix_status_t code,
                                   pmix_info_t info[], size_t ninfo,
                                   pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    return PMIX_SUCCESS;
+    pmix_output(0, "SERVER: NOTIFY EVENT");
+    return PMIX_OPERATION_SUCCEEDED;
 }
 
 typedef struct query_data_t {
@@ -1147,8 +1166,9 @@ static void wait_signal_callback(int fd, short event, void *arg)
                     exit_code = status;
                 }
                 --wakeup;
-                break;
+                return;
             }
         }
     }
+    fprintf(stderr, "ENDLOOP\n");
 }

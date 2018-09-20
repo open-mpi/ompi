@@ -1071,6 +1071,7 @@ static void _deregister_client(int sd, short args, void *cbdata)
                  * for tools, so don't clean them up */
                 if (!PMIX_PROC_IS_TOOL(peer)) {
                     pmix_pnet.child_finalized(&cd->proc);
+                    pmix_psensor.stop(peer, NULL);
                 }
             }
             if (nptr->nlocalprocs == nptr->nfinalized) {
