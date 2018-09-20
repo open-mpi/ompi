@@ -708,6 +708,7 @@ static int shmem_lock_wait_for_ticket(void *lock,
 
     do {
         shmem_int_get(&remote_turn, lock_turn, 1, server_pe);
+        opal_progress();
     } while (remote_turn != ticket);
 
     shmem_get_wrapper(&temp, lock, lock_size, 1, server_pe);
