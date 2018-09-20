@@ -87,6 +87,11 @@ typedef struct opal_common_ucx_module {
     bool opal_mem_hooks;
 } opal_common_ucx_module_t;
 
+typedef struct opal_common_ucx_del_proc {
+    ucp_ep_h ep;
+    size_t   vpid;
+} opal_common_ucx_del_proc_t;
+
 extern opal_common_ucx_module_t opal_common_ucx;
 
 OPAL_DECLSPEC void opal_common_ucx_mca_register(void);
@@ -94,6 +99,8 @@ OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void);
 OPAL_DECLSPEC void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status);
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker);
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component);
+OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, size_t count,
+                                            size_t my_rank, size_t max_disconnect, ucp_worker_h worker);
 
 static inline
 ucs_status_t opal_common_ucx_request_status(ucs_status_ptr_t request)
