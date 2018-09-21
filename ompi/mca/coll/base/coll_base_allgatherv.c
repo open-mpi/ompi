@@ -110,9 +110,6 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgather_intra_bruck rank %d", rank));
 
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
     err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
@@ -237,9 +234,6 @@ int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgatherv_intra_ring rank %d", rank));
-
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -381,9 +375,6 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgatherv_intra_neighborexchange rank %d", rank));
 
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
     err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
@@ -519,9 +510,6 @@ int ompi_coll_base_allgatherv_intra_two_procs(const void *sbuf, int scount,
     if (2 != ompi_comm_size(comm)) {
         return MPI_ERR_UNSUPPORTED_OPERATION;
     }
-
-    err = ompi_datatype_get_extent (sdtype, &lb, &sext);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     err = ompi_datatype_get_extent (rdtype, &lb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
