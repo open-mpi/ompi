@@ -88,6 +88,9 @@ included in the vX.Y.Z section and be denoted as:
   Requested by Axel Huebl.
 - Fix a problem with building the Java bindings when using Java 10.
   Thanks to Bryce Glover for reporting.
+- Fix a problem with ORTE not reporting error messages if an application
+  terminated normally but exited with non-zero error code.  Thanks to
+  Emre Brookes for reporting.
 
 3.1.2 -- August, 2018
 ------------------------
