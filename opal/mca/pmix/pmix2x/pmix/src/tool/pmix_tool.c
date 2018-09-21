@@ -137,9 +137,9 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
         goto error;
     }
 
-    /* we always leave space for a callback object */
-    chain->ninfo = ninfo + 1;
-    PMIX_INFO_CREATE(chain->info, chain->ninfo);
+    /* we always leave space for event hdlr name and a callback object */
+    chain->nallocated = ninfo + 2;
+    PMIX_INFO_CREATE(chain->info, chain->nallocated);
     if (NULL == chain->info) {
         PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
         PMIX_RELEASE(chain);
@@ -155,16 +155,9 @@ static void pmix_tool_notify_recv(struct pmix_peer_t *peer,
             PMIX_RELEASE(chain);
             goto error;
         }
-        /* check for non-default flag */
-        for (cnt=0; cnt < (int)ninfo; cnt++) {
-            if (0 == strncmp(chain->info[cnt].key, PMIX_EVENT_NON_DEFAULT, PMIX_MAX_KEYLEN)) {
-                chain->nondefault = PMIX_INFO_TRUE(&chain->info[cnt]);
-                break;
-            }
-        }
     }
-    /* now put the callback object tag in the last element */
-    PMIX_INFO_LOAD(&chain->info[ninfo], PMIX_EVENT_RETURN_OBJECT, NULL, PMIX_POINTER);
+    /* prep the chain for processing */
+    pmix_prep_event_chain(chain, chain->info, ninfo, false);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "[%s:%d] pmix:tool_notify_recv - processing event %d, calling errhandler",

@@ -867,7 +867,7 @@ static pmix_status_t recv_connect_ack(int sd)
     /* get the current timeout value so we can reset to it */
     sz = sizeof(save);
     if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &sz)) {
-        if (ENOPROTOOPT == errno) {
+        if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
             sockopt = false;
         } else {
            return PMIX_ERR_UNREACH;
