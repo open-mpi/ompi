@@ -193,6 +193,14 @@ int mca_pml_base_select(bool enable_progress_threads,
         modex_reqd = true;
     }
 
+    /* Save the winner */
+
+    mca_pml_base_selected_component = *best_component;
+    mca_pml = *best_module;
+    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+                         "select: component %s selected",
+                         mca_pml_base_selected_component.pmlm_version.mca_component_name );
+
     /* Finalize all non-selected components */
 
     for (item = opal_list_remove_first(&opened);
@@ -238,14 +246,6 @@ int mca_pml_base_select(bool enable_progress_threads,
         }
     }
 #endif
-
-    /* Save the winner */
-
-    mca_pml_base_selected_component = *best_component;
-    mca_pml = *best_module;
-    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                         "select: component %s selected",
-                         mca_pml_base_selected_component.pmlm_version.mca_component_name );
 
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
