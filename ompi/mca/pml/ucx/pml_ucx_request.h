@@ -102,7 +102,7 @@ struct pml_ucx_persistent_request {
     union {
         ucp_datatype_t                datatype;
         ompi_datatype_t              *ompi_datatype;
-    };
+    } datatype;
     ucp_tag_t                         tag;
     struct {
         mca_pml_base_send_mode_t      mode;

@@ -413,7 +413,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 {
     struct sockaddr_storage endpoint_addr_ss;
     const char *proc_hostname;
-    unsigned int perm_size;
+    unsigned int perm_size = 0;
     int rc, *a = NULL;
     size_t i, j;
     mca_btl_tcp_interface_t** peer_interfaces = NULL;
