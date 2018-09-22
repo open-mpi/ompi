@@ -10,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -2090,7 +2090,8 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
         asprintf(out[0] + line++, "%ssource:%s", tmp, source_string);
 
         /* Output whether it's read only or writable */
-        asprintf(out[0] + line++, "%sstatus:%s", tmp, VAR_IS_DEFAULT_ONLY(var[0]) ? "read-only" : "writeable");
+        asprintf(out[0] + line++, "%sstatus:%s", tmp,
+                VAR_IS_SETTABLE(var[0]) ? "writeable" : "read-only");
 
         /* Output the info level of this parametere */
         asprintf(out[0] + line++, "%slevel:%d", tmp, var->mbv_info_lvl + 1);
