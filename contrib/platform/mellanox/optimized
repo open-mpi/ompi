@@ -23,24 +23,9 @@ if [ "$mellanox_autodetect" == "yes" ]; then
         with_ucx=$ucx_dir
     fi
 
-    mxm_dir=${mxm_dir:="$(pkg-config --variable=prefix mxm)"}
-    if [ -d $mxm_dir ]; then
-        with_mxm=$mxm_dir
-    fi
-
-    fca_dir=${fca_dir:="$(pkg-config --variable=prefix fca)"}
-    if [ -d $fca_dir ]; then
-        with_fca=$fca_dir
-    fi
-
     hcoll_dir=${hcoll_dir:="$(pkg-config --variable=prefix hcoll)"}
     if [ -d $hcoll_dir ]; then
         with_hcoll=$hcoll_dir
-    fi
-
-    knem_dir=${knem_dir:="$(pkg-config --variable=prefix knem)"}
-    if [ -d $knem_dir ]; then
-        with_knem=$knem_dir
     fi
 
     slurm_dir=${slurm_dir:="/usr"}
