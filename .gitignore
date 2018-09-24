@@ -390,6 +390,10 @@ opal/mca/pmix/pmix*/pmix/examples/jctrl
 opal/mca/pmix/pmix*/pmix/examples/pub
 opal/mca/pmix/pmix*/pmix/examples/server
 opal/mca/pmix/pmix*/pmix/examples/tool
+opal/mca/pmix/pmix4x/pmix/src/tools/pevent/pevent
+opal/mca/pmix/pmix4x/pmix/src/tools/pmix_info/pmix_info
+opal/mca/pmix/pmix4x/pmix/src/tools/plookup/plookup
+opal/mca/pmix/pmix4x/pmix/src/tools/pps/pps
 
 opal/mca/pmix/ext4x/ext4x.c
 opal/mca/pmix/ext4x/ext4x.h

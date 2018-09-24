@@ -29,4 +29,5 @@ endif # PMIX_INSTALL_BINARIES
 
 pevent_SOURCES = pevent.c
 pevent_LDADD = \
-	$(top_builddir)/src/libpmix.la
+	$(top_builddir)/src/libpmix.la \
+    $(PMIX_EXTRA_LTLIB)

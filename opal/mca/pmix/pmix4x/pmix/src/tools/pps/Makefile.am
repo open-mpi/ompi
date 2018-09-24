@@ -29,4 +29,5 @@ endif # PMIX_INSTALL_BINARIES
 
 pps_SOURCES = pps.c
 pps_LDADD = \
-	$(top_builddir)/src/libpmix.la
+	$(top_builddir)/src/libpmix.la \
+    $(PMIX_EXTRA_LTLIB)
