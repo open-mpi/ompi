@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -747,6 +747,22 @@ However, if you specify --with-<foo> on the configure command line and
 Open MPI is unable to find relevant support for <foo>, configure will
 assume that it was unable to provide a feature that was specifically
 requested and will abort so that a human can resolve out the issue.
+
+Additionally, if a search directory is specified in the form
+--with-<foo>=<dir>, Open MPI will:
+
+1. Search for <foo>'s header files in <dir>/include.
+2. Search for <foo>'s library files in <dir>/lib, and if they are not
+   found there, search again in <dir>/lib64.
+3. If both the relevant header files and libraries are found:
+   3a. Open MPI will build support for <foo>.
+   3b. If <dir> is neither "/usr" nor "/usr/local", Open MPI will
+       compile itself with RPATH flags pointing to the directory where
+       <foo>'s libraries are located.  Open MPI does not RPATH
+       /usr/lib[64] and /usr/local/lib[64] because many systems
+       already search these directories for run-time libraries by
+       default; adding RPATH for them could have unintended
+       consequences for the search path ordering.
 
 INSTALLATION OPTIONS
 
