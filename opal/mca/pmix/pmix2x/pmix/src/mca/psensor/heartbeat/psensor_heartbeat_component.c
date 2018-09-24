@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
- * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,14 +50,9 @@ pmix_psensor_heartbeat_component_t mca_psensor_heartbeat_component = {
   */
 static int heartbeat_open(void)
 {
-    pmix_status_t rc;
-
     PMIX_CONSTRUCT(&mca_psensor_heartbeat_component.trackers, pmix_list_t);
 
-    /* setup to receive heartbeats */
-    PMIX_PTL_RECV(rc, pmix_globals.mypeer, pmix_psensor_heartbeat_recv_beats, PMIX_PTL_TAG_HEARTBEAT);
-
-    return rc;
+    return PMIX_SUCCESS;
 }
 
 
@@ -74,12 +69,7 @@ static int heartbeat_query(pmix_mca_base_module_t **module, int *priority)
 
 static int heartbeat_close(void)
 {
-    pmix_status_t rc;
-
-    /* cancel our persistent recv */
-    PMIX_PTL_CANCEL(rc, pmix_globals.mypeer, PMIX_PTL_TAG_HEARTBEAT);
-
     PMIX_LIST_DESTRUCT(&mca_psensor_heartbeat_component.trackers);
 
-    return rc;
+    return PMIX_SUCCESS;
 }
