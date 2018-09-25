@@ -70,6 +70,8 @@ BEGIN_C_DECLS
 #define NBC_NUM_COLL 17
 
 extern bool libnbc_ibcast_skip_dt_decision;
+extern int libnbc_ibcast_algorithm;
+extern int libnbc_ibcast_knomial_radix;
 extern int libnbc_iexscan_algorithm;
 extern int libnbc_ireduce_algorithm;
 extern int libnbc_iscan_algorithm;
