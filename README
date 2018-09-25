@@ -769,17 +769,21 @@ Additionally, if a search directory is specified in the form
 --with-<foo>=<dir>, Open MPI will:
 
 1. Search for <foo>'s header files in <dir>/include.
-2. Search for <foo>'s library files in <dir>/lib, and if they are not
-   found there, search again in <dir>/lib64.
+2. Search for <foo>'s library files:
+   2a. If --with-<foo>-libdir=<libdir> was specified, search in
+       <libdir>.
+   2b. Otherwise, search in <dir>/lib, and if they are not found
+       there, search again in <dir>/lib64.
 3. If both the relevant header files and libraries are found:
    3a. Open MPI will build support for <foo>.
-   3b. If <dir> is neither "/usr" nor "/usr/local", Open MPI will
-       compile itself with RPATH flags pointing to the directory where
-       <foo>'s libraries are located.  Open MPI does not RPATH
-       /usr/lib[64] and /usr/local/lib[64] because many systems
-       already search these directories for run-time libraries by
-       default; adding RPATH for them could have unintended
-       consequences for the search path ordering.
+   3b. If the root path where the <foo> libraries are found is neither
+       "/usr" nor "/usr/local", Open MPI will compile itself with
+       RPATH flags pointing to the directory where <foo>'s libraries
+       are located.  Open MPI does not RPATH /usr/lib[64] and
+       /usr/local/lib[64] because many systems already search these
+       directories for run-time libraries by default; adding RPATH for
+       them could have unintended consequences for the search path
+       ordering.
 
 INSTALLATION OPTIONS
 
