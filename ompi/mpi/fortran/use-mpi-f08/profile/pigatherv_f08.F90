@@ -12,9 +12,10 @@ subroutine PMPI_Igatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: mpi_f08, only : ompi_igatherv_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, root
-   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype
    TYPE(MPI_Datatype), INTENT(IN) :: recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
