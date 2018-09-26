@@ -489,7 +489,7 @@ static void _query(int sd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *proct;
     orte_app_context_t *app;
-    int rc, i, k, num_replies;
+    int rc = ORTE_SUCCESS, i, k, num_replies;
     opal_list_t *results, targets, *array;
     size_t n;
     uint32_t key;
@@ -716,7 +716,7 @@ static void _query(int sd, short args, void *cbdata)
                     }
                 }
                 if (ORTE_JOBID_INVALID == jobid) {
-                    rc = ORTE_ERR_BAD_PARAM;
+                    rc = ORTE_ERR_NOT_FOUND;
                     goto done;
                 }
                 /* construct a list of values with opal_proc_info_t
@@ -810,12 +810,12 @@ static void _query(int sd, short args, void *cbdata)
     }
 
   done:
-    if (0 == opal_list_get_size(results)) {
-        rc = ORTE_ERR_NOT_FOUND;
-    } else if (opal_list_get_size(results) < opal_list_get_size(cd->info)) {
-        rc = ORTE_ERR_PARTIAL_SUCCESS;
-    } else {
-        rc = ORTE_SUCCESS;
+    if (ORTE_SUCCESS == rc) {
+        if (0 == opal_list_get_size(results)) {
+            rc = ORTE_ERR_NOT_FOUND;
+        } else if (opal_list_get_size(results) < opal_list_get_size(cd->info)) {
+            rc = ORTE_ERR_PARTIAL_SUCCESS;
+        }
     }
     cd->infocbfunc(rc, results, cd->cbdata, qrel, results);
 }
