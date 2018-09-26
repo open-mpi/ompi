@@ -53,12 +53,16 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
         opal_pmix_pmix4x_timing_flag=--disable-pmix-timing
     fi
 
-    opal_pmix_pmix4x_args="$opal_pmix_pmix4x_timing_flag --without-tests-examples --enable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-pmix-extra-ltlib=$OPAL_TOP_BUILDDIR/opal/libopen-pal.la"
+    opal_pmix_pmix4x_args="$opal_pmix_pmix4x_timing_flag --without-tests-examples --disable-pmix-backward-compatibility --disable-visibility --enable-embedded-libevent --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\""
     AS_IF([test "$enable_debug" = "yes"],
           [opal_pmix_pmix4x_args="--enable-debug $opal_pmix_pmix4x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],
           [opal_pmix_pmix4x_args="--disable-debug $opal_pmix_pmix4x_args"
            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"])
+    AS_IF([test $OPAL_ENABLE_DLOPEN_SUPPORT -eq 1],
+          [opal_pmix_pmix4x_args="--with-pmix-extra-ltlib=$OPAL_TOP_BUILDDIR/opal/libopen-pal.la --enable-pmix-binaries $opal_pmix_pmix4x_args"],
+          [opal_pmix_pmix4x_args="--disable-pmix-binaries $opal_pmix_pmix4x_args"])
+
     AC_MSG_CHECKING([if want to install standalone libpmix])
     AS_IF([test "$enable_install_libpmix" == "yes"],
           [AC_MSG_RESULT([yes])],
