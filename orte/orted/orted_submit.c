@@ -876,7 +876,7 @@ int orte_submit_job(char *argv[], int *index,
     jdata->map = OBJ_NEW(orte_job_map_t);
 
     if (NULL != orte_cmd_options.mapping_policy) {
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping, NULL, orte_cmd_options.mapping_policy))) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(jdata, &jdata->map->mapping, NULL, orte_cmd_options.mapping_policy))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
