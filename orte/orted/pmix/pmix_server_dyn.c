@@ -308,7 +308,7 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
                                orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
                 return ORTE_ERR_BAD_PARAM;
             }
-            rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping,
+            rc = orte_rmaps_base_set_mapping_policy(jdata, &jdata->map->mapping,
                                                     NULL, info->data.string);
             if (ORTE_SUCCESS != rc) {
                 return rc;
