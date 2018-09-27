@@ -112,8 +112,8 @@ libopalutil_la_SOURCES = \
         strncpy.c \
         sys_limits.c \
         uri.c \
- 	info_subscriber.c \
- 	info.c
+        info_subscriber.c \
+        info.c
 
 if OPAL_COMPILE_TIMING
 libopalutil_la_SOURCES += timings.c
