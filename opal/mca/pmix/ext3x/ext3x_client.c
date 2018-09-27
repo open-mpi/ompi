@@ -32,6 +32,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 
 #include "opal/mca/pmix/base/base.h"
 #include "ext3x.h"
@@ -89,7 +90,7 @@ int ext3x_client_init(opal_list_t *ilist)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(ival, ilist, opal_value_t) {
-            (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&pinfo[n].value, ival);
             ++n;
         }
@@ -135,7 +136,7 @@ int ext3x_client_init(opal_list_t *ilist)
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
     job = OBJ_NEW(opal_ext3x_jobid_trkr_t);
-    (void)strncpy(job->nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
+    (void)opal_string_copy(job->nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
     job->jobid = pname.jobid;
     opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
 
@@ -214,13 +215,13 @@ int ext3x_tool_init(opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(val, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, val->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, val->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&pinfo[n].value, val);
             ++n;
             /* check to see if our name is being given from above */
             if (0 == strcmp(val->key, OPAL_PMIX_TOOL_NSPACE)) {
                 opal_convert_string_to_jobid(&pname.jobid, val->data.string);
-                (void)strncpy(mca_pmix_ext3x_component.myproc.nspace, val->data.string, PMIX_MAX_NSLEN);
+                (void)opal_string_copy(mca_pmix_ext3x_component.myproc.nspace, val->data.string, PMIX_MAX_NSLEN);
             } else if (0 == strcmp(val->key, OPAL_PMIX_TOOL_RANK)) {
                 pname.vpid = val->data.name.vpid;
                 mca_pmix_ext3x_component.myproc.rank = pname.vpid;
@@ -259,7 +260,7 @@ int ext3x_tool_init(opal_list_t *info)
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
     job = OBJ_NEW(opal_ext3x_jobid_trkr_t);
-    (void)strncpy(job->nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
+    (void)opal_string_copy(job->nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
     job->jobid = pname.jobid;
     opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
 
@@ -353,7 +354,7 @@ int ext3x_abort(int flag, const char *msg,
                 PMIX_PROC_FREE(parray, cnt);
                 return OPAL_ERR_NOT_FOUND;
             }
-            (void)strncpy(parray[n].nspace, nsptr, PMIX_MAX_NSLEN);
+            (void)opal_string_copy(parray[n].nspace, nsptr, PMIX_MAX_NSLEN);
             parray[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
             ++n;
         }
@@ -394,11 +395,11 @@ int ext3x_store_local(const opal_process_name_t *proc, opal_value_t *val)
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             nsptr = job->nspace;
         }
-        (void)strncpy(p.nspace, nsptr, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(p.nspace, nsptr, PMIX_MAX_NSLEN);
         p.rank = ext3x_convert_opalrank(proc->vpid);
     } else {
         /* use our name */
-        (void)strncpy(p.nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(p.nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
         p.rank = ext3x_convert_opalrank(OPAL_PROC_MY_NAME.vpid);
     }
 
@@ -467,7 +468,7 @@ int ext3x_fence(opal_list_t *procs, int collect_data)
                 OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
                 return OPAL_ERR_NOT_FOUND;
             }
-            (void)strncpy(parray[n].nspace, nsptr, PMIX_MAX_NSLEN);
+            (void)opal_string_copy(parray[n].nspace, nsptr, PMIX_MAX_NSLEN);
             parray[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
             ++n;
         }
@@ -476,7 +477,7 @@ int ext3x_fence(opal_list_t *procs, int collect_data)
 
     if (collect_data) {
         PMIX_INFO_CONSTRUCT(&info);
-        (void)strncpy(info.key, PMIX_COLLECT_DATA, PMIX_MAX_KEYLEN);
+        (void)opal_string_copy(info.key, PMIX_COLLECT_DATA, PMIX_MAX_KEYLEN);
         info.value.type = PMIX_BOOL;
         info.value.data.flag = true;
         iptr = &info;
@@ -527,7 +528,7 @@ int ext3x_fencenb(opal_list_t *procs, int collect_data,
                 OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
                 return OPAL_ERR_NOT_FOUND;
             }
-            (void)strncpy(parray[n].nspace, nsptr, PMIX_MAX_NSLEN);
+            (void)opal_string_copy(parray[n].nspace, nsptr, PMIX_MAX_NSLEN);
             parray[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
             ++n;
         }
@@ -623,14 +624,14 @@ int ext3x_get(const opal_process_name_t *proc, const char *key,
     *val = NULL;
 
     if (NULL == proc) {
-        (void)strncpy(p.nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(p.nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
         p.rank = ext3x_convert_rank(PMIX_RANK_WILDCARD);
     } else {
         if (NULL == (nsptr = ext3x_convert_jobid(proc->jobid))) {
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        (void)strncpy(p.nspace, nsptr, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(p.nspace, nsptr, PMIX_MAX_NSLEN);
         p.rank = ext3x_convert_opalrank(proc->vpid);
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -639,7 +640,7 @@ int ext3x_get(const opal_process_name_t *proc, const char *key,
         PMIX_INFO_CREATE(pinfo, sz);
         n=0;
         OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&pinfo[n].value, ival);
             ++n;
         }
@@ -744,14 +745,14 @@ int ext3x_getnb(const opal_process_name_t *proc, const char *key,
         op->nspace = strdup(key);
     }
     if (NULL == proc) {
-        (void)strncpy(op->p.nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(op->p.nspace, mca_pmix_ext3x_component.myproc.nspace, PMIX_MAX_NSLEN);
         op->p.rank = ext3x_convert_rank(PMIX_RANK_WILDCARD);
     } else {
         if (NULL == (nsptr = ext3x_convert_jobid(proc->jobid))) {
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        (void)strncpy(op->p.nspace, nsptr, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(op->p.nspace, nsptr, PMIX_MAX_NSLEN);
         op->p.rank = ext3x_convert_opalrank(proc->vpid);
     }
     OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -760,7 +761,7 @@ int ext3x_getnb(const opal_process_name_t *proc, const char *key,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(val, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, val->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(op->info[n].key, val->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&op->info[n].value, val);
             ++n;
         }
@@ -801,7 +802,7 @@ int ext3x_publish(opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&pinfo[n].value, iptr);
             ++n;
         }
@@ -849,7 +850,7 @@ int ext3x_publishnb(opal_list_t *info,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&op->info[n].value, iptr);
             ++n;
         }
@@ -887,7 +888,7 @@ int ext3x_lookup(opal_list_t *data, opal_list_t *info)
     PMIX_PDATA_CREATE(pdata, cnt);
     n = 0;
     OPAL_LIST_FOREACH(d, data, opal_pmix_pdata_t) {
-        (void)strncpy(pdata[n].key, d->value.key, PMIX_MAX_KEYLEN);
+        (void)opal_string_copy(pdata[n].key, d->value.key, PMIX_MAX_KEYLEN);
         ++n;
     }
 
@@ -895,7 +896,7 @@ int ext3x_lookup(opal_list_t *data, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&pinfo[n].value, iptr);
             ++n;
         }
@@ -926,7 +927,7 @@ int ext3x_lookup(opal_list_t *data, opal_list_t *info)
             }
             if (NULL == job) {
                 job = OBJ_NEW(opal_ext3x_jobid_trkr_t);
-                (void)strncpy(job->nspace, pdata[n].proc.nspace, PMIX_MAX_NSLEN);
+                (void)opal_string_copy(job->nspace, pdata[n].proc.nspace, PMIX_MAX_NSLEN);
                 job->jobid = d->proc.jobid;
                 opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
             }
@@ -988,7 +989,7 @@ static void lk_cbfunc(pmix_status_t status,
             }
             if (NULL == job) {
                 job = OBJ_NEW(opal_ext3x_jobid_trkr_t);
-                (void)strncpy(job->nspace, data[n].proc.nspace, PMIX_MAX_NSLEN);
+                (void)opal_string_copy(job->nspace, data[n].proc.nspace, PMIX_MAX_NSLEN);
                 job->jobid = d->proc.jobid;
                 opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
             }
@@ -1044,7 +1045,7 @@ int ext3x_lookupnb(char **keys, opal_list_t *info,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&op->info[n].value, iptr);
             ++n;
         }
@@ -1072,7 +1073,7 @@ int ext3x_unpublish(char **keys, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&pinfo[n].value, iptr);
             ++n;
         }
@@ -1111,7 +1112,7 @@ int ext3x_unpublishnb(char **keys, opal_list_t *info,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&op->info[n].value, iptr);
             ++n;
         }
@@ -1146,7 +1147,7 @@ int ext3x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         PMIX_INFO_CREATE(info, ninfo);
         n=0;
         OPAL_LIST_FOREACH(ival, job_info, opal_value_t) {
-            (void)strncpy(info[n].key, ival->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(info[n].key, ival->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&info[n].value, ival);
             ++n;
         }
@@ -1171,7 +1172,7 @@ int ext3x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
             PMIX_INFO_CREATE(papps[n].info, papps[n].ninfo);
             m=0;
             OPAL_LIST_FOREACH(ival, &app->info, opal_value_t) {
-                (void)strncpy(papps[n].info[m].key, ival->key, PMIX_MAX_KEYLEN);
+                (void)opal_string_copy(papps[n].info[m].key, ival->key, PMIX_MAX_KEYLEN);
                 ext3x_value_load(&papps[n].info[m].value, ival);
                 ++m;
             }
@@ -1193,7 +1194,7 @@ int ext3x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         }
         /* add this to our jobid tracker */
         job = OBJ_NEW(opal_ext3x_jobid_trkr_t);
-        (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(job->nspace, nspace, PMIX_MAX_NSLEN);
         job->jobid = *jobid;
         opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -1227,7 +1228,7 @@ static void spcbfunc(pmix_status_t status,
         }
         /* add this to our jobid tracker */
         job = OBJ_NEW(opal_ext3x_jobid_trkr_t);
-        (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(job->nspace, nspace, PMIX_MAX_NSLEN);
         job->jobid = jobid;
         opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
         OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
@@ -1262,7 +1263,7 @@ int ext3x_spawnnb(opal_list_t *job_info, opal_list_t *apps,
         PMIX_INFO_CREATE(op->info, op->ninfo);
         n=0;
         OPAL_LIST_FOREACH(info, job_info, opal_value_t) {
-            (void)strncpy(op->info[n].key, info->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(op->info[n].key, info->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&op->info[n].value, info);
             ++n;
         }
@@ -1284,7 +1285,7 @@ int ext3x_spawnnb(opal_list_t *job_info, opal_list_t *apps,
             PMIX_INFO_CREATE(op->apps[n].info, op->apps[n].ninfo);
             m=0;
             OPAL_LIST_FOREACH(info, &app->info, opal_value_t) {
-                (void)strncpy(op->apps[n].info[m].key, info->key, PMIX_MAX_KEYLEN);
+                (void)opal_string_copy(op->apps[n].info[m].key, info->key, PMIX_MAX_KEYLEN);
                 ext3x_value_load(&op->apps[n].info[m].value, info);
                 ++m;
             }
@@ -1330,7 +1331,7 @@ int ext3x_connect(opal_list_t *procs)
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        (void)strncpy(p[n].nspace, nsptr, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(p[n].nspace, nsptr, PMIX_MAX_NSLEN);
         p[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
         ++n;
     }
@@ -1382,7 +1383,7 @@ int ext3x_connectnb(opal_list_t *procs,
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        (void)strncpy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
         op->procs[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
         ++n;
     }
@@ -1427,7 +1428,7 @@ int ext3x_disconnect(opal_list_t *procs)
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        (void)strncpy(p[n].nspace, nsptr, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(p[n].nspace, nsptr, PMIX_MAX_NSLEN);
         p[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
         ++n;
     }
@@ -1479,7 +1480,7 @@ int ext3x_disconnectnb(opal_list_t *procs,
             OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
             return OPAL_ERR_NOT_FOUND;
         }
-        (void)strncpy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
+        (void)opal_string_copy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
         op->procs[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
         ++n;
     }
@@ -1538,7 +1539,7 @@ int ext3x_resolve_peers(const char *nodename,
             /* if we don't already have it, add this to our jobid tracker */
             if (NULL == ext3x_convert_jobid(nm->name.jobid)) {
                 job = OBJ_NEW(opal_ext3x_jobid_trkr_t);
-                (void)strncpy(job->nspace, array[n].nspace, PMIX_MAX_NSLEN);
+                (void)opal_string_copy(job->nspace, array[n].nspace, PMIX_MAX_NSLEN);
                 job->jobid = nm->name.jobid;
                 opal_list_append(&mca_pmix_ext3x_component.jobids, &job->super);
             }
@@ -1639,7 +1640,7 @@ int ext3x_job_control(opal_list_t *targets,
                 OPAL_PMIX_RELEASE_THREAD(&opal_pmix_base.lock);
                 return OPAL_ERR_NOT_FOUND;
             }
-            (void)strncpy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
+            (void)opal_string_copy(op->procs[n].nspace, nsptr, PMIX_MAX_NSLEN);
             op->procs[n].rank = ext3x_convert_opalrank(ptr->name.vpid);
             ++n;
         }
@@ -1650,7 +1651,7 @@ int ext3x_job_control(opal_list_t *targets,
         PMIX_INFO_CREATE(op->info, op->ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, directives, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
             ext3x_value_load(&op->info[n].value, iptr);
             ++n;
         }

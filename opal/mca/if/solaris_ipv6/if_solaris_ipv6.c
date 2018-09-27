@@ -15,6 +15,7 @@
 
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/if/if.h"
 
 static int if_solaris_ipv6_open(void);
@@ -96,7 +97,7 @@ static int if_solaris_ipv6_open(void)
          i += sizeof (*lifreq)) {
 
         lifreq = (struct lifreq *)((caddr_t)lifconf.lifc_buf + i);
-        strncpy (lifquery.lifr_name, lifreq->lifr_name,
+        opal_string_copy (lifquery.lifr_name, lifreq->lifr_name,
                  sizeof (lifquery.lifr_name));
 
         /* lookup kernel index */
@@ -140,7 +141,7 @@ static int if_solaris_ipv6_open(void)
                 }
                 intf->af_family = AF_INET6;
 
-                strncpy (intf->if_name, lifreq->lifr_name, IF_NAMESIZE);
+                opal_string_copy (intf->if_name, lifreq->lifr_name, IF_NAMESIZE);
                 intf->if_index = opal_list_get_size(&opal_if_list)+1;
                 memcpy(&intf->if_addr, my_addr, sizeof (*my_addr));
                 intf->if_mask = 64;

@@ -20,6 +20,7 @@
 #endif
 
 #include "opal/util/net.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/reachable/base/base.h"
 #include "reachable_netlink.h"
 #include "libnl_utils.h"
@@ -92,11 +93,11 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
 
     /* opal_net_get_hostname returns a static buffer.  Great for
        single address printfs, need to copy in this case */
-    strncpy(str_local,
+    opal_string_copy(str_local,
             opal_net_get_hostname((struct sockaddr *)&local_if->if_addr),
             sizeof(str_local));
     str_local[sizeof(str_local) - 1] = '\0';
-    strncpy(str_remote,
+    opal_string_copy(str_remote,
             opal_net_get_hostname((struct sockaddr *)&remote_if->if_addr),
             sizeof(str_remote));
     str_remote[sizeof(str_remote) - 1] = '\0';

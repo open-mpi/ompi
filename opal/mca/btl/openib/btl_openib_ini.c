@@ -35,6 +35,7 @@
 #endif
 
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 
 #include "btl_openib.h"
 #include "btl_openib_lex.h"
@@ -324,7 +325,7 @@ static int parse_line(parsed_section_values_t *sv)
         }
         key_buffer = tmp;
     }
-    strncpy(key_buffer, btl_openib_ini_yytext, key_buffer_len);
+    opal_string_copy(key_buffer, btl_openib_ini_yytext, key_buffer_len);
 
     /* The first thing we have to see is an "=" */
     val = btl_openib_ini_yylex();

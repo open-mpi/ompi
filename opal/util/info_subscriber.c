@@ -41,7 +41,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
-#include "opal/util/strncpy.h"
 #include "opal/util/info_subscriber.h"
 
 static char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t * object, char *key, char *new_value, int *found_callback);
