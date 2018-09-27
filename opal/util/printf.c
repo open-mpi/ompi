@@ -200,6 +200,7 @@ int opal_asprintf(char **ptr, const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
+    /* opal_vasprintf guarantees that *ptr is set to NULL on error */
     length = opal_vasprintf(ptr, fmt, ap);
     va_end(ap);
 
@@ -211,6 +212,13 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
 {
     int length;
     va_list ap2;
+
+#ifdef HAVE_VASPRINTF
+    length = vasprintf(ptr, fmt, ap);
+    if (length < 0) {
+        *ptr = NULL;
+    }
+#else
 
     /* va_list might have pointer to internal state and using
        it twice is a bad idea.  So make a copy for the second
@@ -246,6 +254,7 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
         errno = ENOMEM;
         return -1;
     }
+#endif
 
     return length;
 }
