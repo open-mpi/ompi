@@ -293,7 +293,7 @@ static pmix_status_t _add_hdlr(pmix_rshift_caddy_t *cd, pmix_list_t *xfer)
         PMIX_INFO_CREATE(cd2->info, cd2->ninfo);
         n=0;
         PMIX_LIST_FOREACH(ixfer, xfer, pmix_info_caddy_t) {
-            (void)strncpy(cd2->info[n].key, ixfer->info[n].key, PMIX_MAX_KEYLEN);
+            pmix_strncpy(cd2->info[n].key, ixfer->info[n].key, PMIX_MAX_KEYLEN);
             PMIX_BFROPS_VALUE_LOAD(pmix_client_globals.myserver,
                                    &cd2->info[n].value,
                                    &ixfer->info[n].value.data,
@@ -407,7 +407,7 @@ static void check_cached_events(pmix_rshift_caddy_t *cd)
        /* create the chain */
         chain = PMIX_NEW(pmix_event_chain_t);
         chain->status = ncd->status;
-        (void)strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
         chain->source.rank = pmix_globals.myid.rank;
         /* we always leave space for event hdlr name and a callback object */
         chain->nallocated = ncd->ninfo + 2;
@@ -493,8 +493,6 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
                 }
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_NAME, PMIX_MAX_KEYLEN)) {
                 name = cd->info[n].value.data.string;
-            } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_ENVIRO_LEVEL, PMIX_MAX_KEYLEN)) {
-                cd->enviro = PMIX_INFO_TRUE(&cd->info[n]);
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_RETURN_OBJECT, PMIX_MAX_KEYLEN)) {
                 cbobject = cd->info[n].value.data.ptr;
             } else if (0 == strncmp(cd->info[n].key, PMIX_EVENT_HDLR_FIRST_IN_CATEGORY, PMIX_MAX_KEYLEN)) {
@@ -527,6 +525,14 @@ static void reg_event_hdlr(int sd, short args, void *cbdata)
                 ixfer->info = &cd->info[n];
                 pmix_list_append(&xfer, &ixfer->super);
             }
+        }
+    }
+
+    /* check the codes for system events */
+    for (n=0; n < cd->ncodes; n++) {
+        if (PMIX_SYSTEM_EVENT(cd->codes[n])) {
+            cd->enviro = true;
+            break;
         }
     }
 

@@ -309,7 +309,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
             if (0 == strncmp(info[n].key, PMIX_SERVER_NSPACE, PMIX_MAX_KEYLEN)) {
-                (void)strncpy(pmix_globals.myid.nspace, info[n].value.data.string, PMIX_MAX_NSLEN);
+                pmix_strncpy(pmix_globals.myid.nspace, info[n].value.data.string, PMIX_MAX_NSLEN);
                 nspace_given = true;
             } else if (0 == strncmp(info[n].key, PMIX_SERVER_RANK, PMIX_MAX_KEYLEN)) {
                 pmix_globals.myid.rank = info[n].value.data.rank;
@@ -353,9 +353,9 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         /* look for our namespace, if one was given */
         if (NULL == (evar = getenv("PMIX_SERVER_NAMESPACE"))) {
             /* use a fake namespace */
-            (void)strncpy(pmix_globals.myid.nspace, "pmix-server", PMIX_MAX_NSLEN);
+            pmix_strncpy(pmix_globals.myid.nspace, "pmix-server", PMIX_MAX_NSLEN);
         } else {
-            (void)strncpy(pmix_globals.myid.nspace, evar, PMIX_MAX_NSLEN);
+            pmix_strncpy(pmix_globals.myid.nspace, evar, PMIX_MAX_NSLEN);
         }
     }
     if (!rank_given) {
@@ -377,7 +377,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_init(pmix_server_module_t *module,
         rinfo = pmix_globals.mypeer->info;
     }
     if (NULL == pmix_globals.mypeer->nptr) {
-        pmix_globals.mypeer->nptr = PMIX_NEW(pmix_nspace_t);
+        pmix_globals.mypeer->nptr = PMIX_NEW(pmix_namespace_t);
         /* ensure our own nspace is first on the list */
         PMIX_RETAIN(pmix_globals.mypeer->nptr);
         pmix_list_prepend(&pmix_server_globals.nspaces, &pmix_globals.mypeer->nptr->super);
@@ -452,7 +452,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 {
     int i;
     pmix_peer_t *peer;
-    pmix_nspace_t *ns;
+    pmix_namespace_t *ns;
     pmix_setup_caddy_t *cd;
 
     PMIX_ACQUIRE_THREAD(&pmix_global_lock);
@@ -504,7 +504,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
     PMIX_LIST_DESTRUCT(&pmix_server_globals.local_reqs);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.gdata);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.events);
-    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
         /* ensure that we do the specified cleanup - if this is an
          * abnormal termination, then the nspace object may not be
          * at zero refcount */
@@ -558,7 +558,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_finalize(void)
 static void _register_nspace(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
-    pmix_nspace_t *nptr, *tmp;
+    pmix_namespace_t *nptr, *tmp;
     pmix_status_t rc;
     size_t i;
 
@@ -569,14 +569,14 @@ static void _register_nspace(int sd, short args, void *cbdata)
 
     /* see if we already have this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
             nptr = tmp;
             break;
         }
     }
     if (NULL == nptr) {
-        nptr = PMIX_NEW(pmix_nspace_t);
+        nptr = PMIX_NEW(pmix_namespace_t);
         if (NULL == nptr) {
             rc = PMIX_ERR_NOMEM;
             goto release;
@@ -635,7 +635,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int n
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
     cd = PMIX_NEW(pmix_setup_caddy_t);
-    (void)strncpy(cd->proc.nspace, nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(cd->proc.nspace, nspace, PMIX_MAX_NSLEN);
     cd->nlocalprocs = nlocalprocs;
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
@@ -654,7 +654,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_nspace(const char nspace[], int n
 static void _deregister_nspace(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
-    pmix_nspace_t *tmp;
+    pmix_namespace_t *tmp;
     pmix_status_t rc;
 
     PMIX_ACQUIRE_OBJECT(cd);
@@ -670,7 +670,7 @@ static void _deregister_nspace(int sd, short args, void *cbdata)
     PMIX_GDS_DEL_NSPACE(rc, cd->proc.nspace);
 
     /* release this nspace */
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
             pmix_list_remove_item(&pmix_server_globals.nspaces, &tmp->super);
             PMIX_RELEASE(tmp);
@@ -706,7 +706,7 @@ PMIX_EXPORT void PMIx_server_deregister_nspace(const char nspace[],
     PMIX_RELEASE_THREAD(&pmix_global_lock);
 
      cd = PMIX_NEW(pmix_setup_caddy_t);
-    (void)strncpy(cd->proc.nspace, nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(cd->proc.nspace, nspace, PMIX_MAX_NSLEN);
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
 
@@ -796,7 +796,7 @@ void pmix_server_execute_collective(int sd, short args, void *cbdata)
                 }
                 if (trk->hybrid || first) {
                     /* setup the nspace */
-                    (void)strncpy(proc.nspace, cd->peer->info->pname.nspace, PMIX_MAX_NSLEN);
+                    pmix_strncpy(proc.nspace, cd->peer->info->pname.nspace, PMIX_MAX_NSLEN);
                     first = false;
                 }
                 proc.rank = cd->peer->info->pname.rank;
@@ -873,7 +873,7 @@ static void _register_client(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info, *iptr;
-    pmix_nspace_t *nptr, *ns;
+    pmix_namespace_t *nptr, *ns;
     pmix_server_trkr_t *trk;
     pmix_trkr_caddy_t *tcd;
     bool all_def;
@@ -888,14 +888,14 @@ static void _register_client(int sd, short args, void *cbdata)
 
     /* see if we already have this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(ns->nspace, cd->proc.nspace)) {
             nptr = ns;
             break;
         }
     }
     if (NULL == nptr) {
-        nptr = PMIX_NEW(pmix_nspace_t);
+        nptr = PMIX_NEW(pmix_namespace_t);
         if (NULL == nptr) {
             rc = PMIX_ERR_NOMEM;
             goto cleanup;
@@ -942,7 +942,7 @@ static void _register_client(int sd, short args, void *cbdata)
                  * if the nspaces are all defined */
                 if (all_def) {
                     /* so far, they have all been defined - check this one */
-                    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_nspace_t) {
+                    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
                         if (0 < ns->nlocalprocs &&
                             0 == strcmp(trk->pcs[i].nspace, ns->nspace)) {
                             all_def = ns->all_registered;
@@ -1012,7 +1012,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
     if (NULL == cd) {
         return PMIX_ERR_NOMEM;
     }
-    (void)strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
     cd->proc.rank = proc->rank;
     cd->uid = uid;
     cd->gid = gid;
@@ -1030,7 +1030,7 @@ static void _deregister_client(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info;
-    pmix_nspace_t *nptr, *tmp;
+    pmix_namespace_t *nptr, *tmp;
     pmix_peer_t *peer;
 
     PMIX_ACQUIRE_OBJECT(cd);
@@ -1041,7 +1041,7 @@ static void _deregister_client(int sd, short args, void *cbdata)
 
     /* see if we already have this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
             nptr = tmp;
             break;
@@ -1126,7 +1126,7 @@ PMIX_EXPORT void PMIx_server_deregister_client(const pmix_proc_t *proc,
         }
         return;
     }
-    (void)strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
     cd->proc.rank = proc->rank;
     cd->opcbfunc = cbfunc;
     cd->cbdata = cbdata;
@@ -1214,7 +1214,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info, *iptr;
-    pmix_nspace_t *nptr, *ns;
+    pmix_namespace_t *nptr, *ns;
     char *data = NULL;
     size_t sz = 0;
     pmix_dmdx_remote_t *dcd;
@@ -1234,7 +1234,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
      * been informed of it - so first check to see if we know
      * about this nspace yet */
     nptr = NULL;
-    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(ns, &pmix_server_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(ns->nspace, cd->proc.nspace)) {
             nptr = ns;
             break;
@@ -1364,7 +1364,7 @@ PMIX_EXPORT pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
                         proc->nspace, proc->rank);
 
     cd = PMIX_NEW(pmix_setup_caddy_t);
-    (void)strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
     cd->proc.rank = proc->rank;
     cd->cbfunc = cbfunc;
     cd->cbdata = cbdata;
@@ -1382,7 +1382,7 @@ static void _store_internal(int sd, short args, void *cbdata)
 
     PMIX_ACQUIRE_OBJECT(cd);
 
-    (void)strncpy(proc.nspace, cd->pname.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, cd->pname.nspace, PMIX_MAX_NSLEN);
     proc.rank = cd->pname.rank;
     PMIX_GDS_STORE_KV(cd->status, pmix_globals.mypeer,
                       &proc, PMIX_INTERNAL, cd->kv);
@@ -1506,7 +1506,7 @@ static void _setup_app(int sd, short args, void *cbdata)
         }
         n = 0;
         PMIX_LIST_FOREACH(kv, &ilist, pmix_kval_t) {
-            (void)strncpy(fcd->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+            pmix_strncpy(fcd->info[n].key, kv->key, PMIX_MAX_KEYLEN);
             pmix_value_xfer(&fcd->info[n].value, kv->value);
             ++n;
         }
@@ -1730,7 +1730,7 @@ pmix_status_t PMIx_server_IOF_deliver(const pmix_proc_t *source,
         PMIX_RELEASE(cd);
         return PMIX_ERR_NOMEM;
     }
-    (void)strncpy(cd->procs[0].nspace, source->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(cd->procs[0].nspace, source->nspace, PMIX_MAX_NSLEN);
     cd->procs[0].rank = source->rank;
     cd->channels = channel;
     PMIX_BYTE_OBJECT_CREATE(cd->bo, 1);
@@ -1813,7 +1813,7 @@ static void clct_complete(pmix_status_t status,
                 /* transfer the results */
                 n=0;
                 PMIX_LIST_FOREACH(kv, &cd->payload, pmix_kval_t) {
-                    (void)strncpy(cd->info[n].key, kv->key, PMIX_MAX_KEYLEN);
+                    pmix_strncpy(cd->info[n].key, kv->key, PMIX_MAX_KEYLEN);
                     rc = pmix_value_xfer(&cd->info[n].value, kv->value);
                     if (PMIX_SUCCESS != rc) {
                         PMIX_INFO_FREE(cd->info, cd->ninfo);
@@ -2089,7 +2089,7 @@ static void _spcb(int sd, short args, void *cbdata)
         /* pass back the name of the nspace */
         PMIX_BFROPS_PACK(rc, cd->cd->peer, reply, &cd->pname.nspace, 1, PMIX_STRING);
         /* add the job-level info, if we have it */
-        (void)strncpy(proc.nspace, cd->pname.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(proc.nspace, cd->pname.nspace, PMIX_MAX_NSLEN);
         proc.rank = PMIX_RANK_WILDCARD;
         /* this is going to a local client, so let the gds
          * have the option of returning a copy of the data,
@@ -2224,7 +2224,7 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
         goto finish_collective;
     }
 
-    // collect the pmix_nspace_t's of all local participants
+    // collect the pmix_namespace_t's of all local participants
     PMIX_LIST_FOREACH(cd, &tracker->local_cbs, pmix_server_caddy_t) {
         // see if we already have this nspace
         found = false;
@@ -2507,7 +2507,7 @@ static void _cnct(int sd, short args, void *cbdata)
                  * local storage */
                 /* add the job-level info, if necessary */
                 proc.rank = PMIX_RANK_WILDCARD;
-                (void)strncpy(proc.nspace, nspaces[i], PMIX_MAX_NSLEN);
+                pmix_strncpy(proc.nspace, nspaces[i], PMIX_MAX_NSLEN);
                 PMIX_CONSTRUCT(&cb, pmix_cb_t);
                 /* this is for a local client, so give the gds the
                  * option of returning a complete copy of the data,
@@ -3072,7 +3072,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
         PMIX_GDS_CADDY(cd, peer, tag);
         /* call the local server, if supported */
         if (NULL != pmix_host_server.client_finalized) {
-            (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
+            pmix_strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
             proc.rank = peer->info->pname.rank;
             /* now tell the host server */
             if (PMIX_SUCCESS == (rc = pmix_host_server.client_finalized(&proc, peer->info->server_object,

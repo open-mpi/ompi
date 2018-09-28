@@ -290,7 +290,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
          * rank should be known. So return them here if
          * requested */
         if (NULL != proc) {
-            (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+            pmix_strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
             proc->rank = pmix_globals.myid.rank;
         }
         ++pmix_globals.init_cntr;
@@ -438,7 +438,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     }
     /* if we were given a name, then set it now */
     if (nspace_given || nspace_in_enviro) {
-        (void)strncpy(pmix_globals.myid.nspace, nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(pmix_globals.myid.nspace, nspace, PMIX_MAX_NSLEN);
         free(nspace);
         pmix_globals.myid.rank = rank;
     }
@@ -463,7 +463,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
         PMIX_RELEASE_THREAD(&pmix_global_lock);
         return PMIX_ERR_NOMEM;
     }
-    pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_nspace_t);
+    pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_namespace_t);
     if (NULL == pmix_client_globals.myserver->nptr) {
         PMIX_RELEASE(pmix_client_globals.myserver);
         if (gdsfound) {
@@ -593,7 +593,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
     }
     if (!nspace_given) {
         /* Success, so copy the nspace and rank to the proc struct they gave us */
-        (void)strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(proc->nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     }
     if (!rank_given) {
         proc->rank = pmix_globals.myid.rank;
@@ -727,7 +727,7 @@ PMIX_EXPORT int PMIx_tool_init(pmix_proc_t *proc,
          * datastore with typical job-related info. No point
          * in having the server generate these as we are
          * obviously a singleton, and so the values are well-known */
-        (void)strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(wildcard.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
         wildcard.rank = pmix_globals.myid.rank;
 
         /* the jobid is just our nspace */

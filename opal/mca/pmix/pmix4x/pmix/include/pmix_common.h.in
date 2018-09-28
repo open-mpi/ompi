@@ -81,8 +81,12 @@ extern "C" {
 /****  PMIX CONSTANTS    ****/
 
 /* define maximum value and key sizes */
-#define PMIX_MAX_NSLEN     255
-#define PMIX_MAX_KEYLEN    511
+#define PMIX_MAX_NSLEN     63
+#define PMIX_MAX_KEYLEN    63
+
+/* define abstract types for namespaces and keys */
+typedef char pmix_nspace_t[PMIX_MAX_NSLEN+1];
+typedef char pmix_key_t[PMIX_MAX_KEYLEN+1];
 
 /* define a type for rank values */
 typedef uint32_t pmix_rank_t;
@@ -332,8 +336,6 @@ typedef uint32_t pmix_rank_t;
 
 /* event handler registration and notification info keys */
 #define PMIX_EVENT_HDLR_NAME                "pmix.evname"           // (char*) string name identifying this handler
-#define PMIX_EVENT_JOB_LEVEL                "pmix.evjob"            // (bool) register for job-specific events only
-#define PMIX_EVENT_ENVIRO_LEVEL             "pmix.evenv"            // (bool) register for environment events only
 #define PMIX_EVENT_HDLR_FIRST               "pmix.evfirst"          // (bool) invoke this event handler before any other handlers
 #define PMIX_EVENT_HDLR_LAST                "pmix.evlast"           // (bool) invoke this event handler after all other handlers have been called
 #define PMIX_EVENT_HDLR_FIRST_IN_CATEGORY   "pmix.evfirstcat"       // (bool) invoke this event handler before any other handlers in this category
@@ -408,19 +410,6 @@ typedef uint32_t pmix_rank_t;
 #define PMIX_FWD_STDERR                     "pmix.fwd.stderr"       // (bool) forward stderr from the spawned processes to this process (typically used by a tool)
 #define PMIX_FWD_STDDIAG                    "pmix.fwd.stddiag"      // (bool) if a diagnostic channel exists, forward any output on it
                                                                     //        from the spawned processes to this process (typically used by a tool)
-
-
-/* connect attributes */
-#define PMIX_CONNECT_NOTIFY_EACH            "pmix.cnct.each"        // (bool) notify the other participants of the connection by event
-                                                                    //        each time a process connects
-#define PMIX_CONNECT_NOTIFY_REQ             "pmix.cnct.req"         // (bool) notify all other participants that they are requested to
-                                                                    //        connect
-#define PMIX_CONNECT_OPTIONAL               "pmix.cnt.opt"          // (bool) participation is optional - do not return error if procs
-                                                                    //        terminate without having connected
-#define PMIX_CONNECT_XCHG_ONLY              "pmix.cnt.xchg"         // (bool) provide participants with job-level info for all participating
-                                                                    //        nspaces, but do not assign a new nspace or rank
-#define PMIX_CONNECT_ID                     "pmix.cnt.id"           // (char*) an application-provided string identifier for a PMIx_Connect operation.
-
 
 /* query attributes */
 #define PMIX_QUERY_NAMESPACES               "pmix.qry.ns"           // (char*) request a comma-delimited list of active nspaces
@@ -765,10 +754,11 @@ typedef int pmix_status_t;
 #define PMIX_MONITOR_HEARTBEAT_ALERT            (PMIX_ERR_V2X_BASE -  9)
 #define PMIX_MONITOR_FILE_ALERT                 (PMIX_ERR_V2X_BASE - 10)
 #define PMIX_PROC_TERMINATED                    (PMIX_ERR_V2X_BASE - 11)
+#define PMIX_ERR_INVALID_TERMINATION            (PMIX_ERR_V2X_BASE - 12)
 
 /* define a starting point for operational error constants so
  * we avoid renumbering when making additions */
-#define PMIX_ERR_OP_BASE    PMIX_ERR_V2X_BASE-30
+#define PMIX_ERR_OP_BASE    PMIX_ERR_V2X_BASE-100
 
 /* operational */
 #define PMIX_ERR_EVENT_REGISTRATION             (PMIX_ERR_OP_BASE - 14)
@@ -785,21 +775,27 @@ typedef int pmix_status_t;
 #define PMIX_LAUNCHER_READY                     (PMIX_ERR_OP_BASE - 25)
 #define PMIX_OPERATION_IN_PROGRESS              (PMIX_ERR_OP_BASE - 26)
 #define PMIX_OPERATION_SUCCEEDED                (PMIX_ERR_OP_BASE - 27)
-/* gap for group codes */
+#define PMIX_ERR_INVALID_OPERATION              (PMIX_ERR_OP_BASE - 28)
 
 
 /* define a starting point for system error constants so
- * we avoid renumbering when making additions */
-#define PMIX_ERR_SYS_BASE    PMIX_ERR_OP_BASE-100
+ * we avoid renumbering when making additions - host environments
++ * are responsible for translating their own event codes into
++ * the closest PMIx equivalent value */
+#define PMIX_ERR_SYS_BASE    PMIX_ERR_OP_BASE-200
 
 /* system failures */
-#define PMIX_ERR_NODE_DOWN                      (PMIX_ERR_SYS_BASE -  1)
-#define PMIX_ERR_NODE_OFFLINE                   (PMIX_ERR_SYS_BASE -  2)
+#define PMIX_ERR_NODE_DOWN                      (PMIX_ERR_SYS_BASE -  0)
+#define PMIX_ERR_NODE_OFFLINE                   (PMIX_ERR_SYS_BASE -  1)
+#define PMIX_ERR_SYS_OTHER                      (PMIX_ERR_EVHDLR_BASE + 1)
 
+/* define a macro for identifying system event values */
+#define PMIX_SYSTEM_EVENT(a)   \
+    (PMIX_ERR_SYS_BASE >= (a) && PMIX_ERR_EVHDLR_BASE < (a))
 
 /* define a starting point for event handler error constants so
  * we avoid renumbering when making additions */
-#define PMIX_ERR_EVHDLR_BASE    PMIX_ERR_SYS_BASE-100
+#define PMIX_ERR_EVHDLR_BASE    PMIX_ERR_SYS_BASE-500
 
 /* used by event handlers */
 #define PMIX_EVENT_NO_ACTION_TAKEN              (PMIX_ERR_EVHDLR_BASE -  1)
@@ -810,14 +806,14 @@ typedef int pmix_status_t;
 
 /* define a starting point for PMIx internal error codes
  * that are never exposed outside the library */
-#define PMIX_INTERNAL_ERR_BASE          -1000
+#define PMIX_INTERNAL_ERR_BASE          PMIX_ERR_EVHDLR_BASE-1000
 
 /* define a starting point for user-level defined error
  * constants - negative values larger than this are guaranteed
  * not to conflict with PMIx values. Definitions should always
  * be based on the PMIX_EXTERNAL_ERR_BASE constant and -not- a
  * specific value as the value of the constant may change */
-#define PMIX_EXTERNAL_ERR_BASE           -2000
+#define PMIX_EXTERNAL_ERR_BASE           PMIX_INTERNAL_ERR_BASE-2000
 
 /****    PMIX DATA TYPES    ****/
 typedef uint16_t pmix_data_type_t;
@@ -852,7 +848,7 @@ typedef uint16_t pmix_data_type_t;
 #define PMIX_BUFFER             26
 #define PMIX_BYTE_OBJECT        27
 #define PMIX_KVAL               28
-#define PMIX_MODEX              29
+// Hole left by deprecation/removal of PMIX_MODEX
 #define PMIX_PERSIST            30
 #define PMIX_POINTER            31
 #define PMIX_SCOPE              32
@@ -867,9 +863,7 @@ typedef uint16_t pmix_data_type_t;
 #define PMIX_QUERY              41
 #define PMIX_COMPRESSED_STRING  42  // string compressed with zlib
 #define PMIX_ALLOC_DIRECTIVE    43
-/**** DEPRECATED ****/
-#define PMIX_INFO_ARRAY         44
-/****            ****/
+// Hole left by deprecation/removal of PMIX_INFO_ARRAY
 #define PMIX_IOF_CHANNEL        45
 #define PMIX_ENVAR              46
 /********************/
@@ -953,6 +947,33 @@ typedef uint16_t pmix_iof_channel_t;
 #define PMIX_FWD_STDERR_CHANNEL     0x0004
 #define PMIX_FWD_STDDIAG_CHANNEL    0x0008
 #define PMIX_FWD_ALL_CHANNELS       0x00ff
+
+
+/* declare a convenience macro for checking keys */
+#define PMIX_CHECK_KEY(a, b) \
+    (0 == strncmp((a)->key, (b), PMIX_MAX_KEYLEN))
+
+/* define a convenience macro for loading nspaces */
+#define PMIX_LOAD_NSPACE(a, b)                      \
+    do {                                            \
+        memset((a), 0, PMIX_MAX_NSLEN+1);           \
+        (void)strncpy((a), (b), PMIX_MAX_NSLEN);    \
+    }while(0)
+
+/* define a convenience macro for checking nspaces */
+#define PMIX_CHECK_NSPACE(a, b) \
+    (0 == strncmp((a), (b), PMIX_MAX_NSLEN))
+
+/* define a convenience macro for loading names */
+#define PMIX_LOAD_PROCID(a, b, c)               \
+    do {                                        \
+        PMIX_LOAD_NSPACE((a)->nspace, (b));     \
+        (a)->rank = (c);                        \
+    }while(0)
+
+/* define a convenience macro for checking names */
+#define PMIX_CHECK_PROCID(a, b) \
+    (PMIX_CHECK_NSPACE((a)->nspace, (b)->nspace) && ((a)->rank == (b)->rank || (PMIX_RANK_WILDCARD == (a)->rank || PMIX_RANK_WILDCARD == (b)->rank)))
 
 
 /****    PMIX BYTE OBJECT    ****/
@@ -1119,7 +1140,7 @@ typedef struct pmix_data_buffer {
 
 /****    PMIX PROC OBJECT    ****/
 typedef struct pmix_proc {
-    char nspace[PMIX_MAX_NSLEN+1];
+    pmix_nspace_t nspace;
     pmix_rank_t rank;
 } pmix_proc_t;
 #define PMIX_PROC_CREATE(m, n)                                  \
@@ -1151,7 +1172,7 @@ typedef struct pmix_proc {
 #define PMIX_PROC_LOAD(m, n, r)                             \
     do {                                                    \
         PMIX_PROC_CONSTRUCT((m));                           \
-        (void)strncpy((m)->nspace, (n), PMIX_MAX_NSLEN);    \
+        pmix_strncpy((m)->nspace, (n), PMIX_MAX_NSLEN);    \
         (m)->rank = (r);                                    \
     } while(0)
 
@@ -1161,9 +1182,9 @@ typedef struct pmix_proc {
         memset((t), 0, PMIX_MAX_NSLEN+1);                                   \
         _len = strlen((c));                                                 \
         if ((_len + strlen((n))) < PMIX_MAX_NSLEN) {                        \
-            (void)strncpy((t), (c), PMIX_MAX_NSLEN);                        \
+            pmix_strncpy((t), (c), PMIX_MAX_NSLEN);                         \
             (t)[_len] = ':';                                                \
-            (void)strncpy(&(t)[_len+1], (n), PMIX_MAX_NSLEN - _len - 1);    \
+            pmix_strncpy(&(t)[_len+1], (n), PMIX_MAX_NSLEN - _len);         \
         }                                                                   \
     } while(0)
 
@@ -1336,6 +1357,26 @@ typedef struct pmix_value {
         }                                               \
     } while (0)
 
+#define PMIX_VALUE_LOAD(v, d, t) \
+    pmix_value_load((v), (d), (t))
+
+#define PMIX_VALUE_UNLOAD(r, k, d, s)      \
+    (r) = pmix_value_unload((k), (d), (s))
+
+#define PMIX_VALUE_XFER(r, v, s)                                \
+    do {                                                        \
+        if (NULL == (v)) {                                      \
+            (v) = (pmix_value_t*)malloc(sizeof(pmix_value_t));  \
+            if (NULL == (v)) {                                  \
+                (r) = PMIX_ERR_NOMEM;                           \
+            } else {                                            \
+                (r) = pmix_value_xfer((v), (s));                \
+            }                                                   \
+        } else {                                                \
+            (r) = pmix_value_xfer((v), (s));                    \
+        }                                                       \
+    } while(0)
+
 #define PMIX_VALUE_GET_NUMBER(s, m, n, t)               \
     do {                                                \
         (s) = PMIX_SUCCESS;                             \
@@ -1372,7 +1413,7 @@ typedef struct pmix_value {
 
 /****    PMIX INFO STRUCT    ****/
 typedef struct pmix_info {
-    char key[PMIX_MAX_KEYLEN+1];    // ensure room for the NULL terminator
+    pmix_key_t key;
     pmix_info_directives_t flags;   // bit-mask of flags
     pmix_value_t value;
 } pmix_info_t;
@@ -1406,6 +1447,24 @@ typedef struct pmix_info {
         }                                       \
     } while (0)
 
+#define PMIX_INFO_LOAD(m, k, v, t)                          \
+    do {                                                    \
+        if (NULL != (k)) {                                  \
+            (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
+        }                                                   \
+        (m)->flags = 0;                                     \
+        pmix_value_load(&((m)->value), (v), (t));           \
+    } while (0)
+#define PMIX_INFO_XFER(d, s)                                        \
+    do {                                                            \
+        if (NULL != (s)->key) {                                     \
+            (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);     \
+        }                                                           \
+        (d)->flags = (s)->flags;                                    \
+        pmix_value_xfer(&(d)->value, (pmix_value_t*)&(s)->value);   \
+    } while(0)
+
+
 #define PMIX_INFO_REQUIRED(m)       \
     (m)->flags |= PMIX_INFO_REQD
 #define PMIX_INFO_OPTIONAL(m)       \
@@ -1428,7 +1487,7 @@ typedef struct pmix_info {
 /****    PMIX LOOKUP RETURN STRUCT    ****/
 typedef struct pmix_pdata {
     pmix_proc_t proc;
-    char key[PMIX_MAX_KEYLEN+1];  // ensure room for the NULL terminator
+    pmix_key_t key;
     pmix_value_t value;
 } pmix_pdata_t;
 
@@ -1466,6 +1525,28 @@ typedef struct pmix_pdata {
             free((m));                                  \
             (m) = NULL;                                 \
         }                                               \
+    } while (0)
+
+#define PMIX_PDATA_LOAD(m, p, k, v, t)                                      \
+    do {                                                                    \
+        if (NULL != (m)) {                                                  \
+            memset((m), 0, sizeof(pmix_pdata_t));                           \
+            (void)strncpy((m)->proc.nspace, (p)->nspace, PMIX_MAX_NSLEN);   \
+            (m)->proc.rank = (p)->rank;                                     \
+            (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);                  \
+            pmix_value_load(&((m)->value), (v), (t));                       \
+        }                                                                   \
+    } while (0)
+
+#define PMIX_PDATA_XFER(d, s)                                                   \
+    do {                                                                        \
+        if (NULL != (d)) {                                                      \
+            memset((d), 0, sizeof(pmix_pdata_t));                               \
+            (void)strncpy((d)->proc.nspace, (s)->proc.nspace, PMIX_MAX_NSLEN);  \
+            (d)->proc.rank = (s)->proc.rank;                                    \
+            (void)strncpy((d)->key, (s)->key, PMIX_MAX_KEYLEN);                 \
+            pmix_value_xfer(&((d)->value), &((s)->value));                      \
+        }                                                                       \
     } while (0)
 
 
@@ -1600,52 +1681,152 @@ typedef struct pmix_query {
     } while (0)
 
 
+/****    GENERIC HELPER MACROS    ****/
 
+/* Append a string (by value) to an new or existing NULL-terminated
+ * argv array.
+ *
+ * @param argv Pointer to an argv array.
+ * @param str Pointer to the string to append.
+ *
+ * @retval PMIX_SUCCESS On success
+ * @retval PMIX_ERROR On failure
+ *
+ * This function adds a string to an argv array of strings by value;
+ * it is permissable to pass a string on the stack as the str
+ * argument to this function.
+ *
+ * To add the first entry to an argv array, call this function with
+ * (*argv == NULL).  This function will allocate an array of length
+ * 2; the first entry will point to a copy of the string passed in
+ * arg, the second entry will be set to NULL.
+ *
+ * If (*argv != NULL), it will be realloc'ed to be 1 (char*) larger,
+ * and the next-to-last entry will point to a copy of the string
+ * passed in arg.  The last entry will be set to NULL.
+ *
+ * Just to reinforce what was stated above: the string is copied by
+ * value into the argv array; there is no need to keep the original
+ * string (i.e., the arg parameter) after invoking this function.
+ */
+#define PMIX_ARGV_APPEND(r, a, b) \
+    (r) = pmix_argv_append_nosize(&(a), (b))
 
-/****    PMIX MODEX STRUCT  -  DEPRECATED    ****/
-typedef struct pmix_modex_data {
-    char nspace[PMIX_MAX_NSLEN+1];
-    int rank;
-    uint8_t *blob;
-    size_t size;
-} pmix_modex_data_t;
-/* utility macros for working with pmix_modex_t structs */
-#define PMIX_MODEX_CREATE(m, n)                                             \
-    do {                                                                    \
-        (m) = (pmix_modex_data_t*)calloc((n) , sizeof(pmix_modex_data_t));  \
-    } while (0)
+/* Prepend a string to a new or existing NULL-terminated
+ * argv array - same as above only prepend
+ */
+#define PMIX_ARGV_PREPEND(r, a, b) \
+    (r) = pmix_argv_prepend_nosize(a, b)
 
-#define PMIX_MODEX_RELEASE(m)                   \
-    do {                                        \
-        PMIX_MODEX_DESTRUCT((m));               \
-        free((m));                              \
-        (m) = NULL;                             \
-    } while (0)
+/* Append to an argv-style array, but only if the provided argument
+ * doesn't already exist somewhere in the array. Ignore the size of the array.
+ *
+ * @param argv Pointer to an argv array.
+ * @param str Pointer to the string to append.
+ * @param bool Whether or not to overwrite a matching value if found
+ *
+ * @retval PMIX_SUCCESS On success
+ * @retval PMIX_ERROR On failure
+ *
+ * This function is identical to the pmix_argv_append_nosize() function
+ * except that it only appends the provided argument if it does not already
+ * exist in the provided array, or overwrites it if it is.
+ */
+#define PMIX_ARGV_APPEND_UNIQUE(r, a, b, c) \
+    (r) = pmix_argv_append_unique_nosize(a, b, c)
 
-#define PMIX_MODEX_CONSTRUCT(m)                         \
-    do {                                                \
-        memset((m), 0, sizeof(pmix_modex_data_t));      \
-    } while (0)
+/* Free a NULL-terminated argv array.
+ *
+ * @param argv Argv array to free.
+ *
+ * This function frees an argv array and all of the strings that it
+ * contains.  Since the argv parameter is passed by value, it is not
+ * set to NULL in the caller's scope upon return.
+ *
+ * It is safe to invoke this function with a NULL pointer.  It is
+ * not safe to invoke this function with a non-NULL-terminated argv
+ * array.
+ */
+#define PMIX_ARGV_FREE(a)  pmix_argv_free(a)
 
-#define PMIX_MODEX_DESTRUCT(m)                  \
-    do {                                        \
-        if (NULL != (m)->blob) {                \
-            free((m)->blob);                    \
-            (m)->blob = NULL;                   \
-        }                                       \
-    } while (0)
+/*
+ * Split a string into a NULL-terminated argv array. Do not include empty
+ * strings in result array.
+ *
+ * @param src_string Input string.
+ * @param delimiter Delimiter character.
+ *
+ * @retval argv pointer to new argv array on success
+ * @retval NULL on error
+ *
+ * All strings are insertted into the argv array by value; the
+ * newly-allocated array makes no references to the src_string
+ * argument (i.e., it can be freed after calling this function
+ * without invalidating the output argv).
+ */
+#define PMIX_ARGV_SPLIT(a, b, c) \
+    (a) = pmix_argv_split(b, c)
 
-#define PMIX_MODEX_FREE(m, n)                           \
-    do {                                                \
-        size_t _s;                                      \
-        if (NULL != (m)) {                              \
-            for (_s=0; _s < (n); _s++) {                \
-                PMIX_MODEX_DESTRUCT(&((m)[_s]));        \
-            }                                           \
-            free((m));                                  \
-            (m) = NULL;                                 \
-        }                                               \
-    } while (0)
+/*
+ * Return the length of a NULL-terminated argv array.
+ *
+ * @param argv The input argv array.
+ *
+ * @retval 0 If NULL is passed as argv.
+ * @retval count Number of entries in the argv array.
+ *
+ * The argv array must be NULL-terminated.
+ */
+#define PMIX_ARGV_COUNT(r, a) \
+    (r) = pmix_argv_count(a)
+
+/*
+ * Join all the elements of an argv array into a single
+ * newly-allocated string.
+ *
+ * @param argv The input argv array.
+ * @param delimiter Delimiter character placed between each argv string.
+ *
+ * @retval new_string Output string on success.
+ * @retval NULL On failure.
+ *
+ * Similar to the Perl join function, this function takes an input
+ * argv and joins them into into a single string separated by the
+ * delimiter character.
+ *
+ * It is the callers responsibility to free the returned string.
+ */
+#define PMIX_ARGV_JOIN(a, b, c) \
+    (a) = pmix_argv_join(b, c)
+
+/*
+ * Copy a NULL-terminated argv array.
+ *
+ * @param argv The input argv array.
+ *
+ * @retval argv Copied argv array on success.
+ * @retval NULL On failure.
+ *
+ * Copy an argv array, including copying all off its strings.
+ * Specifically, the output argv will be an array of the same length
+ * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
+ */
+#define PMIX_ARGV_COPY(a, b) \
+    (a) = pmix_argv_copy(b)
+
+/*
+ * Set an environmenal paramter in an env array
+ *
+ * @retval r Return pmix_status_t status
+ *
+ * @param a Name of the environmental param
+ *
+ * @param b String value of the environmental param
+ *
+ * @param c Address of the NULL-terminated env array
+ */
+#define PMIX_SETENV(r, a, b, c) \
+    (r) = pmix_setenv((a), (b), true, (c))
 
 
 /****    CALLBACK FUNCTIONS FOR NON-BLOCKING OPERATIONS    ****/
@@ -1674,7 +1855,7 @@ typedef void (*pmix_modex_cbfunc_t)(pmix_status_t status,
  * released by the library upon return from the callback function, so
  * the receiver must copy it if it needs to be retained */
 typedef void (*pmix_spawn_cbfunc_t)(pmix_status_t status,
-                                    char nspace[], void *cbdata);
+                                    pmix_nspace_t nspace, void *cbdata);
 
 /* define a callback for common operations that simply return
  * a status. Examples include the non-blocking versions of
@@ -1994,7 +2175,7 @@ PMIX_EXPORT const char* PMIx_Get_version(void);
  * proc. This is data that has only internal scope - it will
  * never be "pushed" externally */
 PMIX_EXPORT pmix_status_t PMIx_Store_internal(const pmix_proc_t *proc,
-                                              const char *key, pmix_value_t *val);
+                                              const pmix_key_t key, pmix_value_t *val);
 
 /**
  * Top-level interface function to pack one or more values into a
@@ -2279,6 +2460,34 @@ static inline void pmix_value_destruct(pmix_value_t * m) {
     } else if (PMIX_ENVAR == (m)->type) {
         PMIX_ENVAR_DESTRUCT(&(m)->data.envar);
     }
+}
+
+/**
+ * Provide a safe version of strncpy that doesn't generate
+ * a ton of spurious warnings. Note that not every environment
+ * provides nice string functions, and we aren't concerned about
+ * max performance here
+ *
+ * @param dest Destination string.
+ * @param src Source string.
+ * @param len Size of the dest array - 1
+ *
+ */
+static inline void pmix_strncpy(char *dest, const char *src, size_t len)
+{
+    size_t i, k;
+    char *new_dest = dest;
+
+    /* use an algorithm that also protects against
+     * non-NULL-terminated src strings */
+    for (i=0, k=0; i <= len; ++i, ++src, ++new_dest) {
+        ++k;
+        *new_dest = *src;
+        if ('\0' == *src) {
+            break;
+        }
+    }
+    dest[k-1] = '\0';
 }
 
 #include <pmix_extend.h>

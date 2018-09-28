@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -104,7 +104,7 @@ PMIX_EXPORT pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     PMIX_WAIT_THREAD(&cb->lock);
     rc = cb->status;
     if (NULL != nspace) {
-        (void)strncpy(nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
     }
     PMIX_RELEASE(cb);
 
@@ -254,7 +254,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr,
 
         if (NULL != n2) {
             /* protect length */
-            (void)strncpy(nspace, n2, PMIX_MAX_NSLEN);
+            pmix_strncpy(nspace, n2, PMIX_MAX_NSLEN);
             free(n2);
             PMIX_GDS_STORE_JOB_INFO(rc, pmix_globals.mypeer, nspace, buf);
             /* extract and process any job-related info for this nspace */

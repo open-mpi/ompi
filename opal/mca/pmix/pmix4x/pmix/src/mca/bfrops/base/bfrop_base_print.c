@@ -1137,12 +1137,6 @@ int pmix_bfrops_base_print_kval(char **output, char *prefix,
     return PMIX_SUCCESS;
 }
 
-pmix_status_t pmix_bfrops_base_print_modex(char **output, char *prefix,
-                                           pmix_modex_data_t *src, pmix_data_type_t type)
-{
-    return PMIX_SUCCESS;
-}
-
 int pmix_bfrops_base_print_persist(char **output, char *prefix,
                                    pmix_persistence_t *src, pmix_data_type_t type)
 {

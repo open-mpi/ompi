@@ -294,7 +294,7 @@ static void _getnb_cbfunc(struct pmix_peer_t *pr,
     }
 
     /* cache the proc id */
-    (void)strncpy(proc.nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
     proc.rank = cb->pname.rank;
 
     /* a zero-byte buffer indicates that this recv is being
@@ -407,7 +407,7 @@ static pmix_status_t process_values(pmix_value_t **v, pmix_cb_t *cb)
     /* copy the list elements */
     n=0;
     PMIX_LIST_FOREACH(kv, kvs, pmix_kval_t) {
-        (void)strncpy(info[n].key, kv->key, PMIX_MAX_KEYLEN);
+        pmix_strncpy(info[n].key, kv->key, PMIX_MAX_KEYLEN);
         pmix_value_xfer(&info[n].value, kv->value);
         ++n;
     }
@@ -496,7 +496,7 @@ static void _getnbfn(int fd, short flags, void *cbdata)
                         (NULL == cb->key) ? "NULL" : cb->key);
 
     /* set the proc object identifier */
-    (void)strncpy(proc.nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, cb->pname.nspace, PMIX_MAX_NSLEN);
     proc.rank = cb->pname.rank;
 
     /* scan the incoming directives */
