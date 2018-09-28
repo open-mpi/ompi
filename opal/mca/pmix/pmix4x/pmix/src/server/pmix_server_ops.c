@@ -1956,6 +1956,13 @@ static void intermed_step(pmix_status_t status, void *cbdata)
         goto complete;
     }
 
+    /* since our host is going to send this everywhere, it may well
+     * come back to us. We already processed it, so mark it here
+     * to ensure we don't do it again. We previously inserted the
+     * PMIX_SERVER_INTERNAL_NOTIFY key at the very end of the
+     * info array - just overwrite that position */
+    PMIX_INFO_LOAD(&cd->info[cd->ninfo-1], PMIX_EVENT_PROXY, &pmix_globals.myid, PMIX_PROC);
+
     /* pass it to our host RM for distribution */
     rc = pmix_host_server.notify_event(cd->status, &cd->source, cd->range,
                                        cd->info, cd->ninfo, local_cbfunc, cd);
@@ -1974,6 +1981,11 @@ static void intermed_step(pmix_status_t status, void *cbdata)
     PMIX_RELEASE(cd);
 }
 
+/* Receive an event sent by the client library. Since it was sent
+ * to us by one client, we have to both process it locally to ensure
+ * we notify all relevant local clients AND (assuming a range other
+ * than LOCAL) deliver to our host, requesting that they send it
+ * to all peer servers in the current session */
 pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
                                                   pmix_buffer_t *buf,
                                                   pmix_op_cbfunc_t cbfunc,
@@ -1982,11 +1994,12 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
     int32_t cnt;
     pmix_status_t rc;
     pmix_notify_caddy_t *cd;
-    size_t ninfo;
+    size_t ninfo, n;
 
     pmix_output_verbose(2, pmix_server_globals.event_output,
-                        "%s:%d recvd event notification from client",
-                        pmix_globals.myid.nspace, pmix_globals.myid.rank);
+                        "%s:%d recvd event notification from client %s:%d",
+                        pmix_globals.myid.nspace, pmix_globals.myid.rank,
+                        peer->info->pname.nspace, peer->info->pname.rank);
 
     cd = PMIX_NEW(pmix_notify_caddy_t);
     if (NULL == cd) {
@@ -1995,8 +2008,7 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
     cd->cbfunc = cbfunc;
     cd->cbdata = cbdata;
     /* set the source */
-    (void)strncpy(cd->source.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
-    cd->source.rank = peer->info->pname.rank;
+    PMIX_LOAD_PROCID(&cd->source, peer->info->pname.nspace, peer->info->pname.rank);
 
     /* unpack status */
     cnt = 1;
@@ -2032,6 +2044,17 @@ pmix_status_t pmix_server_event_recvd_from_client(pmix_peer_t *peer,
         PMIX_BFROPS_UNPACK(rc, peer, buf, cd->info, &cnt, PMIX_INFO);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
+            goto exit;
+        }
+    }
+
+    /* check to see if we already processed this event - it is possible
+     * that a local client "echoed" it back to us and we want to avoid
+     * a potential infinite loop */
+    for (n=0; n < ninfo; n++) {
+        if (PMIX_CHECK_KEY(&cd->info[n], PMIX_SERVER_INTERNAL_NOTIFY)) {
+            /* yep, we did - so don't do it again! */
+            rc = PMIX_OPERATION_SUCCEEDED;
             goto exit;
         }
     }

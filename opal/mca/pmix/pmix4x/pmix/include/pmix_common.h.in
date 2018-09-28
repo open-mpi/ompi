@@ -115,6 +115,9 @@ typedef uint32_t pmix_rank_t;
  * a tool can connect with further instructions. This envar will be
  * set by the tool and is _not_ intended for the direct use of users.
  *
+ * PMIX_LAUNCHER_RENDEZVOUS_FILE - if set, contains the full pathname
+ * of a file the launcher is to write that contains its connection info.
+ * Works in addition to anything else the launcher may output.
  */
 
 /* define a set of "standard" PMIx attributes that can
@@ -163,6 +166,7 @@ typedef uint32_t pmix_rank_t;
                                                                     //        from the specified processes to this tool
 #define PMIX_RECONNECT_SERVER               "pmix.cnct.recon"       // (bool) tool is requesting to change server connections
 #define PMIX_LAUNCHER                       "pmix.tool.launcher"    // (bool) tool is a launcher and needs rendezvous files created
+#define PMIX_LAUNCHER_RENDEZVOUS_FILE       "pmix.tool.lncrnd"      // (char*) Pathname of file where connection info is to be stored
 
 /* identification attributes */
 #define PMIX_USERID                         "pmix.euid"             // (uint32_t) effective user id
@@ -347,7 +351,7 @@ typedef uint32_t pmix_rank_t;
                                                                     //           registered it
 #define PMIX_EVENT_DO_NOT_CACHE             "pmix.evnocache"        // (bool) instruct the PMIx server not to cache the event
 #define PMIX_EVENT_SILENT_TERMINATION       "pmix.evsilentterm"     // (bool) do not generate an event when this job normally terminates
-
+#define PMIX_EVENT_PROXY                    "pmix.evproxy"          // (pmix_proc_t*) PMIx server that sourced the event
 
 /* fault tolerance-related events */
 #define PMIX_EVENT_TERMINATE_SESSION        "pmix.evterm.sess"      // (bool) RM intends to terminate session
@@ -760,6 +764,7 @@ typedef int pmix_status_t;
 /* monitoring */
 #define PMIX_MONITOR_HEARTBEAT_ALERT            (PMIX_ERR_V2X_BASE -  9)
 #define PMIX_MONITOR_FILE_ALERT                 (PMIX_ERR_V2X_BASE - 10)
+#define PMIX_PROC_TERMINATED                    (PMIX_ERR_V2X_BASE - 11)
 
 /* define a starting point for operational error constants so
  * we avoid renumbering when making additions */
@@ -781,7 +786,6 @@ typedef int pmix_status_t;
 #define PMIX_OPERATION_IN_PROGRESS              (PMIX_ERR_OP_BASE - 26)
 #define PMIX_OPERATION_SUCCEEDED                (PMIX_ERR_OP_BASE - 27)
 /* gap for group codes */
-#define PMIX_PROC_TERMINATED                    (PMIX_ERR_OP_BASE - 38)
 
 
 /* define a starting point for system error constants so

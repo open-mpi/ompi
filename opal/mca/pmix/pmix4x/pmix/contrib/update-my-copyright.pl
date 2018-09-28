@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+# Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 

@@ -29,4 +29,5 @@ endif # PMIX_INSTALL_BINARIES
 
 plookup_SOURCES = plookup.c
 plookup_LDADD = \
-	$(top_builddir)/src/libpmix.la
+    $(PMIX_EXTRA_LTLIB) \
+    $(top_builddir)/src/libpmix.la

@@ -17,7 +17,7 @@ dnl Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
-dnl Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow

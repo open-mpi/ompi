@@ -25,6 +25,120 @@ Master (not on release branches yet)
 ------------------------------------
 
 
+3.0.2 -- 18 Sept 2018
+----------------------
+- Ensure we cleanup any active sensors when a peer departs. Allow the
+  heartbeat monitor to "reset" if a process stops beating and subsequently
+  returns
+- Fix a few bugs in the event notification system and provide some
+  missing implementation (support for specifying target procs to
+  receive the event).
+- Add PMIX_PROC_TERMINATED constant
+- Properly deal with EOPNOTSUPP from getsockopt() on ARM
+
+
+3.0.1 -- 23 Aug 2018
+----------------------
+**** DEPRECATION WARNING: The pmix_info_array_t struct was
+**** initially marked for deprecation in the v2.x series.
+**** We failed to provide clear warning at that time. This
+**** therefore serves as warning of intended removal of
+**** pmix_info_array_t in the future v4 release series.
+- Fixed memory corruption bug in event notification
+  system due to uninitialized variable
+- Add numeric version field to pmix_version.h
+- Transfer all cached data to client dstore upon first connect
+- Implement missing job control and sensor APIs
+
+
+3.0.0 -- 6 July 2018
+------------------------------------
+**** NOTE: This release implements the complete PMIX v3.0 Standard
+**** and therefore includes a number of new APIs and features. These
+**** can be tracked by their RFC's on the community website:
+**** https://pmix.org/pmix-standard.
+- Added blocking forms of several existing APIs:
+    - PMIx_Log
+    - PMIx_Allocation_request
+    - PMIx_Job_control
+    - PMIx_Process_monitor
+- Added support for getting/validating security credentials
+    - PMIx_Get_credential, PMIx_Validate_credential
+- Extended support for debuggers/tools
+    - Added IO forwarding support allowing tools to request
+      forwarding of output from specific application procs,
+      and to forward their input to specified target procs
+    - Extended tool attributes to support synchronization
+      during startup of applications. This includes the
+      ability to modify an application's environment
+      (including support for LD_PRELOAD) and define an
+      alternate fork/exec agent
+    - Added ability for a tool to switch server connections
+      so it can first connect to a system-level server to
+      launch a starter program, and then reconnect to that
+      starter for debugging purposes
+- Extended network support to collect network inventory by
+     either rolling it up from individual nodes or by direct
+     query of fabric managers. Added an API by which the
+     host can inject any rolled up inventory into the local
+     PMIx server. Applications and/or the host RM can access
+     the inventory via the PMIx_Query function.
+- Added the ability for applications and/or tools to register
+     files and directories for cleanup upon their termination
+- Added support for inter-library coordination within a process
+- Extended PMIx_Log support by adding plugin support for new
+     channels, including local/remote syslog and email. Added
+     attributes to query available channels and to tag and
+     format output.
+- Fix several memory and file descriptor leaks
+
+
+2.1.4 -- 18 Sep 2018
+----------------------
+- Updated configury to silence warnings on older compilers
+- Implement job control and sensor APIs
+- Update sensor support
+- Fix a few bugs in the event notification system and provide some
+  missing implementation (support for specifying target procs to
+  receive the event).
+- Add PMIX_PROC_TERMINATED constant
+- Properly deal with EOPNOTSUPP from getsockopt() on ARM
+
+
+2.1.3 -- 23 Aug 2018
+----------------------
+- Fixed memory corruption bug in event notification
+  system due to uninitialized variable
+- Add numeric version definition
+- Transfer all cached data to client dstore upon first connect
+
+
+2.1.2 -- 6 July 2018
+----------------------
+- Added PMIX_VERSION_RELEASE string to pmix_version.h
+- Added PMIX_SPAWNED and PMIX_PARENT_ID keys to all procs
+  started via PMIx_Spawn
+- Fixed faulty compares in PMI/PMI2 tests
+- Fixed bug in direct modex for data on remote node
+- Correctly transfer all cached job info to the client's
+  shared memory region upon first connection
+- Fix potential deadlock in PMIx_server_init in an error case
+- Fix uninitialized variable
+- Fix several memory and file descriptor leaks
+
+
+2.1.1 -- 5 Mar 2018
+----------------------
+- Fix direct modex when receiving new nspace
+- Resolve direct modex of job-level info
+- Fix a bug in attribute configuration checks
+- Fix a couple of bugs in unpacking of direct modex job-level data
+- Correcly handle application setup data during "instant on" launch
+- add a PMIX_BYTE_OBJECT_LOAD convenience macro
+- Fix two early "free" bugs
+- Add an example PMI-1 client program
+
+
 2.1.0 -- 1 Feb 2018
 ----------------------
 **** NOTE: This release contains the first implementation of cross-version

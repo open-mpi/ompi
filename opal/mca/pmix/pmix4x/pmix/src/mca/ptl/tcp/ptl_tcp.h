@@ -48,6 +48,7 @@ typedef struct {
     char *session_filename;
     char *nspace_filename;
     char *system_filename;
+    char *rendezvous_filename;
     int wait_to_connect;
     int max_retries;
     char *report_uri;

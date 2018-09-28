@@ -67,9 +67,23 @@ extern "C" {
 #define PMIX_CHECK_KEY(a, b) \
     (0 == strncmp((a)->key, (b), PMIX_MAX_KEYLEN))
 
+/* define a convenience macro for loading nspaces */
+#define PMIX_LOAD_NSPACE(a, b)                      \
+    do {                                            \
+        memset((a), 0, PMIX_MAX_NSLEN+1);           \
+        (void)strncpy((a), (b), PMIX_MAX_NSLEN);    \
+    }while(0)
+
 /* define a convenience macro for checking nspaces */
 #define PMIX_CHECK_NSPACE(a, b) \
     (0 == strncmp((a), (b), PMIX_MAX_NSLEN))
+
+/* define a convenience macro for loading names */
+#define PMIX_LOAD_PROCID(a, b, c)               \
+    do {                                        \
+        PMIX_LOAD_NSPACE((a)->nspace, (b));     \
+        (a)->rank = (c);                        \
+    }while(0)
 
 /* define a convenience macro for checking names */
 #define PMIX_CHECK_PROCID(a, b) \
