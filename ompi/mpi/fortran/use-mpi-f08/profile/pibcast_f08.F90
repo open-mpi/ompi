@@ -22,4 +22,4 @@ subroutine PMPI_Ibcast_f08(buffer,count,datatype,root,comm,request,ierror)
    call ompi_ibcast_f(buffer,count,datatype%MPI_VAL,root,comm%MPI_VAL,request%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
- end subroutine PMPI_Ibcast_f08
+end subroutine PMPI_Ibcast_f08

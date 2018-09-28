@@ -10,7 +10,7 @@ subroutine MPI_Comm_spawn_f08(command,argv,maxprocs,info,root,comm,intercomm, &
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm
    use :: mpi_f08, only : ompi_comm_spawn_f
    implicit none
-   CHARACTER(LEN=*), INTENT(IN) :: command, argv
+   CHARACTER(LEN=*), INTENT(IN) :: command, argv(*)
    INTEGER, INTENT(IN) :: maxprocs, root
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Comm), INTENT(IN) :: comm
