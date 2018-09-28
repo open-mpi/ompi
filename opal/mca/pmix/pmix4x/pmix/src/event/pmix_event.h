@@ -192,7 +192,7 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             ch = PMIX_NEW(pmix_event_chain_t);                                      \
             ch->status = (e);                                                       \
             ch->range = (r);                                                        \
-            (void)strncpy(ch->source.nspace,                                        \
+            pmix_strncpy(ch->source.nspace,                                        \
                           (p)->nptr->nspace,                                        \
                           PMIX_MAX_NSLEN);                                          \
             ch->source.rank = (p)->info->pname.rank;                                \
@@ -210,7 +210,7 @@ void pmix_event_timeout_cb(int fd, short flags, void *arg);
             pmix_event_add(&ch->ev, &pmix_globals.event_window);                    \
         } else {                                                                    \
             /* add this peer to the array of sources */                             \
-            (void)strncpy(proc.nspace, (p)->nptr->nspace, PMIX_MAX_NSLEN);          \
+            pmix_strncpy(proc.nspace, (p)->nptr->nspace, PMIX_MAX_NSLEN);          \
             proc.rank = (p)->info->pname.rank;                                      \
             ninfo = ch->nallocated + 1;                                             \
             PMIX_INFO_CREATE(info, ninfo);                                          \

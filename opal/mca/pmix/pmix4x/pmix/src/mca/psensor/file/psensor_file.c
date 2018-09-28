@@ -345,7 +345,7 @@ static void file_sample(int sd, short args, void *cbdata)
         /* stop monitoring this client */
         pmix_list_remove_item(&mca_psensor_file_component.trackers, &ft->super);
         /* generate an event */
-        (void)strncpy(source.nspace, ft->requestor->info->pname.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(source.nspace, ft->requestor->info->pname.nspace, PMIX_MAX_NSLEN);
         source.rank = ft->requestor->info->pname.rank;
         rc = PMIx_Notify_event(PMIX_MONITOR_FILE_ALERT, &source,
                                ft->range, ft->info, ft->ninfo, opcbfunc, ft);

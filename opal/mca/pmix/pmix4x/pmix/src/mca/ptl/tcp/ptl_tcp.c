@@ -529,7 +529,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             pmix_client_globals.myserver->info = PMIX_NEW(pmix_rank_info_t);
         }
         if (NULL == pmix_client_globals.myserver->nptr) {
-            pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_nspace_t);
+            pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_namespace_t);
         }
         if (NULL != pmix_client_globals.myserver->nptr->nspace) {
             free(pmix_client_globals.myserver->nptr->nspace);
@@ -1122,7 +1122,7 @@ static pmix_status_t recv_connect_ack(int sd)
                 return PMIX_ERR_INIT;
             }
         } else {
-            (void)strncpy(pmix_globals.myid.nspace, nspace, PMIX_MAX_NSLEN);
+            pmix_strncpy(pmix_globals.myid.nspace, nspace, PMIX_MAX_NSLEN);
         }
         /* if we already have a rank, then leave it alone */
         if (PMIX_RANK_INVALID == pmix_globals.myid.rank) {
@@ -1135,7 +1135,7 @@ static pmix_status_t recv_connect_ack(int sd)
             pmix_client_globals.myserver->info = PMIX_NEW(pmix_rank_info_t);
         }
         if (NULL == pmix_client_globals.myserver->nptr) {
-            pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_nspace_t);
+            pmix_client_globals.myserver->nptr = PMIX_NEW(pmix_namespace_t);
         }
         pmix_ptl_base_recv_blocking(sd, (char*)nspace, PMIX_MAX_NSLEN+1);
         if (NULL != pmix_client_globals.myserver->nptr->nspace) {

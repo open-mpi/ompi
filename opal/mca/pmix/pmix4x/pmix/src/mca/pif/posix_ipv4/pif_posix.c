@@ -39,23 +39,7 @@
 #include <arpa/inet.h>
 #endif
 #ifdef HAVE_NET_IF_H
-#if defined(__APPLE__) && defined(_LP64)
-/* Apple engineering suggested using options align=power as a
-   workaround for a bug in OS X 10.4 (Tiger) that prevented ioctl(...,
-   SIOCGIFCONF, ...) from working properly in 64 bit mode on Power PC.
-   It turns out that the underlying issue is the size of struct
-   ifconf, which the kernel expects to be 12 and natural 64 bit
-   alignment would make 16.  The same bug appears in 64 bit mode on
-   Intel macs, but align=power is a no-op there, so instead, use the
-   pack pragma to instruct the compiler to pack on 4 byte words, which
-   has the same effect as align=power for our needs and works on both
-   Intel and Power PC Macs. */
-#pragma pack(push,4)
-#endif
 #include <net/if.h>
-#if defined(__APPLE__) && defined(_LP64)
-#pragma pack(pop)
-#endif
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
@@ -265,7 +249,7 @@ static int if_posix_open(void)
 
         /* copy entry over into our data structure */
         memset(intf->if_name, 0, sizeof(intf->if_name));
-        strncpy(intf->if_name, ifr->ifr_name, sizeof(intf->if_name) - 1);
+        pmix_strncpy(intf->if_name, ifr->ifr_name, sizeof(intf->if_name) - 1);
         intf->if_flags = ifr->ifr_flags;
 
         /* every new address gets its own internal if_index */

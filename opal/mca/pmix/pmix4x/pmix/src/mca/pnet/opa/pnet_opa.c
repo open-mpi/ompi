@@ -52,18 +52,18 @@
 
 static pmix_status_t opa_init(void);
 static void opa_finalize(void);
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist);
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo);
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *proc,
                                 char ***env);
 static void child_finalized(pmix_proc_t *peer);
-static void local_app_finalized(pmix_nspace_t *nptr);
-static void deregister_nspace(pmix_nspace_t *nptr);
+static void local_app_finalized(pmix_namespace_t *nptr);
+static void deregister_nspace(pmix_namespace_t *nptr);
 static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
                                        pmix_inventory_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
@@ -229,7 +229,7 @@ static char* transports_print(uint64_t *unique_key)
 /* NOTE: if there is any binary data to be transferred, then
  * this function MUST pack it for transport as the host will
  * not know how to do so */
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist)
 {
@@ -334,7 +334,7 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
     return PMIX_ERR_TAKE_NEXT_OPTION;
 }
 
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo)
 {
@@ -379,7 +379,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *proc,
                                 char ***env)
 {
@@ -408,14 +408,14 @@ static void child_finalized(pmix_proc_t *peer)
                         "pnet:opa child finalized");
 }
 
-static void local_app_finalized(pmix_nspace_t *nptr)
+static void local_app_finalized(pmix_namespace_t *nptr)
 {
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa app finalized");
 
 }
 
-static void deregister_nspace(pmix_nspace_t *nptr)
+static void deregister_nspace(pmix_namespace_t *nptr)
 {
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:opa deregister nspace");

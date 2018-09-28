@@ -172,7 +172,7 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     /* setup for our own local callbacks */
     chain = PMIX_NEW(pmix_event_chain_t);
     chain->status = status;
-    (void)strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(chain->source.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
     chain->source.rank = pmix_globals.myid.rank;
     /* we always leave space for event hdlr name and a callback object */
     chain->nallocated = ninfo + 2;
@@ -185,10 +185,10 @@ static pmix_status_t notify_server_of_event(pmix_status_t status,
     cd = PMIX_NEW(pmix_notify_caddy_t);
     cd->status = status;
     if (NULL == source) {
-        (void)strncpy(cd->source.nspace, "UNDEF", PMIX_MAX_NSLEN);
+        pmix_strncpy(cd->source.nspace, "UNDEF", PMIX_MAX_NSLEN);
         cd->source.rank = PMIX_RANK_UNDEF;
     } else {
-        (void)strncpy(cd->source.nspace, source->nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(cd->source.nspace, source->nspace, PMIX_MAX_NSLEN);
         cd->source.rank = source->rank;
     }
     cd->range = range;
@@ -306,9 +306,9 @@ static void progress_local_event_hdlr(pmix_status_t status,
 
     /* save this handler's returned status */
     if (NULL != chain->evhdlr->name) {
-        (void)strncpy(newinfo[cnt].key, chain->evhdlr->name, PMIX_MAX_KEYLEN);
+        pmix_strncpy(newinfo[cnt].key, chain->evhdlr->name, PMIX_MAX_KEYLEN);
     } else {
-        (void)strncpy(newinfo[cnt].key, "UNKNOWN", PMIX_MAX_KEYLEN);
+        pmix_strncpy(newinfo[cnt].key, "UNKNOWN", PMIX_MAX_KEYLEN);
     }
     newinfo[cnt].value.type = PMIX_STATUS;
     newinfo[cnt].value.data.status = status;
@@ -808,7 +808,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
      * against our registrations */
     chain = PMIX_NEW(pmix_event_chain_t);
     chain->status = cd->status;
-    (void)strncpy(chain->source.nspace, cd->source.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(chain->source.nspace, cd->source.nspace, PMIX_MAX_NSLEN);
     chain->source.rank = cd->source.rank;
     /* we always leave space for a callback object and
      * the evhandler name. */
@@ -1013,10 +1013,10 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     cd = PMIX_NEW(pmix_notify_caddy_t);
     cd->status = status;
     if (NULL == source) {
-        (void)strncpy(cd->source.nspace, "UNDEF", PMIX_MAX_NSLEN);
+        pmix_strncpy(cd->source.nspace, "UNDEF", PMIX_MAX_NSLEN);
         cd->source.rank = PMIX_RANK_UNDEF;
     } else {
-        (void)strncpy(cd->source.nspace, source->nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(cd->source.nspace, source->nspace, PMIX_MAX_NSLEN);
         cd->source.rank = source->rank;
     }
     cd->range = range;

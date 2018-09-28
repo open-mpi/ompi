@@ -883,7 +883,7 @@ pmix_status_t pmix20_bfrop_copy_info(pmix_info_t **dest, pmix_info_t *src,
                                    pmix_data_type_t type)
 {
     *dest = (pmix_info_t*)malloc(sizeof(pmix_info_t));
-    (void)strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
+    pmix_strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
     (*dest)->flags = src->flags;
     return pmix20_bfrop_value_xfer(&(*dest)->value, &src->value);
 }
@@ -912,7 +912,7 @@ pmix_status_t pmix20_bfrop_copy_app(pmix_app_t **dest, pmix_app_t *src,
     (*dest)->ninfo = src->ninfo;
     (*dest)->info = (pmix_info_t*)malloc(src->ninfo * sizeof(pmix_info_t));
     for (j=0; j < src->ninfo; j++) {
-        (void)strncpy((*dest)->info[j].key, src->info[j].key, PMIX_MAX_KEYLEN);
+        pmix_strncpy((*dest)->info[j].key, src->info[j].key, PMIX_MAX_KEYLEN);
         pmix20_bfrop_value_xfer(&(*dest)->info[j].value, &src->info[j].value);
     }
     return PMIX_SUCCESS;
@@ -943,7 +943,7 @@ pmix_status_t pmix20_bfrop_copy_proc(pmix_proc_t **dest, pmix_proc_t *src,
     if (NULL == *dest) {
         return PMIX_ERR_OUT_OF_RESOURCE;
     }
-    (void)strncpy((*dest)->nspace, src->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy((*dest)->nspace, src->nspace, PMIX_MAX_NSLEN);
     (*dest)->rank = src->rank;
     return PMIX_SUCCESS;
 }
@@ -996,9 +996,9 @@ pmix_status_t pmix20_bfrop_copy_pdata(pmix_pdata_t **dest, pmix_pdata_t *src,
                                     pmix_data_type_t type)
 {
     *dest = (pmix_pdata_t*)malloc(sizeof(pmix_pdata_t));
-    (void)strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
     (*dest)->proc.rank = src->proc.rank;
-    (void)strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
+    pmix_strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
     return pmix20_bfrop_value_xfer(&(*dest)->value, &src->value);
 }
 
@@ -1006,7 +1006,7 @@ pmix_status_t pmix20_bfrop_copy_pinfo(pmix_proc_info_t **dest, pmix_proc_info_t 
                                     pmix_data_type_t type)
 {
     *dest = (pmix_proc_info_t*)malloc(sizeof(pmix_proc_info_t));
-    (void)strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy((*dest)->proc.nspace, src->proc.nspace, PMIX_MAX_NSLEN);
     (*dest)->proc.rank = src->proc.rank;
     if (NULL != src->hostname) {
         (*dest)->hostname = strdup(src->hostname);

@@ -38,28 +38,6 @@ pmix_server_module_t mymodule = {
 
 typedef struct {
     pmix_list_item_t super;
-    pmix_modex_data_t data;
-} pmix_test_data_t;
-
-static void pcon(pmix_test_data_t *p)
-{
-    p->data.blob = NULL;
-    p->data.size = 0;
-}
-
-static void pdes(pmix_test_data_t *p)
-{
-    if (NULL != p->data.blob) {
-        free(p->data.blob);
-    }
-}
-
-PMIX_CLASS_INSTANCE(pmix_test_data_t,
-                    pmix_list_item_t,
-                    pcon, pdes);
-
-typedef struct {
-    pmix_list_item_t super;
     pmix_info_t data;
     char *namespace_published;
     int rank_published;

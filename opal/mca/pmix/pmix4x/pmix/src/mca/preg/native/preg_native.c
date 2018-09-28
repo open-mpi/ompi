@@ -522,7 +522,7 @@ static pmix_status_t resolve_peers(const char *nodename,
     /* scope is irrelevant as the info we seek must be local */
     cb.scope = PMIX_SCOPE_UNDEF;
     /* let the proc point to the nspace */
-    (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
     cb.proc = &proc;
 
@@ -565,7 +565,7 @@ static pmix_status_t resolve_peers(const char *nodename,
                 goto complete;
             }
             for (j=0; j < np; j++) {
-                (void)strncpy(p[j].nspace, nspace, PMIX_MAX_NSLEN);
+                pmix_strncpy(p[j].nspace, nspace, PMIX_MAX_NSLEN);
                 p[j].rank = strtoul(ptr[j], NULL, 10);
             }
             rc = PMIX_SUCCESS;
@@ -619,7 +619,7 @@ static pmix_status_t resolve_nodes(const char *nspace,
     /* scope is irrelevant as the info we seek must be local */
     cb.scope = PMIX_SCOPE_UNDEF;
     /* put the nspace in the proc field */
-    (void)strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(proc.nspace, nspace, PMIX_MAX_NSLEN);
     /* the info will be associated with PMIX_RANK_WILDCARD */
     proc.rank = PMIX_RANK_WILDCARD;
     cb.proc = &proc;

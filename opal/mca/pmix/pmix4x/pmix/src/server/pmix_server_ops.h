@@ -131,7 +131,7 @@ typedef struct {
 PMIX_CLASS_DECLARATION(pmix_regevents_info_t);
 
 typedef struct {
-    pmix_list_t nspaces;                    // list of pmix_nspace_t for the nspaces we know about
+    pmix_list_t nspaces;                    // list of pmix_namespace_t for the nspaces we know about
     pmix_pointer_array_t clients;           // array of pmix_peer_t local clients
     pmix_list_t collectives;                // list of active pmix_server_trkr_t
     pmix_list_t remote_pnd;                 // list of pmix_dmdx_remote_t awaiting arrival of data fror servicing remote req's
@@ -195,8 +195,8 @@ typedef struct {
 
 bool pmix_server_trk_update(pmix_server_trkr_t *trk);
 
-void pmix_pending_nspace_requests(pmix_nspace_t *nptr);
-pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, pmix_rank_t rank,
+void pmix_pending_nspace_requests(pmix_namespace_t *nptr);
+pmix_status_t pmix_pending_resolve(pmix_namespace_t *nptr, pmix_rank_t rank,
                                    pmix_status_t status, pmix_dmdx_local_t *lcd);
 
 

@@ -223,7 +223,7 @@ int pmix_rte_init(pmix_proc_type_t type,
     pmix_globals.mypeer->proc_type = type | PMIX_PROC_V3;
     /* create an nspace object for ourselves - we will
      * fill in the nspace name later */
-    pmix_globals.mypeer->nptr = PMIX_NEW(pmix_nspace_t);
+    pmix_globals.mypeer->nptr = PMIX_NEW(pmix_namespace_t);
     if (NULL == pmix_globals.mypeer->nptr) {
         PMIX_RELEASE(pmix_globals.mypeer);
         ret = PMIX_ERR_NOMEM;

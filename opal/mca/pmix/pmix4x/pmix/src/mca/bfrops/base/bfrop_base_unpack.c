@@ -824,7 +824,7 @@ pmix_status_t pmix_bfrops_base_unpack_info(pmix_buffer_t *buffer, void *dest,
         if (NULL == tmp) {
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
+        pmix_strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
         free(tmp);
         /* unpack the directives */
         m=1;
@@ -878,7 +878,7 @@ pmix_status_t pmix_bfrops_base_unpack_pdata(pmix_buffer_t *buffer, void *dest,
             PMIX_ERROR_LOG(PMIX_ERROR);
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
+        pmix_strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
         free(tmp);
         /* unpack value - since the value structure is statically-defined
          * instead of a pointer in this struct, we directly unpack it to
@@ -970,7 +970,7 @@ pmix_status_t pmix_bfrops_base_unpack_proc(pmix_buffer_t *buffer, void *dest,
             PMIX_ERROR_LOG(PMIX_ERROR);
             return PMIX_ERROR;
         }
-        (void)strncpy(ptr[i].nspace, tmp, PMIX_MAX_NSLEN);
+        pmix_strncpy(ptr[i].nspace, tmp, PMIX_MAX_NSLEN);
         free(tmp);
         /* unpack the rank */
         m=1;
@@ -1098,38 +1098,6 @@ pmix_status_t pmix_bfrops_base_unpack_kval(pmix_buffer_t *buffer, void *dest,
     }
     return PMIX_SUCCESS;
 }
-
-pmix_status_t pmix_bfrops_base_unpack_modex(pmix_buffer_t *buffer, void *dest,
-                                            int32_t *num_vals, pmix_data_type_t type)
-{
-    pmix_modex_data_t *ptr;
-    int32_t i, n, m;
-    pmix_status_t ret;
-
-    pmix_output_verbose(20, pmix_bfrops_base_framework.framework_output,
-                        "pmix_bfrop_unpack: %d modex", *num_vals);
-
-    ptr = (pmix_modex_data_t *) dest;
-    n = *num_vals;
-
-    for (i = 0; i < n; ++i) {
-        memset(&ptr[i], 0, sizeof(pmix_modex_data_t));
-        /* unpack the number of bytes */
-        m=1;
-        if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_sizet(buffer, &ptr[i].size, &m, PMIX_SIZE))) {
-            return ret;
-        }
-        if (0 < ptr[i].size) {
-            ptr[i].blob = (uint8_t*)malloc(ptr[i].size * sizeof(uint8_t));
-            m=ptr[i].size;
-            if (PMIX_SUCCESS != (ret = pmix_bfrops_base_unpack_byte(buffer, ptr[i].blob, &m, PMIX_UINT8))) {
-                return ret;
-            }
-        }
-    }
-    return PMIX_SUCCESS;
-}
-
 
 pmix_status_t pmix_bfrops_base_unpack_persist(pmix_buffer_t *buffer, void *dest,
                                               int32_t *num_vals, pmix_data_type_t type)

@@ -96,7 +96,7 @@ PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_cleanup_dir_t,
                                 pmix_list_item_t,
                                 cdcon, cddes);
 
-static void nscon(pmix_nspace_t *p)
+static void nscon(pmix_namespace_t *p)
 {
     p->nspace = NULL;
     p->nprocs = 0;
@@ -113,7 +113,7 @@ static void nscon(pmix_nspace_t *p)
     PMIX_CONSTRUCT(&p->epilog.ignores, pmix_list_t);
     PMIX_CONSTRUCT(&p->setup_data, pmix_list_t);
 }
-static void nsdes(pmix_nspace_t *p)
+static void nsdes(pmix_namespace_t *p)
 {
     if (NULL != p->nspace) {
         free(p->nspace);
@@ -130,7 +130,7 @@ static void nsdes(pmix_nspace_t *p)
     PMIX_LIST_DESTRUCT(&p->epilog.ignores);
     PMIX_LIST_DESTRUCT(&p->setup_data);
 }
-PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_nspace_t,
+PMIX_EXPORT PMIX_CLASS_INSTANCE(pmix_namespace_t,
                                 pmix_list_item_t,
                                 nscon, nsdes);
 

@@ -47,17 +47,17 @@
 
 static pmix_status_t tcp_init(void);
 static void tcp_finalize(void);
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist);
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo);
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *peer, char ***env);
 static void child_finalized(pmix_proc_t *peer);
-static void local_app_finalized(pmix_nspace_t *nptr);
-static void deregister_nspace(pmix_nspace_t *nptr);
+static void local_app_finalized(pmix_namespace_t *nptr);
+static void deregister_nspace(pmix_namespace_t *nptr);
 static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
                                        pmix_inventory_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t deliver_inventory(pmix_info_t info[], size_t ninfo,
@@ -102,7 +102,7 @@ typedef struct {
 } tcp_port_tracker_t;
 
 static pmix_list_t allocations, available;
-static pmix_status_t process_request(pmix_nspace_t *nptr,
+static pmix_status_t process_request(pmix_namespace_t *nptr,
                                      char *idkey, int ports_per_node,
                                      tcp_port_tracker_t *trk,
                                      pmix_list_t *ilist);
@@ -295,7 +295,7 @@ static inline void generate_key(uint64_t* unique_key) {
  * NOTE: this implementation is offered as an example that can
  * undoubtedly be vastly improved/optimized */
 
-static pmix_status_t allocate(pmix_nspace_t *nptr,
+static pmix_status_t allocate(pmix_namespace_t *nptr,
                               pmix_info_t *info,
                               pmix_list_t *ilist)
 {
@@ -702,7 +702,7 @@ static pmix_status_t allocate(pmix_nspace_t *nptr,
 /* upon receipt of the launch message, each daemon adds the
  * static address assignments to the job-level info cache
  * for that job */
-static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
+static pmix_status_t setup_local_network(pmix_namespace_t *nptr,
                                          pmix_info_t info[],
                                          size_t ninfo)
 {
@@ -742,7 +742,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
                                         "recvd KEY %s %s", kv->key,
                                         (PMIX_STRING == kv->value->type) ? kv->value->data.string : "NON-STRING");
                     /* xfer the value to the info */
-                    (void)strncpy(jinfo[m].key, kv->key, PMIX_MAX_KEYLEN);
+                    pmix_strncpy(jinfo[m].key, kv->key, PMIX_MAX_KEYLEN);
                     PMIX_BFROPS_VALUE_XFER(rc, pmix_globals.mypeer,
                                            &jinfo[m].value, kv->value);
                     /* if this is the ID key, save it */
@@ -770,7 +770,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
                 }
                 /* the data gets stored as a pmix_data_array_t on the provided key */
                 PMIX_INFO_CONSTRUCT(&stinfo);
-                (void)strncpy(stinfo.key, idkey, PMIX_MAX_KEYLEN);
+                pmix_strncpy(stinfo.key, idkey, PMIX_MAX_KEYLEN);
                 stinfo.value.type = PMIX_DATA_ARRAY;
                 PMIX_DATA_ARRAY_CREATE(stinfo.value.data.darray, nkvals, PMIX_INFO);
                 stinfo.value.data.darray->array = jinfo;
@@ -788,7 +788,7 @@ static pmix_status_t setup_local_network(pmix_nspace_t *nptr,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t setup_fork(pmix_nspace_t *nptr,
+static pmix_status_t setup_fork(pmix_namespace_t *nptr,
                                 const pmix_proc_t *peer, char ***env)
 {
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
@@ -809,7 +809,7 @@ static void child_finalized(pmix_proc_t *peer)
  * provides an opportunity for the local network to cleanup
  * any resources consumed locally by the clients of that job.
  * We don't have anything we need to do */
-static void local_app_finalized(pmix_nspace_t *nptr)
+static void local_app_finalized(pmix_namespace_t *nptr)
 {
     pmix_output_verbose(2, pmix_pnet_base_framework.framework_output,
                         "pnet:tcp app finalized");
@@ -819,7 +819,7 @@ static void local_app_finalized(pmix_nspace_t *nptr)
  * PMix function, which in turn calls my TCP component to release the
  * assignments for that job. The addresses are marked as "available"
  * for reuse on the next job. */
-static void deregister_nspace(pmix_nspace_t *nptr)
+static void deregister_nspace(pmix_namespace_t *nptr)
 {
     tcp_port_tracker_t *trk;
 
@@ -960,7 +960,7 @@ static pmix_status_t collect_inventory(pmix_info_t directives[], size_t ndirs,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t process_request(pmix_nspace_t *nptr,
+static pmix_status_t process_request(pmix_namespace_t *nptr,
                                      char *idkey, int ports_per_node,
                                      tcp_port_tracker_t *trk,
                                      pmix_list_t *ilist)
