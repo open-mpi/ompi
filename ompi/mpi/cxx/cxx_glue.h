@@ -79,7 +79,7 @@ ompi_cxx_intercept_file_extra_state_t
                                void *extra_state_cxx);
 
 void ompi_cxx_errhandler_set_callbacks (struct ompi_errhandler_t *errhandler, MPI_Comm_errhandler_function *eh_comm_fn,
-                                        ompi_file_errhandler_fn *eh_file_fn, MPI_Win_errhandler_function *eh_win_fn);
+                                        ompi_file_errhandler_function *eh_file_fn, MPI_Win_errhandler_function *eh_win_fn);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
