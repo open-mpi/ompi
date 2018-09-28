@@ -5,6 +5,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -14,7 +15,8 @@ subroutine MPI_Ineighbor_alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvb
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_ineighbor_alltoallv_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype
    TYPE(MPI_Datatype), INTENT(IN) :: recvtype
