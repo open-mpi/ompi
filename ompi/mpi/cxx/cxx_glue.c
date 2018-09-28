@@ -144,7 +144,7 @@ ompi_cxx_intercept_file_extra_state_t
 }
 
 void ompi_cxx_errhandler_set_callbacks (struct ompi_errhandler_t *errhandler, MPI_Comm_errhandler_function *eh_comm_fn,
-                                        ompi_file_errhandler_fn *eh_file_fn, MPI_Win_errhandler_function *eh_win_fn)
+                                        ompi_file_errhandler_function *eh_file_fn, MPI_Win_errhandler_function *eh_win_fn)
 {
     errhandler->eh_comm_fn = eh_comm_fn;
     errhandler->eh_file_fn = eh_file_fn;

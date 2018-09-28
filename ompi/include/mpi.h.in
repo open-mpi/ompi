@@ -385,11 +385,11 @@ typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype,
 typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
 
     /* This is a little hackish, but errhandler.h needs space for a
-       MPI_File_errhandler_fn.  While it could just be removed, this
+       MPI_File_errhandler_function.  While it could just be removed, this
        allows us to maintain a stable ABI within OMPI, at least for
        apps that don't use MPI I/O. */
-typedef void (ompi_file_errhandler_fn)(MPI_File *, int *, ...);
-typedef ompi_file_errhandler_fn MPI_File_errhandler_function;
+typedef void (ompi_file_errhandler_function)(MPI_File *, int *, ...);
+typedef ompi_file_errhandler_function MPI_File_errhandler_function;
 typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
 typedef void (MPI_User_function)(void *, void *, int *, MPI_Datatype *);
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *,
@@ -412,7 +412,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
  */
 typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn
         __mpi_interface_removed__("MPI_Comm_errhandler_fn was removed in MPI-3.0; use MPI_Comm_errhandler_function instead");
-typedef ompi_file_errhandler_fn MPI_File_errhandler_fn
+typedef ompi_file_errhandler_function MPI_File_errhandler_fn
         __mpi_interface_removed__("MPI_File_errhandler_fn was removed in MPI-3.0; use MPI_File_errhandler_function instead");
 typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
         __mpi_interface_removed__("MPI_Win_errhandler_fn was removed in MPI-3.0; use MPI_Win_errhandler_function instead");
