@@ -31,7 +31,6 @@ AM_CFLAGS = \
             -DPMIX_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
             -DPMIX_BUILD_LIBS="\"@LIBS@\"" \
             -DPMIX_CC_ABSOLUTE="\"@PMIX_CC_ABSOLUTE@\"" \
-            -DPMIX_CONFIGURE_CLI="\"@PMIX_CONFIGURE_CLI@\"" \
             -DPMIX_GREEK_VERSION="\"@PMIX_GREEK_VERSION@\"" \
             -DPMIX_REPO_REV="\"@PMIX_REPO_REV@\"" \
             -DPMIX_RELEASE_DATE="\"@PMIX_RELEASE_DATE@\""
@@ -51,4 +50,5 @@ pmix_info_SOURCES =  \
     support.c
 
 pmix_info_LDADD = \
-	$(top_builddir)/src/libpmix.la
+    $(PMIX_EXTRA_LTLIB) \
+    $(top_builddir)/src/libpmix.la

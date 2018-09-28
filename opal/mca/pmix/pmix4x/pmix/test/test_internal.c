@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2017      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

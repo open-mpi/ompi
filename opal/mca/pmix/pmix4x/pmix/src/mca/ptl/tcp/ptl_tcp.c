@@ -120,7 +120,7 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     char *evar, **uri, *suri = NULL, *suri2 = NULL;
     char *filename, *nspace=NULL;
     pmix_rank_t rank = PMIX_RANK_WILDCARD;
-    char *p, *p2, *server_nspace = NULL;
+    char *p, *p2, *server_nspace = NULL, *rendfile = NULL;
     int sd, rc;
     size_t n;
     char myhost[PMIX_MAXHOSTNAMELEN];
@@ -220,14 +220,14 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
     suri = NULL;
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
-            if (0 == strcmp(info[n].key, PMIX_CONNECT_TO_SYSTEM)) {
+            if (PMIX_CHECK_KEY(&info[n], PMIX_CONNECT_TO_SYSTEM)) {
                 system_level_only = PMIX_INFO_TRUE(&info[n]);
-            } else if (0 == strncmp(info[n].key, PMIX_CONNECT_SYSTEM_FIRST, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_CONNECT_SYSTEM_FIRST)) {
                 /* try the system-level */
                 system_level = PMIX_INFO_TRUE(&info[n]);
-            } else if (0 == strncmp(info[n].key, PMIX_SERVER_PIDINFO, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_PIDINFO)) {
                 pid = info[n].value.data.pid;
-            } else if (0 == strncmp(info[n].key, PMIX_SERVER_NSPACE, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_NSPACE)) {
                 if (NULL != server_nspace) {
                     /* they included it more than once */
                     if (0 == strcmp(server_nspace, info[n].value.data.string)) {
@@ -239,10 +239,13 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                     if (NULL != suri) {
                         free(suri);
                     }
+                    if (NULL != rendfile) {
+                        free(rendfile);
+                    }
                     return PMIX_ERR_BAD_PARAM;
                 }
                 server_nspace = strdup(info[n].value.data.string);
-            } else if (0 == strncmp(info[n].key, PMIX_SERVER_URI, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_URI)) {
                 if (NULL != suri) {
                     /* they included it more than once */
                     if (0 == strcmp(suri, info[n].value.data.string)) {
@@ -254,15 +257,20 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                     if (NULL != server_nspace) {
                         free(server_nspace);
                     }
+                    if (NULL != rendfile) {
+                        free(rendfile);
+                    }
                     return PMIX_ERR_BAD_PARAM;
                 }
                 suri = strdup(info[n].value.data.string);
-            } else if (0 == strncmp(info[n].key, PMIX_CONNECT_RETRY_DELAY, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_CONNECT_RETRY_DELAY)) {
                 mca_ptl_tcp_component.wait_to_connect = info[n].value.data.uint32;
-            } else if (0 == strncmp(info[n].key, PMIX_CONNECT_MAX_RETRIES, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_CONNECT_MAX_RETRIES)) {
                 mca_ptl_tcp_component.max_retries = info[n].value.data.uint32;
-            } else if (0 == strncmp(info[n].key, PMIX_RECONNECT_SERVER, PMIX_MAX_KEYLEN)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_RECONNECT_SERVER)) {
                 reconnect = true;
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_LAUNCHER_RENDEZVOUS_FILE)) {
+                rendfile = strdup(info[n].value.data.string);
             }
         }
     }
@@ -288,6 +296,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             rc = parse_uri_file(&suri[5], &suri2, &nspace, &rank);
             if (PMIX_SUCCESS != rc) {
                 free(suri);
+                if (NULL != rendfile) {
+                    free(rendfile);
+                }
                 return PMIX_ERR_UNREACH;
             }
             free(suri);
@@ -297,6 +308,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             p = strchr(suri, ';');
             if (NULL == p) {
                 free(suri);
+                if (NULL != rendfile) {
+                    free(rendfile);
+                }
                 return PMIX_ERR_BAD_PARAM;
             }
             *p = '\0';
@@ -308,6 +322,9 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
             if (NULL == p) {
                 free(suri2);
                 free(suri);
+                if (NULL != rendfile) {
+                    free(rendfile);
+                }
                 return PMIX_ERR_BAD_PARAM;
             }
             *p = '\0';
@@ -326,11 +343,47 @@ static pmix_status_t connect_to_peer(struct pmix_peer_t *peer,
                 free(nspace);
             }
             free(suri);
+            if (NULL != rendfile) {
+                free(rendfile);
+            }
             return rc;
         }
         free(suri);
         suri = NULL;
+        if (NULL != rendfile) {
+            free(rendfile);
+        }
         goto complete;
+    }
+
+    /* if they gave us a rendezvous file, use it */
+    if (NULL != rendfile) {
+        /* try to read the file */
+        rc = parse_uri_file(rendfile, &suri, &nspace, &rank);
+        free(rendfile);
+        rendfile = NULL;
+        if (PMIX_SUCCESS == rc) {
+            pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                                "ptl:tcp:tool attempt connect to system server at %s", suri);
+            /* go ahead and try to connect */
+            if (PMIX_SUCCESS == try_connect(suri, &sd)) {
+                /* don't free nspace - we will use it below */
+                if (NULL != rendfile) {
+                    free(rendfile);
+                }
+                goto complete;
+            }
+        }
+        if (NULL != nspace) {
+            free(nspace);
+        }
+        if (NULL != suri) {
+            free(suri);
+        }
+        free(rendfile);
+        /* since they gave us a specific rendfile and we couldn't
+         * connect to it, return an error */
+        return PMIX_ERR_UNREACH;
     }
 
     /* if they gave us a pid, then look for it */
@@ -1004,7 +1057,7 @@ static pmix_status_t recv_connect_ack(int sd)
     /* get the current timeout value so we can reset to it */
     sz = sizeof(save);
     if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &sz)) {
-        if (ENOPROTOOPT == errno) {
+        if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
             sockopt = false;
         } else {
            return PMIX_ERR_UNREACH;

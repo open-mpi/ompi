@@ -62,7 +62,7 @@ PMIX_EXPORT pmix_status_t PMIx_Notify_event(pmix_status_t status,
         rc = pmix_server_notify_client_of_event(status, source, range,
                                                 info, ninfo,
                                                 cbfunc, cbdata);
-        if (PMIX_SUCCESS != rc) {
+        if (PMIX_SUCCESS != rc && PMIX_OPERATION_SUCCEEDED != rc) {
             PMIX_ERROR_LOG(rc);
         }
         return rc;
@@ -957,8 +957,7 @@ static void _notify_client_event(int sd, short args, void *cbdata)
         PMIX_LIST_DESTRUCT(&trk);
         if (PMIX_RANGE_LOCAL != cd->range && PMIX_CHECK_PROCID(&cd->source, &pmix_globals.myid)) {
             /* if we are the source, then we need to post this upwards as
-             * well so the host RM can broadcast it as necessary - we rely
-             * on the host RM to _not_ deliver this back to us! */
+             * well so the host RM can broadcast it as necessary */
             if (NULL != pmix_host_server.notify_event) {
                 /* mark that we sent it upstairs so we don't release
                  * the caddy until we return from the host RM */
@@ -1002,9 +1001,13 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
                         "pmix_server: notify client of event %s",
                         PMIx_Error_string(status));
 
-    /* check for prior processing */
-    if (NULL != info && PMIX_CHECK_KEY(&info[ninfo], PMIX_SERVER_INTERNAL_NOTIFY)) {
-        return PMIX_OPERATION_SUCCEEDED;
+    if (NULL != info) {
+        for (n=0; n < ninfo; n++) {
+            if (PMIX_CHECK_KEY(&info[n], PMIX_EVENT_PROXY) &&
+                PMIX_CHECK_PROCID(info[n].value.data.proc, &pmix_globals.myid)) {
+                return PMIX_OPERATION_SUCCEEDED;
+            }
+        }
     }
 
     cd = PMIX_NEW(pmix_notify_caddy_t);
@@ -1018,7 +1021,7 @@ pmix_status_t pmix_server_notify_client_of_event(pmix_status_t status,
     }
     cd->range = range;
     /* have to copy the info to preserve it for future when cached */
-    if (0 < ninfo) {
+    if (0 < ninfo && NULL != info) {
         cd->ninfo = ninfo;
         PMIX_INFO_CREATE(cd->info, cd->ninfo);
         /* need to copy the info */

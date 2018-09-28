@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
- * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
