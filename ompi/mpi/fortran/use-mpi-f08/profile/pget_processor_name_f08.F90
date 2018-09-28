@@ -5,6 +5,7 @@
 !               All Rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Get_processor_name_f08(name,resultlen,ierror)
@@ -17,6 +18,5 @@ subroutine PMPI_Get_processor_name_f08(name,resultlen,ierror)
 
    call ompi_get_processor_name_f(name,resultlen,c_ierror,len(name))
    if (present(ierror)) ierror = c_ierror
-
 
 end subroutine PMPI_Get_processor_name_f08

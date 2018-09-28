@@ -5,6 +5,7 @@
 !               All Rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Win_sync_f08(win,ierror)
@@ -18,4 +19,4 @@ subroutine PMPI_Win_sync_f08(win,ierror)
    call ompi_win_sync_f(win%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
- end subroutine PMPI_Win_sync_f08
+end subroutine PMPI_Win_sync_f08

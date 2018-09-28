@@ -5,10 +5,11 @@
 !                         All rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Type_vector_f08(count,blocklength,stride,oldtype,newtype,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype
    use :: ompi_mpifh_bindings, only : ompi_type_vector_f
    implicit none
    INTEGER, INTENT(IN) :: count, blocklength, stride
