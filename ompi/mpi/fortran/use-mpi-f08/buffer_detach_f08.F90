@@ -8,8 +8,8 @@
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine MPI_Buffer_detach_f08(buffer_addr,size,ierror)
-   use :: mpi_f08, only : ompi_buffer_detach_f
    USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+   use :: mpi_f08, only : ompi_buffer_detach_f
    implicit none
    TYPE(C_PTR), INTENT(OUT) ::  buffer_addr
    INTEGER, INTENT(OUT) :: size

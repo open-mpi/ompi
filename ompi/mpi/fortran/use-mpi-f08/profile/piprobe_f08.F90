@@ -31,4 +31,5 @@ subroutine PMPI_Iprobe_f08(source,tag,comm,flag,status,ierror)
 
    call PMPI_Iprobe(source,tag,comm%MPI_VAL,flag,status,c_ierror)
    if (present(ierror)) ierror = c_ierror
+
 end subroutine PMPI_Iprobe_f08

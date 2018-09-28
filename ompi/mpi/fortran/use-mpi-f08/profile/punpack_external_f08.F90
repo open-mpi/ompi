@@ -12,7 +12,8 @@ subroutine PMPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcoun
    use :: mpi_f08, only : ompi_unpack_external_f
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: insize
    INTEGER(MPI_ADDRESS_KIND), INTENT(INOUT) :: position
    INTEGER, INTENT(IN) :: outcount

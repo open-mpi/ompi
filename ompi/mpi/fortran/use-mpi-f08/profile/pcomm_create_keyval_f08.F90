@@ -25,7 +25,7 @@ subroutine PMPI_Comm_create_keyval_f08(comm_copy_attr_fn,comm_delete_attr_fn,&
 
    fcopy_fn = c_funloc(comm_copy_attr_fn)
    fdelete_fn = c_funloc(comm_delete_attr_fn)
-   call ompi_comm_create_keyval_f(fcopy_fn, fdelete_fn,&
+   call ompi_comm_create_keyval_f(fcopy_fn,fdelete_fn,&
                                   comm_keyval,extra_state,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
