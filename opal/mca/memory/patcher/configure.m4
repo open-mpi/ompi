@@ -34,19 +34,27 @@ AC_DEFUN([MCA_opal_memory_patcher_COMPILE_MODE], [
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_memory_patcher_CONFIG],[
+    # disable on MacOS/Darwin where it isn't used and the deprecated
+    # syscall interface causes compiler warnings.
+    AC_MSG_CHECKING([if memory patcher supports $host_os])
+    case $host_os in
+    darwin*)
+        opal_memory_patcher_happy=no
+    ;;
+    *)
+        opal_memory_patcher_happy=yes
+    ;;
+    esac
+    AC_MSG_RESULT([$opal_memory_patcher_happy])
+
+    AS_IF([test "$opal_memory_patcher_happy" == "yes"], [
+        AC_CHECK_FUNCS([__curbrk])
+	AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
+	AC_CHECK_DECLS([__mmap], [], [], [#include <sys/mman.h>])
+	AC_CHECK_FUNCS([__mmap])
+	AC_CHECK_DECLS([__syscall], [], [], [#include <sys/syscall.h>])
+	AC_CHECK_FUNCS([__syscall])
+        $1], [$2])
+
     AC_CONFIG_FILES([opal/mca/memory/patcher/Makefile])
-
-    AC_CHECK_FUNCS([__curbrk])
-
-    AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
-
-    AC_CHECK_DECLS([__mmap], [], [], [#include <sys/mman.h>])
-
-    AC_CHECK_FUNCS([__mmap])
-
-    AC_CHECK_DECLS([__syscall], [], [], [#include <sys/syscall.h>])
-
-    AC_CHECK_FUNCS([__syscall])
-
-    [$1]
 ])
