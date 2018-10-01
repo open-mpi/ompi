@@ -871,17 +871,22 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
     /* No further use of this socket. Close it */
     CLOSE_THE_SOCKET(sd);
     {
-        char *addr_str = NULL, *tmp, *pnet;
+        char *addr_str = NULL, *tmp;
+        char ip[128];
+        ip[sizeof(ip) - 1] = '\0';
+
         for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
             mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
             if (btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
                 continue;
             }
-            pnet = opal_net_get_hostname((struct sockaddr*)&btl_endpoint->endpoint_addr->addr_inet);
+            inet_ntop(btl_endpoint->endpoint_addr->addr_family,
+                      (void*) &(btl_endpoint->endpoint_addr->addr_inet),
+                      ip, sizeof(ip) - 1);
             if (NULL == addr_str) {
-                (void)asprintf(&tmp, "\n\t%s", pnet);
+                (void)asprintf(&tmp, "\n\t%s", ip);
             } else {
-                (void)asprintf(&tmp, "%s\n\t%s", addr_str, pnet);
+                (void)asprintf(&tmp, "%s\n\t%s", addr_str, ip);
                 free(addr_str);
             }
             addr_str = tmp;
