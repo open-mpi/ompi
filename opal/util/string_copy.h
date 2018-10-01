@@ -28,16 +28,22 @@ BEGIN_C_DECLS
 
 /**
  * Do a "safe" string copy (i.e., guarantee to \0-terminate the
- * destination string).
+ * destination string), and assert() fail if the copy length is too
+ * large (because we assume it is a programmer error).
  *
  * @param dest Destination string buffer.
  * @param src Source string buffer.
- * @param len Length of the destination string buffer.
+ * @param dest_len Length of the destination string buffer.
  *
  * This function is similar to, but different than, strcpy() and
  * strncpy().
  *
  * It is invalid to pass NULL for either dest or src.
+ *
+ * If dest_len is larger than
+ * OPAL_MAX_SIZE_ALLOWED_BY_OPAL_STRING_COPY, we assume that this is
+ * a programmer error (because Open MPI does not generally need to do
+ * large string copies), and will assert() fail / abort.
  *
  * There is no return value.
  *
@@ -54,8 +60,15 @@ BEGIN_C_DECLS
  *   destination, and dest[len-1] will be set to '\0'.
  */
 OPAL_DECLSPEC void opal_string_copy(char *dest, const char *src,
-                                    size_t len)
+                                    size_t dest_len)
     __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
+
+/**
+ * Max dest_size allowed by opal_string_copy().
+ *
+ * See the description of opal_string_copy() for an explanation.
+ */
+#define OPAL_MAX_SIZE_ALLOWED_BY_OPAL_STRING_COPY (128 * 1024)
 
 END_C_DECLS
 
