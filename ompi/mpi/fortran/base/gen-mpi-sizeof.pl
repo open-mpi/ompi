@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2018 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Script to generate the overloaded MPI_SIZEOF interfaces and
@@ -156,6 +156,8 @@ for my $size (qw/32 64 128/) {
         queue_sub("complex(real${size})", "complex${size}", "real${size}");
     }
 }
+queue_sub("character", "character");
+queue_sub("logical", "logical");
 
 #######################################################
 
