@@ -36,14 +36,22 @@ This file contains notable changes between releases for each release since
 Open MPI 1.0.  Because Open MPI maintains multiple release branches at any time,
 it is possible for items to appear more than once in the list.
 
-3.0.3 -- August, 2018
----------------------
+3.0.3 -- October, 2018
+----------------------
 
+- Disable async receive of CUDA buffers by default, fixing a hang
+  on large transfers.
+- Support the BCM57XXX and BCM58XXX Broadcomm adapters.
+- Fix minmax datatype support in ROMIO.
+- Bug fixes in vader shared memory transport.
+- Support very large buffers with MPI_TYPE_VECTOR.
+- Fix hang when launching with mpirun on Cray systems.
+- Bug fixes in OFI MTL.
 - Assorted Portals 4.0 bug fixes.
 - Fix for possible data corruption in MPI_BSEND.
 - Move shared memory file for vader btl into /dev/shm on Linux.
 - Fix for MPI_ISCATTER/MPI_ISCATTERV Fortran interfaces with MPI_IN_PLACE.
-- Upgrade PMIx to v2.1.3.
+- Upgrade PMIx to v2.1.4.
 - Fix for Power9 built-in atomics.
 - Numerous One-sided bug fixes.
 - Fix for race condition in uGNI BTL.
