@@ -54,7 +54,7 @@ static int rte_finalize(void);
 orte_ess_base_module_t orte_ess_slurm_module = {
     rte_init,
     rte_finalize,
-    orte_ess_base_app_abort,
+    NULL,
     NULL /* ft_event */
 };
 
