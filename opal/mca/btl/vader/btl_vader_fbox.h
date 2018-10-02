@@ -56,6 +56,16 @@ static inline void mca_btl_vader_fbox_set_header (mca_btl_vader_fbox_hdr_t *hdr,
     hdr->data.tag = tag;
 }
 
+static inline mca_btl_vader_fbox_hdr_t mca_btl_vader_fbox_read_header (mca_btl_vader_fbox_hdr_t *hdr)
+{
+    mca_btl_vader_fbox_hdr_t tmp;
+    uint16_t tag = hdr->data.tag;
+    opal_atomic_rmb ();
+    tmp.ival = hdr->ival;
+    tmp.data.tag = tag;
+    return tmp;
+}
+
 /* attempt to reserve a contiguous segment from the remote ep */
 static inline bool mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, unsigned char tag,
                                              void * restrict header, const size_t header_size,
@@ -175,7 +185,7 @@ static inline bool mca_btl_vader_check_fboxes (void)
         int poll_count;
 
         for (poll_count = 0 ; poll_count <= MCA_BTL_VADER_POLL_COUNT ; ++poll_count) {
-            const mca_btl_vader_fbox_hdr_t hdr = {.ival = MCA_BTL_VADER_FBOX_HDR(ep->fbox_in.buffer + start)->ival};
+            const mca_btl_vader_fbox_hdr_t hdr = mca_btl_vader_fbox_read_header (MCA_BTL_VADER_FBOX_HDR(ep->fbox_in.buffer + start));
 
             /* check for a valid tag a sequence number */
             if (0 == hdr.data.tag || hdr.data.seq != ep->fbox_in.seq) {
