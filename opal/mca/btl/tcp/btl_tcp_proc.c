@@ -732,12 +732,12 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         }
         free(proc_data->local_interfaces[i]);
     }
-    free(proc_data->local_interfaces);
+    free(proc_data->local_interfaces); proc_data->local_interfaces = NULL;
     proc_data->max_local_interfaces = 0;
 
-    free(proc_data->weights);
-    free(proc_data->best_addr);
-    free(proc_data->best_assignment);
+    free(proc_data->weights); proc_data->weights = NULL;
+    free(proc_data->best_addr); proc_data->best_addr = NULL;
+    free(proc_data->best_assignment); proc_data->best_assignment = NULL;
 
     OBJ_DESTRUCT(&_proc_data.local_kindex_to_index);
     OBJ_DESTRUCT(&_proc_data.peer_kindex_to_index);

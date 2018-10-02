@@ -361,9 +361,9 @@ static int mca_btl_tcp_component_open(void)
 #if OPAL_ENABLE_IPV6
     mca_btl_tcp_component.tcp6_listen_sd = -1;
 #endif
-    mca_btl_tcp_component.tcp_num_btls=0;
+    mca_btl_tcp_component.tcp_num_btls = 0;
     mca_btl_tcp_component.tcp_addr_count = 0;
-    mca_btl_tcp_component.tcp_btls=NULL;
+    mca_btl_tcp_component.tcp_btls = NULL;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
