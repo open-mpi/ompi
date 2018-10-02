@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +63,6 @@ ORTE_DECLSPEC int orte_ess_base_std_prolog(void);
 
 ORTE_DECLSPEC int orte_ess_base_app_setup(bool db_restrict_local);
 ORTE_DECLSPEC int orte_ess_base_app_finalize(void);
-ORTE_DECLSPEC void orte_ess_base_app_abort(int status, bool report);
 
 ORTE_DECLSPEC int orte_ess_base_tool_setup(opal_list_t *flags);
 ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);

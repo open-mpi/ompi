@@ -75,7 +75,6 @@
 #include "orte/mca/schizo/schizo.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/filem/filem.h"
-#include "orte/mca/dfs/dfs.h"
 
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
@@ -466,13 +465,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *buffer,
     return ORTE_SUCCESS;
 }
 
-static void fm_release(void *cbdata)
-{
-    opal_buffer_t *bptr = (opal_buffer_t*)cbdata;
-
-    OBJ_RELEASE(bptr);
-}
-
 static void ls_cbunc(int status, void *cbdata)
 {
     opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
@@ -829,15 +821,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *buffer,
         }
     } else {
         lock.active = false;  // we won't get a callback
-    }
-
-    /* if we have a file map, then we need to load it */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FILE_MAPS, (void**)&bptr, OPAL_BUFFER)) {
-        if (NULL != orte_dfs.load_file_maps) {
-            orte_dfs.load_file_maps(jdata->jobid, bptr, fm_release, bptr);
-        } else {
-            OBJ_RELEASE(bptr);
-        }
     }
 
     /* load any controls into the job */
