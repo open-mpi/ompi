@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
@@ -63,11 +63,12 @@
 
 static int rte_init(void);
 static int rte_finalize(void);
+static void rte_abort(int status, bool report);
 
 orte_ess_base_module_t orte_ess_singleton_module = {
     rte_init,
     rte_finalize,
-    orte_ess_base_app_abort,
+    rte_abort,
     NULL /* ft_event */
 };
 
@@ -583,4 +584,26 @@ static int fork_hnp(void)
         /* all done - report success */
         return ORTE_SUCCESS;
     }
+}
+
+static void rte_abort(int status, bool report)
+{
+    struct timespec tp = {0, 100000};
+
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
+                         "%s ess:singleton:abort: abort with status %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         status));
+
+    /* PMI doesn't like NULL messages, but our interface
+     * doesn't provide one - so rig one up here
+     */
+    opal_pmix.abort(status, "N/A", NULL);
+
+    /* provide a little delay for the PMIx thread to
+     * get the info out */
+    nanosleep(&tp, NULL);
+
+    /* Now Exit */
+    _exit(status);
 }

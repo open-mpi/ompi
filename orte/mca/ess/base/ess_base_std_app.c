@@ -48,17 +48,10 @@
 #include "opal/util/proc.h"
 #include "opal/runtime/opal.h"
 
-#include "orte/mca/rml/base/base.h"
-#include "orte/mca/routed/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/dfs/base/base.h"
-#include "orte/mca/grpcomm/base/base.h"
-#include "orte/mca/oob/base/base.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/state/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -75,7 +68,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
     char *error = NULL;
-    opal_list_t transports;
 
     OPAL_TIMING_ENV_INIT(ess_base_setup);
     /*
@@ -166,48 +158,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     }
     OPAL_TIMING_ENV_NEXT(ess_base_setup, "create_session_dirs");
 
-    /* Setup the communication infrastructure */
-    /* Routed system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_select";
-        goto error;
-    }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "routed_framework_open");
-
-    /*
-     * OOB Layer
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_oob_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_oob_base_select";
-        goto error;
-    }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "oob_framework_open");
-    
-    /* Runtime Messaging Layer */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rml_base_select";
-        goto error;
-    }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "rml_framework_open");
-    
     /* if we have info on the HNP and local daemon, process it */
     if (NULL != orte_process_info.my_hnp_uri) {
         /* we have to set the HNP's name, even though we won't route messages directly
@@ -260,56 +210,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     }
     OPAL_TIMING_ENV_NEXT(ess_base_setup, "errmgr_select");
 
-    /* get a conduit for our use - we never route IO over fabric */
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_mgmt_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_mgmt_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_mgmt_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
-
-    OBJ_CONSTRUCT(&transports, opal_list_t);
-    orte_set_attribute(&transports, ORTE_RML_TRANSPORT_TYPE,
-                       ORTE_ATTR_LOCAL, orte_coll_transport, OPAL_STRING);
-    if (ORTE_RML_CONDUIT_INVALID == (orte_coll_conduit = orte_rml.open_conduit(&transports))) {
-        ret = ORTE_ERR_OPEN_CONDUIT_FAIL;
-        error = "orte_rml_open_coll_conduit";
-        goto error;
-    }
-    OPAL_LIST_DESTRUCT(&transports);
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "rml_open_conduit");
-
-    /*
-     * Group communications
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_grpcomm_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_grpcomm_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_grpcomm_base_select";
-        goto error;
-    }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "grpcomm_framework_open");
-
-    /* open the distributed file system */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_dfs_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_dfs_base_select";
-        goto error;
-    }
-    OPAL_TIMING_ENV_NEXT(ess_base_setup, "dfs_framework_open");
-
     return ORTE_SUCCESS;
  error:
     orte_show_help("help-orte-runtime.txt",
@@ -320,25 +220,14 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 
 int orte_ess_base_app_finalize(void)
 {
-    /* release the conduits */
-    orte_rml.close_conduit(orte_mgmt_conduit);
-    orte_rml.close_conduit(orte_coll_conduit);
-
     /* close frameworks */
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
 
-    /* now can close the rml and its friendly group comm */
-    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
-    (void) mca_base_framework_close(&orte_dfs_base_framework);
-    (void) mca_base_framework_close(&orte_routed_base_framework);
-
-    (void) mca_base_framework_close(&orte_rml_base_framework);
     if (NULL != opal_pmix.finalize) {
         opal_pmix.finalize();
         (void) mca_base_framework_close(&opal_pmix_base_framework);
     }
-    (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
 
     if (NULL == opal_pmix.register_cleanup) {
@@ -348,60 +237,4 @@ int orte_ess_base_app_finalize(void)
     orte_proc_info_finalize();
 
     return ORTE_SUCCESS;
-}
-
-/*
- * We do NOT call the regular C-library "abort" function, even
- * though that would have alerted us to the fact that this is
- * an abnormal termination, because it would automatically cause
- * a core file to be generated. On large systems, that can be
- * overwhelming (imagine a few thousand Gbyte-sized files hitting
-                 * a shared file system simultaneously...ouch!).
- *
- * However, this causes a problem for OpenRTE as the system truly
- * needs to know that this actually IS an abnormal termination.
- * To get around the problem, we drop a marker in the proc-level
- * session dir. If session dir's were not allowed, then we just
- * ignore this question.
- *
- * In some cases, however, we DON'T want to create that alert. For
- * example, if an orted detects that the HNP has died, then there
- * is truly nobody to alert! In these cases, we pass report=false
- * to indicate that we don't want the marker dropped.
- */
-void orte_ess_base_app_abort(int status, bool report)
-{
-    int fd;
-    char *myfile;
-    struct timespec tp = {0, 100000};
-
-    /* Exit - do NOT do a normal finalize as this will very likely
-     * hang the process. We are aborting due to an abnormal condition
-     * that precludes normal cleanup
-     *
-     * We do need to do the following bits to make sure we leave a
-     * clean environment. Taken from orte_finalize():
-     * - Assume errmgr cleans up child processes before we exit.
-     */
-
-    /* If we were asked to report this termination, do so.
-     * Since singletons don't start an HNP unless necessary, and
-     * direct-launched procs don't have daemons at all, only send
-     * the message if routing is enabled as this indicates we
-     * have someone to send to
-     */
-    if (report && orte_routing_is_enabled && orte_create_session_dirs) {
-        myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);
-        fd = open(myfile, O_CREAT, S_IRUSR);
-        close(fd);
-        /* now introduce a short delay to allow any pending
-         * messages (e.g., from a call to "show_help") to
-         * have a chance to be sent */
-        nanosleep(&tp, NULL);
-    }
-    /* - Clean out the global structures
-     * (not really necessary, but good practice) */
-    orte_proc_info_finalize();
-    /* Now Exit */
-    _exit(status);
 }
