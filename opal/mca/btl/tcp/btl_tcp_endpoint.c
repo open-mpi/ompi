@@ -734,11 +734,10 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
      * addresses shared in modex, so that the destination rank 
      * can properly pair btl modules, even in cases where Linux 
      * might do something unexpected with routing */
-    opal_socklen_t sockaddr_addrlen = sizeof(struct sockaddr_storage);
     if (endpoint_addr.ss_family == AF_INET) {
         assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr);
         if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr,
-		 sockaddr_addrlen) < 0) {
+		 sizeof(struct sockaddr_in)) < 0) {
 	    BTL_ERROR(("bind() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
 
 	    CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
@@ -749,7 +748,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     if (endpoint_addr.ss_family == AF_INET6) {
         assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr_6);
         if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr_6,
-	    sockaddr_addrlen) < 0) {
+	    sizeof(struct sockaddr_in6)) < 0) {
 	    BTL_ERROR(("bind() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
 
 	    CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
