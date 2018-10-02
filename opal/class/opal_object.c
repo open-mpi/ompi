@@ -33,6 +33,30 @@
 #include "opal/class/opal_object.h"
 #include "opal/constants.h"
 
+void __attribute__((weak)) Tau_track_class_allocation(const char * name, size_t size) {
+
+}
+
+void __attribute__((weak)) Tau_track_class_deallocation(const char * name, size_t size) {
+
+}
+
+void __attribute__((weak)) Tau_start_class_allocation(const char * name, size_t size, int include_in_parent) {
+
+}
+
+void __attribute__((weak)) Tau_stop_class_allocation(const char * name, int record) { 
+
+}
+
+void __attribute__((weak)) Tau_start_class_deallocation(const char * name, size_t size, int include_in_parent) {
+
+}
+
+void __attribute__((weak)) Tau_stop_class_deallocation(const char * name, int record) { 
+
+}
+
 /*
  * Instantiation of class descriptor for the base class.  This is
  * special, since be mark it as already initialized, with no parent

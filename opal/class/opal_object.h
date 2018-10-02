@@ -132,6 +132,13 @@ BEGIN_C_DECLS
 #define OPAL_OBJ_MAGIC_ID ((0xdeafbeedULL << 32) + 0xdeafbeedULL)
 #endif
 
+void __attribute__((weak)) Tau_track_class_allocation(const char * name, size_t size);
+void __attribute__((weak)) Tau_track_class_deallocation(const char * name, size_t size);
+void __attribute__((weak)) Tau_start_class_allocation(const char * name, size_t size, int include_in_parent);
+void __attribute__((weak)) Tau_stop_class_allocation(const char * name, int record);
+void __attribute__((weak)) Tau_start_class_deallocation(const char * name, size_t size, int include_in_parent);
+void __attribute__((weak)) Tau_stop_class_deallocation(const char * name, int record);
+
 /* typedefs ***********************************************************/
 
 typedef struct opal_object_t opal_object_t;
@@ -457,6 +464,7 @@ static inline void opal_obj_run_destructors(opal_object_t * object)
 
     assert(NULL != object->obj_class);
 
+    Tau_track_class_deallocation(object->obj_class->cls_name, object->obj_class->cls_sizeof);
     cls_destruct = object->obj_class->cls_destruct_array;
     while( NULL != *cls_destruct ) {
         (*cls_destruct)(object);
@@ -480,6 +488,8 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
     opal_object_t *object;
     assert(cls->cls_sizeof >= sizeof(opal_object_t));
 
+    Tau_start_class_allocation(cls->cls_name, cls->cls_sizeof, 0);
+
 #if OPAL_WANT_MEMCHECKER
     object = (opal_object_t *) calloc(1, cls->cls_sizeof);
 #else
@@ -493,6 +503,7 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
         object->obj_reference_count = 1;
         opal_obj_run_constructors(object);
     }
+    Tau_stop_class_allocation(cls->cls_name, 1);
     return object;
 }
 

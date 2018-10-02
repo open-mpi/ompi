@@ -256,7 +256,11 @@ int mca_pml_yalla_add_procs(struct ompi_proc_t **procs, size_t nprocs)
             return OMPI_ERROR;
         }
 
+        Tau_start_class_allocation(procs[i]->super.super.super.obj_class->cls_name, 0, 0);
+        Tau_start_class_allocation("mxm_conn_h", sizeof(mxm_conn_h), 0);
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = conn;
+        Tau_stop_class_allocation("mxm_conn_h", 1);
+        Tau_stop_class_allocation(procs[i]->super.super.super.obj_class->cls_name, 0);
     }
 
     return OMPI_SUCCESS;
