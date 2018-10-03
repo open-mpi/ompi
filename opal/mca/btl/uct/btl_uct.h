@@ -106,9 +106,6 @@ struct mca_btl_uct_module_t {
     /** large registered frags for packing non-contiguous data */
     opal_free_list_t max_frags;
 
-    /** RDMA completions */
-    opal_free_list_t rdma_completions;
-
     /** frags that were waiting on connections that are now ready to send */
     opal_list_t pending_frags;
 };
