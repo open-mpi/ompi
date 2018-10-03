@@ -16,7 +16,7 @@
 #if OMPI_PROFILING_DEFINES
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_event_get_wtime = PMPI_T_event_get_wtime
+#pragma weak MPI_T_event_get_timestamp = PMPI_T_event_get_timestamp
 #endif
 
 #include "ompi/mpi/tool/profile/defines.h"
