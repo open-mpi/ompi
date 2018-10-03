@@ -12,7 +12,8 @@ subroutine MPI_Gatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    use :: mpi_f08, only : ompi_gatherv_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, root
    INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype
