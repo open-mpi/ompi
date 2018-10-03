@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2017 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -155,7 +155,11 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct m
 
 static inline void vader_fifo_init (vader_fifo_t *fifo)
 {
-    fifo->fifo_head = fifo->fifo_tail = VADER_FIFO_FREE;
+    /* due to a compiler bug in Oracle C 5.15 the following line was broken into two. Not
+     * ideal but oh well. See #5814 */
+    /* fifo->fifo_head = fifo->fifo_tail = VADER_FIFO_FREE; */
+    fifo->fifo_head = VADER_FIFO_FREE;
+    fifo->fifo_tail = VADER_FIFO_FREE;
     fifo->fbox_available = mca_btl_vader_component.fbox_max;
     mca_btl_vader_component.my_fifo = fifo;
 }
