@@ -125,14 +125,6 @@ static int rte_finalize(void)
             ORTE_ERROR_LOG(ret);
         }
         return ret;
-    } else {
-        /* otherwise, I must be an application process
-         * use the default procedure to finish
-         */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
     }
 
     return ORTE_SUCCESS;
