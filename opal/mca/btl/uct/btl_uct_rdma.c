@@ -30,13 +30,14 @@ static void mca_btl_uct_uct_completion_construct (mca_btl_uct_uct_completion_t *
 
 OBJ_CLASS_INSTANCE(mca_btl_uct_uct_completion_t, opal_free_list_item_t, mca_btl_uct_uct_completion_construct, NULL);
 
+
 mca_btl_uct_uct_completion_t *
 mca_btl_uct_uct_completion_alloc (mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint,
                                   void *local_address, mca_btl_base_registration_handle_t *local_handle,
                                   mca_btl_uct_device_context_t *dev_context, mca_btl_base_rdma_completion_fn_t cbfunc,
                                   void *cbcontext, void *cbdata)
 {
-    mca_btl_uct_uct_completion_t *comp = (mca_btl_uct_uct_completion_t *) opal_free_list_get (&uct_btl->rdma_completions);
+    mca_btl_uct_uct_completion_t *comp = (mca_btl_uct_uct_completion_t *) opal_free_list_get (&dev_context->rdma_completions);
     if (OPAL_LIKELY(NULL != comp)) {
         comp->uct_comp.count = 1;
         comp->btl = &uct_btl->super;
@@ -55,8 +56,7 @@ mca_btl_uct_uct_completion_alloc (mca_btl_uct_module_t *uct_btl, mca_btl_base_en
 void mca_btl_uct_uct_completion_release (mca_btl_uct_uct_completion_t *comp)
 {
     if (comp) {
-        mca_btl_uct_module_t *uct_btl = (mca_btl_uct_module_t *) comp->btl;
-        opal_free_list_return (&uct_btl->rdma_completions, &comp->super);
+        opal_free_list_return (&comp->dev_context->rdma_completions, &comp->super);
     }
 }
 
@@ -122,6 +122,8 @@ int mca_btl_uct_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
         mca_btl_uct_uct_completion_release (comp);
     } else if (UCS_INPROGRESS == ucs_status) {
         ucs_status = UCS_OK;
+    } else {
+        mca_btl_uct_uct_completion_release (comp);
     }
 
     BTL_VERBOSE(("get issued. status = %d", ucs_status));
@@ -157,6 +159,8 @@ int mca_btl_uct_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     ucs_status_t ucs_status;
     uct_rkey_bundle_t rkey;
     uct_ep_h ep_handle;
+    bool use_short = false;
+    bool use_bcopy = false;
     int rc;
 
     BTL_VERBOSE(("performing put operation. local address: %p, length: %lu", local_address, (unsigned long) size));
@@ -177,12 +181,19 @@ int mca_btl_uct_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
 
     mca_btl_uct_context_lock (context);
 
+    /* determine what UCT prototol should be used */
+    if (size <= uct_btl->super.btl_put_local_registration_threshold) {
+        use_short = size <= uct_btl->rdma_tl->uct_iface_attr.cap.put.max_short;
+        use_bcopy = !use_short;
+    }
+
     do {
-        if (size <= uct_btl->rdma_tl->uct_iface_attr.cap.put.max_short) {
+        if (use_short) {
             ucs_status = uct_ep_put_short (ep_handle, local_address, size, remote_address, rkey.rkey);
-        } else if (size <= uct_btl->super.btl_put_local_registration_threshold) {
+        } else if (use_bcopy) {
             ssize_t tmp = uct_ep_put_bcopy (ep_handle, mca_btl_uct_put_pack,
-                                            &(mca_btl_uct_put_pack_args_t) {.local_address = local_address, .size = size},
+                                            &(mca_btl_uct_put_pack_args_t) {.local_address = local_address,
+                                                    .size = size},
                                             remote_address, rkey.rkey);
             ucs_status = (tmp == (ssize_t) size) ? UCS_OK : UCS_ERR_NO_RESOURCE;
         } else {

@@ -141,9 +141,15 @@ struct mca_btl_uct_device_context_t {
     /** UCT interface handle */
     uct_iface_h uct_iface;
 
+    /** RDMA completions */
+    opal_free_list_t rdma_completions;
+
     /** complete fragments and rdma operations. this fifo is used to avoid making
      * callbacks while holding the device lock. */
     opal_fifo_t completion_fifo;
+
+    /** progress is enabled on this context */
+    bool progress_enabled;
 };
 
 typedef struct mca_btl_uct_device_context_t mca_btl_uct_device_context_t;

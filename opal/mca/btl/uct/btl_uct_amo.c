@@ -104,8 +104,10 @@ int mca_btl_uct_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
         rc = OPAL_SUCCESS;
     } else if (UCS_OK == ucs_status) {
         rc = 1;
+        mca_btl_uct_uct_completion_release (comp);
     } else {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
+        mca_btl_uct_uct_completion_release (comp);
     }
 
     uct_rkey_release (&rkey);
@@ -176,8 +178,10 @@ int mca_btl_uct_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
         rc = OPAL_SUCCESS;
     } else if (UCS_OK == ucs_status) {
         rc = 1;
+        mca_btl_uct_uct_completion_release (comp);
     } else {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
+        mca_btl_uct_uct_completion_release (comp);
     }
 
     uct_rkey_release (&rkey);

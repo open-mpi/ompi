@@ -28,6 +28,9 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/argv.h"
+#include "opal/memoryhooks/memory.h"
+#include "opal/mca/memory/base/base.h"
+#include <ucm/api/ucm.h>
 
 #include <string.h>
 
@@ -47,13 +50,13 @@ static int mca_btl_uct_component_register(void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_uct_component.memory_domains);
 
-    mca_btl_uct_component.allowed_transports = "any";
+    mca_btl_uct_component.allowed_transports = "dc_mlx5,rc_mlx5,ud,any";
     (void) mca_base_component_var_register(&mca_btl_uct_component.super.btl_version,
-                                           "transports", "Comma-delimited list of transports of the form to use."
-                                           " The list of transports available can be queried using ucx_info. Special"
-                                           "values: any (any available) (default: any)", MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &mca_btl_uct_component.allowed_transports);
+                                           "transports", "Comma-delimited list of transports to use sorted by increasing "
+                                           "priority. The list of transports available can be queried using ucx_info. Special"
+                                           "values: any (any available) (default: dc_mlx5,rc_mlx5,ud,any)",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.allowed_transports);
 
     mca_btl_uct_component.num_contexts_per_module = 0;
     (void) mca_base_component_var_register(&mca_btl_uct_component.super.btl_version,
@@ -93,6 +96,11 @@ static int mca_btl_uct_component_register(void)
                                         &module->super);
 }
 
+static void mca_btl_uct_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
+{
+    ucm_vm_munmap(buf, length);
+}
+
 static int mca_btl_uct_component_open(void)
 {
     if (0 == mca_btl_uct_component.num_contexts_per_module) {
@@ -112,6 +120,15 @@ static int mca_btl_uct_component_open(void)
         }
     }
 
+    if (mca_btl_uct_component.num_contexts_per_module > MCA_BTL_UCT_MAX_WORKERS) {
+        mca_btl_uct_component.num_contexts_per_module = MCA_BTL_UCT_MAX_WORKERS;
+    }
+
+    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
+        ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
+        opal_mem_hooks_register_release(mca_btl_uct_mem_release_cb, NULL);
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -121,6 +138,10 @@ static int mca_btl_uct_component_open(void)
  */
 static int mca_btl_uct_component_close(void)
 {
+    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
+        opal_mem_hooks_unregister_release (mca_btl_uct_mem_release_cb);
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -247,7 +268,6 @@ static mca_btl_uct_module_t *mca_btl_uct_alloc_module (const char *md_name, mca_
     OBJ_CONSTRUCT(&module->short_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&module->eager_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&module->max_frags, opal_free_list_t);
-    OBJ_CONSTRUCT(&module->rdma_completions, opal_free_list_t);
     OBJ_CONSTRUCT(&module->pending_frags, opal_list_t);
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
 
