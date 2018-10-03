@@ -5,6 +5,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -15,7 +16,8 @@ subroutine MPI_Pack_external_f08(datarep,inbuf,incount,datatype,outbuf,outsize, 
    use :: ompi_mpifh_bindings, only : ompi_pack_external_f
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: incount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: outsize
