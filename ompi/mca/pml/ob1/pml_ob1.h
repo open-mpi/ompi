@@ -99,12 +99,21 @@ enum {
     MCA_PML_OB1_EVENT_UNEX_REMOVE,
     MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
     MCA_PML_OB1_EVENT_TRANSFER,
+    MCA_PML_OB1_EVENT_TRANSFER_END,
     MCA_PML_OB1_EVENT_RECEIVE_CANCELED,
     MCA_PML_OB1_EVENT_REQUEST_FREE,
+    MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
+    MCA_PML_OB1_EVENT_REQUEST_COMPLETE,
     MCA_PML_OB1_EVENT_MAX,
 };
 
 extern mca_base_event_list_item_t mca_pml_ob1_events[];
+
+struct mca_pml_ob1_transfer_event_t {
+    void *request;
+    int64_t length;
+};
+typedef struct mca_pml_ob1_transfer_event_t mca_pml_ob1_transfer_event_t;
 
 extern mca_pml_ob1_t mca_pml_ob1;
 extern int mca_pml_ob1_output;

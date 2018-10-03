@@ -124,8 +124,9 @@ do {                                                                \
  */
 #define MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq )                              \
     do {                                                                              \
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                            \
-                                 &(recvreq->req_recv.req_base), PERUSE_RECV );        \
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_COMPLETE].event, \
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,             \
+                              (recvreq)->req_recv.req_base.req_comm, NULL, &(recvreq)); \
         ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );        \
     } while (0)
 
@@ -162,8 +163,9 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     if(false == recvreq->req_recv.req_base.req_pml_complete){
 
         if(recvreq->req_recv.req_bytes_packed > 0) {
-            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                    &recvreq->req_recv.req_base, PERUSE_RECV );
+            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_END].event,
+                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                                  recvreq->req_recv.req_base.req_comm, NULL, &recvreq);
         }
 
         for(i = 0; i < recvreq->req_rdma_cnt; i++) {
@@ -258,8 +260,9 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
             prepare_recv_req_converter(req);
         }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
-        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
-                                &req->req_recv.req_base, PERUSE_RECV);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,
+                              req->req_recv.req_base.req_comm, NULL, &req);
     }
 }
 
@@ -268,7 +271,7 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
  *
  */
 
-#define MCA_PML_OB1_RECV_REQUEST_UNPACK( request,                                 \
+#define MCA_PML_OB1_RECV_REQUEST_UNPACK( req,                                     \
                                          segments,                                \
                                          num_segments,                            \
                                          seg_offset,                              \
@@ -277,7 +280,7 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
                                          bytes_delivered)                         \
 do {                                                                              \
     bytes_delivered = 0;                                                          \
-    if(request->req_recv.req_bytes_packed > 0) {                                  \
+    if((req)->req_recv.req_bytes_packed > 0) {                                    \
         struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = 0;                                                   \
         size_t max_data = bytes_received;                                         \
@@ -295,18 +298,21 @@ do {                                                                            
                 offset = 0;                                                       \
             }                                                                     \
         }                                                                         \
-        OPAL_THREAD_LOCK(&request->lock);                                         \
-        PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
-                                      &(request->req_recv.req_base), max_data,    \
-                                      PERUSE_RECV);                               \
-        opal_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
+        OPAL_THREAD_LOCK(&(req)->lock);                                           \
+                                                                                  \
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event, \
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE,         \
+                              (req)->req_recv.req_base.req_comm, NULL,            \
+            &((mca_pml_ob1_transfer_event_t){.request = req, .length = max_data})); \
+                                                                                  \
+        opal_convertor_set_position( &((req)->req_recv.req_base.req_convertor),   \
                                      &data_offset );                              \
-        opal_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
+        opal_convertor_unpack( &(req)->req_recv.req_base.req_convertor,           \
                                iov,                                               \
                                &iov_count,                                        \
                                &max_data );                                       \
         bytes_delivered = max_data;                                               \
-        OPAL_THREAD_UNLOCK(&request->lock);                                       \
+        OPAL_THREAD_UNLOCK(&(req)->lock);                                         \
     }                                                                             \
 } while (0)
 

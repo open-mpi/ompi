@@ -125,7 +125,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
 
     void *req = &(request->req_recv.req_base);
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_RECEIVE_CANCELED].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, &req);
+                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
 
     /**
      * As now the PML is done with this request we have to force the pml_complete
@@ -455,13 +455,10 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 
     recvreq->req_ack_sent = true;
 
-    void *req = &(recvreq->req_recv.req_base);
     mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
-                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, &req);
+                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL,
+                          &((mca_pml_ob1_transfer_event_t) {.request = recvreq, .length = frag->rdma_length}));
 
-    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(recvreq->req_recv.req_base), frag->rdma_length,
-                                  PERUSE_RECV);
 
     /* send rdma request to peer */
     rc = mca_bml_base_send (bml_btl, ctl, MCA_PML_OB1_HDR_TYPE_PUT);
@@ -500,9 +497,9 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
         local_handle = recvreq->local_handle;
     }
 
-    PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
-                                 &(((mca_pml_ob1_recv_request_t *) frag->rdma_req)->req_recv.req_base),
-                                 frag->rdma_length, PERUSE_RECV);
+    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+                          MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, recvreq->req_recv.req_base.req_comm, NULL,
+                          &((mca_pml_ob1_transfer_event_t){.request = frag->rdma_req, .length = frag->rdma_length}));
 
     /* queue up get request */
     rc = mca_bml_base_get (bml_btl, frag->local_address, frag->remote_address, local_handle,
@@ -516,9 +513,6 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
 
     return OMPI_SUCCESS;
 }
-
-
-
 
 /*
  * Update the recv request status to reflect the number of bytes

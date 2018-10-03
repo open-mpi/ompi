@@ -65,9 +65,17 @@ static opal_datatype_t *mca_pml_ob1_match_hdr_types[] = {
     &ompi_mpi_int32_t.dt.super, &ompi_mpi_int16_t.dt.super,
 };
 
+static opal_datatype_t *mca_pml_ob1_request_size_types[] = {
+    &ompi_mpi_aint.dt.super, &ompi_mpi_int64_t.dt.super,
+};
+
 static unsigned long mca_pml_ob1_match_hdr_offsets[] = {
     offsetof (mca_pml_ob1_match_hdr_t, hdr_ctx), offsetof (mca_pml_ob1_match_hdr_t, hdr_src),
     offsetof (mca_pml_ob1_match_hdr_t, hdr_tag), offsetof (mca_pml_ob1_match_hdr_t, hdr_seq),
+};
+
+static unsigned long mca_pml_ob1_request_size_offsets[] = {
+    offsetof (mca_pml_ob1_transfer_event_t, request), offsetof (mca_pml_ob1_transfer_event_t, length),
 };
 
 static char *mca_pml_ob1_match_hdr_names[] = {
@@ -78,59 +86,83 @@ static char *mca_pml_ob1_request_element[] = {
     "request", NULL,
 };
 
+static char *mca_pml_ob1_request_size_elements[] = {
+    "request", "length", NULL,
+};
+
 
 mca_base_event_list_item_t mca_pml_ob1_events[] = {
-    {.name = "message_arrived", .desc = "Message arrived for match", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = mca_pml_ob1_match_hdr_types, .offsets = mca_pml_ob1_match_hdr_offsets,
-     .num_datatypes = 4, .elements = mca_pml_ob1_match_hdr_names, .extent = 12, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_MESSAGE_ARRIVED] = {.name = "message_arrived", .desc = "Message arrived for match",
+                                           .verbosity = OPAL_INFO_LVL_5, .datatypes = mca_pml_ob1_match_hdr_types,
+                                           .offsets = mca_pml_ob1_match_hdr_offsets, .num_datatypes = 4,
+                                           .elements = mca_pml_ob1_match_hdr_names, .extent = 12, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "search_posted_begin", .desc = "Begin searching posted message queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &mca_pml_ob1_match_hdr_types[1], .offsets = &mca_pml_ob1_match_hdr_offsets[1],
-     .num_datatypes = 2, .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN] = {.name = "search_posted_begin", .desc = "Begin searching posted message queue",
+                                               .verbosity = OPAL_INFO_LVL_5, .datatypes = &mca_pml_ob1_match_hdr_types[1],
+                                               .offsets = &mca_pml_ob1_match_hdr_offsets[1], .num_datatypes = 2,
+                                               .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "search_posted_end", .desc = "Finished searching posted message queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &mca_pml_ob1_match_hdr_types[1], .offsets = &mca_pml_ob1_match_hdr_offsets[1],
-     .num_datatypes = 2, .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_SEARCH_POSTED_END] = {.name = "search_posted_end", .desc = "Finished searching posted message queue",
+                                             .verbosity = OPAL_INFO_LVL_5, .datatypes = &mca_pml_ob1_match_hdr_types[1],
+                                             .offsets = &mca_pml_ob1_match_hdr_offsets[1], .num_datatypes = 2,
+                                             .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "search_unexpected_begin", .desc = "Begin searching unexpected message queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN] = {.name = "search_unexpected_begin", .desc = "Begin searching unexpected message queue",
+                                             .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super},
+                                             .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_pml_ob1_request_element,
+                                             .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "search_unexpected_end", .desc = "Finished searching unexpected message queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_SEARCH_UNEX_END] = {.name = "search_unexpected_end", .desc = "Finished searching unexpected message queue",
+                                           .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super},
+                                           .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_pml_ob1_request_element,
+                                           .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "posted_insert", .desc = "Added request to the posted message queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_POSTED_INSERT] = {.name = "posted_insert", .desc = "Added request to the posted message queue",
+                                         .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super},
+                                         .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_pml_ob1_request_element,
+                                         .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "posted_remove", .desc = "Remove request from the posted message queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_POSTED_REMOVE] = {.name = "posted_remove", .desc = "Remove request from the posted message queue",
+                                         .verbosity = OPAL_INFO_LVL_5, .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super},
+                                         .offsets = &(unsigned long) {0}, .num_datatypes = 1, .elements = mca_pml_ob1_request_element,
+                                         .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "unex_insert", .desc = "Unexpected message inserted in queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &mca_pml_ob1_match_hdr_types[1], .offsets = &mca_pml_ob1_match_hdr_offsets[1],
-     .num_datatypes = 2, .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_UNEX_INSERT] = {.name = "unex_insert", .desc = "Unexpected message inserted in queue", .verbosity = OPAL_INFO_LVL_5,
+                                       .datatypes = &mca_pml_ob1_match_hdr_types[1], .offsets = &mca_pml_ob1_match_hdr_offsets[1],
+                                       .num_datatypes = 2, .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "unex_remove", .desc = "Unexpected message removed from queue", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &mca_pml_ob1_match_hdr_types[1], .offsets = &mca_pml_ob1_match_hdr_offsets[1],
-     .num_datatypes = 2, .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_UNEX_REMOVE] = {.name = "unex_remove", .desc = "Unexpected message removed from queue", .verbosity = OPAL_INFO_LVL_5,
+                                       .datatypes = &mca_pml_ob1_match_hdr_types[1], .offsets = &mca_pml_ob1_match_hdr_offsets[1],
+                                       .num_datatypes = 2, .elements = &mca_pml_ob1_match_hdr_names[1], .extent = 8, .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "transfer_begin", .desc = "Transfer has begun", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_TRANSFER_BEGIN] = {.name = "transfer_begin", .desc = "Transfer has begun", .verbosity = OPAL_INFO_LVL_5,
+                                          .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
+                                          .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "transfer", .desc = "Transfer event", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_TRANSFER] = {.name = "transfer", .desc = "Transfer event", .verbosity = OPAL_INFO_LVL_5,
+                                    .datatypes = mca_pml_ob1_request_size_types, .offsets = mca_pml_ob1_request_size_offsets, .num_datatypes = 2,
+                                    .elements = mca_pml_ob1_request_size_elements, .extent = sizeof (mca_pml_ob1_transfer_event_t),
+                                    .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "cancel", .desc = "Receive request canceled", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_TRANSFER_END] = {.name = "transfer_end", .desc = "Transfer has completed", .verbosity = OPAL_INFO_LVL_5,
+                                        .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
+                                        .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 
-    {.name = "free", .desc = "Request object freed", .verbosity = OPAL_INFO_LVL_5,
-     .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
-     .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+    [MCA_PML_OB1_EVENT_RECEIVE_CANCELED] = {.name = "cancel", .desc = "Receive request canceled", .verbosity = OPAL_INFO_LVL_5,
+                                            .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
+                                            .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+
+    [MCA_PML_OB1_EVENT_REQUEST_FREE] = {.name = "free", .desc = "Request object freed", .verbosity = OPAL_INFO_LVL_5,
+                                        .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
+                                        .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+
+    [MCA_PML_OB1_EVENT_REQUEST_ACTIVATE] = {.name = "request_activate", .desc = "Request activated", .verbosity = OPAL_INFO_LVL_5,
+                                            .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
+                                            .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
+
+    [MCA_PML_OB1_EVENT_REQUEST_COMPLETE] = {.name = "request_complete", .desc = "Request completed", .verbosity = OPAL_INFO_LVL_5,
+                                            .datatypes = &(opal_datatype_t *) {&ompi_mpi_aint.dt.super}, .offsets = &(unsigned long) {0}, .num_datatypes = 1,
+                                            .elements = mca_pml_ob1_request_element, .extent = sizeof (MPI_Aint), .bind = MCA_BASE_VAR_BIND_MPI_COMM},
 };
 
 mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {

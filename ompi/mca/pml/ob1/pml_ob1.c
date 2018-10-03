@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
@@ -237,8 +237,8 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * figure out if the messages are not received in the correct
          * order (if multiple network interfaces).
          */
-        PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm,
-                               hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_MESSAGE_ARRIVED].event,
+                              MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, hdr);
 
         /* There is no matching to be done, and no lock to be held on the communicator as
          * we know at this point that the communicator has not yet been returned to the user.
@@ -254,8 +254,8 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_INSERT].event,
+                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, hdr);
             continue;
         }
 
@@ -269,8 +269,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_INSERT].event,
+                                  MCA_BASE_CALLBACK_SAFETY_ASYNC_SIGNAL_SAFE, comm, NULL, hdr);
+
             /* And now the ugly part. As some fragments can be inserted in the cant_match list,
              * every time we succesfully add a fragment in the unexpected list we have to make
              * sure the next one is not in the cant_match. Otherwise, we will endup in a deadlock
