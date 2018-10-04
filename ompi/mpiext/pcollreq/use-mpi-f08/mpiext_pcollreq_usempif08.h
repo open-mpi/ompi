@@ -32,8 +32,8 @@ interface mpix_allgather_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -54,10 +54,10 @@ interface mpix_allgatherv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount
-        integer, intent(in) :: recvcounts(*), displs(*)
+        integer, intent(in), asynchronous :: recvcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -77,8 +77,8 @@ interface mpix_allreduce_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -100,8 +100,8 @@ interface mpix_alltoall_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -122,9 +122,9 @@ interface mpix_alltoallv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -144,10 +144,10 @@ interface mpix_alltoallw_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-        type(mpi_datatype), intent(in) :: sendtypes(*), recvtypes(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+        type(mpi_datatype), intent(in), asynchronous :: sendtypes(*), recvtypes(*)
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
         type(mpi_request), intent(out) :: request
@@ -176,7 +176,7 @@ interface mpix_bcast_init
         !$PRAGMA IGNORE_TKR buffer
         !DIR$ IGNORE_TKR buffer
         !IBM* IGNORE_TKR buffer
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: buffer
         integer, intent(in) :: count, root
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_comm), intent(in) :: comm
@@ -197,8 +197,8 @@ interface mpix_exscan_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -220,8 +220,8 @@ interface mpix_gather_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount, root
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -242,10 +242,10 @@ interface mpix_gatherv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, root
-        integer, intent(in) :: recvcounts(*), displs(*)
+        integer, intent(in), asynchronous :: recvcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -265,8 +265,8 @@ interface mpix_reduce_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count, root
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -288,9 +288,9 @@ interface mpix_reduce_scatter_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: recvcounts(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: recvcounts(*)
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
         type(mpi_comm), intent(in) :: comm
@@ -311,8 +311,8 @@ interface mpix_reduce_scatter_block_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: recvcount
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -334,8 +334,8 @@ interface mpix_scan_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -357,8 +357,8 @@ interface mpix_scatter_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount, root
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -379,10 +379,10 @@ interface mpix_scatterv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: recvcount, root
-        integer, intent(in) :: sendcounts(*), displs(*)
+        integer, intent(in), asynchronous :: sendcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -402,8 +402,8 @@ interface mpix_neighbor_allgather_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -424,10 +424,10 @@ interface mpix_neighbor_allgatherv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount
-        integer, intent(in) :: recvcounts(*), displs(*)
+        integer, intent(in), asynchronous :: recvcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -447,8 +447,8 @@ interface mpix_neighbor_alltoall_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -469,9 +469,9 @@ interface mpix_neighbor_alltoallv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -491,11 +491,11 @@ interface mpix_neighbor_alltoallw_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), recvcounts(*)
-        integer(mpi_address_kind), intent(in) :: sdispls(*), rdispls(*)
-        type(mpi_datatype), intent(in) :: sendtypes(*), recvtypes(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), recvcounts(*)
+        integer(mpi_address_kind), intent(in), asynchronous :: sdispls(*), rdispls(*)
+        type(mpi_datatype), intent(in), asynchronous :: sendtypes(*), recvtypes(*)
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
         type(mpi_request), intent(out) :: request
@@ -514,8 +514,8 @@ interface pmpix_allgather_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -536,10 +536,10 @@ interface pmpix_allgatherv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount
-        integer, intent(in) :: recvcounts(*), displs(*)
+        integer, intent(in), asynchronous :: recvcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -559,8 +559,8 @@ interface pmpix_allreduce_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -582,8 +582,8 @@ interface pmpix_alltoall_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -604,9 +604,9 @@ interface pmpix_alltoallv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -626,10 +626,10 @@ interface pmpix_alltoallw_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-        type(mpi_datatype), intent(in) :: sendtypes(*), recvtypes(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+        type(mpi_datatype), intent(in), asynchronous :: sendtypes(*), recvtypes(*)
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
         type(mpi_request), intent(out) :: request
@@ -658,7 +658,7 @@ interface pmpix_bcast_init
         !$PRAGMA IGNORE_TKR buffer
         !DIR$ IGNORE_TKR buffer
         !IBM* IGNORE_TKR buffer
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: buffer
         integer, intent(in) :: count, root
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_comm), intent(in) :: comm
@@ -679,8 +679,8 @@ interface pmpix_exscan_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -702,8 +702,8 @@ interface pmpix_gather_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount, root
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -724,8 +724,8 @@ interface pmpix_gatherv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, root
         integer, intent(in) :: recvcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
@@ -747,8 +747,8 @@ interface pmpix_reduce_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count, root
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -770,9 +770,9 @@ interface pmpix_reduce_scatter_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: recvcounts(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: recvcounts(*)
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
         type(mpi_comm), intent(in) :: comm
@@ -793,8 +793,8 @@ interface pmpix_reduce_scatter_block_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: recvcount
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -816,8 +816,8 @@ interface pmpix_scan_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: count
         type(mpi_datatype), intent(in) :: datatype
         type(mpi_op), intent(in) :: op
@@ -839,8 +839,8 @@ interface pmpix_scatter_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount, root
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -861,10 +861,10 @@ interface pmpix_scatterv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: recvcount, root
-        integer, intent(in) :: sendcounts(*), displs(*)
+        integer, intent(in), asynchronous :: sendcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -884,8 +884,8 @@ interface pmpix_neighbor_allgather_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -906,10 +906,10 @@ interface pmpix_neighbor_allgatherv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount
-        integer, intent(in) :: recvcounts(*), displs(*)
+        integer, intent(in), asynchronous :: recvcounts(*), displs(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -929,8 +929,8 @@ interface pmpix_neighbor_alltoall_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
         integer, intent(in) :: sendcount, recvcount
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
@@ -951,9 +951,9 @@ interface pmpix_neighbor_alltoallv_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
         type(mpi_datatype), intent(in) :: sendtype, recvtype
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
@@ -973,10 +973,10 @@ interface pmpix_neighbor_alltoallw_init
         !$PRAGMA IGNORE_TKR sendbuf, recvbuf
         !DIR$ IGNORE_TKR sendbuf, recvbuf
         !IBM* IGNORE_TKR sendbuf, recvbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in) :: sendbuf
-        OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-        integer, intent(in) :: sendcounts(*), recvcounts(*)
-        integer(mpi_address_kind), intent(in) :: sdispls(*), rdispls(*)
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, intent(in), asynchronous :: sendbuf
+        OMPI_FORTRAN_IGNORE_TKR_TYPE, asynchronous :: recvbuf
+        integer, intent(in), asynchronous :: sendcounts(*), recvcounts(*)
+        integer(mpi_address_kind), intent(in), asynchronous :: sdispls(*), rdispls(*)
         type(mpi_datatype), intent(in) :: sendtypes(*), recvtypes(*)
         type(mpi_comm), intent(in) :: comm
         type(mpi_info), intent(in) :: info
