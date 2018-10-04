@@ -18,6 +18,7 @@
 
 #include "opal_config.h"
 #include "opal/win32/opal_utsname.h"
+#include "opal/util/string_copy.h"
 
 /*
     This has to fill in the following information
@@ -42,7 +43,7 @@ int uname( struct utsname *un )
         snprintf( un->sysname, OPAL_UTSNAME_LEN, "Unknown" );
     } else {
         /* remove the "OS=" from the beginning of the string */
-        strncpy( un->sysname, info_buf + 3, OPAL_UTSNAME_LEN );
+        opal_string_copy( un->sysname, info_buf + 3, OPAL_UTSNAME_LEN );
     }
     info_buf_count = OPAL_UTSNAME_LEN;
     if (!GetComputerName( un->nodename, &info_buf_count)) {

@@ -43,6 +43,7 @@
 #include "opal/constants.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/basename.h"
+#include "opal/util/string_copy.h"
 
 #if OPAL_HAVE_DL_SUPPORT
 
@@ -167,12 +168,8 @@ static int process_repository_item (const char *filename, void *data)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* strncpy does not guarantee a \0 */
-    ri->ri_type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-    strncpy (ri->ri_type, type, MCA_BASE_MAX_TYPE_NAME_LEN);
-
-    ri->ri_name[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-    strncpy (ri->ri_name, name, MCA_BASE_MAX_COMPONENT_NAME_LEN);
+    opal_string_copy (ri->ri_type, type, MCA_BASE_MAX_TYPE_NAME_LEN);
+    opal_string_copy (ri->ri_name, name, MCA_BASE_MAX_COMPONENT_NAME_LEN);
 
     opal_list_append (component_list, &ri->super);
 

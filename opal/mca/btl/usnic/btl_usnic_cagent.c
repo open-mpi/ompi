@@ -27,6 +27,7 @@
 #include "opal/types.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
+#include "opal/util/string_copy.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"
@@ -1189,7 +1190,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
 
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path) - 1);
+    opal_string_copy(address.sun_path, ipc_filename, sizeof(address.sun_path));
 
     if (bind(ipc_accept_fd, (struct sockaddr *) &address,
              sizeof(struct sockaddr_un)) != 0) {

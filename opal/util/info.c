@@ -41,8 +41,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
-#include "opal/util/strncpy.h"
-
+#include "opal/util/string_copy.h"
 #include "opal/util/info.h"
 
 /*
@@ -107,23 +106,8 @@ static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuel
          * We have found the element, so we can return the value
          * Set the flag, value_length and value
          */
-         *flag = 1;
-         value_length = strlen(search->ie_value);
-         /*
-          * If the stored value is shorter than valuelen, then
-          * we can copy the entire value out. Else, we have to
-          * copy ONLY valuelen bytes out
-          */
-          if (value_length < valuelen ) {
-               strcpy(value, search->ie_value);
-          } else {
-               opal_strncpy(value, search->ie_value, valuelen);
-               if (OPAL_MAX_INFO_VAL == valuelen) {
-                   value[valuelen-1] = 0;
-               } else {
-                   value[valuelen] = 0;
-               }
-          }
+        *flag = 1;
+        opal_string_copy(value, search->ie_value, valuelen);
     }
 }
 
@@ -152,7 +136,7 @@ static int opal_info_set_nolock (opal_info_t *info, const char *key, const char 
             OPAL_THREAD_UNLOCK(info->i_lock);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        strncpy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
+        opal_string_copy (new_info->ie_key, key, OPAL_MAX_INFO_KEY);
         new_info->ie_value = new_value;
         opal_list_append (&(info->super), (opal_list_item_t *) new_info);
     }
@@ -472,7 +456,7 @@ int opal_info_get_nthkey (opal_info_t *info, int n, char *key)
      * cast it to opal_info_entry_t before we can use it to
      * access the value
      */
-    strncpy(key, iterator->ie_key, OPAL_MAX_INFO_KEY);
+    opal_string_copy(key, iterator->ie_key, OPAL_MAX_INFO_KEY);
     OPAL_THREAD_UNLOCK(info->i_lock);
     return OPAL_SUCCESS;
 }

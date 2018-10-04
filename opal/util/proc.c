@@ -16,9 +16,12 @@
  * $HEADER$
  */
 
+#include "opal_config.h"
+
 #include "proc.h"
 #include "opal/util/proc.h"
 #include "opal/util/arch.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/pmix/pmix.h"
 
 opal_process_name_t opal_name_wildcard = {OPAL_JOBID_WILDCARD, OPAL_VPID_WILDCARD};
@@ -157,7 +160,7 @@ static int opal_convert_process_name_to_string_should_never_be_called(char** nam
 
 static int opal_snprintf_jobid_should_never_be_called(char* name_string, size_t size, opal_jobid_t jobid)
 {
-    (void)strncpy(name_string, "My JOBID", size);
+    (void)opal_string_copy(name_string, "My JOBID", size);
     return OPAL_SUCCESS;
 }
 

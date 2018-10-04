@@ -53,6 +53,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
 
@@ -437,7 +438,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         ds_buf->seg_cpid = my_pid;
         ds_buf->seg_size = real_size;
         ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
-        (void)strncpy(ds_buf->seg_name, real_file_name, OPAL_PATH_MAX - 1);
+        (void)opal_string_copy(ds_buf->seg_name, real_file_name, OPAL_PATH_MAX);
 
         /* set "valid" bit because setment creation was successful */
         OPAL_SHMEM_DS_SET_VALID(ds_buf);

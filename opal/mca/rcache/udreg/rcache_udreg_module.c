@@ -37,6 +37,7 @@
 #include "opal/runtime/opal_params.h"
 #include "opal/include/opal_stdint.h"
 #include "opal/util/sys_limits.h"
+#include "opal/util/string_copy.h"
 
 #include <fcntl.h>
 
@@ -92,7 +93,7 @@ int mca_rcache_udreg_module_init (mca_rcache_udreg_module_t *rcache)
 
     OBJ_CONSTRUCT(&rcache->lock, opal_mutex_t);
 
-    strncpy (cache_attr.cache_name, rcache->resources.base.cache_name, UDREG_MAX_CACHENAME_LEN);
+    opal_string_copy (cache_attr.cache_name, rcache->resources.base.cache_name, UDREG_MAX_CACHENAME_LEN);
     cache_attr.max_entries         = rcache->resources.max_entries;
     cache_attr.debug_mode          = 0;
     cache_attr.debug_rank          = 0;

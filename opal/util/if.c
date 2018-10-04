@@ -67,6 +67,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/constants.h"
 
 #include "opal/mca/if/base/base.h"
@@ -191,7 +192,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
                 memcpy (&ipv4, r->ai_addr, r->ai_addrlen);
 
                 if (inaddr->sin_addr.s_addr == ipv4.sin_addr.s_addr) {
-                    strncpy(if_name, intf->if_name, length);
+                    opal_string_copy(if_name, intf->if_name, length);
                     freeaddrinfo (res);
                     return OPAL_SUCCESS;
                 }
@@ -200,7 +201,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
             else {
                 if (IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6*) &intf->if_addr)->sin6_addr,
                     &((struct sockaddr_in6*) r->ai_addr)->sin6_addr)) {
-                    strncpy(if_name, intf->if_name, length);
+                    opal_string_copy(if_name, intf->if_name, length);
                     freeaddrinfo (res);
                     return OPAL_SUCCESS;
                 }
@@ -449,7 +450,7 @@ int opal_ifindextoname(int if_index, char* if_name, int length)
 
     OPAL_LIST_FOREACH(intf, &opal_if_list, opal_if_t) {
         if (intf->if_index == if_index) {
-            strncpy(if_name, intf->if_name, length);
+            opal_string_copy(if_name, intf->if_name, length);
             return OPAL_SUCCESS;
         }
     }
@@ -468,7 +469,7 @@ int opal_ifkindextoname(int if_kindex, char* if_name, int length)
 
     OPAL_LIST_FOREACH(intf, &opal_if_list, opal_if_t) {
         if (intf->if_kernel_index == if_kindex) {
-            strncpy(if_name, intf->if_name, length);
+            opal_string_copy(if_name, intf->if_name, length);
             return OPAL_SUCCESS;
         }
     }

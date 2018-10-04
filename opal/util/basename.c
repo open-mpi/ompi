@@ -126,11 +126,7 @@ char* opal_dirname(const char* filename)
                 if (NULL == ret) {
                     return NULL;
                 }
-#ifdef HAVE_STRNCPY_S
-                strncpy_s( ret, (p - filename + 1), filename, p - filename );
-#else
-                strncpy(ret, filename, p - filename);
-#endif
+                opal_string_copy(ret, filename, p - filename);
                 ret[p - filename] = '\0';
                 return opal_make_filename_os_friendly(ret);
             }

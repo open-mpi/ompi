@@ -43,6 +43,7 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/threads/mutex.h"
 #include "opal/constants.h"
 #include "opal/mca/pmix/pmix.h"
@@ -769,7 +770,7 @@ static int open_file(int i)
         if (NULL == filename) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        strncpy(filename, output_dir, OPAL_PATH_MAX);
+        opal_string_copy(filename, output_dir, OPAL_PATH_MAX);
         strcat(filename, "/");
         if (NULL != output_prefix) {
             strcat(filename, output_prefix);

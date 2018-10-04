@@ -13,6 +13,7 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -184,7 +185,7 @@ static int if_bsdx_ipv6_open(void)
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
         intf->af_family = AF_INET6;
-        strncpy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
+        opal_string_copy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
         intf->if_index = opal_list_get_size(&opal_if_list) + 1;
         ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
         ((struct sockaddr_in6*) &intf->if_addr)->sin6_family = AF_INET6;

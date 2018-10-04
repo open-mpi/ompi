@@ -48,6 +48,7 @@
 #include "opal/constants.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/if/if.h"
 #include "opal/mca/if/base/base.h"
 
@@ -129,7 +130,7 @@ static int if_linux_ipv6_open(void)
             }
 
             /* now construct the opal_if_t */
-            strncpy(intf->if_name, ifname, IF_NAMESIZE);
+            opal_string_copy(intf->if_name, ifname, IF_NAMESIZE);
             intf->if_index = opal_list_get_size(&opal_if_list)+1;
             intf->if_kernel_index = (uint16_t) idx;
             ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
