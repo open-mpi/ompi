@@ -14,7 +14,7 @@ subroutine MPIX_Bcast_init_f08(buffer,count,datatype,root,comm,info,request,ierr
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    use :: mpiext_pcollreq_f08, only : ompix_bcast_init_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: buffer
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm

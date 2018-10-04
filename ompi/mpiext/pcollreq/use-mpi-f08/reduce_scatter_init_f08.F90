@@ -5,6 +5,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -13,8 +14,9 @@ subroutine MPIX_Reduce_scatter_init_f08(sendbuf,recvbuf,recvcounts,datatype,op,c
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Info, MPI_Request
    use :: mpiext_pcollreq_f08, only : ompix_reduce_scatter_init_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
-   INTEGER, INTENT(IN) :: recvcounts(*)
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*)
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
    TYPE(MPI_Comm), INTENT(IN) :: comm
