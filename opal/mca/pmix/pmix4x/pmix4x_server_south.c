@@ -516,6 +516,7 @@ int pmix4x_server_notify_event(int status,
     size_t sz, n;
     pmix_status_t rc;
     pmix4x_opcaddy_t *op;
+    pmix_data_range_t range = PMIX_RANGE_SESSION;
 
     OPAL_PMIX_ACQUIRE_THREAD(&opal_pmix_base.lock);
     if (0 >= opal_pmix_base.initialized) {
@@ -535,6 +536,9 @@ int pmix4x_server_notify_event(int status,
                 pinfo[n].value.data.status = pmix4x_convert_opalrc(kv->data.integer);
             } else {
                 pmix4x_value_load(&pinfo[n].value, kv);
+                if (0 == strcmp(kv->key, OPAL_PMIX_EVENT_CUSTOM_RANGE)) {
+                    range = PMIX_RANGE_CUSTOM;
+                }
             }
             ++n;
         }
@@ -561,7 +565,7 @@ int pmix4x_server_notify_event(int status,
     rc = pmix4x_convert_opalrc(status);
     /* the range must be nonlocal so the server will pass
      * the event down to its local clients */
-    rc = PMIx_Notify_event(rc, &op->p, PMIX_RANGE_SESSION,
+    rc = PMIx_Notify_event(rc, &op->p, range,
                            pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
