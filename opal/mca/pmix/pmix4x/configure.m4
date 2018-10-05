@@ -87,6 +87,9 @@ AC_DEFUN([MCA_opal_pmix_pmix4x_CONFIG],[
           [AC_MSG_RESULT([no - disqualifying this component])
            opal_pmix_pmix4x_happy=0],
           [AC_MSG_RESULT([yes - using the internal v4.x library])
+           AS_IF([test "$opal_pmix_pmix4x_happy" = "0"],
+                 [AC_MSG_WARN([INTERNAL PMIX FAILED TO CONFIGURE])
+                  AC_MSG_ERROR([CANNOT CONTINUE])])
            # Build flags for our Makefile.am
            opal_pmix_pmix4x_LDFLAGS=
            opal_pmix_pmix4x_LIBS="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix4x_basedir/pmix/src/libpmix.la"
