@@ -464,7 +464,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
     char *tmpsend = NULL, *tmprecv = NULL, *accumbuf = NULL, *accumbuf_free = NULL;
     char *inbuf_free[2] = {NULL, NULL}, *inbuf[2] = {NULL, NULL};
     ptrdiff_t extent, max_real_segsize, dsize, gap = 0;
-    ompi_request_t *reqs[2] = {NULL, NULL};
+    ompi_request_t *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);

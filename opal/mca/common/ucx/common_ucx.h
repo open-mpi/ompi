@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2018      Mellanox Technologies.  All rights reserved.
  *                         All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +72,7 @@ BEGIN_C_DECLS
                     return OPAL_SUCCESS;                                                 \
                 } else {                                                                 \
                     MCA_COMMON_UCX_VERBOSE(1, "%s failed: %d, %s",                       \
-                                           (_msg) ? (_msg) : __FUNCTION__,               \
+                                           (_msg) ? (_msg) : __func__,                   \
                                            UCS_PTR_STATUS(_request),                     \
                                            ucs_status_string(UCS_PTR_STATUS(_request))); \
                     return OPAL_ERROR;                                                   \

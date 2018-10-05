@@ -208,7 +208,7 @@ __pmix_attribute_extension__ ({                             \
     memcpy(addr, &sz, sizeof(size_t));                      \
     memset(addr + sizeof(size_t), 0,                        \
         ESH_KNAME_LEN_V20(key));                            \
-    strncpy((char *)addr + sizeof(size_t),                  \
+    pmix_strncpy((char *)addr + sizeof(size_t),                  \
             key, ESH_KNAME_LEN_V20(key));                   \
     memcpy(addr + sizeof(size_t) + ESH_KNAME_LEN_V20(key),  \
             buffer, size);                                  \
@@ -273,7 +273,7 @@ __pmix_attribute_extension__ ({                             \
 __pmix_attribute_extension__ ({                             \
     size_t sz = size;                                       \
     memset(addr, 0, ESH_KNAME_LEN_V12(key));                \
-    strncpy((char *)addr, key, ESH_KNAME_LEN_V12(key));     \
+    pmix_strncpy((char *)addr, key, ESH_KNAME_LEN_V12(key));     \
     memcpy(addr + ESH_KNAME_LEN_V12(key), &sz,              \
         sizeof(size_t));                                    \
     memcpy(addr + ESH_KNAME_LEN_V12(key) + sizeof(size_t),  \
@@ -614,7 +614,7 @@ static inline ns_map_data_t * _esh_session_map(pmix_common_dstore_ctx_t *ds_ctx,
     for(map_idx = 0; map_idx < size; map_idx++) {
         if (!ns_map[map_idx].in_use) {
             ns_map[map_idx].in_use = true;
-            strncpy(ns_map[map_idx].data.name, nspace, sizeof(ns_map[map_idx].data.name)-1);
+            pmix_strncpy(ns_map[map_idx].data.name, nspace, sizeof(ns_map[map_idx].data.name)-1);
             ns_map[map_idx].data.tbl_idx = tbl_idx;
             return  &ns_map[map_idx].data;
         }
@@ -628,7 +628,7 @@ static inline ns_map_data_t * _esh_session_map(pmix_common_dstore_ctx_t *ds_ctx,
     _esh_session_map_clean(ds_ctx, new_map);
     new_map->in_use = true;
     new_map->data.tbl_idx = tbl_idx;
-    strncpy(new_map->data.name, nspace, sizeof(new_map->data.name)-1);
+    pmix_strncpy(new_map->data.name, nspace, sizeof(new_map->data.name)-1);
 
     return  &new_map->data;
 }
@@ -960,7 +960,7 @@ static int _put_ns_info_to_initial_segment(pmix_common_dstore_ctx_t *ds_ctx,
                0, ds_ctx->initial_segment_size);
     }
     memset(&elem.ns_map, 0, sizeof(elem.ns_map));
-    strncpy(elem.ns_map.name, ns_map->name, sizeof(elem.ns_map.name)-1);
+    pmix_strncpy(elem.ns_map.name, ns_map->name, sizeof(elem.ns_map.name)-1);
     elem.ns_map.tbl_idx = ns_map->tbl_idx;
     elem.num_meta_seg = 1;
     elem.num_data_seg = 1;
@@ -1055,7 +1055,7 @@ static ns_track_elem_t *_get_track_elem_for_namespace(pmix_common_dstore_ctx_t *
         return NULL;
     }
     PMIX_CONSTRUCT(new_elem, ns_track_elem_t);
-    strncpy(new_elem->ns_map.name, ns_map->name, sizeof(new_elem->ns_map.name)-1);
+    pmix_strncpy(new_elem->ns_map.name, ns_map->name, sizeof(new_elem->ns_map.name)-1);
     /* save latest track idx to info of nspace */
     ns_map->track_idx = size;
 
@@ -1461,7 +1461,7 @@ static int pmix_sm_store(pmix_common_dstore_ctx_t *ds_ctx, ns_track_elem_t *ns_i
                 if (ESH_DATA_SIZE(_client_peer(ds_ctx), addr, ESH_DATA_PTR(_client_peer(ds_ctx), addr)) != size) {
                 //if (1) { /* if we want to test replacing values for existing keys. */
                     /* invalidate current value and store another one at the end of data region. */
-                    strncpy(ESH_KNAME_PTR(_client_peer(ds_ctx), addr), ESH_REGION_INVALIDATED,
+                    pmix_strncpy(ESH_KNAME_PTR(_client_peer(ds_ctx), addr), ESH_REGION_INVALIDATED,
                             ESH_KNAME_LEN(_client_peer(ds_ctx), ESH_REGION_INVALIDATED));
                     /* decrementing count, it will be incremented back when we add a new value for this key at the end of region. */
                     (*rinfo)->count--;
@@ -1671,7 +1671,7 @@ static inline ssize_t _get_univ_size(pmix_common_dstore_ctx_t *ds_ctx, const cha
 }
 
 PMIX_EXPORT pmix_status_t pmix_common_dstor_cache_job_info(pmix_common_dstore_ctx_t *ds_ctx,
-                                struct pmix_nspace_t *ns,
+                                struct pmix_namespace_t *ns,
                                 pmix_info_t info[], size_t ninfo)
 {
     return PMIX_SUCCESS;
@@ -1955,7 +1955,7 @@ static pmix_status_t _dstore_store_nolock(pmix_common_dstore_ctx_t *ds_ctx,
      * data segments and update corresponding element's fields. */
     if (NULL == elem->meta_seg || NULL == elem->data_seg) {
         memset(&ns_info.ns_map, 0, sizeof(ns_info.ns_map));
-        strncpy(ns_info.ns_map.name, ns_map->name, sizeof(ns_info.ns_map.name)-1);
+        pmix_strncpy(ns_info.ns_map.name, ns_map->name, sizeof(ns_info.ns_map.name)-1);
         ns_info.ns_map.tbl_idx = ns_map->tbl_idx;
         ns_info.num_meta_seg = 1;
         ns_info.num_data_seg = 1;
@@ -2288,7 +2288,7 @@ static pmix_status_t _dstore_fetch(pmix_common_dstore_ctx_t *ds_ctx,
                     PMIX_ERROR_LOG(rc);
                     goto done;
                 }
-                strncpy(info[kval_cnt - 1].key, ESH_KNAME_PTR(_client_peer(ds_ctx), addr),
+                pmix_strncpy(info[kval_cnt - 1].key, ESH_KNAME_PTR(_client_peer(ds_ctx), addr),
                         ESH_KNAME_LEN(_client_peer(ds_ctx), (char *)addr));
                 pmix_value_xfer(&info[kval_cnt - 1].value, &val);
                 PMIX_VALUE_DESTRUCT(&val);
@@ -2630,11 +2630,11 @@ static inline int _my_client(const char *nspace, pmix_rank_t rank)
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
 PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t *ds_ctx,
-                                struct pmix_nspace_t *nspace,
+                                struct pmix_namespace_t *nspace,
                                 pmix_list_t *cbs,
                                 pmix_byte_object_t *bo)
 {
-    pmix_nspace_t *ns = (pmix_nspace_t*)nspace;
+    pmix_namespace_t *ns = (pmix_namespace_t*)nspace;
     pmix_status_t rc = PMIX_SUCCESS;
     int32_t cnt;
     pmix_buffer_t pbkt;
@@ -2800,7 +2800,7 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_register_job_info(pmix_common_dstore
                                 pmix_buffer_t *reply)
 {
     pmix_peer_t *peer = (pmix_peer_t*)pr;
-    pmix_nspace_t *ns = peer->nptr;
+    pmix_namespace_t *ns = peer->nptr;
     char *msg;
     pmix_status_t rc;
     pmix_proc_t proc;
@@ -2815,7 +2815,7 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_register_job_info(pmix_common_dstore
         ns_map_data_t *ns_map;
 
         _client_compat_save(ds_ctx, peer);
-        (void)strncpy(proc.nspace, ns->nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(proc.nspace, ns->nspace, PMIX_MAX_NSLEN);
         proc.rank = PMIX_RANK_WILDCARD;
         if (NULL == (ns_map = ds_ctx->session_map_search(ds_ctx, proc.nspace))) {
             rc = PMIX_ERROR;
@@ -2884,11 +2884,11 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_store_job_info(pmix_common_dstore_ct
 
 static void _client_compat_save(pmix_common_dstore_ctx_t *ds_ctx, pmix_peer_t *peer)
 {
-    pmix_nspace_t *nptr = NULL;
+    pmix_namespace_t *nptr = NULL;
 
     if (NULL == ds_ctx->clients_peer) {
         ds_ctx->clients_peer = PMIX_NEW(pmix_peer_t);
-        nptr = PMIX_NEW(pmix_nspace_t);
+        nptr = PMIX_NEW(pmix_namespace_t);
         ds_ctx->clients_peer->nptr = nptr;
     }
     ds_ctx->clients_peer->nptr->compat = peer->nptr->compat;

@@ -7,7 +7,7 @@
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -34,7 +34,7 @@
 
 /*** Monitoring specific variables ***/
 /* Keep tracks of how many components are currently using the common part */
-static int32_t mca_common_monitoring_hold = 0;
+static opal_atomic_int32_t mca_common_monitoring_hold = 0;
 /* Output parameters */
 int mca_common_monitoring_output_stream_id = -1;
 static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
@@ -61,18 +61,18 @@ static char* mca_common_monitoring_initial_filename = "";
 static char* mca_common_monitoring_current_filename = NULL;
 
 /* array for stroring monitoring data*/
-static size_t* pml_data = NULL;
-static size_t* pml_count = NULL;
-static size_t* filtered_pml_data = NULL;
-static size_t* filtered_pml_count = NULL;
-static size_t* osc_data_s = NULL;
-static size_t* osc_count_s = NULL;
-static size_t* osc_data_r = NULL;
-static size_t* osc_count_r = NULL;
-static size_t* coll_data = NULL;
-static size_t* coll_count = NULL;
+static opal_atomic_size_t* pml_data = NULL;
+static opal_atomic_size_t* pml_count = NULL;
+static opal_atomic_size_t* filtered_pml_data = NULL;
+static opal_atomic_size_t* filtered_pml_count = NULL;
+static opal_atomic_size_t* osc_data_s = NULL;
+static opal_atomic_size_t* osc_count_s = NULL;
+static opal_atomic_size_t* osc_data_r = NULL;
+static opal_atomic_size_t* osc_count_r = NULL;
+static opal_atomic_size_t* coll_data = NULL;
+static opal_atomic_size_t* coll_count = NULL;
 
-static size_t* size_histogram = NULL;
+static opal_atomic_size_t* size_histogram = NULL;
 static const int max_size_histogram = 66;
 static double log10_2 = 0.;
 
@@ -241,7 +241,7 @@ void mca_common_monitoring_finalize( void )
     opal_output_close(mca_common_monitoring_output_stream_id);
     free(mca_common_monitoring_output_stream_obj.lds_prefix);
     /* Free internal data structure */
-    free(pml_data);  /* a single allocation */
+    free((void *) pml_data);  /* a single allocation */
     opal_hash_table_remove_all( common_monitoring_translation_ht );
     OBJ_RELEASE(common_monitoring_translation_ht);
     mca_common_monitoring_coll_finalize();
@@ -446,7 +446,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
     if( NULL == pml_data ) {
         int array_size = (10 + max_size_histogram) * nprocs_world;
-        pml_data           = (size_t*)calloc(array_size, sizeof(size_t));
+        pml_data           = (opal_atomic_size_t*)calloc(array_size, sizeof(size_t));
         pml_count          = pml_data + nprocs_world;
         filtered_pml_data  = pml_count + nprocs_world;
         filtered_pml_count = filtered_pml_data + nprocs_world;
@@ -493,7 +493,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 static void mca_common_monitoring_reset( void )
 {
     int array_size = (10 + max_size_histogram) * nprocs_world;
-    memset(pml_data, 0, array_size * sizeof(size_t));
+    memset((void *) pml_data, 0, array_size * sizeof(size_t));
     mca_common_monitoring_coll_reset();
 }
 

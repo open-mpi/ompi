@@ -3,6 +3,7 @@
 ! Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Info_get_f08(info,key,valuelen,value,flag,ierror)
@@ -19,6 +20,6 @@ subroutine PMPI_Info_get_f08(info,key,valuelen,value,flag,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call PMPI_Info_get(info%MPI_VAL,key,valuelen,value,flag,c_ierror);
+   call PMPI_Info_get(info%MPI_VAL,key,valuelen,value,flag,c_ierror)
    if (present(ierror)) ierror = c_ierror
 end subroutine PMPI_Info_get_f08

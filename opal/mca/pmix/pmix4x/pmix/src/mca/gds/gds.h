@@ -44,7 +44,7 @@
 BEGIN_C_DECLS
 /* forward declaration */
 struct pmix_peer_t;
-struct pmix_nspace_t;
+struct pmix_namespace_t;
 
 /* backdoor to base verbosity */
 PMIX_EXPORT extern int pmix_gds_base_output;
@@ -117,7 +117,7 @@ typedef pmix_status_t (*pmix_gds_base_module_accept_kvs_resp_fn_t)(pmix_buffer_t
  * only we don't have packed data on the server side, and don't want
  * to incur the overhead of packing it just to unpack it in the function.
  */
-typedef pmix_status_t (*pmix_gds_base_module_cache_job_info_fn_t)(struct pmix_nspace_t *ns,
+typedef pmix_status_t (*pmix_gds_base_module_cache_job_info_fn_t)(struct pmix_namespace_t *ns,
                                                                   pmix_info_t info[], size_t ninfo);
 
 /* define a convenience macro for caching job info */
@@ -127,7 +127,7 @@ typedef pmix_status_t (*pmix_gds_base_module_cache_job_info_fn_t)(struct pmix_ns
         pmix_output_verbose(1, pmix_gds_base_output,                        \
                             "[%s:%d] GDS CACHE JOB INFO WITH %s",           \
                             __FILE__, __LINE__, _g->name);                  \
-       (s) = _g->cache_job_info((struct pmix_nspace_t*)(n), (i), (ni));     \
+       (s) = _g->cache_job_info((struct pmix_namespace_t*)(n), (i), (ni));     \
     } while(0)
 
 /* register job-level info - this is provided as a special function
@@ -135,7 +135,7 @@ typedef pmix_status_t (*pmix_gds_base_module_cache_job_info_fn_t)(struct pmix_ns
  * prepare the job-level info provided at PMIx_Register_nspace, because
  * we don't know the GDS component to use for that application until
  * a local client contacts us. Thus, the module is required to process
- * the job-level info cached in the pmix_nspace_t for this job and
+ * the job-level info cached in the pmix_namespace_t for this job and
  * do whatever is necessary to support the client, packing any required
  * return message into the provided buffer.
  *
@@ -155,7 +155,7 @@ typedef pmix_status_t (*pmix_gds_base_module_cache_job_info_fn_t)(struct pmix_ns
  *
  * The pmix_peer_t of the requesting client is provided here so that
  * the module can access the job-level info cached on the corresponding
- * pmix_nspace_t pointed to by the pmix_peer_t
+ * pmix_namespace_t pointed to by the pmix_peer_t
  */
 typedef pmix_status_t (*pmix_gds_base_module_register_job_info_fn_t)(struct pmix_peer_t *pr,
                                                                      pmix_buffer_t *reply);
@@ -241,7 +241,7 @@ typedef pmix_status_t (*pmix_gds_base_module_store_fn_t)(const pmix_proc_t *proc
  * bo - pointer to the byte object containing the data
  *
  */
-typedef pmix_status_t (*pmix_gds_base_module_store_modex_fn_t)(struct pmix_nspace_t *ns,
+typedef pmix_status_t (*pmix_gds_base_module_store_modex_fn_t)(struct pmix_namespace_t *ns,
                                                                pmix_list_t *cbs,
                                                                pmix_byte_object_t *bo);
 
@@ -250,7 +250,7 @@ typedef pmix_status_t (*pmix_gds_base_module_store_modex_fn_t)(struct pmix_nspac
  *
  * r - return status code
  *
- * n - pointer to the pmix_nspace_t this blob is to be stored for
+ * n - pointer to the pmix_namespace_t this blob is to be stored for
  *
  * l - pointer to pmix_list_t containing pmix_server_caddy_t objects
  *     of the local_cbs of the collective tracker
@@ -262,7 +262,7 @@ typedef pmix_status_t (*pmix_gds_base_module_store_modex_fn_t)(struct pmix_nspac
         pmix_output_verbose(1, pmix_gds_base_output,                        \
                             "[%s:%d] GDS STORE MODEX WITH %s",              \
                             __FILE__, __LINE__, (n)->compat.gds->name);     \
-        (r) = (n)->compat.gds->store_modex((struct pmix_nspace_t*)n, l, b); \
+        (r) = (n)->compat.gds->store_modex((struct pmix_namespace_t*)n, l, b); \
     } while (0)
 
 /**

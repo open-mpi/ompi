@@ -4,7 +4,7 @@
  *                         All rights reserved.
  *
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2018      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.

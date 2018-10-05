@@ -117,7 +117,7 @@ struct ompi_errhandler_t {
        can be invoked on any MPI object type, so we need callbacks for
        all of three. */
     MPI_Comm_errhandler_function *eh_comm_fn;
-    ompi_file_errhandler_fn *eh_file_fn;
+    ompi_file_errhandler_function *eh_file_fn;
     MPI_Win_errhandler_function *eh_win_fn;
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
 

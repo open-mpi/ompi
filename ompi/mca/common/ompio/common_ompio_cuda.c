@@ -34,7 +34,7 @@ static opal_mutex_t     mca_common_ompio_cuda_mutex;      /* lock for thread saf
 static mca_allocator_base_component_t* mca_common_ompio_allocator_component=NULL;
 static mca_allocator_base_module_t* mca_common_ompio_allocator=NULL;  
 
-static int32_t  mca_common_ompio_cuda_init = 0;
+static opal_atomic_int32_t  mca_common_ompio_cuda_init = 0;
 static int32_t  mca_common_ompio_pagesize=4096;
 static void* mca_common_ompio_cuda_alloc_seg ( void *ctx, size_t *size );
 static void mca_common_ompio_cuda_free_seg ( void *ctx, void *buf );

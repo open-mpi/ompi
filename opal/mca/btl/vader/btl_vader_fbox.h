@@ -50,9 +50,20 @@ void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, mca_btl_base_endp
 static inline void mca_btl_vader_fbox_set_header (mca_btl_vader_fbox_hdr_t *hdr, uint16_t tag,
                                                   uint16_t seq, uint32_t size)
 {
-    mca_btl_vader_fbox_hdr_t tmp = {.data = {.tag = tag, .seq = seq, .size = size}};
-    opal_atomic_wmb ();
+    mca_btl_vader_fbox_hdr_t tmp = {.data = {.tag = 0, .seq = seq, .size = size}};
     hdr->ival = tmp.ival;
+    opal_atomic_wmb ();
+    hdr->data.tag = tag;
+}
+
+static inline mca_btl_vader_fbox_hdr_t mca_btl_vader_fbox_read_header (mca_btl_vader_fbox_hdr_t *hdr)
+{
+    mca_btl_vader_fbox_hdr_t tmp;
+    uint16_t tag = hdr->data.tag;
+    opal_atomic_rmb ();
+    tmp.ival = hdr->ival;
+    tmp.data.tag = tag;
+    return tmp;
 }
 
 /* attempt to reserve a contiguous segment from the remote ep */
@@ -138,9 +149,6 @@ static inline bool mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, unsign
         memcpy (data + header_size, payload, payload_size);
     }
 
-    /* write out part of the header now. the tag will be written when the data is available */
-    mca_btl_vader_fbox_set_header (MCA_BTL_VADER_FBOX_HDR(dst), tag, ep->fbox_out.seq++, data_size);
-
     end += size;
 
     if (OPAL_UNLIKELY(fbox_size == end)) {
@@ -151,6 +159,9 @@ static inline bool mca_btl_vader_fbox_sendi (mca_btl_base_endpoint_t *ep, unsign
     } else if (buffer_free > size) {
         MCA_BTL_VADER_FBOX_HDR(ep->fbox_out.buffer + end)->ival = 0;
     }
+
+    /* write out part of the header now. the tag will be written when the data is available */
+    mca_btl_vader_fbox_set_header (MCA_BTL_VADER_FBOX_HDR(dst), tag, ep->fbox_out.seq++, data_size);
 
     /* align the buffer */
     ep->fbox_out.end = ((uint32_t) hbs << 31) | end;
@@ -174,7 +185,7 @@ static inline bool mca_btl_vader_check_fboxes (void)
         int poll_count;
 
         for (poll_count = 0 ; poll_count <= MCA_BTL_VADER_POLL_COUNT ; ++poll_count) {
-            const mca_btl_vader_fbox_hdr_t hdr = {.ival = MCA_BTL_VADER_FBOX_HDR(ep->fbox_in.buffer + start)->ival};
+            const mca_btl_vader_fbox_hdr_t hdr = mca_btl_vader_fbox_read_header (MCA_BTL_VADER_FBOX_HDR(ep->fbox_in.buffer + start));
 
             /* check for a valid tag a sequence number */
             if (0 == hdr.data.tag || hdr.data.seq != ep->fbox_in.seq) {

@@ -123,11 +123,7 @@ char* pmix_dirname(const char* filename)
             }
             if( p != filename ) {
                 char* ret = (char*)malloc( p - filename + 1 );
-#ifdef HAVE_STRNCPY_S
-                strncpy_s( ret, (p - filename + 1), filename, p - filename );
-#else
-                strncpy(ret, filename, p - filename);
-#endif
+                pmix_strncpy(ret, filename, p - filename);
                 ret[p - filename] = '\0';
                 return pmix_make_filename_os_friendly(ret);
             }

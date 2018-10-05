@@ -189,7 +189,7 @@ number_of_fragments(ptl_size_t length, ptl_size_t maxlength)
 
 /* put in segments no larger than segment_length */
 static int
-segmentedPut(int64_t *opcount,
+segmentedPut(opal_atomic_int64_t *opcount,
              ptl_handle_md_t md_h,
              ptl_size_t origin_offset,
              ptl_size_t put_length,
@@ -236,7 +236,7 @@ segmentedPut(int64_t *opcount,
 
 /* get in segments no larger than segment_length */
 static int
-segmentedGet(int64_t *opcount,
+segmentedGet(opal_atomic_int64_t *opcount,
              ptl_handle_md_t md_h,
              ptl_size_t origin_offset,
              ptl_size_t get_length,
@@ -280,7 +280,7 @@ segmentedGet(int64_t *opcount,
 
 /* atomic op in segments no larger than segment_length */
 static int
-segmentedAtomic(int64_t *opcount,
+segmentedAtomic(opal_atomic_int64_t *opcount,
                 ptl_handle_md_t md_h,
                 ptl_size_t origin_offset,
                 ptl_size_t length,
@@ -329,7 +329,7 @@ segmentedAtomic(int64_t *opcount,
 
 /* atomic op in segments no larger than segment_length */
 static int
-segmentedFetchAtomic(int64_t *opcount,
+segmentedFetchAtomic(opal_atomic_int64_t *opcount,
                      ptl_handle_md_t result_md_h,
                      ptl_size_t result_offset,
                      ptl_handle_md_t origin_md_h,
@@ -381,7 +381,7 @@ segmentedFetchAtomic(int64_t *opcount,
 
 /* swap in segments no larger than segment_length */
 static int
-segmentedSwap(int64_t *opcount,
+segmentedSwap(opal_atomic_int64_t *opcount,
               ptl_handle_md_t result_md_h,
               ptl_size_t result_offset,
               ptl_handle_md_t origin_md_h,
@@ -1187,7 +1187,7 @@ fetch_atomic_to_iovec(ompi_osc_portals4_module_t *module,
 
 /* put in the largest chunks possible given the noncontiguous restriction */
 static int
-put_to_noncontig(int64_t          *opcount,
+put_to_noncontig(opal_atomic_int64_t *opcount,
                  ptl_handle_md_t   md_h,
                  const void       *origin_address,
                  int               origin_count,
@@ -1521,7 +1521,7 @@ atomic_to_noncontig(ompi_osc_portals4_module_t *module,
 
 /* get from a noncontiguous remote to an (non)contiguous local */
 static int
-get_from_noncontig(int64_t          *opcount,
+get_from_noncontig(opal_atomic_int64_t *opcount,
                    ptl_handle_md_t   md_h,
                    const void       *origin_address,
                    int               origin_count,

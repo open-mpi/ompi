@@ -3,6 +3,7 @@
 ! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Iprobe_f08(source,tag,comm,flag,status,ierror)
@@ -31,4 +32,5 @@ subroutine PMPI_Iprobe_f08(source,tag,comm,flag,status,ierror)
 
    call PMPI_Iprobe(source,tag,comm%MPI_VAL,flag,status,c_ierror)
    if (present(ierror)) ierror = c_ierror
+
 end subroutine PMPI_Iprobe_f08

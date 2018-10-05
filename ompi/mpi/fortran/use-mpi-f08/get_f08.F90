@@ -3,6 +3,8 @@
 ! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2018 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -10,7 +12,7 @@
 subroutine MPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank,&
                        target_disp,target_count,target_datatype,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_get_f
+   use :: ompi_mpifh_bindings, only : ompi_get_f
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count

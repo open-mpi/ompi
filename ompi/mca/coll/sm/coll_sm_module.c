@@ -372,7 +372,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     data->mcb_barrier_control_me = (uint32_t*)
         (base + (rank * control_size * num_barrier_buffers * 2));
     if (data->mcb_tree[rank].mcstn_parent) {
-        data->mcb_barrier_control_parent = (uint32_t*)
+        data->mcb_barrier_control_parent = (opal_atomic_uint32_t*)
             (base +
              (data->mcb_tree[rank].mcstn_parent->mcstn_id * control_size *
               num_barrier_buffers * 2));

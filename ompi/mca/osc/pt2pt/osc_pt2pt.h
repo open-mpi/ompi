@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -110,7 +110,7 @@ struct ompi_osc_pt2pt_peer_t {
     int rank;
 
     /** pointer to the current send fragment for each outgoing target */
-    struct ompi_osc_pt2pt_frag_t *active_frag;
+    opal_atomic_intptr_t active_frag;
 
     /** lock for this peer */
     opal_mutex_t lock;
@@ -119,10 +119,10 @@ struct ompi_osc_pt2pt_peer_t {
     opal_list_t queued_frags;
 
     /** number of fragments incomming (negative - expected, positive - unsynchronized) */
-    volatile int32_t passive_incoming_frag_count;
+    opal_atomic_int32_t passive_incoming_frag_count;
 
     /** peer flags */
-    volatile int32_t flags;
+    opal_atomic_int32_t flags;
 };
 typedef struct ompi_osc_pt2pt_peer_t ompi_osc_pt2pt_peer_t;
 
@@ -208,16 +208,16 @@ struct ompi_osc_pt2pt_module_t {
 
     /** Nmber of communication fragments started for this epoch, by
         peer.  Not in peer data to make fence more manageable. */
-    uint32_t *epoch_outgoing_frag_count;
+    opal_atomic_uint32_t *epoch_outgoing_frag_count;
 
     /** cyclic counter for a unique tage for long messages. */
-    volatile uint32_t tag_counter;
+    opal_atomic_uint32_t tag_counter;
 
     /** number of outgoing fragments still to be completed */
-    volatile int32_t outgoing_frag_count;
+    opal_atomic_int32_t outgoing_frag_count;
 
     /** number of incoming fragments */
-    volatile int32_t active_incoming_frag_count;
+    opal_atomic_int32_t active_incoming_frag_count;
 
     /** Number of targets locked/being locked */
     unsigned int passive_target_access_epoch;
@@ -230,13 +230,13 @@ struct ompi_osc_pt2pt_module_t {
 
     /** Number of "count" messages from the remote complete group
         we've received */
-    volatile int32_t num_complete_msgs;
+    opal_atomic_int32_t num_complete_msgs;
 
     /* ********************* LOCK data ************************ */
 
     /** Status of the local window lock.  One of 0 (unlocked),
         MPI_LOCK_EXCLUSIVE, or MPI_LOCK_SHARED. */
-    int32_t lock_status;
+    opal_atomic_int32_t lock_status;
 
     /** lock for locks_pending list */
     opal_mutex_t locks_pending_lock;
@@ -526,7 +526,7 @@ static inline void mark_incoming_completion (ompi_osc_pt2pt_module_t *module, in
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "mark_incoming_completion marking passive incoming complete. module %p, source = %d, count = %d",
                              (void *) module, source, (int) peer->passive_incoming_frag_count + 1));
-        new_value = OPAL_THREAD_ADD_FETCH32((int32_t *) &peer->passive_incoming_frag_count, 1);
+        new_value = OPAL_THREAD_ADD_FETCH32((opal_atomic_int32_t *) &peer->passive_incoming_frag_count, 1);
         if (0 == new_value) {
             OPAL_THREAD_LOCK(&module->lock);
             opal_condition_broadcast(&module->cond);
@@ -550,7 +550,7 @@ static inline void mark_incoming_completion (ompi_osc_pt2pt_module_t *module, in
  */
 static inline void mark_outgoing_completion (ompi_osc_pt2pt_module_t *module)
 {
-    int32_t new_value = OPAL_THREAD_ADD_FETCH32((int32_t *) &module->outgoing_frag_count, 1);
+    int32_t new_value = OPAL_THREAD_ADD_FETCH32((opal_atomic_int32_t *) &module->outgoing_frag_count, 1);
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "mark_outgoing_completion: outgoing_frag_count = %d", new_value));
     if (new_value >= 0) {
@@ -574,12 +574,12 @@ static inline void mark_outgoing_completion (ompi_osc_pt2pt_module_t *module)
  */
 static inline void ompi_osc_signal_outgoing (ompi_osc_pt2pt_module_t *module, int target, int count)
 {
-    OPAL_THREAD_ADD_FETCH32((int32_t *) &module->outgoing_frag_count, -count);
+    OPAL_THREAD_ADD_FETCH32((opal_atomic_int32_t *) &module->outgoing_frag_count, -count);
     if (MPI_PROC_NULL != target) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "ompi_osc_signal_outgoing_passive: target = %d, count = %d, total = %d", target,
                              count, module->epoch_outgoing_frag_count[target] + count));
-        OPAL_THREAD_ADD_FETCH32((int32_t *) (module->epoch_outgoing_frag_count + target), count);
+        OPAL_THREAD_ADD_FETCH32((opal_atomic_int32_t *) (module->epoch_outgoing_frag_count + target), count);
     }
 }
 
@@ -717,7 +717,7 @@ static inline int get_tag(ompi_osc_pt2pt_module_t *module)
     /* the LSB of the tag is used be the receiver to determine if the
        message is a passive or active target (ie, where to mark
        completion). */
-    int32_t tmp = OPAL_THREAD_ADD_FETCH32((volatile int32_t *) &module->tag_counter, 4);
+    int32_t tmp = OPAL_THREAD_ADD_FETCH32((opal_atomic_int32_t *) &module->tag_counter, 4);
     return (tmp & OSC_PT2PT_FRAG_MASK) | !!(module->passive_target_access_epoch);
 }
 

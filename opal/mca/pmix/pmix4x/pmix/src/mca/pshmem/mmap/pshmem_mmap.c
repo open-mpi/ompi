@@ -121,7 +121,7 @@ static int _mmap_segment_create(pmix_pshmem_seg_t *sm_seg, const char *file_name
     sm_seg->seg_cpid = my_pid;
     sm_seg->seg_size = size;
     sm_seg->seg_base_addr = (unsigned char *)seg_addr;
-    (void)strncpy(sm_seg->seg_name, file_name, PMIX_PATH_MAX - 1);
+    pmix_strncpy(sm_seg->seg_name, file_name, PMIX_PATH_MAX);
 
 out:
     if (-1 != sm_seg->seg_id) {

@@ -68,7 +68,7 @@ struct mca_btl_ugni_base_frag_t;
 
 typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_descriptor_t    base;
-    volatile int32_t             ref_cnt;
+    opal_atomic_int32_t          ref_cnt;
     uint32_t                     msg_id;
     uint16_t                     hdr_size;
     uint16_t                     flags;

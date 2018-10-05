@@ -5,13 +5,15 @@
 !               All Rights reserved.
 ! Copyright (c) 2004-2014 High Performance Computing Center Stuttgart,
 !                         University of Stuttgart.  All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Win_allocate_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)
    USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_win_allocate_f
+   use :: ompi_mpifh_bindings, only : ompi_win_allocate_f
    implicit none
    INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
    INTEGER, INTENT(IN) ::  disp_unit

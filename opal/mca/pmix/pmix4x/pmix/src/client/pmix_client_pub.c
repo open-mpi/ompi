@@ -660,7 +660,7 @@ static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t nda
             for (j=0; j < cb->nvals; j++) {
                 if (0 == strcmp(pdata[i].key, tgt[j].key)) {
                     /* transfer the publishing proc id */
-                    (void)strncpy(tgt[j].proc.nspace, pdata[i].proc.nspace, PMIX_MAX_NSLEN);
+                    pmix_strncpy(tgt[j].proc.nspace, pdata[i].proc.nspace, PMIX_MAX_NSLEN);
                     tgt[j].proc.rank = pdata[i].proc.rank;
                     /* transfer the value to the pmix_info_t */
                     PMIX_BFROPS_VALUE_XFER(cb->status, pmix_client_globals.myserver, &tgt[j].value, &pdata[i].value);

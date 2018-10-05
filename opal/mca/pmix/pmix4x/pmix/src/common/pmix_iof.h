@@ -148,7 +148,7 @@ pmix_iof_fd_always_ready(int fd)
                             "defining endpt: file %s line %d fd %d",        \
                             __FILE__, __LINE__, (fid)));                    \
         PMIX_CONSTRUCT((snk), pmix_iof_sink_t);                             \
-        (void)strncpy((snk)->name.nspace, (nm)->nspace, PMIX_MAX_NSLEN);    \
+        pmix_strncpy((snk)->name.nspace, (nm)->nspace, PMIX_MAX_NSLEN);    \
         (snk)->name.rank = (nm)->rank;                                      \
         (snk)->tag = (tg);                                                  \
         if (0 <= (fid)) {                                                   \

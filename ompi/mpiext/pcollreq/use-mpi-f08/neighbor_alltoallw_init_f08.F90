@@ -10,16 +10,16 @@
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine MPIX_Neighbor_alltoallw_init_f08(sendbuf,sendcounts,sdispls,sendtypes,&
-                                       recvbuf,recvcounts,rdispls,recvtypes,comm,info,request,ierror)
+                                            recvbuf,recvcounts,rdispls,recvtypes,comm,info,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request, MPI_ADDRESS_KIND
    use :: mpiext_pcollreq_f08, only : ompix_neighbor_alltoallw_init_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-   INTEGER, INTENT(IN) :: sendcounts(*), recvcounts(*)
-   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: recvtypes(*)
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), recvcounts(*)
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN), ASYNCHRONOUS :: sdispls(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: sendtypes(*)
+   TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: recvtypes(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Request), INTENT(OUT) :: request

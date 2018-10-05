@@ -62,7 +62,6 @@ struct dict {
 	int			 (*_insert)		__P((void *obj, void *k, void *d, int ow));
 	int			 (*_probe)		__P((void *obj, void *key, void **dat));
 	void		*(*_search)		__P((void *obj, const void *k));
-	const void	*(*_csearch)	__P((const void *obj, const void *k));
 	int			 (*_remove)		__P((void *obj, const void *key, int del));
 	void		 (*_walk)		__P((void *obj, dict_vis_func func));
 	unsigned	 (*_count)		__P((const void *obj));
@@ -75,7 +74,6 @@ struct dict {
 #define dict_insert(dct,k,d,o)	(dct)->_insert((dct)->_object, (k), (d), (o))
 #define dict_probe(dct,k,d)		(dct)->_probe((dct)->_object, (k), (d))
 #define dict_search(dct,k)		(dct)->_search((dct)->_object, (k))
-#define dict_csearch(dct,k)		(dct)->_csearch((dct)->_object, (k))
 #define dict_remove(dct,k,del)	(dct)->_remove((dct)->_object, (k), (del))
 #define dict_walk(dct,f)		(dct)->_walk((dct)->_object, (f))
 #define dict_count(dct)			(dct)->_count((dct)->_object)

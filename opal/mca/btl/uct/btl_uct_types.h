@@ -94,7 +94,7 @@ typedef struct mca_btl_uct_conn_req_t mca_btl_uct_conn_req_t;
  */
 struct mca_btl_uct_tl_endpoint_t {
     /** current flags (connected, requested, etc) */
-    volatile int32_t flags;
+    opal_atomic_int32_t flags;
 
     /** UCT endpoint handle */
     uct_ep_h uct_ep;

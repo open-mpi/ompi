@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
-# Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -27,6 +27,7 @@
 headers += \
 	opal/sys/architecture.h \
 	opal/sys/atomic.h \
+	opal/sys/atomic_stdc.h \
 	opal/sys/atomic_impl.h \
 	opal/sys/timer.h \
         opal/sys/cma.h

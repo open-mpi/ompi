@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      ARM ltd.  All rights reserved.
- * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -109,7 +109,7 @@ void opal_atomic_isync(void)
 
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #define OPAL_HAVE_ATOMIC_MATH_32 1
-static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
   int32_t prev, tmp;
   bool ret;
@@ -137,7 +137,7 @@ static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *add
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     bool rc;
 
@@ -148,7 +148,7 @@ static inline bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t 
 }
 
 
-static inline bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     opal_atomic_wmb();
     return opal_atomic_compare_exchange_strong_32 (addr, oldval, newval);
@@ -157,7 +157,7 @@ static inline bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t 
 #if (OPAL_ASM_SUPPORT_64BIT == 1)
 
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
-static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     int64_t prev;
     int tmp;
@@ -188,7 +188,7 @@ static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *add
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     bool rc;
 
@@ -199,7 +199,7 @@ static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t 
 }
 
 
-static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     opal_atomic_wmb();
     return opal_atomic_compare_exchange_strong_64 (addr, oldval, newval);
@@ -209,7 +209,7 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t 
 
 
 #define OPAL_HAVE_ATOMIC_ADD_32 1
-static inline int32_t opal_atomic_fetch_add_32(volatile int32_t* v, int inc)
+static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t* v, int inc)
 {
     int32_t t, old;
     int tmp;
@@ -230,7 +230,7 @@ static inline int32_t opal_atomic_fetch_add_32(volatile int32_t* v, int inc)
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_32 1
-static inline int32_t opal_atomic_fetch_sub_32(volatile int32_t* v, int dec)
+static inline int32_t opal_atomic_fetch_sub_32(opal_atomic_int32_t* v, int dec)
 {
     int32_t t, old;
     int tmp;

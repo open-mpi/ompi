@@ -551,36 +551,17 @@ static void _send_notification(int status,
         return;
     }
 
-    if (OPAL_ERR_PROC_ABORTED == status) {
-        /* we will pass three opal_value_t's */
-        rc = 3;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
-            return;
-        }
-        /* pass along the affected proc(s) */
-        OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_PMIX_EVENT_AFFECTED_PROC);
-        kv.type = OPAL_NAME;
-        kv.data.name.jobid = proc->jobid;
-        kv.data.name.vpid = proc->vpid;
-        kvptr = &kv;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&kv);
-            OBJ_RELEASE(buf);
-            return;
-        }
-        OBJ_DESTRUCT(&kv);
+    if (ORTE_VPID_WILDCARD == target->vpid) {
+        /* we will only pass the affected proc */
+        rc = 1;
     } else {
-        /* we are going to pass two opal_value_t's */
+        /* we have to pass the target */
         rc = 2;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buf);
-            return;
-        }
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rc, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return;
     }
 
     /* pass along the affected proc(s) */
@@ -598,23 +579,8 @@ static void _send_notification(int status,
     }
     OBJ_DESTRUCT(&kv);
 
-    /* pass along the proc(s) to be notified */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
-    kv.type = OPAL_NAME;
-    kv.data.name.jobid = target->jobid;
-    kv.data.name.vpid = target->vpid;
-    kvptr = &kv;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&kv);
-        OBJ_RELEASE(buf);
-        return;
-    }
-    OBJ_DESTRUCT(&kv);
-
-    /* if the targets are a wildcard, then xcast it to everyone */
     if (ORTE_VPID_WILDCARD == target->vpid) {
+        /* xcast it to everyone */
         OBJ_CONSTRUCT(&sig, orte_grpcomm_signature_t);
         sig.signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
         sig.signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
@@ -627,6 +593,20 @@ static void _send_notification(int status,
         OBJ_DESTRUCT(&sig);
         OBJ_RELEASE(buf);
     } else {
+        /* pass along the proc to be notified */
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_PMIX_EVENT_CUSTOM_RANGE);
+        kv.type = OPAL_NAME;
+        kv.data.name.jobid = target->jobid;
+        kv.data.name.vpid = target->vpid;
+        kvptr = &kv;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kvptr, 1, OPAL_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&kv);
+            OBJ_RELEASE(buf);
+            return;
+        }
+        OBJ_DESTRUCT(&kv);
         /* get the daemon hosting the proc to be notified */
         daemon.jobid = ORTE_PROC_MY_NAME->jobid;
         daemon.vpid = orte_get_proc_daemon_vpid(target);

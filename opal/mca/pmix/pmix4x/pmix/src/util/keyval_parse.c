@@ -136,7 +136,7 @@ static int parse_line(void)
         key_buffer = tmp;
     }
 
-    strncpy(key_buffer, pmix_util_keyval_yytext, key_buffer_len);
+    pmix_strncpy(key_buffer, pmix_util_keyval_yytext, key_buffer_len-1);
 
     /* The first thing we have to see is an "=" */
 
@@ -259,7 +259,7 @@ static int save_param_name (void)
         key_buffer = tmp;
     }
 
-    strncpy (key_buffer, pmix_util_keyval_yytext, key_buffer_len);
+    pmix_strncpy (key_buffer, pmix_util_keyval_yytext, key_buffer_len-1);
 
     return PMIX_SUCCESS;
 }

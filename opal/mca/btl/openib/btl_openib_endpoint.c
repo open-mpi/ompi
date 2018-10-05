@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
@@ -378,7 +378,7 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
          * was not in "connect" or "bad" flow (failed to allocate memory)
          * and changed the pointer back to NULL
          */
-        if(!opal_atomic_compare_exchange_strong_ptr(&endpoint->eager_rdma_local.base.pval, (void *) &_tmp_ptr, (void *) 1)) {
+        if(!opal_atomic_compare_exchange_strong_ptr((opal_atomic_intptr_t *) &endpoint->eager_rdma_local.base.pval, (intptr_t *) &_tmp_ptr, 1)) {
             if (NULL != endpoint->eager_rdma_local.reg) {
                 endpoint->endpoint_btl->device->rcache->rcache_deregister (endpoint->endpoint_btl->device->rcache,
                                                                            &endpoint->eager_rdma_local.reg->base);
@@ -502,6 +502,7 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_frag_t *openib_frag;
     mca_btl_openib_com_frag_t *com_frag;
     mca_btl_openib_control_header_t *ctl_hdr;
+    int rc;
 
     OPAL_OUTPUT((-1, "SENDING CTS to %s on qp index %d (QP num %d)",
                  opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
@@ -538,11 +539,14 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     ctl_hdr->type = MCA_BTL_OPENIB_CONTROL_CTS;
 
     /* Send the fragment */
-    if (OPAL_SUCCESS != mca_btl_openib_endpoint_post_send(endpoint, sc_frag)) {
-        BTL_ERROR(("Failed to post CTS send"));
-        mca_btl_openib_endpoint_invoke_error(endpoint);
+    if (OPAL_SUCCESS != (rc = mca_btl_openib_endpoint_post_send(endpoint, sc_frag))) {
+        if( OPAL_ERR_RESOURCE_BUSY != rc ) {
+            BTL_ERROR(("Failed to post CTS send"));
+            mca_btl_openib_endpoint_invoke_error(endpoint);
+        }
+    } else {
+        endpoint->endpoint_cts_sent = true;
     }
-    endpoint->endpoint_cts_sent = true;
 }
 
 /*
@@ -611,8 +615,8 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_send_frag_t *frag;
     mca_btl_openib_endpoint_t *ep;
     bool master = false;
+    int rc;
 
-    opal_output(-1, "Now we are CONNECTED");
     if (MCA_BTL_XRC_ENABLED) {
         opal_mutex_lock (&endpoint->ib_addr->addr_lock);
         if (MCA_BTL_IB_ADDR_CONNECTED == endpoint->ib_addr->status) {
@@ -664,8 +668,11 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         frag = to_send_frag(frag_item);
         /* We need to post this one */
 
-        if (OPAL_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag)) {
-            BTL_ERROR(("Error posting send"));
+        if(OPAL_SUCCESS != (rc = mca_btl_openib_endpoint_post_send(endpoint, frag))) {
+            /* if we are out of resources, let's try to reschedule everything later */
+            if( OPAL_ERR_RESOURCE_BUSY != rc ) {
+                BTL_ERROR(("Error posting send"));
+            }
         }
     }
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
@@ -899,8 +906,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
-    if(!opal_atomic_compare_exchange_strong_ptr (&endpoint->eager_rdma_local.base.pval, (void *) &_tmp_ptr,
-                                                 (void *) 1)) {
+    if(!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &endpoint->eager_rdma_local.base.pval, (intptr_t *) &_tmp_ptr, 1)) {
         return;
     }
 
@@ -990,7 +996,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         do {
             _tmp_ptr = NULL;
             p = &device->eager_rdma_buffers[device->eager_rdma_buffers_count];
-        } while(!opal_atomic_compare_exchange_strong_ptr (p, (void *) &_tmp_ptr, endpoint));
+        } while(!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) p, (intptr_t *) &_tmp_ptr, (intptr_t) endpoint));
 
         OPAL_THREAD_ADD_FETCH32(&openib_btl->eager_rdma_channels, 1);
         /* from this point progress function starts to poll new buffer */
@@ -1030,6 +1036,7 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
         }
     } else {
         btl = endpoint->endpoint_btl;
+        endpoint->endpoint_state = MCA_BTL_IB_FAILED;
     }
 
     /* If we didn't find a BTL, then just bail :-( */

@@ -24,6 +24,7 @@ struct ompi_osc_rdma_peer_t;
 typedef int64_t osc_rdma_base_t;
 typedef int64_t osc_rdma_size_t;
 typedef int64_t osc_rdma_counter_t;
+typedef opal_atomic_int64_t osc_rdma_atomic_counter_t;
 
 #define ompi_osc_rdma_counter_add opal_atomic_add_fetch_64
 
@@ -32,6 +33,7 @@ typedef int64_t osc_rdma_counter_t;
 typedef int32_t osc_rdma_base_t;
 typedef int32_t osc_rdma_size_t;
 typedef int32_t osc_rdma_counter_t;
+typedef opal_atomic_int32_t osc_rdma_atomic_counter_t;
 
 #define ompi_osc_rdma_counter_add opal_atomic_add_fetch_32
 
@@ -42,8 +44,9 @@ typedef int32_t osc_rdma_counter_t;
 #define OMPI_OSC_RDMA_LOCK_EXCLUSIVE   0x8000000000000000l
 
 typedef int64_t  ompi_osc_rdma_lock_t;
+typedef opal_atomic_int64_t  ompi_osc_rdma_atomic_lock_t;
 
-static inline int64_t ompi_osc_rdma_lock_add (volatile int64_t *p, int64_t value)
+static inline int64_t ompi_osc_rdma_lock_add (opal_atomic_int64_t *p, int64_t value)
 {
     int64_t new;
 
@@ -54,7 +57,7 @@ static inline int64_t ompi_osc_rdma_lock_add (volatile int64_t *p, int64_t value
     return new;
 }
 
-static inline int ompi_osc_rdma_lock_compare_exchange (volatile int64_t *p, int64_t *comp, int64_t value)
+static inline int ompi_osc_rdma_lock_compare_exchange (opal_atomic_int64_t *p, int64_t *comp, int64_t value)
 {
     int ret;
 
@@ -70,8 +73,9 @@ static inline int ompi_osc_rdma_lock_compare_exchange (volatile int64_t *p, int6
 #define OMPI_OSC_RDMA_LOCK_EXCLUSIVE 0x80000000l
 
 typedef int32_t  ompi_osc_rdma_lock_t;
+typedef opal_atomic_int32_t  ompi_osc_rdma_atomic_lock_t;
 
-static inline int32_t ompi_osc_rdma_lock_add (volatile int32_t *p, int32_t value)
+static inline int32_t ompi_osc_rdma_lock_add (opal_atomic_int32_t *p, int32_t value)
 {
     int32_t new;
 
@@ -83,7 +87,7 @@ static inline int32_t ompi_osc_rdma_lock_add (volatile int32_t *p, int32_t value
     return new;
 }
 
-static inline int ompi_osc_rdma_lock_compare_exchange (volatile int32_t *p, int32_t *comp, int32_t value)
+static inline int ompi_osc_rdma_lock_compare_exchange (opal_atomic_int32_t *p, int32_t *comp, int32_t value)
 {
     int ret;
 
@@ -157,7 +161,7 @@ struct ompi_osc_rdma_state_t {
     /** post buffers */
     osc_rdma_counter_t post_peers[OMPI_OSC_RDMA_POST_PEER_MAX];
     /** counter for number of post messages received  */
-    osc_rdma_counter_t num_post_msgs;
+    osc_rdma_atomic_counter_t num_post_msgs;
     /** counter for number of complete messages received */
     osc_rdma_counter_t num_complete_msgs;
     /** lock for the region state to ensure consistency */
@@ -195,11 +199,11 @@ struct ompi_osc_rdma_frag_t {
     opal_free_list_item_t super;
 
     /* Number of operations which have started writing into the frag, but not yet completed doing so */
-    volatile int32_t pending;
+    opal_atomic_int32_t pending;
 #if OPAL_HAVE_ATOMIC_MATH_64
-    volatile int64_t curr_index;
+    opal_atomic_int64_t curr_index;
 #else
-    volatile int32_t curr_index;
+    opal_atomic_int32_t curr_index;
 #endif
 
     struct ompi_osc_rdma_module_t *module;

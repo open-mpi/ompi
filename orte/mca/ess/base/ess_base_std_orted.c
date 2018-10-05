@@ -52,7 +52,6 @@
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
@@ -621,18 +620,6 @@ int orte_ess_base_orted_setup(void)
         goto error;
     }
 
-    /* setup the DFS framework */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_dfs_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_dfs_select";
-        goto error;
-    }
-
     return ORTE_SUCCESS;
 
   error:
@@ -684,8 +671,6 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_iof_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
-    /* close the dfs so its threads can exit */
-    (void) mca_base_framework_close(&orte_dfs_base_framework);
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
     (void) mca_base_framework_close(&orte_rtc_base_framework);

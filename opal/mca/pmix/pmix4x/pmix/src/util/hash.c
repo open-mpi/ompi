@@ -172,7 +172,7 @@ pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, pmix_rank_t rank,
             /* copy the list elements */
             n=0;
             PMIX_LIST_FOREACH(hv, &proc_data->data, pmix_kval_t) {
-                (void)strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
+                pmix_strncpy(info[n].key, hv->key, PMIX_MAX_KEYLEN);
                 pmix_value_xfer(&info[n].value, hv->value);
                 ++n;
             }

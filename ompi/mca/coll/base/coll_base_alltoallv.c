@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -276,6 +276,15 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
 
  err_hndl:
+    /* find a real error code */
+    if (MPI_ERR_IN_STATUS == err) {
+        for( i = 0; i < nreqs; i++ ) {
+            if (MPI_REQUEST_NULL == reqs[i]) continue;
+            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+            err = reqs[i]->req_status.MPI_ERROR;
+            break;
+        }
+    }
     /* Free the requests in all cases as they are persistent */
     ompi_coll_base_free_reqs(reqs, nreqs);
 

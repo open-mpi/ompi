@@ -52,7 +52,7 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_del_nspace(pmix_common_dstore_ctx_t 
 PMIX_EXPORT pmix_status_t pmix_common_dstor_setup_fork(pmix_common_dstore_ctx_t *ds_ctx, const char *base_path_env,
                                            const pmix_proc_t *peer, char ***env);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_cache_job_info(pmix_common_dstore_ctx_t *ds_ctx,
-                                struct pmix_nspace_t *ns,
+                                struct pmix_namespace_t *ns,
                                 pmix_info_t info[], size_t ninfo);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_register_job_info(pmix_common_dstore_ctx_t *ds_ctx,
                                 struct pmix_peer_t *pr,
@@ -71,7 +71,7 @@ PMIX_EXPORT pmix_status_t pmix_common_dstor_fetch(pmix_common_dstore_ctx_t *ds_c
                                 pmix_info_t info[], size_t ninfo,
                                 pmix_list_t *kvs);
 PMIX_EXPORT pmix_status_t pmix_common_dstor_store_modex(pmix_common_dstore_ctx_t *ds_ctx,
-                                struct pmix_nspace_t *nspace,
+                                struct pmix_namespace_t *nspace,
                                 pmix_list_t *cbs,
                                 pmix_byte_object_t *bo);
 #endif

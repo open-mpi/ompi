@@ -80,6 +80,53 @@ Master (not on release branches yet)
   Currently, this means the Open SHMEM layer will only build if
   a MXM or UCX library is found.
 
+3.1.2 -- August, 2018
+------------------------
+
+- A subtle race condition bug was discovered in the "vader" BTL
+  (shared memory communications) that, in rare instances, can cause
+  MPI processes to crash or incorrectly classify (or effectively drop)
+  an MPI message sent via shared memory.  If you are using the "ob1"
+  PML with "vader" for shared memory communication (note that vader is
+  the default for shared memory communication with ob1), you need to
+  upgrade to v3.1.2 or later to fix this issue.  You may also upgrade
+  to the following versions to fix this issue:
+  - Open MPI v2.1.5 (expected end of August, 2018) or later in the
+    v2.1.x series
+  - Open MPI v3.0.1 (released March, 2018) or later in the v3.0.x
+    series
+- Assorted Portals 4.0 bug fixes.
+- Fix for possible data corruption in MPI_BSEND.
+- Move shared memory file for vader btl into /dev/shm on Linux.
+- Fix for MPI_ISCATTER/MPI_ISCATTERV Fortran interfaces with MPI_IN_PLACE.
+- Upgrade PMIx to v2.1.3.
+- Numerous One-sided bug fixes.
+- Fix for race condition in uGNI BTL.
+- Improve handling of large number of interfaces with TCP BTL.
+- Numerous UCX bug fixes.
+
+3.1.1 -- June, 2018
+-------------------
+
+- Fix potential hang in UCX PML during MPI_FINALIZE
+- Update internal PMIx to v2.1.2rc2 to fix forward version compatibility.
+- Add new MCA parameter osc_sm_backing_store to allow users to specify
+  where in the filesystem the backing file for the shared memory
+  one-sided component should live.  Defaults to /dev/shm on Linux.
+- Fix potential hang on non-x86 platforms when using builds with
+  optimization flags turned off.
+- Disable osc/pt2pt when using MPI_THREAD_MULTIPLE due to numerous
+  race conditions in the component.
+- Fix dummy variable names for the mpi and mpi_f08 Fortran bindings to
+  match the MPI standard.  This may break applications which use
+  name-based parameters in Fortran which used our internal names
+  rather than those documented in the MPI standard.
+- Revamp Java detection to properly handle new Java versions which do
+  not provide a javah wrapper.
+- Fix RMA function signatures for use-mpi-f08 bindings to have the
+  asynchonous property on all buffers.
+- Improved configure logic for finding the UCX library.
+
 3.1.0 -- May, 2018
 ------------------
 

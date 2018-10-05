@@ -78,7 +78,7 @@ static pmix_status_t ds12_assign_module(pmix_info_t *info, size_t ninfo,
     return PMIX_SUCCESS;
 }
 
-static pmix_status_t ds12_cache_job_info(struct pmix_nspace_t *ns,
+static pmix_status_t ds12_cache_job_info(struct pmix_namespace_t *ns,
                                 pmix_info_t info[], size_t ninfo)
 {
     return PMIX_SUCCESS;
@@ -106,7 +106,7 @@ static pmix_status_t ds12_store(const pmix_proc_t *proc,
  * host has received data from some other peer. It therefore
  * always contains data solely from remote procs, and we
  * shall store it accordingly */
-static pmix_status_t ds12_store_modex(struct pmix_nspace_t *nspace,
+static pmix_status_t ds12_store_modex(struct pmix_namespace_t *nspace,
                                       pmix_list_t *cbs,
                                       pmix_byte_object_t *bo)
 {

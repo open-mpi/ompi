@@ -45,33 +45,33 @@ int nreps = 100;
 int nthreads = 2;
 int enable_verbose = 0;
 
-volatile int32_t vol32 = 0;
-int32_t val32 = 0;
+opal_atomic_int32_t vol32 = 0;
+opal_atomic_int32_t val32 = 0;
 int32_t old32 = 0;
 int32_t new32 = 0;
 
 #if OPAL_HAVE_ATOMIC_MATH_64
-volatile int64_t vol64 = 0;
-int64_t val64 = 0;
+opal_atomic_int64_t vol64 = 0;
+opal_atomic_int64_t val64 = 0;
 int64_t old64 = 0;
 int64_t new64 = 0;
 #endif
 
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
-volatile opal_int128_t vol128;
-opal_int128_t val128;
+opal_atomic_int128_t vol128;
+opal_atomic_int128_t val128;
 opal_int128_t old128;
 opal_int128_t new128;
 #endif
 
-volatile int volint = 0;
-int valint = 0;
+opal_atomic_int_t volint = 0;
+opal_atomic_int_t valint = 0;
 int oldint = 0;
 int newint = 0;
 
-volatile void *volptr = NULL;
-void *oldptr = NULL;
-void *newptr = NULL;
+opal_atomic_intptr_t volptr = 0;
+intptr_t oldptr = 0;
+intptr_t newptr = 0;
 
 
 static void *thread_main(void *arg)
@@ -235,39 +235,39 @@ int main(int argc, char *argv[])
 
     /* -- cmpset ptr tests -- */
 
-    volptr = (void *) 42, oldptr = (void *) 42, newptr = (void *) 50;
+    volptr = 42, oldptr = 42, newptr = 50;
     assert(opal_atomic_compare_exchange_strong_ptr (&volptr, &oldptr, newptr) == true);
     opal_atomic_rmb();
     assert(volptr == newptr);
-    assert(oldptr == (void *) 42);
+    assert(oldptr == 42);
 
-    volptr = (void *) 42, oldptr = (void *) 420, newptr = (void *) 50;
+    volptr = 42, oldptr = 420, newptr = 50;
     assert(opal_atomic_compare_exchange_strong_ptr (&volptr, &oldptr, newptr) == false);
     opal_atomic_rmb();
-    assert(volptr == (void *) 42);
-    assert(oldptr == (void *) 42);
+    assert(volptr == 42);
+    assert(oldptr == 42);
 
-    volptr = (void *) 42, oldptr = (void *) 42, newptr = (void *) 50;
+    volptr = 42, oldptr = 42, newptr = 50;
     assert(opal_atomic_compare_exchange_strong_acq_ptr (&volptr, &oldptr, newptr) == true);
     assert(volptr == newptr);
-    assert(oldptr == (void *) 42);
+    assert(oldptr == 42);
 
-    volptr = (void *) 42, oldptr = (void *) 420, newptr = (void *) 50;
+    volptr = 42, oldptr = 420, newptr = 50;
     assert(opal_atomic_compare_exchange_strong_acq_ptr (&volptr, &oldptr, newptr) == false);
-    assert(volptr == (void *) 42);
-    assert(oldptr == (void *) 42);
+    assert(volptr == 42);
+    assert(oldptr == 42);
 
-    volptr = (void *) 42, oldptr = (void *) 42, newptr = (void *) 50;
+    volptr = 42, oldptr = 42, newptr = 50;
     assert(opal_atomic_compare_exchange_strong_rel_ptr (&volptr, &oldptr, newptr) == true);
     opal_atomic_rmb();
     assert(volptr == newptr);
-    assert(oldptr == (void *) 42);
+    assert(oldptr == 42);
 
-    volptr = (void *) 42, oldptr = (void *) 420, newptr = (void *) 50;
+    volptr = 42, oldptr = 420, newptr = 50;
     assert(opal_atomic_compare_exchange_strong_rel_ptr (&volptr, &oldptr, newptr) == false);
     opal_atomic_rmb();
-    assert(volptr == (void *) 42);
-    assert(oldptr == (void *) 42);
+    assert(volptr == 42);
+    assert(oldptr == 42);
 
     /* -- add_32 tests -- */
 

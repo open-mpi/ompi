@@ -43,7 +43,7 @@ struct ompi_osc_rdma_peer_t {
     int rank;
 
     /** peer flags */
-    volatile int32_t flags;
+    opal_atomic_int32_t flags;
 };
 typedef struct ompi_osc_rdma_peer_t ompi_osc_rdma_peer_t;
 

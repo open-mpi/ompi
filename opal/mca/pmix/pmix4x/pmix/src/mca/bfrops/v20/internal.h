@@ -42,6 +42,55 @@
 
  BEGIN_C_DECLS
 
+/* DEPRECATED data type values */
+#define PMIX_MODEX        29
+#define PMIX_INFO_ARRAY   44
+
+/****    PMIX MODEX STRUCT  -  DEPRECATED    ****/
+typedef struct pmix_modex_data {
+    char nspace[PMIX_MAX_NSLEN+1];
+    int rank;
+    uint8_t *blob;
+    size_t size;
+} pmix_modex_data_t;
+/* utility macros for working with pmix_modex_t structs */
+#define PMIX_MODEX_CREATE(m, n)                                             \
+    do {                                                                    \
+        (m) = (pmix_modex_data_t*)calloc((n) , sizeof(pmix_modex_data_t));  \
+    } while (0)
+
+#define PMIX_MODEX_RELEASE(m)                   \
+    do {                                        \
+        PMIX_MODEX_DESTRUCT((m));               \
+        free((m));                              \
+        (m) = NULL;                             \
+    } while (0)
+
+#define PMIX_MODEX_CONSTRUCT(m)                         \
+    do {                                                \
+        memset((m), 0, sizeof(pmix_modex_data_t));      \
+    } while (0)
+
+#define PMIX_MODEX_DESTRUCT(m)                  \
+    do {                                        \
+        if (NULL != (m)->blob) {                \
+            free((m)->blob);                    \
+            (m)->blob = NULL;                   \
+        }                                       \
+    } while (0)
+
+#define PMIX_MODEX_FREE(m, n)                           \
+    do {                                                \
+        size_t _s;                                      \
+        if (NULL != (m)) {                              \
+            for (_s=0; _s < (n); _s++) {                \
+                PMIX_MODEX_DESTRUCT(&((m)[_s]));        \
+            }                                           \
+            free((m));                                  \
+            (m) = NULL;                                 \
+        }                                               \
+    } while (0)
+
 /*
  * Implementations of API functions
  */

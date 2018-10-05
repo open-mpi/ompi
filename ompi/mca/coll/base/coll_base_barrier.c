@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2017 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -102,8 +102,10 @@ int ompi_coll_base_barrier_intra_doublering(struct ompi_communicator_t *comm,
 {
     int rank, size, err = 0, line = 0, left, right;
 
-    rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
+    if( 1 == size )
+        return OMPI_SUCCESS;
+    rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"ompi_coll_base_barrier_intra_doublering rank %d", rank));
 
@@ -172,8 +174,10 @@ int ompi_coll_base_barrier_intra_recursivedoubling(struct ompi_communicator_t *c
 {
     int rank, size, adjsize, err, line, mask, remote;
 
-    rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
+    if( 1 == size )
+        return OMPI_SUCCESS;
+    rank = ompi_comm_rank(comm);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_barrier_intra_recursivedoubling rank %d",
                  rank));
@@ -251,8 +255,10 @@ int ompi_coll_base_barrier_intra_bruck(struct ompi_communicator_t *comm,
 {
     int rank, size, distance, to, from, err, line = 0;
 
-    rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
+    if( 1 == size )
+        return MPI_SUCCESS;
+    rank = ompi_comm_rank(comm);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_barrier_intra_bruck rank %d", rank));
 
@@ -285,15 +291,18 @@ int ompi_coll_base_barrier_intra_bruck(struct ompi_communicator_t *comm,
 int ompi_coll_base_barrier_intra_two_procs(struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
 {
-    int remote, err;
+    int remote, size, err;
+
+    size = ompi_comm_size(comm);
+    if( 1 == size )
+        return MPI_SUCCESS;
+    if( 2 != ompi_comm_size(comm) ) {
+        return MPI_ERR_UNSUPPORTED_OPERATION;
+    }
 
     remote = ompi_comm_rank(comm);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_barrier_intra_two_procs rank %d", remote));
-
-    if (2 != ompi_comm_size(comm)) {
-        return MPI_ERR_UNSUPPORTED_OPERATION;
-    }
 
     remote = (remote + 1) & 0x1;
 
@@ -324,8 +333,10 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
     int i, err, rank, size, line;
     ompi_request_t** requests = NULL;
 
-    rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
+    if( 1 == size )
+        return MPI_SUCCESS;
+    rank = ompi_comm_rank(comm);
 
     /* All non-root send & receive zero-length message. */
     if (rank > 0) {
@@ -367,11 +378,21 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
     /* All done */
     return MPI_SUCCESS;
  err_hndl:
+    if( NULL != requests ) {
+        /* find a real error code */
+        if (MPI_ERR_IN_STATUS == err) {
+            for( i = 0; i < size; i++ ) {
+                if (MPI_REQUEST_NULL == requests[i]) continue;
+                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR) continue;
+                err = requests[i]->req_status.MPI_ERROR;
+                break;
+            }
+        }
+        ompi_coll_base_free_reqs(requests, size);
+    }
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
     (void)line;  // silence compiler warning
-    if( NULL != requests )
-        ompi_coll_base_free_reqs(requests, size);
     return err;
 }
 /* copied function (with appropriate renaming) ends here */
@@ -385,8 +406,10 @@ int ompi_coll_base_barrier_intra_tree(struct ompi_communicator_t *comm,
 {
     int rank, size, depth, err, jump, partner;
 
-    rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
+    if( 1 == size )
+        return MPI_SUCCESS;
+    rank = ompi_comm_rank(comm);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_barrier_intra_tree %d",
                  rank));

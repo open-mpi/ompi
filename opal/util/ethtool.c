@@ -39,6 +39,7 @@
 
 #include "opal/util/ethtool.h"
 #include "opal/util/if.h"
+#include "opal/util/string_copy.h"
 
 /*
  * Obtain an appropriate bandwidth for the interface if_name. On Linux, we
@@ -63,9 +64,7 @@ opal_ethtool_get_speed (const char *if_name)
     }
 
     memset(&ifr, 0, sizeof(struct ifreq));
-    strncpy(ifr.ifr_name, if_name, IF_NAMESIZE);
-    /* strncpy does not null terminate when the string is truncated */
-    ifr.ifr_name[IF_NAMESIZE-1] = '\0';
+    opal_string_copy(ifr.ifr_name, if_name, IF_NAMESIZE);
     ifr.ifr_data = (char *)&edata;
 
     if (ioctl(sockfd, SIOCETHTOOL, &ifr) < 0) {

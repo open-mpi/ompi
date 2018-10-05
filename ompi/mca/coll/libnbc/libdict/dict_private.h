@@ -15,7 +15,6 @@
 typedef int			 (*insert_func)		__P((void *, void *k, void *d, int o));
 typedef int			 (*probe_func)		__P((void *, void *k, void **d));
 typedef void		*(*search_func)		__P((void *, const void *k));
-typedef const void	*(*csearch_func)	__P((const void *, const void *k));
 typedef int			 (*remove_func)		__P((void *, const void *k, int d));
 typedef void		 (*walk_func)		__P((void *, dict_vis_func visit));
 typedef unsigned	 (*count_func)		__P((const void *));

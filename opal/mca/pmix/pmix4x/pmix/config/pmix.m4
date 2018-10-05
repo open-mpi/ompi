@@ -189,11 +189,35 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                                [Link the output PMIx library to this extra lib (used in embedded mode)]))
     AC_MSG_CHECKING([for extra lib])
     AS_IF([test ! -z "$with_pmix_extra_lib"],
-          [AC_MSG_RESULT([$with_pmix_extra_lib])
-           PMIX_EXTRA_LIB=$with_pmix_extra_lib],
+          [AS_IF([test "$with_pmix_extra_lib" == "yes" || test "$with_pmix_extra_lib" == "no"],
+                 [AC_MSG_RESULT([ERROR])
+                  AC_MSG_WARN([Invalid value for --with-extra-pmix-lib:])
+                  AC_MSG_WARN([    $with_pmix_extra_lib])
+                  AC_MSG_WARN([Must be path name of the library to add])
+                  AC_MSG_ERROR([Cannot continue])],
+                 [AC_MSG_RESULT([$with_pmix_extra_lib])
+                  PMIX_EXTRA_LIB=$with_pmix_extra_lib])],
           [AC_MSG_RESULT([no])
            PMIX_EXTRA_LIB=])
     AC_SUBST(PMIX_EXTRA_LIB)
+
+    # Add any extra libtool lib?
+    AC_ARG_WITH([pmix-extra-ltlib],
+                AC_HELP_STRING([--with-pmix-extra-ltlib=LIB],
+                               [Link any embedded components/tools that require it to the provided libtool lib (used in embedded mode)]))
+    AC_MSG_CHECKING([for extra ltlib])
+    AS_IF([test ! -z "$with_pmix_extra_ltlib"],
+          [AS_IF([test "$with_pmix_extra_ltlib" == "yes" || test "$with_pmix_extra_ltlib" == "no"],
+                 [AC_MSG_RESULT([ERROR])
+                  AC_MSG_WARN([Invalid value for --with-pmix-extra-ltlib:])
+                  AC_MSG_WARN([    $with_pmix_extra_ltlib])
+                  AC_MSG_WARN([Must be path name of the library to add])
+                  AC_MSG_ERROR([Cannot continue])],
+                 [AC_MSG_RESULT([$with_pmix_extra_ltlib])
+                  PMIX_EXTRA_LTLIB=$with_pmix_extra_ltlib])],
+          [AC_MSG_RESULT([no])
+           PMIX_EXTRA_LTLIB=])
+    AC_SUBST(PMIX_EXTRA_LTLIB)
 
     #
     # Package/brand string

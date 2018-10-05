@@ -3,12 +3,14 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine PMPI_Type_create_struct_f08(count,array_of_blocklengths,array_of_displacements, &
                                       array_of_types,newtype,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
-   use :: mpi_f08, only : ompi_type_create_struct_f
+   use :: ompi_mpifh_bindings, only : ompi_type_create_struct_f
    implicit none
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(IN) :: array_of_blocklengths(count)

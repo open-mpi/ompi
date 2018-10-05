@@ -55,7 +55,7 @@ int opal_class_init_epoch = 1;
 /*
  * Local variables
  */
-static opal_atomic_lock_t class_lock = { { OPAL_ATOMIC_LOCK_UNLOCKED } };
+static opal_atomic_lock_t class_lock = OPAL_ATOMIC_LOCK_INIT;
 static void** classes = NULL;
 static int num_classes = 0;
 static int max_classes = 0;

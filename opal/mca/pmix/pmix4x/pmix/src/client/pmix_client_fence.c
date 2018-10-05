@@ -147,7 +147,7 @@ PMIX_EXPORT pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs
     /* if we are given a NULL proc, then the caller is referencing
      * all procs within our own nspace */
     if (NULL == procs) {
-        (void)strncpy(rg.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
+        pmix_strncpy(rg.nspace, pmix_globals.myid.nspace, PMIX_MAX_NSLEN);
         rg.rank = PMIX_RANK_WILDCARD;
         rgs = &rg;
         nrg = 1;

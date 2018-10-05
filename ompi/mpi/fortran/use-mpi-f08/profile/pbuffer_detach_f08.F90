@@ -3,13 +3,15 @@
 ! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine PMPI_Buffer_detach_f08(buffer_addr,size,ierror)
    USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
-   use :: mpi_f08, only : ompi_buffer_detach_f
+   use :: ompi_mpifh_bindings, only : ompi_buffer_detach_f
    implicit none
    TYPE(C_PTR), INTENT(OUT) ::  buffer_addr
    INTEGER, INTENT(OUT) :: size

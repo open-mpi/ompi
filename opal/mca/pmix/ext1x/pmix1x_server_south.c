@@ -35,6 +35,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/pmix/base/base.h"
 #include "pmix1x.h"
 
@@ -143,7 +144,7 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
             pmix1_value_load(&pinfo[n].value, kv);
             ++n;
         }
@@ -242,7 +243,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
 
     /* store this job in our list of known nspaces */
     job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
-    (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
+    (void)opal_string_copy(job->nspace, nspace, PMIX_MAX_NSLEN);
     job->jobid = jobid;
     opal_list_append(&mca_pmix_ext1x_component.jobids, &job->super);
 
@@ -251,7 +252,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
             if (0 == strcmp(kv->key, OPAL_PMIX_PROC_DATA)) {
                 pinfo[n].value.type = PMIX_INFO_ARRAY;
                 /* the value contains a list of values - convert
@@ -264,7 +265,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
                     pinfo[n].value.data.array.size = szmap;
                     m = 0;
                     OPAL_LIST_FOREACH(k2, pmapinfo, opal_value_t) {
-                        (void)strncpy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);
+                        (void)opal_string_copy(pmap[m].key, k2->key, PMIX_MAX_KEYLEN);
                         pmix1_value_load(&pmap[m].value, k2);
                         ++m;
                     }
@@ -352,7 +353,7 @@ void pmix1_server_deregister_client(const opal_process_name_t *proc,
     OPAL_LIST_FOREACH(jptr, &mca_pmix_ext1x_component.jobids, opal_pmix1_jobid_trkr_t) {
         if (jptr->jobid == proc->jobid) {
             /* found it - tell the server to deregister */
-            (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);
+            (void)opal_string_copy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);
             p.rank = proc->vpid;
             PMIx_server_deregister_client(&p);
             return;
@@ -433,7 +434,7 @@ int pmix1_server_notify_error(int status,
         PMIX_INFO_CREATE(pinfo, sz);
         n = 0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
+            (void)opal_string_copy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
             pmix1_value_load(&pinfo[n].value, kv);
         }
     } else {

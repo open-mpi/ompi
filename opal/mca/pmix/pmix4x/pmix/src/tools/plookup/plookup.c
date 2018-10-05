@@ -269,7 +269,7 @@ int main(int argc, char **argv)
     /* setup the keys */
     PMIX_PDATA_CREATE(pdata, ndata);
     for (n=0; n < ndata; n++) {
-        (void)strncpy(pdata[n].key, keys[n], PMIX_MAX_KEYLEN);
+        pmix_strncpy(pdata[n].key, keys[n], PMIX_MAX_KEYLEN);
     }
     /* perform the lookup */
     rc = PMIx_Lookup(pdata, ndata, info, ninfo);

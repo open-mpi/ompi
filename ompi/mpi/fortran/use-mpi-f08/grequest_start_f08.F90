@@ -3,6 +3,8 @@
 ! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -14,7 +16,7 @@ subroutine MPI_Grequest_start_f08(query_fn,free_fn,cancel_fn,&
    use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_query_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_free_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_cancel_function
-   use :: mpi_f08, only : ompi_grequest_start_f
+   use :: ompi_mpifh_bindings, only : ompi_grequest_start_f
    implicit none
    PROCEDURE(MPI_Grequest_query_function) :: query_fn
    PROCEDURE(MPI_Grequest_free_function) :: free_fn

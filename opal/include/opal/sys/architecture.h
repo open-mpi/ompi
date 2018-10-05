@@ -47,6 +47,7 @@
 #define OPAL_BUILTIN_SYNC   0200
 #define OPAL_BUILTIN_GCC    0202
 #define OPAL_BUILTIN_NO     0203
+#define OPAL_BUILTIN_C11    0204
 
 /* Formats */
 #define OPAL_DEFAULT        1000  /* standard for given architecture */

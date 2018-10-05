@@ -26,7 +26,7 @@ static void opal_lifo_construct (opal_lifo_t *lifo)
 {
     OBJ_CONSTRUCT(&lifo->opal_lifo_ghost, opal_list_item_t);
     lifo->opal_lifo_ghost.opal_list_next = &lifo->opal_lifo_ghost;
-    lifo->opal_lifo_head.data.item = &lifo->opal_lifo_ghost;
+    lifo->opal_lifo_head.data.item = (intptr_t) &lifo->opal_lifo_ghost;
     lifo->opal_lifo_head.data.counter = 0;
 }
 

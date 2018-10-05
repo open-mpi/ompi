@@ -24,6 +24,7 @@
 
 #include "opal/util/basename.h"
 #include "opal/util/opal_getcwd.h"
+#include "opal/util/string_copy.h"
 #include "opal/constants.h"
 
 
@@ -90,13 +91,11 @@ int opal_getcwd(char *buf, size_t size)
          * of the basename as possible
          */
         shortened = opal_basename(pwd);
-        strncpy(buf, shortened, size);
+        opal_string_copy(buf, shortened, size);
         free(shortened);
-        /* ensure it is null terminated */
-        buf[size-1] = '\0';
         /* indicate that it isn't the full path */
         return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
     }
-    strncpy(buf, pwd, size);
+    opal_string_copy(buf, pwd, size);
     return OPAL_SUCCESS;
 }

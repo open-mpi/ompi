@@ -221,7 +221,7 @@ static char **pmix_argv_split_inter(const char *src_string, int delimiter,
       if (NULL == argtemp)
         return NULL;
 
-      strncpy(argtemp, src_string, arglen);
+      pmix_strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
       if (PMIX_SUCCESS != pmix_argv_append(&argc, &argv, argtemp)) {
@@ -235,7 +235,7 @@ static char **pmix_argv_split_inter(const char *src_string, int delimiter,
     /* short argument, copy to buffer and add */
 
     else {
-      strncpy(arg, src_string, arglen);
+      pmix_strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
       if (PMIX_SUCCESS != pmix_argv_append(&argc, &argv, arg))

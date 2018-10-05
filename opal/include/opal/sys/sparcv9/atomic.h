@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserverd.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -85,7 +85,7 @@ static inline void opal_atomic_isync(void)
  *********************************************************************/
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -107,7 +107,7 @@ static inline bool opal_atomic_compare_exchange_strong_32 (volatile int32_t *add
 }
 
 
-static inline bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     bool rc;
 
@@ -118,7 +118,7 @@ static inline bool opal_atomic_compare_exchange_strong_acq_32 (volatile int32_t 
 }
 
 
-static inline bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t *addr, int32_t *oldval, int32_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_32 (opal_atomic_int32_t *addr, int32_t *oldval, int32_t newval)
 {
     opal_atomic_wmb();
     return opal_atomic_compare_exchange_strong_32 (addr, oldval, newval);
@@ -127,7 +127,7 @@ static inline bool opal_atomic_compare_exchange_strong_rel_32 (volatile int32_t 
 
 #if OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
 
-static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -149,7 +149,7 @@ static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *add
 
 #else /* OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64 */
 
-static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
      *
@@ -179,7 +179,7 @@ static inline bool opal_atomic_compare_exchange_strong_64 (volatile int64_t *add
 
 #endif /* OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64 */
 
-static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_acq_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     bool rc;
 
@@ -190,7 +190,7 @@ static inline bool opal_atomic_compare_exchange_strong_acq_64 (volatile int64_t 
 }
 
 
-static inline bool opal_atomic_compare_exchange_strong_rel_64 (volatile int64_t *addr, int64_t *oldval, int64_t newval)
+static inline bool opal_atomic_compare_exchange_strong_rel_64 (opal_atomic_int64_t *addr, int64_t *oldval, int64_t newval)
 {
     opal_atomic_wmb();
     return opal_atomic_compare_exchange_strong_64 (addr, oldval, newval);

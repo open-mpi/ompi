@@ -117,6 +117,7 @@ static pmix_status_t setup_fork(const pmix_proc_t *proc, char ***env);
     .session_filename = NULL,
     .nspace_filename = NULL,
     .system_filename = NULL,
+    .rendezvous_filename = NULL,
     .wait_to_connect = 4,
     .max_retries = 2,
     .report_uri = NULL,
@@ -279,6 +280,10 @@ pmix_status_t component_close(void)
         unlink(mca_ptl_tcp_component.nspace_filename);
         free(mca_ptl_tcp_component.nspace_filename);
     }
+    if (NULL != mca_ptl_tcp_component.rendezvous_filename) {
+        unlink(mca_ptl_tcp_component.rendezvous_filename);
+        free(mca_ptl_tcp_component.rendezvous_filename);
+    }
     if (NULL != urifile) {
         /* remove the file */
         unlink(urifile);
@@ -358,51 +363,54 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     /* scan the info keys and process any override instructions */
     if (NULL != info) {
         for (n=0; n < ninfo; n++) {
-            if (0 == strcmp(info[n].key, PMIX_TCP_IF_INCLUDE)) {
+            if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_IF_INCLUDE)) {
                 if (NULL != mca_ptl_tcp_component.if_include) {
                     free(mca_ptl_tcp_component.if_include);
                 }
                 mca_ptl_tcp_component.if_include = strdup(info[n].value.data.string);
-            } else if (0 == strcmp(info[n].key, PMIX_TCP_IF_EXCLUDE)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_IF_EXCLUDE)) {
                 if (NULL != mca_ptl_tcp_component.if_exclude) {
                     free(mca_ptl_tcp_component.if_exclude);
                 }
                 mca_ptl_tcp_component.if_exclude = strdup(info[n].value.data.string);
-            } else if (0 == strcmp(info[n].key, PMIX_TCP_IPV4_PORT)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_IPV4_PORT)) {
                 mca_ptl_tcp_component.ipv4_port = info[n].value.data.integer;
-            } else if (0 == strcmp(info[n].key, PMIX_TCP_IPV6_PORT)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_IPV6_PORT)) {
                 mca_ptl_tcp_component.ipv6_port = info[n].value.data.integer;
-            } else if (0 == strcmp(info[n].key, PMIX_TCP_DISABLE_IPV4)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_DISABLE_IPV4)) {
                 mca_ptl_tcp_component.disable_ipv4_family = PMIX_INFO_TRUE(&info[n]);
-            } else if (0 == strcmp(info[n].key, PMIX_TCP_DISABLE_IPV6)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_DISABLE_IPV6)) {
                 mca_ptl_tcp_component.disable_ipv6_family = PMIX_INFO_TRUE(&info[n]);
-            } else if (0 == strcmp(info[n].key, PMIX_SERVER_REMOTE_CONNECTIONS)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_REMOTE_CONNECTIONS)) {
                 mca_ptl_tcp_component.remote_connections = PMIX_INFO_TRUE(&info[n]);
-            } else if (0 == strcmp(info[n].key, PMIX_TCP_URI)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_URI)) {
                 if (NULL != mca_ptl_tcp_component.super.uri) {
                     free(mca_ptl_tcp_component.super.uri);
                 }
                 mca_ptl_tcp_component.super.uri = strdup(info[n].value.data.string);
-            } else if (0 == strcmp(info[n].key, PMIX_TCP_REPORT_URI)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_TCP_REPORT_URI)) {
                 if (NULL != mca_ptl_tcp_component.report_uri) {
                     free(mca_ptl_tcp_component.report_uri);
                 }
                 mca_ptl_tcp_component.report_uri = strdup(info[n].value.data.string);
-            } else if (0 == strcmp(info[n].key, PMIX_SERVER_TMPDIR)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_TMPDIR)) {
                 if (NULL != mca_ptl_tcp_component.session_tmpdir) {
                     free(mca_ptl_tcp_component.session_tmpdir);
                 }
                 mca_ptl_tcp_component.session_tmpdir = strdup(info[n].value.data.string);
-            } else if (0 == strcmp(info[n].key, PMIX_SYSTEM_TMPDIR)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_SYSTEM_TMPDIR)) {
                 if (NULL != mca_ptl_tcp_component.system_tmpdir) {
                     free(mca_ptl_tcp_component.system_tmpdir);
                 }
                 mca_ptl_tcp_component.system_tmpdir = strdup(info[n].value.data.string);
             } else if (0 == strcmp(info[n].key, PMIX_SERVER_TOOL_SUPPORT)) {
                 session_tool = PMIX_INFO_TRUE(&info[n]);
-            } else if (0 == strcmp(info[n].key, PMIX_SERVER_SYSTEM_SUPPORT)) {
+            } else if (PMIX_CHECK_KEY(&info[n], PMIX_SERVER_SYSTEM_SUPPORT)) {
                 system_tool = PMIX_INFO_TRUE(&info[n]);
-           }
+            } else if (PMIX_PROC_IS_LAUNCHER(pmix_globals.mypeer) &&
+                       PMIX_CHECK_KEY(&info[n], PMIX_LAUNCHER_RENDEZVOUS_FILE)) {
+                mca_ptl_tcp_component.rendezvous_filename = strdup(info[n].value.data.string);
+            }
         }
     }
 
@@ -650,6 +658,38 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
             /* add a flag that indicates we accept v2.1 protocols */
             fprintf(fp, "v%s\n", PMIX_VERSION);
             fclose(fp);
+        }
+    }
+
+    /* if we were given a rendezvous file, then drop it */
+    if (NULL != mca_ptl_tcp_component.rendezvous_filename) {
+        FILE *fp;
+
+        pmix_output_verbose(2, pmix_ptl_base_framework.framework_output,
+                            "WRITING RENDEZVOUS FILE %s",
+                            mca_ptl_tcp_component.rendezvous_filename);
+        fp = fopen(mca_ptl_tcp_component.rendezvous_filename, "w");
+        if (NULL == fp) {
+            pmix_output(0, "Impossible to open the file %s in write mode\n", mca_ptl_tcp_component.rendezvous_filename);
+            PMIX_ERROR_LOG(PMIX_ERR_FILE_OPEN_FAILURE);
+            CLOSE_THE_SOCKET(lt->socket);
+            free(mca_ptl_tcp_component.rendezvous_filename);
+            mca_ptl_tcp_component.rendezvous_filename = NULL;
+            goto sockerror;
+        }
+
+        /* output my nspace and rank plus the URI */
+        fprintf(fp, "%s\n", lt->uri);
+        /* add a flag that indicates we accept v3.0 protocols */
+        fprintf(fp, "v%s\n", PMIX_VERSION);
+        fclose(fp);
+        /* set the file mode */
+        if (0 != chmod(mca_ptl_tcp_component.rendezvous_filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) {
+            PMIX_ERROR_LOG(PMIX_ERR_FILE_OPEN_FAILURE);
+            CLOSE_THE_SOCKET(lt->socket);
+            free(mca_ptl_tcp_component.rendezvous_filename);
+            mca_ptl_tcp_component.rendezvous_filename = NULL;
+            goto sockerror;
         }
     }
 
@@ -908,7 +948,7 @@ static void connection_handler(int sd, short args, void *cbdata)
     uint32_t len, u32;
     size_t cnt, msglen, n;
     uint8_t flag;
-    pmix_nspace_t *nptr, *tmp;
+    pmix_namespace_t *nptr, *tmp;
     bool found;
     pmix_rank_info_t *info;
     pmix_proc_t proc;
@@ -1100,6 +1140,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         }
     } else {
         /* we don't know what they are! */
+        PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
         rc = PMIX_ERR_NOT_SUPPORTED;
         free(msg);
         goto error;
@@ -1134,6 +1175,7 @@ static void connection_handler(int sd, short args, void *cbdata)
             proc_type = proc_type | PMIX_PROC_V3;
         } else {
             free(msg);
+            PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
             rc = PMIX_ERR_NOT_SUPPORTED;
             goto error;
         }
@@ -1184,6 +1226,7 @@ static void connection_handler(int sd, short args, void *cbdata)
         /* does the server support tool connections? */
         if (NULL == pmix_host_server.tool_connected) {
             /* send an error reply to the client */
+            PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
             rc = PMIX_ERR_NOT_SUPPORTED;
             goto error;
         }
@@ -1276,7 +1319,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
     /* see if we know this nspace */
     nptr = NULL;
-    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_nspace_t) {
+    PMIX_LIST_FOREACH(tmp, &pmix_server_globals.nspaces, pmix_namespace_t) {
         if (0 == strcmp(tmp->nspace, nspace)) {
             nptr = tmp;
             break;
@@ -1444,7 +1487,7 @@ static void connection_handler(int sd, short args, void *cbdata)
 
       /* let the host server know that this client has connected */
       if (NULL != pmix_host_server.client_connected) {
-          (void)strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
+          pmix_strncpy(proc.nspace, peer->info->pname.nspace, PMIX_MAX_NSLEN);
           proc.rank = peer->info->pname.rank;
           rc = pmix_host_server.client_connected(&proc, peer->info->server_object,
                                                  NULL, NULL);
@@ -1484,7 +1527,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
 {
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_pending_connection_t *pnd = (pmix_pending_connection_t*)cd->cbdata;
-    pmix_nspace_t *nptr;
+    pmix_namespace_t *nptr;
     pmix_rank_info_t *info;
     pmix_peer_t *peer;
     int rc;
@@ -1542,7 +1585,7 @@ static void process_cbfunc(int sd, short args, void *cbdata)
     }
 
     /* add this nspace to our pool */
-    nptr = PMIX_NEW(pmix_nspace_t);
+    nptr = PMIX_NEW(pmix_namespace_t);
     if (NULL == nptr) {
         PMIX_ERROR_LOG(PMIX_ERR_NOMEM);
         CLOSE_THE_SOCKET(pnd->sd);
@@ -1719,7 +1762,7 @@ static void cnct_cbfunc(pmix_status_t status,
         return;
     }
     cd->status = status;
-    (void)strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
+    pmix_strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
     cd->cbdata = cbdata;
     PMIX_THREADSHIFT(cd, process_cbfunc);
 }

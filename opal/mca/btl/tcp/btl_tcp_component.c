@@ -361,9 +361,9 @@ static int mca_btl_tcp_component_open(void)
 #if OPAL_ENABLE_IPV6
     mca_btl_tcp_component.tcp6_listen_sd = -1;
 #endif
-    mca_btl_tcp_component.tcp_num_btls=0;
+    mca_btl_tcp_component.tcp_num_btls = 0;
     mca_btl_tcp_component.tcp_addr_count = 0;
-    mca_btl_tcp_component.tcp_btls=NULL;
+    mca_btl_tcp_component.tcp_btls = NULL;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
@@ -1372,7 +1372,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* get the current timeout value so we can reset to it */
     if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &rcvtimeo_save_len)) {
-        if (ENOPROTOOPT == errno) {
+        if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
             sockopt = false;
         } else {
             opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail",
