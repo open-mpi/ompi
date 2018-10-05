@@ -197,6 +197,7 @@ static inline void vader_fifo_write (vader_fifo_t *fifo, fifo_value_t value)
 static inline bool vader_fifo_write_ep (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
     fifo_value_t rhdr = virtual2relative ((char *) hdr);
+#if OPAL_BTL_VADER_FBOX_SUPPORT
     if (ep->fbox_out.buffer) {
         /* if there is a fast box for this peer then use the fast box to send the fragment header.
          * this is done to ensure fragment ordering */
@@ -204,6 +205,7 @@ static inline bool vader_fifo_write_ep (mca_btl_vader_hdr_t *hdr, struct mca_btl
         return mca_btl_vader_fbox_sendi (ep, 0xfe, &rhdr, sizeof (rhdr), NULL, 0);
     }
     mca_btl_vader_try_fbox_setup (ep, hdr);
+#endif
     hdr->next = VADER_FIFO_FREE;
     vader_fifo_write (ep->fifo, rhdr);
 

@@ -9,7 +9,7 @@
  * $HEADER$
  */
 
-#if !defined(MCA_BTL_VADER_FBOX_H)
+#if !defined(MCA_BTL_VADER_FBOX_H) && OPAL_BTL_VADER_FBOX_SUPPORT
 #define MCA_BTL_VADER_FBOX_H
 
 #include "btl_vader.h"
@@ -277,4 +277,4 @@ static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mc
     }
 }
 
-#endif /* !defined(MCA_BTL_VADER_FBOX_H) */
+#endif /* !defined(MCA_BTL_VADER_FBOX_H) && OPAL_BTL_VADER_FBOX_SUPPORT */

@@ -23,6 +23,20 @@ AC_DEFUN([MCA_opal_btl_vader_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([btl_vader_xpmem_happy btl_vader_cma_happy btl_vader_knem_happy])
 
+    # check for fbox support
+    AC_ARG_ENABLE([vader-fbox-support],
+		  [AC_HELP_STRING([--disable-vader-fbox-support],
+				  [Disable fastbox support in vader shared memory btl (default: enabled)])])
+    AC_MSG_CHECKING([whether to enable fastbox support])
+    AS_IF([test "$enable_vader_fbox_support" != "no"],
+	  [AC_MSG_RESULT([yes])
+	   OPAL_BTL_VADER_FBOX_SUPPORT=1],
+	  [AC_MSG_RESULT([no])
+	   OPAL_BTL_VADER_FBOX_SUPPORT=0])
+    AC_DEFINE_UNQUOTED([OPAL_BTL_VADER_FBOX_SUPPORT],
+		       [$OPAL_BTL_VADER_FBOX_SUPPORT],
+		       [Enable fastbox support in vader btl])
+
     # Check for single-copy APIs
 
     OPAL_CHECK_XPMEM([btl_vader], [btl_vader_xpmem_happy=1], [btl_vader_xpmem_happy=0])

@@ -724,10 +724,12 @@ static int mca_btl_vader_component_progress (void)
         }
     }
 
+#if OPAL_BTL_VADER_FBOX_SUPPORT
     /* check for messages in fast boxes */
     if (mca_btl_vader_component.num_fbox_in_endpoints) {
         count = mca_btl_vader_check_fboxes ();
     }
+#endif
 
     mca_btl_vader_progress_endpoints ();
 
