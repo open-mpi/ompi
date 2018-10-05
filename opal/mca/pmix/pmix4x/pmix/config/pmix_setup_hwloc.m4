@@ -24,6 +24,8 @@ AC_DEFUN([PMIX_HWLOC_CONFIG],[
                                 [Search for hwloc libraries in DIR ])])
 
     pmix_hwloc_support=0
+    AS_IF([test "$with_hwloc" = "internal" || test "$with_hwloc" = "external"],
+          [with_hwloc=])
 
     if test "$with_hwloc" != "no"; then
         AC_MSG_CHECKING([for hwloc in])
