@@ -45,8 +45,6 @@ typedef union mca_btl_vader_fbox_hdr_t {
 /** macro for checking if the high bit is set */
 #define MCA_BTL_VADER_FBOX_OFFSET_HBS(v) (!!((v) & MCA_BTL_VADER_FBOX_HB_MASK))
 
-void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, mca_btl_base_endpoint_t *ep);
-
 static inline void mca_btl_vader_fbox_set_header (mca_btl_vader_fbox_hdr_t *hdr, uint16_t tag,
                                                   uint16_t seq, uint32_t size)
 {

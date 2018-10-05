@@ -26,7 +26,6 @@
 #include "btl_vader.h"
 #include "btl_vader_frag.h"
 #include "btl_vader_fifo.h"
-#include "btl_vader_fbox.h"
 
 /**
  * Initiate a send to the peer.
