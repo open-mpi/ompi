@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -386,7 +387,7 @@ static void resolve_relative_paths(char **file_prefix, char *file_path, bool rel
     }
     else {
         /* Prepend the files to the search list */
-        asprintf(&tmp_str, "%s%c%s", *file_prefix, sep, *files);
+        opal_asprintf(&tmp_str, "%s%c%s", *file_prefix, sep, *files);
         free (*files);
         *files = tmp_str;
     }
@@ -409,11 +410,11 @@ int mca_base_var_cache_files(bool rel_path_search)
     }
 
 #if OPAL_WANT_HOME_CONFIG_FILES
-    asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
+    opal_asprintf(&mca_base_var_files, "%s"OPAL_PATH_SEP".openmpi" OPAL_PATH_SEP
              "mca-params.conf%c%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
              home, ',', opal_install_dirs.sysconfdir);
 #else
-    asprintf(&mca_base_var_files, "%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
+    opal_asprintf(&mca_base_var_files, "%s" OPAL_PATH_SEP "openmpi-mca-params.conf",
              opal_install_dirs.sysconfdir);
 #endif
 
@@ -434,7 +435,7 @@ int mca_base_var_cache_files(bool rel_path_search)
     (void) mca_base_var_register_synonym (ret, "opal", "mca", NULL, "param_files",
                                           MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
-    ret = asprintf(&mca_base_var_override_file, "%s" OPAL_PATH_SEP "openmpi-mca-params-override.conf",
+    ret = opal_asprintf(&mca_base_var_override_file, "%s" OPAL_PATH_SEP "openmpi-mca-params-override.conf",
                    opal_install_dirs.sysconfdir);
     if (0 > ret) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -488,7 +489,7 @@ int mca_base_var_cache_files(bool rel_path_search)
         return ret;
     }
 
-    ret = asprintf(&mca_base_param_file_path, "%s" OPAL_PATH_SEP "amca-param-sets%c%s",
+    ret = opal_asprintf(&mca_base_param_file_path, "%s" OPAL_PATH_SEP "amca-param-sets%c%s",
                    opal_install_dirs.opaldatadir, OPAL_ENV_SEP, cwd);
     if (0 > ret) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -517,7 +518,7 @@ int mca_base_var_cache_files(bool rel_path_search)
         if (NULL != mca_base_param_file_path) {
             char *tmp_str = mca_base_param_file_path;
 
-            asprintf(&mca_base_param_file_path, "%s%c%s", force_agg_path, OPAL_ENV_SEP, tmp_str);
+            opal_asprintf(&mca_base_param_file_path, "%s%c%s", force_agg_path, OPAL_ENV_SEP, tmp_str);
             free(tmp_str);
         } else {
             mca_base_param_file_path = strdup(force_agg_path);
@@ -598,7 +599,7 @@ static int var_set_string (mca_base_var_t *var, char *value)
        in the future. */
     if (0 == strncmp (value, "~/", 2)) {
         if (NULL != home) {
-            ret = asprintf (&value, "%s/%s", home, value + 2);
+            ret = opal_asprintf (&value, "%s/%s", home, value + 2);
             if (0 > ret) {
                 return OPAL_ERROR;
             }
@@ -617,7 +618,7 @@ static int var_set_string (mca_base_var_t *var, char *value)
         tmp[0] = '\0';
         tmp += 3;
 
-        ret = asprintf (&tmp, "%s:%s%s%s", value,
+        ret = opal_asprintf (&tmp, "%s:%s%s%s", value,
                         home ? home : "", home ? "/" : "", tmp);
 
         free (value);
@@ -894,7 +895,7 @@ int mca_base_var_env_name(const char *param_name,
 
     assert (NULL != env_name);
 
-    ret = asprintf(env_name, "%s%s", mca_prefix, param_name);
+    ret = opal_asprintf(env_name, "%s%s", mca_prefix, param_name);
     if (0 > ret) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -1049,7 +1050,7 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
             goto cleanup;
         }
 
-        ret = asprintf (&str, "%s%s=%s", mca_prefix, var->mbv_full_name,
+        ret = opal_asprintf (&str, "%s%s=%s", mca_prefix, var->mbv_full_name,
                         value_string);
         free (value_string);
         if (0 > ret) {
@@ -1062,11 +1063,11 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
         switch (var->mbv_source) {
         case MCA_BASE_VAR_SOURCE_FILE:
         case MCA_BASE_VAR_SOURCE_OVERRIDE:
-            asprintf (&str, "%sSOURCE_%s=FILE:%s", mca_prefix, var->mbv_full_name,
+            opal_asprintf (&str, "%sSOURCE_%s=FILE:%s", mca_prefix, var->mbv_full_name,
                       mca_base_var_source_file (var));
             break;
         case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
-            asprintf (&str, "%sSOURCE_%s=COMMAND_LINE", mca_prefix, var->mbv_full_name);
+            opal_asprintf (&str, "%sSOURCE_%s=COMMAND_LINE", mca_prefix, var->mbv_full_name);
             break;
         case MCA_BASE_VAR_SOURCE_ENV:
         case MCA_BASE_VAR_SOURCE_SET:
@@ -1916,12 +1917,12 @@ static char *source_name(mca_base_var_t *var)
         int rc;
 
         if (fv) {
-            rc = asprintf(&ret, "file (%s:%d)", fv->mbvfv_file, fv->mbvfv_lineno);
+            rc = opal_asprintf(&ret, "file (%s:%d)", fv->mbvfv_file, fv->mbvfv_lineno);
         } else {
-            rc = asprintf(&ret, "file (%s)", var->mbv_source_file);
+            rc = opal_asprintf(&ret, "file (%s)", var->mbv_source_file);
         }
 
-        /* some compilers will warn if the return code of asprintf is not checked (even if it is cast to void) */
+        /* some compilers will warn if the return code of opal_asprintf is not checked (even if it is cast to void) */
         if (0 > rc) {
             return NULL;
         }
@@ -1944,7 +1945,7 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
      * as "unset" by default. */
     if ((var->mbv_flags & MCA_BASE_VAR_FLAG_DEF_UNSET) &&
         (MCA_BASE_VAR_SOURCE_DEFAULT == var->mbv_source)){
-        asprintf (value_string, "%s", "unset");
+        opal_asprintf (value_string, "%s", "unset");
         return OPAL_SUCCESS;
     }
 
@@ -1956,45 +1957,45 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
     if (NULL == var->mbv_enumerator) {
         switch (var->mbv_type) {
         case MCA_BASE_VAR_TYPE_INT:
-            ret = asprintf (value_string, "%d", value->intval);
+            ret = opal_asprintf (value_string, "%d", value->intval);
             break;
         case MCA_BASE_VAR_TYPE_INT32_T:
-            ret = asprintf (value_string, "%" PRId32, value->int32tval);
+            ret = opal_asprintf (value_string, "%" PRId32, value->int32tval);
             break;
         case MCA_BASE_VAR_TYPE_UINT32_T:
-            ret = asprintf (value_string, "%" PRIu32, value->uint32tval);
+            ret = opal_asprintf (value_string, "%" PRIu32, value->uint32tval);
             break;
         case MCA_BASE_VAR_TYPE_INT64_T:
-            ret = asprintf (value_string, "%" PRId64, value->int64tval);
+            ret = opal_asprintf (value_string, "%" PRId64, value->int64tval);
             break;
         case MCA_BASE_VAR_TYPE_UINT64_T:
-            ret = asprintf (value_string, "%" PRIu64, value->uint64tval);
+            ret = opal_asprintf (value_string, "%" PRIu64, value->uint64tval);
             break;
         case MCA_BASE_VAR_TYPE_LONG:
-            ret = asprintf (value_string, "%ld", value->longval);
+            ret = opal_asprintf (value_string, "%ld", value->longval);
             break;
         case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
-            ret = asprintf (value_string, "%u", value->uintval);
+            ret = opal_asprintf (value_string, "%u", value->uintval);
             break;
         case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-            ret = asprintf (value_string, "%lu", value->ulval);
+            ret = opal_asprintf (value_string, "%lu", value->ulval);
             break;
         case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
-            ret = asprintf (value_string, "%llu", value->ullval);
+            ret = opal_asprintf (value_string, "%llu", value->ullval);
             break;
         case MCA_BASE_VAR_TYPE_SIZE_T:
-            ret = asprintf (value_string, "%" PRIsize_t, value->sizetval);
+            ret = opal_asprintf (value_string, "%" PRIsize_t, value->sizetval);
             break;
         case MCA_BASE_VAR_TYPE_STRING:
         case MCA_BASE_VAR_TYPE_VERSION_STRING:
-            ret = asprintf (value_string, "%s",
+            ret = opal_asprintf (value_string, "%s",
                             value->stringval ? value->stringval : "");
             break;
         case MCA_BASE_VAR_TYPE_BOOL:
-            ret = asprintf (value_string, "%d", value->boolval);
+            ret = opal_asprintf (value_string, "%d", value->boolval);
             break;
         case MCA_BASE_VAR_TYPE_DOUBLE:
-            ret = asprintf (value_string, "%lf", value->lfval);
+            ret = opal_asprintf (value_string, "%lf", value->lfval);
             break;
         default:
             ret = -1;
@@ -2138,30 +2139,30 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
         }
 
         /* build the message*/
-        asprintf(&tmp, "mca:%s:%s:param:%s:", framework, component,
+        opal_asprintf(&tmp, "mca:%s:%s:param:%s:", framework, component,
                  full_name);
 
         /* Output the value */
         char *colon = strchr(value_string, ':');
         if (NULL != colon) {
-            asprintf(out[0] + line++, "%svalue:\"%s\"", tmp, value_string);
+            opal_asprintf(out[0] + line++, "%svalue:\"%s\"", tmp, value_string);
         } else {
-            asprintf(out[0] + line++, "%svalue:%s", tmp, value_string);
+            opal_asprintf(out[0] + line++, "%svalue:%s", tmp, value_string);
         }
 
         /* Output the source */
-        asprintf(out[0] + line++, "%ssource:%s", tmp, source_string);
+        opal_asprintf(out[0] + line++, "%ssource:%s", tmp, source_string);
 
         /* Output whether it's read only or writable */
-        asprintf(out[0] + line++, "%sstatus:%s", tmp,
-                VAR_IS_SETTABLE(var[0]) ? "writeable" : "read-only");
+        opal_asprintf(out[0] + line++, "%sstatus:%s", tmp,
+                      VAR_IS_SETTABLE(var[0]) ? "writeable" : "read-only");
 
         /* Output the info level of this parametere */
-        asprintf(out[0] + line++, "%slevel:%d", tmp, var->mbv_info_lvl + 1);
+        opal_asprintf(out[0] + line++, "%slevel:%d", tmp, var->mbv_info_lvl + 1);
 
         /* If it has a help message, output the help message */
         if (var->mbv_description) {
-            asprintf(out[0] + line++, "%shelp:%s", tmp, var->mbv_description);
+            opal_asprintf(out[0] + line++, "%shelp:%s", tmp, var->mbv_description);
         }
 
         if (NULL != var->mbv_enumerator) {
@@ -2175,18 +2176,18 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
                     continue;
                 }
 
-                asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
+                opal_asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
             }
         }
 
         /* Is this variable deprecated? */
-        asprintf(out[0] + line++, "%sdeprecated:%s", tmp, VAR_IS_DEPRECATED(var[0]) ? "yes" : "no");
+        opal_asprintf(out[0] + line++, "%sdeprecated:%s", tmp, VAR_IS_DEPRECATED(var[0]) ? "yes" : "no");
 
-        asprintf(out[0] + line++, "%stype:%s", tmp, ompi_var_type_names[var->mbv_type]);
+        opal_asprintf(out[0] + line++, "%stype:%s", tmp, ompi_var_type_names[var->mbv_type]);
 
         /* Does this parameter have any synonyms or is it a synonym? */
         if (VAR_IS_SYNONYM(var[0])) {
-            asprintf(out[0] + line++, "%ssynonym_of:name:%s", tmp, original->mbv_full_name);
+            opal_asprintf(out[0] + line++, "%ssynonym_of:name:%s", tmp, original->mbv_full_name);
         } else if (opal_value_array_get_size(&var->mbv_synonyms)) {
             for (i = 0 ; i < synonym_count ; ++i) {
                 mca_base_var_t *synonym;
@@ -2196,7 +2197,7 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
                     continue;
                 }
 
-                asprintf(out[0] + line++, "%ssynonym:name:%s", tmp, synonym->mbv_full_name);
+                opal_asprintf(out[0] + line++, "%ssynonym:name:%s", tmp, synonym->mbv_full_name);
             }
         }
 
@@ -2210,24 +2211,24 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        asprintf (out[0], "%s \"%s\" (current value: \"%s\", data source: %s, level: %d %s, type: %s",
+        opal_asprintf (out[0], "%s \"%s\" (current value: \"%s\", data source: %s, level: %d %s, type: %s",
                   VAR_IS_DEFAULT_ONLY(var[0]) ? "informational" : "parameter",
                   full_name, value_string, source_string, var->mbv_info_lvl + 1,
                   info_lvl_strings[var->mbv_info_lvl], ompi_var_type_names[var->mbv_type]);
 
         tmp = out[0][0];
         if (VAR_IS_DEPRECATED(var[0])) {
-            asprintf (out[0], "%s, deprecated", tmp);
+            opal_asprintf (out[0], "%s, deprecated", tmp);
             free (tmp);
             tmp = out[0][0];
         }
 
         /* Does this parameter have any synonyms or is it a synonym? */
         if (VAR_IS_SYNONYM(var[0])) {
-            asprintf(out[0], "%s, synonym of: %s)", tmp, original->mbv_full_name);
+            opal_asprintf(out[0], "%s, synonym of: %s)", tmp, original->mbv_full_name);
             free (tmp);
         } else if (synonym_count) {
-            asprintf(out[0], "%s, synonyms: ", tmp);
+            opal_asprintf(out[0], "%s, synonyms: ", tmp);
             free (tmp);
 
             for (i = 0 ; i < synonym_count ; ++i) {
@@ -2240,21 +2241,21 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
 
                 tmp = out[0][0];
                 if (synonym_count == i+1) {
-                    asprintf(out[0], "%s%s)", tmp, synonym->mbv_full_name);
+                    opal_asprintf(out[0], "%s%s)", tmp, synonym->mbv_full_name);
                 } else {
-                    asprintf(out[0], "%s%s, ", tmp, synonym->mbv_full_name);
+                    opal_asprintf(out[0], "%s%s, ", tmp, synonym->mbv_full_name);
                 }
                 free(tmp);
             }
         } else {
-            asprintf(out[0], "%s)", tmp);
+            opal_asprintf(out[0], "%s)", tmp);
             free(tmp);
         }
 
         line++;
 
         if (var->mbv_description) {
-            asprintf(out[0] + line++, "%s", var->mbv_description);
+            opal_asprintf(out[0] + line++, "%s", var->mbv_description);
         }
 
         if (NULL != var->mbv_enumerator) {
@@ -2262,7 +2263,7 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
 
             ret = var->mbv_enumerator->dump(var->mbv_enumerator, &values);
             if (OPAL_SUCCESS == ret) {
-                asprintf (out[0] + line++, "Valid values: %s", values);
+                opal_asprintf (out[0] + line++, "Valid values: %s", values);
                 free (values);
             }
         }
@@ -2274,7 +2275,7 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        asprintf(out[0], "%s=%s (%s)", var->mbv_full_name, value_string, source_string);
+        opal_asprintf(out[0], "%s=%s (%s)", var->mbv_full_name, value_string, source_string);
     }
 
     free (value_string);

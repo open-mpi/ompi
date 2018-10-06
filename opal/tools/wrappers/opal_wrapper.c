@@ -15,6 +15,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +54,7 @@
 #include "opal/util/few.h"
 #include "opal/util/basename.h"
 #include "opal/util/os_path.h"
+#include "opal/util/printf.h"
 
 #define OPAL_INCLUDE_FLAG  "-I"
 #define OPAL_LIBDIR_FLAG   "-L"
@@ -320,7 +322,7 @@ data_callback(const char *key, const char *value)
             if (0 != strcmp(options_data[parse_options_idx].path_includedir, "/usr/include") ||
                 0 == strncmp(options_data[parse_options_idx].language, "Fortran", strlen("Fortran"))) {
                 char *line;
-                asprintf(&line, OPAL_INCLUDE_FLAG"%s",
+                opal_asprintf(&line, OPAL_INCLUDE_FLAG"%s",
                          options_data[parse_options_idx].path_includedir);
                 opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
                 free(line);
@@ -331,7 +333,7 @@ data_callback(const char *key, const char *value)
                                opal_install_dirs_expand(value);
         if (0 != strcmp(options_data[parse_options_idx].path_libdir, "/usr/lib")) {
             char *line;
-            asprintf(&line, OPAL_LIBDIR_FLAG"%s",
+            opal_asprintf(&line, OPAL_LIBDIR_FLAG"%s",
                      options_data[parse_options_idx].path_libdir);
             opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
             free(line);
@@ -344,7 +346,7 @@ data_callback(const char *key, const char *value)
             if (0 != strcmp(options_data[parse_options_idx].path_opalincludedir, "/usr/include") ||
                 0 == strncmp(options_data[parse_options_idx].language, "Fortran", strlen("Fortran"))) {
                 char *line;
-                asprintf(&line, OPAL_INCLUDE_FLAG"%s",
+                opal_asprintf(&line, OPAL_INCLUDE_FLAG"%s",
                          options_data[parse_options_idx].path_opalincludedir);
                 opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
                 free(line);
@@ -355,7 +357,7 @@ data_callback(const char *key, const char *value)
                                opal_install_dirs_expand(value);
         if (0 != strcmp(options_data[parse_options_idx].path_opallibdir, "/usr/lib")) {
             char *line;
-            asprintf(&line, OPAL_LIBDIR_FLAG"%s",
+            opal_asprintf(&line, OPAL_LIBDIR_FLAG"%s",
                      options_data[parse_options_idx].path_opallibdir);
             opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
             free(line);
@@ -371,7 +373,7 @@ data_init(const char *appname)
     char *datafile;
 
     /* now load the data */
-    asprintf(&datafile, "%s%s%s-wrapper-data.txt",
+    opal_asprintf(&datafile, "%s%s%s-wrapper-data.txt",
              opal_install_dirs.opaldatadir, OPAL_PATH_SEP, appname);
     if (NULL == datafile) return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
@@ -425,10 +427,10 @@ load_env_data(const char *project, const char *flag, char **data)
 
     if (NULL == project || NULL == flag) return;
 
-    asprintf(&envname, "%s_MPI%s", project, flag);
+    opal_asprintf(&envname, "%s_MPI%s", project, flag);
     if (NULL == (envvalue = getenv(envname))) {
         free(envname);
-        asprintf(&envname, "%s_%s", project, flag);
+        opal_asprintf(&envname, "%s_%s", project, flag);
         if (NULL == (envvalue = getenv(envname))) {
             free(envname);
             return;
@@ -449,10 +451,10 @@ load_env_data_argv(const char *project, const char *flag, char ***data)
 
     if (NULL == project || NULL == flag) return;
 
-    asprintf(&envname, "%s_MPI%s", project, flag);
+    opal_asprintf(&envname, "%s_MPI%s", project, flag);
     if (NULL == (envvalue = getenv(envname))) {
         free(envname);
-        asprintf(&envname, "%s_%s", project, flag);
+        opal_asprintf(&envname, "%s_%s", project, flag);
         if (NULL == (envvalue = getenv(envname))) {
             free(envname);
             return;

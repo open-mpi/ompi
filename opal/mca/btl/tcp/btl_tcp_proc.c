@@ -17,6 +17,7 @@
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,7 @@
 #include "opal/util/net.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
@@ -914,9 +916,9 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                       (void*) &(btl_endpoint->endpoint_addr->addr_inet),
                       ip, sizeof(ip) - 1);
             if (NULL == addr_str) {
-                (void)asprintf(&tmp, "\n\t%s", ip);
+                opal_asprintf(&tmp, "\n\t%s", ip);
             } else {
-                (void)asprintf(&tmp, "%s\n\t%s", addr_str, ip);
+                opal_asprintf(&tmp, "%s\n\t%s", addr_str, ip);
                 free(addr_str);
             }
             addr_str = tmp;

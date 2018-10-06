@@ -22,6 +22,7 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,6 +48,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
+#include "opal/util/printf.h"
 
 char *opal_signal_string = NULL;
 char *opal_stacktrace_output_filename = NULL;
@@ -109,10 +111,10 @@ int opal_register_params(void)
         };
         for (j = 0 ; signals[j] != -1 ; ++j) {
             if (j == 0) {
-                asprintf(&string, "%d", signals[j]);
+                opal_asprintf(&string, "%d", signals[j]);
             } else {
                 char *tmp;
-                asprintf(&tmp, "%s,%d", string, signals[j]);
+                opal_asprintf(&tmp, "%s,%d", string, signals[j]);
                 free(string);
                 string = tmp;
             }

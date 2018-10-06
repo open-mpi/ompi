@@ -9,6 +9,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 #include <opal/class/opal_hash_table.h>
 #include <opal/util/output.h>
+#include "opal/util/printf.h"
 #include <math.h>
 
 #if SIZEOF_LONG_LONG == SIZEOF_SIZE_T
@@ -216,7 +218,7 @@ int mca_common_monitoring_init( void )
     log10_2 = log10(2.);
     /* Open the opal_output stream */
     gethostname(hostname, sizeof(hostname));
-    asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
+    opal_asprintf(&mca_common_monitoring_output_stream_obj.lds_prefix,
              "[%s:%06d] monitoring: ", hostname, getpid());
     mca_common_monitoring_output_stream_id =
         opal_output_open(&mca_common_monitoring_output_stream_obj);
@@ -775,7 +777,7 @@ static int mca_common_monitoring_flush(int fd, char* filename)
             OPAL_MONITORING_PRINT_ERR("Error while flushing: no filename provided");
             return OMPI_ERROR;
         } else {
-            asprintf(&tmpfn, "%s.%" PRId32 ".prof", filename, rank_world);
+            opal_asprintf(&tmpfn, "%s.%" PRId32 ".prof", filename, rank_world);
             pf = fopen(tmpfn, "w");
             free(tmpfn);
         }

@@ -9,6 +9,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include "opal/util/opal_environ.h"
 #include "ompi/mca/mca.h"
@@ -6283,7 +6285,7 @@ static void display_indv_timer_core(int idx, int proc, int msgs, bool direct) {
         /* These timers do not mean anything in the aggregate, so only display
          * them when directly asked for */
         if( direct && timing_enabled >= 2) {
-            asprintf(&str, "Proc %2d, Msg %5d", proc, msgs);
+            opal_asprintf(&str, "Proc %2d, Msg %5d", proc, msgs);
         } else {
             return;
         }

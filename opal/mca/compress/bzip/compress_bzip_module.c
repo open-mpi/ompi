@@ -6,6 +6,7 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 
 #include "opal/constants.h"
 #include "opal/util/basename.h"
@@ -90,15 +92,15 @@ int opal_compress_bzip_compress_nb(char * fname, char **cname, char **postfix, p
         if( is_dir ) {
 #if 0
             opal_compress_base_tar_create(&base_fname);
-            asprintf(cname, "%s.bz2", base_fname);
-            asprintf(&cmd, "bzip2 %s", base_fname);
+            opal_asprintf(cname, "%s.bz2", base_fname);
+            opal_asprintf(&cmd, "bzip2 %s", base_fname);
 #else
-            asprintf(cname, "%s.tar.bz2", base_fname);
-            asprintf(&cmd, "tar -jcf %s %s", *cname, base_fname);
+            opal_asprintf(cname, "%s.tar.bz2", base_fname);
+            opal_asprintf(&cmd, "tar -jcf %s %s", *cname, base_fname);
 #endif
         } else {
-            asprintf(cname, "%s.bz2", base_fname);
-            asprintf(&cmd, "bzip2 %s", base_fname);
+            opal_asprintf(cname, "%s.bz2", base_fname);
+            opal_asprintf(&cmd, "bzip2 %s", base_fname);
         }
 
         opal_output_verbose(10, mca_compress_bzip_component.super.output_handle,
@@ -120,7 +122,7 @@ int opal_compress_bzip_compress_nb(char * fname, char **cname, char **postfix, p
         } else {
             *postfix = strdup(".bz2");
         }
-        asprintf(cname, "%s%s", fname, *postfix);
+        opal_asprintf(cname, "%s%s", fname, *postfix);
     }
     else {
         return OPAL_ERROR;
@@ -181,7 +183,7 @@ int opal_compress_bzip_decompress_nb(char * cname, char **fname, pid_t *child_pi
         loc_pid = fork();
         if( loc_pid == 0 ) { /* Child */
             char * cmd;
-            asprintf(&cmd, "bunzip2 %s", cname);
+            opal_asprintf(&cmd, "bunzip2 %s", cname);
 
             opal_output_verbose(10, mca_compress_bzip_component.super.output_handle,
                                 "compress:bzip: decompress_nb() command [%s]",

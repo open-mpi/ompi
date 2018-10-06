@@ -11,6 +11,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "opal/util/sys_limits.h"
 #include "opal/include/opal/align.h"
 #include "opal/util/info_subscriber.h"
+#include "opal/util/printf.h"
 
 #include "osc_sm.h"
 
@@ -282,7 +284,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         posts_size += OPAL_ALIGN_PAD_AMOUNT(posts_size, 64);
         if (0 == ompi_comm_rank (module->comm)) {
             char *data_file;
-            ret = asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%d",
+            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%d",
                             mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
                             OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid, ompi_comm_get_cid(module->comm));
             if (ret < 0) {

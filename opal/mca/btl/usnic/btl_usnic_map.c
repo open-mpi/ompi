@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 #include <unistd.h>
 
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include "btl_usnic_compat.h"
 #include "btl_usnic.h"
@@ -242,7 +244,7 @@ void opal_btl_usnic_connectivity_map(void)
 
     /* Filename is of the form: <prefix>-<hostname>.<pid>.<job>.<MCW
        rank>.txt */
-    asprintf(&filename, "%s-%s.pid%d.job%d.mcwrank%d.txt",
+    opal_asprintf(&filename, "%s-%s.pid%d.job%d.mcwrank%d.txt",
              mca_btl_usnic_component.connectivity_map_prefix,
              opal_get_proc_hostname(opal_proc_local_get()),
              getpid(),

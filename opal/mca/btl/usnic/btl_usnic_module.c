@@ -16,6 +16,7 @@
  * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/mca/memchecker/base/base.h"
 
 #if BTL_IN_OPAL
@@ -2204,7 +2206,7 @@ static int init_mpool(opal_btl_usnic_module_t *module)
     module->super.btl_mpool =
         mca_mpool_base_module_lookup (mca_btl_usnic_component.usnic_mpool_hints);
 #else
-    asprintf(&mpool_resources.pool_name, "%s",
+    opal_asprintf(&mpool_resources.pool_name, "%s",
              module->linux_device_name);
     module->super.btl_mpool =
         mca_mpool_base_module_create(mca_btl_usnic_component.usnic_mpool_name,

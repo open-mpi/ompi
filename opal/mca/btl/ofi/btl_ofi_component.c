@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc, All rights reserved
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,8 @@
 
 
 #include "opal_config.h"
+
+#include "opal/util/printf.h"
 
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
@@ -88,7 +91,7 @@ static int mca_btl_ofi_component_register(void)
     char *msg;
     mca_btl_ofi_module_t *module = &mca_btl_ofi_module_template;
 
-    asprintf(&msg, "BTL OFI mode of operation. Valid values are: %d = One-Sided only, %d=Two-Sided only, "
+    opal_asprintf(&msg, "BTL OFI mode of operation. Valid values are: %d = One-Sided only, %d=Two-Sided only, "
                    "%d = Both one and two sided. BTL OFI is only optimized for one-sided communication",
                    MCA_BTL_OFI_MODE_ONE_SIDED,
                    MCA_BTL_OFI_MODE_TWO_SIDED,

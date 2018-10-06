@@ -11,6 +11,7 @@
 #include "mpi.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -113,7 +114,7 @@ static void sample(void)
     wait_for_release = true;
     /* log my own results as a single string so the output
      * doesn't get garbled on the other end */
-    asprintf(&tmp, "Data for node %s", orte_process_info.nodename);
+    opal_asprintf(&tmp, "Data for node %s", orte_process_info.nodename);
     opal_argv_append_nosize(&answer, tmp);
     free(tmp);
     OPAL_LIST_FOREACH(kv, &response, opal_value_t) {
@@ -121,11 +122,11 @@ static void sample(void)
         if (NULL != lt) {
             OPAL_LIST_FOREACH(ival, lt, opal_value_t) {
                 if (0 == strcmp(ival->key, OPAL_PMIX_DAEMON_MEMORY)) {
-                    asprintf(&tmp, "\tDaemon: %f", ival->data.fval);
+                    opal_asprintf(&tmp, "\tDaemon: %f", ival->data.fval);
                     opal_argv_append_nosize(&answer, tmp);
                     free(tmp);
                 } else if (0 == strcmp(ival->key, OPAL_PMIX_CLIENT_AVG_MEMORY)) {
-                    asprintf(&tmp, "\tClient: %f", ival->data.fval);
+                    opal_asprintf(&tmp, "\tClient: %f", ival->data.fval);
                     opal_argv_append_nosize(&answer, tmp);
                     free(tmp);
                 } else {

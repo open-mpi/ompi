@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,7 @@
 #include <string.h>
 
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/printf.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/attribute/attribute.h"
 
@@ -110,7 +112,7 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
     new_ompi_datatype->args = NULL;
 
     char *new_name;
-    asprintf(&new_name, "Dup %s", oldType->name);
+    opal_asprintf(&new_name, "Dup %s", oldType->name);
     strncpy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME - 1);
     new_ompi_datatype->name[MPI_MAX_OBJECT_NAME - 1] = '\0';
     free(new_name);

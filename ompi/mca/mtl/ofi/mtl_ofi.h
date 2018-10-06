@@ -3,6 +3,7 @@
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,7 @@
 #include "ompi/mca/mtl/base/base.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include <rdma/fabric.h>
 #include <rdma/fi_cm.h>
@@ -483,10 +485,10 @@ ompi_mtl_ofi_isend(struct mca_mtl_base_module_t *mtl,
     if (OPAL_UNLIKELY(0 > ret)) {
         char *fi_api;
         if (ompi_mtl_ofi.fi_cq_data) {
-                asprintf( &fi_api, "fi_tsendddata") ;
+                opal_asprintf( &fi_api, "fi_tsendddata") ;
         }
         else {
-                asprintf( &fi_api, "fi_send") ;
+                opal_asprintf( &fi_api, "fi_send") ;
         }
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: %s failed: %s(%zd)",

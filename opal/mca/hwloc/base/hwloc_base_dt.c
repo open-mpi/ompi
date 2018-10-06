@@ -3,6 +3,7 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +13,7 @@
 #include "opal/constants.h"
 
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -243,13 +245,13 @@ static void print_hwloc_obj(char **output, char *prefix,
 
     /* print the object type */
     hwloc_obj_type_snprintf(string, 1024, obj, 1);
-    asprintf(&pfx, "\n%s\t", (NULL == prefix) ? "" : prefix);
-    asprintf(&tmp, "%sType: %s Number of child objects: %u%sName=%s",
+    opal_asprintf(&pfx, "\n%s\t", (NULL == prefix) ? "" : prefix);
+    opal_asprintf(&tmp, "%sType: %s Number of child objects: %u%sName=%s",
              (NULL == prefix) ? "" : prefix, string, obj->arity,
              pfx, (NULL == obj->name) ? "NULL" : obj->name);
     if (0 < hwloc_obj_attr_snprintf(string, 1024, obj, pfx, 1)) {
         /* print the attributes */
-        asprintf(&tmp2, "%s%s%s", tmp, pfx, string);
+        opal_asprintf(&tmp2, "%s%s%s", tmp, pfx, string);
         free(tmp);
         tmp = tmp2;
     }
@@ -258,28 +260,28 @@ static void print_hwloc_obj(char **output, char *prefix,
      */
     if (NULL != obj->cpuset) {
         hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->cpuset);
-        asprintf(&tmp2, "%s%sCpuset:  %s", tmp, pfx, string);
+        opal_asprintf(&tmp2, "%s%sCpuset:  %s", tmp, pfx, string);
         free(tmp);
         tmp = tmp2;
     }
     if (HWLOC_OBJ_MACHINE == obj->type) {
         /* root level object - add support values */
         support = (struct hwloc_topology_support*)hwloc_topology_get_support(topo);
-        asprintf(&tmp2, "%s%sBind CPU proc:   %s%sBind CPU thread: %s", tmp, pfx,
+        opal_asprintf(&tmp2, "%s%sBind CPU proc:   %s%sBind CPU thread: %s", tmp, pfx,
                  (support->cpubind->set_thisproc_cpubind) ? "TRUE" : "FALSE", pfx,
                  (support->cpubind->set_thisthread_cpubind) ? "TRUE" : "FALSE");
         free(tmp);
         tmp = tmp2;
-        asprintf(&tmp2, "%s%sBind MEM proc:   %s%sBind MEM thread: %s", tmp, pfx,
+        opal_asprintf(&tmp2, "%s%sBind MEM proc:   %s%sBind MEM thread: %s", tmp, pfx,
                  (support->membind->set_thisproc_membind) ? "TRUE" : "FALSE", pfx,
                  (support->membind->set_thisthread_membind) ? "TRUE" : "FALSE");
         free(tmp);
         tmp = tmp2;
     }
-    asprintf(&tmp2, "%s%s\n", (NULL == *output) ? "" : *output, tmp);
+    opal_asprintf(&tmp2, "%s%s\n", (NULL == *output) ? "" : *output, tmp);
     free(tmp);
     free(pfx);
-    asprintf(&pfx, "%s\t", (NULL == prefix) ? "" : prefix);
+    opal_asprintf(&pfx, "%s\t", (NULL == prefix) ? "" : prefix);
     for (i=0; i < obj->arity; i++) {
         obj2 = obj->children[i];
         /* print the object */

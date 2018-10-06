@@ -6,6 +6,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -375,22 +376,22 @@ int ompi_rte_convert_process_name_to_string(char** name_string,
      * it is passed back to us later
      */
     if (pmix_name_wildcard.jobid == name->jobid) {
-        asprintf(&tmp, "%s", OPAL_SCHEMA_WILDCARD_STRING);
+        opal_asprintf(&tmp, "%s", OPAL_SCHEMA_WILDCARD_STRING);
     } else if (pmix_name_invalid.jobid == name->jobid) {
-        asprintf(&tmp, "%s", OPAL_SCHEMA_INVALID_STRING);
+        opal_asprintf(&tmp, "%s", OPAL_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(&tmp, "%lu", (unsigned long)name->jobid);
+        opal_asprintf(&tmp, "%lu", (unsigned long)name->jobid);
     }
 
     if (pmix_name_wildcard.vpid == name->vpid) {
-        asprintf(&tmp2, "%s%c%s", tmp, OPAL_SCHEMA_DELIMITER_CHAR, OPAL_SCHEMA_WILDCARD_STRING);
+        opal_asprintf(&tmp2, "%s%c%s", tmp, OPAL_SCHEMA_DELIMITER_CHAR, OPAL_SCHEMA_WILDCARD_STRING);
     } else if (pmix_name_invalid.vpid == name->vpid) {
-        asprintf(&tmp2, "%s%c%s", tmp, OPAL_SCHEMA_DELIMITER_CHAR, OPAL_SCHEMA_INVALID_STRING);
+        opal_asprintf(&tmp2, "%s%c%s", tmp, OPAL_SCHEMA_DELIMITER_CHAR, OPAL_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(&tmp2, "%s%c%lu", tmp, OPAL_SCHEMA_DELIMITER_CHAR, (unsigned long)name->vpid);
+        opal_asprintf(&tmp2, "%s%c%lu", tmp, OPAL_SCHEMA_DELIMITER_CHAR, (unsigned long)name->vpid);
     }
 
-    asprintf(name_string, "%s", tmp2);
+    opal_asprintf(name_string, "%s", tmp2);
 
     free(tmp);
     free(tmp2);
@@ -589,12 +590,12 @@ int ompi_rte_init(int *pargc, char ***pargv)
      * MPI-3 required info key
      */
     if (NULL == getenv(OPAL_MCA_PREFIX"opal_ess_num_procs")) {
-        asprintf(&ev1, OPAL_MCA_PREFIX"opal_ess_num_procs=%d", pmix_process_info.num_procs);
+        opal_asprintf(&ev1, OPAL_MCA_PREFIX"opal_ess_num_procs=%d", pmix_process_info.num_procs);
         putenv(ev1);
         added_num_procs = true;
     }
     if (NULL == getenv("OMPI_APP_CTX_NUM_PROCS")) {
-        asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", pmix_process_info.num_procs);
+        opal_asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", pmix_process_info.num_procs);
         putenv(ev2);
         added_app_ctx = true;
     }
@@ -632,7 +633,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_output_verbose(2, ompi_rte_base_framework.framework_output,
                             "%s transport key %s",
                             OPAL_NAME_PRINT(pmix_process_info.my_name), string_key);
-        asprintf(&envar, OPAL_MCA_PREFIX"opal_precondition_transports=%s", string_key);
+        opal_asprintf(&envar, OPAL_MCA_PREFIX"opal_precondition_transports=%s", string_key);
         putenv(envar);
         added_transport_keys = true;
         /* cannot free the envar as that messes up our environ */
@@ -816,7 +817,7 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
     /* If there was a message, output it */
     va_start(arglist, fmt);
     if( NULL != fmt ) {
-        vasprintf( &buffer, fmt, arglist );
+        opal_vasprintf( &buffer, fmt, arglist );
     }
     va_end(arglist);
 
@@ -964,7 +965,7 @@ static char* pre_condition_transports_print(uint64_t *unique_key)
      * number if the system has a different sized long (8 would be for
      * sizeof(int) == 4)).
      */
-    asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2);
+    opal_asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2);
 
     /* print the first number */
     int_ptr = (unsigned int*) &unique_key[0];
@@ -1015,7 +1016,7 @@ static int _setup_job_session_dir(char **sdir)
             if( NULL == (tmpdir = getenv("TMP")) )
                 tmpdir = "/tmp";
 
-    if (0 > asprintf(&pmix_process_info.job_session_dir,
+    if (0 > opal_asprintf(&pmix_process_info.job_session_dir,
                      "%s/ompi.%s.%lu/jf.0/%u", tmpdir,
                      pmix_process_info.nodename,
                      (unsigned long)uid,

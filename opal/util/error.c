@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,7 @@
 #include "opal/util/string_copy.h"
 #include "opal/constants.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 #include "opal/runtime/opal_params.h"
 
 #define MAX_CONVERTERS 5
@@ -82,7 +84,7 @@ opal_strerror_unknown(int errnum, char **str)
         if (0 != converters[i].init) {
             if (errnum < converters[i].err_base &&
                 errnum > converters[i].err_max) {
-                asprintf(str, "Unknown error: %d (%s error %d)",
+                opal_asprintf(str, "Unknown error: %d (%s error %d)",
                          errnum, converters[i].project,
                          errnum - converters[i].err_base);
                 return OPAL_SUCCESS;
@@ -90,7 +92,7 @@ opal_strerror_unknown(int errnum, char **str)
         }
     }
 
-    asprintf(str, "Unknown error: %d", errnum);
+    opal_asprintf(str, "Unknown error: %d", errnum);
 
     return OPAL_SUCCESS;
 }

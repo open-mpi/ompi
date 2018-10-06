@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +14,7 @@
 #define PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal_stdint.h"
 #include <stdio.h>
 #include "pml_v.h"
@@ -29,7 +31,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
     char *str;
     int ret;
     va_start(list, fmt);
-    ret = vasprintf(&str, fmt, list);
+    ret = opal_vasprintf(&str, fmt, list);
     assert(-1 != ret);
     (void)ret;  // silence compiler warning
     opal_output(0, "%s", str);
@@ -60,7 +62,7 @@ static inline void V_OUTPUT(const char* fmt, ... )
     char *str;
     int ret;
     va_start(list, fmt);
-    ret = vasprintf(&str, fmt, list);
+    ret = opal_vasprintf(&str, fmt, list);
     assert(-1 != ret);
     opal_output(mca_pml_v.output, "%s", str);
     free(str);
@@ -72,7 +74,7 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     char *str;
     int ret;
     va_start(list, fmt);
-    ret = vasprintf(&str, fmt, list);
+    ret = opal_vasprintf(&str, fmt, list);
     assert(-1 != ret);
     opal_output_verbose(V, mca_pml_v.output, "%s", str);
     free(str);

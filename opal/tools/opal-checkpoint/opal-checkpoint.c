@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,6 +59,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/runtime/opal.h"
@@ -374,11 +376,11 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     int value;
 
     /* A string copy of the pid */
-    asprintf(&tmp_pid, "%d", pid);
+    opal_asprintf(&tmp_pid, "%d", pid);
 
     /* Flip the read/write files for bi-directionality */
-    asprintf(&prog_named_pipe_w, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R, tmp_pid);
-    asprintf(&prog_named_pipe_r, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
+    opal_asprintf(&prog_named_pipe_w, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R, tmp_pid);
+    opal_asprintf(&prog_named_pipe_r, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
 
     /*
      * Signal the application telling it that we wish to checkpoint

@@ -18,6 +18,7 @@
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +42,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "opal/align.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
@@ -181,7 +183,7 @@ static int ompi_osc_rdma_component_register (void)
     mca_base_var_enum_t *new_enum;
 
     mca_osc_rdma_component.no_locks = false;
-    asprintf(&description_str, "Enable optimizations available only if MPI_LOCK is "
+    opal_asprintf(&description_str, "Enable optimizations available only if MPI_LOCK is "
              "not used. Info key of same name overrides this value (default: %s)",
              mca_osc_rdma_component.no_locks  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "no_locks", description_str,
@@ -190,7 +192,7 @@ static int ompi_osc_rdma_component_register (void)
     free(description_str);
 
     mca_osc_rdma_component.acc_single_intrinsic = false;
-    asprintf(&description_str, "Enable optimizations for MPI_Fetch_and_op, MPI_Accumulate, etc for codes "
+    opal_asprintf(&description_str, "Enable optimizations for MPI_Fetch_and_op, MPI_Accumulate, etc for codes "
              "that will not use anything more than a single predefined datatype (default: %s)",
              mca_osc_rdma_component.acc_single_intrinsic  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "acc_single_intrinsic",
@@ -199,7 +201,7 @@ static int ompi_osc_rdma_component_register (void)
     free(description_str);
 
     mca_osc_rdma_component.acc_use_amo = true;
-    asprintf(&description_str, "Enable the use of network atomic memory operations when using single "
+    opal_asprintf(&description_str, "Enable the use of network atomic memory operations when using single "
              "intrinsic optimizations. If not set network compare-and-swap will be "
              "used instread (default: %s)", mca_osc_rdma_component.acc_use_amo ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "acc_use_amo", description_str,
@@ -208,14 +210,14 @@ static int ompi_osc_rdma_component_register (void)
     free(description_str);
 
     mca_osc_rdma_component.buffer_size = 32768;
-    asprintf(&description_str, "Size of temporary buffers (default: %d)", mca_osc_rdma_component.buffer_size);
+    opal_asprintf(&description_str, "Size of temporary buffers (default: %d)", mca_osc_rdma_component.buffer_size);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "buffer_size", description_str,
                                             MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_LOCAL, &mca_osc_rdma_component.buffer_size);
     free(description_str);
 
     mca_osc_rdma_component.max_attach = 32;
-    asprintf(&description_str, "Maximum number of buffers that can be attached to a dynamic window. "
+    opal_asprintf(&description_str, "Maximum number of buffers that can be attached to a dynamic window. "
              "Keep in mind that each attached buffer will use a potentially limited "
              "resource (default: %d)", mca_osc_rdma_component.max_attach);
    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "max_attach", description_str,
@@ -224,7 +226,7 @@ static int ompi_osc_rdma_component_register (void)
     free(description_str);
 
     mca_osc_rdma_component.priority = 101;
-    asprintf(&description_str, "Priority of the osc/rdma component (default: %d)",
+    opal_asprintf(&description_str, "Priority of the osc/rdma component (default: %d)",
              mca_osc_rdma_component.priority);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "priority", description_str,
                                             MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
@@ -241,7 +243,7 @@ static int ompi_osc_rdma_component_register (void)
     OBJ_RELEASE(new_enum);
 
     ompi_osc_rdma_btl_names = "openib,ugni,uct,ucp";
-    asprintf(&description_str, "Comma-delimited list of BTL component names to allow without verifying "
+    opal_asprintf(&description_str, "Comma-delimited list of BTL component names to allow without verifying "
              "connectivity. Do not add a BTL to to this list unless it can reach all "
              "processes in any communicator used with an MPI window (default: %s)",
              ompi_osc_rdma_btl_names);
@@ -251,7 +253,7 @@ static int ompi_osc_rdma_component_register (void)
     free(description_str);
 
     ompi_osc_rdma_mtl_names = "psm2";
-    asprintf(&description_str, "Comma-delimited list of MTL component names to lower the priority of rdma "
+    opal_asprintf(&description_str, "Comma-delimited list of MTL component names to lower the priority of rdma "
              "osc component favoring pt2pt osc (default: %s)", ompi_osc_rdma_mtl_names);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "mtls", description_str,
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
@@ -585,7 +587,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         }
 
         /* allocate the shared memory segment */
-        ret = asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d",
+        ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d",
                         mca_osc_rdma_component.backing_directory, ompi_process_info.nodename,
                         OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm));
         if (0 > ret) {
@@ -1269,7 +1271,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* fill in window information */
     *model = MPI_WIN_UNIFIED;
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    asprintf(&name, "rdma window %d", ompi_comm_get_cid(module->comm));
+    opal_asprintf(&name, "rdma window %d", ompi_comm_get_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 

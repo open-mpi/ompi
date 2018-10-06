@@ -11,6 +11,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "opal/constants.h"
 
 #include "opal/mca/base/mca_base_var.h"
@@ -369,7 +371,7 @@ int opal_crs_blcr_checkpoint(pid_t pid,
     if( opal_crs_blcr_dev_null ) {
         loc_fname = strdup("/dev/null");
     } else {
-        asprintf(&loc_fname, "%s/%s", snapshot->super.snapshot_directory, snapshot->context_filename);
+        opal_asprintf(&loc_fname, "%s/%s", snapshot->super.snapshot_directory, snapshot->context_filename);
     }
 
 #if OPAL_ENABLE_CRDEBUG == 1
@@ -711,7 +713,7 @@ static int opal_crs_blcr_restart_cmd(char *fname, char **cmd)
         return OPAL_CRS_ERROR;
     }
 
-    asprintf(cmd, "%s %s", blcr_restart_cmd, fname);
+    opal_asprintf(cmd, "%s %s", blcr_restart_cmd, fname);
 
     return OPAL_SUCCESS;
 }
@@ -721,7 +723,7 @@ static int blcr_get_checkpoint_filename(char **fname, pid_t pid)
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: get_checkpoint_filename(--, %d)", pid);
 
-    asprintf(fname, "ompi_blcr_context.%d", pid);
+    opal_asprintf(fname, "ompi_blcr_context.%d", pid);
 
     return OPAL_SUCCESS;
 }
@@ -779,7 +781,7 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
-    asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.snapshot_directory, tmp_argv[0]);
+    opal_asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.snapshot_directory, tmp_argv[0]);
 
     /*
      * Reset the cold_start flag

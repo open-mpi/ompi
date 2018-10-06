@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +23,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/util/printf.h"
 
 /*
  * Function for comparing two mca_base_component_priority_t structs so
@@ -142,7 +143,7 @@ int mca_base_component_compatible(
  */
 char * mca_base_component_to_string(const mca_base_component_t *a) {
     char * str = NULL;
-    if(0 > asprintf(&str, "%s.%s.%d.%d", a->mca_type_name,
+    if(0 > opal_asprintf(&str, "%s.%s.%d.%d", a->mca_type_name,
                     a->mca_component_name, a->mca_component_major_version,
                     a->mca_component_minor_version)) {
         return NULL;

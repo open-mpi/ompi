@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,8 +11,9 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/output.h"
 
+#include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include "pml_v_output.h"
 
@@ -42,7 +44,7 @@ int ompi_pml_v_output_open(char *output, int verbosity) {
         }
         lds.lds_is_debugging = true;
         gethostname(hostname, sizeof(hostname));
-        asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
+        opal_asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
         lds.lds_verbose_level = verbosity;
         mca_pml_v.output = opal_output_open(&lds);
         free(lds.lds_prefix);

@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2017      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,7 @@
 #include "btl_ugni_smsg.h"
 
 #include "opal/util/sys_limits.h"
+#include "opal/util/printf.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -378,7 +380,7 @@ static int btl_ugni_component_register(void)
     OBJ_RELEASE(new_enum);
 
     if (mca_btl_ugni_ugni_page_size) {
-        rc = asprintf (&mpool_hints_tmp, "page_size=%lu", mca_btl_ugni_ugni_page_size);
+        rc = opal_asprintf (&mpool_hints_tmp, "page_size=%lu", mca_btl_ugni_ugni_page_size);
         if (rc < 0) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }

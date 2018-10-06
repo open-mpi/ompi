@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,7 @@ const char *ibv_get_sysfs_path(void);
 #include "opal/runtime/opal_params.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 
 /***********************************************************************/
 
@@ -53,7 +55,7 @@ bool opal_common_verbs_check_basics(void)
     struct stat s;
 
     /* Check to see if $sysfsdir/class/infiniband/ exists */
-    asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
+    opal_asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
     if (NULL == file) {
         return false;
     }

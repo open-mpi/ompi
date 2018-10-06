@@ -3,6 +3,7 @@
  *                          All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,8 @@
 #include "ompi/runtime/ompi_info_support.h"
 #include "oshmem/runtime/oshmem_info_support.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
+#include "opal/util/printf.h"
 #include "ompi/include/ompi/constants.h"
 
 const char *oshmem_info_type_oshmem = "oshmem";
@@ -82,7 +85,7 @@ void oshmem_info_show_oshmem_version(const char *scope)
 {
     char *tmp, *tmp2;
 
-    if (0 < asprintf(&tmp, "%s:version:full", oshmem_info_type_oshmem)) {
+    if (0 < opal_asprintf(&tmp, "%s:version:full", oshmem_info_type_oshmem)) {
         tmp2 = opal_info_make_version_str(scope,
                 OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
                 OSHMEM_RELEASE_VERSION,
@@ -92,11 +95,11 @@ void oshmem_info_show_oshmem_version(const char *scope)
         free(tmp);
         free(tmp2);
     }
-    if(0 < asprintf(&tmp, "%s:version:repo", oshmem_info_type_oshmem)) {
+    if(0 < opal_asprintf(&tmp, "%s:version:repo", oshmem_info_type_oshmem)) {
         opal_info_out("Open SHMEM repo revision", tmp, OSHMEM_REPO_REV);
         free(tmp);
     }
-    if (0 < asprintf(&tmp, "%s:version:release_date", oshmem_info_type_oshmem)) {
+    if (0 < opal_asprintf(&tmp, "%s:version:release_date", oshmem_info_type_oshmem)) {
         opal_info_out("Open SHMEM release date", tmp, OSHMEM_RELEASE_DATE);
         free(tmp);
     }

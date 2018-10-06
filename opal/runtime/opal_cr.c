@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,7 @@
 #include "opal/util/keyval_parse.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "opal/memoryhooks/memory.h"
 
 #include "opal/mca/base/base.h"
@@ -934,7 +936,7 @@ int opal_cr_refresh_environ(int prev_pid) {
      *  1) We have already executed this function, and
      *  2) The file has been deleted on the previous round.
      */
-    asprintf(&file_name, "%s/%s-%d", opal_tmp_directory(), OPAL_CR_BASE_ENV_NAME, prev_pid);
+    opal_asprintf(&file_name, "%s/%s-%d", opal_tmp_directory(), OPAL_CR_BASE_ENV_NAME, prev_pid);
     if (NULL == file_name) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

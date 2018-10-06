@@ -19,6 +19,7 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +40,7 @@
 #include "opal/runtime/opal_params.h"
 #include "opal/include/opal_stdint.h"
 #include "opal/mca/allocator/base/base.h"
+#include "opal/util/printf.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -133,7 +135,7 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
 
         count = opal_atomic_add_fetch_32 (&huge_page->count, 1);
 
-        rc = asprintf (&path, "%s/hugepage.openmpi.%d.%d", huge_page->path,
+        rc = opal_asprintf (&path, "%s/hugepage.openmpi.%d.%d", huge_page->path,
                        getpid (), count);
         if (0 > rc) {
             return NULL;

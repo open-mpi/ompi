@@ -5,6 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,9 +28,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
 #include "opal/mca/installdirs/installdirs.h"
-
-
+#include "opal/util/printf.h"
 
 #include "coll_fca.h"
 
@@ -1212,10 +1213,10 @@ static char *fca_check_file(char *file)
 static char *fca_get_spec_file(void)
 {
     char *file;
-    asprintf(&file, "%s/etc/fca_mpi_spec.ini", COLL_FCA_HOME);
+    opal_asprintf(&file, "%s/etc/fca_mpi_spec.ini", COLL_FCA_HOME);
     if (NULL == fca_check_file(file)) {
         free(file);
-        asprintf(&file, "%s/../fca/etc/fca_mpi_spec.ini", opal_install_dirs.prefix);
+        opal_asprintf(&file, "%s/../fca/etc/fca_mpi_spec.ini", opal_install_dirs.prefix);
         if (NULL == fca_check_file(file)) {
             free(file);
             return NULL;

@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "coll_sm.h"

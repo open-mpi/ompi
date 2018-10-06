@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +44,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
@@ -193,14 +195,14 @@ int ompi_cr_init(void)
 
         /* Set the checkpoint and restart commands */
         /* Add the full path to the binary */
-        asprintf(&MPIR_checkpoint_command,
+        opal_asprintf(&MPIR_checkpoint_command,
                  "%s/ompi-checkpoint --crdebug --hnp-jobid %u",
                  opal_install_dirs.bindir,
                  ORTE_PROC_MY_HNP->jobid);
-        asprintf(&MPIR_restart_command,
+        opal_asprintf(&MPIR_restart_command,
                  "%s/ompi-restart --crdebug ",
                  opal_install_dirs.bindir);
-        asprintf(&MPIR_checkpoint_listing_command,
+        opal_asprintf(&MPIR_checkpoint_listing_command,
                  "%s/ompi-checkpoint -l --crdebug ",
                  opal_install_dirs.bindir);
 

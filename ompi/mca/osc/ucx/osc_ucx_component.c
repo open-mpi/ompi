@@ -1,5 +1,6 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -8,6 +9,8 @@
  */
 
 #include "ompi_config.h"
+
+#include "opal/util/printf.h"
 
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
@@ -100,7 +103,7 @@ static int component_open(void) {
 static int component_register(void) {
     char *description_str;
     mca_osc_ucx_component.priority = 0;
-    asprintf(&description_str, "Priority of the osc/ucx component (default: %d)",
+    opal_asprintf(&description_str, "Priority of the osc/ucx component (default: %d)",
              mca_osc_ucx_component.priority);
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "priority", description_str,
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
@@ -378,7 +381,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
     }
 
     *model = MPI_WIN_UNIFIED;
-    asprintf(&name, "ucx window %d", ompi_comm_get_cid(module->comm));
+    opal_asprintf(&name, "ucx window %d", ompi_comm_get_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 

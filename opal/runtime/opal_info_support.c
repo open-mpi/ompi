@@ -16,6 +16,7 @@
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,7 @@
 #include "opal/util/error.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/base/mca_base_pvar.h"
@@ -351,7 +353,7 @@ void opal_info_show_path(const char *type, const char *value)
     pretty = strdup(type);
     pretty[0] = toupper(pretty[0]);
 
-    asprintf(&path, "path:%s", type);
+    opal_asprintf(&path, "path:%s", type);
     opal_info_out(pretty, path, value);
     free(pretty);
     free(path);
@@ -601,7 +603,7 @@ void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line)
                 (void) mca_base_var_group_get(var->mbv_group_index, &group);
                 for (j = 0 ; strings[j] ; ++j) {
                     if (0 == j && opal_info_pretty) {
-                        asprintf (&message, "MCA %s", group->group_framework);
+                        opal_asprintf (&message, "MCA %s", group->group_framework);
                         opal_info_out(message, message, strings[j]);
                         free(message);
                     } else {
@@ -661,7 +663,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
     const mca_base_var_group_t *curr_group = NULL;
     char *component_msg = NULL;
-    asprintf(&component_msg, " %s", group_component);
+    opal_asprintf(&component_msg, " %s", group_component);
 
     for (i = 0 ; i < count ; ++i) {
         ret = mca_base_var_get(variables[i], &var);
@@ -672,7 +674,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         }
 
         if (opal_info_pretty && curr_group != group) {
-            asprintf(&message, "MCA%s %s%s", requested ? "" : " (-)",
+            opal_asprintf(&message, "MCA%s %s%s", requested ? "" : " (-)",
                      group->group_framework,
                      component_msg ? component_msg : "");
             opal_info_out(message, message, "---------------------------------------------------");
@@ -687,7 +689,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                asprintf (&message, "MCA%s %s%s", requested ? "" : " (-)",
+                opal_asprintf (&message, "MCA%s %s%s", requested ? "" : " (-)",
                           group->group_framework,
                           component_msg ? component_msg : "");
                 opal_info_out(message, message, strings[j]);
@@ -700,7 +702,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         if (!opal_info_pretty) {
             /* generate an entry indicating whether this variable is disabled or not. if the
              * format in mca_base_var/pvar.c changes this needs to be changed as well */
-            asprintf (&message, "mca:%s:%s:param:%s:disabled:%s", group->group_framework,
+            opal_asprintf (&message, "mca:%s:%s:param:%s:disabled:%s", group->group_framework,
                       group_component, var->mbv_full_name, requested ? "false" : "true");
             opal_info_out("", "", message);
             free (message);
@@ -718,7 +720,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         }
 
         if (opal_info_pretty && curr_group != group) {
-            asprintf(&message, "MCA%s %s%s", requested ? "" : " (-)",
+            opal_asprintf(&message, "MCA%s %s%s", requested ? "" : " (-)",
                      group->group_framework,
                      component_msg ? component_msg : "");
             opal_info_out(message, message, "---------------------------------------------------");
@@ -733,7 +735,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                asprintf (&message, "MCA%s %s%s", requested ? "" : " (-)",
+                opal_asprintf (&message, "MCA%s %s%s", requested ? "" : " (-)",
                           group->group_framework,
                           component_msg ? component_msg : "");
                 opal_info_out(message, message, strings[j]);
@@ -746,7 +748,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
         if (!opal_info_pretty) {
             /* generate an entry indicating whether this variable is disabled or not. if the
              * format in mca_base_var/pvar.c changes this needs to be changed as well */
-            asprintf (&message, "mca:%s:%s:pvar:%s:disabled:%s", group->group_framework,
+            opal_asprintf (&message, "mca:%s:%s:pvar:%s:disabled:%s", group->group_framework,
                       group_component, pvar->name, requested ? "false" : "true");
             opal_info_out("", "", message);
             free (message);
@@ -897,7 +899,7 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
 
     if (opal_info_pretty && NULL != pretty_message) {
         if (centerpoint > (int)strlen(pretty_message)) {
-            asprintf(&spaces, "%*s", centerpoint -
+            opal_asprintf(&spaces, "%*s", centerpoint -
                      (int)strlen(pretty_message), " ");
         } else {
             spaces = strdup("");
@@ -911,9 +913,9 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         }
         max_value_width = screen_width - strlen(spaces) - strlen(pretty_message) - 2;
         if (0 < strlen(pretty_message)) {
-            asprintf(&filler, "%s%s: ", spaces, pretty_message);
+            opal_asprintf(&filler, "%s%s: ", spaces, pretty_message);
         } else {
-            asprintf(&filler, "%s  ", spaces);
+            opal_asprintf(&filler, "%s  ", spaces);
         }
         free(spaces);
         spaces = NULL;
@@ -923,7 +925,7 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
                 printf("%s%s\n", filler, v);
                 break;
             } else {
-                asprintf(&spaces, "%*s", centerpoint + 2, " ");
+                opal_asprintf(&spaces, "%*s", centerpoint + 2, " ");
 
                 /* Work backwards to find the first space before
                  * max_value_width
@@ -1005,7 +1007,7 @@ void opal_info_out_int(const char *pretty_message,
 {
     char *valstr;
 
-    asprintf(&valstr, "%d", (int)value);
+    opal_asprintf(&valstr, "%d", (int)value);
     opal_info_out(pretty_message, plain_message, valstr);
     free(valstr);
 }
@@ -1093,16 +1095,16 @@ static void opal_info_show_failed_component(const mca_base_component_repository_
     char *message, *content;
 
     if (opal_info_pretty) {
-        asprintf(&message, "MCA %s", ri->ri_type);
-        asprintf(&content, "%s (failed to load) %s", ri->ri_name, error_msg);
+        opal_asprintf(&message, "MCA %s", ri->ri_type);
+        opal_asprintf(&content, "%s (failed to load) %s", ri->ri_name, error_msg);
 
         opal_info_out(message, NULL, content);
 
         free(message);
         free(content);
     } else {
-        asprintf(&message, "mca:%s:%s:failed", ri->ri_type, ri->ri_name);
-        asprintf(&content, "%s", error_msg);
+        opal_asprintf(&message, "mca:%s:%s:failed", ri->ri_type, ri->ri_name);
+        opal_asprintf(&content, "%s", error_msg);
 
         opal_info_out(NULL, message, content);
 
@@ -1155,12 +1157,12 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
                                                    component->mca_component_release_version,
                                                    "", "");
     if (opal_info_pretty) {
-        asprintf(&message, "MCA %s", component->mca_type_name);
+        opal_asprintf(&message, "MCA %s", component->mca_type_name);
         printed = false;
-        asprintf(&content, "%s (", component->mca_component_name);
+        opal_asprintf(&content, "%s (", component->mca_component_name);
 
         if (want_mca) {
-            asprintf(&tmp, "%sMCA v%s", content, mca_version);
+            opal_asprintf(&tmp, "%sMCA v%s", content, mca_version);
             free(content);
             content = tmp;
             printed = true;
@@ -1168,11 +1170,11 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
 
         if (want_type) {
             if (printed) {
-                asprintf(&tmp, "%s, ", content);
+                opal_asprintf(&tmp, "%s, ", content);
                 free(content);
                 content = tmp;
             }
-            asprintf(&tmp, "%sAPI v%s", content, api_version);
+            opal_asprintf(&tmp, "%sAPI v%s", content, api_version);
             free(content);
             content = tmp;
             printed = true;
@@ -1180,17 +1182,17 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
 
         if (want_component) {
             if (printed) {
-                asprintf(&tmp, "%s, ", content);
+                opal_asprintf(&tmp, "%s, ", content);
                 free(content);
                 content = tmp;
             }
-            asprintf(&tmp, "%sComponent v%s", content, component_version);
+            opal_asprintf(&tmp, "%sComponent v%s", content, component_version);
             free(content);
             content = tmp;
             printed = true;
         }
         if (NULL != content) {
-            asprintf(&tmp, "%s)", content);
+            opal_asprintf(&tmp, "%s)", content);
             free(content);
         } else {
             tmp = NULL;
@@ -1203,19 +1205,19 @@ void opal_info_show_mca_version(const mca_base_component_t* component,
         }
 
     } else {
-        asprintf(&message, "mca:%s:%s:version", component->mca_type_name, component->mca_component_name);
+        opal_asprintf(&message, "mca:%s:%s:version", component->mca_type_name, component->mca_component_name);
         if (want_mca) {
-            asprintf(&tmp, "mca:%s", mca_version);
+            opal_asprintf(&tmp, "mca:%s", mca_version);
             opal_info_out(NULL, message, tmp);
             free(tmp);
         }
         if (want_type) {
-            asprintf(&tmp, "api:%s", api_version);
+            opal_asprintf(&tmp, "api:%s", api_version);
             opal_info_out(NULL, message, tmp);
             free(tmp);
         }
         if (want_component) {
-            asprintf(&tmp, "component:%s", component_version);
+            opal_asprintf(&tmp, "component:%s", component_version);
             opal_info_out(NULL, message, tmp);
             free(tmp);
         }
@@ -1248,7 +1250,7 @@ char *opal_info_make_version_str(const char *scope,
         snprintf(temp, BUFSIZ - 1, "%d.%d.%d", major, minor, release);
         str = strdup(temp);
         if (NULL != greek) {
-            asprintf(&tmp, "%s%s", str, greek);
+            opal_asprintf(&tmp, "%s%s", str, greek);
             free(str);
             str = tmp;
         }
@@ -1275,7 +1277,7 @@ void opal_info_show_opal_version(const char *scope)
 {
     char *tmp, *tmp2;
 
-    asprintf(&tmp, "%s:version:full", opal_info_type_opal);
+    opal_asprintf(&tmp, "%s:version:full", opal_info_type_opal);
     tmp2 = opal_info_make_version_str(scope,
                                       OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                       OPAL_RELEASE_VERSION,
@@ -1284,10 +1286,10 @@ void opal_info_show_opal_version(const char *scope)
     opal_info_out("OPAL", tmp, tmp2);
     free(tmp);
     free(tmp2);
-    asprintf(&tmp, "%s:version:repo", opal_info_type_opal);
+    opal_asprintf(&tmp, "%s:version:repo", opal_info_type_opal);
     opal_info_out("OPAL repo revision", tmp, OPAL_REPO_REV);
     free(tmp);
-    asprintf(&tmp, "%s:version:release_date", opal_info_type_opal);
+    opal_asprintf(&tmp, "%s:version:release_date", opal_info_type_opal);
     opal_info_out("OPAL release date", tmp, OPAL_RELEASE_DATE);
     free(tmp);
 }

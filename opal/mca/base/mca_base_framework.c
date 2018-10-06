@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 
 #include "opal/include/opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include "mca_base_framework.h"
 #include "mca_base_var.h"
@@ -82,7 +84,7 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
             return ret;
         }
 
-        asprintf (&desc, "Default selection set of components for the %s framework (<none>"
+        opal_asprintf (&desc, "Default selection set of components for the %s framework (<none>"
                   " means use all components that can be found)", framework->framework_name);
         ret = mca_base_var_register (framework->framework_project, framework->framework_name,
                                      NULL, NULL, desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0,
@@ -94,7 +96,7 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
         }
 
         /* register a verbosity variable for this framework */
-        ret = asprintf (&desc, "Verbosity level for the %s framework (default: 0)",
+        ret = opal_asprintf (&desc, "Verbosity level for the %s framework (default: 0)",
                         framework->framework_name);
         if (0 > ret) {
             return OPAL_ERR_OUT_OF_RESOURCE;

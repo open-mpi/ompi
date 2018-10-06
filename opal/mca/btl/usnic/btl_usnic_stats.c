@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2017 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +14,7 @@
 #include <stdlib.h>
 
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
 
@@ -410,7 +412,7 @@ static void setup_mpit_pvars_enum(void)
         c = (unsigned char*) &sin->sin_addr.s_addr;
 
         devices[i].value = i;
-        rc = asprintf(&str, "%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
+        rc = opal_asprintf(&str, "%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
                       m->linux_device_name,
                       c[0], c[1], c[2], c[3],
                       usnic_netmask_to_cidrlen(sin->sin_addr.s_addr));
