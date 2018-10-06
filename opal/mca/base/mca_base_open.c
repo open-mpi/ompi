@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,16 +80,16 @@ int mca_base_open(void)
     /* define the system and user default paths */
 #if OPAL_WANT_HOME_CONFIG_FILES
     mca_base_system_default_path = strdup(opal_install_dirs.opallibdir);
-    asprintf(&mca_base_user_default_path, "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_home_directory());
+    opal_asprintf(&mca_base_user_default_path, "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_home_directory());
 #else
-    asprintf(&mca_base_system_default_path, "%s", opal_install_dirs.opallibdir);
+    opal_asprintf(&mca_base_system_default_path, "%s", opal_install_dirs.opallibdir);
 #endif
 
     /* see if the user wants to override the defaults */
     if (NULL == mca_base_user_default_path) {
         value = strdup(mca_base_system_default_path);
     } else {
-        asprintf(&value, "%s%c%s", mca_base_system_default_path,
+        opal_asprintf(&value, "%s%c%s", mca_base_system_default_path,
                  OPAL_ENV_SEP, mca_base_user_default_path);
     }
 
@@ -156,7 +157,7 @@ int mca_base_open(void)
         set_defaults(&lds);
     }
     gethostname(hostname, sizeof(hostname));
-    asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
+    opal_asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
     opal_output_reopen(0, &lds);
     opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, 0, "mca: base: opening components");
     free(lds.lds_prefix);

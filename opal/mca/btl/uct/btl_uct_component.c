@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include <string.h>
 
@@ -349,7 +351,7 @@ static int mca_btl_uct_component_process_uct_md (uct_md_resource_desc_t *md_desc
     /* NTH: a registration cache shouldn't be necessary when using UCT but there are measurable
      * performance benefits to using rcache/grdma instead of assuming UCT will do the right
      * thing. */
-    (void) asprintf (&tmp, "uct.%s", module->md_name);
+    (void) opal_asprintf (&tmp, "uct.%s", module->md_name);
 
     rcache_resources.cache_name     = tmp;
     rcache_resources.reg_data       = (void *) module;

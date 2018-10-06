@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +45,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
+#include "opal/util/printf.h"
 #include "opal/threads/mutex.h"
 #include "opal/constants.h"
 #include "opal/mca/pmix/pmix.h"
@@ -189,7 +191,7 @@ bool opal_output_init(void)
         }
     }
     gethostname(hostname, sizeof(hostname));
-    asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
+    opal_asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
         info[i].ldi_used = false;
@@ -210,7 +212,7 @@ bool opal_output_init(void)
 
     /* Set some defaults */
 
-    asprintf(&output_prefix, "output-pid%d-", getpid());
+    opal_asprintf(&output_prefix, "output-pid%d-", getpid());
     output_dir = strdup(opal_tmp_directory());
 
     /* Open the default verbose stream */
@@ -279,7 +281,7 @@ void opal_output_reopen_all(void)
         free(verbose.lds_prefix);
         verbose.lds_prefix = NULL;
     }
-    asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
+    opal_asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 #if 0
     int i;
     opal_output_stream_t lds;
@@ -864,7 +866,7 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
 
     /* Make the formatted string */
 
-    vasprintf(no_newline_string, format, arglist);
+    opal_vasprintf(no_newline_string, format, arglist);
     total_len = len = strlen(*no_newline_string);
     if ('\n' != (*no_newline_string)[len - 1]) {
         want_newline = true;

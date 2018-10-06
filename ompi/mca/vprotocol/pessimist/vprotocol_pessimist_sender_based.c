@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2014 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include <string.h>
 #include <errno.h>
 #include "opal/datatype/opal_datatype_memcpy.h"
+#include "opal/util/printf.h"
 #include <fcntl.h>
 
 #define sb mca_vprotocol_pessimist.sender_based
@@ -96,7 +98,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     OBJ_CONSTRUCT(&sb.sb_sendreq, opal_list_t);
 #endif
 
-    asprintf(&path, "%s"OPAL_PATH_SEP"%s", ompi_process_info.proc_session_dir,
+    opal_asprintf(&path, "%s"OPAL_PATH_SEP"%s", ompi_process_info.proc_session_dir,
                 mmapfile);
     if(OPAL_SUCCESS != sb_mmap_file_open(path))
         return OPAL_ERR_FILE_OPEN_FAILURE;

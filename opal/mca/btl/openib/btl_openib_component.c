@@ -22,6 +22,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,6 +65,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/mpool/base/base.h"
@@ -1861,7 +1863,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                        "eager RDMA and progress threads", true);
     }
 
-    asprintf (&rcache_resources.cache_name, "verbs.%" PRIu64, device->ib_dev_attr.node_guid);
+    opal_asprintf (&rcache_resources.cache_name, "verbs.%" PRIu64, device->ib_dev_attr.node_guid);
     rcache_resources.reg_data = (void*)device;
     rcache_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
     rcache_resources.register_mem = openib_reg_mr;

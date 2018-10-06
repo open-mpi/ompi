@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_var.h"
@@ -565,7 +567,7 @@ static int crs_self_find_function(char *prefix, char *suffix,
                         "crs:self: crs_self_find_function(--, %s, %s)",
                         prefix, suffix);
 
-    asprintf(&func_to_find, "%s_%s", prefix, suffix);
+    opal_asprintf(&func_to_find, "%s_%s", prefix, suffix);
 
     /* The RTLD_DEFAULT is a special handle that searches the default libraries
      * including the current application for the indicated symbol. This allows
@@ -654,7 +656,7 @@ static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **
      *   add_args = strdup("-mca crs self -mca crs_self_do_restart 1");
      */
 
-    asprintf(cmd, "%s", snapshot->cmd_line);
+    opal_asprintf(cmd, "%s", snapshot->cmd_line);
 
     return OPAL_SUCCESS;
 }
@@ -713,7 +715,7 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
-    asprintf(&snapshot->cmd_line, "%s", tmp_argv[0]);
+    opal_asprintf(&snapshot->cmd_line, "%s", tmp_argv[0]);
 
     /*
      * Reset the cold_start flag

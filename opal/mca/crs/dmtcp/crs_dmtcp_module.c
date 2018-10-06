@@ -4,6 +4,7 @@
  * Copyright (c)      2010-2011 Alex Brick <bricka@ccs.neu.edu>.
  *                         All rights reserved.
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "opal/constants.h"
 
 #include "opal/mca/base/mca_base_var.h"
@@ -158,7 +160,7 @@ int opal_crs_dmtcp_module_init(void)
      * sleep_between_ckpt callback.
      */
 
-    asprintf(&temp_checkpoint_name, "checkpoint.dmtcp.%ld", syscall(SYS_getpid));
+    opal_asprintf(&temp_checkpoint_name, "checkpoint.dmtcp.%ld", syscall(SYS_getpid));
     mtcp_init(temp_checkpoint_name, 0, 1);
     mtcp_ok();
 
@@ -527,7 +529,7 @@ static int dmtcp_cold_start(opal_crs_dmtcp_snapshot_t *snapshot) {
         goto cleanup;
     }
 
-    asprintf(&(snapshot->context_filename), "%s/%s", snapshot->super.snapshot_directory, tmp_argv[0]);
+    opal_asprintf(&(snapshot->context_filename), "%s/%s", snapshot->super.snapshot_directory, tmp_argv[0]);
 
     opal_output_verbose(10, mca_crs_dmtcp_component.super.output_handle,
                         "crs:dmtcp: cold_start(%s)", snapshot->context_filename);
@@ -559,11 +561,11 @@ static int dmtcp_cold_start(opal_crs_dmtcp_snapshot_t *snapshot) {
 static int dmtcp_generate_full_ckpt_path(opal_crs_dmtcp_snapshot_t *snapshot)
 {
     int retval;
-    retval = asprintf(&(snapshot->context_filename), "ompi_dmtcp_context.%ld", syscall(SYS_getpid));
+    retval = opal_asprintf(&(snapshot->context_filename), "ompi_dmtcp_context.%ld", syscall(SYS_getpid));
     if(retval == -1)
         return -1;
 
-    return asprintf(&full_ckpt_path, "%s/%s", snapshot->super.snapshot_directory, snapshot->context_filename);
+    return opal_asprintf(&full_ckpt_path, "%s/%s", snapshot->super.snapshot_directory, snapshot->context_filename);
 }
 
 /**

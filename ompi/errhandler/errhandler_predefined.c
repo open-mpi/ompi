@@ -16,6 +16,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -194,7 +195,7 @@ static void backend_fatal_aggregate(char *type,
     arg = va_arg(arglist, char*);
     va_end(arglist);
 
-    if (asprintf(&prefix, "[%s:%05d]",
+    if (opal_asprintf(&prefix, "[%s:%05d]",
                  ompi_process_info.nodename,
                  (int) ompi_process_info.pid) == -1) {
         prefix = NULL;
@@ -207,7 +208,7 @@ static void backend_fatal_aggregate(char *type,
     if (NULL != error_code) {
         err_msg = ompi_mpi_errnum_get_string(*error_code);
         if (NULL == err_msg) {
-            if (asprintf(&err_msg, unknown_error_code,
+            if (opal_asprintf(&err_msg, unknown_error_code,
                          *error_code) == -1) {
                 err_msg = NULL;
                 opal_output(0, "%s", "Could not write to err_msg");
@@ -333,7 +334,7 @@ static void backend_fatal_no_aggregate(char *type,
         }
 
         if (NULL != name) {
-            /* Don't use asprintf() here because there may be stack /
+            /* Don't use opal_asprintf() here because there may be stack /
                heap corruption by the time we're invoked, so just do
                it on the stack */
             str[0] = '\0';

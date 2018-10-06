@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 #include "support.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 /*
 #define DEBUG
@@ -99,7 +101,7 @@ static int test_hibit(int value, int start)
         return 1;
     } else {
         char * msg;
-        asprintf(&msg, "Mismatch for hibit (w/ start:%d): value:%d, expected:%d got:%d\n",
+        opal_asprintf(&msg, "Mismatch for hibit (w/ start:%d): value:%d, expected:%d got:%d\n",
                  start, value, bit, out);
         test_failure(msg);
         free(msg);
@@ -133,7 +135,7 @@ static int test_cube_dim(int value)
         return 1;
     } else {
         char * msg;
-        asprintf(&msg, "Mismatch for cube_dim: value:%d, expected:%d got:%d\n",
+        opal_asprintf(&msg, "Mismatch for cube_dim: value:%d, expected:%d got:%d\n",
                  value, dim, out);
         test_failure(msg);
         free(msg);
@@ -168,7 +170,7 @@ static int test_next_poweroftwo(int value)
         return 1;
     } else {
         char * msg;
-        asprintf(&msg, "Mismatch for power-of-two: value:%d, expected:%d got:%d\n",
+        opal_asprintf(&msg, "Mismatch for power-of-two: value:%d, expected:%d got:%d\n",
                  value, power2, out);
         test_failure(msg);
         free(msg);
@@ -204,7 +206,7 @@ static int test_next_poweroftwo_inclusive(int value)
         return 1;
     } else {
         char * msg;
-        asprintf(&msg, "Mismatch for power-of-two-inclusive: value:%d, expected:%d got:%d\n",
+        opal_asprintf(&msg, "Mismatch for power-of-two-inclusive: value:%d, expected:%d got:%d\n",
                  value, power2, out);
         test_failure(msg);
         free(msg);

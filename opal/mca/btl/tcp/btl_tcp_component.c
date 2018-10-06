@@ -19,6 +19,7 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +69,7 @@
 #include "opal/util/net.h"
 #include "opal/util/fd.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/constants.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
@@ -278,7 +280,7 @@ static int mca_btl_tcp_component_register(void)
                                     "The minimum port where the TCP BTL will try to bind (default 1024)",
                                     1024, OPAL_INFO_LVL_2, &mca_btl_tcp_component.tcp_port_min);
 
-    asprintf( &message,
+    opal_asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",
@@ -291,7 +293,7 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_tcp_param_register_int( "port_min_v6",
                                     "The minimum port where the TCP BTL will try to bind (default 1024)", 1024,
                                     OPAL_INFO_LVL_2, & mca_btl_tcp_component.tcp6_port_min );
-    asprintf( &message,
+    opal_asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",

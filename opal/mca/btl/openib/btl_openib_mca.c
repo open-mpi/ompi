@@ -20,6 +20,7 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 
 #include <string.h>
 #include "opal/util/bit_ops.h"
+#include "opal/util/printf.h"
 #include "opal/mca/common/verbs/common_verbs.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/os_dirpath.h"
@@ -267,7 +269,7 @@ int btl_openib_register_mca_params(void)
                    MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT, &mca_btl_openib_component.cq_poll_batch,
                    REGINT_GE_ONE));
 
-    asprintf(&str, "%s/mca-btl-openib-device-params.ini",
+    opal_asprintf(&str, "%s/mca-btl-openib-device-params.ini",
              opal_install_dirs.opaldatadir);
     if (NULL == str) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -369,7 +371,7 @@ int btl_openib_register_mca_params(void)
                    "(must be >= 0)",
                    4, &mca_btl_openib_component.ib_qp_ous_rd_atom, 0));
 
-    asprintf(&msg, "OpenFabrics MTU, in bytes (if not specified in INI files).  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes",
+    opal_asprintf(&msg, "OpenFabrics MTU, in bytes (if not specified in INI files).  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes",
              IBV_MTU_256,
              IBV_MTU_512,
              IBV_MTU_1024,
@@ -645,7 +647,7 @@ int btl_openib_register_mca_params(void)
         mid_qp_size = 1024;
     }
 
-    asprintf(&default_qps,
+    opal_asprintf(&default_qps,
             "S,128,256,192,128:S,%u,1024,1008,64:S,%u,1024,1008,64:S,%u,1024,1008,64",
             mid_qp_size,
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,

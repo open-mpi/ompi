@@ -16,6 +16,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,7 @@
 #include "opal_stdint.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/os_path.h"
+#include "opal/util/printf.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
@@ -518,7 +520,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
             lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
         }
     }
-    asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,
+    opal_asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,
              OMPI_NAME_PRINT(lowest_name));
     if (NULL == shortpath) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,

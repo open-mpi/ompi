@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,7 @@
 #include <string.h>
 
 
+#ifndef HAVE_VASPRINTF
 /*
  * Make a good guess about how long a printf-style varargs formatted
  * string will be once all the % escapes are filled in.  We don't
@@ -192,7 +194,7 @@ static int guess_strlen(const char *fmt, va_list ap)
     return len;
 #endif
 }
-
+#endif /* #ifndef HAVE_VASPRINTF */
 
 int opal_asprintf(char **ptr, const char *fmt, ...)
 {
@@ -210,15 +212,18 @@ int opal_asprintf(char **ptr, const char *fmt, ...)
 
 int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
 {
-    int length;
-    va_list ap2;
-
 #ifdef HAVE_VASPRINTF
+    int length;
+
     length = vasprintf(ptr, fmt, ap);
     if (length < 0) {
         *ptr = NULL;
     }
+
+    return length;
 #else
+    int length;
+    va_list ap2;
 
     /* va_list might have pointer to internal state and using
        it twice is a bad idea.  So make a copy for the second
@@ -254,9 +259,9 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
         errno = ENOMEM;
         return -1;
     }
-#endif
 
     return length;
+#endif
 }
 
 

@@ -4,6 +4,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +15,7 @@
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/printf.h"
 #include "ompi/dpm/dpm.h"
 
 int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm)
@@ -27,7 +29,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
 
     OBJ_CONSTRUCT(&results, opal_list_t);
     pdat = OBJ_NEW(opal_pmix_pdata_t);
-    asprintf(&pdat->value.key, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
+    opal_asprintf(&pdat->value.key, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
     opal_list_append(&results, &pdat->super);
 
     rc = opal_pmix.lookup(&results, NULL);

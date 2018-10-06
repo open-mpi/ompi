@@ -14,6 +14,7 @@
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +55,7 @@
 #include "opal/util/net.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
 #include "btl_tcp.h"
@@ -850,7 +852,7 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_en
     }
     if(so_error != 0) {
         char *msg;
-        asprintf(&msg, "connect() to %s:%d failed",
+        opal_asprintf(&msg, "connect() to %s:%d failed",
                  opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                  ntohs(((struct sockaddr_in*) &endpoint_addr)->sin_port));
         opal_show_help("help-mpi-btl-tcp.txt", "client connect fail",

@@ -22,6 +22,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
 #include "opal/util/proc.h"
+#include "opal/util/printf.h"
 #include "opal/include/opal_stdint.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/btl/btl.h"
@@ -144,11 +146,11 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         ret = -1;
 #endif
         if (0 != ret) {
-            asprintf(&str_limit, "Unknown");
+            opal_asprintf(&str_limit, "Unknown");
         } else if (limit.rlim_cur == RLIM_INFINITY) {
-            asprintf(&str_limit, "unlimited");
+            opal_asprintf(&str_limit, "unlimited");
         } else {
-            asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
+            opal_asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
         }
 
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",

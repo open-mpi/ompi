@@ -18,6 +18,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +57,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
 #include "opal/util/if.h"
+#include "opal/util/printf.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/util/show_help.h"
@@ -298,10 +300,10 @@ static int check_reg_mem_basics(void)
             limit.rlim_cur == RLIM_INFINITY) {
             return OPAL_SUCCESS;
         } else {
-            asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
+            opal_asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
         }
     } else {
-        asprintf(&str_limit, "Unknown");
+        opal_asprintf(&str_limit, "Unknown");
     }
 
     opal_show_help("help-mpi-btl-usnic.txt", "check_reg_mem_basics fail",

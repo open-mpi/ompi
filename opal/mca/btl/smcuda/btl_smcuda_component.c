@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +47,7 @@
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/common/sm/common_sm.h"
@@ -438,28 +440,28 @@ set_uniq_paths_for_init_rndv(mca_btl_smcuda_component_t *comp_ptr)
     comp_ptr->sm_ctl_file_name = NULL;
     comp_ptr->sm_rndv_file_name = NULL;
 
-    if (asprintf(&comp_ptr->sm_mpool_ctl_file_name,
+    if (opal_asprintf(&comp_ptr->sm_mpool_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool.%s",
                  opal_process_info.job_session_dir,
                  opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
-    if (asprintf(&comp_ptr->sm_mpool_rndv_file_name,
+    if (opal_asprintf(&comp_ptr->sm_mpool_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool_rndv.%s",
                  opal_process_info.job_session_dir,
                  opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
-    if (asprintf(&comp_ptr->sm_ctl_file_name,
+    if (opal_asprintf(&comp_ptr->sm_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_module.%s",
                  opal_process_info.job_session_dir,
                  opal_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
-    if (asprintf(&comp_ptr->sm_rndv_file_name,
+    if (opal_asprintf(&comp_ptr->sm_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_rndv.%s",
                  opal_process_info.job_session_dir,
                  opal_process_info.nodename) < 0) {

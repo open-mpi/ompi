@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,8 @@
  */
 
 #include "ompi_config.h"
+
+#include "opal/util/printf.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -104,7 +107,7 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
         datatype->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;
         /* Mark the datatype as a special F90 convenience type */
         char *new_name;
-        asprintf(&new_name, "COMBINER %s", (*newtype)->name);
+        opal_asprintf(&new_name, "COMBINER %s", (*newtype)->name);
         size_t max_len = MPI_MAX_OBJECT_NAME;
         strncpy(datatype->name, new_name, max_len - 1);
         datatype->name[max_len - 1] = '\0';

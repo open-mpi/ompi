@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
 #include "opal/util/string_copy.h"
+#include "opal/util/printf.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
@@ -62,7 +64,7 @@ int opal_btl_usnic_connectivity_client_init(void)
     }
 
     char *ipc_filename = NULL;
-    asprintf(&ipc_filename, "%s/%s",
+    opal_asprintf(&ipc_filename, "%s/%s",
              opal_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
     if (NULL == ipc_filename) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);

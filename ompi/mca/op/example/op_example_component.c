@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,8 @@
  */
 
 #include "ompi_config.h"
+
+#include "opal/util/printf.h"
 
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
@@ -132,7 +135,7 @@ static int example_component_register(void)
        containing the major.minor.release version number from the
        libfoo support library (see configure.m4 for how we got these C
        macros). */
-    asprintf(&str, "%s.%s.%s",
+    opal_asprintf(&str, "%s.%s.%s",
              OP_EXAMPLE_LIBFOO_VERSION_MAJOR,
              OP_EXAMPLE_LIBFOO_VERSION_MINOR,
              OP_EXAMPLE_LIBFOO_VERSION_RELEASE);

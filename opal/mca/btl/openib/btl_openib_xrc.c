@@ -8,6 +8,7 @@
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 #include <dlfcn.h>
 
 #include "opal/mca/btl/base/base.h"
+#include "opal/util/printf.h"
 #include "btl_openib_xrc.h"
 #include "btl_openib.h"
 
@@ -53,7 +55,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
 #endif
 
     dev_name = ibv_get_device_name(device->ib_dev);
-    len = asprintf(&xrc_file_name,
+    len = opal_asprintf(&xrc_file_name,
             "%s"OPAL_PATH_SEP"openib_xrc_domain_%s",
             opal_process_info.job_session_dir, dev_name);
     if (0 > len) {

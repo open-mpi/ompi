@@ -4,6 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,6 +17,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "opal/util/printf.h"
 #include "oshmem_config.h"
 #include "orte/util/show_help.h"
 #include "shmem.h"
@@ -70,7 +72,7 @@ static inline int check_mxm_tls(char *var)
     }
 
     if (NULL != strstr(str, "shm")) {
-        if (0 < asprintf(&str,
+        if (0 < opal_asprintf(&str,
                     "%s=%s",
                     var, getenv(var)
                     )) {

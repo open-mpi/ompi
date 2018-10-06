@@ -16,6 +16,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,6 +63,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/error.h"
 #include "opal/util/basename.h"
+#include "opal/util/printf.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/runtime/opal.h"
@@ -210,7 +212,7 @@ main(int argc, char *argv[])
         char * full_metadata_path = NULL;
         FILE * metadata = NULL;
 
-        asprintf(&full_metadata_path, "%s/%s/%s",
+        opal_asprintf(&full_metadata_path, "%s/%s/%s",
                  opal_restart_globals.snapshot_loc,
                  opal_restart_globals.snapshot_ref,
                  opal_restart_globals.snapshot_metadata);
@@ -293,10 +295,10 @@ main(int argc, char *argv[])
 
     snapshot = OBJ_NEW(opal_crs_base_snapshot_t);
     snapshot->cold_start         = true;
-    asprintf(&(snapshot->snapshot_directory), "%s/%s",
+    opal_asprintf(&(snapshot->snapshot_directory), "%s/%s",
              opal_restart_globals.snapshot_loc,
              opal_restart_globals.snapshot_ref);
-    asprintf(&(snapshot->metadata_filename), "%s/%s",
+    opal_asprintf(&(snapshot->metadata_filename), "%s/%s",
              snapshot->snapshot_directory,
              opal_restart_globals.snapshot_metadata);
 
@@ -421,7 +423,7 @@ static int initialize(int argc, char *argv[])
         free(tmp_env_var);
         tmp_env_var = NULL;
 
-        asprintf(&zip_dir, "%s/%s%s",
+        opal_asprintf(&zip_dir, "%s/%s%s",
                  opal_restart_globals.snapshot_loc,
                  opal_restart_globals.snapshot_ref,
                  opal_restart_globals.snapshot_compress_postfix);
@@ -599,7 +601,7 @@ static int check_file(void)
     /*
      * Check for the existance of the snapshot handle in the snapshot directory
      */
-    asprintf(&path_to_check, "%s/%s",
+    opal_asprintf(&path_to_check, "%s/%s",
              opal_restart_globals.snapshot_loc,
              opal_restart_globals.snapshot_ref);
 
@@ -642,8 +644,8 @@ static int post_env_vars(int prev_pid, opal_crs_base_snapshot_t *snapshot)
      * This is needed so we can pass the previous environment to the restarted
      * application process.
      */
-    asprintf(&proc_file, "%s/%s-%d", opal_tmp_directory(), OPAL_CR_BASE_ENV_NAME, prev_pid);
-    asprintf(&command, "env | grep OMPI_ > %s", proc_file);
+    opal_asprintf(&proc_file, "%s/%s-%d", opal_tmp_directory(), OPAL_CR_BASE_ENV_NAME, prev_pid);
+    opal_asprintf(&command, "env | grep OMPI_ > %s", proc_file);
 
     opal_output_verbose(5, opal_restart_globals.output,
                         "post_env_vars: Execute: <%s>", command);
@@ -671,7 +673,7 @@ static int post_env_vars(int prev_pid, opal_crs_base_snapshot_t *snapshot)
             free(command);
             command = NULL;
         }
-        asprintf(&command, "mkdir -p %s", loc_mkdir[i]);
+        opal_asprintf(&command, "mkdir -p %s", loc_mkdir[i]);
 
         opal_output_verbose(5, opal_restart_globals.output,
                             "post_env_vars: Execute: <%s>", command);
@@ -696,7 +698,7 @@ static int post_env_vars(int prev_pid, opal_crs_base_snapshot_t *snapshot)
             free(command);
             command = NULL;
         }
-        asprintf(&command, "touch %s", loc_touch[i]);
+        opal_asprintf(&command, "touch %s", loc_touch[i]);
 
         opal_output_verbose(5, opal_restart_globals.output,
                             "post_env_vars: Execute: <%s>", command);

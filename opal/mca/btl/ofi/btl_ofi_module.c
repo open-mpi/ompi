@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc, All rights reserved
  *
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #include "opal_config.h"
 #include <string.h>
 #include "opal/class/opal_bitmap.h"
+#include "opal/util/printf.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/mpool/base/base.h"
@@ -138,7 +140,7 @@ void mca_btl_ofi_rcache_init (mca_btl_ofi_module_t *module)
         mca_rcache_base_resources_t rcache_resources;
         char *tmp;
 
-        (void) asprintf (&tmp, "ofi.%s", module->linux_device_name);
+        (void) opal_asprintf (&tmp, "ofi.%s", module->linux_device_name);
 
         rcache_resources.cache_name     = tmp;
         rcache_resources.reg_data       = (void *) module;

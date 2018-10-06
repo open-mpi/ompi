@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -160,11 +161,11 @@ static int open_file(const char *base, const char *topic)
             filename = opal_os_path( false, search_dirs[i], base, NULL );
             opal_show_help_yyin = fopen(filename, "r");
             if (NULL == opal_show_help_yyin) {
-                asprintf(&err_msg, "%s: %s", filename, strerror(errno));
+                opal_asprintf(&err_msg, "%s: %s", filename, strerror(errno));
                 base_len = strlen(base);
                 if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
                     free(filename);
-                    asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
+                    opal_asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
                     opal_show_help_yyin = fopen(filename, "r");
                 }
             }
@@ -308,7 +309,7 @@ char *opal_show_help_vstring(const char *filename, const char *topic,
 
     if (OPAL_SUCCESS == rc) {
         /* Apply the formatting to make the final output string */
-        vasprintf(&output, single_string, arglist);
+        opal_vasprintf(&output, single_string, arglist);
         free(single_string);
     }
 

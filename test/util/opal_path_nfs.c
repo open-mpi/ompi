@@ -18,6 +18,7 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +47,7 @@
 #include "support.h"
 #include "opal/util/path.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #define DEBUG
 
@@ -127,7 +129,7 @@ void test(char* file, bool expect)
         test_success();
     } else {
         char * msg;
-        asprintf(&msg, "Mismatch: input \"%s\", expected:%d got:%d\n",
+        opal_asprintf(&msg, "Mismatch: input \"%s\", expected:%d got:%d\n",
                  file, expect, !expect);
         test_failure(msg);
         free(msg);

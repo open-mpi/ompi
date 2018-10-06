@@ -6,6 +6,7 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 
 #include "opal/constants.h"
 #include "opal/util/basename.h"
@@ -90,15 +92,15 @@ int opal_compress_gzip_compress_nb(char * fname, char **cname, char **postfix, p
         if( is_dir ) {
 #if 0
             opal_compress_base_tar_create(&base_fname);
-            asprintf(cname, "%s.gz", base_fname);
-            asprintf(&cmd, "gzip %s", base_fname);
+            opal_asprintf(cname, "%s.gz", base_fname);
+            opal_asprintf(&cmd, "gzip %s", base_fname);
 #else
-            asprintf(cname, "%s.tar.gz", base_fname);
-            asprintf(&cmd, "tar -zcf %s %s", *cname, base_fname);
+            opal_asprintf(cname, "%s.tar.gz", base_fname);
+            opal_asprintf(&cmd, "tar -zcf %s %s", *cname, base_fname);
 #endif
         } else {
-            asprintf(cname, "%s.gz", base_fname);
-            asprintf(&cmd, "gzip %s", base_fname);
+            opal_asprintf(cname, "%s.gz", base_fname);
+            opal_asprintf(&cmd, "gzip %s", base_fname);
         }
 
         opal_output_verbose(10, mca_compress_gzip_component.super.output_handle,
@@ -120,7 +122,7 @@ int opal_compress_gzip_compress_nb(char * fname, char **cname, char **postfix, p
         } else {
             *postfix = strdup(".gz");
         }
-        asprintf(cname, "%s%s", fname, *postfix);
+        opal_asprintf(cname, "%s%s", fname, *postfix);
 
     }
     else {
@@ -184,7 +186,7 @@ int opal_compress_gzip_decompress_nb(char * cname, char **fname, pid_t *child_pi
         /* Fork(gunzip) */
         loc_pid = fork();
         if( loc_pid == 0 ) { /* Child */
-            asprintf(&cmd, "gunzip %s", cname);
+            opal_asprintf(&cmd, "gunzip %s", cname);
 
             opal_output_verbose(10, mca_compress_gzip_component.super.output_handle,
                                 "compress:gzip: decompress_nb() command [%s]",

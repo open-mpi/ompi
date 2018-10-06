@@ -14,6 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,7 @@
 
 #include "opal_config.h"
 #include <string.h>
+#include "opal/util/printf.h"
 #include "common_sm_mpool.h"
 #include "opal/mca/common/sm/common_sm.h"
 #include "opal/mca/common/cuda/common_cuda.h"
@@ -222,7 +224,7 @@ int mca_common_sm_mpool_ft_event(int state) {
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Record the shared memory filename */
-        asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
+        opal_asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
                   opal_process_info.job_session_dir,
                   opal_proc_local_get()->proc_hostname );
         /* Disabled to get FT code compiled again
