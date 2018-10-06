@@ -7,6 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -736,10 +737,10 @@ static int app_define_pipe_names(void)
         app_comm_pipe_w = NULL;
     }
 
-    asprintf(&app_comm_pipe_r, "%s/%s.%d_%d",
+    opal_asprintf(&app_comm_pipe_r, "%s/%s.%d_%d",
              opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R,
              (int)getpid(), current_unique_id);
-    asprintf(&app_comm_pipe_w, "%s/%s.%d_%d",
+    opal_asprintf(&app_comm_pipe_w, "%s/%s.%d_%d",
              opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W,
              (int)getpid(), current_unique_id);
 

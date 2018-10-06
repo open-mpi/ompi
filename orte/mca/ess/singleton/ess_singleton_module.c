@@ -240,14 +240,14 @@ static int rte_init(void)
      */
     if (NULL == getenv(OPAL_MCA_PREFIX"orte_ess_num_procs")) {
         char * num_procs;
-        asprintf(&num_procs, "%d", orte_process_info.num_procs);
+        opal_asprintf(&num_procs, "%d", orte_process_info.num_procs);
         opal_setenv(OPAL_MCA_PREFIX"orte_ess_num_procs", num_procs, true, &environ);
         free(num_procs);
         added_num_procs = true;
     }
     if (NULL == getenv("OMPI_APP_CTX_NUM_PROCS")) {
         char * num_procs;
-        asprintf(&num_procs, "%d", orte_process_info.num_procs);
+        opal_asprintf(&num_procs, "%d", orte_process_info.num_procs);
         opal_setenv("OMPI_APP_CTX_NUM_PROCS", num_procs, true, &environ);
         free(num_procs);
         added_app_ctx = true;
@@ -592,13 +592,13 @@ static int fork_hnp(void)
 
     /* tell the daemon to report back its uri so we can connect to it */
     opal_argv_append(&argc, &argv, "--report-uri");
-    asprintf(&param, "%d", p[1]);
+    opal_asprintf(&param, "%d", p[1]);
     opal_argv_append(&argc, &argv, param);
     free(param);
 
     /* give the daemon a pipe it can watch to tell when we have died */
     opal_argv_append(&argc, &argv, "--singleton-died-pipe");
-    asprintf(&param, "%d", death_pipe[0]);
+    opal_asprintf(&param, "%d", death_pipe[0]);
     opal_argv_append(&argc, &argv, param);
     free(param);
 

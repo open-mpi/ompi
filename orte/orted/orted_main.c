@@ -623,7 +623,7 @@ int orte_daemon(int argc, char *argv[])
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             goto DONE;
         }
-        asprintf(&env_str, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
+        opal_asprintf(&env_str, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
         opal_argv_append_nosize(&singenv, env_str);
         free(env_str);
 
@@ -632,7 +632,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* create a string that contains our uri + sysinfo + PMIx server URI envars */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
-        asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, nptr);
+        opal_asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, nptr);
         free(sysinfo);
         free(nptr);
 

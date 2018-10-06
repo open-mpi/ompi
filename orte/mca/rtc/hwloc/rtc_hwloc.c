@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Inria.  All rights reserved.
  * $COPYRIGHT$
@@ -135,7 +135,7 @@ static int init(void)
     }
     /* create the shmem file in our session dir so it
      * will automatically get cleaned up */
-    asprintf(&shmemfile, "%s/hwloc.sm", orte_process_info.jobfam_session_dir);
+    opal_asprintf(&shmemfile, "%s/hwloc.sm", orte_process_info.jobfam_session_dir);
     /* let's make sure we have enough space for the backing file */
     if (OPAL_SUCCESS != (rc = enough_space(shmemfile, shmemsize,
                                            &amount_space_avail,
@@ -303,7 +303,7 @@ static void set(orte_job_t *jobdat,
                 } else {
                     char *tmp;
                     (void)hwloc_bitmap_list_asprintf(&tmp, sum->available);
-                    asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
+                    opal_asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
                              opal_strerror(rc), tmp);
                     free(tmp);
                 }
@@ -335,7 +335,7 @@ static void set(orte_job_t *jobdat,
         cpuset = hwloc_bitmap_alloc();
         if (0 != (rc = hwloc_bitmap_list_sscanf(cpuset, cpu_bitmap))) {
             /* See comment above about "This may be a small memory leak" */
-            asprintf(&msg, "hwloc_bitmap_sscanf returned \"%s\" for the string \"%s\"",
+            opal_asprintf(&msg, "hwloc_bitmap_sscanf returned \"%s\" for the string \"%s\"",
                      opal_strerror(rc), cpu_bitmap);
             if (NULL == msg) {
                 msg = "failed to convert bitmap list to hwloc bitmap";
@@ -370,7 +370,7 @@ static void set(orte_job_t *jobdat,
             } else if (errno == EXDEV) {
                 msg = "hwloc indicates cpu binding cannot be enforced";
             } else {
-                asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
+                opal_asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
                          opal_strerror(rc), cpu_bitmap);
             }
             if (OPAL_BINDING_REQUIRED(jobdat->map->binding)) {

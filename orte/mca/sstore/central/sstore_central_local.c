@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -545,7 +546,7 @@ static orte_sstore_central_local_snapshot_info_t *create_new_handle_info(orte_ss
      * Create a sub structure for each child
      */
     for (i=0; i < orte_local_children->size; i++) {
-	    if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
             continue;
         }
         append_new_app_handle_info(handle_info, &child->name);
@@ -683,13 +684,13 @@ static int process_global_push(orte_process_name_t* peer, opal_buffer_t* buffer,
             free(app_info->local_location);
             app_info->local_location = NULL;
         }
-        asprintf(&(app_info->local_location), handle_info->location_fmt, app_info->name.vpid);
+        opal_asprintf(&(app_info->local_location), handle_info->location_fmt, app_info->name.vpid);
 
         if( NULL != app_info->metadata_filename ) {
             free(app_info->metadata_filename);
             app_info->metadata_filename = NULL;
         }
-        asprintf(&(app_info->metadata_filename), "%s/%s",
+        opal_asprintf(&(app_info->metadata_filename), "%s/%s",
                  app_info->local_location,
                  orte_sstore_base_local_metadata_filename);
     }

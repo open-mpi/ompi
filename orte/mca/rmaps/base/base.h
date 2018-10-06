@@ -33,6 +33,7 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/util/printf.h"
 #include "orte/mca/mca.h"
 
 #include "orte/runtime/orte_globals.h"

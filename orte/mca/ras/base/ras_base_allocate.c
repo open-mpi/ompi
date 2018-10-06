@@ -32,6 +32,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/dss/dss.h"
 #include "opal/util/argv.h"
 #include "opal/mca/if/if.h"
@@ -61,9 +62,9 @@ void orte_ras_base_display_alloc(void)
     orte_node_t *alloc;
 
     if (orte_xml_output) {
-        asprintf(&tmp, "<allocation>\n");
+        opal_asprintf(&tmp, "<allocation>\n");
     } else {
-        asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
+        opal_asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
     }
     if (orte_hnp_is_allocated) {
             istart = 0;
@@ -76,11 +77,11 @@ void orte_ras_base_display_alloc(void)
         }
         if (orte_xml_output) {
             /* need to create the output in XML format */
-            asprintf(&tmp2, "\t<host name=\"%s\" slots=\"%d\" max_slots=\"%d\" slots_inuse=\"%d\">\n",
+            opal_asprintf(&tmp2, "\t<host name=\"%s\" slots=\"%d\" max_slots=\"%d\" slots_inuse=\"%d\">\n",
                      (NULL == alloc->name) ? "UNKNOWN" : alloc->name,
                      (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse);
         } else {
-            asprintf(&tmp2, "\t%s: flags=0x%02x slots=%d max_slots=%d slots_inuse=%d state=%s\n",
+            opal_asprintf(&tmp2, "\t%s: flags=0x%02x slots=%d max_slots=%d slots_inuse=%d state=%s\n",
                      (NULL == alloc->name) ? "UNKNOWN" : alloc->name, alloc->flags,
                      (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse,
                      orte_node_state_to_str(alloc->state));
@@ -88,7 +89,7 @@ void orte_ras_base_display_alloc(void)
         if (NULL == tmp) {
             tmp = tmp2;
         } else {
-            asprintf(&tmp3, "%s%s", tmp, tmp2);
+            opal_asprintf(&tmp3, "%s%s", tmp, tmp2);
             free(tmp);
             free(tmp2);
             tmp = tmp3;

@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     printf("Hello from process %d of %d\n", self, size);
     MPI_Barrier(MPI_COMM_WORLD);
     if (-1 == reader || reader == self) {
-        asprintf(&junk, "./junk%d", self);
+        opal_asprintf(&junk, "./junk%d", self);
         unlink(junk);
         file = fopen(junk, "w+");
         if (NULL == file) {

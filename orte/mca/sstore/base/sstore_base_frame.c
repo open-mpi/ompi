@@ -7,6 +7,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -128,7 +129,7 @@ static int orte_sstore_base_open(mca_base_open_flag_t flags)
      * location
      */
     if( NULL != orte_sstore_base_global_snapshot_ref ) {
-        asprintf(&orte_sstore_base_prelaunch_location,
+        opal_asprintf(&orte_sstore_base_prelaunch_location,
                  "%s/%s/%d",
                  orte_sstore_base_global_snapshot_dir,
                  orte_sstore_base_global_snapshot_ref,

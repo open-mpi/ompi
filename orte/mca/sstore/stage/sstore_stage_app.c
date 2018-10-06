@@ -1,6 +1,7 @@
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -252,7 +253,7 @@ int orte_sstore_stage_app_get_attr(orte_sstore_base_handle_t handle, orte_sstore
      * Access metadata
      */
     if( SSTORE_METADATA_GLOBAL_SNAP_SEQ == key ) {
-        asprintf(value, "%d", handle_info->seq_num);
+        opal_asprintf(value, "%d", handle_info->seq_num);
     }
     else if( SSTORE_METADATA_LOCAL_SNAP_LOC == key) {
         *value = strdup(handle_info->local_location);

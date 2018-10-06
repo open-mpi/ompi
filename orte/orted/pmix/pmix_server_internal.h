@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -42,6 +42,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/printf.h"
 #include "opal/util/proc.h"
 #include "opal/sys/atomic.h"
 
@@ -114,7 +115,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
     do {                                                     \
         pmix_server_req_t *_req;                             \
         _req = OBJ_NEW(pmix_server_req_t);                   \
-        (void)asprintf(&_req->operation, "DMDX: %s:%d", __FILE__, __LINE__); \
+        opal_asprintf(&_req->operation, "DMDX: %s:%d", __FILE__, __LINE__); \
         _req->target = (p);                                  \
         _req->mdxcbfunc = (ocf);                             \
         _req->cbdata = (ocd);                                \
@@ -129,7 +130,7 @@ OBJ_CLASS_DECLARATION(orte_pmix_mdx_caddy_t);
     do {                                                     \
         pmix_server_req_t *_req;                             \
         _req = OBJ_NEW(pmix_server_req_t);                   \
-        (void)asprintf(&_req->operation, "SPAWN: %s:%d", __FILE__, __LINE__); \
+        opal_asprintf(&_req->operation, "SPAWN: %s:%d", __FILE__, __LINE__); \
         _req->jdata = (j);                                   \
         _req->spcbfunc = (ocf);                              \
         _req->cbdata = (ocd);                                \

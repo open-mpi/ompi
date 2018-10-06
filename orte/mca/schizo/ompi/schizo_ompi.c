@@ -786,7 +786,7 @@ static int parse_env(char *path,
     /* If the user specified --path, store it in the user's app
        environment via the OMPI_exec_path variable. */
     if (NULL != path) {
-        asprintf(&value, "OMPI_exec_path=%s", path);
+        opal_asprintf(&value, "OMPI_exec_path=%s", path);
         opal_argv_append_nosize(dstenv, value);
         /* save it for any comm_spawn'd apps */
         opal_argv_append_nosize(&orte_forwarded_envars, value);
@@ -880,14 +880,14 @@ static int setup_fork(orte_job_t *jdata,
 
         /* Reset PATH */
         if (0 == strncmp("PATH=", app->env[i], 5)) {
-            asprintf(&newenv, "%s/bin:%s", param, app->env[i] + 5);
+            opal_asprintf(&newenv, "%s/bin:%s", param, app->env[i] + 5);
             opal_setenv("PATH", newenv, true, &app->env);
             free(newenv);
         }
 
         /* Reset LD_LIBRARY_PATH */
         else if (0 == strncmp("LD_LIBRARY_PATH=", app->env[i], 16)) {
-            asprintf(&newenv, "%s/lib:%s", param, app->env[i] + 16);
+            opal_asprintf(&newenv, "%s/lib:%s", param, app->env[i] + 16);
             opal_setenv("LD_LIBRARY_PATH", newenv, true, &app->env);
             free(newenv);
         }
@@ -914,7 +914,7 @@ static int setup_fork(orte_job_t *jdata,
     }
 
     /* set the app_context number into the environment */
-    asprintf(&param, "%ld", (long)app->idx);
+    opal_asprintf(&param, "%ld", (long)app->idx);
     opal_setenv("OMPI_MCA_orte_app_num", param, true, &app->env);
     free(param);
 
@@ -926,12 +926,12 @@ static int setup_fork(orte_job_t *jdata,
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    asprintf(&param, "%ld", (long)jdata->total_slots_alloc);
+    opal_asprintf(&param, "%ld", (long)jdata->total_slots_alloc);
     opal_setenv("OMPI_UNIVERSE_SIZE", param, true, &app->env);
     free(param);
 
     /* pass the number of nodes involved in this job */
-    asprintf(&param, "%ld", (long)(jdata->map->num_nodes));
+    opal_asprintf(&param, "%ld", (long)(jdata->map->num_nodes));
     opal_setenv("OMPI_MCA_orte_num_nodes", param, true, &app->env);
     free(param);
 
@@ -993,7 +993,7 @@ static int setup_fork(orte_job_t *jdata,
      */
     opal_unsetenv("OMPI_MCA_orte_ess_name", &app->env);
 
-    asprintf(&param, "%ld", (long)jdata->num_procs);
+    opal_asprintf(&param, "%ld", (long)jdata->num_procs);
     opal_setenv("OMPI_MCA_orte_ess_num_procs", param, true, &app->env);
 
     /* although the num_procs is the comm_world size, users
@@ -1014,7 +1014,7 @@ static int setup_fork(orte_job_t *jdata,
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    asprintf(&param, "%ld", (long)jdata->num_local_procs);
+    opal_asprintf(&param, "%ld", (long)jdata->num_local_procs);
     opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", param, true, &app->env);
     free(param);
 
@@ -1028,7 +1028,7 @@ static int setup_fork(orte_job_t *jdata,
      * so we pass them as envars to avoid introducing further
      * ORTE calls in the MPI layer
      */
-    asprintf(&num_app_ctx, "%lu", (unsigned long)jdata->num_apps);
+    opal_asprintf(&num_app_ctx, "%lu", (unsigned long)jdata->num_apps);
 
     /* build some common envars we need to pass for MPI-3 compatibility */
     nps = NULL;
@@ -1074,7 +1074,7 @@ static int setup_fork(orte_job_t *jdata,
                     /* we have the var - prepend it */
                     param = saveptr;
                     ++param;  // move past where the '=' sign was
-                    (void)asprintf(&p2, "%s%c%s", attr->data.envar.value,
+                    opal_asprintf(&p2, "%s%c%s", attr->data.envar.value,
                                    attr->data.envar.separator, param);
                     *saveptr = '=';  // restore the current envar setting
                     opal_setenv(attr->data.envar.envar, p2, true, &app->env);
@@ -1099,7 +1099,7 @@ static int setup_fork(orte_job_t *jdata,
                     /* we have the var - prepend it */
                     param = saveptr;
                     ++param;  // move past where the '=' sign was
-                    (void)asprintf(&p2, "%s%c%s", param, attr->data.envar.separator,
+                    opal_asprintf(&p2, "%s%c%s", param, attr->data.envar.separator,
                                    attr->data.envar.value);
                     *saveptr = '=';  // restore the current envar setting
                     opal_setenv(attr->data.envar.envar, p2, true, &app->env);
@@ -1135,7 +1135,7 @@ static int setup_fork(orte_job_t *jdata,
                     /* we have the var - prepend it */
                     param = saveptr;
                     ++param;  // move past where the '=' sign was
-                    (void)asprintf(&p2, "%s%c%s", attr->data.envar.value,
+                    opal_asprintf(&p2, "%s%c%s", attr->data.envar.value,
                                    attr->data.envar.separator, param);
                     *saveptr = '=';  // restore the current envar setting
                     opal_setenv(attr->data.envar.envar, p2, true, &app->env);
@@ -1160,7 +1160,7 @@ static int setup_fork(orte_job_t *jdata,
                     /* we have the var - prepend it */
                     param = saveptr;
                     ++param;  // move past where the '=' sign was
-                    (void)asprintf(&p2, "%s%c%s", param, attr->data.envar.separator,
+                    opal_asprintf(&p2, "%s%c%s", param, attr->data.envar.separator,
                                    attr->data.envar.value);
                     *saveptr = '=';  // restore the current envar setting
                     opal_setenv(attr->data.envar.envar, p2, true, &app->env);
@@ -1252,7 +1252,7 @@ static int setup_child(orte_job_t *jdata,
         rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         return rc;
     }
-    asprintf(&value, "%lu", (unsigned long) child->local_rank);
+    opal_asprintf(&value, "%lu", (unsigned long) child->local_rank);
     opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, env);
     free(value);
 
@@ -1268,7 +1268,7 @@ static int setup_child(orte_job_t *jdata,
         rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         return rc;
     }
-    asprintf(&value, "%lu", (unsigned long) child->node_rank);
+    opal_asprintf(&value, "%lu", (unsigned long) child->node_rank);
     opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, env);
     /* set an mca param for it too */
     opal_setenv("OMPI_MCA_orte_ess_node_rank", value, true, env);
@@ -1289,7 +1289,7 @@ static int setup_child(orte_job_t *jdata,
          * an initial start, but procs would like to know if they are being
          * restarted so they can take appropriate action
          */
-        asprintf(&value, "%d", nrestarts);
+        opal_asprintf(&value, "%d", nrestarts);
         opal_setenv("OMPI_MCA_orte_num_restarts", value, true, env);
         free(value);
     }

@@ -12,7 +12,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +40,7 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/alfg.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -89,7 +90,7 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
      * number if the system has a different sized long (8 would be for
      * sizeof(int) == 4)).
      */
-    asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2);
+    opal_asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2);
 
     /* print the first number */
     int_ptr = (unsigned int*) &unique_key[0];

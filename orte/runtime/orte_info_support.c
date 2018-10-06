@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 #include "opal/runtime/opal_info_support.h"
 
 #include "orte/include/orte/frameworks.h"
@@ -97,7 +99,7 @@ void orte_info_show_orte_version(const char *scope)
 {
     char *tmp, *tmp2;
 
-    asprintf(&tmp, "%s:version:full", orte_info_type_orte);
+    opal_asprintf(&tmp, "%s:version:full", orte_info_type_orte);
     tmp2 = opal_info_make_version_str(scope,
                                       ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                                       ORTE_RELEASE_VERSION,
@@ -106,11 +108,10 @@ void orte_info_show_orte_version(const char *scope)
     opal_info_out("Open RTE", tmp, tmp2);
     free(tmp);
     free(tmp2);
-    asprintf(&tmp, "%s:version:repo", orte_info_type_orte);
+    opal_asprintf(&tmp, "%s:version:repo", orte_info_type_orte);
     opal_info_out("Open RTE repo revision", tmp, ORTE_REPO_REV);
     free(tmp);
-    asprintf(&tmp, "%s:version:release_date", orte_info_type_orte);
+    opal_asprintf(&tmp, "%s:version:release_date", orte_info_type_orte);
     opal_info_out("Open RTE release date", tmp, ORTE_RELEASE_DATE);
     free(tmp);
 }
-

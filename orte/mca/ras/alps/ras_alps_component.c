@@ -13,6 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -111,7 +112,7 @@ get_res_id(void)
             return 0;
         }
 
-        ret = asprintf (&apstat_cmd, "%s -r", ras_alps_apstat_cmd);
+        ret = opal_asprintf (&apstat_cmd, "%s -r", ras_alps_apstat_cmd);
         if (0 > ret) {
             return 0;
         }

@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -257,7 +257,7 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
         /* save this value in the global job ident string for
          * later use in any error reporting
          */
-    	orte_job_ident = strdup(slurm_jobid);
+        orte_job_ident = strdup(slurm_jobid);
     }
 
     slurm_node_str = getenv("SLURM_NODELIST");
@@ -1017,7 +1017,7 @@ static int dyn_allocate(orte_job_t *jdata)
     opal_argv_append_nosize(&cmd, "allocate");
     /* add the jobid */
     orte_util_convert_jobid_to_string(&jstring, jdata->jobid);
-    asprintf(&tmp, "jobid=%s", jstring);
+    opal_asprintf(&tmp, "jobid=%s", jstring);
     opal_argv_append_nosize(&cmd, tmp);
     free(tmp);
     free(jstring);
@@ -1036,7 +1036,7 @@ static int dyn_allocate(orte_job_t *jdata)
 #endif
 
     /* pass the timeout */
-    asprintf(&tmp, "timeout=%d", mca_ras_slurm_component.timeout);
+    opal_asprintf(&tmp, "timeout=%d", mca_ras_slurm_component.timeout);
     opal_argv_append_nosize(&cmd, tmp);
     free(tmp);
 
@@ -1047,16 +1047,16 @@ static int dyn_allocate(orte_job_t *jdata)
             continue;
         }
         /* add the app id, preceded by a colon separator */
-        asprintf(&tmp, ": app=%d", (int)app->idx);
+        opal_asprintf(&tmp, ": app=%d", (int)app->idx);
         opal_argv_append_nosize(&cmd, tmp);
         free(tmp);
         /* add the number of process "slots" we need */
-        asprintf(&tmp, "np=%d", app->num_procs);
+        opal_asprintf(&tmp, "np=%d", app->num_procs);
         opal_argv_append_nosize(&cmd, tmp);
         free(tmp);
         /* if we were given a minimum number of nodes, pass it along */
         if (orte_get_attribute(&app->attributes, ORTE_APP_MIN_NODES, (void**)&i64ptr, OPAL_INT64)) {
-            asprintf(&tmp, "N=%ld", (long int)i64);
+            opal_asprintf(&tmp, "N=%ld", (long int)i64);
             opal_argv_append_nosize(&cmd, tmp);
             free(tmp);
         }
@@ -1065,7 +1065,7 @@ static int dyn_allocate(orte_job_t *jdata)
          */
         node_list =  get_node_list(app);
         if (NULL != node_list) {
-            asprintf(&tmp, "node_list=%s", node_list);
+            opal_asprintf(&tmp, "node_list=%s", node_list);
             opal_argv_append_nosize(&cmd, tmp);
             free(node_list);
             free(tmp);
@@ -1192,7 +1192,7 @@ static int read_ip_port(char *filename, char **ip, uint16_t *port)
 
     memset(line, 0, ORTE_SLURM_DYN_MAX_SIZE);
     while (NULL != fgets(line, ORTE_SLURM_DYN_MAX_SIZE, fp) &&
-    		 (!found_ip || !found_port)) {
+                 (!found_ip || !found_port)) {
         if (0 == strlen(line)) {
             continue;
         }

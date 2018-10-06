@@ -227,12 +227,12 @@ static int rte_init(void)
      * MPI-3 required info key
      */
     if (NULL == getenv(OPAL_MCA_PREFIX"orte_ess_num_procs")) {
-        asprintf(&ev1, OPAL_MCA_PREFIX"orte_ess_num_procs=%d", orte_process_info.num_procs);
+        opal_asprintf(&ev1, OPAL_MCA_PREFIX"orte_ess_num_procs=%d", orte_process_info.num_procs);
         putenv(ev1);
         added_num_procs = true;
     }
     if (NULL == getenv("OMPI_APP_CTX_NUM_PROCS")) {
-        asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
+        opal_asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", orte_process_info.num_procs);
         putenv(ev2);
         added_app_ctx = true;
     }
@@ -279,7 +279,7 @@ static int rte_init(void)
         opal_output_verbose(2, orte_ess_base_framework.framework_output,
                             "%s transport key %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), string_key);
-        asprintf(&envar, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
+        opal_asprintf(&envar, OPAL_MCA_PREFIX"orte_precondition_transports=%s", string_key);
         putenv(envar);
         added_transport_keys = true;
         /* cannot free the envar as that messes up our environ */

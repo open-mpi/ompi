@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1278,13 +1279,13 @@ static int local_define_pipe_names(orte_snapc_full_app_snapshot_t *vpid_snapshot
         vpid_snapshot->comm_pipe_w = NULL;
     }
 
-    asprintf(&(vpid_snapshot->comm_pipe_w),
+    opal_asprintf(&(vpid_snapshot->comm_pipe_w),
              "%s/%s.%d_%d",
              opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R,
              vpid_snapshot->process_pid,
              vpid_snapshot->unique_pipe_id);
 
-    asprintf(&(vpid_snapshot->comm_pipe_r),
+    opal_asprintf(&(vpid_snapshot->comm_pipe_r),
              "%s/%s.%d_%d",
              opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W,
              vpid_snapshot->process_pid,
@@ -1918,9 +1919,9 @@ static int snapc_full_local_get_vpids(void)
      * Otherwise update or populate the list
      */
     for (i=0; i < orte_local_children->size; i++) {
-	    if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-		    continue;
-	    }
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                    continue;
+            }
 
         /* if the list is empty or this child is not in the list then add it */
         if( 0    >= list_len ||

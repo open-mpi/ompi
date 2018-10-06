@@ -30,6 +30,7 @@
 
 #include "orte/mca/mca.h"
 #include "opal/class/opal_list.h"
+#include "opal/util/printf.h"
 
 #include "orte/mca/plm/plm.h"
 
