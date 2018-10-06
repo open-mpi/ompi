@@ -62,6 +62,8 @@ do
 	    ;;
         --with*=internal)
             ;;
+        --with*=external)
+            ;;
 	*)
 	    case $subdir_arg in
 	    *\'*) subdir_arg=`echo "$subdir_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
