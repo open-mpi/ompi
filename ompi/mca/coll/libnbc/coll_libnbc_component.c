@@ -54,6 +54,15 @@ static mca_base_var_enum_value_t iallgather_algorithms[] = {
     {0, NULL}
 };
 
+int libnbc_iallreduce_algorithm = 0;             /* iallreduce user forced algorithm */
+static mca_base_var_enum_value_t iallreduce_algorithms[] = {
+    {0, "ignore"},
+    {1, "ring"},
+    {2, "binomial"},
+    {3, "rabenseifner"},
+    {0, NULL}
+};
+
 int libnbc_ibcast_algorithm = 0;             /* ibcast user forced algorithm */
 int libnbc_ibcast_knomial_radix = 4;
 static mca_base_var_enum_value_t ibcast_algorithms[] = {
@@ -96,7 +105,6 @@ static int libnbc_register(void);
 static int libnbc_init_query(bool, bool);
 static mca_coll_base_module_t *libnbc_comm_query(struct ompi_communicator_t *, int *);
 static int libnbc_module_enable(mca_coll_base_module_t *, struct ompi_communicator_t *);
-
 
 /*
  * Instantiate the public struct with all of our public information
@@ -213,6 +221,16 @@ libnbc_register(void)
                                     &libnbc_iallgather_algorithm);
     OBJ_RELEASE(new_enum);
 
+    libnbc_iallreduce_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_iallreduce_algorithms", iallreduce_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "iallreduce_algorithm",
+                                    "Which iallreduce algorithm is used: 0 ignore, 1 ring, 2 binomial, 3 rabenseifner",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_iallreduce_algorithm);
+    OBJ_RELEASE(new_enum);
+
     libnbc_ibcast_algorithm = 0;
     (void) mca_base_var_enum_create("coll_libnbc_ibcast_algorithms", ibcast_algorithms, &new_enum);
     mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
@@ -263,8 +281,6 @@ libnbc_register(void)
 
     return OMPI_SUCCESS;
 }
-
-
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
