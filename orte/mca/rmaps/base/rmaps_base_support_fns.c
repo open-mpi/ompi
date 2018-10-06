@@ -653,20 +653,11 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         }
     }
 
- process:
+  process:
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Starting at node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ((orte_node_t*)cur_node_item)->name));
-
-    /* make life easier - put the bookmark at the top of the list,
-     * shifting everything above it to the end of the list while
-     * preserving order
-     */
-    while (cur_node_item != (item = opal_list_get_first(node_list))) {
-        opal_list_remove_item(node_list, item);
-        opal_list_append(node_list, item);
-    }
 
     return (orte_node_t*)cur_node_item;
 }
