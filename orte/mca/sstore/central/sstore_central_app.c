@@ -1,6 +1,7 @@
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -252,7 +253,7 @@ int orte_sstore_central_app_get_attr(orte_sstore_base_handle_t handle, orte_ssto
      * Access metadata
      */
     if( SSTORE_METADATA_GLOBAL_SNAP_SEQ == key ) {
-        asprintf(value, "%d", handle_info->seq_num);
+        opal_asprintf(value, "%d", handle_info->seq_num);
         OPAL_OUTPUT_VERBOSE((10, mca_sstore_central_component.super.output_handle,
                              "sstore:central:(app): get_attr(%d, %d) Seq = <%s>", key, handle_info->id, *value));
     }

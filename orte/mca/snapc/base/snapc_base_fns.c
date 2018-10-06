@@ -9,7 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -836,7 +836,7 @@ int orte_snapc_ckpt_state_str(char ** state_str, int state)
         *state_str = strdup("Error");
         break;
     default:
-        asprintf(state_str, "Unknown %d", state);
+        opal_asprintf(state_str, "Unknown %d", state);
         break;
     }
 

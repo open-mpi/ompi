@@ -15,7 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2017-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +37,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -179,7 +180,7 @@ void orte_odls_base_start_threads(orte_job_t *jdata)
         orte_odls_globals.ev_bases =
             (opal_event_base_t**)malloc(orte_odls_globals.num_threads * sizeof(opal_event_base_t*));
         for (i=0; i < orte_odls_globals.num_threads; i++) {
-            asprintf(&tmp, "ORTE-ODLS-%d", i);
+            opal_asprintf(&tmp, "ORTE-ODLS-%d", i);
             orte_odls_globals.ev_bases[i] = opal_progress_thread_init(tmp);
             opal_argv_append_nosize(&orte_odls_globals.ev_threads, tmp);
             free(tmp);

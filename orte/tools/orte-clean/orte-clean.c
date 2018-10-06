@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  *
@@ -59,6 +59,7 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
 #include "opal/util/error.h"
+#include "opal/util/printf.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/show_help.h"
 
@@ -176,14 +177,14 @@ main(int argc, char *argv[])
     opal_os_dirpath_destroy(orte_process_info.top_session_dir, true, NULL);
 
     /* also get rid of any legacy session directories */
-    asprintf(&legacy, "%s/openmpi-sessions-%d@%s_0",
+    opal_asprintf(&legacy, "%s/openmpi-sessions-%d@%s_0",
              orte_process_info.tmpdir_base,
              (int)geteuid(), orte_process_info.nodename);
     opal_os_dirpath_destroy(legacy, true, NULL);
     free(legacy);
 
     /* and finally get rid of any lingering pmix-related artifacts */
-    asprintf(&legacy, "rm -rf %s/pmix*", orte_process_info.tmpdir_base);
+    opal_asprintf(&legacy, "rm -rf %s/pmix*", orte_process_info.tmpdir_base);
     system(legacy);
     free(legacy);
 
@@ -315,7 +316,7 @@ void kill_procs(void) {
 
     /* get the userid of the user */
     uid = getuid();
-    asprintf(&this_user, "%d", uid);
+    opal_asprintf(&this_user, "%d", uid);
 
     /*
      * There is a race condition here.  The problem is that we are looking

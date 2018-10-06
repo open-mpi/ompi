@@ -55,6 +55,7 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -150,7 +151,7 @@ int orte_setup_top_session_dir(void)
             goto exit;
         }
 
-        if (0 > asprintf(&orte_process_info.top_session_dir,
+        if (0 > opal_asprintf(&orte_process_info.top_session_dir,
                          "%s/ompi.%s.%lu", orte_process_info.tmpdir_base,
                          orte_process_info.nodename, (unsigned long)uid)) {
             orte_process_info.top_session_dir = NULL;
@@ -176,13 +177,13 @@ static int _setup_jobfam_session_dir(orte_process_name_t *proc)
         }
 
         if (ORTE_PROC_IS_MASTER) {
-            if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                              "%s/dvm", orte_process_info.top_session_dir)) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
         } else if (ORTE_PROC_IS_HNP) {
-            if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                              "%s/pid.%lu", orte_process_info.top_session_dir,
                              (unsigned long)orte_process_info.pid)) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -191,13 +192,13 @@ static int _setup_jobfam_session_dir(orte_process_name_t *proc)
         } else {
             /* we were not given one, so define it */
             if (NULL == proc || (ORTE_JOBID_INVALID == proc->jobid)) {
-                if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+                if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                                  "%s/jobfam", orte_process_info.top_session_dir) ) {
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
                     goto exit;
                 }
             } else {
-                if (0 > asprintf(&orte_process_info.jobfam_session_dir,
+                if (0 > opal_asprintf(&orte_process_info.jobfam_session_dir,
                                  "%s/jf.%d", orte_process_info.top_session_dir,
                                  ORTE_JOB_FAMILY(proc->jobid))) {
                     orte_process_info.jobfam_session_dir = NULL;
@@ -225,7 +226,7 @@ _setup_job_session_dir(orte_process_name_t *proc)
             return rc;
         }
         if (ORTE_JOBID_INVALID != proc->jobid) {
-            if (0 > asprintf(&orte_process_info.job_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.job_session_dir,
                              "%s/%d", orte_process_info.jobfam_session_dir,
                              ORTE_LOCAL_JOBID(proc->jobid))) {
                 orte_process_info.job_session_dir = NULL;
@@ -255,7 +256,7 @@ _setup_proc_session_dir(orte_process_name_t *proc)
             return rc;
         }
         if (ORTE_VPID_INVALID != proc->vpid) {
-            if (0 > asprintf(&orte_process_info.proc_session_dir,
+            if (0 > opal_asprintf(&orte_process_info.proc_session_dir,
                              "%s/%d", orte_process_info.job_session_dir,
                              proc->vpid)) {
                 orte_process_info.proc_session_dir = NULL;

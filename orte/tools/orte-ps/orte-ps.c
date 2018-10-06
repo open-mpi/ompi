@@ -15,7 +15,7 @@
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -58,6 +58,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -439,7 +440,7 @@ static int pretty_print(orte_ps_mpirun_info_t *hnpinfo) {
     /*
      * Print header and remember header length
      */
-    len_hdr = asprintf(&header, "Information from mpirun %s", ORTE_JOBID_PRINT(hnpinfo->hnp->name.jobid));
+    len_hdr = opal_asprintf(&header, "Information from mpirun %s", ORTE_JOBID_PRINT(hnpinfo->hnp->name.jobid));
 
     printf("\n\n%s\n", header);
     free(header);
@@ -708,7 +709,7 @@ static int pretty_print_vpids(orte_job_t *job) {
         if ((int)strlen(o_proc_name) > len_o_proc_name)
             len_o_proc_name = strlen(o_proc_name);
 
-        asprintf(&rankstr, "%u", (uint)vpid->local_rank);
+        opal_asprintf(&rankstr, "%u", (uint)vpid->local_rank);
         if ((int)strlen(rankstr) > len_rank)
             len_rank = strlen(rankstr);
         free(rankstr);

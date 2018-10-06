@@ -32,15 +32,15 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_APPNUM, &appnum, &flag);
     if (NULL == appnum) {
-        asprintf(&appstr, "UNDEFINED");
+        opal_asprintf(&appstr, "UNDEFINED");
     } else {
-        asprintf(&appstr, "%d", *(int*)appnum);
+        opal_asprintf(&appstr, "%d", *(int*)appnum);
     }
     MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_UNIVERSE_SIZE, &univ_size, &flag);
     if (NULL == univ_size) {
-        asprintf(&unistr, "UNDEFINED");
+        opal_asprintf(&unistr, "UNDEFINED");
     } else {
-        asprintf(&unistr, "%d", *(int*)univ_size);
+        opal_asprintf(&unistr, "%d", *(int*)univ_size);
     }
 
     gethostname(hostname, sizeof(hostname));

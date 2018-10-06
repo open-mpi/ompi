@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -249,7 +249,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     }
 
     /* need integer value for command line parameter */
-    asprintf(&jobid_string, "%lu", (unsigned long) daemons->jobid);
+    opal_asprintf(&jobid_string, "%lu", (unsigned long) daemons->jobid);
 
     /*
      * start building argv array
@@ -333,17 +333,17 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * require any further arguments
      */
     if (map->num_new_daemons < orte_num_allocated_nodes) {
-        asprintf(&tmp, "--nodes=%lu", (unsigned long)map->num_new_daemons);
+        opal_asprintf(&tmp, "--nodes=%lu", (unsigned long)map->num_new_daemons);
         opal_argv_append(&argc, &argv, tmp);
         free(tmp);
 
-        asprintf(&tmp, "--nodelist=%s", nodelist_flat);
+        opal_asprintf(&tmp, "--nodelist=%s", nodelist_flat);
         opal_argv_append(&argc, &argv, tmp);
         free(tmp);
     }
 
     /* tell srun how many tasks to run */
-    asprintf(&tmp, "--ntasks=%lu", (unsigned long)map->num_new_daemons);
+    opal_asprintf(&tmp, "--ntasks=%lu", (unsigned long)map->num_new_daemons);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
 
@@ -637,9 +637,9 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
             /* Reset PATH */
             oldenv = getenv("PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/%s:%s", prefix, bin_base, oldenv);
+                opal_asprintf(&newenv, "%s/%s:%s", prefix, bin_base, oldenv);
             } else {
-                asprintf(&newenv, "%s/%s", prefix, bin_base);
+                opal_asprintf(&newenv, "%s/%s", prefix, bin_base);
             }
             opal_setenv("PATH", newenv, true, &env);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
@@ -651,9 +651,9 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
             /* Reset LD_LIBRARY_PATH */
             oldenv = getenv("LD_LIBRARY_PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/%s:%s", prefix, lib_base, oldenv);
+                opal_asprintf(&newenv, "%s/%s:%s", prefix, lib_base, oldenv);
             } else {
-                asprintf(&newenv, "%s/%s", prefix, lib_base);
+                opal_asprintf(&newenv, "%s/%s", prefix, lib_base);
             }
             opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,

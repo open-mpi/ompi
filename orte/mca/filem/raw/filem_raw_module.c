@@ -2,7 +2,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -288,7 +288,7 @@ static int raw_preposition_files(orte_job_t *jdata,
              */
             cptr = opal_basename(app->app);
             free(app->app);
-            asprintf(&app->app, "./%s", cptr);
+            opal_asprintf(&app->app, "./%s", cptr);
             free(app->argv[0]);
             app->argv[0] = strdup(app->app);
             fs->remote_target = strdup(app->app);
@@ -894,7 +894,7 @@ static int link_archive(orte_filem_raw_incoming_t *inbnd)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          inbnd->fullpath));
 
-    asprintf(&cmd, "tar tf %s", inbnd->fullpath);
+    opal_asprintf(&cmd, "tar tf %s", inbnd->fullpath);
     fp = popen(cmd, "r");
     free(cmd);
     if (NULL == fp) {
@@ -1145,25 +1145,41 @@ static void write_handler(int fd, short event, void *cbdata)
             } else {
                 /* unarchive the file */
                 if (ORTE_FILEM_TYPE_TAR == sink->type) {
-                    asprintf(&cmd, "tar xf %s", sink->file);
+                    opal_asprintf(&cmd, "tar xf %s", sink->file);
                 } else if (ORTE_FILEM_TYPE_BZIP == sink->type) {
-                    asprintf(&cmd, "tar xjf %s", sink->file);
+                    opal_asprintf(&cmd, "tar xjf %s", sink->file);
                 } else if (ORTE_FILEM_TYPE_GZIP == sink->type) {
-                    asprintf(&cmd, "tar xzf %s", sink->file);
+                    opal_asprintf(&cmd, "tar xzf %s", sink->file);
                 } else {
                     ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                     send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
                     return;
                 }
-                getcwd(homedir, sizeof(homedir));
+                if (NULL == getcwd(homedir, sizeof(homedir))) {
+                    ORTE_ERROR_LOG(ORTE_ERROR);
+                    send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
+                    return;
+                }
                 dirname = opal_dirname(sink->fullpath);
-                chdir(dirname);
+                if (0 != chdir(dirname)) {
+                    ORTE_ERROR_LOG(ORTE_ERROR);
+                    send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
+                    return;
+                }
                 OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                      "%s write:handler unarchiving file %s with cmd: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      sink->file, cmd));
-                system(cmd);
-                chdir(homedir);
+                if (0 != system(cmd)) {
+                    ORTE_ERROR_LOG(ORTE_ERROR);
+                    send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
+                    return;
+                }
+                if (0 != chdir(homedir)) {
+                    ORTE_ERROR_LOG(ORTE_ERROR);
+                    send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
+                    return;
+                }
                 free(dirname);
                 free(cmd);
                 /* setup the link points */

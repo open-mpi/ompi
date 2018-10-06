@@ -328,7 +328,7 @@ void bind_me_to(bool main_thread) {
 
     set = hwloc_bitmap_alloc();
     hwloc_get_cpubind(topo, set, HWLOC_CPUBIND_THREAD);
-    hwloc_bitmap_asprintf(&buffer, set);
+    hwloc_bitmap_opal_asprintf(&buffer, set);
     printf("%s : [objs = %d] : cpuset is %s\n", (main_thread ? "Main" : "Peer"), num_objs, buffer);
     free(buffer);
     hwloc_bitmap_free(set);

@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -30,6 +30,7 @@
 
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/pmix/pmix.h"
@@ -349,7 +350,7 @@ static void show_accumulated_duplicates(int fd, short event, void *context)
             tli->tli_count_since_last_display > 0) {
             static bool first = true;
             if (orte_xml_output) {
-                asprintf(&tmp, "%d more process%s sent help message %s / %s",
+                opal_asprintf(&tmp, "%d more process%s sent help message %s / %s",
                          tli->tli_count_since_last_display,
                          (tli->tli_count_since_last_display > 1) ? "es have" : " has",
                          tli->tli_filename, tli->tli_topic);

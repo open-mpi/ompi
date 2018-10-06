@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -680,7 +680,7 @@ static int component_startup(void)
         opal_pointer_array_add(&mca_oob_tcp_component.ev_bases, orte_oob_base.ev_base);
     } else {
         for (i=0; i < orte_oob_base.num_threads; i++) {
-            asprintf(&tmp, "OOB-TCP-%d", i);
+            opal_asprintf(&tmp, "OOB-TCP-%d", i);
             evb = opal_progress_thread_init(tmp);
             opal_pointer_array_add(&mca_oob_tcp_component.ev_bases, evb);
             opal_argv_append_nosize(&mca_oob_tcp_component.ev_threads, tmp);
@@ -779,7 +779,7 @@ static char* component_get_addr(void)
         NULL != mca_oob_tcp_component.ipv4conns) {
         tmp = opal_argv_join(mca_oob_tcp_component.ipv4conns, ',');
         tp = opal_argv_join(mca_oob_tcp_component.ipv4ports, ',');
-        asprintf(&cptr, "tcp://%s:%s", tmp, tp);
+        opal_asprintf(&cptr, "tcp://%s:%s", tmp, tp);
         free(tmp);
         free(tp);
     }
@@ -803,9 +803,9 @@ static char* component_get_addr(void)
         tp = opal_argv_join(mca_oob_tcp_component.ipv6ports, ',');
         if (NULL == cptr) {
             /* no ipv4 stuff */
-            asprintf(&cptr, "tcp6://[%s]:%s", tmp, tp);
+            opal_asprintf(&cptr, "tcp6://[%s]:%s", tmp, tp);
         } else {
-            asprintf(&tmp2, "%s;tcp6://[%s]:%s", cptr, tmp, tp);
+            opal_asprintf(&tmp2, "%s;tcp6://[%s]:%s", cptr, tmp, tp);
             free(cptr);
             cptr = tmp2;
         }

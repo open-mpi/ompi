@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2016      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +41,7 @@
 
 #include "orte/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include "opal/dss/dss.h"
 #include "orte/constants.h"
@@ -247,8 +248,10 @@ static void filem_base_process_get_remote_path_cmd(orte_process_name_t* sender,
      * Determine the absolute path of the file
      */
     if (filename[0] != '/') { /* if it is not an absolute path already */
-        getcwd(cwd, sizeof(cwd));
-        asprintf(&tmp_name, "%s/%s", cwd, filename);
+        if (NULL == getcwd(cwd, sizeof(cwd))) {
+            return;
+        }
+        opal_asprintf(&tmp_name, "%s/%s", cwd, filename);
     }
     else {
         tmp_name = strdup(filename);

@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -202,7 +202,7 @@ static char* component_get_addr(void)
 
     gethostname(hn, sizeof(hn));
 
-    asprintf(&cptr, "gni://%s:%d", hn, getpid());
+    opal_asprintf(&cptr, "gni://%s:%d", hn, getpid());
 
     opal_output_verbose(10, orte_oob_base_framework.framework_output,
                         "%s oob:alps: component_get_addr invoked - %s",

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -166,26 +167,26 @@ char* orte_rmaps_base_print_mapping(orte_mapping_policy_t mapping)
         }
     }
     if (0 != strcmp(map, "PPR") && (ORTE_MAPPING_PPR & ORTE_GET_MAPPING_DIRECTIVE(mapping))) {
-        asprintf(&mymap, "%s[PPR]:", map);
+        opal_asprintf(&mymap, "%s[PPR]:", map);
     } else {
-        asprintf(&mymap, "%s:", map);
+        opal_asprintf(&mymap, "%s:", map);
     }
     if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
-        asprintf(&tmp, "%sNO_USE_LOCAL,", mymap);
+        opal_asprintf(&tmp, "%sNO_USE_LOCAL,", mymap);
         free(mymap);
         mymap = tmp;
     }
     if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
-        asprintf(&tmp, "%sNOOVERSUBSCRIBE,", mymap);
+        opal_asprintf(&tmp, "%sNOOVERSUBSCRIBE,", mymap);
         free(mymap);
         mymap = tmp;
     } else if (ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
-        asprintf(&tmp, "%sOVERSUBSCRIBE,", mymap);
+        opal_asprintf(&tmp, "%sOVERSUBSCRIBE,", mymap);
         free(mymap);
         mymap = tmp;
     }
     if (ORTE_MAPPING_SPAN & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
-        asprintf(&tmp, "%sSPAN,", mymap);
+        opal_asprintf(&tmp, "%sSPAN,", mymap);
         free(mymap);
         mymap = tmp;
     }

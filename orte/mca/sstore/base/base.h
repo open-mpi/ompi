@@ -3,6 +3,7 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +15,7 @@
 
 #include "orte_config.h"
 
+#include "opal/util/printf.h"
 #include "orte/mca/sstore/sstore.h"
 
 /*

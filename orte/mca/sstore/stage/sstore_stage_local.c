@@ -6,6 +6,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -353,7 +354,7 @@ int orte_sstore_stage_local_module_init(void)
     /*
      * Create the local storage directory
      */
-    asprintf(&sstore_stage_local_basedir, "%s/%s/%s",
+    opal_asprintf(&sstore_stage_local_basedir, "%s/%s/%s",
              orte_sstore_stage_local_snapshot_dir,
              ORTE_SSTORE_LOCAL_SNAPSHOT_DIR_NAME,
              ORTE_SSTORE_LOCAL_SNAPSHOT_STAGE_DIR_NAME);
@@ -367,7 +368,7 @@ int orte_sstore_stage_local_module_init(void)
      * Create the local cache
      */
     if( orte_sstore_stage_enabled_caching ) {
-        asprintf(&sstore_stage_cache_basedir, "%s/%s/%s",
+        opal_asprintf(&sstore_stage_cache_basedir, "%s/%s/%s",
                  orte_sstore_stage_local_snapshot_dir,
                  ORTE_SSTORE_LOCAL_SNAPSHOT_DIR_NAME,
                  ORTE_SSTORE_LOCAL_SNAPSHOT_CACHE_DIR_NAME);
@@ -949,7 +950,7 @@ static orte_sstore_stage_local_snapshot_info_t *create_new_handle_info(orte_ssto
      * Create a sub structure for each child
      */
     for (i=0; i < orte_local_children->size; i++) {
-	    if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
             continue;
         }
         append_new_app_handle_info(handle_info, &child->name);
@@ -1210,21 +1211,21 @@ static int process_global_push(orte_process_name_t* peer, opal_buffer_t* buffer,
             free(app_info->local_location);
             app_info->local_location = NULL;
         }
-        asprintf(&(app_info->local_location), handle_info->location_fmt, app_info->name.vpid);
+        opal_asprintf(&(app_info->local_location), handle_info->location_fmt, app_info->name.vpid);
 
         if( orte_sstore_stage_enabled_caching ) {
             if( NULL != app_info->local_cache_location ) {
                 free(app_info->local_cache_location);
                 app_info->local_cache_location = NULL;
             }
-            asprintf(&(app_info->local_cache_location), handle_info->cache_location_fmt, app_info->name.vpid);
+            opal_asprintf(&(app_info->local_cache_location), handle_info->cache_location_fmt, app_info->name.vpid);
         }
 
         if( NULL != app_info->metadata_filename ) {
             free(app_info->metadata_filename);
             app_info->metadata_filename = NULL;
         }
-        asprintf(&(app_info->metadata_filename), "%s/%s",
+        opal_asprintf(&(app_info->metadata_filename), "%s/%s",
                  app_info->local_location,
                  orte_sstore_base_local_metadata_filename);
     }
@@ -1260,7 +1261,7 @@ static int process_global_remove(orte_process_name_t* peer, opal_buffer_t* buffe
             item  = opal_list_get_next(item) ) {
             app_info = (orte_sstore_stage_local_app_snapshot_info_t*)item;
 
-            asprintf(&cmd, "rm -rf %s", app_info->local_location);
+            opal_asprintf(&cmd, "rm -rf %s", app_info->local_location);
             OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                                  "sstore:stage:(local): update_cache(): Removing with command (%s)",
                                  cmd));
@@ -1270,7 +1271,7 @@ static int process_global_remove(orte_process_name_t* peer, opal_buffer_t* buffe
                 free(cmd);
                 cmd = NULL;
 
-                asprintf(&cmd, "rm -rf %s", app_info->compressed_local_location);
+                opal_asprintf(&cmd, "rm -rf %s", app_info->compressed_local_location);
                 OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                                      "sstore:stage:(local): update_cache(): Removing with command (%s)",
                                      cmd));
@@ -1805,7 +1806,7 @@ static int sstore_stage_destroy_local_dir(void)
     int ret, exit_status = ORTE_SUCCESS;
     char * basedir_root = NULL;
 
-    asprintf(&basedir_root, "%s/%s",
+    opal_asprintf(&basedir_root, "%s/%s",
              orte_sstore_stage_local_snapshot_dir,
              ORTE_SSTORE_LOCAL_SNAPSHOT_DIR_NAME);
 
@@ -1911,7 +1912,7 @@ static int sstore_stage_update_cache(orte_sstore_stage_local_snapshot_info_t *ha
         item  = opal_list_get_next(item) ) {
         app_info = (orte_sstore_stage_local_app_snapshot_info_t*)item;
 
-        asprintf(&cmd, "mv %s %s", app_info->local_location, cache_dirname);
+        opal_asprintf(&cmd, "mv %s %s", app_info->local_location, cache_dirname);
         OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                              "sstore:stage:(local): update_cache(): Caching snapshot for process %s [%s]",
                              ORTE_NAME_PRINT(&app_info->name),
@@ -1923,7 +1924,7 @@ static int sstore_stage_update_cache(orte_sstore_stage_local_snapshot_info_t *ha
             free(cmd);
             cmd = NULL;
 
-            asprintf(&cmd, "rm -rf %s", app_info->compressed_local_location);
+            opal_asprintf(&cmd, "rm -rf %s", app_info->compressed_local_location);
             OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                                  "sstore:stage:(local): update_cache(): Removing with command (%s)",
                                  cmd));
@@ -1935,7 +1936,7 @@ static int sstore_stage_update_cache(orte_sstore_stage_local_snapshot_info_t *ha
      * Remove the previous cached checkpoint
      */
     if( NULL != sstore_stage_cache_last_dir ) {
-        asprintf(&cmd, "rm -rf %s", sstore_stage_cache_last_dir);
+        opal_asprintf(&cmd, "rm -rf %s", sstore_stage_cache_last_dir);
         OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                              "sstore:stage:(local): update_cache(): Removing old cache dir command (%s)",
                              sstore_stage_cache_last_dir));
@@ -2014,12 +2015,12 @@ static int orte_sstore_stage_local_preload_files(char **local_location, bool *sk
     }
 #endif
 
-    asprintf(local_location, "%s/%s/%s/%d",
+    opal_asprintf(local_location, "%s/%s/%s/%d",
              orte_sstore_stage_local_snapshot_dir,
              ORTE_SSTORE_LOCAL_SNAPSHOT_DIR_NAME,
              ORTE_SSTORE_LOCAL_SNAPSHOT_RESTART_DIR_NAME,
              seq);
-    asprintf(&full_local_location, "%s/%s",
+    opal_asprintf(&full_local_location, "%s/%s",
              *local_location,
              ref);
 
@@ -2070,12 +2071,12 @@ static int orte_sstore_stage_local_preload_files(char **local_location, bool *sk
 
     f_set->local_target = strdup(*local_location);
     if( NULL != postfix && 0 < strlen(postfix) ) {
-        asprintf(&(f_set->remote_target), "%s/%s%s",
+        opal_asprintf(&(f_set->remote_target), "%s/%s%s",
                  global_loc,
                  ref,
                  postfix);
     } else {
-        asprintf(&(f_set->remote_target), "%s/%s",
+        opal_asprintf(&(f_set->remote_target), "%s/%s",
                  global_loc,
                  ref);
     }

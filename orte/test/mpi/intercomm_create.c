@@ -23,7 +23,7 @@ void ompitest_warning( char* filename, int lineno, const char* fmt, ... )
     va_list va_list;
 
     va_start(va_list, fmt);
-    vasprintf( &buf, fmt, va_list );
+    opal_vasprintf( &buf, fmt, va_list );
     va_end(va_list);
     printf( "*warning* %s:%d %s\n", filename, lineno, buf );
     free(buf);
@@ -35,7 +35,7 @@ void ompitest_error( char* filename, int lineno, const char* fmt, ... )
     va_list va_list;
 
     va_start(va_list, fmt);
-    vasprintf( &buf, fmt, va_list );
+    opal_vasprintf( &buf, fmt, va_list );
     va_end(va_list);
     printf( "*error* %s:%d %s\n", filename, lineno, buf );
     free(buf);

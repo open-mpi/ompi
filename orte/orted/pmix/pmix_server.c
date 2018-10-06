@@ -59,6 +59,7 @@
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -514,7 +515,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
          * condition, so just log the request and we will fill
          * it later */
         req = OBJ_NEW(pmix_server_req_t);
-        (void)asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
+        opal_asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
         req->proxy = *sender;
         req->target = idreq;
         req->remote_room_num = room_num;
@@ -541,7 +542,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     /* track the request since the call down to the PMIx server
      * is asynchronous */
     req = OBJ_NEW(pmix_server_req_t);
-    (void)asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
+    opal_asprintf(&req->operation, "DMDX: %s:%d", __FILE__, __LINE__);
     req->proxy = *sender;
     req->target = idreq;
     req->remote_room_num = room_num;

@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -480,20 +481,20 @@ int orte_sstore_central_global_get_attr(orte_sstore_base_handle_t handle, orte_s
         *value = strdup(handle_info->ref_name);
     }
     else if( SSTORE_METADATA_GLOBAL_SNAP_SEQ == key ) {
-        asprintf(value, "%d", handle_info->seq_num);
+        opal_asprintf(value, "%d", handle_info->seq_num);
     }
     else if( SSTORE_METADATA_LOCAL_SNAP_REF_FMT == key ) {
         *value = strdup(orte_sstore_base_local_snapshot_fmt);
     }
     /* 'central' does not cache, so these are the same */
     else if( SSTORE_METADATA_LOCAL_SNAP_LOC       == key ) {
-        asprintf(value, "%s/%s/%d",
+        opal_asprintf(value, "%s/%s/%d",
                  handle_info->base_location,
                  handle_info->ref_name,
                  handle_info->seq_num);
     }
     else if( SSTORE_METADATA_LOCAL_SNAP_REF_LOC_FMT == key ) {
-        asprintf(value, "%s/%s/%d/%s",
+        opal_asprintf(value, "%s/%s/%d/%s",
                  handle_info->base_location,
                  handle_info->ref_name,
                  handle_info->seq_num,
@@ -731,15 +732,15 @@ static orte_sstore_central_global_snapshot_info_t *create_new_handle_info(int se
 
     orte_sstore_base_get_global_snapshot_ref(&(handle_info->ref_name), getpid());
 
-    asprintf(&(handle_info->local_location), "%s/%d",
+    opal_asprintf(&(handle_info->local_location), "%s/%d",
              handle_info->ref_name, handle_info->seq_num);
 
-    asprintf(&(handle_info->app_location_fmt), "%s/%s/%s",
+    opal_asprintf(&(handle_info->app_location_fmt), "%s/%s/%s",
              handle_info->base_location,
              handle_info->local_location,
              orte_sstore_base_local_snapshot_fmt);
 
-    asprintf(&(handle_info->metadata_filename), "%s/%s/%s",
+    opal_asprintf(&(handle_info->metadata_filename), "%s/%s/%s",
              handle_info->base_location,
              handle_info->ref_name,
              orte_sstore_base_global_metadata_filename);
@@ -1029,7 +1030,7 @@ static int init_global_snapshot_directory(orte_sstore_central_global_snapshot_in
     /*
      * Make the snapshot directory from the uniq_global_snapshot_name
      */
-    asprintf(&dir_name, "%s/%s",
+    opal_asprintf(&dir_name, "%s/%s",
              handle_info->base_location,
              handle_info->local_location);
     if(OPAL_SUCCESS != (ret = opal_os_dirpath_create(dir_name, my_mode)) ) {

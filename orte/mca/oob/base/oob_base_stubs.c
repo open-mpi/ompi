@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +17,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/state/state.h"
@@ -263,7 +264,7 @@ void orte_oob_base_get_addr(char **uri)
                 continue;
             }
             /* add new value to final one */
-            asprintf(&tmp, "%s;%s", final, turi);
+            opal_asprintf(&tmp, "%s;%s", final, turi);
             free(turi);
             free(final);
             final = tmp;

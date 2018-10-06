@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -582,11 +583,11 @@ int orte_sstore_stage_global_get_attr(orte_sstore_base_handle_t handle, orte_sst
     }
     /* Used by snapc */
     else if( SSTORE_METADATA_GLOBAL_SNAP_SEQ == key ) {
-        asprintf(value, "%d", handle_info->seq_num);
+        opal_asprintf(value, "%d", handle_info->seq_num);
     }
     /* Used by orte-restart and RecoS and snapc (kinda) */
     else if( SSTORE_METADATA_LOCAL_SNAP_LOC == key ) {
-        asprintf(value, "%s/%s/%d",
+        opal_asprintf(value, "%s/%s/%d",
                  handle_info->base_location,
                  handle_info->ref_name,
                  handle_info->seq_num);
@@ -597,7 +598,7 @@ int orte_sstore_stage_global_get_attr(orte_sstore_base_handle_t handle, orte_sst
     }
     /* Used by orte-restart and RecoS */
     else if( SSTORE_METADATA_LOCAL_SNAP_REF_LOC_FMT == key ) {
-        asprintf(value, "%s/%s/%d/%s",
+        opal_asprintf(value, "%s/%s/%d/%s",
                  handle_info->base_location,
                  handle_info->ref_name,
                  handle_info->seq_num,
@@ -750,7 +751,7 @@ static void sync_global_dir(orte_sstore_stage_global_snapshot_info_t *handle_inf
     /*
      * Sync the Sequence num dir
      */
-    asprintf(&fs_str, "%s/%s/%d",
+    opal_asprintf(&fs_str, "%s/%s/%d",
              handle_info->base_location,
              handle_info->ref_name,
              handle_info->seq_num);
@@ -932,18 +933,18 @@ static orte_sstore_stage_global_snapshot_info_t *create_new_handle_info(int seq,
 
     orte_sstore_base_get_global_snapshot_ref(&(handle_info->ref_name), getpid());
 
-    asprintf(&(handle_info->local_location), "%s/%d",
+    opal_asprintf(&(handle_info->local_location), "%s/%d",
              handle_info->ref_name, handle_info->seq_num);
 
     /* This is used by the application to establish the local directory */
-    asprintf(&(handle_info->app_local_location_fmt), "%s/%s/%s/%s",
+    opal_asprintf(&(handle_info->app_local_location_fmt), "%s/%s/%s/%s",
              orte_sstore_stage_local_snapshot_dir,
              ORTE_SSTORE_LOCAL_SNAPSHOT_DIR_NAME,
              ORTE_SSTORE_LOCAL_SNAPSHOT_STAGE_DIR_NAME,
              orte_sstore_base_local_snapshot_fmt);
 
     if( orte_sstore_stage_enabled_caching ) {
-        asprintf(&(handle_info->app_local_cache_location_fmt), "%s/%s/%s/%d/%s",
+        opal_asprintf(&(handle_info->app_local_cache_location_fmt), "%s/%s/%s/%d/%s",
                  orte_sstore_stage_local_snapshot_dir,
                  ORTE_SSTORE_LOCAL_SNAPSHOT_DIR_NAME,
                  ORTE_SSTORE_LOCAL_SNAPSHOT_CACHE_DIR_NAME,
@@ -952,12 +953,12 @@ static orte_sstore_stage_global_snapshot_info_t *create_new_handle_info(int seq,
     }
 
     /* This is used by the HNP to remember where it should place each process */
-    asprintf(&(handle_info->app_global_location_fmt), "%s/%s/%s",
+    opal_asprintf(&(handle_info->app_global_location_fmt), "%s/%s/%s",
              handle_info->base_location,
              handle_info->local_location,
              orte_sstore_base_local_snapshot_fmt);
 
-    asprintf(&(handle_info->metadata_filename), "%s/%s/%s",
+    opal_asprintf(&(handle_info->metadata_filename), "%s/%s/%s",
              handle_info->base_location,
              handle_info->ref_name,
              orte_sstore_base_global_metadata_filename);
@@ -1264,14 +1265,14 @@ static int process_local_push(orte_process_name_t* peer, opal_buffer_t* buffer, 
                 }
 
                 if( orte_sstore_stage_enabled_compression ) {
-                    asprintf(&tmp_str,
+                    opal_asprintf(&tmp_str,
                              handle_info->app_global_location_fmt,
                              name.vpid);
-                    asprintf(&(f_set->local_target), "%s%s",
+                    opal_asprintf(&(f_set->local_target), "%s%s",
                              tmp_str,
                              compress_postfix);
                 } else {
-                    asprintf(&(f_set->local_target),
+                    opal_asprintf(&(f_set->local_target),
                              handle_info->app_global_location_fmt,
                              name.vpid);
                 }
@@ -1281,14 +1282,14 @@ static int process_local_push(orte_process_name_t* peer, opal_buffer_t* buffer, 
                 }
 
                 if( orte_sstore_stage_enabled_compression ) {
-                    asprintf(&tmp_str,
+                    opal_asprintf(&tmp_str,
                              handle_info->app_local_location_fmt,
                              name.vpid);
-                    asprintf(&(f_set->remote_target), "%s%s",
+                    opal_asprintf(&(f_set->remote_target), "%s%s",
                              tmp_str,
                              compress_postfix);
                 } else {
-                    asprintf(&(f_set->remote_target),
+                    opal_asprintf(&(f_set->remote_target),
                              handle_info->app_local_location_fmt,
                              name.vpid);
                 }
@@ -1428,7 +1429,7 @@ static int init_global_snapshot_directory(orte_sstore_stage_global_snapshot_info
     /*
      * Make the snapshot directory from the uniq_global_snapshot_name
      */
-    asprintf(&dir_name, "%s/%s",
+    opal_asprintf(&dir_name, "%s/%s",
              handle_info->base_location,
              handle_info->local_location);
     if(OPAL_SUCCESS != (ret = opal_os_dirpath_create(dir_name, my_mode)) ) {

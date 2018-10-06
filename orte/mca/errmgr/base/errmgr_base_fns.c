@@ -13,7 +13,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -52,6 +52,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/util/basename.h"
 #include "opal/util/argv.h"
 #include "opal/mca/crs/crs.h"
@@ -109,7 +110,7 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     va_start(arglist, fmt);
     if( NULL != fmt ) {
         char* buffer = NULL;
-        vasprintf( &buffer, fmt, arglist );
+        opal_vasprintf( &buffer, fmt, arglist );
         opal_output( 0, "%s", buffer );
         free( buffer );
     }
@@ -252,8 +253,8 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
 
         orte_remove_attribute(&new_app_context->attributes, ORTE_APP_PRELOAD_BIN);
 
-        asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
-        asprintf(&sload,
+        opal_asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
+        opal_asprintf(&sload,
                  "%s:%s:%s:%s:%s:%s",
                  location_str,
                  global_snapshot_ref,
@@ -285,8 +286,8 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
         opal_argv_free(new_app_context->argv);
         new_app_context->argv = NULL;
 
-        asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
-        asprintf(&sload,
+        opal_asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
+        opal_asprintf(&sload,
                  "%s:%s:%s:%s:%s:%s",
                  location_str,
                  global_snapshot_ref,
@@ -312,7 +313,7 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
         free(tmp_str);
         tmp_str = NULL;
     }
-    asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
+    opal_asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
     opal_argv_append(&argc, &(new_app_context->argv), tmp_str);
 
  cleanup:

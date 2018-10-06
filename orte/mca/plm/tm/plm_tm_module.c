@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -298,7 +298,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add our umask -- see big note in orted.c */
     current_umask = umask(0);
     umask(current_umask);
-    (void)asprintf(&var, "0%o", current_umask);
+    opal_asprintf(&var, "0%o", current_umask);
     opal_setenv("ORTE_DAEMON_UMASK_VALUE", var, true, &env);
     free(var);
 
@@ -316,7 +316,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         for (i = 0; NULL != env && NULL != env[i]; ++i) {
             /* Reset PATH */
             if (0 == strncmp("PATH=", env[i], 5)) {
-                (void)asprintf(&newenv, "%s/%s:%s",
+                opal_asprintf(&newenv, "%s/%s:%s",
                                prefix_dir, bin_base, env[i] + 5);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting PATH: %s",
@@ -328,7 +328,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
             /* Reset LD_LIBRARY_PATH */
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
-                (void)asprintf(&newenv, "%s/%s:%s",
+                opal_asprintf(&newenv, "%s/%s:%s",
                                prefix_dir, lib_base, env[i] + 16);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",

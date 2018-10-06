@@ -150,7 +150,7 @@ static void orted_abort(int error_code, char *fmt, ...)
     /* If there was a message, construct it */
     va_start(arglist, fmt);
     if (NULL != fmt) {
-        vasprintf(&outmsg, fmt, arglist);
+        opal_vasprintf(&outmsg, fmt, arglist);
     }
     va_end(arglist);
 

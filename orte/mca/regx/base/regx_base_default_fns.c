@@ -22,6 +22,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
@@ -365,9 +366,9 @@ int orte_regx_base_encode_nodemap(opal_buffer_t *buffer)
     while (NULL != (item = opal_list_remove_first(&slots))) {
         rng = (orte_regex_range_t*)item;
         if (NULL == tmp) {
-            asprintf(&tmp, "%d[%d]", rng->cnt, rng->slots);
+            opal_asprintf(&tmp, "%d[%d]", rng->cnt, rng->slots);
         } else {
-            asprintf(&tmp2, "%s,%d[%d]", tmp, rng->cnt, rng->slots);
+            opal_asprintf(&tmp2, "%s,%d[%d]", tmp, rng->cnt, rng->slots);
             free(tmp);
             tmp = tmp2;
         }
@@ -391,9 +392,9 @@ int orte_regx_base_encode_nodemap(opal_buffer_t *buffer)
     while (NULL != (item = opal_list_remove_first(&flags))) {
         rng = (orte_regex_range_t*)item;
         if (NULL == tmp) {
-            asprintf(&tmp, "%d[%d]", rng->cnt, rng->slots);
+            opal_asprintf(&tmp, "%d[%d]", rng->cnt, rng->slots);
         } else {
-            asprintf(&tmp2, "%s,%d[%d]", tmp, rng->cnt, rng->slots);
+            opal_asprintf(&tmp2, "%s,%d[%d]", tmp, rng->cnt, rng->slots);
             free(tmp);
             tmp = tmp2;
         }
@@ -440,9 +441,9 @@ int orte_regx_base_encode_nodemap(opal_buffer_t *buffer)
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 (NULL == rng->t) ? "NULL" : rng->t->sig, rng->cnt);
             if (NULL == tmp) {
-                asprintf(&tmp, "%d", rng->cnt);
+                opal_asprintf(&tmp, "%d", rng->cnt);
             } else {
-                asprintf(&tmp2, "%s,%d", tmp, rng->cnt);
+                opal_asprintf(&tmp2, "%s,%d", tmp, rng->cnt);
                 free(tmp);
                 tmp = tmp2;
             }
@@ -845,17 +846,17 @@ int orte_regx_base_generate_ppn(orte_job_t *jdata, char **ppn)
         OPAL_LIST_FOREACH(prng, &prk[n], orte_nidmap_regex_t) {
             if (1 < prng->cnt) {
                 if (NULL == ptmp) {
-                    asprintf(&ptmp, "%u(%u)", prng->nprocs, prng->cnt);
+                    opal_asprintf(&ptmp, "%u(%u)", prng->nprocs, prng->cnt);
                 } else {
-                    asprintf(&tmp2, "%s,%u(%u)", ptmp, prng->nprocs, prng->cnt);
+                    opal_asprintf(&tmp2, "%s,%u(%u)", ptmp, prng->nprocs, prng->cnt);
                     free(ptmp);
                     ptmp = tmp2;
                 }
             } else {
                 if (NULL == ptmp) {
-                    asprintf(&ptmp, "%u", prng->nprocs);
+                    opal_asprintf(&ptmp, "%u", prng->nprocs);
                 } else {
-                    asprintf(&tmp2, "%s,%u", ptmp, prng->nprocs);
+                    opal_asprintf(&tmp2, "%s,%u", ptmp, prng->nprocs);
                     free(ptmp);
                     ptmp = tmp2;
                 }

@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -165,7 +166,7 @@ static void orte_info_show_mca_group_params(const mca_base_var_group_t *group, b
             if (0 == j && orte_info_pretty) {
                 char *message;
 
-                asprintf (&message, "MCA %s", group->group_framework);
+                opal_asprintf (&message, "MCA %s", group->group_framework);
                 orte_info_out(message, message, strings[j]);
                 free(message);
             } else {
@@ -305,7 +306,7 @@ void orte_info_show_path(const char *type, const char *value)
     pretty = strdup(type);
     pretty[0] = toupper(pretty[0]);
 
-    asprintf(&path, "path:%s", type);
+    opal_asprintf(&path, "path:%s", type);
     orte_info_out(pretty, path, value);
     free(pretty);
     free(path);
@@ -327,8 +328,8 @@ void orte_info_do_hostname()
 /*
  * do_config
  * Accepts:
- *	- want_all: boolean flag; TRUE -> display all options
- *				  FALSE -> display selected options
+ *      - want_all: boolean flag; TRUE -> display all options
+ *                                FALSE -> display selected options
  *
  * This function displays all the options with which the current
  * installation of orte was configured. There are many options here
@@ -360,10 +361,10 @@ void orte_info_do_config(bool want_all)
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
 
     /* setup strings that require allocation */
-    asprintf(&threads, "%s (OPAL: yes, ORTE progress: yes, Event lib: yes)",
+    opal_asprintf(&threads, "%s (OPAL: yes, ORTE progress: yes, Event lib: yes)",
              "posix");
 
-    asprintf(&ft_support, "%s (checkpoint thread: %s)",
+    opal_asprintf(&ft_support, "%s (checkpoint thread: %s)",
              OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;
 
     /* output values */
