@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include <string.h>
 
 #include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 #include "opal/threads/tsd.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -292,7 +294,7 @@ int orte_util_snprintf_jobid(char *jobid_string, size_t size, const orte_jobid_t
 
     /* check for wildcard value - handle appropriately */
     if (ORTE_JOBID_WILDCARD == jobid) {
-        (void)strncpy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
+        (void)opal_string_copy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
     } else {
         rc = snprintf(jobid_string, size, "%ld", (long) jobid);
         if (0 > rc) {

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.  All rights reserved.
@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+
+#include "opal/util/string_copy.h"
 
 #include <pmix_tool.h>
 
@@ -47,7 +49,7 @@ int main(int argc, char **argv)
     /* query something */
     ninfo = 1;
     PMIX_INFO_CREATE(info, ninfo);
-    (void)strncpy(info[0].key, PMIX_QUERY_NAMESPACES, PMIX_MAX_KEYLEN);
+    (void)opal_string_copy(info[0].key, PMIX_QUERY_NAMESPACES, PMIX_MAX_KEYLEN);
     if (PMIX_SUCCESS != (rc = PMIx_Query_info(info, ninfo))) {
         fprintf(stderr, "Tool ns %s rank %d: PMIx_Query_info failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;

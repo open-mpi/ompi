@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"
+#include "opal/util/string_copy.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -187,7 +189,8 @@ int orte_attr_register(const char *project,
     for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
         if (0 == converters[i].init) {
             converters[i].init = 1;
-            strncpy(converters[i].project, project, MAX_CONVERTER_PROJECT_LEN);
+            opal_string_copy(converters[i].project, project,
+                             MAX_CONVERTER_PROJECT_LEN);
             converters[i].project[MAX_CONVERTER_PROJECT_LEN-1] = '\0';
             converters[i].key_base = key_base;
             converters[i].key_max = key_max;

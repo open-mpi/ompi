@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
@@ -1381,7 +1383,7 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ret);
                 goto cleanup;
             }
-            strncpy( ((datum->mig_host_pref)[i]), tmp_str, OPAL_MAX_PROCESSOR_NAME);
+            opal_string_copy( ((datum->mig_host_pref)[i]), tmp_str, OPAL_MAX_PROCESSOR_NAME);
 
             count = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(sbuffer, &((datum->mig_vpid_pref)[i]), &count, OPAL_INT))) {
