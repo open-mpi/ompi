@@ -1,0 +1,35 @@
+enable_orterun_prefix_by_default=yes
+enable_mpi_thread_multiple=no
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug_symbols=yes
+enable_binaries=yes
+enable_heterogeneous=no
+enable_picky=yes
+enable_debug=yes
+enable_shared=yes
+enable_static=no
+enable_memchecker=no
+enable_ipv6=no
+enable_mpi_fortran=no
+enable_mpi_cxx=no
+enable_mpi_cxx_seek=no
+enable_cxx_exceptions=no
+enable_mpi_java=no
+enable_io_romio=no
+enable_contrib_no_build=libnbc
+enable_install_libpmix=yes
+with_memory_manager=no
+with_tm=no
+with_psm=no
+with_psm2=no
+with_devel_headers=yes
+with_libfabric=no
+with_portals=no
+with_valgrind=no
+if [ -n "$SLURMHOME" ] ; then
+    with_slurm=$SLURMHOME
+    with_pmi=$SLURMHOME
+else
+    with_slurm=no
+fi
