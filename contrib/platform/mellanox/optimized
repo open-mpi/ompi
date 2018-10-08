@@ -1,7 +1,7 @@
 enable_mca_no_build=coll-ml
 enable_debug_symbols=yes
 enable_orterun_prefix_by_default=yes
-with_verbs=yes
+with_verbs=no
 with_devel_headers=yes
 enable_oshmem=yes
 enable_oshmem_fortran=yes
