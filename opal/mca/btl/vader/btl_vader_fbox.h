@@ -29,6 +29,10 @@ typedef union mca_btl_vader_fbox_hdr_t {
         /** sequence number */
         uint16_t  seq;
     } data;
+    struct {
+        uint32_t value0;
+        uint32_t value1;
+    } data_i32;
     uint64_t ival;
 } mca_btl_vader_fbox_hdr_t;
 
@@ -50,19 +54,20 @@ void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, mca_btl_base_endp
 static inline void mca_btl_vader_fbox_set_header (mca_btl_vader_fbox_hdr_t *hdr, uint16_t tag,
                                                   uint16_t seq, uint32_t size)
 {
-    mca_btl_vader_fbox_hdr_t tmp = {.data = {.tag = 0, .seq = seq, .size = size}};
-    hdr->ival = tmp.ival;
+    mca_btl_vader_fbox_hdr_t tmp = {.data = {.tag = tag, .seq = seq, .size = size}};
+    /* clear out existing tag/seq */
+    hdr->data_i32.value1 = 0;
     opal_atomic_wmb ();
-    hdr->data.tag = tag;
+    hdr->data_i32.value0 = size;
+    opal_atomic_wmb ();
+    hdr->data_i32.value1 = tmp.data_i32.value1;
 }
 
 static inline mca_btl_vader_fbox_hdr_t mca_btl_vader_fbox_read_header (mca_btl_vader_fbox_hdr_t *hdr)
 {
-    mca_btl_vader_fbox_hdr_t tmp;
-    uint16_t tag = hdr->data.tag;
+    mca_btl_vader_fbox_hdr_t tmp = {.data_i32 = {.value1 = hdr->data_i32.value1}};;
     opal_atomic_rmb ();
-    tmp.ival = hdr->ival;
-    tmp.data.tag = tag;
+    tmp.data_i32.value0 = hdr->data_i32.value0;
     return tmp;
 }
 
