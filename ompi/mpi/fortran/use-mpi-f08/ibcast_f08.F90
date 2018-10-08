@@ -11,7 +11,7 @@ subroutine MPI_Ibcast_f08(buffer,count,datatype,root,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: mpi_f08, only : ompi_ibcast_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: buffer
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
