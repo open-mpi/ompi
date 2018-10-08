@@ -186,4 +186,6 @@ mca_btl_vader_rdma_frag_alloc (mca_btl_base_module_t *btl, mca_btl_base_endpoint
     return frag;
 }
 
+void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, mca_btl_base_endpoint_t *ep);
+
 #endif /* MCA_BTL_VADER_SEND_FRAG_H */

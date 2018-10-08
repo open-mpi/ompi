@@ -46,7 +46,9 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
                          mca_btl_base_descriptor_t **descriptor)
 {
     mca_btl_vader_frag_t *frag;
+#if OPAL_BTL_VADER_FBOX_SUPPORT
     void *data_ptr = NULL;
+#endif
     size_t length;
 
     /* don't attempt sendi if there are pending fragments on the endpoint */
@@ -58,6 +60,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+#if OPAL_BTL_VADER_FBOX_SUPPORT
     if (payload_size) {
         opal_convertor_get_current_pointer (convertor, &data_ptr);
     }
@@ -66,6 +69,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
         mca_btl_vader_fbox_sendi (endpoint, tag, header, header_size, data_ptr, payload_size)) {
         return OPAL_SUCCESS;
     }
+#endif
 
     length = header_size + payload_size;
 

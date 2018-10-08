@@ -9,7 +9,7 @@
  * $HEADER$
  */
 
-#if !defined(MCA_BTL_VADER_FBOX_H)
+#if !defined(MCA_BTL_VADER_FBOX_H) && OPAL_BTL_VADER_FBOX_SUPPORT
 #define MCA_BTL_VADER_FBOX_H
 
 #include "btl_vader.h"
@@ -48,8 +48,6 @@ typedef union mca_btl_vader_fbox_hdr_t {
 
 /** macro for checking if the high bit is set */
 #define MCA_BTL_VADER_FBOX_OFFSET_HBS(v) (!!((v) & MCA_BTL_VADER_FBOX_HB_MASK))
-
-void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, mca_btl_base_endpoint_t *ep);
 
 static inline void mca_btl_vader_fbox_set_header (mca_btl_vader_fbox_hdr_t *hdr, uint16_t tag,
                                                   uint16_t seq, uint32_t size)
@@ -284,4 +282,4 @@ static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mc
     }
 }
 
-#endif /* !defined(MCA_BTL_VADER_FBOX_H) */
+#endif /* !defined(MCA_BTL_VADER_FBOX_H) && OPAL_BTL_VADER_FBOX_SUPPORT */
