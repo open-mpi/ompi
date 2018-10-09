@@ -16,6 +16,7 @@
 
 #include "opal/runtime/opal.h"
 #include "opal/mca/pmix/pmix.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/message/message.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "opal/mca/common/ucx/common_ucx.h"
@@ -190,9 +191,9 @@ int mca_pml_ucx_close(void)
 int mca_pml_ucx_init(void)
 {
     ucp_worker_params_t params;
-    ucs_status_t status;
     ucp_worker_attr_t attr;
-    int rc;
+    ucs_status_t status;
+    int i, rc;
 
     PML_UCX_VERBOSE(1, "mca_pml_ucx_init");
 
@@ -209,30 +210,34 @@ int mca_pml_ucx_init(void)
                                &ompi_pml_ucx.ucp_worker);
     if (UCS_OK != status) {
         PML_UCX_ERROR("Failed to create UCP worker");
-        return OMPI_ERROR;
+        rc = OMPI_ERROR;
+        goto err;
     }
 
     attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
     status = ucp_worker_query(ompi_pml_ucx.ucp_worker, &attr);
     if (UCS_OK != status) {
-        ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
-        ompi_pml_ucx.ucp_worker = NULL;
         PML_UCX_ERROR("Failed to query UCP worker thread level");
-        return OMPI_ERROR;
+        rc = OMPI_ERROR;
+        goto err_destroy_worker;
     }
 
-    if (ompi_mpi_thread_multiple && attr.thread_mode != UCS_THREAD_MODE_MULTI) {
+    if (ompi_mpi_thread_multiple && (attr.thread_mode != UCS_THREAD_MODE_MULTI)) {
         /* UCX does not support multithreading, disqualify current PML for now */
         /* TODO: we should let OMPI to fallback to THREAD_SINGLE mode */
-        ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
-        ompi_pml_ucx.ucp_worker = NULL;
         PML_UCX_ERROR("UCP worker does not support MPI_THREAD_MULTIPLE");
-        return OMPI_ERROR;
+        rc = OMPI_ERR_NOT_SUPPORTED;
+        goto err_destroy_worker;
     }
 
     rc = mca_pml_ucx_send_worker_address();
     if (rc < 0) {
-        return rc;
+        goto err_destroy_worker;
+    }
+
+    ompi_pml_ucx.datatype_attr_keyval = MPI_KEYVAL_INVALID;
+    for (i = 0; i < OMPI_DATATYPE_MAX_PREDEFINED; ++i) {
+        ompi_pml_ucx.predefined_types[i] = PML_UCX_DATATYPE_INVALID;
     }
 
     /* Initialize the free lists */
@@ -249,13 +254,32 @@ int mca_pml_ucx_init(void)
                     (void *)ompi_pml_ucx.ucp_context,
                     (void *)ompi_pml_ucx.ucp_worker);
     return OMPI_SUCCESS;
+
+err_destroy_worker:
+    ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
+    ompi_pml_ucx.ucp_worker = NULL;
+err:
+    return OMPI_ERROR;
 }
 
 int mca_pml_ucx_cleanup(void)
 {
+    int i;
+
     PML_UCX_VERBOSE(1, "mca_pml_ucx_cleanup");
 
     opal_progress_unregister(mca_pml_ucx_progress);
+
+    if (ompi_pml_ucx.datatype_attr_keyval != MPI_KEYVAL_INVALID) {
+        ompi_attr_free_keyval(TYPE_ATTR, &ompi_pml_ucx.datatype_attr_keyval, false);
+    }
+
+    for (i = 0; i < OMPI_DATATYPE_MAX_PREDEFINED; ++i) {
+        if (ompi_pml_ucx.predefined_types[i] != PML_UCX_DATATYPE_INVALID) {
+            ucp_dt_destroy(ompi_pml_ucx.predefined_types[i]);
+            ompi_pml_ucx.predefined_types[i] = PML_UCX_DATATYPE_INVALID;
+        }
+    }
 
     ompi_pml_ucx.completed_send_req.req_state = OMPI_REQUEST_INVALID;
     OMPI_REQUEST_FINI(&ompi_pml_ucx.completed_send_req);
@@ -398,6 +422,22 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 
 int mca_pml_ucx_enable(bool enable)
 {
+    ompi_attribute_fn_ptr_union_t copy_fn;
+    ompi_attribute_fn_ptr_union_t del_fn;
+    int ret;
+
+    /* Create a key for adding custom attributes to datatypes */
+    copy_fn.attr_datatype_copy_fn  =
+                    (MPI_Type_internal_copy_attr_function*)MPI_TYPE_NULL_COPY_FN;
+    del_fn.attr_datatype_delete_fn = mca_pml_ucx_datatype_attr_del_fn;
+    ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
+                                  &ompi_pml_ucx.datatype_attr_keyval, NULL, 0,
+                                  NULL);
+    if (ret != OMPI_SUCCESS) {
+        PML_UCX_ERROR("Failed to create keyval for UCX datatypes: %d", ret);
+        return ret;
+    }
+
     PML_UCX_FREELIST_INIT(&ompi_pml_ucx.persistent_reqs,
                           mca_pml_ucx_persistent_request_t,
                           128, -1, 128);
