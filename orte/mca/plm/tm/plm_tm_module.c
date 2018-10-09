@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2018      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,6 +63,7 @@
 #include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
+#include "opal/util/printf.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/threads.h"
