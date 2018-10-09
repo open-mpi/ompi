@@ -5,16 +5,17 @@
 !               All Rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
-function PMPI_Aint_add_f08(base, diff)
+function PMPI_Aint_add_f08(base, disp)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_aint_add_f
    implicit none
    INTEGER(MPI_ADDRESS_KIND) :: PMPI_Aint_add_f08
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: base
-   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: diff
-   PMPI_Aint_add_f08 = ompi_aint_add_f(base, diff)
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: disp
+   PMPI_Aint_add_f08 = ompi_aint_add_f(base, disp)
 end function PMPI_Aint_add_f08

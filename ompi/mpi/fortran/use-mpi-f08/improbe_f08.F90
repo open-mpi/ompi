@@ -3,6 +3,7 @@
 ! Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2010-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
+! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
 
 subroutine MPI_Improbe_f08(source,tag,comm,flag,message,status,ierror)
@@ -33,4 +34,5 @@ subroutine MPI_Improbe_f08(source,tag,comm,flag,message,status,ierror)
 
    call PMPI_Improbe(source,tag,comm%MPI_VAL,flag,message%MPI_VAL,status,c_ierror)
    if (present(ierror)) ierror = c_ierror
+
 end subroutine MPI_Improbe_f08
