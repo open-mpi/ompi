@@ -13,8 +13,8 @@ subroutine PMPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    use :: mpi_f08, only : ompi_compare_and_swap_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr, compare_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: origin_addr, compare_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp

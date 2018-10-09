@@ -11,7 +11,8 @@ subroutine MPI_Unpack_f08(inbuf,insize,position,outbuf,outcount,datatype,comm,ie
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    use :: mpi_f08, only : ompi_unpack_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf, outbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: outbuf
    INTEGER, INTENT(IN) :: insize, outcount
    INTEGER, INTENT(INOUT) :: position
    TYPE(MPI_Datatype), INTENT(IN) :: datatype

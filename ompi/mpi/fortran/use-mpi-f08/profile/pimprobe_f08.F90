@@ -16,6 +16,8 @@ subroutine PMPI_Improbe_f08(source,tag,comm,flag,message,status,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
+   ! See note in mpi-f-interfaces-bind.h for why we include an
+   ! interface here and call a PMPI_* subroutine below.
    interface
       subroutine PMPI_Improbe(source, tag, comm, flag, message, status, ierror)
         use :: mpi_f08_types, only : MPI_Status
@@ -29,8 +31,6 @@ subroutine PMPI_Improbe_f08(source,tag,comm,flag,message,status,ierror)
       end subroutine PMPI_Improbe
    end interface
 
-   ! See note in ompi/mpi/fortran/use-mpi-f08/iprobe_f09.F90 about why
-   ! we call an PMPI_* subroutine here
    call PMPI_Improbe(source,tag,comm%MPI_VAL,flag,message%MPI_VAL,status,c_ierror)
    if (present(ierror)) ierror = c_ierror
 

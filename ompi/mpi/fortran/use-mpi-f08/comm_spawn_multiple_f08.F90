@@ -15,7 +15,7 @@ subroutine MPI_Comm_spawn_multiple_f08(count,array_of_commands,array_of_argv, &
    implicit none
    INTEGER, INTENT(IN) :: count, root
    INTEGER, INTENT(IN) :: array_of_maxprocs(count)
-   CHARACTER(LEN=*), INTENT(IN) :: array_of_commands(count), array_of_argv(count)
+   CHARACTER(LEN=*), INTENT(IN) :: array_of_commands(count), array_of_argv(count, *)
    TYPE(MPI_Info), INTENT(IN) :: array_of_info(count)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm

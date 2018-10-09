@@ -10,7 +10,7 @@
 subroutine PMPI_Buffer_attach_f08(buffer,size,ierror)
    use :: mpi_f08, only : ompi_buffer_attach_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer
    INTEGER, INTENT(IN) :: size
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
