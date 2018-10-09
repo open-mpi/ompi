@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -159,7 +159,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         if (1 == cnt) {
             node_name = strdup(argv[0]);
         } else if (2 == cnt) {
-            username = argv[0];
+            username = strdup(argv[0]);
             node_name = strdup(argv[1]);
         } else {
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
@@ -274,7 +274,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         if (1 == cnt) {
             node_name = strdup(argv[0]);
         } else if (2 == cnt) {
-            username = argv[0];
+            username = strdup(argv[0]);
             node_name = strdup(argv[1]);
         } else {
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
