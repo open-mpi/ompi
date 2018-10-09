@@ -10,6 +10,7 @@
 #include "pml_ucx_datatype.h"
 
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/attribute/attribute.h"
 
 #include <inttypes.h>
 
@@ -127,12 +128,25 @@ static ucp_generic_dt_ops_t pml_ucx_generic_datatype_ops = {
     .finish       = pml_ucx_generic_datatype_finish
 };
 
+int mca_pml_ucx_datatype_attr_del_fn(ompi_datatype_t* datatype, int keyval,
+                                     void *attr_val, void *extra)
+{
+    ucp_datatype_t ucp_datatype = (ucp_datatype_t)attr_val;
+
+    PML_UCX_ASSERT((void*)ucp_datatype == datatype->pml_data);
+
+    ucp_dt_destroy(ucp_datatype);
+    datatype->pml_data = PML_UCX_DATATYPE_INVALID;
+    return OMPI_SUCCESS;
+}
+
 ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
 {
     ucp_datatype_t ucp_datatype;
     ucs_status_t status;
     ptrdiff_t lb;
     size_t size;
+    int ret;
 
     ompi_datatype_type_lb(datatype, &lb);
 
@@ -147,16 +161,33 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
     }
 
     status = ucp_dt_create_generic(&pml_ucx_generic_datatype_ops,
-                                         datatype, &ucp_datatype);
+                                   datatype, &ucp_datatype);
     if (status != UCS_OK) {
         PML_UCX_ERROR("Failed to create UCX datatype for %s", datatype->name);
         ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
     }
 
-    PML_UCX_VERBOSE(7, "created generic UCX datatype 0x%"PRIx64, ucp_datatype)
-    // TODO put this on a list to be destroyed later
-
     datatype->pml_data = ucp_datatype;
+
+    /* Add custom attribute, to clean up UCX resources when OMPI datatype is
+     * released.
+     */
+    if (ompi_datatype_is_predefined(datatype)) {
+        PML_UCX_ASSERT(datatype->id < OMPI_DATATYPE_MAX_PREDEFINED);
+        ompi_pml_ucx.predefined_types[datatype->id] = ucp_datatype;
+    } else {
+        ret = ompi_attr_set_c(TYPE_ATTR, datatype, &datatype->d_keyhash,
+                              ompi_pml_ucx.datatype_attr_keyval,
+                              (void*)ucp_datatype, false);
+        if (ret != OMPI_SUCCESS) {
+            PML_UCX_ERROR("Failed to add UCX datatype attribute for %s: %d",
+                          datatype->name, ret);
+            ompi_mpi_abort(&ompi_mpi_comm_world.comm, 1);
+        }
+    }
+
+    PML_UCX_VERBOSE(7, "created generic UCX datatype 0x%"PRIx64, ucp_datatype)
+
     return ucp_datatype;
 }
 
