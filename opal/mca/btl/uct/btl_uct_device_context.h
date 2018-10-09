@@ -23,7 +23,7 @@
  * @param[in] tl         btl uct tl pointer
  * @param[in] context_id identifier for this context (0..MCA_BTL_UCT_MAX_WORKERS-1)
  */
-mca_btl_uct_device_context_t *mca_btl_uct_context_create (mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl, int context_id);
+mca_btl_uct_device_context_t *mca_btl_uct_context_create (mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl, int context_id, bool enable_progress);
 
 /**
  * @brief Destroy a device context and release all resources
@@ -91,8 +91,9 @@ mca_btl_uct_module_get_tl_context_specific (mca_btl_uct_module_t *module, mca_bt
     if (OPAL_UNLIKELY(NULL == context)) {
         mca_btl_uct_device_context_t *new_context;
 
-        new_context = mca_btl_uct_context_create (module, tl, context_id);
-        if (!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &tl->uct_dev_contexts[context_id], &context, new_context)) {
+        new_context = mca_btl_uct_context_create (module, tl, context_id, true);
+        if (!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &tl->uct_dev_contexts[context_id],
+                                                      (intptr_t *) &context, (intptr_t) new_context)) {
             mca_btl_uct_context_destroy (new_context);
         } else {
             context = new_context;
