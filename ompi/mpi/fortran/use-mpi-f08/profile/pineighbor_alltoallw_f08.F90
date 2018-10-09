@@ -12,7 +12,8 @@ subroutine PMPI_Ineighbor_alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_ADDRESS_KIND
    use :: mpi_f08, only : ompi_ineighbor_alltoallw_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
    INTEGER, INTENT(IN) :: sendcounts(*), recvcounts(*)
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(*)

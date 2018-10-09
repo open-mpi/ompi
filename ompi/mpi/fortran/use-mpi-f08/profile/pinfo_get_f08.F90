@@ -19,6 +19,6 @@ subroutine PMPI_Info_get_f08(info,key,valuelen,value,flag,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call PMPI_Info_get(info%MPI_VAL,key,valuelen,value,flag,c_ierror);
+   call PMPI_Info_get(info%MPI_VAL,key,valuelen,value,flag,c_ierror)
    if (present(ierror)) ierror = c_ierror
 end subroutine PMPI_Info_get_f08

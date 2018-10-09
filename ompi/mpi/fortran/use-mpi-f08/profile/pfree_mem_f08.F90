@@ -12,7 +12,7 @@
 subroutine PMPI_Free_mem_f08(base,ierror)
    use :: mpi_f08, only : ompi_free_mem_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE,INTENT(IN) :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

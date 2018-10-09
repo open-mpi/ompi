@@ -16,4 +16,4 @@ subroutine MPI_Win_sync_f08(win,ierror)
    call ompi_win_sync_f(win%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
- end subroutine MPI_Win_sync_f08
+end subroutine MPI_Win_sync_f08
