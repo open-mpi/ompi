@@ -564,10 +564,12 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
             }
         }
 
-#if 0 && OPAL_ENABLE_DEBUG
-        BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
-                    btl->super.btl_bandwidth, btl->super.btl_latency));
-#endif
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "btl:tcp: %p: if %s kidx %d cnt %i addr %s %s bw %d lt %d\n",
+                            (void*)btl, if_name, (int) btl->tcp_ifkindex, i,
+                            opal_net_get_hostname((struct sockaddr*)&addr),
+                            (addr.ss_family == AF_INET) ? "IPv4" : "IPv6",
+                            btl->super.btl_bandwidth, btl->super.btl_latency);
     }
     return OPAL_SUCCESS;
 }
@@ -1154,7 +1156,8 @@ static int mca_btl_tcp_component_exchange(void)
 
                  opal_ifindextoname(index, ifn, sizeof(ifn));
                  opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                     "btl:tcp: examining interface %s", ifn);
+                                     "btl: tcp: component_exchange: examining interface %s",
+                                     ifn);
                  if (OPAL_SUCCESS !=
                      opal_ifindextoaddr(index, (struct sockaddr*) &my_ss,
                                         sizeof (my_ss))) {
@@ -1179,7 +1182,9 @@ static int mca_btl_tcp_component_exchange(void)
                          opal_ifindextokindex (index);
                      current_addr++;
                      opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                         "btl:tcp: using ipv4 interface %s", ifn);
+                                         "btl: tcp: component_exchange: "
+                                         "%s IPv6 %s", ifn,
+                                         opal_net_get_hostname((struct sockaddr*)&my_ss));
                  } else
 #endif
                  if ((AF_INET == my_ss.ss_family) &&
@@ -1196,7 +1201,9 @@ static int mca_btl_tcp_component_exchange(void)
                          opal_ifindextokindex (index);
                      current_addr++;
                      opal_output_verbose(30, opal_btl_base_framework.framework_output,
-                                         "btl:tcp: using ipv6 interface %s", ifn);
+                                         "btl: tcp: component_exchange: "
+                                         "%s IPv4 %s", ifn,
+                                         opal_net_get_hostname((struct sockaddr*)&my_ss));
                  }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
