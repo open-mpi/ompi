@@ -39,6 +39,12 @@ it is possible for items to appear more than once in the list.
 3.0.3 -- October, 2018
 ----------------------
 
+- Fix compile error when using OpenJDK 11 to compile the Java bindings.
+- Fix crash when using a hostfile with a 'user@host' line.
+- Numerous Fortran '08 interface fixes.
+- TCP BTL error message fixes.
+- OFI MTL now will use any provider other than shm, sockets, tcp, udp, or
+  rstream, rather than only supporting gni, psm, and psm2.
 - Disable async receive of CUDA buffers by default, fixing a hang
   on large transfers.
 - Support the BCM57XXX and BCM58XXX Broadcomm adapters.
