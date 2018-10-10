@@ -825,6 +825,8 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
         ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
     }
 
+    opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
+
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
 
