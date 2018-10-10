@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -38,15 +38,15 @@ endif
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_pmix_ext2x_la_SOURCES = $(sources)
+mca_pmix_ext2x_la_SOURCES = $(sources) $(headers)
 mca_pmix_ext2x_la_CFLAGS = $(opal_pmix_ext2x_CFLAGS)
-mca_pmix_ext2x_la_CPPFLAGS =$(opal_pmix_ext2x_CPPFLAGS)
+mca_pmix_ext2x_la_CPPFLAGS = $(opal_pmix_ext2x_CPPFLAGS)
 mca_pmix_ext2x_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext2x_LDFLAGS)
 mca_pmix_ext2x_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
 	$(opal_pmix_ext2x_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_pmix_ext2x_la_SOURCES =$(sources)
+libmca_pmix_ext2x_la_SOURCES = $(sources) $(headers)
 libmca_pmix_ext2x_la_CFLAGS = $(opal_pmix_ext2x_CFLAGS)
 libmca_pmix_ext2x_la_CPPFLAGS = $(opal_pmix_ext2x_CPPFLAGS)
 libmca_pmix_ext2x_la_LDFLAGS = -module -avoid-version $(opal_pmix_ext2x_LDFLAGS)

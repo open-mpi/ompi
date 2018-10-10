@@ -37,12 +37,6 @@
 
 BEGIN_C_DECLS
 
-#ifdef OPAL_C_HAVE_VISIBILITY
-#define PMIX_HAVE_VISIBILITY 1
-#else
-#undef PMIX_HAVE_VISIBILITY
-#endif
-
 typedef struct {
   opal_pmix_base_component_t super;
   bool legacy_get;
