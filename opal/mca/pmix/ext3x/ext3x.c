@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2018 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -1257,7 +1257,7 @@ static void errreg_cbfunc (pmix_status_t status,
     OPAL_ACQUIRE_OBJECT(op);
     op->event->index = errhandler_ref;
     opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                        "PMIX2x errreg_cbfunc - error handler registered status=%d, reference=%lu",
+                        "PMIX3x errreg_cbfunc - error handler registered status=%d, reference=%lu",
                         status, (unsigned long)errhandler_ref);
     if (NULL != op->evregcbfunc) {
         op->evregcbfunc(pmix3x_convert_rc(status), errhandler_ref, op->cbdata);
