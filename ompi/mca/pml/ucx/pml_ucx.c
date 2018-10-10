@@ -253,7 +253,7 @@ int mca_pml_ucx_init(void)
     PML_UCX_VERBOSE(2, "created ucp context %p, worker %p",
                     (void *)ompi_pml_ucx.ucp_context,
                     (void *)ompi_pml_ucx.ucp_worker);
-    return OMPI_SUCCESS;
+    return rc;
 
 err_destroy_worker:
     ucp_worker_destroy(ompi_pml_ucx.ucp_worker);
