@@ -55,8 +55,25 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+3.1.3 -- October, 2018
+----------------------
+
+- Fix compile error when using OpenJDK 11 to compile the Java bindings.
+- Fix crash when using a hostfile with a 'user@host' line.
+- Numerous Fortran '08 interface fixes.
+- TCP BTL error message fixes.
+- OFI MTL now will use any provider other than shm, sockets, tcp, udp, or
+  rstream, rather than only supporting gni, psm, and psm2.
+- Disable async receive of CUDA buffers by default, fixing a hang
+  on large transfers.
+- Support the BCM57XXX and BCM58XXX Broadcomm adapters.
+- Fix minmax datatype support in ROMIO.
+- Bug fixes in vader shared memory transport.
+- Support very large buffers with MPI_TYPE_VECTOR.
+- Fix hang when launching with mpirun on Cray systems.
+
 3.1.2 -- August, 2018
-------------------------
+---------------------
 
 - A subtle race condition bug was discovered in the "vader" BTL
   (shared memory communications) that, in rare instances, can cause
