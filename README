@@ -507,7 +507,6 @@ MPI Functionality and Features
   - yalla
 
   (1) The cm PML and the following MTLs support MPI_THREAD_MULTIPLE:
-      - MXM
       - ofi (Libfabric)
       - portals4
 
