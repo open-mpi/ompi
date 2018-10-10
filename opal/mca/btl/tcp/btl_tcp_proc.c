@@ -929,6 +929,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
                        btl_proc->proc_opal->proc_hostname,
                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
                        opal_net_get_hostname((struct sockaddr*)addr),
+                       btl_proc->proc_endpoint_count,
                        (NULL == addr_str) ? "NONE" : addr_str);
         if (NULL != addr_str) {
             free(addr_str);

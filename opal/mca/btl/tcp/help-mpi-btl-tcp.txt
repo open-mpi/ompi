@@ -99,7 +99,7 @@ hopefully be able to continue).
   Local PID:           %d
   Peer hostname:       %s (%s)
   Source IP of socket: %s
-  Known IPs of peer:   %s
+  Known IPs of peer (%d):   %s
 #
 [socket flag fail]
 WARNING: Open MPI failed to get or set flags on a TCP socket.  This
