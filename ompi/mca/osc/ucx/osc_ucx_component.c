@@ -131,14 +131,6 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
     return OMPI_SUCCESS;
 }
 
-static void component_world_barrier(void)
-{
-    ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
-    opal_progress_register(progress_callback);
-    comm->c_coll->coll_barrier(comm, comm->c_coll->coll_barrier_module);
-    opal_progress_unregister(progress_callback);
-}
-
 static int component_finalize(void) {
     int i;
     for (i = 0; i < ompi_proc_world_size(); i++) {
@@ -148,9 +140,7 @@ static int component_finalize(void) {
         }
     }
 
-    assert(mca_osc_ucx_component.num_modules == 0);
     if (mca_osc_ucx_component.ucp_worker != NULL) {
-        component_world_barrier();
         ucp_worker_destroy(mca_osc_ucx_component.ucp_worker);
     }
 
