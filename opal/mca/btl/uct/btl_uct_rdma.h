@@ -45,7 +45,7 @@ static inline int mca_btl_uct_get_rkey (mca_btl_uct_module_t *module,
                                         mca_btl_base_endpoint_t *endpoint,
 					mca_btl_base_registration_handle_t *remote_handle,
                                         uct_rkey_bundle_t *rkey,
-                                        uct_ep_h *ep_handle)
+                                        mca_btl_uct_tl_endpoint_t **ep_handle)
 {
     ucs_status_t ucs_status;
     int rc;

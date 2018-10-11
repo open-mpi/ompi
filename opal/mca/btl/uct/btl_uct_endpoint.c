@@ -115,6 +115,7 @@ static int mca_btl_uct_endpoint_connect_iface (mca_btl_uct_module_t *uct_btl, mc
 
     mca_btl_uct_context_lock (tl_context);
     ucs_status = uct_ep_create_connected (tl_context->uct_iface, device_addr, iface_addr, &tl_endpoint->uct_ep);
+    uct_iface_query(tl_context->uct_iface, &tl_endpoint->iface_attr);
     mca_btl_uct_context_unlock (tl_context);
 
     tl_endpoint->flags = MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY;
@@ -245,6 +246,7 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
             OBJ_RELEASE(endpoint->conn_ep);
             return OPAL_ERROR;
         }
+        uct_iface_query(tl_context->uct_iface, &tl_endpoint->iface_attr);
 
         /* fill in connection request */
         ucs_status = uct_ep_get_address (tl_endpoint->uct_ep, (uct_ep_addr_t *) request->ep_addr);
