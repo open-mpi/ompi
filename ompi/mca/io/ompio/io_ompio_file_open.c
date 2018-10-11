@@ -400,8 +400,9 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
         }
         break;
     case MPI_SEEK_CUR:
-        offset += data->ompio_fh.f_position_in_file_view;
-        offset += data->ompio_fh.f_disp;
+        ret = mca_common_ompio_file_get_position (&data->ompio_fh,
+                                                  &temp_offset);
+        offset += temp_offset;
         if (offset < 0) {
             OPAL_THREAD_UNLOCK(&fh->f_lock);
             return OMPI_ERROR;
