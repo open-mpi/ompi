@@ -152,12 +152,12 @@ static size_t mca_btl_uct_tl_modex_size (mca_btl_uct_tl_t *tl)
 {
     const size_t size = strlen (tl->uct_tl_name) + 1;
 
-    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
+    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
         /* pad out to a multiple of 4 bytes */
-        return (4 + 3 + size + tl->uct_iface_attr.device_addr_len + tl->uct_iface_attr.iface_addr_len) & ~3;
+        return (4 + 3 + size + MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len + MCA_BTL_UCT_TL_ATTR(tl, 0).iface_addr_len) & ~3;
     }
 
-    return (4 + 3 + size + tl->uct_iface_attr.device_addr_len) & ~3;
+    return (4 + 3 + size + MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len) & ~3;
 }
 
 static size_t mca_btl_uct_module_modex_size (mca_btl_uct_module_t *module)
@@ -196,13 +196,13 @@ static size_t mca_btl_uct_tl_modex_pack (mca_btl_uct_tl_t *tl, uint8_t *modex_da
      * the same endpoint since we are only doing RDMA. if any of these assumptions are
      * wrong then we can't delay creating the other contexts and must include their
      * information in the modex. */
-    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
+    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
         uct_iface_get_address (dev_context->uct_iface, (uct_iface_addr_t *) modex_data);
-        modex_data += tl->uct_iface_attr.iface_addr_len;
+        modex_data += MCA_BTL_UCT_TL_ATTR(tl, 0).iface_addr_len;
     }
 
     uct_iface_get_device_address (dev_context->uct_iface, (uct_device_addr_t *) modex_data);
-    modex_data += tl->uct_iface_attr.device_addr_len;
+    modex_data += MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len;
 
     return modex_size;
 }

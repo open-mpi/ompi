@@ -109,15 +109,14 @@ static int mca_btl_uct_endpoint_connect_iface (mca_btl_uct_module_t *uct_btl, mc
 
     /* easy case. just connect to the interface */
     iface_addr = (uct_iface_addr_t *) tl_data;
-    device_addr = (uct_device_addr_t *) ((uintptr_t) iface_addr + tl->uct_iface_attr.iface_addr_len);
+    device_addr = (uct_device_addr_t *) ((uintptr_t) iface_addr + MCA_BTL_UCT_TL_ATTR(tl, tl_context->context_id).iface_addr_len);
 
     BTL_VERBOSE(("connecting endpoint to interface"));
 
     mca_btl_uct_context_lock (tl_context);
     ucs_status = uct_ep_create_connected (tl_context->uct_iface, device_addr, iface_addr, &tl_endpoint->uct_ep);
-    mca_btl_uct_context_unlock (tl_context);
-
     tl_endpoint->flags = MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY;
+    mca_btl_uct_context_unlock (tl_context);
 
     return (UCS_OK == ucs_status) ? OPAL_SUCCESS : OPAL_ERROR;
 }
@@ -189,7 +188,7 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
                                                   mca_btl_uct_tl_endpoint_t *tl_endpoint, uint8_t *tl_data,
                                                   uint8_t *conn_tl_data, void *ep_addr)
 {
-    size_t request_length = sizeof (mca_btl_uct_conn_req_t) + tl->uct_iface_attr.ep_addr_len;
+    size_t request_length = sizeof (mca_btl_uct_conn_req_t) + MCA_BTL_UCT_TL_ATTR(tl, tl_context->context_id).ep_addr_len;
     mca_btl_uct_connection_ep_t *conn_ep = endpoint->conn_ep;
     mca_btl_uct_tl_t *conn_tl = uct_btl->conn_tl;
     mca_btl_uct_device_context_t *conn_tl_context = conn_tl->uct_dev_contexts[0];
@@ -208,7 +207,7 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
                      opal_process_name_print (endpoint->ep_proc->proc_name)));
 
         iface_addr = (uct_iface_addr_t *) conn_tl_data;
-        device_addr = (uct_device_addr_t *) ((uintptr_t) conn_tl_data + conn_tl->uct_iface_attr.iface_addr_len);
+        device_addr = (uct_device_addr_t *) ((uintptr_t) conn_tl_data + MCA_BTL_UCT_TL_ATTR(conn_tl, 0).iface_addr_len);
 
         endpoint->conn_ep = conn_ep = OBJ_NEW(mca_btl_uct_connection_ep_t);
         if (OPAL_UNLIKELY(NULL == conn_ep)) {

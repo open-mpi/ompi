@@ -98,13 +98,12 @@ int mca_btl_uct_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
 
     mca_btl_uct_context_lock (context);
 
-    if (size <= uct_btl->rdma_tl->uct_iface_attr.cap.get.max_bcopy) {
+    if (size <= MCA_BTL_UCT_TL_ATTR(uct_btl->rdma_tl, context->context_id).cap.get.max_bcopy) {
         ucs_status = uct_ep_get_bcopy (ep_handle, mca_btl_uct_get_unpack, local_address, size, remote_address,
                                        rkey.rkey, &comp->uct_comp);
     } else {
         uct_iov_t iov = {.buffer = local_address, .length = size, .stride = 0, .count = 1,
                          .memh = MCA_BTL_UCT_REG_REMOTE_TO_LOCAL(local_handle)->uct_memh};
-
         ucs_status = uct_ep_get_zcopy (ep_handle, &iov, 1, remote_address, rkey.rkey, &comp->uct_comp);
     }
 
@@ -183,7 +182,7 @@ int mca_btl_uct_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
 
     /* determine what UCT prototol should be used */
     if (size <= uct_btl->super.btl_put_local_registration_threshold) {
-        use_short = size <= uct_btl->rdma_tl->uct_iface_attr.cap.put.max_short;
+        use_short = size <= MCA_BTL_UCT_TL_ATTR(uct_btl->rdma_tl, context->context_id).cap.put.max_short;
         use_bcopy = !use_short;
     }
 
