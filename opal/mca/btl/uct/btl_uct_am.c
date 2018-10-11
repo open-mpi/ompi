@@ -25,7 +25,7 @@ mca_btl_base_descriptor_t *mca_btl_uct_alloc (mca_btl_base_module_t *btl, mca_bt
     mca_btl_uct_module_t *uct_btl = (mca_btl_uct_module_t *) btl;
     mca_btl_uct_base_frag_t *frag = NULL;
 
-    if ((size + 8) <= (size_t) uct_btl->am_tl->uct_iface_attr.cap.am.max_short) {
+    if ((size + 8) <= (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
         frag = mca_btl_uct_frag_alloc_short (uct_btl, endpoint);
     } else if (size <= uct_btl->super.btl_eager_limit) {
         frag = mca_btl_uct_frag_alloc_eager (uct_btl, endpoint);
@@ -97,7 +97,7 @@ struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src (mca_btl_base_module_t
 
         frag->base.order       = order;
         frag->base.des_flags   = flags;
-        if (total_size > (size_t) uct_btl->am_tl->uct_iface_attr.cap.am.max_short) {
+        if (total_size > (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
             frag->segments[1].seg_len = *size;
             frag->segments[1].seg_addr.pval = data_ptr;
             frag->base.des_segment_count = 2;
@@ -253,10 +253,11 @@ static size_t mca_btl_uct_sendi_pack (void *data, void *arg)
     return args->header_size + args->payload_size + 8;
 }
 
-static inline size_t mca_btl_uct_max_sendi (mca_btl_uct_module_t *uct_btl)
+static inline size_t mca_btl_uct_max_sendi (mca_btl_uct_module_t *uct_btl, int context_id)
 {
-    return (uct_btl->am_tl->uct_iface_attr.cap.am.max_short > uct_btl->am_tl->uct_iface_attr.cap.am.max_bcopy) ?
-        uct_btl->am_tl->uct_iface_attr.cap.am.max_short : uct_btl->am_tl->uct_iface_attr.cap.am.max_bcopy;
+    const mca_btl_uct_tl_t *tl = uct_btl->am_tl;
+    return (MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_short > MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_bcopy) ?
+        MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_short : MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_bcopy;
 }
 
 int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, opal_convertor_t *convertor,
@@ -274,7 +275,7 @@ int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endp
     int rc;
 
     rc = mca_btl_uct_endpoint_check_am (uct_btl, endpoint, context, &ep_handle);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || msg_size > mca_btl_uct_max_sendi (uct_btl))) {
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || msg_size > mca_btl_uct_max_sendi (uct_btl, context->context_id))) {
         if (descriptor) {
             *descriptor = mca_btl_uct_alloc (btl, endpoint, order, total_size, flags);
         }
@@ -287,7 +288,7 @@ int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endp
     mca_btl_uct_context_lock (context);
     if (0 == payload_size) {
         ucs_status = uct_ep_am_short (ep_handle, MCA_BTL_UCT_FRAG, am_header.value, header, header_size);
-    } else if (msg_size < (size_t) uct_btl->am_tl->uct_iface_attr.cap.am.max_short) {
+    } else if (msg_size < (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, context->context_id).cap.am.max_short) {
         int8_t *data = alloca (total_size);
         _mca_btl_uct_send_pack (data, header, header_size, convertor, payload_size);
         ucs_status = uct_ep_am_short (ep_handle, MCA_BTL_UCT_FRAG, am_header.value, data, total_size);

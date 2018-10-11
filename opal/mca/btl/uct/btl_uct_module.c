@@ -88,7 +88,7 @@ static int mca_btl_uct_add_procs (mca_btl_base_module_t *btl,
         if (am_tl) {
             rc = opal_free_list_init (&uct_module->short_frags, sizeof (mca_btl_uct_base_frag_t),
                                       opal_cache_line_size, OBJ_CLASS(mca_btl_uct_base_frag_t),
-                                      am_tl->uct_iface_attr.cap.am.max_short, opal_cache_line_size,
+                                      MCA_BTL_UCT_TL_ATTR(am_tl, 0).cap.am.max_short, opal_cache_line_size,
                                       0, 1024, 64, NULL, 0, NULL, NULL, NULL);
 
             rc = opal_free_list_init (&uct_module->eager_frags, sizeof (mca_btl_uct_base_frag_t),
