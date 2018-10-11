@@ -98,6 +98,7 @@ struct mca_btl_uct_tl_endpoint_t {
 
     /** UCT endpoint handle */
     uct_ep_h uct_ep;
+    uct_iface_attr_t iface_attr;
 };
 
 typedef struct mca_btl_uct_tl_endpoint_t mca_btl_uct_tl_endpoint_t;

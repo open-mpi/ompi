@@ -34,7 +34,7 @@ int mca_btl_uct_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
     mca_btl_uct_uct_completion_t *comp = NULL;
     ucs_status_t ucs_status;
     uct_rkey_bundle_t rkey;
-    uct_ep_h ep_handle;
+    mca_btl_uct_tl_endpoint_t *ep_handle;
     int rc;
 
 #if OPAL_HAVE_UCT_EP_ATOMIC64_POST
@@ -67,27 +67,27 @@ int mca_btl_uct_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
 #if OPAL_HAVE_UCT_EP_ATOMIC64_POST
     if (flags & MCA_BTL_ATOMIC_FLAG_32BIT) {
-        ucs_status = uct_ep_atomic32_fetch (ep_handle, uct_op, operand, (uint32_t *) local_address, remote_address,
+        ucs_status = uct_ep_atomic32_fetch (ep_handle->uct_ep, uct_op, operand, (uint32_t *) local_address, remote_address,
 	                                    rkey.rkey, &comp->uct_comp);
     } else {
-        ucs_status = uct_ep_atomic64_fetch (ep_handle, uct_op, operand, (uint64_t *) local_address, remote_address,
+        ucs_status = uct_ep_atomic64_fetch (ep_handle->uct_ep, uct_op, operand, (uint64_t *) local_address, remote_address,
 	                                    rkey.rkey, &comp->uct_comp);
     }
 #else
     if (MCA_BTL_ATOMIC_ADD == op) {
         if (flags & MCA_BTL_ATOMIC_FLAG_32BIT) {
-            ucs_status = uct_ep_atomic_fadd32 (ep_handle, (uint32_t) operand, remote_address,
+            ucs_status = uct_ep_atomic_fadd32 (ep_handle->uct_ep, (uint32_t) operand, remote_address,
                                                rkey.rkey, (uint32_t *) local_address, &comp->uct_comp);
         } else {
-            ucs_status = uct_ep_atomic_fadd64 (ep_handle, operand, remote_address, rkey.rkey,
+            ucs_status = uct_ep_atomic_fadd64 (ep_handle->uct_ep, operand, remote_address, rkey.rkey,
                                                (uint64_t *) local_address, &comp->uct_comp);
         }
     } else {
         if (flags & MCA_BTL_ATOMIC_FLAG_32BIT) {
-            ucs_status = uct_ep_atomic_swap32 (ep_handle, (uint32_t) operand, remote_address,
+            ucs_status = uct_ep_atomic_swap32 (ep_handle->uct_ep, (uint32_t) operand, remote_address,
                                                rkey.rkey, (uint32_t *) local_address, &comp->uct_comp);
         } else {
-            ucs_status = uct_ep_atomic_swap64 (ep_handle, operand, remote_address, rkey.rkey,
+            ucs_status = uct_ep_atomic_swap64 (ep_handle->uct_ep, operand, remote_address, rkey.rkey,
                                                (uint64_t *) local_address, &comp->uct_comp);
         }
     }
@@ -140,7 +140,7 @@ int mca_btl_uct_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     mca_btl_uct_uct_completion_t *comp = NULL;
     ucs_status_t ucs_status;
     uct_rkey_bundle_t rkey;
-    uct_ep_h ep_handle;
+    mca_btl_uct_tl_endpoint_t *ep_handle;
     int rc;
 
     if (cbfunc) {
@@ -160,10 +160,10 @@ int mca_btl_uct_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     mca_btl_uct_context_lock (context);
 
     if (flags & MCA_BTL_ATOMIC_FLAG_32BIT) {
-        ucs_status = uct_ep_atomic_cswap32 (ep_handle, (uint32_t) compare, (uint32_t) value, remote_address,
+        ucs_status = uct_ep_atomic_cswap32 (ep_handle->uct_ep, (uint32_t) compare, (uint32_t) value, remote_address,
                                             rkey.rkey, (uint32_t *) local_address, &comp->uct_comp);
     } else {
-        ucs_status = uct_ep_atomic_cswap64 (ep_handle, compare, value, remote_address, rkey.rkey,
+        ucs_status = uct_ep_atomic_cswap64 (ep_handle->uct_ep, compare, value, remote_address, rkey.rkey,
                                             (uint64_t *) local_address, &comp->uct_comp);
     }
 
