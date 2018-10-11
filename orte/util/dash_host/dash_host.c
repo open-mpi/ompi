@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -41,6 +41,36 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "dash_host.h"
+
+int orte_util_dash_host_compute_slots(orte_node_t *node, char *hosts)
+{
+    char **specs, *cptr;
+    int slots = 0;
+    int n;
+
+    specs = opal_argv_split(hosts, ',');
+
+    /* see if this node appears in the list */
+    for (n=0; NULL != specs[n]; n++) {
+        if (0 == strncmp(node->name, specs[n], strlen(node->name))) {
+            /* check if the #slots was specified */
+            if (NULL != (cptr = strchr(specs[n], ':'))) {
+                *cptr = '\0';
+                ++cptr;
+                if ('*' == *cptr || 0 == strcmp(cptr, "auto")) {
+                    slots += node->slots - node->slots_inuse;
+                } else {
+                    slots += strtol(cptr, NULL, 10);
+                }
+            } else {
+                ++slots;
+            }
+
+        }
+    }
+    opal_argv_free(specs);
+    return slots;
+}
 
 /* we can only enter this routine if no other allocation
  * was found, so we only need to know that finding any
@@ -289,7 +319,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
                 if (ORTE_FLAG_TEST(nd, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     /* transfer across the number of slots */
-                    node->slots = nd->slots;
+                    node->slots += nd->slots;
                     ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
                 }
                 break;

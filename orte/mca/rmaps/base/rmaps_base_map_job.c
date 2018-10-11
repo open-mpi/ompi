@@ -49,7 +49,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_node_t *node;
     int rc, i, ppx = 0;
-    bool did_map, given, pernode = false, persocket = false;
+    bool did_map, pernode = false, persocket = false;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_vpid_t nprocs;
@@ -105,7 +105,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 orte_std_cntr_t slots;
                 OBJ_CONSTRUCT(&nodes, opal_list_t);
                 orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
-                slots = 0;
                 if (pernode) {
                     slots = ppx * opal_list_get_size(&nodes);
                 } else if (persocket) {
@@ -114,34 +113,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         slots += ppx * opal_hwloc_base_get_nbobjs_by_type(node->topology->topo,
                                                                           HWLOC_OBJ_SOCKET, 0,
                                                                           OPAL_HWLOC_AVAILABLE);
-                    }
-                } else {
-                    /* if we are in a managed allocation, then all is good - otherwise,
-                     * we have to do a little more checking */
-                    if (!orte_managed_allocation) {
-                        /* if all the nodes have their slots given, then we are okay */
-                        given = true;
-                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
-                            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
-                                given = false;
-                                break;
-                            }
-                        }
-                        /* if -host or -hostfile was given, and the slots were not,
-                         * then this is no longer allowed */
-                        if (!given &&
-                            (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, NULL, OPAL_STRING) ||
-                             orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING))) {
-                            /* inform the user of the error */
-                            orte_show_help("help-orte-rmaps-base.txt", "num-procs-not-specified", true);
-                            OPAL_LIST_DESTRUCT(&nodes);
-                            OBJ_RELEASE(caddy);
-                            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
-                            return;
-                        }
-                        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
-                            slots += node->slots;
-                        }
                     }
                 }
                 app->num_procs = slots;

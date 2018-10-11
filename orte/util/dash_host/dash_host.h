@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +27,7 @@
 
 #include "opal/class/opal_list.h"
 
+#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
@@ -40,6 +41,8 @@ ORTE_DECLSPEC int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
 
 ORTE_DECLSPEC int orte_util_get_ordered_dash_host_list(opal_list_t *nodes,
                                                        char *hosts);
+
+ORTE_DECLSPEC int orte_util_dash_host_compute_slots(orte_node_t *node, char *hosts);
 
 END_C_DECLS
 
