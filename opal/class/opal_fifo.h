@@ -262,7 +262,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
     }
 
     next = (opal_list_item_t *) item->opal_list_next;
-    fifo->opal_fifo_head.data.item = next;
+    fifo->opal_fifo_head.data.item = (uintptr_t) next;
 #endif
 
     if (ghost == next) {
