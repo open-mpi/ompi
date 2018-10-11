@@ -77,6 +77,12 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
     int i = 0; /* index into the decoded iovec of the buffer */
     int j = 0; /* index into the file vie iovec */
 
+    if (fh->f_amode & MPI_MODE_WRONLY){
+//      opal_output(10, "Improper use of FILE Mode, Using WRONLY for Read!\n");
+        ret = MPI_ERR_ACCESS;
+      return ret;
+    }
+
     if ( 0 == count ) {
         if ( MPI_STATUS_IGNORE != status ) {
             status->_ucount = 0;
@@ -84,11 +90,6 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         return ret;
     }
 
-    if (fh->f_amode & MPI_MODE_WRONLY){
-      printf("Improper use of FILE Mode, Using WRONLY for Read!\n");
-      ret = OMPI_ERROR;
-      return ret;
-    }
 
 #if OPAL_CUDA_SUPPORT
     int is_gpu, is_managed;
@@ -225,6 +226,12 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
     int ret = OMPI_SUCCESS;
     mca_ompio_request_t *ompio_req=NULL;
     size_t spc=0;
+
+    if (fh->f_amode & MPI_MODE_WRONLY){
+//      opal_output(10, "Improper use of FILE Mode, Using WRONLY for Read!\n");
+        ret = MPI_ERR_ACCESS;
+      return ret;
+    }
 
     mca_common_ompio_request_alloc ( &ompio_req, MCA_OMPIO_REQUEST_READ);
 
