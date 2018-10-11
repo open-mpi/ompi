@@ -417,10 +417,12 @@ typedef ompi_file_errhandler_fn MPI_File_errhandler_fn
 typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
         __mpi_interface_removed__("MPI_Win_errhandler_fn was removed in MPI-3.0; use MPI_Win_errhandler_function instead");
 
-// NOTE: We intentionally do *not* mark the following as
-// deprecated/removed because they are used below in function
-// prototypes (and would therefore emit warnings, just for #including
-// <mpi.h>).
+/*
+ * NOTE: We intentionally do *not* mark the following as
+ * deprecated/removed because they are used below in function
+ * prototypes (and would therefore emit warnings, just for #including
+ * <mpi.h>).
+ */
 typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
 typedef int (MPI_Copy_function)(MPI_Comm, int, void *,
                                 void *, void *, int *);
