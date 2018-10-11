@@ -58,6 +58,13 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
     int i = 0; /* index into the decoded iovec of the buffer */
     int j = 0; /* index into the file view iovec */
 
+    if (fh->f_amode & MPI_MODE_RDONLY){
+//      opal_output(10, "Improper use of FILE Mode, Using RDONLY for write!\n");
+        ret = MPI_ERR_READ_ONLY;
+      return ret;
+    }
+
+    
     if ( 0 == count ) {
         if ( MPI_STATUS_IGNORE != status ) {
             status->_ucount = 0;
@@ -194,6 +201,12 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
     mca_ompio_request_t *ompio_req=NULL;
     size_t spc=0;
 
+    if (fh->f_amode & MPI_MODE_RDONLY){
+//      opal_output(10, "Improper use of FILE Mode, Using RDONLY for write!\n");
+        ret = MPI_ERR_READ_ONLY;
+      return ret;
+    }
+    
     mca_common_ompio_request_alloc ( &ompio_req, MCA_OMPIO_REQUEST_WRITE);
 
     if ( 0 == count ) {
