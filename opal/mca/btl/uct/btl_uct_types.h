@@ -141,6 +141,9 @@ struct mca_btl_uct_device_context_t {
     /** UCT interface handle */
     uct_iface_h uct_iface;
 
+    /** interface attributes */
+    uct_iface_attr_t uct_iface_attr;
+
     /** RDMA completions */
     opal_free_list_t rdma_completions;
 
@@ -307,9 +310,6 @@ struct mca_btl_uct_tl_t {
     /** device name for this tl (used for creating device contexts) */
     char *uct_dev_name;
 
-    /** interface attributes */
-    uct_iface_attr_t uct_iface_attr;
-
     /** maxiumum number of device contexts that can be created */
     int max_device_contexts;
 
@@ -323,5 +323,7 @@ struct mca_btl_uct_tl_t {
 
 typedef struct mca_btl_uct_tl_t mca_btl_uct_tl_t;
 OBJ_CLASS_DECLARATION(mca_btl_uct_tl_t);
+
+#define MCA_BTL_UCT_TL_ATTR(tl, context_id) (tl)->uct_dev_contexts[(context_id)]->uct_iface_attr
 
 #endif /* !defined(BTL_UCT_TYPES_H) */

@@ -286,7 +286,7 @@ int mca_btl_uct_query_tls (mca_btl_uct_module_t *module, mca_btl_uct_md_t *md, u
  */
 static inline bool mca_btl_uct_tl_supports_rdma (mca_btl_uct_tl_t *tl)
 {
-    return (tl->uct_iface_attr.cap.flags & (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY)) ==
+    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY)) ==
         (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY);
 }
 
@@ -295,7 +295,7 @@ static inline bool mca_btl_uct_tl_supports_rdma (mca_btl_uct_tl_t *tl)
  */
 static inline bool mca_btl_uct_tl_support_am (mca_btl_uct_tl_t *tl)
 {
-    return (tl->uct_iface_attr.cap.flags & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_AM_BCOPY | UCT_IFACE_FLAG_AM_ZCOPY));
+    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_AM_BCOPY | UCT_IFACE_FLAG_AM_ZCOPY));
 }
 
 /**
@@ -305,7 +305,7 @@ static inline bool mca_btl_uct_tl_support_am (mca_btl_uct_tl_t *tl)
  */
 static inline bool mca_btl_uct_tl_supports_conn (mca_btl_uct_tl_t *tl)
 {
-    return (tl->uct_iface_attr.cap.flags & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE)) ==
+    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE)) ==
         (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }
 
@@ -316,7 +316,7 @@ static inline bool mca_btl_uct_tl_supports_conn (mca_btl_uct_tl_t *tl)
  */
 static inline bool mca_btl_uct_tl_requires_connection_tl (mca_btl_uct_tl_t *tl)
 {
-    return !(tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE);
+    return !(MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }
 
 END_C_DECLS
