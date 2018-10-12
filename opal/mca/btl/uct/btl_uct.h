@@ -68,7 +68,7 @@ struct mca_btl_uct_module_t {
     opal_hash_table_t id_to_endpoint;
 
     /** mutex to protect the module */
-    opal_mutex_t lock;
+    opal_recursive_mutex_t lock;
 
     /** async context */
     ucs_async_context_t *ucs_async;
@@ -108,6 +108,9 @@ struct mca_btl_uct_module_t {
 
     /** frags that were waiting on connections that are now ready to send */
     opal_list_t pending_frags;
+
+    /** pending connection requests */
+    opal_fifo_t pending_connection_reqs;
 };
 typedef struct mca_btl_uct_module_t mca_btl_uct_module_t;
 
@@ -278,6 +281,7 @@ ucs_status_t mca_btl_uct_am_handler (void *arg, void *data, size_t length, unsig
 struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep (struct mca_btl_base_module_t *module, opal_proc_t *proc);
 
 int mca_btl_uct_query_tls (mca_btl_uct_module_t *module, mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_descs, unsigned tl_count);
+int mca_btl_uct_process_connection_request (mca_btl_uct_module_t *module, mca_btl_uct_conn_req_t *req);
 
 /**
  * @brief Checks if a tl is suitable for using for RDMA

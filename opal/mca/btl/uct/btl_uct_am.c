@@ -25,7 +25,7 @@ mca_btl_base_descriptor_t *mca_btl_uct_alloc (mca_btl_base_module_t *btl, mca_bt
     mca_btl_uct_module_t *uct_btl = (mca_btl_uct_module_t *) btl;
     mca_btl_uct_base_frag_t *frag = NULL;
 
-    if ((size + 8) <= (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
+    if (size <= (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
         frag = mca_btl_uct_frag_alloc_short (uct_btl, endpoint);
     } else if (size <= uct_btl->super.btl_eager_limit) {
         frag = mca_btl_uct_frag_alloc_eager (uct_btl, endpoint);
@@ -40,6 +40,10 @@ mca_btl_base_descriptor_t *mca_btl_uct_alloc (mca_btl_base_module_t *btl, mca_bt
         frag->base.des_flags   = flags;
         frag->base.order       = order;
         frag->uct_iov.length = size;
+        if (NULL != frag->base.super.registration) {
+            /* zero-copy fragments will need callbacks */
+            frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+        }
     }
 
     return (mca_btl_base_descriptor_t *) frag;
@@ -95,14 +99,18 @@ struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src (mca_btl_base_module_t
             return NULL;
         }
 
+        frag->uct_iov.length   = total_size;
         frag->base.order       = order;
         frag->base.des_flags   = flags;
         if (total_size > (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
+            frag->segments[0].seg_len = reserve;
             frag->segments[1].seg_len = *size;
             frag->segments[1].seg_addr.pval = data_ptr;
             frag->base.des_segment_count = 2;
         } else {
+            frag->segments[0].seg_len = total_size;
             memcpy ((void *)((intptr_t) frag->segments[1].seg_addr.pval + reserve), data_ptr, *size);
+            frag->base.des_segment_count = 1;
         }
     }
 
@@ -130,7 +138,7 @@ static size_t mca_btl_uct_send_frag_pack (void *data, void *arg)
     data = (void *)((intptr_t) data + 8);
 
     /* this function should only ever get called with fragments with two segments */
-    for (size_t i = 0 ; i < 2 ; ++i) {
+    for (size_t i = 0 ; i < frag->base.des_segment_count ; ++i) {
         const size_t seg_len = frag->segments[i].seg_len;
         memcpy (data, frag->segments[i].seg_addr.pval, seg_len);
         data = (void *)((intptr_t) data + seg_len);
@@ -140,57 +148,84 @@ static size_t mca_btl_uct_send_frag_pack (void *data, void *arg)
     return length;
 }
 
-int mca_btl_uct_send_frag (mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint, mca_btl_uct_base_frag_t *frag,
-                           int32_t flags, mca_btl_uct_device_context_t *context, uct_ep_h ep_handle)
+static void mca_btl_uct_append_pending_frag (mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t *frag,
+                                             mca_btl_uct_device_context_t *context, bool ready)
 {
+    frag->ready = ready;
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    opal_atomic_wmb ();
+
+    opal_list_append (&uct_btl->pending_frags, (opal_list_item_t *) frag);
+}
+
+int mca_btl_uct_send_frag (mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t *frag, bool append)
+{
+    mca_btl_uct_device_context_t *context = frag->context;
+    const ssize_t msg_size = frag->uct_iov.length + 8;
+    ssize_t size;
     ucs_status_t ucs_status;
+    uct_ep_h ep_handle = NULL;
 
-    mca_btl_uct_context_lock (context);
+    /* if we get here then we must have an endpoint handle for this context/endpoint pair */
+    (void) mca_btl_uct_endpoint_test_am (uct_btl, frag->endpoint, frag->context, &ep_handle);
+    assert (NULL != ep_handle);
 
-    do {
+    /* if another thread set this we really don't care too much as this flag is only meant
+     * to protect against deep recursion */
+    if (!context->in_am_callback) {
+        mca_btl_uct_context_lock (context);
+        /* attempt to post the fragment */
         if (NULL != frag->base.super.registration) {
             frag->comp.dev_context = context;
-
             ucs_status = uct_ep_am_zcopy (ep_handle, MCA_BTL_UCT_FRAG, &frag->header, sizeof (frag->header),
                                           &frag->uct_iov, 1, 0, &frag->comp.uct_comp);
+
+            if (OPAL_LIKELY(UCS_INPROGRESS == ucs_status)) {
+                uct_worker_progress (context->uct_worker);
+                mca_btl_uct_context_unlock (context);
+                return OPAL_SUCCESS;
+            }
         } else {
             /* short message */
-            /* restore original flags */
-            frag->base.des_flags = flags;
-
-            if (1 == frag->base.des_segment_count) {
+            if (1 == frag->base.des_segment_count && (frag->uct_iov.length + 8) < MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
                 ucs_status = uct_ep_am_short (ep_handle, MCA_BTL_UCT_FRAG, frag->header.value, frag->uct_iov.buffer,
                                               frag->uct_iov.length);
-            } else {
-                ucs_status = uct_ep_am_bcopy (ep_handle, MCA_BTL_UCT_FRAG, mca_btl_uct_send_frag_pack, frag, 0);
+
+                if (OPAL_LIKELY(UCS_OK == ucs_status)) {
+                    uct_worker_progress (context->uct_worker);
+                    mca_btl_uct_context_unlock (context);
+                    /* send is complete */
+                    mca_btl_uct_frag_complete (frag, OPAL_SUCCESS);
+                    return 1;
+                }
+            }
+
+            size = uct_ep_am_bcopy (ep_handle, MCA_BTL_UCT_FRAG, mca_btl_uct_send_frag_pack, frag, 0);
+            if (OPAL_LIKELY(size == msg_size)) {
+                uct_worker_progress (context->uct_worker);
+                mca_btl_uct_context_unlock (context);
+                /* send is complete */
+                mca_btl_uct_frag_complete (frag, OPAL_SUCCESS);
+                return 1;
             }
         }
 
-        if (UCS_ERR_NO_RESOURCE != ucs_status) {
-            /* go ahead and progress the worker while we have the lock */
-            (void) uct_worker_progress (context->uct_worker);
-            break;
-        }
+        /* wait for something to happen */
+        uct_worker_progress (context->uct_worker);
+        mca_btl_uct_context_unlock (context);
 
-        /* wait for something to complete before trying again */
-        while (!uct_worker_progress (context->uct_worker));
-    } while (1);
-
-    mca_btl_uct_context_unlock (context);
-
-    if (UCS_OK == ucs_status) {
-        /* restore original flags */
-        frag->base.des_flags = flags;
-        /* send is complete */
-        mca_btl_uct_frag_complete (frag, OPAL_SUCCESS);
-        return 1;
+        mca_btl_uct_device_handle_completions (context);
     }
 
-    if (OPAL_UNLIKELY(UCS_INPROGRESS != ucs_status)) {
+    if (!append) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    return 0;
+    OPAL_THREAD_LOCK(&uct_btl->lock);
+    mca_btl_uct_append_pending_frag (uct_btl, frag, context, true);
+    OPAL_THREAD_UNLOCK(&uct_btl->lock);
+
+    return OPAL_SUCCESS;
 }
 
 int mca_btl_uct_send (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, mca_btl_base_descriptor_t *descriptor,
@@ -199,7 +234,6 @@ int mca_btl_uct_send (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpo
     mca_btl_uct_module_t *uct_btl = (mca_btl_uct_module_t *) btl;
     mca_btl_uct_device_context_t *context = mca_btl_uct_module_get_am_context (uct_btl);
     mca_btl_uct_base_frag_t *frag = (mca_btl_uct_base_frag_t *) descriptor;
-    int flags = frag->base.des_flags;
     uct_ep_h ep_handle;
     int rc;
 
@@ -208,28 +242,21 @@ int mca_btl_uct_send (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpo
 
 
     frag->header.data.tag = tag;
-
-    /* add the callback flag before posting to avoid potential races with other threads */
-    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    frag->context = context;
 
     rc = mca_btl_uct_endpoint_check_am (uct_btl, endpoint, context, &ep_handle);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        OPAL_THREAD_LOCK(&endpoint->ep_lock);
+        OPAL_THREAD_LOCK(&uct_btl->lock);
         /* check one more time in case another thread is completing the connection now */
         if (OPAL_SUCCESS != mca_btl_uct_endpoint_test_am (uct_btl, endpoint, context, &ep_handle)) {
-            frag->context_id = context->context_id;
-            frag->ready = false;
-            OPAL_THREAD_LOCK(&uct_btl->lock);
-            opal_list_append (&uct_btl->pending_frags, (opal_list_item_t *) frag);
-            OPAL_THREAD_UNLOCK(&endpoint->ep_lock);
+            mca_btl_uct_append_pending_frag (uct_btl, frag, context, false);
             OPAL_THREAD_UNLOCK(&uct_btl->lock);
-
             return OPAL_SUCCESS;
         }
-        OPAL_THREAD_UNLOCK(&endpoint->ep_lock);
+        OPAL_THREAD_UNLOCK(&uct_btl->lock);
     }
 
-    return mca_btl_uct_send_frag (uct_btl, endpoint, frag, flags, context, ep_handle);
+    return mca_btl_uct_send_frag (uct_btl, frag, true);
 }
 
 struct mca_btl_uct_sendi_pack_args_t {
@@ -255,9 +282,7 @@ static size_t mca_btl_uct_sendi_pack (void *data, void *arg)
 
 static inline size_t mca_btl_uct_max_sendi (mca_btl_uct_module_t *uct_btl, int context_id)
 {
-    const mca_btl_uct_tl_t *tl = uct_btl->am_tl;
-    return (MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_short > MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_bcopy) ?
-        MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_short : MCA_BTL_UCT_TL_ATTR(tl, context_id).cap.am.max_bcopy;
+    return MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, context_id).cap.am.max_bcopy;
 }
 
 int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, opal_convertor_t *convertor,
@@ -270,7 +295,7 @@ int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endp
     /* message with header */
     const size_t msg_size = total_size + 8;
     mca_btl_uct_am_header_t am_header;
-    ucs_status_t ucs_status = UCS_OK;
+    ucs_status_t ucs_status = UCS_ERR_NO_RESOURCE;
     uct_ep_h ep_handle;
     int rc;
 

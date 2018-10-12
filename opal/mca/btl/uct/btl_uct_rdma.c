@@ -107,19 +107,24 @@ int mca_btl_uct_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
         ucs_status = uct_ep_get_zcopy (ep_handle, &iov, 1, remote_address, rkey.rkey, &comp->uct_comp);
     }
 
-    /* go ahead and progress the worker while we have the lock */
-    (void) uct_worker_progress (context->uct_worker);
+    /* go ahead and progress the worker while we have the lock (if we are not in an AM callback) */
+    if (!context->in_am_callback) {
+        (void) uct_worker_progress (context->uct_worker);
+    }
 
     mca_btl_uct_context_unlock (context);
 
-    mca_btl_uct_device_handle_completions (context);
+    if (!context->in_am_callback) {
+        mca_btl_uct_device_handle_completions (context);
+    }
 
     if (UCS_OK == ucs_status && cbfunc) {
         /* if UCS_OK is returned the callback will never fire so we have to make the callback
          * ourselves */
         cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
-        mca_btl_uct_uct_completion_release (comp);
-    } else if (UCS_INPROGRESS == ucs_status) {
+    }
+
+    if (UCS_INPROGRESS == ucs_status) {
         ucs_status = UCS_OK;
     } else {
         mca_btl_uct_uct_completion_release (comp);
@@ -203,8 +208,11 @@ int mca_btl_uct_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
         }
 
         /* go ahead and progress the worker while we have the lock */
-        if (UCS_ERR_NO_RESOURCE != ucs_status) {
-            (void) uct_worker_progress (context->uct_worker);
+        if (UCS_ERR_NO_RESOURCE != ucs_status || context->in_am_callback) {
+            if (!context->in_am_callback) {
+                (void) uct_worker_progress (context->uct_worker);
+            }
+
             break;
         }
 
@@ -221,9 +229,12 @@ int mca_btl_uct_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
          * ourselves. this callback is possibly being made before the data is visible to the
          * remote process. */
         cbfunc (btl, endpoint, local_address, local_handle, cbcontext, cbdata, OPAL_SUCCESS);
-        mca_btl_uct_uct_completion_release (comp);
-    } else if (UCS_INPROGRESS == ucs_status) {
+    }
+
+    if (UCS_INPROGRESS == ucs_status) {
         ucs_status = UCS_OK;
+    } else {
+        mca_btl_uct_uct_completion_release (comp);
     }
 
     uct_rkey_release (&rkey);
