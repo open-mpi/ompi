@@ -17,10 +17,12 @@
 #include "osc_ucx_request.h"
 
 
-#define CHECK_VALID_RKEY(_module, _target, _count)                               \
-    if (!((_module)->win_info_array[_target]).rkey_init && ((_count) > 0)) {     \
-        OSC_UCX_VERBOSE(1, "window with non-zero length does not have an rkey"); \
-        return OMPI_ERROR;                                                       \
+#define CHECK_VALID_RKEY(_module, _target, _count)                                        \
+    if (!((_module)->win_info_array[_target]).rkey_init && ((_count) > 0)) {              \
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,                  \
+                            "%s:%d: window with non-zero length does not have an rkey\n", \
+                            __FILE__, __LINE__);                                          \
+        return OMPI_ERROR;                                                                \
     }
 
 typedef struct ucx_iovec {
@@ -344,7 +346,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
 
     if ((module->win_info_array[target]).rkey_init == true) {
         ucp_rkey_destroy((module->win_info_array[target]).rkey);
-        (module->win_info_array[target]).rkey_init == false;
+        (module->win_info_array[target]).rkey_init = false;
     }
 
     status = ucp_get_nbi(ep, (void *)temp_buf, len, remote_state_addr, state_rkey);
