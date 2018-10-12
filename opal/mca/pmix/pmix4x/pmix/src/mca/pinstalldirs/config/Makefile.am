@@ -19,4 +19,4 @@ libmca_pinstalldirs_config_la_SOURCES = \
 
 # This file is generated; we do not want to include it in the tarball
 nodist_libmca_pinstalldirs_config_la_SOURCES = \
-        install_dirs.h
+        pinstall_dirs.h
