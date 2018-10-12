@@ -27,8 +27,7 @@ int mca_btl_uct_sendi (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endp
 int mca_btl_uct_send (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, mca_btl_base_descriptor_t *descriptor,
                       mca_btl_base_tag_t tag);
 
-int mca_btl_uct_send_frag (mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint, mca_btl_uct_base_frag_t *frag,
-                           int32_t flags, mca_btl_uct_device_context_t *context, uct_ep_h ep_handle);
+int mca_btl_uct_send_frag (mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t *frag, bool append);
 
 mca_btl_base_descriptor_t *mca_btl_uct_alloc (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
                                               uint8_t order, size_t size, uint32_t flags);

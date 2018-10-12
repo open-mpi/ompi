@@ -164,60 +164,70 @@ OBJ_CLASS_INSTANCE(mca_btl_uct_tl_t, opal_list_item_t, mca_btl_uct_tl_constructo
 static ucs_status_t mca_btl_uct_conn_req_cb (void *arg, void *data, size_t length, unsigned flags)
 {
     mca_btl_uct_module_t *module = (mca_btl_uct_module_t *) arg;
-    mca_btl_uct_conn_req_t *req = (mca_btl_uct_conn_req_t *) ((uintptr_t) data + 8);
+    mca_btl_uct_pending_connection_request_t *request = calloc (1, length + sizeof (request->super));
+
+    /* it is not safe to process the connection request from the callback so just save it for
+     * later processing */
+    OBJ_CONSTRUCT(request, mca_btl_uct_pending_connection_request_t);
+    memcpy (&request->request_data, (void *) ((intptr_t) data + 8), length);
+    opal_fifo_push_atomic (&module->pending_connection_reqs, &request->super);
+
+    return UCS_OK;
+}
+
+OBJ_CLASS_INSTANCE(mca_btl_uct_pending_connection_request_t, opal_list_item_t, NULL, NULL);
+
+int mca_btl_uct_process_connection_request (mca_btl_uct_module_t *module, mca_btl_uct_conn_req_t *req)
+{
     struct opal_proc_t *remote_proc = opal_proc_for_name (req->proc_name);
     mca_btl_base_endpoint_t *endpoint = mca_btl_uct_get_ep (&module->super, remote_proc);
     mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[req->context_id] + req->tl_index;
-    int64_t type = *((int64_t *) data);
     int32_t ep_flags;
     int rc;
 
-    BTL_VERBOSE(("got connection request for endpoint %p. length = %lu", (void *) endpoint, length));
+    BTL_VERBOSE(("got connection request for endpoint %p. type = %d. context id = %d",
+                 (void *) endpoint, req->type, req->context_id));
 
     if (NULL == endpoint) {
         BTL_ERROR(("could not create endpoint for connection request"));
         return UCS_ERR_UNREACHABLE;
     }
 
-    assert (type < 2);
+    assert (req->type < 2);
 
-    if (0 == type) {
+    ep_flags = opal_atomic_fetch_or_32 (&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC);
+
+    if (!(ep_flags & MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC)) {
         /* create any necessary resources */
         rc = mca_btl_uct_endpoint_connect (module, endpoint, req->context_id, req->ep_addr, req->tl_index);
         if (OPAL_SUCCESS != rc && OPAL_ERR_OUT_OF_RESOURCE != rc) {
-            BTL_ERROR(("could not setup rdma endpoint"));
-            return UCS_ERR_UNREACHABLE;
+            BTL_ERROR(("could not setup rdma endpoint. rc = %d", rc));
+            return rc;
         }
-
-        ep_flags = opal_atomic_or_fetch_32 (&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC);
-    } else {
-        ep_flags = opal_atomic_or_fetch_32 (&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY);
     }
 
     /* the connection is ready once we have received the connection data and also a connection ready
      * message. this might be overkill but there is little documentation at the UCT level on when
      * an endpoint can be used. */
-    if ((ep_flags & (MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY | MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC)) ==
-        (MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY | MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC)) {
+    if (req->type == 1) {
+        /* remote side is ready */
         mca_btl_uct_base_frag_t *frag;
 
         /* to avoid a race with send adding pending frags grab the lock here */
-        OPAL_THREAD_LOCK(&endpoint->ep_lock);
-        (void) opal_atomic_or_fetch_32 (&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY);
-        OPAL_THREAD_UNLOCK(&endpoint->ep_lock);
+        OPAL_THREAD_SCOPED_LOCK(&endpoint->ep_lock,{
+                BTL_VERBOSE(("connection ready. sending %d frags", opal_list_get_size (&module->pending_frags)));
+                (void) opal_atomic_or_fetch_32 (&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY);
+                opal_atomic_wmb ();
 
-        opal_atomic_wmb ();
-
-        OPAL_THREAD_SCOPED_LOCK(&module->lock, {
                 OPAL_LIST_FOREACH(frag, &module->pending_frags, mca_btl_uct_base_frag_t) {
-                    if (frag->context_id == req->context_id && endpoint == frag->endpoint) {
+                    if (frag->context->context_id == req->context_id && endpoint == frag->endpoint) {
                         frag->ready = true;
                     }
                 }
             });
     }
 
-    return UCS_OK;
+    return OPAL_SUCCESS;
 }
 
 static int mca_btl_uct_setup_connection_tl (mca_btl_uct_module_t *module)
@@ -284,7 +294,7 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create (mca_btl_uct_module_t *
      * use our own locks just go ahead and use UCS_THREAD_MODE_SINGLE. if they ever fix their
      * api then change this back to UCS_THREAD_MODE_MULTI and remove the locks around the
      * various UCT calls. */
-    ucs_status = uct_worker_create (module->ucs_async, UCS_THREAD_MODE_SERIALIZED, &context->uct_worker);
+    ucs_status = uct_worker_create (module->ucs_async, UCS_THREAD_MODE_SINGLE, &context->uct_worker);
     if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
         BTL_VERBOSE(("could not create a UCT worker"));
         mca_btl_uct_context_destroy (context);
@@ -307,15 +317,15 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create (mca_btl_uct_module_t *
         return NULL;
     }
 
-    if (enable_progress) {
-        BTL_VERBOSE(("enabling progress for tl %p context id %d", (void *) tl, context_id));
-        mca_btl_uct_context_enable_progress (context);
-    }
-
     if (context_id > 0 && tl == module->am_tl) {
         BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
         uct_iface_set_am_handler (context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
                                   context, UCT_CB_FLAG_SYNC);
+    }
+
+    if (enable_progress) {
+        BTL_VERBOSE(("enabling progress for tl %p context id %d", (void *) tl, context_id));
+        mca_btl_uct_context_enable_progress (context);
     }
 
     return context;
@@ -349,7 +359,6 @@ static int tl_compare (opal_list_item_t **a, opal_list_item_t **b)
 static mca_btl_uct_tl_t *mca_btl_uct_create_tl (mca_btl_uct_module_t *module, mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_desc, int priority)
 {
     mca_btl_uct_tl_t *tl = OBJ_NEW(mca_btl_uct_tl_t);
-    ucs_status_t ucs_status;
 
     if (OPAL_UNLIKELY(NULL == tl)) {
         return NULL;
@@ -434,6 +443,9 @@ static void mca_btl_uct_set_tl_am (mca_btl_uct_module_t *module, mca_btl_uct_tl_
     if (tl->max_device_contexts <= 1) {
 	tl->max_device_contexts = mca_btl_uct_component.num_contexts_per_module;
     }
+
+    module->super.btl_max_send_size = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_zcopy - sizeof (mca_btl_uct_am_header_t);
+    module->super.btl_eager_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_bcopy - sizeof (mca_btl_uct_am_header_t);
 }
 
 static int mca_btl_uct_set_tl_conn (mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)

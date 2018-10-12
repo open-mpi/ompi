@@ -72,7 +72,8 @@ static inline int mca_btl_uct_endpoint_check (mca_btl_uct_module_t *module, mca_
 
     rc = mca_btl_uct_endpoint_connect (module, endpoint, ep_index, NULL, tl_index);
     *ep_handle = endpoint->uct_eps[ep_index][tl_index].uct_ep;
-    BTL_VERBOSE(("mca_btl_uct_endpoint_connect returned %d", rc));
+    BTL_VERBOSE(("mca_btl_uct_endpoint_connect returned %d. context id = %d, flags = 0x%x", rc, ep_index,
+                 MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & endpoint->uct_eps[ep_index][tl_index].flags));
     return rc;
 }
 
