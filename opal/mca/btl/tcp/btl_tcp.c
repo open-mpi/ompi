@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -38,8 +38,6 @@
 #include "btl_tcp_proc.h"
 #include "btl_tcp_endpoint.h"
 
-static int mca_btl_tcp_register_error_cb(struct mca_btl_base_module_t* btl,
-                                         mca_btl_base_module_error_cb_fn_t cbfunc);
 
 mca_btl_tcp_module_t mca_btl_tcp_module = {
     .super = {
@@ -53,19 +51,10 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         .btl_send = mca_btl_tcp_send,
         .btl_put = mca_btl_tcp_put,
         .btl_dump = mca_btl_base_dump,
-        .btl_register_error = mca_btl_tcp_register_error_cb, /* register error */
         .btl_ft_event = mca_btl_tcp_ft_event
     },
     .tcp_endpoints_mutex = OPAL_MUTEX_STATIC_INIT
 };
-
-static int mca_btl_tcp_register_error_cb(struct mca_btl_base_module_t* btl,
-                                         mca_btl_base_module_error_cb_fn_t cbfunc)
-{
-    mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*)btl;
-    tcp_btl->tcp_error_cb = cbfunc;
-    return OPAL_SUCCESS;
-}
 
 /**
  *

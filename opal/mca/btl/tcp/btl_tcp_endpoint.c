@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -387,7 +387,6 @@ mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpoint,
 {
     int ret = mca_btl_tcp_send_blocking(btl_endpoint->endpoint_sd, data, size);
     if (ret < 0) {
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
         mca_btl_tcp_endpoint_close(btl_endpoint);
     }
     return ret;
@@ -537,9 +536,8 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
     btl_endpoint->endpoint_sd = -1;
     /**
      * If we keep failing to connect to the peer let the caller know about
-     * this situation by triggering the callback on all pending fragments and
-     * reporting the error. The upper layer has then the opportunity to
-     * re-route or re-schedule the fragments.
+     * this situation by triggering all the pending fragments callback and
+     * reporting the error.
      */
     if( MCA_BTL_TCP_FAILED == btl_endpoint->endpoint_state ) {
         mca_btl_tcp_frag_t* frag = btl_endpoint->endpoint_send_frag;
@@ -547,20 +545,11 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
             frag = (mca_btl_tcp_frag_t*)opal_list_remove_first(&btl_endpoint->endpoint_frags);
         while(NULL != frag) {
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, OPAL_ERR_UNREACH);
-            if( frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP ) {
-                MCA_BTL_TCP_FRAG_RETURN(frag);
-            }
+
             frag = (mca_btl_tcp_frag_t*)opal_list_remove_first(&btl_endpoint->endpoint_frags);
         }
-        btl_endpoint->endpoint_send_frag = NULL;
-        /* Let's report the error upstream */
-        if(NULL != btl_endpoint->endpoint_btl->tcp_error_cb) {
-            btl_endpoint->endpoint_btl->tcp_error_cb((mca_btl_base_module_t*)btl_endpoint->endpoint_btl, 0,
-                                                      btl_endpoint->endpoint_proc->proc_opal, "Socket closed");
-        }
-    } else {
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
     }
+    btl_endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
 }
 
 /*
@@ -617,6 +606,7 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
         opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail",
                        true, opal_process_info.nodename,
                        getpid(), "did not receive entire connect ACK from peer");
+        
         return OPAL_ERR_BAD_PARAM;
     }
     if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
@@ -636,7 +626,6 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
     if (0 != opal_compare_proc(btl_proc->proc_opal->proc_name, guid)) {
         BTL_ERROR(("received unexpected process identifier %s",
                    OPAL_NAME_PRINT(guid)));
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OPAL_ERR_UNREACH;
     }
@@ -843,7 +832,6 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_en
                    opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                    ((struct sockaddr_in*) &endpoint_addr)->sin_port,
                    strerror(opal_socket_errno), opal_socket_errno));
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OPAL_ERROR;
     }
@@ -860,7 +848,6 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_en
                        getpid(), msg,
                        strerror(opal_socket_errno), opal_socket_errno);
         free(msg);
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OPAL_ERROR;
     }
@@ -932,15 +919,12 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                 MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "connected");
             }
-            else if (OPAL_ERR_BAD_PARAM == rc
-                  || OPAL_ERROR == rc) {
+            else if (OPAL_ERR_BAD_PARAM == rc) {
                 /* If we get a BAD_PARAM, it means that it probably wasn't
                    an OMPI process on the other end of the socket (e.g.,
-                   the magic string ID failed). recv_connect_ack already cleaned
-                   up the socket. */
-                /* If we get OPAL_ERROR, the other end closed the connection
-                 * because it has initiated a symetrical connexion on its end. 
-                 * recv_connect_ack already cleaned up the socket. */
+                   the magic string ID failed).  So we can probably just
+                   close the socket and ignore this connection. */
+                CLOSE_THE_SOCKET(sd);
             }
             else {
                 /* Otherwise, it probably *was* an OMPI peer process on
@@ -1078,8 +1062,6 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, false, "event_del(send) [endpoint_send_handler]");
             opal_event_del(&btl_endpoint->endpoint_send_event);
         }
-        break;
-    case MCA_BTL_TCP_FAILED:
         break;
     default:
         BTL_ERROR(("invalid connection state (%d)", btl_endpoint->endpoint_state));
