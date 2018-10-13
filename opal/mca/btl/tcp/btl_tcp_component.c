@@ -1300,6 +1300,24 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
         }
     }
 
+    /* Avoid a race in wire-up when using threads (progess or user)
+       and multiple BTL modules.  The details of the race are in
+       https://github.com/open-mpi/ompi/issues/3035#issuecomment-429500032,
+       but the summary is that the lookup code in
+       component_recv_handler() below assumes that add_procs() is
+       atomic across all active TCP BTL modules, but in multi-threaded
+       code, that isn't guaranteed, because the locking is inside
+       add_procs(), and add_procs() is called once per module.  This
+       isn't a proper fix, but will solve the "dropped connection"
+       problem until we can come up with a more complete fix to how we
+       initialize procs, endpoints, and modules in the TCP BTL. */
+    if (mca_btl_tcp_component.tcp_num_btls > 1 &&
+        (enable_mpi_threads || 0 < mca_btl_tcp_progress_thread_trigger)) {
+        for( i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
+            mca_btl_tcp_component.tcp_btls[i]->super.btl_flags |= MCA_BTL_FLAGS_SINGLE_ADD_PROCS;
+        }
+    }
+
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_stage_one_init();
 #endif /* OPAL_CUDA_SUPPORT */
