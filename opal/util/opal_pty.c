@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -135,7 +136,9 @@ int opal_openpty(int *amaster, int *aslave, char *name,
         return -1;
     }
     if (name) {
-        strcpy(name, line);
+        // We don't know the max length of name, but we do know the
+        // max length of the source, so at least use that.
+        opal_string_copy(name, line, sizeof(line));
     }
 #ifndef TCSAFLUSH
 #define TCSAFLUSH TCSETAF
