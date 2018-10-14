@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,6 +11,8 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
+
+#include "opal/util/string_copy.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/info/info.h"
@@ -59,8 +61,7 @@ int OMPI_CR_Migrate(MPI_Comm comm, char *hostname, int rank, MPI_Info *info)
     if( NULL == hostname ) {
         loc_hostname[0] = '\0';
     } else {
-        strncpy(loc_hostname, hostname, strlen(hostname));
-        loc_hostname[strlen(hostname)] = '\0';
+        opal_string_copy(loc_hostname, hostname, sizeof(loc_hostname));
     }
     my_vpid = (int) OMPI_PROC_MY_NAME->vpid;
 

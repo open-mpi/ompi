@@ -5,7 +5,7 @@
  * Copyright (c) 2012-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  */
@@ -38,6 +38,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/threads/threads.h"
@@ -430,7 +431,8 @@ static int ompi_pmix_snprintf_jobid(char *jobid_string, size_t size, const opal_
 
     /* check for wildcard value - handle appropriately */
     if (OPAL_JOBID_WILDCARD == jobid) {
-        (void)strncpy(jobid_string, OPAL_SCHEMA_WILDCARD_STRING, size);
+        (void)opal_string_copy(jobid_string,
+                               OPAL_SCHEMA_WILDCARD_STRING, size);
     } else {
         rc = snprintf(jobid_string, size, "%ld", (long) jobid);
         if (0 > rc) {

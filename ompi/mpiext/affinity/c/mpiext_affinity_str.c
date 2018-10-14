@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -31,6 +31,7 @@
 
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
+#include "opal/util/string_copy.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
@@ -101,7 +102,7 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If OMPI did not bind, indicate that */
     if (!ompi_rte_proc_is_bound) {
-        strncpy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX - 1);
+        opal_string_copy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX);
         return OMPI_SUCCESS;
     }
 
@@ -113,7 +114,7 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
                                        ompi_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
-        strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
+        opal_string_copy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX);
         ret = OMPI_SUCCESS;
     }
     return ret;
@@ -163,7 +164,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
                                        opal_hwloc_topology,
                                        boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
-            strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
+            opal_string_copy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX);
             ret = OMPI_SUCCESS;
         }
     }
@@ -293,7 +294,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If OMPI did not bind, indicate that */
     if (!ompi_rte_proc_is_bound) {
-        strncpy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX - 1);
+        opal_string_copy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX);
         return OMPI_SUCCESS;
     }
 
@@ -306,7 +307,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
                                           ompi_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
-        strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
+        opal_string_copy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX);
         ret = OMPI_SUCCESS;
     }
 
@@ -356,7 +357,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
                                           opal_hwloc_topology,
                                           boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
-            strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
+            opal_string_copy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX);
             ret = OMPI_SUCCESS;
         }
     }

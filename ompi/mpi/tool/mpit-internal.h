@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,9 +15,11 @@
 #if !defined(MPIT_INTERNAL_H)
 #define MPIT_INTERNAL_H
 
-#include "ompi/include/ompi_config.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
+
+#include "ompi/include/ompi_config.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
@@ -64,8 +67,7 @@ static inline void mpit_copy_string (char *dest, int *len, const char *source)
             *len = strlen (source) + 1;
         }
 
-        strncpy (dest, source, *len);
-        dest[*len - 1] = '\0';
+        opal_string_copy (dest, source, *len);
     } else {
         *len = strlen (source) + 1;
     }
