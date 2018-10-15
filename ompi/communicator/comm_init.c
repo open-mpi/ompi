@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2017 University of Houston. All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -35,6 +35,7 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/util/info_subscriber.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/pmix/pmix.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -139,9 +140,8 @@ int ompi_comm_init(void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
-    MEMCHECKER (memset (ompi_mpi_comm_world.comm.c_name, 0, MPI_MAX_OBJECT_NAME));
-    strncpy (ompi_mpi_comm_world.comm.c_name, "MPI_COMM_WORLD",
-             strlen("MPI_COMM_WORLD")+1 );
+    opal_string_copy(ompi_mpi_comm_world.comm.c_name, "MPI_COMM_WORLD",
+                     sizeof(ompi_mpi_comm_world.comm.c_name));
     ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_INTRINSIC;
 
@@ -193,8 +193,8 @@ int ompi_comm_init(void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
-    MEMCHECKER (memset (ompi_mpi_comm_self.comm.c_name, 0, MPI_MAX_OBJECT_NAME));
-    strncpy(ompi_mpi_comm_self.comm.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
+    opal_string_copy(ompi_mpi_comm_self.comm.c_name, "MPI_COMM_SELF",
+                     sizeof(ompi_mpi_comm_self.comm.c_name));
     ompi_mpi_comm_self.comm.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_self.comm.c_flags |= OMPI_COMM_INTRINSIC;
 
@@ -218,8 +218,8 @@ int ompi_comm_init(void)
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
     opal_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
-    MEMCHECKER (memset (ompi_mpi_comm_null.comm.c_name, 0, MPI_MAX_OBJECT_NAME));
-    strncpy(ompi_mpi_comm_null.comm.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
+    opal_string_copy(ompi_mpi_comm_null.comm.c_name, "MPI_COMM_NULL",
+                     sizeof(ompi_mpi_comm_null.comm.c_name));
     ompi_mpi_comm_null.comm.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_null.comm.c_flags |= OMPI_COMM_INTRINSIC;
 

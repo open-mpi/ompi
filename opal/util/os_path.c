@@ -54,14 +54,12 @@ char *opal_os_path(int relative, ...)
     va_end(ap);
 
     if (0 == num_elements) { /* must be looking for a simple answer */
-    	path = (char *)malloc(3);
-        path[0] = '\0';
+        size_t len = 3;
+        path = (char *)calloc(len, sizeof(char));
     	if (relative) {
-    	    strcpy(path, ".");
-            strcat(path, path_sep);
-    	} else {
-    	    strcpy(path, path_sep);
-    	}
+            path[0] = '.';
+        }
+        strncat(path, path_sep, len);
     	return(path);
     }
 
@@ -76,28 +74,27 @@ char *opal_os_path(int relative, ...)
     	return(NULL);
     }
 
-    path = (char *)malloc(total_length);
+    path = (char *)calloc(total_length, sizeof(char));
     if (NULL == path) {
         return(NULL);
     }
-    path[0] = 0;
 
     if (relative) {
-        strcpy(path, ".");
+        path[0] = '.';
     }
 
     va_start(ap, relative);
     if( NULL != (element = va_arg(ap, char*)) ) {
     	if (path_sep[0] != element[0]) {
-            strcat(path, path_sep);
+            strncat(path, path_sep, total_length);
         }
         strcat(path, element);
     }
     while (NULL != (element=va_arg(ap, char*))) {
     	if (path_sep[0] != element[0]) {
-            strcat(path, path_sep);
+            strncat(path, path_sep, total_length);
         }
-        strcat(path, element);
+        strncat(path, element, total_length);
     }
 
     va_end(ap);

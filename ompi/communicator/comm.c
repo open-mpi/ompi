@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 University of Houston. All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
@@ -38,6 +38,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/string_copy.h"
 
 #include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
@@ -1317,9 +1318,7 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
 {
 
     OPAL_THREAD_LOCK(&(comm->c_lock));
-    memset(comm->c_name, 0, MPI_MAX_OBJECT_NAME);
-    strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
-    comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
+    opal_string_copy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
     comm->c_flags |= OMPI_COMM_NAMEISSET;
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
 

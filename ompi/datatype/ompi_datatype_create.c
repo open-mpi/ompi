@@ -25,6 +25,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/attribute/attribute.h"
 
@@ -113,7 +114,7 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
 
     char *new_name;
     opal_asprintf(&new_name, "Dup %s", oldType->name);
-    strncpy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME - 1);
+    opal_string_copy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME);
     new_ompi_datatype->name[MPI_MAX_OBJECT_NAME - 1] = '\0';
     free(new_name);
 

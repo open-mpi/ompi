@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -96,7 +96,6 @@ static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuel
                                  char *value, int *flag)
 {
     opal_info_entry_t *search;
-    int value_length;
 
     search = info_find_key (info, key);
     if (NULL == search){
@@ -104,7 +103,7 @@ static void opal_info_get_nolock (opal_info_t *info, const char *key, int valuel
     } else if (value && valuelen) {
         /*
          * We have found the element, so we can return the value
-         * Set the flag, value_length and value
+         * Set the flag and value
          */
         *flag = 1;
         opal_string_copy(value, search->ie_value, valuelen);

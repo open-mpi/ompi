@@ -15,7 +15,7 @@
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -138,7 +139,8 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
     }
 
-    strncpy ( port_name, pdat->value.data.string, MPI_MAX_PORT_NAME );
+    opal_string_copy( port_name, pdat->value.data.string,
+                      MPI_MAX_PORT_NAME );
     OPAL_LIST_DESTRUCT(&results);
 
     OPAL_CR_EXIT_LIBRARY();

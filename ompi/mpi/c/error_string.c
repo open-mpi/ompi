@@ -12,6 +12,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,8 @@
  */
 #include "ompi_config.h"
 #include <string.h>
+
+#include "opal/util/string_copy.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -53,7 +56,7 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
     }
 
     tmpstring = ompi_mpi_errnum_get_string (errorcode);
-    strncpy(string, tmpstring, MPI_MAX_ERROR_STRING);
+    opal_string_copy(string, tmpstring, MPI_MAX_ERROR_STRING);
     *resultlen = (int)strlen(string);
 
     return MPI_SUCCESS;

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -27,6 +27,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/info_subscriber.h"
+#include "opal/util/string_copy.h"
 
 #include "mpi.h"
 #include "ompi/win/win.h"
@@ -383,9 +384,7 @@ int
 ompi_win_set_name(ompi_win_t *win, const char *win_name)
 {
     OPAL_THREAD_LOCK(&(win->w_lock));
-    memset(win->w_name, 0, MPI_MAX_OBJECT_NAME);
-    strncpy(win->w_name, win_name, MPI_MAX_OBJECT_NAME);
-    win->w_name[MPI_MAX_OBJECT_NAME - 1] = 0;
+    opal_string_copy(win->w_name, win_name, MPI_MAX_OBJECT_NAME);
     OPAL_THREAD_UNLOCK(&(win->w_lock));
 
     return OMPI_SUCCESS;
@@ -396,7 +395,7 @@ int
 ompi_win_get_name(ompi_win_t *win, char *win_name, int *length)
 {
     OPAL_THREAD_LOCK(&(win->w_lock));
-    strncpy(win_name, win->w_name, MPI_MAX_OBJECT_NAME);
+    opal_string_copy(win_name, win->w_name, MPI_MAX_OBJECT_NAME);
     *length = (int)strlen(win->w_name);
     OPAL_THREAD_UNLOCK(&(win->w_lock));
 

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -72,6 +72,7 @@
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/show_help.h"
 #include "opal/util/fd.h"
+#include "opal/util/string_copy.h"
 #include "opal/sys/atomic.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
@@ -2295,7 +2296,8 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
                 free(attach_fifo);
                 return;
             }
-            strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH - 1);
+            opal_string_copy(MPIR_attach_fifo, attach_fifo,
+                             MPIR_MAX_PATH_LENGTH);
             free(attach_fifo);
             open_fifo();
         }

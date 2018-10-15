@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,8 @@
 #include "ompi_config.h"
 
 #include <string.h>
+
+#include "opal/util/string_copy.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -66,6 +69,6 @@ int MPI_Type_set_name (MPI_Datatype type, const char *type_name)
     if( length >= MPI_MAX_OBJECT_NAME ) {
         length = MPI_MAX_OBJECT_NAME - 1;
     }
-    strncpy( type->name, type_name, length );
+    opal_string_copy( type->name, type_name, length );
     return MPI_SUCCESS;
 }

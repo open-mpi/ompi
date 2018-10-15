@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -56,6 +56,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
 #include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
 #include "btl_tcp.h"
@@ -404,7 +405,8 @@ mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
     OPAL_PROCESS_NAME_HTON(guid);
     
     mca_btl_tcp_endpoint_hs_msg_t hs_msg;
-    strcpy(hs_msg.magic_id, mca_btl_tcp_magic_id_string);
+    opal_string_copy(hs_msg.magic_id, mca_btl_tcp_magic_id_string,
+                     sizeof(hs_msg.magic_id));
     hs_msg.guid = guid;
     
     if(sizeof(hs_msg) != 

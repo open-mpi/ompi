@@ -15,7 +15,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights
  *                         reserved.
- * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2018 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -45,6 +45,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/path.h"
+#include "opal/util/string_copy.h"
 
 #include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
@@ -365,8 +366,7 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
     if (NULL == path) {
         getcwd(cwd, OPAL_PATH_MAX);
     } else {
-        strncpy(cwd, path, OPAL_PATH_MAX - 1);
-        cwd[OPAL_PATH_MAX - 1] = '\0';
+        opal_string_copy(cwd, path, OPAL_PATH_MAX);
     }
     if (NULL == agent_list) {
         lines = opal_argv_split(mca_plm_rsh_component.agent, ':');

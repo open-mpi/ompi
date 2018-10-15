@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -77,6 +77,7 @@
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 /*
  * Sanity check to ensure we have either statfs or statvfs
@@ -146,12 +147,7 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
                 if (!delimit) {
                     fullpath = opal_path_access(fname, env, mode);
                 } else {
-                    pfix = (char*) malloc(strlen(env) + strlen(delimit) + 1);
-                    if (NULL == pfix) {
-                        return NULL;
-                    }
-                    strcpy(pfix, env);
-                    strcat(pfix, delimit);
+                    opal_asprintf(&pfix, "%s%s", env, delimit);
                     fullpath = opal_path_access(fname, pfix, mode);
                     free(pfix);
                 }

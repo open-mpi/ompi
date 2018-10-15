@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -26,6 +26,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/string_copy.h"
 
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
@@ -356,7 +357,7 @@ ompi_op_t *ompi_op_create_user(bool commute,
         new_op->o_flags |= OMPI_OP_FLAGS_COMMUTE;
     }
 
-    strncpy(new_op->o_name, "USER OP", sizeof(new_op->o_name) - 1);
+    opal_string_copy(new_op->o_name, "USER OP", sizeof(new_op->o_name));
     new_op->o_name[sizeof(new_op->o_name) - 1] = '\0';
 
     /* Set the user-defined callback function.  The "fort_fn" member
@@ -423,7 +424,7 @@ static int add_intrinsic(ompi_op_t *op, int fort_handle, int flags,
 
     /* Set the members */
     op->o_flags = flags;
-    strncpy(op->o_name, name, sizeof(op->o_name) - 1);
+    opal_string_copy(op->o_name, name, sizeof(op->o_name));
     op->o_name[sizeof(op->o_name) - 1] = '\0';
 
     /* Perform the selection on this op to fill in the function
