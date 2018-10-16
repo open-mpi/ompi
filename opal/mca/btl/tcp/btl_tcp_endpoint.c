@@ -544,19 +544,44 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
      * re-route or re-schedule the fragments.
      */
     if( MCA_BTL_TCP_FAILED == btl_endpoint->endpoint_state ) {
+        bool frag_cleaned = false;
         mca_btl_tcp_frag_t* frag = btl_endpoint->endpoint_send_frag;
         if( NULL == frag )
             frag = (mca_btl_tcp_frag_t*)opal_list_remove_first(&btl_endpoint->endpoint_frags);
         while(NULL != frag) {
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, OPAL_ERR_UNREACH);
             if( frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP ) {
+                frag_cleaned = true;
                 MCA_BTL_TCP_FRAG_RETURN(frag);
             }
             frag = (mca_btl_tcp_frag_t*)opal_list_remove_first(&btl_endpoint->endpoint_frags);
         }
         btl_endpoint->endpoint_send_frag = NULL;
-        /* Let's report the error upstream */
-        if(NULL != btl_endpoint->endpoint_btl->tcp_error_cb) {
+        /*
+         * Let's report the error upstream.  The frag_cleaned check is
+         * a hack to work around a shutdown race (and probably a
+         * bigger problem in the TCP BTL design).  writev() or readv()
+         * in btl_tcp_frag.c returning 0 means the socket was closed
+         * cleanly on the other side, but we move the endpoint into a
+         * FAILED state.  However, the most common reason for getting
+         * into that case is the natural shutdown race when multiple
+         * peers are clealy closing sockets.  Suddenly, the error
+         * handler changes a harmless shutdown race into an error that
+         * aborts the job from MPI_FINALIZE.
+         *
+         * The quick fix is to just skip error reporting if there wree
+         * no outstanding frags.  If the PML tries to reuse this
+         * endpoint and there really is a persistent error, the
+         * connect will fail and return an error.  If it was just the
+         * shutdown race, the PML will never try to connect.
+         *
+         * The right fix is probably to drive a graceful BTL-level
+         * reconnect on a dropped TCP connection and keep going
+         * without dropping any frags or returning errors upwards and
+         * use the retries counter to notify the PML that there's a
+         * more permanent problem.
+         */
+        if(frag_cleaned && NULL != btl_endpoint->endpoint_btl->tcp_error_cb) {
             btl_endpoint->endpoint_btl->tcp_error_cb((mca_btl_base_module_t*)btl_endpoint->endpoint_btl, 0,
                                                       btl_endpoint->endpoint_proc->proc_opal, "Socket closed");
         }
