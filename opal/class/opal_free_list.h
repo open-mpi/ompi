@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -146,6 +146,7 @@ OPAL_DECLSPEC int opal_free_list_init (opal_free_list_t *free_list,
  *
  * @param flist         (IN)   Free list to grow
  * @param num_elements  (IN)   Number of elements to add
+ * @param item_out      (OUT)  Location to store new free list item (can be NULL)
  *
  * @returns OPAL_SUCCESS if any elements were added
  * @returns OPAL_ERR_OUT_OF_RESOURCE if no elements could be added
@@ -155,8 +156,14 @@ OPAL_DECLSPEC int opal_free_list_init (opal_free_list_t *free_list,
  * that may be accessed by multiple threads simultaneously. Note: this is an
  * internal function that will be used when needed by opal_free_list_get* and
  * opal_free_list_wait*.
+ *
+ * The item_out parameter can be used to ensure that the thread calling this
+ * function always gets a free list item if the list is successfully grown.
+ * This eliminates a race condition with code that simply calls free_list_get
+ * and assumes NULL is an out of memory condition (which it wasn't necessarily
+ * before this parameter was added).
  */
-OPAL_DECLSPEC int opal_free_list_grow_st (opal_free_list_t *flist, size_t num_elements);
+OPAL_DECLSPEC int opal_free_list_grow_st (opal_free_list_t *flist, size_t num_elements, opal_free_list_item_t **item_out);
 
 /**
  * Grow the free list to be at least size elements.
@@ -195,9 +202,8 @@ static inline opal_free_list_item_t *opal_free_list_get_mt (opal_free_list_t *fl
 
     if (OPAL_UNLIKELY(NULL == item)) {
         opal_mutex_lock (&flist->fl_lock);
-        opal_free_list_grow_st (flist, flist->fl_num_per_alloc);
+        opal_free_list_grow_st (flist, flist->fl_num_per_alloc, &item);
         opal_mutex_unlock (&flist->fl_lock);
-        item = (opal_free_list_item_t *) opal_lifo_pop_atomic (&flist->super);
     }
 
     return item;
@@ -209,8 +215,7 @@ static inline opal_free_list_item_t *opal_free_list_get_st (opal_free_list_t *fl
         (opal_free_list_item_t*) opal_lifo_pop_st (&flist->super);
 
     if (OPAL_UNLIKELY(NULL == item)) {
-        opal_free_list_grow_st (flist, flist->fl_num_per_alloc);
-        item = (opal_free_list_item_t *) opal_lifo_pop_atomic (&flist->super);
+        opal_free_list_grow_st (flist, flist->fl_num_per_alloc, &item);
     }
 
     return item;
@@ -253,7 +258,7 @@ static inline opal_free_list_item_t *opal_free_list_wait_mt (opal_free_list_t *f
     while (NULL == item) {
         if (!opal_mutex_trylock (&fl->fl_lock)) {
             if (fl->fl_max_to_alloc <= fl->fl_num_allocated ||
-                OPAL_SUCCESS != opal_free_list_grow_st (fl, fl->fl_num_per_alloc)) {
+                OPAL_SUCCESS != opal_free_list_grow_st (fl, fl->fl_num_per_alloc, &item)) {
                 fl->fl_num_waiting++;
                 opal_condition_wait (&fl->fl_condition, &fl->fl_lock);
                 fl->fl_num_waiting--;
@@ -274,7 +279,9 @@ static inline opal_free_list_item_t *opal_free_list_wait_mt (opal_free_list_t *f
             opal_mutex_lock (&fl->fl_lock);
         }
         opal_mutex_unlock (&fl->fl_lock);
-        item = (opal_free_list_item_t *) opal_lifo_pop_atomic (&fl->super);
+        if (NULL == item) {
+            item = (opal_free_list_item_t *) opal_lifo_pop_atomic (&fl->super);
+        }
     }
 
     return item;
@@ -287,12 +294,13 @@ static inline opal_free_list_item_t *opal_free_list_wait_st (opal_free_list_t *f
 
     while (NULL == item) {
         if (fl->fl_max_to_alloc <= fl->fl_num_allocated ||
-            OPAL_SUCCESS != opal_free_list_grow_st (fl, fl->fl_num_per_alloc)) {
+            OPAL_SUCCESS != opal_free_list_grow_st (fl, fl->fl_num_per_alloc, &item)) {
             /* try to make progress */
             opal_progress ();
         }
-
-        item = (opal_free_list_item_t *) opal_lifo_pop (&fl->super);
+        if (NULL == item) {
+            item = (opal_free_list_item_t *) opal_lifo_pop (&fl->super);
+        }
     }
 
     return item;
