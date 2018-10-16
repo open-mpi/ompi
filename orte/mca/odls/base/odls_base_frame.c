@@ -28,6 +28,7 @@
 #include "orte/constants.h"
 
 #include <string.h>
+#include <signal.h>
 
 #include "opal/class/opal_ring_buffer.h"
 #include "orte/mca/mca.h"
@@ -140,6 +141,7 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
     int rc, i, rank;
     orte_namelist_t *nm;
     bool xterm_hold;
+    sigset_t unblock;
 
     /* initialize the global array of local children */
     orte_local_children = OBJ_NEW(opal_pointer_array_t);
@@ -154,6 +156,17 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
     /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.xterm_ranks, opal_list_t);
     orte_odls_globals.xtermcmd = NULL;
+
+    /* ensure that SIGCHLD is unblocked as we need to capture it */
+    if (0 != sigemptyset(&unblock)) {
+        return ORTE_ERROR;
+    }
+    if (0 != sigaddset(&unblock, SIGCHLD)) {
+        return ORTE_ERROR;
+    }
+    if (0 != sigprocmask(SIG_UNBLOCK, &unblock, NULL)) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
 
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {
