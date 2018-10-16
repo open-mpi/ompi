@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
@@ -556,17 +556,17 @@ void orte_rmaps_base_display_map(orte_job_t *jdata)
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
-                memset(tmp1, 0, 1024);
+                memset(tmp1, 0, sizeof(tmp1));
                 if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
                     if (NULL == bd) {
-                        (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                        (void)strncpy(tmp1, "UNBOUND", sizeof(tmp1));
                     } else {
                         if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology->topo, bd->cpuset)) {
-                            (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                            (void)strncpy(tmp1, "UNBOUND", sizeof(tmp1));
                         }
                     }
                 } else {
-                    (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                    (void)strncpy(tmp1, "UNBOUND", sizeof(tmp1));
                 }
                 opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
                             ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
