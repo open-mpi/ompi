@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -155,13 +155,13 @@ int opal_free_list_init (opal_free_list_t *flist, size_t frag_size, size_t frag_
     flist->ctx = ctx;
 
     if (num_elements_to_alloc) {
-        return opal_free_list_grow_st (flist, num_elements_to_alloc);
+        return opal_free_list_grow_st (flist, num_elements_to_alloc, NULL);
     }
 
     return OPAL_SUCCESS;
 }
 
-int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements)
+int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_free_list_item_t **item_out)
 {
     unsigned char *ptr, *payload_ptr = NULL;
     opal_free_list_memory_t *alloc_ptr;
@@ -263,10 +263,16 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements)
         /* NTH: in case the free list may be accessed from multiple threads
          * use the atomic lifo push. The overhead is small compared to the
          * overall overhead of opal_free_list_grow(). */
-        opal_lifo_push_atomic (&flist->super, &item->super);
+        if (item_out && 0 == i) {
+            /* ensure the thread that is growing the free list always gets an item
+             * if one is available */
+            *item_out = item;
+        } else {
+            opal_lifo_push_atomic (&flist->super, &item->super);
+        }
+
         ptr += head_size;
         payload_ptr += elem_size;
-
     }
 
     if (OPAL_SUCCESS != rc && 0 == num_elements) {
@@ -298,7 +304,7 @@ int opal_free_list_resize_mt(opal_free_list_t *flist, size_t size)
 
     opal_mutex_lock (&flist->fl_lock);
     do {
-        ret = opal_free_list_grow_st (flist, flist->fl_num_per_alloc);
+        ret = opal_free_list_grow_st (flist, flist->fl_num_per_alloc, NULL);
         if (OPAL_SUCCESS != ret) {
             break;
         }
