@@ -89,7 +89,12 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
     opal_common_ucx.output = opal_output_open(NULL);
     opal_output_set_verbosity(opal_common_ucx.output, opal_common_ucx.verbose);
 
-    mca_base_framework_open(&opal_memory_base_framework, 0);
+    if (OPAL_SUCCESS != mca_base_framework_open(&opal_memory_base_framework, 0)) {
+        /* failed to initialize memory framework - just exit */
+        MCA_COMMON_UCX_VERBOSE(1, "%s", "failed to initialize memory base framework, "
+                                        "memory hooks will not be used");
+        return;
+    }
 
     /* Set memory hooks */
     if (opal_common_ucx.opal_mem_hooks &&
