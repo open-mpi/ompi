@@ -646,7 +646,9 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
 
     /* Root sends data to all others. */
     preq = reqs = ompi_coll_base_comm_get_reqs(module->base_data, size-1);
-    if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl; }
+    if( NULL == reqs ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     for (i = 0; i < size; ++i) {
         if (i == rank) {
