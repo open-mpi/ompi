@@ -73,6 +73,15 @@ static mca_base_var_enum_value_t iexscan_algorithms[] = {
     {0, NULL}
 };
 
+int libnbc_ireduce_algorithm = 0;            /* ireduce user forced algorithm */
+static mca_base_var_enum_value_t ireduce_algorithms[] = {
+    {0, "ignore"},
+    {1, "chain"},
+    {2, "binomial"},
+    {3, "rabenseifner"},
+    {0, NULL}
+};
+
 int libnbc_iscan_algorithm = 0;             /* iscan user forced algorithm */
 static mca_base_var_enum_value_t iscan_algorithms[] = {
     {0, "ignore"},
@@ -230,6 +239,16 @@ libnbc_register(void)
                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
                                     &libnbc_iexscan_algorithm);
+    OBJ_RELEASE(new_enum);
+
+    libnbc_ireduce_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_libnbc_ireduce_algorithms", ireduce_algorithms, &new_enum);
+    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                    "ireduce_algorithm",
+                                    "Which ireduce algorithm is used: 0 ignore, 1 chain, 2 binomial, 3 rabenseifner",
+                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
+                                    &libnbc_ireduce_algorithm);
     OBJ_RELEASE(new_enum);
 
     libnbc_iscan_algorithm = 0;
