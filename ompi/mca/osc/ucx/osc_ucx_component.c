@@ -825,7 +825,9 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
         ucp_worker_progress(mca_osc_ucx_component.ucp_worker);
     }
 
-    opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker);
+    if (OMPI_SUCCESS != opal_common_ucx_worker_flush(mca_osc_ucx_component.ucp_worker)) {
+        OSC_UCX_VERBOSE(1, "opal_common_ucx_worker_flush failed");
+    }
 
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
