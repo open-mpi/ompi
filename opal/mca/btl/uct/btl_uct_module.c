@@ -74,7 +74,6 @@ static int mca_btl_uct_add_procs (mca_btl_base_module_t *btl,
 
     if (false == uct_module->initialized) {
         mca_btl_uct_tl_t *am_tl = uct_module->am_tl;
-        mca_btl_uct_tl_t *rdma_tl = uct_module->rdma_tl;
 
         /* NTH: might want to vary this size based off the universe size (if
          * one exists). the table is only used for connection lookup and
@@ -277,6 +276,7 @@ int mca_btl_uct_finalize (mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&uct_module->max_frags);
     OBJ_DESTRUCT(&uct_module->pending_frags);
     OBJ_DESTRUCT(&uct_module->lock);
+    OBJ_DESTRUCT(&uct_module->pending_connection_reqs);
 
     if (uct_module->rcache) {
         mca_rcache_base_module_destroy (uct_module->rcache);

@@ -89,15 +89,12 @@ mca_btl_uct_module_get_tl_context_specific (mca_btl_uct_module_t *module, mca_bt
     mca_btl_uct_device_context_t *context = tl->uct_dev_contexts[context_id];
 
     if (OPAL_UNLIKELY(NULL == context)) {
-        mca_btl_uct_device_context_t *new_context;
-
-        new_context = mca_btl_uct_context_create (module, tl, context_id, true);
-        if (!opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) &tl->uct_dev_contexts[context_id],
-                                                      (intptr_t *) &context, (intptr_t) new_context)) {
-            mca_btl_uct_context_destroy (new_context);
-        } else {
-            context = new_context;
+        OPAL_THREAD_LOCK(&module->lock);
+        context = tl->uct_dev_contexts[context_id];
+        if (OPAL_UNLIKELY(NULL == context)) {
+            context = tl->uct_dev_contexts[context_id] = mca_btl_uct_context_create (module, tl, context_id, true);
         }
+        OPAL_THREAD_UNLOCK(&module->lock);
     }
 
     return context;

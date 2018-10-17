@@ -56,7 +56,7 @@ mca_btl_base_endpoint_t *mca_btl_uct_endpoint_create (opal_proc_t *proc)
 
 static unsigned char *mca_btl_uct_process_modex_tl (unsigned char *modex_data)
 {
-    BTL_VERBOSE(("processing modex for tl %s. size: %u", modex_data, *((uint32_t *) modex_data)));
+    BTL_VERBOSE(("processing modex for tl %s. size: %u", modex_data + 4, *((uint32_t *) modex_data)));
 
     /* skip size and name */
     return modex_data + 4 + strlen ((char *) modex_data + 4) + 1;
@@ -139,13 +139,13 @@ OBJ_CLASS_INSTANCE(mca_btl_uct_connection_ep_t, opal_object_t, mca_btl_uct_conne
 
 static int mca_btl_uct_endpoint_send_conn_req (mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint,
                                                mca_btl_uct_device_context_t *conn_tl_context,
-                                               int64_t type, void *request, size_t request_length)
+                                               mca_btl_uct_conn_req_t *request, size_t request_length)
 {
     mca_btl_uct_connection_ep_t *conn_ep = endpoint->conn_ep;
     ucs_status_t ucs_status;
 
-    BTL_VERBOSE(("sending connection request to peer. type: %" PRId64 ", length: %" PRIsize_t,
-                 type, request_length));
+    BTL_VERBOSE(("sending connection request to peer. context id: %d, type: %d, length: %" PRIsize_t,
+                 request->context_id, request->type, request_length));
 
     OBJ_RETAIN(endpoint->conn_ep);
 
@@ -154,7 +154,8 @@ static int mca_btl_uct_endpoint_send_conn_req (mca_btl_uct_module_t *uct_btl, mc
 
     do {
         MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
-                ucs_status = uct_ep_am_short (conn_ep->uct_ep, MCA_BTL_UCT_CONNECT_RDMA, type, request, request_length);
+                ucs_status = uct_ep_am_short (conn_ep->uct_ep, MCA_BTL_UCT_CONNECT_RDMA, request->type, request,
+                                              request_length);
             });
         if (OPAL_LIKELY(UCS_OK == ucs_status)) {
             break;
@@ -169,12 +170,10 @@ static int mca_btl_uct_endpoint_send_conn_req (mca_btl_uct_module_t *uct_btl, mc
     } while (1);
 
     /* for now we just wait for the connection request to complete before continuing */
-    MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
-            do {
-                uct_worker_progress (conn_tl_context->uct_worker);
-                ucs_status = uct_ep_flush (conn_ep->uct_ep, 0, NULL);
-            } while (UCS_INPROGRESS == ucs_status);
-        });
+    do {
+        ucs_status = uct_ep_flush (conn_ep->uct_ep, 0, NULL);
+        mca_btl_uct_context_progress (conn_tl_context);
+    } while (UCS_INPROGRESS == ucs_status);
 
     opal_mutex_lock (&endpoint->ep_lock);
 
@@ -232,6 +231,7 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
     request->proc_name = OPAL_PROC_MY_NAME;
     request->context_id = tl_context->context_id;
     request->tl_index = tl->tl_index;
+    request->type = !!(ep_addr);
 
     if (NULL == tl_endpoint->uct_ep) {
         BTL_VERBOSE(("allocating endpoint for peer %s and sending connection data",
@@ -244,48 +244,37 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
             OBJ_RELEASE(endpoint->conn_ep);
             return OPAL_ERROR;
         }
+    }
 
-        /* fill in connection request */
-        ucs_status = uct_ep_get_address (tl_endpoint->uct_ep, (uct_ep_addr_t *) request->ep_addr);
+    if (ep_addr) {
+        BTL_VERBOSE(("using remote endpoint address to connect endpoint for tl %s, index %d. ep_addr = %p",
+                     tl->uct_tl_name, tl_context->context_id, ep_addr));
+
+        /* NTH: there is no need to lock the device context in this case */
+        ucs_status = uct_ep_connect_to_ep (tl_endpoint->uct_ep, (uct_device_addr_t *) tl_data, ep_addr);
         if (UCS_OK != ucs_status) {
-            /* this is a fatal a fatal error */
-            OBJ_RELEASE(endpoint->conn_ep);
-            uct_ep_destroy (tl_endpoint->uct_ep);
-            tl_endpoint->uct_ep = NULL;
-            return OPAL_ERROR;
-        }
-
-        rc = mca_btl_uct_endpoint_send_conn_req (uct_btl, endpoint, conn_tl_context, 0, request,
-                                                 request_length);
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            OBJ_RELEASE(endpoint->conn_ep);
-            uct_ep_destroy (tl_endpoint->uct_ep);
-            tl_endpoint->uct_ep = NULL;
             return OPAL_ERROR;
         }
     }
 
-    if (ep_addr) {
-        BTL_VERBOSE(("using remote endpoint address to connect endpoint. ep_addr = %p", ep_addr));
+    /* fill in connection request */
+    ucs_status = uct_ep_get_address (tl_endpoint->uct_ep, (uct_ep_addr_t *) request->ep_addr);
+    if (UCS_OK != ucs_status) {
+        /* this is a fatal a fatal error */
+        OBJ_RELEASE(endpoint->conn_ep);
+        uct_ep_destroy (tl_endpoint->uct_ep);
+        tl_endpoint->uct_ep = NULL;
+        return OPAL_ERROR;
+    }
 
-        device_addr = (uct_device_addr_t *) tl_data;
-
-        /* NTH: there is no need to lock the device context in this case */
-        ucs_status = uct_ep_connect_to_ep (tl_endpoint->uct_ep, device_addr, ep_addr);
-        if (UCS_OK != ucs_status) {
-            return OPAL_ERROR;
-        }
-
-        /* let the remote side know that the connection has been established and
-         * wait for the message to be sent */
-        rc = mca_btl_uct_endpoint_send_conn_req (uct_btl, endpoint, conn_tl_context, 1, request,
-                                                 sizeof (mca_btl_uct_conn_req_t));
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            OBJ_RELEASE(endpoint->conn_ep);
-            uct_ep_destroy (tl_endpoint->uct_ep);
-            tl_endpoint->uct_ep = NULL;
-            return OPAL_ERROR;
-        }
+    /* let the remote side know that the connection has been established and
+     * wait for the message to be sent */
+    rc = mca_btl_uct_endpoint_send_conn_req (uct_btl, endpoint, conn_tl_context, request, request_length);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        OBJ_RELEASE(endpoint->conn_ep);
+        uct_ep_destroy (tl_endpoint->uct_ep);
+        tl_endpoint->uct_ep = NULL;
+        return OPAL_ERROR;
     }
 
     return (tl_endpoint->flags & MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY) ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
