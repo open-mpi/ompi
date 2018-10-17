@@ -248,14 +248,12 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AC_MSG_ERROR([Cannot continue])])
 
     AC_MSG_CHECKING([if user requested internal PMIx support($with_pmix)])
-    opal_prun_happy=no
     opal_external_pmix_happy=no
     opal_external_have_pmix1=0
 
     AS_IF([test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([yes])
            opal_external_pmix_happy=no
-           opal_prun_happy=yes
            opal_external_pmix_version=internal],
 
           [AC_MSG_RESULT([no])
@@ -376,7 +374,6 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                                            [AC_MSG_RESULT([found])
                                             opal_external_pmix_version=2x
                                             opal_external_pmix_version_found=1
-                                            opal_prun_happy=yes
                                             opal_external_pmix_happy=yes],
                                            [AC_MSG_RESULT([not found])])])
 
@@ -436,7 +433,6 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
 
     AC_DEFINE_UNQUOTED([OPAL_PMIX_V1],[$opal_external_have_pmix1],
                        [Whether the external PMIx library is v1])
-    AM_CONDITIONAL([OPAL_WANT_PRUN], [test "$opal_prun_happy" = "yes"])
 
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
           [AS_IF([test "$opal_external_pmix_version" = "1x"],
