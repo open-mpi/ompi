@@ -42,12 +42,4 @@ DIST_SUBDIRS += \
 	tools/wrappers \
         tools/orte-top \
         tools/orte-info \
-        tools/orte-server \
-        tools/orte-dvm \
-        tools/ompi-prun
-
-if OPAL_WANT_PRUN
-SUBDIRS += \
-	tools/ompi-prun \
-        tools/orte-dvm
-endif
+        tools/orte-server

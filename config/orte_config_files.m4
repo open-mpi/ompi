@@ -30,7 +30,5 @@ AC_DEFUN([ORTE_CONFIG_FILES],[
         orte/tools/orte-top/Makefile
         orte/tools/orte-info/Makefile
         orte/tools/orte-server/Makefile
-        orte/tools/orte-dvm/Makefile
-        orte/tools/ompi-prun/Makefile
     ])
 ])
