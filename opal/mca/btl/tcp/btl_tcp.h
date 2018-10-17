@@ -164,13 +164,11 @@ OPAL_MODULE_DECLSPEC extern mca_btl_tcp_component_t mca_btl_tcp_component;
 struct mca_btl_tcp_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
     uint16_t           tcp_ifkindex; /** <BTL kernel interface index */
-#if 0
-    int                tcp_ifindex; /**< BTL interface index */
-#endif
-    struct sockaddr_storage tcp_ifaddr; /**< First IPv4 address discovered for this interface, bound as sending address for this BTL */
-#if OPAL_ENABLE_IPV6
-    struct sockaddr_storage tcp_ifaddr_6; /**< First IPv6 address discovered for this interface, bound as sending address for this BTL  */
-#endif
+    struct sockaddr_storage tcp_ifaddr;   /**< First address
+                                             discovered for this
+                                             interface, bound as
+                                             sending address for this
+                                             BTL */
     uint32_t           tcp_ifmask;  /**< BTL interface netmask */
 
     opal_mutex_t       tcp_endpoints_mutex;

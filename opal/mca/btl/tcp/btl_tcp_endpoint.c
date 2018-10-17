@@ -743,11 +743,11 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
 #if OPAL_ENABLE_IPV6
     if (endpoint_addr.ss_family == AF_INET6) {
         assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr_6);
-        if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr_6,
+        if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr,
                  sizeof(struct sockaddr_in6)) < 0) {
             BTL_ERROR(("bind on local address (%s:%d) failed: %s (%d)",
                        opal_net_get_hostname((struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr),
-                       htons(((struct sockaddr_in*)&btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port),
+                       htons(((struct sockaddr_in6*)&btl_endpoint->endpoint_btl->tcp_ifaddr)->sin6_port),
                        strerror(opal_socket_errno), opal_socket_errno));
 
             CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);

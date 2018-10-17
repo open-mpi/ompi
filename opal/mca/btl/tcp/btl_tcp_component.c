@@ -513,17 +513,12 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
         btl->tcp_send_handler = 0;
 #endif
 
-       struct sockaddr_storage addr;
-       opal_ifkindextoaddr(if_kindex, (struct sockaddr*) &addr,
-                                          sizeof (struct sockaddr_storage));
-#if OPAL_ENABLE_IPV6
-        if (addr.ss_family == AF_INET6) {
-            btl->tcp_ifaddr_6 =  addr;
-        }
-#endif
-        if (addr.ss_family == AF_INET) {
-           btl->tcp_ifaddr = addr;
-        }
+        /* save the address associated with this kindex in the module
+           to publish in the modex and use as the source of all packets
+           from this module */
+        opal_ifkindextoaddr(if_kindex, (struct sockaddr*)&btl->tcp_ifaddr,
+                            sizeof (struct sockaddr_storage));
+
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
@@ -567,8 +562,8 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "btl:tcp: %p: if %s kidx %d cnt %i addr %s %s bw %d lt %d\n",
                             (void*)btl, if_name, (int) btl->tcp_ifkindex, i,
-                            opal_net_get_hostname((struct sockaddr*)&addr),
-                            (addr.ss_family == AF_INET) ? "IPv4" : "IPv6",
+                            opal_net_get_hostname((struct sockaddr*)&btl->tcp_ifaddr),
+                            (btl->tcp_ifaddr.ss_family == AF_INET) ? "IPv4" : "IPv6",
                             btl->super.btl_bandwidth, btl->super.btl_latency);
     }
     return OPAL_SUCCESS;
@@ -721,6 +716,7 @@ static int mca_btl_tcp_component_create_instances(void)
          */
         for(if_index = opal_ifbegin(); if_index >= 0; if_index = opal_ifnext(if_index)){
             int index = opal_ifindextokindex (if_index);
+
             if (index > 0) {
                 bool want_this_if = true;
 
@@ -1172,7 +1168,7 @@ static int mca_btl_tcp_component_exchange(void)
                      (6 != mca_btl_tcp_component.tcp_disable_family)) {
                      memcpy(&addrs[current_addr].addr_inet,
                              &((struct sockaddr_in6*)&my_ss)->sin6_addr,
-                             sizeof(addrs[0].addr_inet));
+                            sizeof(addrs[0].addr_inet));
                      addrs[current_addr].addr_port =
                          mca_btl_tcp_component.tcp6_listen_port;
                      addrs[current_addr].addr_family = MCA_BTL_TCP_AF_INET6;
