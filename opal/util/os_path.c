@@ -59,7 +59,7 @@ char *opal_os_path(int relative, ...)
     	if (relative) {
             path[0] = '.';
         }
-        strncat(path, path_sep, len);
+        strncat(path, path_sep, len - 1);
     	return(path);
     }
 
