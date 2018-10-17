@@ -21,7 +21,7 @@
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  */
-#include "opal/include/opal/align.h"
+#include "opal/align.h"
 
 #include "nbc_internal.h"
 
