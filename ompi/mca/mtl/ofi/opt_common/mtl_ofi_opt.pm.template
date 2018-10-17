@@ -1,0 +1,66 @@
+#!/usr/bin/env perl
+#
+# Copyright (c) 2013-2018 Intel, Inc. All rights reserved
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+use strict;
+use warnings;
+use opt_common::mtl_ofi_opt_common;
+package mtl_ofi_#INSERT FUNCTION NAME HERE#_opt;
+
+my @en_dis = (0, 1);
+
+sub gen_funcs {
+    my $gen_file = $_[0];
+    my $gen_type = $_[1];
+    my $#INSERT FLAG NAME HERE# = 0;
+
+     foreach $#INSERT FLAG NAME HERE# (@en_dis) {
+        my @flags = ($#INSERT FLAG NAME HERE#);
+        if (($gen_type cmp "FUNC") == 0) {
+            my $FUNC = gen_#INSERT FUNCTION NAME HERE#_function(\@flags);
+            print $gen_file "$FUNC\n\n";
+        }
+        if (($gen_type cmp "SYM") == 0) {
+            my $SYM = gen_#INSERT FUNCTION NAME HERE#_sym_init(\@flags);
+            print $gen_file "$SYM\n";
+        }
+    }
+}
+
+sub gen_#INSERT FUNCTION NAME HERE#_function {
+    my @op_flags = @{$_[0]};
+    my $MTL_OFI_NAME_EXT = opt_common::mtl_ofi_opt_common::gen_flags_ext(\@op_flags);
+    my $#INSERT FLAG NAME HERE#_EN = $op_flags[0];
+
+    my $FUNCTION =
+"__opal_attribute_always_inline__ static inline int
+ompi_mtl_ofi_#INSERT FUNCTION NAME HERE#_" . $MTL_OFI_NAME_EXT . "(#INSERT FUNCTION ARGS HERE#)
+{
+    const int $#INSERT FLAG NAME HERE# = " . $#INSERT FLAG NAME HERE#_EN . ";
+
+    return ompi_mtl_ofi_#INSERT FUNCTION NAME HERE#_generic(#INSERT FUNCTION ARGS HERE#,
+                                    #INSERT FLAG NAME HERE#);
+}";
+    return $FUNCTION;
+}
+
+sub gen_#INSERT FUNCTION NAME HERE#_sym_init {
+    my @op_flags = @{$_[0]};
+    my $MTL_OFI_FUNC_NAME = "ompi_mtl_ofi_#INSERT FUNCTION NAME HERE#_" . opt_common::mtl_ofi_opt_common::gen_flags_ext(\@op_flags) . "";
+    my $#INSERT FLAG NAME HERE#_EN = $op_flags[0];
+    my $symbol_init =
+"
+    sym_table->ompi_mtl_ofi_#INSERT FUNCTION NAME HERE#[".$#INSERT FLAG NAME HERE#_EN."]
+        = ".$MTL_OFI_FUNC_NAME.";
+";
+    return $symbol_init;
+}
+
+1;

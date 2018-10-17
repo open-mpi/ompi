@@ -23,12 +23,12 @@ mca_mtl_ofi_module_t ompi_mtl_ofi = {
         ompi_mtl_ofi_del_procs,
         ompi_mtl_ofi_finalize,
 
-        ompi_mtl_ofi_send,
-        ompi_mtl_ofi_isend,
-        ompi_mtl_ofi_irecv,
-        ompi_mtl_ofi_iprobe,
-        ompi_mtl_ofi_imrecv,
-        ompi_mtl_ofi_improbe,
+         NULL,
+         NULL,
+         NULL,
+         NULL,
+         ompi_mtl_ofi_imrecv,
+         NULL,
 
         ompi_mtl_ofi_cancel,
         ompi_mtl_ofi_add_comm,
