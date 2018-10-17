@@ -740,6 +740,31 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     /**
+     * Initialize the MTL OFI Symbol Tables & function pointers
+     * for specialized functions.
+     */
+
+    ompi_mtl_ofi_send_symtable_init(&ompi_mtl_ofi.sym_table);
+    ompi_mtl_ofi.base.mtl_send =
+        ompi_mtl_ofi.sym_table.ompi_mtl_ofi_send[ompi_mtl_ofi.fi_cq_data];
+
+    ompi_mtl_ofi_isend_symtable_init(&ompi_mtl_ofi.sym_table);
+    ompi_mtl_ofi.base.mtl_isend =
+        ompi_mtl_ofi.sym_table.ompi_mtl_ofi_isend[ompi_mtl_ofi.fi_cq_data];
+
+    ompi_mtl_ofi_irecv_symtable_init(&ompi_mtl_ofi.sym_table);
+    ompi_mtl_ofi.base.mtl_irecv =
+        ompi_mtl_ofi.sym_table.ompi_mtl_ofi_irecv[ompi_mtl_ofi.fi_cq_data];
+
+    ompi_mtl_ofi_iprobe_symtable_init(&ompi_mtl_ofi.sym_table);
+    ompi_mtl_ofi.base.mtl_iprobe =
+        ompi_mtl_ofi.sym_table.ompi_mtl_ofi_iprobe[ompi_mtl_ofi.fi_cq_data];
+
+    ompi_mtl_ofi_improbe_symtable_init(&ompi_mtl_ofi.sym_table);
+    ompi_mtl_ofi.base.mtl_improbe =
+        ompi_mtl_ofi.sym_table.ompi_mtl_ofi_improbe[ompi_mtl_ofi.fi_cq_data];
+
+    /**
      * Check for potential bits in the OFI tag that providers may be reserving
      * for internal usage (see mem_tag_format in fi_endpoint man page).
      */
