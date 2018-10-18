@@ -656,6 +656,10 @@ static inline int red_sched_redscat_gather(
 
     /* Find nearest power-of-two less than or equal to comm_size */
     int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
+    if (nsteps < 1) {
+        /* This case never happens (for comm_size < 2 other algorithms are used) */
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
     ptrdiff_t lb, extent;
