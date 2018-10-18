@@ -832,7 +832,7 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
     while (size) { \
         size_in_buf = ADIOI_MIN(size, flat_buf_sz); \
   ADIOI_Assert((((ADIO_Offset)(MPIU_Upint)buf) + user_buf_idx) == (ADIO_Offset)(MPIU_Upint)((MPIU_Upint)buf + user_buf_idx)); \
-  ADIOI_Assert(size_in_buf == (size_t)size_in_buf); \
+  ADIOI_Assert((ADIO_Size) size_in_buf == (size_t)size_in_buf);          \
         memcpy(&(send_buf[p][send_buf_idx[p]]), \
                ((char *) buf) + user_buf_idx, size_in_buf); \
         send_buf_idx[p] += size_in_buf; \

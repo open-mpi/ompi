@@ -335,7 +335,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 #ifdef ADIOI_MPE_LOGGING 
 		    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
 #endif
-                    ADIOI_Assert(size == (size_t) size);
+                    ADIOI_Assert((ADIO_Size) size == (size_t) size);
                     ADIOI_Assert(off == (off_t) off);
 		    err = write(fd->fd_sys, ((char *) buf) + indx, size);
 #ifdef ADIOI_MPE_LOGGING
