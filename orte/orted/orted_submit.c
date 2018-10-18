@@ -2258,6 +2258,8 @@ struct MPIR_PROCDESC {
  * spawn we need to check if we are being run under a TotalView-like
  * debugger; if so then inform applications via an MCA parameter.
  */
+static bool mpir_warning_printed = false;
+
 static void orte_debugger_init_before_spawn(orte_job_t *jdata)
 {
     char *env_name;
@@ -2306,6 +2308,15 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
 
  launchit:
     opal_output_verbose(1, orte_debug_output, "Info: Spawned by a debugger");
+
+    /* if we haven't previously warned about it */
+    if (!mpir_warning_printed) {
+        mpir_warning_printed = true;
+        /* check for silencing envar */
+        if (NULL == getenv("OMPI_MPIR_DO_NOT_WARN")) {
+            orte_show_help("help-orted.txt", "mpir-debugger-detected", true);
+        }
+    }
 
     /* tell the procs they are being debugged */
     (void) mca_base_var_env_name ("orte_in_parallel_debugger", &env_name);
@@ -2520,6 +2531,14 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
         if (MPIR_being_debugged || NULL != orte_debugger_test_daemon ||
             NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
             OBJ_RELEASE(caddy);
+            /* if we haven't previously warned about it */
+            if (!mpir_warning_printed) {
+                mpir_warning_printed = true;
+                /* check for silencing envar */
+                if (NULL == getenv("OMPI_MPIR_DO_NOT_WARN")) {
+                    orte_show_help("help-orted.txt", "mpir-debugger-detected", true);
+                }
+            }
             if (!mpir_breakpoint_fired) {
                 /* record that we have triggered the debugger */
                 mpir_breakpoint_fired = true;
@@ -2615,6 +2634,15 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
      */
     if (MPIR_being_debugged || NULL != orte_debugger_test_daemon ||
         NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
+        /* if we haven't previously warned about it */
+        if (!mpir_warning_printed) {
+            mpir_warning_printed = true;
+            /* check for silencing envar */
+            if (NULL == getenv("OMPI_MPIR_DO_NOT_WARN")) {
+                orte_show_help("help-orted.txt", "mpir-debugger-detected", true);
+            }
+        }
+
         /* if we are not launching debugger daemons, then trigger
          * the debugger - otherwise, we need to wait for the debugger
          * daemons to be started
@@ -2923,6 +2951,15 @@ static void attach_debugger(int fd, short event, void *arg)
                         "%s Attaching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == orte_debugger_test_daemon) ? MPIR_executable_path : orte_debugger_test_daemon);
 
+    /* if we haven't previously warned about it */
+    if (!mpir_warning_printed) {
+        mpir_warning_printed = true;
+        /* check for silencing envar */
+        if (NULL == getenv("OMPI_MPIR_DO_NOT_WARN")) {
+            orte_show_help("help-orted.txt", "mpir-debugger-detected", true);
+        }
+    }
+
     /* a debugger has attached! All the MPIR_Proctable
      * data is already available, so we only need to
      * check to see if we should spawn any daemons
@@ -3036,6 +3073,15 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
     if (OPAL_SUCCESS == ret && NULL != env_name) {
         opal_setenv(env_name, "1", true, &environ);
         free(env_name);
+    }
+
+    /* if we haven't previously warned about it */
+    if (!mpir_warning_printed) {
+        mpir_warning_printed = true;
+        /* check for silencing envar */
+        if (NULL == getenv("OMPI_MPIR_DO_NOT_WARN")) {
+            orte_show_help("help-orted.txt", "mpir-debugger-detected", true);
+        }
     }
 
     /* Launch the debugger */
