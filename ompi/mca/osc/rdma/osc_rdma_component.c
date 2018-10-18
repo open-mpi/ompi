@@ -586,6 +586,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
         if (size && MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
             *base = (void *)((intptr_t) module->segment_base + my_base_offset);
+            memset (*base, 0, size);
         }
 
         module->rank_array = (ompi_osc_rdma_rank_data_t *) module->segment_base;
@@ -599,7 +600,12 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         /* initialize my state */
         memset (module->state, 0, module->state_size);
 
+        /* barrier to make sure all ranks have attached and initialized */
+        shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
+
         if (0 == local_rank) {
+            /* unlink the shared memory backing file */
+            opal_shmem_unlink (&module->seg_ds);
             /* just go ahead and register the whole segment */
             ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size, MCA_BTL_REG_FLAG_ACCESS_ANY,
                                           &module->state_handle);
@@ -618,14 +624,6 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             if (OMPI_SUCCESS != ret) {
                 break;
             }
-        }
-
-        /* barrier to make sure all ranks have attached */
-        shared_comm->c_coll->coll_barrier(shared_comm, shared_comm->c_coll->coll_barrier_module);
-
-        /* unlink the shared memory backing file */
-        if (0 == local_rank) {
-            opal_shmem_unlink (&module->seg_ds);
         }
 
         if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
